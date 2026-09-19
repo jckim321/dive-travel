@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "996020953462",
+    "project_id": "dive-travel-9dcf7",
+    "storage_bucket": "dive-travel-9dcf7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996020953462:android:b8246e7a21eee74d335a57",
+        "android_client_info": {
+          "package_name": "com.example.DiveTravel_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeMEzjIqpTu9kReuKVGvfVdYreo3sxN4g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996020953462:android:4683f429bd96582e335a57",
+        "android_client_info": {
+          "package_name": "com.jongcheol.divetravel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeMEzjIqpTu9kReuKVGvfVdYreo3sxN4g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

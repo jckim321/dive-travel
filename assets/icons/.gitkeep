@@ -1,0 +1,2 @@
+# 런처 아이콘 원본을 이 폴더에 app_icon.png (1024x1024) 로 넣고
+# 프로젝트 루트에서 dart run flutter_launcher_icons 를 실행하세요.

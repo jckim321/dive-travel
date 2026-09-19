@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc().is_admin == true;
+    }
+
+    function isBusiness() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc().is_business == true;
+    }
+
+    function ownsShop(shopId) {
+      return isBusiness() && userDoc().owned_shop_id == shopId;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+
+      match /logs/{logId} {
+        allow get, list, create, update, delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /bookings/{bookingId} {
+        allow get, list, create, update, delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /reviews/{reviewId} {
+        allow get, list, create: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /shops/{shopId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+
+      match /reviews/{reviewId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      }
+
+      match /bookings/{bookingId} {
+        allow read: if isSignedIn() && (
+          isAdmin() ||
+          ownsShop(shopId) ||
+          resource.data.uid == request.auth.uid ||
+          request.resource.data.uid == request.auth.uid
+        );
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow update: if isAdmin() || ownsShop(shopId) ||
+          (isSignedIn() && resource.data.uid == request.auth.uid);
+      }
+    }
+
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin()
+        || (isSignedIn() && resource.data.author_uid == request.auth.uid);
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.author_uid == request.auth.uid;
+        allow update, delete: if isAdmin()
+          || resource.data.author_uid == request.auth.uid;
+      }
+    }
+  }
+}

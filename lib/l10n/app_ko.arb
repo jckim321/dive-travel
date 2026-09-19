@@ -1,0 +1,861 @@
+{
+  "@@locale": "ko",
+  "appTitle": "다이브 트래블",
+  "@appTitle": {
+    "description": "앱 이름. 앱바와 작업 전환기에 표시됩니다."
+  },
+  "homeWelcome": "너의 바다는 어디까지 넓어졌니?",
+  "@homeWelcome": {
+    "description": "홈 화면 슬로건입니다."
+  },
+  "homeSubtitle": "전 세계 바다를 내 손안에.",
+  "@homeSubtitle": {
+    "description": "슬로건 아래 보조 문구입니다."
+  },
+  "homeProWelcome": "안녕하세요, PRO 강사님!",
+  "@homeProWelcome": {
+    "description": "강사 인증 유저에게 보이는 홈 인포바 문구입니다."
+  },
+  "homeMapTitle": "나의 글로벌 바다 개척 지도",
+  "@homeMapTitle": {
+    "description": "홈 화면 지도 영역 제목입니다."
+  },
+  "homeMapExplored": "현재까지 총 {count}개 지역 탐험 중",
+  "@homeMapExplored": {
+    "description": "방문한 고유 지역 수 안내입니다.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMapTip": "한 지역에서 다이빙 횟수가 늘어날수록 지도 위의 네온 불빛이 황금빛으로 진화합니다.",
+  "@homeMapTip": {
+    "description": "단골 지역 황금 마커 안내입니다."
+  },
+  "homeDiveStarTitle": "Dive Star 추천 리조트",
+  "@homeDiveStarTitle": {
+    "description": "홈 화면 다이브 스타 섹션 제목입니다."
+  },
+  "homeFavoritesTitle": "즐겨 찾는 곳",
+  "@homeFavoritesTitle": {
+    "description": "홈 화면 즐겨찾기·단골 섹션 제목입니다."
+  },
+  "homePopularTitle": "많이 가는 곳",
+  "@homePopularTitle": {
+    "description": "홈 화면 인기 리조트 섹션 제목입니다."
+  },
+  "homeSeeAll": "더보기",
+  "@homeSeeAll": {
+    "description": "홈 섹션 우측 더보기입니다."
+  },
+  "homeFavoritesEmpty": "하트를 누르거나 로그를 남기면 단골 리조트가 여기에 모여요.",
+  "@homeFavoritesEmpty": {
+    "description": "즐겨찾기 섹션이 비었을 때 안내입니다."
+  },
+  "homeChipAll": "전체",
+  "@homeChipAll": {
+    "description": "홈 분류 칩의 전체입니다."
+  },
+  "homeChipRecommended": "추천",
+  "@homeChipRecommended": {
+    "description": "홈 분류 칩의 추천입니다."
+  },
+  "homeChipFavorites": "즐겨찾기",
+  "@homeChipFavorites": {
+    "description": "홈 분류 칩의 즐겨찾기입니다."
+  },
+  "homeChipPopular": "인기",
+  "@homeChipPopular": {
+    "description": "홈 분류 칩의 인기입니다."
+  },
+  "homeChipLastMinute": "마감임박",
+  "@homeChipLastMinute": {
+    "description": "홈 분류 칩의 마감 임박입니다."
+  },
+  "homeNextDepartures": "이번 출발",
+  "@homeNextDepartures": {
+    "description": "홈에서 빈자리가 얼마 안 남은 출발 목록 제목입니다."
+  },
+  "homeLastMinuteTitle": "마감 임박 출발",
+  "@homeLastMinuteTitle": {
+    "description": "홈 화면 마감 임박 피드 제목입니다."
+  },
+  "homeLastMinuteCrew": "다합 사흘 소셜 크루",
+  "@homeLastMinuteCrew": {
+    "description": "마감 임박 배너 제목입니다."
+  },
+  "homeLastMinuteSeat": "내일 마감 · 남은 자리 1명 · 싱글차지 없음",
+  "@homeLastMinuteSeat": {
+    "description": "마감 임박 배너 보조 문구입니다."
+  },
+  "homeForYouTitle": "나를 위한 다음 바다",
+  "@homeForYouTitle": {
+    "description": "로그 기반 맞춤 추천 섹션 제목입니다."
+  },
+  "homeStyleFirstOcean": "첫 바다를 여는 다이버",
+  "homeStyleFirstOceanBody": "아직 스탬프가 없습니다. 아시아부터 열면 로그와 여행이 바로 이어집니다.",
+  "homeStyleHomeContinent": "한 대륙을 깊게 파는 다이버",
+  "homeStyleHomeContinentBody": "단골 바다가 생겼습니다. 다음엔 다른 대륙을 열어 지도를 넓혀 보세요.",
+  "homeStyleCollector": "대양을 모으는 탐험가",
+  "homeStyleCollectorBody": "이미 여러 대륙을 밟았습니다. 빈 스탬프를 채우면 여권 페이지가 완성됩니다.",
+  "homeStyleDeepLocal": "한 포인트를 깊게 파는 다이버",
+  "homeStyleDeepLocalBody": "같은 바다를 반복해 골든 지역이 됐습니다. 다음 대륙으로 시야를 넓혀 보세요.",
+  "homeStylePro": "프로 루트의 강사",
+  "homeStyleProBody": "우대 단가로 새 대륙을 열어 보세요. 수업과 탐험을 같이 쌓을 수 있습니다.",
+  "homeNextOceanTitle": "다음에 열 바다",
+  "homeNextOceanBody": "{continent}에 아직 로그가 없습니다. 이 상품부터 열어 보세요.",
+  "@homeNextOceanBody": {
+    "placeholders": {
+      "continent": {
+        "type": "String"
+      }
+    }
+  },
+  "homeOpenShop": "{name} 상품 보기",
+  "@homeOpenShop": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeStampsLabel": "여권 스탬프",
+  "homeStampsProgress": "{stamped}/{total} 나라",
+  "@homeStampsProgress": {
+    "placeholders": {
+      "stamped": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBadgeLabel": "다음 뱃지",
+  "homeBadgeLeft": "메탈 카드까지 {count}로그",
+  "@homeBadgeLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeBadgeDone": "메탈 카드 신청 가능",
+  "homeChecklistLabel": "출국 체크",
+  "homeChecklistSoon": "{days}일 전 · {shop}",
+  "@homeChecklistSoon": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "shop": {
+        "type": "String"
+      }
+    }
+  },
+  "homeChecklistIdle": "장비 리스트 열어보기",
+  "passportCoverNation": "오션 공화국",
+  "passportCoverType": "여권",
+  "passportOpenHint": "표지를 눌러 여권을 펼치세요.",
+  "passportCloseHint": "다시 누르면 표지가 닫힙니다.",
+  "passportVisaTitle": "입국 스탬프",
+  "passportEntryGranted": "입국",
+  "passportAwaiting": "미입국",
+  "passportPageIndex": "{current} / {total} 페이지",
+  "@passportPageIndex": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "passportEmptyPage": "이 페이지는 아직 비어 있습니다. 로그가 쌓이면 스탬프가 생깁니다.",
+  "profilePassportHint": "표지를 누르면 여권이 펼쳐지고, 로그가 있는 나라에 스탬프가 찍힙니다.",
+  "navHome": "홈",
+  "@navHome": {
+    "description": "하단 내비게이션의 홈 탭 이름입니다."
+  },
+  "navLogbook": "로그북",
+  "@navLogbook": {
+    "description": "하단 내비게이션의 로그북 탭 이름입니다."
+  },
+  "navExplore": "여행상품",
+  "@navExplore": {
+    "description": "하단 내비게이션의 여행상품 탭 이름입니다."
+  },
+  "navCommunity": "같은배",
+  "@navCommunity": {
+    "description": "하단 내비게이션의 같은배 탭 이름입니다."
+  },
+  "navProfile": "마이",
+  "@navProfile": {
+    "description": "하단 내비게이션의 마이페이지 탭 이름입니다."
+  },
+  "logbookTitle": "디지털 로그북",
+  "@logbookTitle": {
+    "description": "로그북 화면 제목입니다."
+  },
+  "logbookAdd": "로그 추가",
+  "@logbookAdd": {
+    "description": "로그북 추가 버튼 문구입니다."
+  },
+  "logbookEmpty": "아직 기록한 로그가 없습니다.",
+  "@logbookEmpty": {
+    "description": "로그 목록이 비었을 때 문구입니다."
+  },
+  "logbookChecklist": "장비 체크리스트",
+  "@logbookChecklist": {
+    "description": "장비 체크리스트 화면 제목입니다."
+  },
+  "logbookSiteLabel": "다이빙한 장소",
+  "@logbookSiteLabel": {
+    "description": "로그 입력 폼의 장소 필드 이름입니다."
+  },
+  "logbookDateLabel": "다이빙 날짜와 시간",
+  "@logbookDateLabel": {
+    "description": "로그 입력 폼의 날짜 필드 이름입니다."
+  },
+  "logbookMemoLabel": "한 줄 메모",
+  "@logbookMemoLabel": {
+    "description": "로그 입력 폼의 메모 필드 이름입니다."
+  },
+  "logbookSelfRegisterHint": "강사 서명 없이 저장하면 여행 일지로 바로 자체 등록됩니다.",
+  "logbookSelfRegistered": "여행 일지 · 자체 등록",
+  "logbookBriefEmpty": "장소만 기록됨",
+  "logbookSlipTitle": "새 로그 슬립",
+  "logbookTankRackTitle": "메탈 카드까지, 탱크 10개",
+  "logbookTankRackHint": "탱크 하나당 10로그. 수심 경쟁이 아니라 기록이 차오릅니다.",
+  "logbookCenturyTitle": "100부터 1,000 · 다음 구간",
+  "logbookCenturyHint": "다이버는 100에서 메탈 카드, 강사 코스는 색이 바뀌며 1,000까지 이어집니다.",
+  "logbookCenturyLeft": "다음 {target}까지 {count}로그",
+  "@logbookCenturyLeft": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "target": { "type": "int" }
+    }
+  },
+  "logbookCenturyMastered": "1,000로그 마스터",
+  "logbookJournalTitle": "여행 일지",
+  "logbookStatDives": "총 다이빙",
+  "logbookStatDiveUnit": "회",
+  "logbookStatTime": "누적 시간",
+  "logbookStatRegions": "탐험 지역",
+  "logbookStatRegionUnit": "곳",
+  "logbookMaxDepth": "최대 수심",
+  "logbookAvgDepth": "평균 수심",
+  "logbookMinutes": "잠수 시간",
+  "logbookMinUnit": "분",
+  "logbookSac": "BMV",
+  "logbookSacHint": "BMV는 평균수심·시간·사용잔압·탱크용량으로 계산합니다. 평균이 비면 최대수심을 씁니다. 수심은 기록이니 깊게 갈 필요는 없습니다.",
+  "logbookMix": "호흡 기체",
+  "logbookMixAir": "21% AIR",
+  "logbookMixNx32": "32% NITROX",
+  "logbookMixNx36": "36% NITROX",
+  "logbookPressure": "잔압",
+  "logbookStartBar": "시작 잔압 (bar)",
+  "logbookEndBar": "종료 잔압 (bar)",
+  "logbookTankLiters": "탱크 용량 (L)",
+  "logbookTemp": "수온",
+  "logbookAirLeft": "남은 공기",
+  "logbookSave": "저장",
+  "@logbookSave": {
+    "description": "로그 저장 버튼입니다."
+  },
+  "logbookEdit": "수정",
+  "logbookUpdated": "로그를 수정했습니다. 지도와 일지가 갱신됩니다.",
+  "logbookSaved": "로그를 저장했습니다. 지도와 산소통이 갱신됩니다.",
+  "@logbookSaved": {
+    "description": "로그 저장 성공 안내입니다."
+  },
+  "logbookPhotoSection": "테스트용 수중 사진",
+  "@logbookPhotoSection": {
+    "description": "로그 작성 화면의 사진 첨부 영역 제목입니다."
+  },
+  "logbookPhotoHint": "갤러리·컴퓨터에서 고르거나, 테스트 사진을 바로 넣을 수 있습니다.",
+  "@logbookPhotoHint": {
+    "description": "사진 첨부 안내 문구입니다."
+  },
+  "logbookAttachPhoto": "기기에서 사진 고르기",
+  "@logbookAttachPhoto": {
+    "description": "로그 작성 화면의 갤러리/파일 사진 첨부 버튼입니다."
+  },
+  "logbookUseTestPhoto": "테스트 사진 사용",
+  "@logbookUseTestPhoto": {
+    "description": "앱에 들어 있는 샘플 사진을 첨부하는 버튼입니다."
+  },
+  "logbookPhotoPicked": "첨부됨: {fileName}",
+  "@logbookPhotoPicked": {
+    "description": "선택한 사진 파일 이름 안내입니다.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "logbookPhotoRemove": "사진 제거",
+  "@logbookPhotoRemove": {
+    "description": "첨부한 사진을 제거하는 버튼입니다."
+  },
+  "logbookPhotoMissingConfig": "Cloudflare R2 Access Key 또는 Account ID가 없습니다. lib/core/config/r2_secrets.dart를 확인해 주세요.",
+  "@logbookPhotoMissingConfig": {
+    "description": "R2 인증값이 비어 있을 때 안내입니다."
+  },
+  "logbookUploading": "업로드 중...",
+  "@logbookUploading": {
+    "description": "사진 업로드와 로그 저장이 진행 중일 때 버튼 문구입니다."
+  },
+  "checklistTitle": "출국 전 장비 체크리스트",
+  "@checklistTitle": {
+    "description": "체크리스트 화면 제목입니다."
+  },
+  "exploreTitle": "여행상품",
+  "@exploreTitle": {
+    "description": "여행상품 화면 제목입니다."
+  },
+  "exploreConsumerPrice": "소비자가",
+  "@exploreConsumerPrice": {
+    "description": "일반 다이버에게 보이는 가격 라벨입니다."
+  },
+  "exploreProPrice": "강사 우대가",
+  "@exploreProPrice": {
+    "description": "강사에게 보이는 가격 라벨입니다."
+  },
+  "exploreSearchHint": "리조트, 포인트, 국가 검색",
+  "@exploreSearchHint": {
+    "description": "투어 예약 검색 필드 힌트입니다."
+  },
+  "exploreFilterAll": "전체",
+  "@exploreFilterAll": {
+    "description": "대륙 필터의 전체 칩입니다."
+  },
+  "exploreContinentAsia": "아시아",
+  "exploreContinentAfrica": "아프리카",
+  "exploreContinentOceania": "오세아니아",
+  "exploreContinentAmericas": "아메리카",
+  "exploreContinentEurope": "유럽",
+  "exploreContinentPolar": "극지",
+  "exploreProBanner": "강사 자격 확인됨 · 모든 상품이 강사 우대가로 표시됩니다",
+  "@exploreProBanner": {
+    "description": "강사 세션에서 예약 화면에 보이는 안내입니다."
+  },
+  "exploreConsumerBanner": "일반 다이버 가격 · 자리를 요청하면 샵 확정 후 결제합니다",
+  "@exploreConsumerBanner": {
+    "description": "일반 다이버 세션에서 예약 화면에 보이는 안내입니다."
+  },
+  "exploreBook": "예약하기",
+  "@exploreBook": {
+    "description": "샵 카드의 예약 버튼입니다."
+  },
+  "explorePay": "자리 요청",
+  "@explorePay": {
+    "description": "체크아웃 시트의 자리 요청 버튼입니다. 결제는 샵 확정 후입니다."
+  },
+  "exploreDepartureLine": "{window} · 빈자리 {seats}",
+  "@exploreDepartureLine": {
+    "placeholders": {
+      "window": { "type": "String" },
+      "seats": { "type": "int" }
+    }
+  },
+  "exploreDepartureBody": "이 출발에 빈자리 {empty} / 정원 {capacity}입니다. 깃발을 올리면 같은 배에 탑니다.",
+  "@exploreDepartureBody": {
+    "placeholders": {
+      "empty": { "type": "int" },
+      "capacity": { "type": "int" }
+    }
+  },
+  "exploreWeatherRefundTitle": "기상 취소 전액 환불",
+  "exploreWeatherRefundBody": "샵이 날씨로 출항을 취소하면 결제한 금액 전액을 돌려드립니다. 이건 마케팅 문구가 아니라 상품 조건입니다.",
+  "exploreHostedBy": "{shop}가 운영합니다",
+  "@exploreHostedBy": {
+    "placeholders": {
+      "shop": { "type": "String" }
+    }
+  },
+  "exploreListingSites": "이 바다의 다이브 포인트",
+  "exploreListingAmenities": "이 상품이 제공하는 것",
+  "exploreListingSafetyTitle": "안전이 먼저인 바다",
+  "exploreListingSafetyBody": "수심은 자랑이 아닙니다. 가이드·보트·장비가 먼저이고, 깊이 경쟁은 하지 않습니다.",
+  "exploreRareFind": "흔치 않은 Dive Star 리조트",
+  "exploreRareFindBody": "오퍼레이션 후기로 별이 붙은 곳입니다. 인기 포인트는 날짜를 먼저 잡아 두세요.",
+  "exploreWontChargeYet": "지금은 일정을 잡고, 결제는 샵 확정 후 진행됩니다.",
+  "exploreListingGuests": "인원",
+  "exploreListingGuestOne": "다이버 1명",
+  "explorePerTrip": " / 회",
+  "exploreCheckoutTitle": "예약 결제",
+  "@exploreCheckoutTitle": {
+    "description": "인앱 결제 시트 제목입니다."
+  },
+  "exploreCheckoutBody": "{shop} · {product}",
+  "@exploreCheckoutBody": {
+    "description": "결제 시트에 보이는 상품 요약입니다.",
+    "placeholders": {
+      "shop": { "type": "String" },
+      "product": { "type": "String" }
+    }
+  },
+  "exploreCheckoutDone": "{label} {price}원 자리 요청을 샵에 전달했습니다.",
+  "@exploreCheckoutDone": {
+    "description": "결제 버튼을 눌렀을 때 안내입니다.",
+    "placeholders": {
+      "label": { "type": "String" },
+      "price": { "type": "String" }
+    }
+  },
+  "exploreConsumerPayHint": "샵이 등록한 정상 소비자가입니다.",
+  "@exploreConsumerPayHint": {
+    "description": "일반 다이버 결제 시트 보조 문구입니다."
+  },
+  "exploreNoResults": "검색과 일치하는 샵이 없습니다.",
+  "@exploreNoResults": {
+    "description": "검색 결과가 없을 때 문구입니다."
+  },
+  "exploreDiveStar": "Dive Star {stars}",
+  "@exploreDiveStar": {
+    "description": "샵 카드의 Dive Star 배지입니다.",
+    "placeholders": {
+      "stars": { "type": "int" }
+    }
+  },
+  "exploreRating": "{rating} · 후기 {count}",
+  "@exploreRating": {
+    "description": "샵 평점과 후기 수입니다.",
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "explorePriceWon": "{price}원",
+  "@explorePriceWon": {
+    "description": "원화 가격 표시입니다.",
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "exploreOriginalPrice": "소비자가 {price}원",
+  "@exploreOriginalPrice": {
+    "description": "강사 우대가일 때 그어 보이는 소비자가입니다.",
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "exploreStarPending": "리뷰 집계 전",
+  "@exploreStarPending": {
+    "description": "오퍼레이션 리뷰가 아직 없을 때 Dive Star 자리 표시입니다."
+  },
+  "exploreListingNew": "신규",
+  "@exploreListingNew": {
+    "description": "리뷰가 없는 여행상품 이미지 뱃지입니다."
+  },
+  "exploreListingPendingReview": "리뷰평가전",
+  "@exploreListingPendingReview": {
+    "description": "리뷰는 있으나 Dive Star 인증 전인 상품 뱃지입니다."
+  },
+  "exploreDiveStarCertified": "다이브스타 인증",
+  "@exploreDiveStarCertified": {
+    "description": "Dive Star를 받은 상품 이미지 표식입니다."
+  },
+  "exploreViewListing": "리조트 보기",
+  "@exploreViewListing": {
+    "description": "리조트 카드에서 상세로 들어가는 버튼입니다."
+  },
+  "exploreBuyNow": "상품 고르기",
+  "@exploreBuyNow": {
+    "description": "리조트 카드에서 상품 목록으로 들어가는 버튼입니다."
+  },
+  "exploreResortCardLine": "{location} · 상품 {count}개",
+  "@exploreResortCardLine": {
+    "placeholders": {
+      "location": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "exploreMyBookings": "내 예약",
+  "@exploreMyBookings": {
+    "description": "투어 탭의 결제 완료 예약 목록 제목입니다."
+  },
+  "reviewTitle": "오퍼레이션 리뷰",
+  "@reviewTitle": {
+    "description": "3대 항목 별점 화면 제목입니다."
+  },
+  "reviewIntro": "다녀온 샵의 안전·가이드·보트를 평가하면 Dive Star가 다시 계산됩니다.",
+  "reviewShopLabel": "리조트 / 다이브샵",
+  "reviewSafety": "① 안전 및 장비 관리",
+  "reviewGuide": "② 가이드 전문성",
+  "reviewBoat": "③ 보트 및 편의시설",
+  "reviewComment": "한 줄 후기 (선택)",
+  "reviewSubmit": "리뷰 등록",
+  "reviewWrite": "리뷰 작성",
+  "reviewDone": "리뷰 완료",
+  "reviewSaved": "리뷰가 반영되었습니다. Dive Star가 갱신됩니다.",
+  "reviewSaveFailed": "리뷰 저장에 실패했습니다.",
+  "homeDiveStarSubtitle": "오퍼레이션 평균 {rating} · 리뷰 {count}건",
+  "@homeDiveStarSubtitle": {
+    "description": "홈 추천 리조트 서브타이틀입니다.",
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "proTitle": "강사 프로 자격증 인증",
+  "@proTitle": {
+    "description": "마이페이지 C-Card 인증 섹션 제목입니다."
+  },
+  "proBody": "PADI/SSI 등 강사 C-Card 사진을 올리면 관리자 검토를 기다립니다. 승인되면 예약 단가가 강사 우대가로 바뀝니다.",
+  "proAgency": "자격 발행 기관",
+  "proPickPhoto": "C-Card 사진 첨부",
+  "proSubmit": "프로 인증 신청",
+  "proSubmitDone": "자격증을 올렸습니다. 인증 상태가 대기중(pending)입니다.",
+  "proSubmitFailed": "프로 인증 신청에 실패했습니다.",
+  "proStatusNone": "미신청",
+  "proStatusPending": "대기중 (pending)",
+  "proStatusRejected": "반려됨",
+  "communityTitle": "같은 밀물",
+  "@communityTitle": {
+    "description": "같은배 화면 제목입니다."
+  },
+  "communityHostMileage": "깃발을 올린 크루가 예약하면 방장에게 마일리지가 적립됩니다.",
+  "@communityHostMileage": {
+    "description": "방장 마일리지 안내입니다."
+  },
+  "profileTitle": "마이페이지",
+  "@profileTitle": {
+    "description": "마이페이지 화면 제목입니다."
+  },
+  "profileProBadge": "PRO 강사 인증됨",
+  "@profileProBadge": {
+    "description": "강사 인증 배지 문구입니다."
+  },
+  "profileMasterChallenge": "100로그 마스터 챌린지",
+  "@profileMasterChallenge": {
+    "description": "산소통 게이지 섹션 제목입니다."
+  },
+  "profileLogsProgress": "{current} / {target}",
+  "@profileLogsProgress": {
+    "description": "누적 로그 대비 목표 표시입니다.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "profileMetalCard": "실물 메탈 카드 신청하기",
+  "@profileMetalCard": {
+    "description": "100로그 달성 시 메탈 카드 신청 버튼입니다."
+  },
+  "profileMetalCardHint": "100로그를 채우면 실물 메탈 인증 카드를 신청할 수 있습니다.",
+  "@profileMetalCardHint": {
+    "description": "100로그 미만일 때 메탈 카드 안내입니다."
+  },
+  "profileRadarTitle": "여권 스탬프",
+  "@profileRadarTitle": {
+    "description": "마이페이지 대륙 스탬프 섹션 제목입니다."
+  },
+  "profileRegions": "탐험 지역 {count}곳",
+  "@profileRegions": {
+    "description": "마이페이지의 고유 지역 수 표시입니다.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "metalCardDialogTitle": "100로그 마스터 달성",
+  "@metalCardDialogTitle": {
+    "description": "메탈 카드 팝업 제목입니다."
+  },
+  "metalCardDialogBody": "실물 메탈 인증 카드 무료 배송 신청은 2단계에서 연결됩니다. 지금은 달성 축하 화면입니다.",
+  "@metalCardDialogBody": {
+    "description": "메탈 카드 팝업 본문입니다."
+  },
+  "metalCardDialogClose": "확인",
+  "@metalCardDialogClose": {
+    "description": "메탈 카드 팝업 닫기 버튼입니다."
+  },
+  "authLogin": "로그인",
+  "@authLogin": {
+    "description": "로그인 버튼입니다."
+  },
+  "authSignup": "회원가입",
+  "@authSignup": {
+    "description": "회원가입 버튼입니다."
+  },
+  "authEmail": "이메일",
+  "@authEmail": {
+    "description": "로그인 이메일 필드입니다."
+  },
+  "authPassword": "비밀번호",
+  "@authPassword": {
+    "description": "로그인 비밀번호 필드입니다."
+  },
+  "authPasswordHint": "6자 이상",
+  "@authPasswordHint": {
+    "description": "비밀번호 최소 길이 안내입니다."
+  },
+  "authDisplayName": "이름",
+  "@authDisplayName": {
+    "description": "회원가입 이름 필드입니다."
+  },
+  "authNoAccount": "계정이 없나요? 회원가입",
+  "@authNoAccount": {
+    "description": "회원가입 화면으로 전환하는 문구입니다."
+  },
+  "authHaveAccount": "이미 계정이 있나요? 로그인",
+  "@authHaveAccount": {
+    "description": "로그인 화면으로 전환하는 문구입니다."
+  },
+  "authErrorInvalidEmail": "이메일 형식이 올바르지 않습니다.",
+  "@authErrorInvalidEmail": {
+    "description": "잘못된 이메일 오류입니다."
+  },
+  "authErrorInvalidCredential": "이미 가입된 이메일입니다. 처음 만든 비밀번호로 로그인해 주세요.",
+  "@authErrorInvalidCredential": {
+    "description": "이미 가입된 계정인데 비밀번호가 다를 때 오류입니다."
+  },
+  "authResetPassword": "비밀번호 재설정 메일 보내기",
+  "@authResetPassword": {
+    "description": "비밀번호 재설정 메일 발송 버튼입니다."
+  },
+  "authResetPasswordSent": "비밀번호 재설정 메일을 보냈습니다. Gmail 받은편지함을 확인하세요.",
+  "@authResetPasswordSent": {
+    "description": "재설정 메일 발송 성공 안내입니다."
+  },
+  "authErrorEmailInUse": "이미 가입된 이메일입니다.",
+  "@authErrorEmailInUse": {
+    "description": "중복 이메일 오류입니다."
+  },
+  "authErrorWeakPassword": "비밀번호는 6자 이상이어야 합니다.",
+  "@authErrorWeakPassword": {
+    "description": "약한 비밀번호 오류입니다."
+  },
+  "authErrorNetwork": "네트워크 연결을 확인해 주세요.",
+  "@authErrorNetwork": {
+    "description": "네트워크 오류입니다."
+  },
+  "authErrorGeneric": "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+  "@authErrorGeneric": {
+    "description": "기타 인증 오류입니다."
+  },
+  "authErrorOperationNotAllowed": "이메일/비밀번호 로그인이 아직 꺼져 있습니다. Firebase Authentication에서 사용 설정해 주세요.",
+  "@authErrorOperationNotAllowed": {
+    "description": "Email/Password provider가 꺼져 있을 때 오류입니다."
+  },
+  "authErrorFirestore": "계정은 만들어졌지만 Firestore에 프로필을 쓰지 못했습니다. 콘솔에서 Firestore Database를 만들고 규칙을 붙여 주세요.",
+  "@authErrorFirestore": {
+    "description": "가입 후 Firestore 문서 생성 실패 안내입니다."
+  },
+  "profileSignOut": "로그아웃",
+  "@profileSignOut": {
+    "description": "로그아웃 버튼입니다."
+  },
+  "logbookSaveFailed": "로그 저장에 실패했습니다. 네트워크와 Firebase 규칙을 확인해 주세요.",
+  "@logbookSaveFailed": {
+    "description": "Firestore 로그 저장 실패 안내입니다."
+  },
+  "firebaseSetupTitle": "Firebase 연결이 필요합니다",
+  "@firebaseSetupTitle": {
+    "description": "Firebase 옵션이 없을 때 제목입니다."
+  },
+  "firebaseSetupBody": "1. Firebase 콘솔에서 DiveTravelApp 프로젝트를 만듭니다.\n2. Authentication > Email/Password를 켭니다.\n3. Firestore Database를 테스트 모드로 생성합니다.\n4. 터미널에서 dart pub global activate flutterfire_cli 후 flutterfire configure 를 실행합니다.\n5. 생성된 firebase_options.dart가 들어오면 앱을 다시 실행하세요.",
+  "@firebaseSetupBody": {
+    "description": "Firebase 콘솔 설정 안내입니다."
+  },
+  "adminMode": "관리자 모드",
+  "@adminMode": {
+    "description": "마이페이지·홈에서 관리자 대시보드로 들어가는 버튼입니다."
+  },
+  "adminPinTitle": "관리자 PIN",
+  "@adminPinTitle": {
+    "description": "관리자 모드 PIN 입력 창 제목입니다."
+  },
+  "adminPinHint": "4자리 PIN",
+  "adminPinConfirm": "입장",
+  "adminPinWrong": "PIN이 올바르지 않습니다.",
+  "adminAccessDenied": "관리자 권한이 없는 계정입니다.",
+  "adminDashboardTitle": "관리자 대시보드",
+  "adminDashboardSubtitle": "전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.",
+  "adminInstructorsTitle": "강사 자격증 승인",
+  "adminInstructorsSubtitle": "R2에 올라온 C-Card를 확인하고 승인하면 강사 우대가가 열립니다.",
+  "adminInstructorAgency": "발행 기관 · {agency}",
+  "@adminInstructorAgency": {
+    "description": "대기 강사의 자격 발행 기관입니다.",
+    "placeholders": {
+      "agency": { "type": "String" }
+    }
+  },
+  "adminApprove": "승인",
+  "adminReject": "거절",
+  "adminNoPending": "대기 중인 자격증 신청이 없습니다.",
+  "adminShopsTitle": "다이브 스타 · 제휴 샵",
+  "adminShopsSubtitle": "오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.",
+  "adminPlaqueQueue": "실물 현판 발송 요청 리스트",
+  "adminPlaqueEmpty": "스타 등급을 충족한 샵이 아직 없습니다.",
+  "adminPlaqueRequest": "현판 발송 요청",
+  "adminPlaqueQueued": "발송 요청됨",
+  "adminPlaqueShipped": "발송 완료",
+  "adminPlaqueNone": "현판 대기",
+  "adminPlaqueMarkShipped": "발송 완료 처리",
+  "adminShopMonitor": "전 세계 제휴 샵 모니터링",
+  "adminPricingTitle": "강사 할인가",
+  "adminPricingSubtitle": "일반 다이버는 소비자가, 강사는 여기서 정한 할인율 또는 정액이 적용됩니다.",
+  "adminPricingPercent": "할인율",
+  "adminPricingAmount": "할인 금액",
+  "adminPricingPercentHint": "할인율 (%)",
+  "adminPricingAmountHint": "할인 금액 (원)",
+  "adminPricingSave": "할인가 저장",
+  "adminPricingSaved": "강사 할인가가 저장되었습니다.",
+  "adminPricingPreview": "소비자가 {consumer}원 → 강사 {pro}원",
+  "@adminPricingPreview": {
+    "placeholders": {
+      "consumer": { "type": "String" },
+      "pro": { "type": "String" }
+    }
+  },
+  "adminPostsTitle": "상품 · 그룹 투어 검증",
+  "adminPostsSubtitle": "샵 상품과 버디 모집 글을 검수하고 허위·불법 게시글을 숨기거나 삭제합니다.",
+  "adminHidePost": "숨김",
+  "adminUnhidePost": "숨김 해제",
+  "adminDeletePost": "삭제",
+  "adminEmptyPosts": "등록된 게시글이 없습니다.",
+  "adminPostTypeBuddy": "버디 모집",
+  "adminPostTypeTour": "샵 투어 상품",
+  "adminPostHidden": "숨김 처리됨",
+  "partnerTitle": "파트너 모드",
+  "@partnerTitle": {
+    "description": "샵 사장님 전용 대시보드 제목입니다."
+  },
+  "partnerSubtitle": "샵 정보, 투어 상품, 이번 달 예약과 정산을 한곳에서 관리합니다.",
+  "partnerAccessDenied": "파트너(Business) 권한이 없는 계정입니다.",
+  "partnerShopEdit": "샵 정보 수정",
+  "partnerShopEditHint": "이름, 위치, 기본 상품과 두 가지 가격을 저장합니다.",
+  "partnerProductForm": "상품 등록",
+  "partnerProductFormHint": "일반 소비자가와 강사 우대 특가를 따로 입력하세요.",
+  "partnerSettlementTitle": "이번 달 정산 예정",
+  "partnerCommissionRange": "플랫폼 수수료 10~15%(기본 12%)를 제외한 금액입니다.",
+  "partnerGross": "예약 매출",
+  "partnerFee": "수수료",
+  "partnerNet": "정산 예정",
+  "partnerBookingsTitle": "실시간 예약 현황",
+  "partnerNoBookings": "이번 샵으로 들어온 예약이 없습니다.",
+  "partnerShopName": "샵 이름",
+  "partnerShopLocation": "위치",
+  "partnerDefaultProduct": "상품명",
+  "partnerSave": "저장",
+  "translateAction": "🌐 번역 보기",
+  "translateLoading": "번역 중…",
+  "translateShowOriginal": "원문 보기",
+  "communityCompose": "깃발 올리기",
+  "communityPostTitle": "한 줄 의도",
+  "communityPostBody": "이 배에 타고 싶은 이유",
+  "communityPostSubmit": "명부에 올리기",
+  "communityComments": "승선 메모",
+  "communityNoComments": "아직 깃발이 없습니다.",
+  "communityCommentHint": "짧게 남기세요",
+  "communityTideKicker": "깃발꽂기",
+  "communityTideHeadline": "먼저 리조트를 고르세요.\n예약한 뒤에 방을 엽니다.",
+  "communityTideBody": "혼자 가도, 이미 짠 팀을 데려가도 여행상품에서 예약합니다. 지인·동호회를 같은 일정에 태우고 싶을 때만 깃발을 꽂습니다.",
+  "communityTideSafety": "물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.",
+  "communityPlantFlag": "깃발 꽂기",
+  "communityPlantFlagAsk": "이 예약을 같은배에 올려 지인이나 동호회가 조인하게 할까요?",
+  "communityPlantFlagLater": "나중에",
+  "communityNeedBooking": "깃발은 예약한 뒤에 꽂습니다. 여행상품에서 리조트를 먼저 고르세요.",
+  "communityRoomOpened": "예약한 여행에 방을 열었습니다.",
+  "exploreChooseRoom": "이 리조트의 상품",
+  "exploreChooseRoomHint": "호텔에서 객실을 고르듯, 원하는 다이브 상품을 고르세요.",
+  "exploreResortTraits": "리조트 특성",
+  "exploreRecommended": "추천",
+  "exploreLightest": "가벼운 일정",
+  "exploreProductRooms": "이 상품에 열린 방 {count}",
+  "@exploreProductRooms": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "exploreResortIntro": "리조트 소개",
+  "exploreResortMap": "LOCATION",
+  "exploreResortAddress": "주소",
+  "exploreEditResort": "리조트 글 수정",
+  "exploreDeskHint": "현지 샵과 관리자가 같은 글을 고칩니다. 저장하면 여행상품 상세에 바로 반영됩니다.",
+  "exploreOpenRooms": "열린 방 {count}",
+  "@exploreOpenRooms": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "exploreProductDuration": "소요 시간",
+  "exploreProductBlurb": "상품 한 줄 소개",
+  "exploreCoverPhoto": "대표 이미지",
+  "exploreCoverPhotoHint": "Booking.com·아고다처럼 가로 16:9로 보여 줍니다. 세로 사진은 가운데를 잘라 씁니다.",
+  "exploreAttachPhoto": "사진 첨부",
+  "exploreUseAsCover": "이 사진을 리조트 대표 이미지로",
+  "exploreCoverRemove": "이미지 삭제",
+  "communityFilterAll": "모든 밀물",
+  "communityFilterLastCall": "마감임박",
+  "communityFilterSolo": "싱글쉐어",
+  "communityFilterShop": "샵 크루",
+  "communityBerths": "자리 {booked}/{capacity}",
+  "@communityBerths": {
+    "placeholders": {
+      "booked": {"type": "int"},
+      "capacity": {"type": "int"}
+    }
+  },
+  "communityLooking": "깃발 {count}",
+  "@communityLooking": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "communitySeatsLeft": "빈자리 {count}",
+  "@communitySeatsLeft": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "communityRaiseFlag": "이 배에 깃발",
+  "communityRaiseFlagDone": "승선 의사를 명부에 남겼습니다.",
+  "communityRaiseFlagMessage": "같은 출발에 타겠습니다. 샵 브리핑에서 뵙겠습니다.",
+  "communityOpenTrip": "이 상품 열기",
+  "communityWindowLabel": "출발 구간",
+  "communityPickShop": "탈 샵",
+  "communityEmpty": "아직 떠 있는 밀물이 없습니다.",
+  "communityKindShop": "샵 크루",
+  "communityKindSolo": "싱글쉐어",
+  "communityKindLast": "마감",
+  "communityFrom": "FROM",
+  "communityTo": "TIDE",
+  "communityManifest": "승선 명부",
+  "weatherCancel": "기상 악화 취소",
+  "weatherAdminTitle": "기상 악화 취소 권한",
+  "weatherAdminBody": "해당 날짜 예약을 weather_cancelled로 바꾸고 100% 환불을 보장합니다.",
+  "weatherTourDate": "투어 날짜",
+  "weatherCancelDone": "기상 취소와 전액 환불을 반영했습니다.",
+  "weatherRefundTitle": "기상 악화로 100% 환불됩니다",
+  "weatherRefundBody": "{shop} · {product} 예약이 기상 악화로 취소되어 결제/포인트가 전액 환불됩니다.",
+  "@weatherRefundBody": {
+    "placeholders": {
+      "shop": { "type": "String" },
+      "product": { "type": "String" }
+    }
+  },
+  "weatherRefundAck": "확인",
+  "bookingConfirmed": "예약 확정",
+  "bookingCancelled": "취소됨",
+  "bookingWeatherCancelled": "기상 악화 취소 · 100% 환불",
+  "bookingCancel": "예약 취소",
+  "bookingCancelledRefund": "취소 · 환불 {percent}%",
+  "@bookingCancelledRefund": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "refundPolicyHint": "지금 취소 시 환불 {percent}%",
+  "@refundPolicyHint": {
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  }
+}
