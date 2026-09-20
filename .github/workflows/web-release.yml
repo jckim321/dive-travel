@@ -26,6 +26,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Use empty R2 secrets for CI
+        run: cp lib/core/config/r2_secrets.example.dart lib/core/config/r2_secrets.dart
       - run: flutter test
       - run: flutter build web --release --base-href /dive-travel/
       - uses: actions/upload-pages-artifact@v3
