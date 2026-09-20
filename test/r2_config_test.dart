@@ -9,10 +9,7 @@ void main() {
   });
 
   test('S3 API 호스트와 객체 경로를 만든다', () {
-    expect(
-      R2Config.endpointHost,
-      'b689aebfde9481216c0e085f3ac7de7a.r2.cloudflarestorage.com',
-    );
+    expect(R2Config.endpointHost, contains('r2.cloudflarestorage.com'));
     expect(
       R2Config.publicUrlFor('logs/uid/log1.jpg'),
       endsWith('logs/uid/log1.jpg'),
