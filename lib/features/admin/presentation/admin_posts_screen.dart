@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AdminPostsScreen extends StatelessWidget {
-  const AdminPostsScreen({super.key});
+  const AdminPostsScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -13,8 +16,9 @@ class AdminPostsScreen extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final posts = store.posts;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.adminPostsTitle)),
+    return adminScreenShell(
+      embedded: embedded,
+      title: l10n.adminPostsTitle,
       body: posts.isEmpty
           ? Center(child: Text(l10n.adminEmptyPosts))
           : ListView.separated(

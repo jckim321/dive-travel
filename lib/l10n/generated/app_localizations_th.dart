@@ -746,6 +746,79 @@ class AppLocalizationsTh extends AppLocalizations {
       'ควบคุมการยืนยันอินสตรักเตอร์, Dive Star และโพสต์';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => 'คอนโซลผู้ดูแลสูงสุด';
+
+  @override
+  String get adminHqClose => 'ปิด';
+
+  @override
+  String get adminTabOverview => 'ภาพรวม';
+
+  @override
+  String get adminTabMembers => 'สมาชิก';
+
+  @override
+  String get adminTabCertify => 'รับรอง';
+
+  @override
+  String get adminTabShops => 'ร้าน';
+
+  @override
+  String get adminTabOps => 'ปฏิบัติการ';
+
+  @override
+  String get adminMetricMembers => 'สมาชิกทั้งหมด';
+
+  @override
+  String get adminMetricPendingCert => 'รอรับรอง';
+
+  @override
+  String get adminMetricPlaques => 'คิวป้าย';
+
+  @override
+  String get adminMetricPosts => 'โพสต์';
+
+  @override
+  String adminMetricHidden(int count) {
+    return 'ซ่อน $count';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return 'ร้านพันธมิตร $count';
+  }
+
+  @override
+  String get adminAttentionTitle => 'ต้องจัดการ';
+
+  @override
+  String get adminAttentionClear => 'ไม่มีงานเร่งด่วน';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return 'รออนุมัติใบรับรอง $count';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return 'ตรวจป้าย $count รายการ';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return 'โพสต์ที่ซ่อน $count';
+  }
+
+  @override
+  String get adminGradeMixTitle => 'สัดส่วนระดับสมาชิก';
+
+  @override
+  String get adminQuickActions => 'ทางลัด';
+
+  @override
   String get adminMembersTitle => 'สมาชิก';
 
   @override

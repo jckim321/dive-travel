@@ -762,6 +762,79 @@ class AppLocalizationsEn extends AppLocalizations {
       'Control instructor verification, Dive Star shops, and listings in one place.';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => 'Chief admin console';
+
+  @override
+  String get adminHqClose => 'Close';
+
+  @override
+  String get adminTabOverview => 'Overview';
+
+  @override
+  String get adminTabMembers => 'Members';
+
+  @override
+  String get adminTabCertify => 'Certify';
+
+  @override
+  String get adminTabShops => 'Shops';
+
+  @override
+  String get adminTabOps => 'Ops';
+
+  @override
+  String get adminMetricMembers => 'Members';
+
+  @override
+  String get adminMetricPendingCert => 'Pending certs';
+
+  @override
+  String get adminMetricPlaques => 'Plaque queue';
+
+  @override
+  String get adminMetricPosts => 'Posts';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '$count hidden';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '$count partner shops';
+  }
+
+  @override
+  String get adminAttentionTitle => 'Needs attention';
+
+  @override
+  String get adminAttentionClear => 'No urgent items in the queue.';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '$count instructor cards awaiting approval';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '$count plaque shipments to review';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '$count hidden posts';
+  }
+
+  @override
+  String get adminGradeMixTitle => 'Member grade mix';
+
+  @override
+  String get adminQuickActions => 'Quick actions';
+
+  @override
   String get adminMembersTitle => 'Members';
 
   @override

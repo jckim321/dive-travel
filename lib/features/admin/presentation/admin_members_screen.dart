@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AdminMembersScreen extends StatefulWidget {
-  const AdminMembersScreen({super.key});
+  const AdminMembersScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   State<AdminMembersScreen> createState() => _AdminMembersScreenState();
@@ -34,10 +37,22 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
           member,
     ];
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.adminMembersTitle)),
+    return adminScreenShell(
+      embedded: widget.embedded,
+      title: l10n.adminMembersTitle,
       body: Column(
         children: [
+          if (widget.embedded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.adminMembersTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(

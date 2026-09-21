@@ -731,6 +731,79 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminDashboardSubtitle => 'インストラクター認証、Dive Starショップ、投稿を一括管理します。';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => '総括管理者コンソール';
+
+  @override
+  String get adminHqClose => '閉じる';
+
+  @override
+  String get adminTabOverview => '概況';
+
+  @override
+  String get adminTabMembers => '会員';
+
+  @override
+  String get adminTabCertify => '認証';
+
+  @override
+  String get adminTabShops => 'ショップ';
+
+  @override
+  String get adminTabOps => '運営';
+
+  @override
+  String get adminMetricMembers => '会員数';
+
+  @override
+  String get adminMetricPendingCert => '認証待ち';
+
+  @override
+  String get adminMetricPlaques => '看板待ち';
+
+  @override
+  String get adminMetricPosts => '投稿';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '非表示 $count';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '提携ショップ $count';
+  }
+
+  @override
+  String get adminAttentionTitle => '要対応';
+
+  @override
+  String get adminAttentionClear => '緊急の待ち作業はありません。';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '資格証 $count件が承認待ち';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '看板発送 $count件を確認';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '非表示投稿 $count件';
+  }
+
+  @override
+  String get adminGradeMixTitle => '会員等級の分布';
+
+  @override
+  String get adminQuickActions => 'クイック操作';
+
+  @override
   String get adminMembersTitle => '会員管理';
 
   @override

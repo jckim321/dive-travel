@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AdminPricingScreen extends StatefulWidget {
-  const AdminPricingScreen({super.key});
+  const AdminPricingScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   State<AdminPricingScreen> createState() => _AdminPricingScreenState();
@@ -65,8 +68,9 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
     final sample = DiveShopCatalog.shops.first.consumerPrice;
     final preview = _draft.apply(sample);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.adminPricingTitle)),
+    return adminScreenShell(
+      embedded: widget.embedded,
+      title: l10n.adminPricingTitle,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [

@@ -744,6 +744,79 @@ class AppLocalizationsKo extends AppLocalizations {
       '전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.';
 
   @override
+  String get adminHqTitle => '다이브 트래블 HQ';
+
+  @override
+  String get adminHqSubtitle => '총괄 관리자 콘솔';
+
+  @override
+  String get adminHqClose => '닫기';
+
+  @override
+  String get adminTabOverview => '현황';
+
+  @override
+  String get adminTabMembers => '회원';
+
+  @override
+  String get adminTabCertify => '인증';
+
+  @override
+  String get adminTabShops => '샵';
+
+  @override
+  String get adminTabOps => '운영';
+
+  @override
+  String get adminMetricMembers => '전체 회원';
+
+  @override
+  String get adminMetricPendingCert => '인증 대기';
+
+  @override
+  String get adminMetricPlaques => '현판 대기';
+
+  @override
+  String get adminMetricPosts => '게시글';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '숨김 $count';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '제휴 샵 $count곳';
+  }
+
+  @override
+  String get adminAttentionTitle => '지금 처리할 일';
+
+  @override
+  String get adminAttentionClear => '대기 중인 긴급 작업이 없습니다.';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '강사 자격증 $count건 승인 대기';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '현판 발송 $count건 확인 필요';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '숨긴 게시글 $count건';
+  }
+
+  @override
+  String get adminGradeMixTitle => '회원 등급 분포';
+
+  @override
+  String get adminQuickActions => '빠른 실행';
+
+  @override
   String get adminMembersTitle => '회원 관리';
 
   @override

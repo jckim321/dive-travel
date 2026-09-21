@@ -731,6 +731,79 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminDashboardSubtitle => '统一管理教练认证、Dive Star 潜店和帖子。';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => '总管理员控制台';
+
+  @override
+  String get adminHqClose => '关闭';
+
+  @override
+  String get adminTabOverview => '概况';
+
+  @override
+  String get adminTabMembers => '会员';
+
+  @override
+  String get adminTabCertify => '认证';
+
+  @override
+  String get adminTabShops => '潜店';
+
+  @override
+  String get adminTabOps => '运营';
+
+  @override
+  String get adminMetricMembers => '全部会员';
+
+  @override
+  String get adminMetricPendingCert => '待认证';
+
+  @override
+  String get adminMetricPlaques => '牌匾队列';
+
+  @override
+  String get adminMetricPosts => '帖子';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '已隐藏 $count';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '合作潜店 $count';
+  }
+
+  @override
+  String get adminAttentionTitle => '待处理';
+
+  @override
+  String get adminAttentionClear => '暂无紧急事项。';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '$count 份教练证待审';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '$count 块牌匾待处理';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '$count 条隐藏帖';
+  }
+
+  @override
+  String get adminGradeMixTitle => '会员等级分布';
+
+  @override
+  String get adminQuickActions => '快捷操作';
+
+  @override
   String get adminMembersTitle => '会员管理';
 
   @override

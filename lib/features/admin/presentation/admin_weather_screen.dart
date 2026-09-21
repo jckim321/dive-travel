@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AdminWeatherScreen extends StatefulWidget {
-  const AdminWeatherScreen({super.key});
+  const AdminWeatherScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   State<AdminWeatherScreen> createState() => _AdminWeatherScreenState();
@@ -21,8 +24,9 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.weatherAdminTitle)),
+    return adminScreenShell(
+      embedded: widget.embedded,
+      title: l10n.weatherAdminTitle,
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

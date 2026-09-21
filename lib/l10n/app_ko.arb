@@ -678,6 +678,52 @@
   "adminAccessDenied": "관리자 권한이 없는 계정입니다.",
   "adminDashboardTitle": "관리자 대시보드",
   "adminDashboardSubtitle": "전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.",
+  "adminHqTitle": "다이브 트래블 HQ",
+  "adminHqSubtitle": "총괄 관리자 콘솔",
+  "adminHqClose": "닫기",
+  "adminTabOverview": "현황",
+  "adminTabMembers": "회원",
+  "adminTabCertify": "인증",
+  "adminTabShops": "샵",
+  "adminTabOps": "운영",
+  "adminMetricMembers": "전체 회원",
+  "adminMetricPendingCert": "인증 대기",
+  "adminMetricPlaques": "현판 대기",
+  "adminMetricPosts": "게시글",
+  "adminMetricHidden": "숨김 {count}",
+  "@adminMetricHidden": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminMetricShops": "제휴 샵 {count}곳",
+  "@adminMetricShops": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionTitle": "지금 처리할 일",
+  "adminAttentionClear": "대기 중인 긴급 작업이 없습니다.",
+  "adminAttentionCertify": "강사 자격증 {count}건 승인 대기",
+  "@adminAttentionCertify": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionPlaque": "현판 발송 {count}건 확인 필요",
+  "@adminAttentionPlaque": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionHidden": "숨긴 게시글 {count}건",
+  "@adminAttentionHidden": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminGradeMixTitle": "회원 등급 분포",
+  "adminQuickActions": "빠른 실행",
   "adminMembersTitle": "회원 관리",
   "adminMembersSubtitle": "회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.",
   "adminMembersSearch": "이름 또는 이메일 검색",

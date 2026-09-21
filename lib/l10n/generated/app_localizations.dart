@@ -1452,6 +1452,132 @@ abstract class AppLocalizations {
   /// **'전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.'**
   String get adminDashboardSubtitle;
 
+  /// No description provided for @adminHqTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브 트래블 HQ'**
+  String get adminHqTitle;
+
+  /// No description provided for @adminHqSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'총괄 관리자 콘솔'**
+  String get adminHqSubtitle;
+
+  /// No description provided for @adminHqClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get adminHqClose;
+
+  /// No description provided for @adminTabOverview.
+  ///
+  /// In ko, this message translates to:
+  /// **'현황'**
+  String get adminTabOverview;
+
+  /// No description provided for @adminTabMembers.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원'**
+  String get adminTabMembers;
+
+  /// No description provided for @adminTabCertify.
+  ///
+  /// In ko, this message translates to:
+  /// **'인증'**
+  String get adminTabCertify;
+
+  /// No description provided for @adminTabShops.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵'**
+  String get adminTabShops;
+
+  /// No description provided for @adminTabOps.
+  ///
+  /// In ko, this message translates to:
+  /// **'운영'**
+  String get adminTabOps;
+
+  /// No description provided for @adminMetricMembers.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 회원'**
+  String get adminMetricMembers;
+
+  /// No description provided for @adminMetricPendingCert.
+  ///
+  /// In ko, this message translates to:
+  /// **'인증 대기'**
+  String get adminMetricPendingCert;
+
+  /// No description provided for @adminMetricPlaques.
+  ///
+  /// In ko, this message translates to:
+  /// **'현판 대기'**
+  String get adminMetricPlaques;
+
+  /// No description provided for @adminMetricPosts.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시글'**
+  String get adminMetricPosts;
+
+  /// No description provided for @adminMetricHidden.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨김 {count}'**
+  String adminMetricHidden(int count);
+
+  /// No description provided for @adminMetricShops.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 샵 {count}곳'**
+  String adminMetricShops(int count);
+
+  /// No description provided for @adminAttentionTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 처리할 일'**
+  String get adminAttentionTitle;
+
+  /// No description provided for @adminAttentionClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'대기 중인 긴급 작업이 없습니다.'**
+  String get adminAttentionClear;
+
+  /// No description provided for @adminAttentionCertify.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 자격증 {count}건 승인 대기'**
+  String adminAttentionCertify(int count);
+
+  /// No description provided for @adminAttentionPlaque.
+  ///
+  /// In ko, this message translates to:
+  /// **'현판 발송 {count}건 확인 필요'**
+  String adminAttentionPlaque(int count);
+
+  /// No description provided for @adminAttentionHidden.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨긴 게시글 {count}건'**
+  String adminAttentionHidden(int count);
+
+  /// No description provided for @adminGradeMixTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 등급 분포'**
+  String get adminGradeMixTitle;
+
+  /// No description provided for @adminQuickActions.
+  ///
+  /// In ko, this message translates to:
+  /// **'빠른 실행'**
+  String get adminQuickActions;
+
   /// No description provided for @adminMembersTitle.
   ///
   /// In ko, this message translates to:

@@ -4,11 +4,14 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AdminShopsScreen extends StatelessWidget {
-  const AdminShopsScreen({super.key});
+  const AdminShopsScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +20,9 @@ class AdminShopsScreen extends StatelessWidget {
     final shops = store.shops;
     final plaque = store.plaqueQueue;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.adminShopsTitle)),
+    return adminScreenShell(
+      embedded: embedded,
+      title: l10n.adminShopsTitle,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [

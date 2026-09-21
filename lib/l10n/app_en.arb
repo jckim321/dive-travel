@@ -224,6 +224,52 @@
   "adminAccessDenied": "This account does not have admin access.",
   "adminDashboardTitle": "Admin dashboard",
   "adminDashboardSubtitle": "Control instructor verification, Dive Star shops, and listings in one place.",
+  "adminHqTitle": "Dive Travel HQ",
+  "adminHqSubtitle": "Chief admin console",
+  "adminHqClose": "Close",
+  "adminTabOverview": "Overview",
+  "adminTabMembers": "Members",
+  "adminTabCertify": "Certify",
+  "adminTabShops": "Shops",
+  "adminTabOps": "Ops",
+  "adminMetricMembers": "Members",
+  "adminMetricPendingCert": "Pending certs",
+  "adminMetricPlaques": "Plaque queue",
+  "adminMetricPosts": "Posts",
+  "adminMetricHidden": "{count} hidden",
+  "@adminMetricHidden": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminMetricShops": "{count} partner shops",
+  "@adminMetricShops": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionTitle": "Needs attention",
+  "adminAttentionClear": "No urgent items in the queue.",
+  "adminAttentionCertify": "{count} instructor cards awaiting approval",
+  "@adminAttentionCertify": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionPlaque": "{count} plaque shipments to review",
+  "@adminAttentionPlaque": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAttentionHidden": "{count} hidden posts",
+  "@adminAttentionHidden": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminGradeMixTitle": "Member grade mix",
+  "adminQuickActions": "Quick actions",
   "adminMembersTitle": "Members",
   "adminMembersSubtitle": "Look up members and set Member, Special, VIP, or Instructor grade.",
   "adminMembersSearch": "Search name or email",

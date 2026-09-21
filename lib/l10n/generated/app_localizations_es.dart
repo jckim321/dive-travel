@@ -756,6 +756,79 @@ class AppLocalizationsEs extends AppLocalizations {
       'Controla certificaciones, Dive Star y publicaciones.';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => 'Consola de administrador';
+
+  @override
+  String get adminHqClose => 'Cerrar';
+
+  @override
+  String get adminTabOverview => 'Resumen';
+
+  @override
+  String get adminTabMembers => 'Miembros';
+
+  @override
+  String get adminTabCertify => 'Certificar';
+
+  @override
+  String get adminTabShops => 'Tiendas';
+
+  @override
+  String get adminTabOps => 'Ops';
+
+  @override
+  String get adminMetricMembers => 'Miembros';
+
+  @override
+  String get adminMetricPendingCert => 'Cert. pendientes';
+
+  @override
+  String get adminMetricPlaques => 'Placas';
+
+  @override
+  String get adminMetricPosts => 'Posts';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '$count ocultos';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '$count tiendas';
+  }
+
+  @override
+  String get adminAttentionTitle => 'Atención';
+
+  @override
+  String get adminAttentionClear => 'No hay tareas urgentes.';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '$count certificados pendientes';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '$count placas por revisar';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '$count posts ocultos';
+  }
+
+  @override
+  String get adminGradeMixTitle => 'Distribución de niveles';
+
+  @override
+  String get adminQuickActions => 'Acciones rápidas';
+
+  @override
   String get adminMembersTitle => 'Miembros';
 
   @override

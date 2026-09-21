@@ -753,6 +753,79 @@ class AppLocalizationsId extends AppLocalizations {
       'Kendalikan verifikasi instruktur, Dive Star, dan postingan.';
 
   @override
+  String get adminHqTitle => 'Dive Travel HQ';
+
+  @override
+  String get adminHqSubtitle => 'Konsol admin pusat';
+
+  @override
+  String get adminHqClose => 'Tutup';
+
+  @override
+  String get adminTabOverview => 'Ringkasan';
+
+  @override
+  String get adminTabMembers => 'Anggota';
+
+  @override
+  String get adminTabCertify => 'Sertifikasi';
+
+  @override
+  String get adminTabShops => 'Toko';
+
+  @override
+  String get adminTabOps => 'Ops';
+
+  @override
+  String get adminMetricMembers => 'Anggota';
+
+  @override
+  String get adminMetricPendingCert => 'Menunggu sertifikasi';
+
+  @override
+  String get adminMetricPlaques => 'Antrian plakat';
+
+  @override
+  String get adminMetricPosts => 'Postingan';
+
+  @override
+  String adminMetricHidden(int count) {
+    return '$count disembunyikan';
+  }
+
+  @override
+  String adminMetricShops(int count) {
+    return '$count toko mitra';
+  }
+
+  @override
+  String get adminAttentionTitle => 'Perlu perhatian';
+
+  @override
+  String get adminAttentionClear => 'Tidak ada tugas mendesak.';
+
+  @override
+  String adminAttentionCertify(int count) {
+    return '$count kartu instruktur menunggu';
+  }
+
+  @override
+  String adminAttentionPlaque(int count) {
+    return '$count plakat perlu dicek';
+  }
+
+  @override
+  String adminAttentionHidden(int count) {
+    return '$count postingan tersembunyi';
+  }
+
+  @override
+  String get adminGradeMixTitle => 'Sebaran tingkat anggota';
+
+  @override
+  String get adminQuickActions => 'Aksi cepat';
+
+  @override
   String get adminMembersTitle => 'Anggota';
 
   @override
