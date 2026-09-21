@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -44,6 +45,7 @@ class DiverStore extends ChangeNotifier {
   StreamSubscription<List<ShopLiveStats>>? _shopSubscription;
   StreamSubscription<List<TourBooking>>? _bookingSubscription;
   StreamSubscription<List<PendingInstructor>>? _pendingSubscription;
+  StreamSubscription<List<MemberAccount>>? _membersSubscription;
   StreamSubscription<List<CommunityPost>>? _postsSubscription;
   StreamSubscription<List<TourBooking>>? _shopBookingSubscription;
   StreamSubscription<InstructorDiscount>? _discountSubscription;
@@ -61,6 +63,7 @@ class DiverStore extends ChangeNotifier {
   List<ShopLiveStats> _shopStats = const [];
   List<TourBooking> _bookings = const [];
   List<PendingInstructor> _pendingInstructors = const [];
+  List<MemberAccount> _members = const [];
   List<CommunityPost> _posts = const [];
   List<TourBooking> _shopBookings = const [];
   late List<GearItem> _gear;
@@ -84,6 +87,7 @@ class DiverStore extends ChangeNotifier {
   List<TourBooking> get bookings => List.unmodifiable(_bookings);
   List<PendingInstructor> get pendingInstructors =>
       List.unmodifiable(_pendingInstructors);
+  List<MemberAccount> get members => List.unmodifiable(_members);
   List<CommunityPost> get posts => List.unmodifiable(_posts);
   List<CommunityPost> get visiblePosts => [
     for (final post in _posts)
@@ -354,6 +358,13 @@ class DiverStore extends ChangeNotifier {
     return _repository.approveInstructor(uid);
   }
 
+  Future<void> setMemberGrade({
+    required String uid,
+    required MemberGrade grade,
+  }) {
+    return _repository.setMemberGrade(uid: uid, grade: grade);
+  }
+
   Future<void> rejectInstructor(String uid) {
     return _repository.rejectInstructor(uid);
   }
@@ -537,6 +548,7 @@ class DiverStore extends ChangeNotifier {
     _shopSubscription?.cancel();
     _bookingSubscription?.cancel();
     _pendingSubscription?.cancel();
+    _membersSubscription?.cancel();
     _postsSubscription?.cancel();
     _shopBookingSubscription?.cancel();
     if (user == null) {
@@ -551,6 +563,7 @@ class DiverStore extends ChangeNotifier {
       _shopStats = const [];
       _bookings = const [];
       _pendingInstructors = const [];
+      _members = const [];
       _posts = const [];
       _shopBookings = const [];
       _loadingTimeout?.cancel();
@@ -629,21 +642,34 @@ class DiverStore extends ChangeNotifier {
     if (!isAdmin) {
       _pendingSubscription?.cancel();
       _pendingSubscription = null;
+      _membersSubscription?.cancel();
+      _membersSubscription = null;
       _pendingInstructors = const [];
+      _members = const [];
       return;
     }
-    if (_pendingSubscription != null) {
-      return;
+    if (_pendingSubscription == null) {
+      _pendingSubscription = _repository.watchPendingInstructors().listen(
+        (pending) {
+          _pendingInstructors = pending;
+          notifyListeners();
+        },
+        onError: (Object error) {
+          debugPrint('관리자 강사 대기열 구독 실패: $error');
+        },
+      );
     }
-    _pendingSubscription = _repository.watchPendingInstructors().listen(
-      (pending) {
-        _pendingInstructors = pending;
-        notifyListeners();
-      },
-      onError: (Object error) {
-        debugPrint('관리자 강사 대기열 구독 실패: $error');
-      },
-    );
+    if (_membersSubscription == null) {
+      _membersSubscription = _repository.watchMembers().listen(
+        (members) {
+          _members = members;
+          notifyListeners();
+        },
+        onError: (Object error) {
+          debugPrint('관리자 회원 목록 구독 실패: $error');
+        },
+      );
+    }
   }
 
   void _bindPartnerInbox(bool isBusiness, String? shopId) {
@@ -677,6 +703,7 @@ class DiverStore extends ChangeNotifier {
     _shopSubscription?.cancel();
     _bookingSubscription?.cancel();
     _pendingSubscription?.cancel();
+    _membersSubscription?.cancel();
     _postsSubscription?.cancel();
     _shopBookingSubscription?.cancel();
     _discountSubscription?.cancel();

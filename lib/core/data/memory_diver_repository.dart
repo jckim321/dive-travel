@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -24,6 +25,7 @@ class MemoryDiverRepository implements DiverRepository {
       isAdmin: _resolvedAdmin,
       isBusiness: _resolvedBusiness,
       ownedShopId: _ownedShopId ?? AppConstants.defaultPartnerShopId,
+      memberGrade: _memberGrade,
     );
     for (final comment in CommunityPostCatalog.seedComments) {
       _comments.putIfAbsent(comment.postId, () => []).add(comment);
@@ -48,6 +50,9 @@ class MemoryDiverRepository implements DiverRepository {
     repo._proStatus = isInstructor
         ? ProVerificationStatus.approved
         : ProVerificationStatus.none;
+    repo._memberGrade = isInstructor
+        ? MemberGrade.instructor
+        : MemberGrade.member;
     repo._seedAdminInbox();
     repo._snapshot = DiverSnapshot.empty(
       displayName: '테스트 다이버',
@@ -56,6 +61,7 @@ class MemoryDiverRepository implements DiverRepository {
       isAdmin: repo._resolvedAdmin,
       isBusiness: repo._resolvedBusiness,
       ownedShopId: repo._ownedShopId,
+      memberGrade: repo._memberGrade,
     );
     return repo;
   }
@@ -69,9 +75,11 @@ class MemoryDiverRepository implements DiverRepository {
   bool _isBusiness = false;
   String? _ownedShopId;
   ProVerificationStatus _proStatus = ProVerificationStatus.none;
+  MemberGrade _memberGrade = MemberGrade.member;
   final _shopStats = <String, ShopLiveStats>{};
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
+  final _members = <MemberAccount>[];
   late List<CommunityPost> _posts;
   final _shopBookings = <String, List<TourBooking>>{};
   final _comments = <String, List<CommunityComment>>{};
@@ -85,6 +93,7 @@ class MemoryDiverRepository implements DiverRepository {
   final _bookingController = StreamController<List<TourBooking>>.broadcast();
   final _pendingController =
       StreamController<List<PendingInstructor>>.broadcast();
+  final _membersController = StreamController<List<MemberAccount>>.broadcast();
   final _postsController = StreamController<List<CommunityPost>>.broadcast();
   final _shopBookingController =
       StreamController<List<TourBooking>>.broadcast();
@@ -112,6 +121,27 @@ class MemoryDiverRepository implements DiverRepository {
           displayName: '대기 강사',
           agency: 'PADI',
           photoUrl: '',
+        ),
+      );
+    }
+    if (_members.isEmpty) {
+      _members.add(
+        MemberAccount(
+          uid: _user?.uid ?? 'test-user',
+          email: _user?.email ?? 'test@dive.local',
+          displayName: _user?.displayName ?? '테스트 다이버',
+          grade: _memberGrade,
+          isAdmin: _resolvedAdmin,
+          isInstructor: _isInstructor,
+        ),
+      );
+      _members.add(
+        const MemberAccount(
+          uid: 'pending-instructor',
+          email: 'instructor@dive.local',
+          displayName: '대기 강사',
+          grade: MemberGrade.member,
+          totalLogCount: 12,
         ),
       );
     }
@@ -188,6 +218,7 @@ class MemoryDiverRepository implements DiverRepository {
       isAdmin: _resolvedAdmin,
       isBusiness: _resolvedBusiness,
       ownedShopId: _ownedShopId,
+      memberGrade: _memberGrade,
     );
     _diverController.add(_snapshot);
   }
@@ -235,6 +266,7 @@ class MemoryDiverRepository implements DiverRepository {
       isAdmin: _snapshot.stats.isAdmin,
       isBusiness: _snapshot.stats.isBusiness,
       ownedShopId: _snapshot.stats.ownedShopId,
+      memberGrade: _snapshot.stats.memberGrade,
       logs: logs,
     );
     _diverController.add(_snapshot);
@@ -283,6 +315,7 @@ class MemoryDiverRepository implements DiverRepository {
       isAdmin: _snapshot.stats.isAdmin,
       isBusiness: _snapshot.stats.isBusiness,
       ownedShopId: _snapshot.stats.ownedShopId,
+      memberGrade: _snapshot.stats.memberGrade,
       logs: logs,
     );
     _diverController.add(_snapshot);
@@ -436,6 +469,7 @@ class MemoryDiverRepository implements DiverRepository {
         stats: _snapshot.stats.copyWith(
           isInstructor: true,
           proStatus: ProVerificationStatus.approved,
+          memberGrade: MemberGrade.instructor,
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
@@ -455,6 +489,47 @@ class MemoryDiverRepository implements DiverRepository {
         stats: _snapshot.stats.copyWith(
           isInstructor: false,
           proStatus: ProVerificationStatus.rejected,
+        ),
+        regions: _snapshot.regions,
+        logs: _snapshot.logs,
+      );
+      _emitSnapshot();
+    }
+  }
+
+  @override
+  Stream<List<MemberAccount>> watchMembers() async* {
+    yield List<MemberAccount>.from(_members);
+    yield* _membersController.stream;
+  }
+
+  @override
+  Future<void> setMemberGrade({
+    required String uid,
+    required MemberGrade grade,
+  }) async {
+    final index = _members.indexWhere((item) => item.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(grade: grade);
+    } else {
+      _members.add(
+        MemberAccount(
+          uid: uid,
+          email: '',
+          displayName: uid,
+          grade: grade,
+        ),
+      );
+    }
+    _membersController.add(List<MemberAccount>.from(_members));
+    if (_user?.uid == uid) {
+      _memberGrade = grade;
+      _snapshot = DiverSnapshot(
+        stats: _snapshot.stats.copyWith(
+          memberGrade: grade,
+          isInstructor: grade == MemberGrade.instructor
+              ? true
+              : _snapshot.stats.isInstructor,
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
@@ -773,6 +848,7 @@ class MemoryDiverRepository implements DiverRepository {
     _shopController.close();
     _bookingController.close();
     _pendingController.close();
+    _membersController.close();
     _postsController.close();
     _shopBookingController.close();
     _commentController.close();

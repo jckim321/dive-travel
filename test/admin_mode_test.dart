@@ -89,6 +89,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
+    expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-instructors')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-shops')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);

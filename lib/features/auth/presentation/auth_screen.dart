@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -13,9 +12,9 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _emailController = TextEditingController(text: AppOwner.email);
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController(text: AppOwner.displayName);
+  final _nameController = TextEditingController();
   bool _isSignUp = false;
   String? _error;
   String? _info;
@@ -141,6 +140,11 @@ class _AuthScreenState extends State<AuthScreen> {
           Text(
             _isSignUp ? l10n.authSignup : l10n.authLogin,
             style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.authWelcome,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           if (_isSignUp) ...[

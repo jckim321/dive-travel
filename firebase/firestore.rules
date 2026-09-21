@@ -33,7 +33,11 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || (
+        isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['is_admin', 'is_business', 'member_grade', 'user_role', 'owned_shop_id'])
+      );
       allow delete: if isOwner(userId) || isAdmin();
 
       match /logs/{logId} {

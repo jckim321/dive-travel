@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
@@ -22,6 +23,14 @@ class AdminDashboardScreen extends StatelessWidget {
         children: [
           Text(l10n.adminDashboardSubtitle, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
+          _AdminMenuCard(
+            key: const Key('admin-menu-members'),
+            icon: Icons.groups_outlined,
+            title: l10n.adminMembersTitle,
+            subtitle: l10n.adminMembersSubtitle,
+            onTap: () => _open(context, const AdminMembersScreen()),
+          ),
+          const SizedBox(height: 12),
           _AdminMenuCard(
             key: const Key('admin-menu-instructors'),
             icon: Icons.verified_user,

@@ -583,6 +583,7 @@
   "@authSignup": {
     "description": "회원가입 버튼입니다."
   },
+  "authWelcome": "가입하면 로그, 같은배, 예약 등 기본 기능을 바로 쓸 수 있습니다. 등급은 활동에 따라 관리자가 조정합니다.",
   "authEmail": "이메일",
   "@authEmail": {
     "description": "로그인 이메일 필드입니다."
@@ -677,6 +678,28 @@
   "adminAccessDenied": "관리자 권한이 없는 계정입니다.",
   "adminDashboardTitle": "관리자 대시보드",
   "adminDashboardSubtitle": "전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.",
+  "adminMembersTitle": "회원 관리",
+  "adminMembersSubtitle": "회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.",
+  "adminMembersSearch": "이름 또는 이메일 검색",
+  "adminMembersEmpty": "조건에 맞는 회원이 없습니다.",
+  "adminMembersGrade": "회원 등급",
+  "adminMembersActivity": "로그 {logs}회 · 지역 {regions}곳",
+  "@adminMembersActivity": {
+    "placeholders": {
+      "logs": { "type": "int" },
+      "regions": { "type": "int" }
+    }
+  },
+  "adminMembersSuggested": "활동 참고 등급 · {grade}",
+  "@adminMembersSuggested": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "memberGradeMember": "회원",
+  "memberGradeSpecial": "특별회원",
+  "memberGradeVip": "VIP",
+  "memberGradeInstructor": "강사회원",
   "adminInstructorsTitle": "강사 자격증 승인",
   "adminInstructorsSubtitle": "R2에 올라온 C-Card를 확인하고 승인하면 강사 우대가가 열립니다.",
   "adminInstructorAgency": "발행 기관 · {agency}",

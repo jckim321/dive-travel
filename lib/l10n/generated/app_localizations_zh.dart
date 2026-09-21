@@ -642,6 +642,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignup => '注册';
 
   @override
+  String get authWelcome => '注册后即可使用日志、同船和预约。管理员会按活跃度调整等级。';
+
+  @override
   String get authEmail => '邮箱';
 
   @override
@@ -726,6 +729,43 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get adminDashboardSubtitle => '统一管理教练认证、Dive Star 潜店和帖子。';
+
+  @override
+  String get adminMembersTitle => '会员管理';
+
+  @override
+  String get adminMembersSubtitle => '查询会员并调整等级：会员、特别会员、VIP、教练会员。';
+
+  @override
+  String get adminMembersSearch => '搜索姓名或邮箱';
+
+  @override
+  String get adminMembersEmpty => '没有匹配的会员。';
+
+  @override
+  String get adminMembersGrade => '会员等级';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return '日志 $logs · 地区 $regions';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return '活跃参考等级 · $grade';
+  }
+
+  @override
+  String get memberGradeMember => '会员';
+
+  @override
+  String get memberGradeSpecial => '特别会员';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => '教练会员';
 
   @override
   String get adminInstructorsTitle => '教练证书审批';

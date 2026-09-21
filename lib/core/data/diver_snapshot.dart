@@ -3,6 +3,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 
 class DiverSnapshot {
@@ -19,6 +20,7 @@ class DiverSnapshot {
     bool isAdmin = false,
     bool isBusiness = false,
     String? ownedShopId,
+    MemberGrade memberGrade = MemberGrade.member,
   }) {
     return DiverSnapshot(
       stats: DiverStats(
@@ -30,6 +32,7 @@ class DiverSnapshot {
         isAdmin: isAdmin,
         isBusiness: isBusiness,
         ownedShopId: ownedShopId,
+        memberGrade: memberGrade,
       ),
       regions: const [],
       logs: const [],
@@ -64,6 +67,7 @@ class DiverSnapshot {
         isAdmin: _isAdminOf(data),
         isBusiness: _isBusinessOf(data),
         ownedShopId: data['owned_shop_id'] as String?,
+        memberGrade: _memberGradeOf(data),
         logs: logs,
       );
     }
@@ -80,6 +84,7 @@ class DiverSnapshot {
         isAdmin: _isAdminOf(data),
         isBusiness: _isBusinessOf(data),
         ownedShopId: data['owned_shop_id'] as String?,
+        memberGrade: _memberGradeOf(data),
       ),
       regions: regions,
       logs: logs,
@@ -95,6 +100,7 @@ class DiverSnapshot {
     bool isAdmin = false,
     bool isBusiness = false,
     String? ownedShopId,
+    MemberGrade memberGrade = MemberGrade.member,
   }) {
     final grouped = <String, DiveRegion>{};
     for (final log in logs) {
@@ -115,9 +121,17 @@ class DiverSnapshot {
         isAdmin: isAdmin,
         isBusiness: isBusiness,
         ownedShopId: ownedShopId,
+        memberGrade: memberGrade,
       ),
       regions: regions,
       logs: logs,
+    );
+  }
+
+  static MemberGrade _memberGradeOf(Map<String, dynamic> data) {
+    return MemberGrade.parse(
+      data['member_grade'] ?? data['memberGrade'],
+      isInstructor: data['is_instructor'] == true,
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:dive_travel_app/core/models/member_grade.dart';
+
 enum CommunityPostType { shopTour, buddy }
 
 enum TideKind {
@@ -160,6 +162,47 @@ class PendingInstructor {
   final String displayName;
   final String agency;
   final String photoUrl;
+}
+
+class MemberAccount {
+  const MemberAccount({
+    required this.uid,
+    required this.email,
+    required this.displayName,
+    required this.grade,
+    this.totalLogCount = 0,
+    this.uniqueRegionsCount = 0,
+    this.isAdmin = false,
+    this.isInstructor = false,
+  });
+
+  final String uid;
+  final String email;
+  final String displayName;
+  final MemberGrade grade;
+  final int totalLogCount;
+  final int uniqueRegionsCount;
+  final bool isAdmin;
+  final bool isInstructor;
+
+  MemberGrade get suggestedGrade => MemberGrade.suggested(
+        totalLogCount: totalLogCount,
+        uniqueRegionsCount: uniqueRegionsCount,
+        isInstructor: isInstructor,
+      );
+
+  MemberAccount copyWith({MemberGrade? grade}) {
+    return MemberAccount(
+      uid: uid,
+      email: email,
+      displayName: displayName,
+      grade: grade ?? this.grade,
+      totalLogCount: totalLogCount,
+      uniqueRegionsCount: uniqueRegionsCount,
+      isAdmin: isAdmin,
+      isInstructor: isInstructor,
+    );
+  }
 }
 
 abstract final class CommunityPostCatalog {

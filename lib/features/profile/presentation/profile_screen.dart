@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
@@ -69,6 +70,11 @@ class ProfileScreen extends StatelessWidget {
                         Text(email, style: theme.textTheme.bodySmall),
                       ],
                       const SizedBox(height: 10),
+                      Chip(
+                        label: Text(
+                          _gradeLabel(l10n, stats.memberGrade),
+                        ),
+                      ),
                       if (stats.isVerifiedPro)
                         Chip(
                           avatar: const Icon(
@@ -190,5 +196,18 @@ class ProfileScreen extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+String _gradeLabel(AppLocalizations l10n, MemberGrade grade) {
+  switch (grade) {
+    case MemberGrade.member:
+      return l10n.memberGradeMember;
+    case MemberGrade.special:
+      return l10n.memberGradeSpecial;
+    case MemberGrade.vip:
+      return l10n.memberGradeVip;
+    case MemberGrade.instructor:
+      return l10n.memberGradeInstructor;
   }
 }

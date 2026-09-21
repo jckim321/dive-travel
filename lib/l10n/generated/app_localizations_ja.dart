@@ -642,6 +642,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authSignup => '新規登録';
 
   @override
+  String get authWelcome => '登録するとログ・同じ船・予約がすぐ使えます。等級は活動に応じて管理者が調整します。';
+
+  @override
   String get authEmail => 'メール';
 
   @override
@@ -726,6 +729,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminDashboardSubtitle => 'インストラクター認証、Dive Starショップ、投稿を一括管理します。';
+
+  @override
+  String get adminMembersTitle => '会員管理';
+
+  @override
+  String get adminMembersSubtitle => '会員を検索し、会員・特別会員・VIP・インストラクター会員の等級を調整します。';
+
+  @override
+  String get adminMembersSearch => '名前またはメールで検索';
+
+  @override
+  String get adminMembersEmpty => '該当する会員がいません。';
+
+  @override
+  String get adminMembersGrade => '会員等級';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return 'ログ $logs回 · 地域 $regionsか所';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return '活動の参考等級 · $grade';
+  }
+
+  @override
+  String get memberGradeMember => '会員';
+
+  @override
+  String get memberGradeSpecial => '特別会員';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => 'インストラクター会員';
 
   @override
   String get adminInstructorsTitle => 'インストラクター資格の承認';

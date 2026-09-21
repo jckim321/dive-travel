@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 
 class DiverStats {
@@ -10,6 +11,7 @@ class DiverStats {
     this.isAdmin = false,
     this.isBusiness = false,
     this.ownedShopId,
+    this.memberGrade = MemberGrade.member,
   });
 
   final String displayName;
@@ -20,6 +22,7 @@ class DiverStats {
   final bool isAdmin;
   final bool isBusiness;
   final String? ownedShopId;
+  final MemberGrade memberGrade;
 
   bool get isVerifiedPro => proStatus == ProVerificationStatus.approved;
   bool get isProPending => proStatus == ProVerificationStatus.pending;
@@ -93,6 +96,7 @@ class DiverStats {
     bool? isAdmin,
     bool? isBusiness,
     String? ownedShopId,
+    MemberGrade? memberGrade,
   }) {
     return DiverStats(
       displayName: displayName,
@@ -103,6 +107,7 @@ class DiverStats {
       isAdmin: isAdmin ?? this.isAdmin,
       isBusiness: isBusiness ?? this.isBusiness,
       ownedShopId: ownedShopId ?? this.ownedShopId,
+      memberGrade: memberGrade ?? this.memberGrade,
     );
   }
 }

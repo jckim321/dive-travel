@@ -654,6 +654,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authSignup => 'สมัครสมาชิก';
 
   @override
+  String get authWelcome =>
+      'สมัครแล้วใช้ล็อก Same Tide และการจองได้ทันที ผู้ดูแลปรับระดับตามกิจกรรม';
+
+  @override
   String get authEmail => 'อีเมล';
 
   @override
@@ -740,6 +744,44 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get adminDashboardSubtitle =>
       'ควบคุมการยืนยันอินสตรักเตอร์, Dive Star และโพสต์';
+
+  @override
+  String get adminMembersTitle => 'สมาชิก';
+
+  @override
+  String get adminMembersSubtitle =>
+      'ค้นหาสมาชิกและปรับระดับ สมาชิก / พิเศษ / VIP / อินสตรักเตอร์';
+
+  @override
+  String get adminMembersSearch => 'ค้นหาชื่อหรืออีเมล';
+
+  @override
+  String get adminMembersEmpty => 'ไม่พบสมาชิก';
+
+  @override
+  String get adminMembersGrade => 'ระดับสมาชิก';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return 'ล็อก $logs · พื้นที่ $regions';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return 'ระดับจากกิจกรรม · $grade';
+  }
+
+  @override
+  String get memberGradeMember => 'สมาชิก';
+
+  @override
+  String get memberGradeSpecial => 'สมาชิกพิเศษ';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => 'อินสตรักเตอร์';
 
   @override
   String get adminInstructorsTitle => 'อนุมัติใบรับรอง';

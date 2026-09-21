@@ -661,6 +661,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get authSignup => 'Daftar';
 
   @override
+  String get authWelcome =>
+      'Setelah daftar, log, Same Tide, dan booking bisa dipakai. Admin menyesuaikan tingkat sesuai aktivitas.';
+
+  @override
   String get authEmail => 'Email';
 
   @override
@@ -747,6 +751,44 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get adminDashboardSubtitle =>
       'Kendalikan verifikasi instruktur, Dive Star, dan postingan.';
+
+  @override
+  String get adminMembersTitle => 'Anggota';
+
+  @override
+  String get adminMembersSubtitle =>
+      'Cari anggota dan atur tingkat: anggota, khusus, VIP, atau instruktur.';
+
+  @override
+  String get adminMembersSearch => 'Cari nama atau email';
+
+  @override
+  String get adminMembersEmpty => 'Tidak ada anggota.';
+
+  @override
+  String get adminMembersGrade => 'Tingkat anggota';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return '$logs log · $regions wilayah';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return 'Saran aktivitas · $grade';
+  }
+
+  @override
+  String get memberGradeMember => 'Anggota';
+
+  @override
+  String get memberGradeSpecial => 'Khusus';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => 'Instruktur';
 
   @override
   String get adminInstructorsTitle => 'Persetujuan sertifikat';

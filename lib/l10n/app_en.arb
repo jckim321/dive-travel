@@ -195,6 +195,7 @@
   "metalCardDialogClose": "OK",
   "authLogin": "Log in",
   "authSignup": "Sign up",
+  "authWelcome": "After you sign up you can use logs, Same Tide, and bookings right away. An admin adjusts your grade based on activity.",
   "authEmail": "Email",
   "authPassword": "Password",
   "authPasswordHint": "At least 6 characters",
@@ -223,6 +224,28 @@
   "adminAccessDenied": "This account does not have admin access.",
   "adminDashboardTitle": "Admin dashboard",
   "adminDashboardSubtitle": "Control instructor verification, Dive Star shops, and listings in one place.",
+  "adminMembersTitle": "Members",
+  "adminMembersSubtitle": "Look up members and set Member, Special, VIP, or Instructor grade.",
+  "adminMembersSearch": "Search name or email",
+  "adminMembersEmpty": "No members match.",
+  "adminMembersGrade": "Member grade",
+  "adminMembersActivity": "{logs} logs · {regions} regions",
+  "@adminMembersActivity": {
+    "placeholders": {
+      "logs": { "type": "int" },
+      "regions": { "type": "int" }
+    }
+  },
+  "adminMembersSuggested": "Activity hint · {grade}",
+  "@adminMembersSuggested": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "memberGradeMember": "Member",
+  "memberGradeSpecial": "Special",
+  "memberGradeVip": "VIP",
+  "memberGradeInstructor": "Instructor",
   "adminInstructorsTitle": "Instructor certificate review",
   "adminInstructorsSubtitle": "Review C-Cards on R2. Approval unlocks pro pricing.",
   "adminInstructorAgency": "Agency · {agency}",

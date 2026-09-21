@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
@@ -85,6 +86,13 @@ abstract class DiverRepository {
   Future<void> approveInstructor(String uid);
 
   Future<void> rejectInstructor(String uid);
+
+  Stream<List<MemberAccount>> watchMembers();
+
+  Future<void> setMemberGrade({
+    required String uid,
+    required MemberGrade grade,
+  });
 
   Future<void> setPlaqueStatus({
     required String shopId,

@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -159,6 +160,7 @@ class FirestoreDiverRepository implements DiverRepository {
     if (!snapshot.exists) {
       payload.addAll({
         if (!grantAdmin) 'user_role': 'diver',
+        'member_grade': MemberGrade.member.firestoreValue,
         'is_instructor': false,
         'is_verified_pro': false,
         'c_card_agency': '',
@@ -169,6 +171,12 @@ class FirestoreDiverRepository implements DiverRepository {
         'region_log_counts': <String, int>{},
         'created_at': FieldValue.serverTimestamp(),
       });
+    } else if (snapshot.data()?['member_grade'] == null &&
+        snapshot.data()?['memberGrade'] == null) {
+      final instructor = snapshot.data()?['is_instructor'] == true;
+      payload['member_grade'] = instructor
+          ? MemberGrade.instructor.firestoreValue
+          : MemberGrade.member.firestoreValue;
     }
     await ref.set(payload, SetOptions(merge: true));
   }
@@ -782,6 +790,7 @@ class FirestoreDiverRepository implements DiverRepository {
     return _userDoc(uid).set({
       'is_instructor': true,
       'is_verified_pro': ProVerificationStatus.approved.firestoreValue,
+      'member_grade': MemberGrade.instructor.firestoreValue,
       'pro_approved_at': FieldValue.serverTimestamp(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -793,6 +802,52 @@ class FirestoreDiverRepository implements DiverRepository {
       'is_instructor': false,
       'is_verified_pro': ProVerificationStatus.rejected.firestoreValue,
       'pro_rejected_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  MemberAccount _toMemberAccount(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final instructor = data['is_instructor'] == true;
+    return MemberAccount(
+      uid: doc.id,
+      email: data['email'] as String? ?? '',
+      displayName:
+          data['display_name'] as String? ??
+          (data['email'] as String?)?.split('@').first ??
+          '다이버',
+      grade: MemberGrade.parse(
+        data['member_grade'] ?? data['memberGrade'],
+        isInstructor: instructor,
+      ),
+      totalLogCount: (data['total_log_count'] as num?)?.toInt() ?? 0,
+      uniqueRegionsCount: (data['unique_regions_count'] as num?)?.toInt() ?? 0,
+      isAdmin: data['is_admin'] == true,
+      isInstructor: instructor,
+    );
+  }
+
+  @override
+  Stream<List<MemberAccount>> watchMembers() {
+    return _users.snapshots().map((snapshot) {
+      final members = [
+        for (final doc in snapshot.docs) _toMemberAccount(doc),
+      ];
+      members.sort((a, b) => a.displayName.compareTo(b.displayName));
+      return members;
+    });
+  }
+
+  @override
+  Future<void> setMemberGrade({
+    required String uid,
+    required MemberGrade grade,
+  }) {
+    return _userDoc(uid).set({
+      'member_grade': grade.firestoreValue,
+      if (grade == MemberGrade.instructor) 'is_instructor': true,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

@@ -1278,6 +1278,12 @@ abstract class AppLocalizations {
   /// **'회원가입'**
   String get authSignup;
 
+  /// No description provided for @authWelcome.
+  ///
+  /// In ko, this message translates to:
+  /// **'가입하면 로그, 같은배, 예약 등 기본 기능을 바로 쓸 수 있습니다. 등급은 활동에 따라 관리자가 조정합니다.'**
+  String get authWelcome;
+
   /// 로그인 이메일 필드입니다.
   ///
   /// In ko, this message translates to:
@@ -1445,6 +1451,72 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.'**
   String get adminDashboardSubtitle;
+
+  /// No description provided for @adminMembersTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 관리'**
+  String get adminMembersTitle;
+
+  /// No description provided for @adminMembersSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.'**
+  String get adminMembersSubtitle;
+
+  /// No description provided for @adminMembersSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 또는 이메일 검색'**
+  String get adminMembersSearch;
+
+  /// No description provided for @adminMembersEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건에 맞는 회원이 없습니다.'**
+  String get adminMembersEmpty;
+
+  /// No description provided for @adminMembersGrade.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 등급'**
+  String get adminMembersGrade;
+
+  /// No description provided for @adminMembersActivity.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그 {logs}회 · 지역 {regions}곳'**
+  String adminMembersActivity(int logs, int regions);
+
+  /// No description provided for @adminMembersSuggested.
+  ///
+  /// In ko, this message translates to:
+  /// **'활동 참고 등급 · {grade}'**
+  String adminMembersSuggested(String grade);
+
+  /// No description provided for @memberGradeMember.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원'**
+  String get memberGradeMember;
+
+  /// No description provided for @memberGradeSpecial.
+  ///
+  /// In ko, this message translates to:
+  /// **'특별회원'**
+  String get memberGradeSpecial;
+
+  /// No description provided for @memberGradeVip.
+  ///
+  /// In ko, this message translates to:
+  /// **'VIP'**
+  String get memberGradeVip;
+
+  /// No description provided for @memberGradeInstructor.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사회원'**
+  String get memberGradeInstructor;
 
   /// No description provided for @adminInstructorsTitle.
   ///

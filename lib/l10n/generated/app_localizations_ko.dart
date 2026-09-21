@@ -651,6 +651,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authSignup => '회원가입';
 
   @override
+  String get authWelcome =>
+      '가입하면 로그, 같은배, 예약 등 기본 기능을 바로 쓸 수 있습니다. 등급은 활동에 따라 관리자가 조정합니다.';
+
+  @override
   String get authEmail => '이메일';
 
   @override
@@ -738,6 +742,43 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get adminDashboardSubtitle =>
       '전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.';
+
+  @override
+  String get adminMembersTitle => '회원 관리';
+
+  @override
+  String get adminMembersSubtitle => '회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.';
+
+  @override
+  String get adminMembersSearch => '이름 또는 이메일 검색';
+
+  @override
+  String get adminMembersEmpty => '조건에 맞는 회원이 없습니다.';
+
+  @override
+  String get adminMembersGrade => '회원 등급';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return '로그 $logs회 · 지역 $regions곳';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return '활동 참고 등급 · $grade';
+  }
+
+  @override
+  String get memberGradeMember => '회원';
+
+  @override
+  String get memberGradeSpecial => '특별회원';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => '강사회원';
 
   @override
   String get adminInstructorsTitle => '강사 자격증 승인';

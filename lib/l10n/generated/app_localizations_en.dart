@@ -667,6 +667,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignup => 'Sign up';
 
   @override
+  String get authWelcome =>
+      'After you sign up you can use logs, Same Tide, and bookings right away. An admin adjusts your grade based on activity.';
+
+  @override
   String get authEmail => 'Email';
 
   @override
@@ -756,6 +760,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminDashboardSubtitle =>
       'Control instructor verification, Dive Star shops, and listings in one place.';
+
+  @override
+  String get adminMembersTitle => 'Members';
+
+  @override
+  String get adminMembersSubtitle =>
+      'Look up members and set Member, Special, VIP, or Instructor grade.';
+
+  @override
+  String get adminMembersSearch => 'Search name or email';
+
+  @override
+  String get adminMembersEmpty => 'No members match.';
+
+  @override
+  String get adminMembersGrade => 'Member grade';
+
+  @override
+  String adminMembersActivity(int logs, int regions) {
+    return '$logs logs · $regions regions';
+  }
+
+  @override
+  String adminMembersSuggested(String grade) {
+    return 'Activity hint · $grade';
+  }
+
+  @override
+  String get memberGradeMember => 'Member';
+
+  @override
+  String get memberGradeSpecial => 'Special';
+
+  @override
+  String get memberGradeVip => 'VIP';
+
+  @override
+  String get memberGradeInstructor => 'Instructor';
 
   @override
   String get adminInstructorsTitle => 'Instructor certificate review';
