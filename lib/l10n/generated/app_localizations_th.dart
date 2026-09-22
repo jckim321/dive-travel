@@ -1050,18 +1050,37 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityCommentHint => 'เขียนความคิดเห็น';
 
   @override
-  String get communityTideKicker => '깃발꽂기';
+  String get communityTideKicker => '출발 보드';
 
   @override
-  String get communityTideHeadline => '먼저 리조트를 고르세요.\n예약한 뒤에 방을 엽니다.';
+  String get communityTideHeadline => '이번 주, 빈자리가 열린 배';
 
   @override
-  String get communityTideBody =>
-      '혼자 가도, 이미 짠 팀을 데려가도 여행상품에서 예약합니다. 지인·동호회를 같은 일정에 태우고 싶을 때만 깃발을 꽂습니다.';
+  String get communityTideBody => '목적지·날짜·빈자리만 보고 고르세요. 물속 버디는 샵이 배정합니다.';
 
   @override
   String get communityTideSafety =>
       '물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.';
+
+  @override
+  String get communityStatOpenSeats => '빈자리';
+
+  @override
+  String communityUrgentBanner(int count) {
+    return '마감 임박 $count건 · 바로 보기';
+  }
+
+  @override
+  String get communityBoardList => '출발 명부';
+
+  @override
+  String get communityBoardListHint => '카드를 누르면 승선 의사와 예약을 이어갈 수 있습니다.';
+
+  @override
+  String get communityViewSeats => '자리 보기';
+
+  @override
+  String get communityWindowOpen => '일정 미정';
 
   @override
   String get communityPlantFlag => '깃발 꽂기';
@@ -1142,16 +1161,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreCoverRemove => '이미지 삭제';
 
   @override
-  String get communityFilterAll => '모든 밀물';
+  String get communityFilterAll => '전체';
 
   @override
-  String get communityFilterLastCall => '마감임박';
+  String get communityFilterLastCall => '마감';
 
   @override
-  String get communityFilterSolo => '싱글쉐어';
+  String get communityFilterSolo => '싱글';
 
   @override
-  String get communityFilterShop => '샵 크루';
+  String get communityFilterShop => '샵';
 
   @override
   String communityBerths(int booked, int capacity) {

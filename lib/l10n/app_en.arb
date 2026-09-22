@@ -354,10 +354,21 @@
   "communityComments": "Manifest notes",
   "communityNoComments": "No flags yet.",
   "communityCommentHint": "Leave a short note",
-  "communityTideKicker": "PLANT A FLAG",
-  "communityTideHeadline": "Pick the resort first.\nOpen a room after you book.",
-  "communityTideBody": "Solo or with a ready team, book the resort in Travel. Plant a flag only when friends or a club should join that same trip.",
+  "communityTideKicker": "SAME TIDE",
+  "communityTideHeadline": "Open berths this week",
+  "communityTideBody": "Pick by place, date, and empty seats. The shop assigns the water buddy.",
   "communityTideSafety": "The shop assigns the water buddy. This tab shares the van, the table, and the bed of a trip you already booked.",
+  "communityStatOpenSeats": "Open seats",
+  "communityUrgentBanner": "{count} last-call departures · view now",
+  "@communityUrgentBanner": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "communityBoardList": "Departure board",
+  "communityBoardListHint": "Open a card to raise a flag or continue to booking.",
+  "communityViewSeats": "View seats",
+  "communityWindowOpen": "Dates TBD",
   "communityPlantFlag": "Plant a flag",
   "communityPlantFlagAsk": "Put this booking on Same Tide so friends or a club can join?",
   "communityPlantFlagLater": "Later",
@@ -387,10 +398,10 @@
   "exploreAttachPhoto": "Attach photo",
   "exploreUseAsCover": "Use this photo as the resort cover",
   "exploreCoverRemove": "Remove photo",
-  "communityFilterAll": "All tides",
+  "communityFilterAll": "All",
   "communityFilterLastCall": "Last call",
-  "communityFilterSolo": "Solo share",
-  "communityFilterShop": "Shop crew",
+  "communityFilterSolo": "Solo",
+  "communityFilterShop": "Shop",
   "communityBerths": "Berths {booked}/{capacity}",
   "@communityBerths": {
     "placeholders": {

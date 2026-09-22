@@ -2019,19 +2019,19 @@ abstract class AppLocalizations {
   /// No description provided for @communityTideKicker.
   ///
   /// In ko, this message translates to:
-  /// **'깃발꽂기'**
+  /// **'출발 보드'**
   String get communityTideKicker;
 
   /// No description provided for @communityTideHeadline.
   ///
   /// In ko, this message translates to:
-  /// **'먼저 리조트를 고르세요.\n예약한 뒤에 방을 엽니다.'**
+  /// **'이번 주, 빈자리가 열린 배'**
   String get communityTideHeadline;
 
   /// No description provided for @communityTideBody.
   ///
   /// In ko, this message translates to:
-  /// **'혼자 가도, 이미 짠 팀을 데려가도 여행상품에서 예약합니다. 지인·동호회를 같은 일정에 태우고 싶을 때만 깃발을 꽂습니다.'**
+  /// **'목적지·날짜·빈자리만 보고 고르세요. 물속 버디는 샵이 배정합니다.'**
   String get communityTideBody;
 
   /// No description provided for @communityTideSafety.
@@ -2039,6 +2039,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.'**
   String get communityTideSafety;
+
+  /// No description provided for @communityStatOpenSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리'**
+  String get communityStatOpenSeats;
+
+  /// No description provided for @communityUrgentBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감 임박 {count}건 · 바로 보기'**
+  String communityUrgentBanner(int count);
+
+  /// No description provided for @communityBoardList.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 명부'**
+  String get communityBoardList;
+
+  /// No description provided for @communityBoardListHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'카드를 누르면 승선 의사와 예약을 이어갈 수 있습니다.'**
+  String get communityBoardListHint;
+
+  /// No description provided for @communityViewSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리 보기'**
+  String get communityViewSeats;
+
+  /// No description provided for @communityWindowOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정 미정'**
+  String get communityWindowOpen;
 
   /// No description provided for @communityPlantFlag.
   ///
@@ -2187,25 +2223,25 @@ abstract class AppLocalizations {
   /// No description provided for @communityFilterAll.
   ///
   /// In ko, this message translates to:
-  /// **'모든 밀물'**
+  /// **'전체'**
   String get communityFilterAll;
 
   /// No description provided for @communityFilterLastCall.
   ///
   /// In ko, this message translates to:
-  /// **'마감임박'**
+  /// **'마감'**
   String get communityFilterLastCall;
 
   /// No description provided for @communityFilterSolo.
   ///
   /// In ko, this message translates to:
-  /// **'싱글쉐어'**
+  /// **'싱글'**
   String get communityFilterSolo;
 
   /// No description provided for @communityFilterShop.
   ///
   /// In ko, this message translates to:
-  /// **'샵 크루'**
+  /// **'샵'**
   String get communityFilterShop;
 
   /// No description provided for @communityBerths.

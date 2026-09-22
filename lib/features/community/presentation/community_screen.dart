@@ -33,61 +33,59 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final posts = [
-          for (final post in store.visiblePosts)
-            if (_matches(post)) post,
+        final all = store.visiblePosts;
+        final posts = [for (final post in all) if (_matches(post)) post];
+        final lastCallPosts = [
+          for (final post in all)
+            if (post.kind == TideKind.lastCall) post,
         ];
-        final looking = store.visiblePosts.fold<int>(
+        final openSeats = all.fold<int>(
           0,
-          (sum, post) => sum + post.lookingSeats,
+          (sum, post) => sum + post.emptySeats,
         );
-        final lastCall = store.visiblePosts
-            .where((post) => post.kind == TideKind.lastCall)
-            .length;
 
         return Scaffold(
-          floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: AppTheme.canvas,
+          floatingActionButton: FloatingActionButton(
             heroTag: 'community-fab',
             onPressed: () => _compose(context),
-            icon: const Icon(Icons.flag_outlined, size: 20),
-            label: Text(l10n.communityPlantFlag),
+            tooltip: l10n.communityPlantFlag,
+            child: const Icon(Icons.flag_outlined),
           ),
           body: SafeArea(
             bottom: false,
             child: ListView(
               key: const Key('tide-board'),
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 108),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 108),
               children: [
-                const _TideHero(),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _TideStat(
-                      value: '${store.visiblePosts.length}',
-                      label: l10n.communityFilterAll,
-                    ),
-                    const SizedBox(width: 10),
-                    _TideStat(value: '$looking', label: l10n.communityManifest),
-                    const SizedBox(width: 10),
-                    _TideStat(
-                      value: '$lastCall',
-                      label: l10n.communityFilterLastCall,
-                      warn: lastCall > 0,
-                    ),
-                  ],
+                _TideHeader(
+                  openSeats: openSeats,
+                  departureCount: all.length,
+                  lastCallCount: lastCallPosts.length,
                 ),
+                if (lastCallPosts.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _UrgentStrip(
+                    count: lastCallPosts.length,
+                    onTap: () => setState(() => _filter = _TideFilter.lastCall),
+                  ),
+                ],
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _chip(l10n.communityFilterAll, _TideFilter.all),
-                    _chip(l10n.communityFilterLastCall, _TideFilter.lastCall),
-                    _chip(l10n.communityFilterSolo, _TideFilter.solo),
-                    _chip(l10n.communityFilterShop, _TideFilter.shop),
-                  ],
+                _TideSegmentFilter(
+                  value: _filter,
+                  onChanged: (next) => setState(() => _filter = next),
                 ),
                 const SizedBox(height: 18),
+                Text(
+                  l10n.communityBoardList,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.communityBoardListHint,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
                 if (posts.isEmpty)
                   AppCard(
                     child: Text(
@@ -100,13 +98,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     _TideManifestCard(
                       post: post,
                       shop: _shopFor(store, post),
+                      compact: true,
                       onOpen: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => CommunityPostDetailScreen(post: post),
+                          builder: (_) =>
+                              CommunityPostDetailScreen(post: post),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                   ],
                 const SizedBox(height: 8),
                 Text(
@@ -133,19 +133,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return post.kind == TideKind.shopCrew ||
             post.type == CommunityPostType.shopTour;
     }
-  }
-
-  Widget _chip(String label, _TideFilter value) {
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: ChoiceChip(
-        showCheckmark: false,
-        visualDensity: VisualDensity.compact,
-        label: Text(label),
-        selected: _filter == value,
-        onSelected: (_) => setState(() => _filter = value),
-      ),
-    );
   }
 
   Future<void> _compose(BuildContext context) async {
@@ -219,182 +206,250 @@ DiveShop _withPostDeparture(DiveShop shop, CommunityPost post) {
   );
 }
 
-class _TideHero extends StatelessWidget {
-  const _TideHero();
+class _TideHeader extends StatelessWidget {
+  const _TideHeader({
+    required this.openSeats,
+    required this.departureCount,
+    required this.lastCallCount,
+  });
+
+  final int openSeats;
+  final int departureCount;
+  final int lastCallCount;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0B1F33), Color(0xFF0A4A73), Color(0xFFC4A35A)],
-          stops: [0, 0.62, 1],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.communityTideKicker,
+          style: const TextStyle(
+            color: AppTheme.ocean,
+            fontSize: 11,
+            letterSpacing: 1.6,
+            fontWeight: FontWeight.w800,
+          ),
         ),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Stack(
+        const SizedBox(height: 6),
+        Text(
+          l10n.communityTideHeadline,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                height: 1.2,
+                color: AppTheme.navy,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.communityTideBody,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 14),
+        Row(
           children: [
-            const Positioned(
-              right: -28,
-              top: -40,
-              child: IgnorePointer(
-                child: _TideRing(size: 160, color: Color(0x33FFFFFF)),
+            Expanded(
+              child: _MiniStat(
+                value: '$openSeats',
+                label: l10n.communityStatOpenSeats,
+                accent: AppTheme.ocean,
               ),
             ),
-            const Positioned(
-              right: 18,
-              bottom: -36,
-              child: IgnorePointer(
-                child: _TideRing(size: 110, color: Color(0x22C4A35A)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MiniStat(
+                value: '$departureCount',
+                label: l10n.communityFilterAll,
+                accent: AppTheme.navy,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.communityTideKicker,
-                    style: const TextStyle(
-                      color: Color(0xFFF4EBD3),
-                      fontSize: 11,
-                      letterSpacing: 2.4,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    l10n.communityTideHeadline,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      height: 1.18,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    l10n.communityTideBody,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.84),
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xF2FFF6DC),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                      child: Text(
-                        l10n.communityTideSafety,
-                        style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontSize: 12,
-                          height: 1.35,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MiniStat(
+                value: '$lastCallCount',
+                label: l10n.communityFilterLastCall,
+                accent: lastCallCount > 0
+                    ? const Color(0xFFB42318)
+                    : AppTheme.muted,
+                warn: lastCallCount > 0,
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }
 
-class _TideRing extends StatelessWidget {
-  const _TideRing({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.square(size),
-      painter: _TideRingPainter(color),
-    );
-  }
-}
-
-class _TideRingPainter extends CustomPainter {
-  const _TideRingPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10;
-    final center = Offset(size.width / 2, size.height / 2);
-    canvas.drawCircle(center, size.width * 0.42, paint);
-    canvas.drawCircle(center, size.width * 0.28, paint..strokeWidth = 6);
-    canvas.drawCircle(center, size.width * 0.14, paint..strokeWidth = 3);
-  }
-
-  @override
-  bool shouldRepaint(covariant _TideRingPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _TideStat extends StatelessWidget {
-  const _TideStat({
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
     required this.value,
     required this.label,
+    required this.accent,
     this.warn = false,
   });
 
   final String value;
   final String label;
+  final Color accent;
   final bool warn;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: warn ? const Color(0xFFFBE9E7) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.cardShadow,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      decoration: BoxDecoration(
+        color: warn ? const Color(0xFFFBE9E7) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: warn ? const Color(0xFFF2C4BE) : const Color(0xFFE8EBEE),
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.6,
+              color: accent,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.muted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UrgentStrip extends StatelessWidget {
+  const _UrgentStrip({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: const Color(0xFFFBE9E7),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
             children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: warn ? const Color(0xFFB42318) : AppTheme.navy,
+              const Icon(
+                Icons.local_fire_department_outlined,
+                color: Color(0xFFB42318),
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.communityUrgentBanner(count),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFB42318),
+                    fontSize: 13,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
+              const Icon(Icons.chevron_right, color: Color(0xFFB42318)),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TideSegmentFilter extends StatelessWidget {
+  const _TideSegmentFilter({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final _TideFilter value;
+  final ValueChanged<_TideFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8EBEE)),
+      ),
+      child: Row(
+        children: [
+          for (final entry in [
+            (_TideFilter.all, l10n.communityFilterAll),
+            (_TideFilter.lastCall, l10n.communityFilterLastCall),
+            (_TideFilter.solo, l10n.communityFilterSolo),
+            (_TideFilter.shop, l10n.communityFilterShop),
+          ])
+            Expanded(
+              child: _SegmentCell(
+                label: entry.$2,
+                selected: value == entry.$1,
+                onTap: () => onChanged(entry.$1),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SegmentCell extends StatelessWidget {
+  const _SegmentCell({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppTheme.navy : Colors.transparent,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: selected ? Colors.white : AppTheme.muted,
+            ),
           ),
         ),
       ),
@@ -407,11 +462,13 @@ class _TideManifestCard extends StatelessWidget {
     required this.post,
     required this.shop,
     required this.onOpen,
+    this.compact = false,
   });
 
   final CommunityPost post;
   final DiveShop? shop;
   final VoidCallback onOpen;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -423,26 +480,31 @@ class _TideManifestCard extends StatelessWidget {
       TideKind.soloShare => l10n.communityKindSolo,
       TideKind.shopCrew => l10n.communityKindShop,
     };
+    final destination =
+        post.destination.isEmpty ? post.authorName : post.destination;
+    final window =
+        post.windowLabel.isEmpty ? l10n.communityWindowOpen : post.windowLabel;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         key: Key('tide-card-${post.id}'),
         onTap: onOpen,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Ink(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE8EBEE)),
             boxShadow: AppTheme.cardShadow,
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(width: 8, color: accent),
+                  Container(width: 7, color: accent),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -451,99 +513,108 @@ class _TideManifestCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                l10n.communityFrom,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  letterSpacing: 1.4,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.muted,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  post.destination.isEmpty
-                                      ? post.authorName
-                                      : post.destination,
+                                  destination,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
                                     color: AppTheme.navy,
                                   ),
                                 ),
                               ),
-                              DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: post.kind == TideKind.lastCall
-                                      ? const Color(0xFFFBE9E7)
-                                      : AppTheme.goldSoft,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  child: Text(
-                                    kindLabel,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: post.kind == TideKind.lastCall
-                                          ? const Color(0xFFB42318)
-                                          : AppTheme.navy,
-                                    ),
-                                  ),
-                                ),
+                              _KindPill(
+                                label: kindLabel,
+                                urgent: post.kind == TideKind.lastCall,
                               ),
                             ],
                           ),
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Text(
-                                l10n.communityTo,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  letterSpacing: 1.4,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.muted,
-                                ),
+                              const Icon(
+                                Icons.calendar_month_outlined,
+                                size: 14,
+                                color: AppTheme.ocean,
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                post.windowLabel.isEmpty
-                                    ? 'OPEN'
-                                    : post.windowLabel,
+                                window,
                                 style: const TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   color: AppTheme.ocean,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                l10n.communitySeatsLeft(post.emptySeats),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.navy,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          TranslatableText(
-                            text: post.title,
-                            language: post.language,
-                            style: theme.textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 6),
-                          TranslatableText(
-                            text: post.subtitle,
-                            language: post.language,
-                            style: theme.textTheme.bodySmall,
-                          ),
+                          if (!compact) ...[
+                            const SizedBox(height: 10),
+                            TranslatableText(
+                              text: post.title,
+                              language: post.language,
+                              style: theme.textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 4),
+                            TranslatableText(
+                              text: post.subtitle,
+                              language: post.language,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ] else if (post.subtitle.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              post.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           _BerthMeter(post: post),
-                          const SizedBox(height: 10),
-                          Text(
-                            '${l10n.communityBerths(post.bookedSeats, post.capacity)}  ·  ${l10n.communityLooking(post.lookingSeats)}  ·  ${l10n.communitySeatsLeft(post.emptySeats)}',
-                            style: theme.textTheme.labelSmall,
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  l10n.communityBerths(
+                                    post.bookedSeats,
+                                    post.capacity,
+                                  ),
+                                  style: theme.textTheme.labelSmall,
+                                ),
+                              ),
+                              if (compact)
+                                FilledButton(
+                                  onPressed: onOpen,
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    textStyle: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  child: Text(l10n.communityViewSeats),
+                                ),
+                            ],
                           ),
                         ],
                       ),
@@ -552,6 +623,34 @@ class _TideManifestCard extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _KindPill extends StatelessWidget {
+  const _KindPill({required this.label, required this.urgent});
+
+  final String label;
+  final bool urgent;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: urgent ? const Color(0xFFFBE9E7) : AppTheme.goldSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: urgent ? const Color(0xFFB42318) : AppTheme.navy,
           ),
         ),
       ),
@@ -575,8 +674,8 @@ class _BerthMeter extends StatelessWidget {
             fill: i < post.bookedSeats
                 ? AppTheme.navy
                 : i < post.bookedSeats + post.lookingSeats
-                ? AppTheme.gold
-                : const Color(0xFFD5DBE0),
+                    ? AppTheme.gold
+                    : const Color(0xFFD5DBE0),
           ),
         ],
       ],
@@ -630,6 +729,7 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
     final shop = _shopFor(store, post);
 
     return Scaffold(
+      backgroundColor: AppTheme.canvas,
       appBar: AppBar(title: Text(l10n.communityManifest)),
       body: Column(
         children: [
@@ -641,11 +741,26 @@ class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   children: [
-                    _TideManifestCard(post: post, shop: shop, onOpen: () {}),
+                    _TideManifestCard(
+                      post: post,
+                      shop: shop,
+                      onOpen: () {},
+                    ),
                     const SizedBox(height: 12),
-                    Text(
-                      l10n.communityTideSafety,
-                      style: theme.textTheme.bodySmall,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8EEF2),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        l10n.communityTideSafety,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppTheme.navy,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     FilledButton.icon(

@@ -1071,19 +1071,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityCommentHint => 'Leave a short note';
 
   @override
-  String get communityTideKicker => 'PLANT A FLAG';
+  String get communityTideKicker => 'SAME TIDE';
 
   @override
-  String get communityTideHeadline =>
-      'Pick the resort first.\nOpen a room after you book.';
+  String get communityTideHeadline => 'Open berths this week';
 
   @override
   String get communityTideBody =>
-      'Solo or with a ready team, book the resort in Travel. Plant a flag only when friends or a club should join that same trip.';
+      'Pick by place, date, and empty seats. The shop assigns the water buddy.';
 
   @override
   String get communityTideSafety =>
       'The shop assigns the water buddy. This tab shares the van, the table, and the bed of a trip you already booked.';
+
+  @override
+  String get communityStatOpenSeats => 'Open seats';
+
+  @override
+  String communityUrgentBanner(int count) {
+    return '$count last-call departures · view now';
+  }
+
+  @override
+  String get communityBoardList => 'Departure board';
+
+  @override
+  String get communityBoardListHint =>
+      'Open a card to raise a flag or continue to booking.';
+
+  @override
+  String get communityViewSeats => 'View seats';
+
+  @override
+  String get communityWindowOpen => 'Dates TBD';
 
   @override
   String get communityPlantFlag => 'Plant a flag';
@@ -1167,16 +1187,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreCoverRemove => 'Remove photo';
 
   @override
-  String get communityFilterAll => 'All tides';
+  String get communityFilterAll => 'All';
 
   @override
   String get communityFilterLastCall => 'Last call';
 
   @override
-  String get communityFilterSolo => 'Solo share';
+  String get communityFilterSolo => 'Solo';
 
   @override
-  String get communityFilterShop => 'Shop crew';
+  String get communityFilterShop => 'Shop';
 
   @override
   String communityBerths(int booked, int capacity) {
