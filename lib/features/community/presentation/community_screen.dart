@@ -575,11 +575,11 @@ class _TideManifestCard extends StatelessWidget {
                             ),
                           ] else if (post.subtitle.isNotEmpty) ...[
                             const SizedBox(height: 8),
-                            Text(
-                              post.subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            TranslatableText(
+                              text: post.subtitle,
+                              language: post.language,
                               style: theme.textTheme.bodySmall,
+                              maxLines: 1,
                             ),
                           ],
                           const SizedBox(height: 12),
