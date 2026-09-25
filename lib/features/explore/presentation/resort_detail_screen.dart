@@ -81,11 +81,12 @@ class ResortDetailScreen extends StatelessWidget {
                 ),
             ],
           ),
-          body: ListView(
+          body: SingleChildScrollView(
             key: Key('resort-detail-$hullId'),
-            cacheExtent: 2400,
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               _ResortPhotoGallery(shop: hull),
               const SizedBox(height: 16),
               Wrap(
@@ -166,7 +167,8 @@ class ResortDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-            ],
+              ],
+            ),
           ),
         );
       },
