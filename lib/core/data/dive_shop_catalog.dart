@@ -223,7 +223,7 @@ abstract final class DiveShopCatalog {
       final merged = shop.overlay(stats);
       final products = [
         for (final product in stats?.products ?? const <ShopProduct>[])
-          if (product.active) product,
+          if (product.isListedPublicly) product,
       ];
       if (products.isEmpty) {
         result.add(_withDeparture(merged));

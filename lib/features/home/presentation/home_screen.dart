@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
@@ -26,10 +27,14 @@ class HomeScreen extends StatelessWidget {
     final stats = store.stats;
     final theme = Theme.of(context);
     final explored = store.regions.length;
-    final recommendedShops = store.rankedResorts(limit: 4);
-    final favoriteShops = store.favoriteResorts();
-    final lastCallShops = store.lastCallResorts();
-    final popularShops = store.popularResorts();
+    final recommendedShops =
+        store.resortsFeaturedAs(ProductListingKind.diveStar, limit: 4);
+    final favoriteShops =
+        store.resortsFeaturedAs(ProductListingKind.favorites);
+    final lastCallShops =
+        store.resortsFeaturedAs(ProductListingKind.nextDeparture);
+    final popularShops =
+        store.resortsFeaturedAs(ProductListingKind.popular);
 
     return Scaffold(
       body: ListView(

@@ -129,6 +129,13 @@ abstract class DiverRepository {
     bool useAsResortCover = false,
   });
 
+  Future<void> setShopProductPublishStatus({
+    required String shopId,
+    required String productId,
+    required ProductPublishStatus status,
+    String reviewNote = '',
+  });
+
   Stream<InstructorDiscount> watchInstructorDiscount();
 
   Future<void> saveInstructorDiscount(InstructorDiscount discount);

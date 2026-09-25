@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -53,11 +54,11 @@ class PartnerDashboardScreen extends StatelessWidget {
               key: const Key('partner-product-form'),
               leading: const Icon(Icons.add_box_outlined),
               title: Text(l10n.partnerProductForm),
-              subtitle: Text(l10n.partnerProductFormHint),
+              subtitle: Text(l10n.partnerProductPendingHint),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => ResortDeskScreen(shopId: shopId),
+                  builder: (_) => AdminProductsScreen(partnerMode: true),
                 ),
               ),
             ),

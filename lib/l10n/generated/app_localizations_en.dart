@@ -901,6 +901,73 @@ class AppLocalizationsEn extends AppLocalizations {
       'Monitor operation ratings, star grades, and plaque shipping.';
 
   @override
+  String get adminProductsTitle => 'Travel product registration';
+
+  @override
+  String get adminProductsSubtitle =>
+      'Pick a listing kind and submit. Products go live only after owner approval.';
+
+  @override
+  String get adminProductsTab => 'Products';
+
+  @override
+  String get adminProductPendingQueue => 'Pending approval';
+
+  @override
+  String get adminProductPendingEmpty => 'No products waiting for approval.';
+
+  @override
+  String get adminProductApproved => 'Product approved and published.';
+
+  @override
+  String get adminProductRejected => 'Product registration rejected.';
+
+  @override
+  String get adminProductSubmitHint =>
+      'Saving sends the product to the approval queue. It stays hidden until approved.';
+
+  @override
+  String get adminProductSubmitted => 'Submitted for approval.';
+
+  @override
+  String get productListingKind => 'Listing kind';
+
+  @override
+  String get productListingDiveStar => 'Dive Star picks';
+
+  @override
+  String get productListingFavorites => 'Favorites';
+
+  @override
+  String get productListingPopular => 'Popular';
+
+  @override
+  String get productListingNextDeparture => 'Departing soon';
+
+  @override
+  String get productListingCurated => 'Curated offer';
+
+  @override
+  String get productStatusPending => 'Pending';
+
+  @override
+  String get productStatusApproved => 'Published';
+
+  @override
+  String get productStatusRejected => 'Rejected';
+
+  @override
+  String get productStatusDraft => 'Draft';
+
+  @override
+  String get partnerOwnProductsOnly =>
+      'Partners can only manage products for their own shop.';
+
+  @override
+  String get partnerProductPendingHint =>
+      'After you submit, the product appears once an admin approves it.';
+
+  @override
   String get adminPlaqueQueue => 'Physical plaque shipping list';
 
   @override

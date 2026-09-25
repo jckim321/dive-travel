@@ -967,17 +967,7 @@ class FirestoreDiverRepository implements DiverRepository {
         bytes: photoBytes,
         contentType: photoContentType ?? 'image/jpeg',
       );
-      saved = ShopProduct(
-        id: product.id,
-        shopId: product.shopId,
-        name: product.name,
-        consumerPrice: product.consumerPrice,
-        professionalPrice: product.professionalPrice,
-        active: product.active,
-        blurb: product.blurb,
-        durationLabel: product.durationLabel,
-        coverUrl: url,
-      );
+      saved = product.copyWith(coverUrl: url);
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
@@ -1008,6 +998,40 @@ class FirestoreDiverRepository implements DiverRepository {
               item.trim(),
         ],
       },
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setShopProductPublishStatus({
+    required String shopId,
+    required String productId,
+    required ProductPublishStatus status,
+    String reviewNote = '',
+  }) async {
+    final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final current = [
+      for (final item
+          in (snap.data()?['products'] as List<dynamic>? ?? const []))
+        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
+    ];
+    final next = [
+      for (final item in current)
+        if (item.id == productId)
+          item.copyWith(
+            publishStatus: status,
+            active: status == ProductPublishStatus.approved
+                ? true
+                : item.active,
+            reviewedAt: DateTime.now(),
+            reviewNote: reviewNote,
+          )
+        else
+          item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

@@ -858,11 +858,13 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
   final _photoPicker = const DivePhotoPicker();
   PickedPhoto? _photo;
   var _useAsCover = true;
+  late ProductListingKind _kind;
 
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
+    _kind = existing?.listingKind ?? ProductListingKind.diveStar;
     _name = TextEditingController(text: existing?.name ?? '');
     _consumer = TextEditingController(
       text: existing == null ? '' : '${existing.consumerPrice}',
@@ -893,7 +895,29 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l10n.partnerProductFormHint),
+          Text(l10n.partnerProductPendingHint),
+          const SizedBox(height: 16),
+          Text(l10n.productListingKind, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final kind in ProductListingKind.values)
+                ChoiceChip(
+                  label: Text(switch (kind) {
+                    ProductListingKind.diveStar => l10n.productListingDiveStar,
+                    ProductListingKind.favorites => l10n.productListingFavorites,
+                    ProductListingKind.popular => l10n.productListingPopular,
+                    ProductListingKind.nextDeparture =>
+                      l10n.productListingNextDeparture,
+                    ProductListingKind.curated => l10n.productListingCurated,
+                  }),
+                  selected: _kind == kind,
+                  onSelected: (_) => setState(() => _kind = kind),
+                ),
+            ],
+          ),
           const SizedBox(height: 16),
           _CoverEditor(
             fieldKey: 'product-cover-field',
@@ -987,6 +1011,10 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
                     blurb: _blurb.text.trim(),
                     durationLabel: _duration.text.trim(),
                     coverUrl: widget.existing?.coverUrl ?? '',
+                    listingKind: _kind,
+                    publishStatus: ProductPublishStatus.pending,
+                    submittedAt: DateTime.now(),
+                    active: false,
                   ),
                   photoBytes: _photo?.bytes,
                   photoFileName: _photo?.fileName,
@@ -994,6 +1022,13 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
                   useAsResortCover: _useAsCover,
                 );
                 if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        AppLocalizations.of(context).adminProductSubmitted,
+                      ),
+                    ),
+                  );
                   Navigator.of(context).pop();
                 }
               } catch (error) {

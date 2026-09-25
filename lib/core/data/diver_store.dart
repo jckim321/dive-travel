@@ -124,6 +124,61 @@ class DiverStore extends ChangeNotifier {
       if (stats.qualifiesForPlaque || stats.plaqueStatus != PlaqueStatus.none)
         stats,
   ];
+
+  /// Partner/admin submissions waiting for owner approval.
+  List<ShopProduct> get pendingProductApprovals {
+    final out = <ShopProduct>[];
+    for (final stats in _shopStats) {
+      for (final product in stats.products) {
+        if (product.isPendingApproval) {
+          out.add(product);
+        }
+      }
+    }
+    out.sort((a, b) {
+      final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bAt.compareTo(aAt);
+    });
+    return out;
+  }
+
+  List<ShopProduct> productsForShop(String shopId) {
+    return liveStatsFor(shopId)?.products ?? const [];
+  }
+
+  List<DiveShop> resortsFeaturedAs(
+    ProductListingKind kind, {
+    int limit = 4,
+  }) {
+    final featuredIds = <String>{
+      for (final stats in _shopStats)
+        for (final product in stats.products)
+          if (product.isListedPublicly && product.listingKind == kind)
+            stats.shopId,
+    };
+    final featured = [
+      for (final shop in shops)
+        if (featuredIds.contains(shop.hullId)) shop,
+    ];
+    if (featured.length >= limit) {
+      return featured.take(limit).toList();
+    }
+    final fallback = switch (kind) {
+      ProductListingKind.diveStar => rankedResorts(limit: limit),
+      ProductListingKind.favorites => favoriteResorts(limit: limit),
+      ProductListingKind.popular => popularResorts(limit: limit),
+      ProductListingKind.nextDeparture => lastCallResorts(limit: limit),
+      ProductListingKind.curated => rankedResorts(limit: limit),
+    };
+    final seen = {for (final shop in featured) shop.hullId};
+    return [
+      ...featured,
+      for (final shop in fallback)
+        if (seen.add(shop.hullId)) shop,
+    ].take(limit).toList();
+  }
+
   List<GearItem> get gear => List.unmodifiable(_gear);
   InstructorDiscount get instructorDiscount => _instructorDiscount;
   bool get loading => _loading;
@@ -454,8 +509,23 @@ class DiverStore extends ChangeNotifier {
     String? photoContentType,
     bool useAsResortCover = false,
   }) {
+    // Partners may only manage their own hull; everyone else needs admin.
+    final owned = _stats.ownedShopId;
+    final isOwnerPartner =
+        _stats.isBusiness && owned != null && owned == shopId;
+    if (!_stats.isAdmin && !isOwnerPartner) {
+      return Future.error(StateError('Not allowed to edit this shop product'));
+    }
+
+    // Final publish always goes through owner approval (pending queue).
+    final gated = product.copyWith(
+      publishStatus: ProductPublishStatus.pending,
+      submittedAt: DateTime.now(),
+      active: false,
+    );
+
     if (photoBytes != null && photoBytes.isNotEmpty) {
-      _coverBytes['$shopId--${product.id}'] = photoBytes;
+      _coverBytes['$shopId--${gated.id}'] = photoBytes;
       if (useAsResortCover) {
         _coverBytes[shopId] = photoBytes;
       }
@@ -463,11 +533,41 @@ class DiverStore extends ChangeNotifier {
     }
     return _repository.saveShopProduct(
       shopId: shopId,
-      product: product,
+      product: gated,
       photoBytes: photoBytes,
       photoFileName: photoFileName,
       photoContentType: photoContentType,
       useAsResortCover: useAsResortCover,
+    );
+  }
+
+  Future<void> approveShopProduct({
+    required String shopId,
+    required String productId,
+  }) {
+    if (!_stats.isAdmin) {
+      return Future.error(StateError('Admin only'));
+    }
+    return _repository.setShopProductPublishStatus(
+      shopId: shopId,
+      productId: productId,
+      status: ProductPublishStatus.approved,
+    );
+  }
+
+  Future<void> rejectShopProduct({
+    required String shopId,
+    required String productId,
+    String reviewNote = '',
+  }) {
+    if (!_stats.isAdmin) {
+      return Future.error(StateError('Admin only'));
+    }
+    return _repository.setShopProductPublishStatus(
+      shopId: shopId,
+      productId: productId,
+      status: ProductPublishStatus.rejected,
+      reviewNote: reviewNote,
     );
   }
 

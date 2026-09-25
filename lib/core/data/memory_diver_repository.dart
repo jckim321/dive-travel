@@ -669,17 +669,7 @@ class MemoryDiverRepository implements DiverRepository {
     final coverUrl = photoBytes == null
         ? product.coverUrl
         : 'memory://shop-product-$shopId-${product.id}';
-    final saved = ShopProduct(
-      id: product.id,
-      shopId: product.shopId,
-      name: product.name,
-      consumerPrice: product.consumerPrice,
-      professionalPrice: product.professionalPrice,
-      active: product.active,
-      blurb: product.blurb,
-      durationLabel: product.durationLabel,
-      coverUrl: coverUrl,
-    );
+    final saved = product.copyWith(coverUrl: coverUrl);
     final products = [
       for (final item in current?.products ?? const <ShopProduct>[])
         if (item.id != product.id) item,
@@ -700,6 +690,33 @@ class MemoryDiverRepository implements DiverRepository {
           ? (photoBytes == null ? saved.coverUrl : 'memory://shop-cover-$shopId')
           : _shopStats[shopId]!.coverUrl,
     );
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<void> setShopProductPublishStatus({
+    required String shopId,
+    required String productId,
+    required ProductPublishStatus status,
+    String reviewNote = '',
+  }) async {
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    final products = [
+      for (final item in current.products)
+        if (item.id == productId)
+          item.copyWith(
+            publishStatus: status,
+            active: status == ProductPublishStatus.approved ? true : item.active,
+            reviewedAt: DateTime.now(),
+            reviewNote: reviewNote,
+          )
+        else
+          item,
+    ];
+    _shopStats[shopId] = current.copyWith(products: products);
     _shopController.add(_shopStats.values.toList());
   }
 

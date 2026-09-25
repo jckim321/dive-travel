@@ -892,6 +892,71 @@ class AppLocalizationsId extends AppLocalizations {
       'Pantau rating, bintang, dan pengiriman plakat.';
 
   @override
+  String get adminProductsTitle => '여행상품 등록';
+
+  @override
+  String get adminProductsSubtitle =>
+      '상품 종류를 고르고 등록하면, 최종 공개는 승인 결재 후에만 반영됩니다.';
+
+  @override
+  String get adminProductsTab => '상품 등록';
+
+  @override
+  String get adminProductPendingQueue => '승인 대기 상품';
+
+  @override
+  String get adminProductPendingEmpty => '승인 대기 중인 상품이 없습니다.';
+
+  @override
+  String get adminProductApproved => '상품이 승인되어 공개되었습니다.';
+
+  @override
+  String get adminProductRejected => '상품 등록이 거절되었습니다.';
+
+  @override
+  String get adminProductSubmitHint =>
+      '저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.';
+
+  @override
+  String get adminProductSubmitted => '승인 요청이 접수되었습니다.';
+
+  @override
+  String get productListingKind => '상품 종류 (노출 위치)';
+
+  @override
+  String get productListingDiveStar => 'Dive Star 추천';
+
+  @override
+  String get productListingFavorites => '즐겨찾는 곳';
+
+  @override
+  String get productListingPopular => '많이 가는 곳';
+
+  @override
+  String get productListingNextDeparture => '이번 출발';
+
+  @override
+  String get productListingCurated => '기획 상품';
+
+  @override
+  String get productStatusPending => '승인 대기';
+
+  @override
+  String get productStatusApproved => '공개됨';
+
+  @override
+  String get productStatusRejected => '거절됨';
+
+  @override
+  String get productStatusDraft => '임시저장';
+
+  @override
+  String get partnerOwnProductsOnly => '파트너는 본인 샵 상품만 등록·수정할 수 있습니다.';
+
+  @override
+  String get partnerProductPendingHint => '등록 후 관리자 승인이 완료되면 여행상품에 노출됩니다.';
+
+  @override
   String get adminPlaqueQueue => 'Daftar kirim plakat fisik';
 
   @override

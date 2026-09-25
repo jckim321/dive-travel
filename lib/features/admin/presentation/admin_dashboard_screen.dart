@@ -8,13 +8,14 @@ import 'package:dive_travel_app/features/admin/presentation/admin_instructors_sc
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _AdminHub { overview, members, certify, shops, ops }
 
-enum _ShopsSub { monitor, pricing }
+enum _ShopsSub { monitor, products, pricing }
 
 enum _OpsSub { posts, weather }
 
@@ -51,6 +52,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final pending = store.pendingInstructors.length;
     final plaque = store.plaqueQueue.length;
     final hidden = store.posts.where((p) => p.hidden).length;
+    final pendingProducts = store.pendingProductApprovals.length;
 
     return Theme(
       data: AdminConsoleTheme.dark,
@@ -93,22 +95,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 _PrimaryTabStrip(
                   hub: _hub,
                   pendingCertify: pending,
+                  pendingProducts: pendingProducts,
                   onSelect: _go,
                 ),
                 if (_hub == _AdminHub.shops)
                   _SubTabStrip(
                     labels: [
                       l10n.adminShopsTitle,
+                      l10n.adminProductsTab,
                       l10n.adminPricingTitle,
                     ],
                     keys: const [
                       Key('admin-sub-shops'),
+                      Key('admin-sub-products'),
                       Key('admin-menu-pricing'),
                     ],
-                    selected: _shopsSub == _ShopsSub.monitor ? 0 : 1,
+                    selected: switch (_shopsSub) {
+                      _ShopsSub.monitor => 0,
+                      _ShopsSub.products => 1,
+                      _ShopsSub.pricing => 2,
+                    },
                     onSelect: (i) => _go(
                       _AdminHub.shops,
-                      sub: i == 0 ? _ShopsSub.monitor : _ShopsSub.pricing,
+                      sub: switch (i) {
+                        1 => _ShopsSub.products,
+                        2 => _ShopsSub.pricing,
+                        _ => _ShopsSub.monitor,
+                      },
                     ),
                   ),
                 if (_hub == _AdminHub.ops)
@@ -140,6 +153,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         pending: pending,
                         plaque: plaque,
                         hidden: hidden,
+                        pendingProducts: pendingProducts,
                       ),
                     ),
                   ),
@@ -158,6 +172,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required int pending,
     required int plaque,
     required int hidden,
+    required int pendingProducts,
   }) {
     switch (_hub) {
       case _AdminHub.overview:
@@ -169,6 +184,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           postCount: store.posts.length,
           hiddenCount: hidden,
           shopCount: store.shops.length,
+          pendingProducts: pendingProducts,
           members: store.members,
         );
       case _AdminHub.members:
@@ -176,9 +192,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.certify:
         return const AdminInstructorsScreen(embedded: true);
       case _AdminHub.shops:
-        return _shopsSub == _ShopsSub.monitor
-            ? const AdminShopsScreen(embedded: true)
-            : const AdminPricingScreen(embedded: true);
+        return switch (_shopsSub) {
+          _ShopsSub.monitor => const AdminShopsScreen(embedded: true),
+          _ShopsSub.products => const AdminProductsScreen(embedded: true),
+          _ShopsSub.pricing => const AdminPricingScreen(embedded: true),
+        };
       case _AdminHub.ops:
         return _opsSub == _OpsSub.posts
             ? const AdminPostsScreen(embedded: true)
@@ -191,11 +209,13 @@ class _PrimaryTabStrip extends StatelessWidget {
   const _PrimaryTabStrip({
     required this.hub,
     required this.pendingCertify,
+    required this.pendingProducts,
     required this.onSelect,
   });
 
   final _AdminHub hub;
   final int pendingCertify;
+  final int pendingProducts;
   final void Function(_AdminHub hub, {Object? sub}) onSelect;
 
   @override
@@ -210,7 +230,12 @@ class _PrimaryTabStrip extends StatelessWidget {
         l10n.adminTabCertify,
         pendingCertify,
       ),
-      (_AdminHub.shops, Icons.storefront_outlined, l10n.adminTabShops, 0),
+      (
+        _AdminHub.shops,
+        Icons.storefront_outlined,
+        l10n.adminTabShops,
+        pendingProducts,
+      ),
       (_AdminHub.ops, Icons.tune_outlined, l10n.adminTabOps, 0),
     ];
 
@@ -406,6 +431,7 @@ class _OverviewPane extends StatelessWidget {
     required this.postCount,
     required this.hiddenCount,
     required this.shopCount,
+    required this.pendingProducts,
     required this.members,
   });
 
@@ -416,6 +442,7 @@ class _OverviewPane extends StatelessWidget {
   final int postCount;
   final int hiddenCount;
   final int shopCount;
+  final int pendingProducts;
   final List<MemberAccount> members;
 
   @override
@@ -467,6 +494,14 @@ class _OverviewPane extends StatelessWidget {
               onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.monitor),
             ),
             _MetricCard(
+              label: l10n.adminProductsTab,
+              value: '$pendingProducts',
+              accent: pendingProducts > 0
+                  ? AdminConsoleTheme.danger
+                  : AdminConsoleTheme.aqua,
+              onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.products),
+            ),
+            _MetricCard(
               label: l10n.adminMetricPosts,
               value: '$postCount',
               accent: AdminConsoleTheme.ice,
@@ -483,7 +518,10 @@ class _OverviewPane extends StatelessWidget {
           title: l10n.adminAttentionTitle,
         ),
         const SizedBox(height: 10),
-        if (pendingCertify == 0 && plaqueCount == 0 && hiddenCount == 0)
+        if (pendingCertify == 0 &&
+            plaqueCount == 0 &&
+            hiddenCount == 0 &&
+            pendingProducts == 0)
           _EmptyAttention(message: l10n.adminAttentionClear)
         else ...[
           if (pendingCertify > 0)
@@ -493,6 +531,15 @@ class _OverviewPane extends StatelessWidget {
               color: AdminConsoleTheme.danger,
               onTap: () => onJump(_AdminHub.certify),
             ),
+          if (pendingProducts > 0) ...[
+            const SizedBox(height: 8),
+            _AttentionTile(
+              icon: Icons.add_box_outlined,
+              title: '${l10n.adminProductPendingQueue} · $pendingProducts',
+              color: AdminConsoleTheme.danger,
+              onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.products),
+            ),
+          ],
           if (plaqueCount > 0) ...[
             const SizedBox(height: 8),
             _AttentionTile(
@@ -827,7 +874,6 @@ class _GradeMixCard extends StatelessWidget {
 
 class _QuickAction extends StatelessWidget {
   const _QuickAction({
-    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,

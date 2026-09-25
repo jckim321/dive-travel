@@ -1692,6 +1692,132 @@ abstract class AppLocalizations {
   /// **'오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.'**
   String get adminShopsSubtitle;
 
+  /// No description provided for @adminProductsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행상품 등록'**
+  String get adminProductsTitle;
+
+  /// No description provided for @adminProductsSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 종류를 고르고 등록하면, 최종 공개는 승인 결재 후에만 반영됩니다.'**
+  String get adminProductsSubtitle;
+
+  /// No description provided for @adminProductsTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 등록'**
+  String get adminProductsTab;
+
+  /// No description provided for @adminProductPendingQueue.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 상품'**
+  String get adminProductPendingQueue;
+
+  /// No description provided for @adminProductPendingEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 중인 상품이 없습니다.'**
+  String get adminProductPendingEmpty;
+
+  /// No description provided for @adminProductApproved.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품이 승인되어 공개되었습니다.'**
+  String get adminProductApproved;
+
+  /// No description provided for @adminProductRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 등록이 거절되었습니다.'**
+  String get adminProductRejected;
+
+  /// No description provided for @adminProductSubmitHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.'**
+  String get adminProductSubmitHint;
+
+  /// No description provided for @adminProductSubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 요청이 접수되었습니다.'**
+  String get adminProductSubmitted;
+
+  /// No description provided for @productListingKind.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 종류 (노출 위치)'**
+  String get productListingKind;
+
+  /// No description provided for @productListingDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star 추천'**
+  String get productListingDiveStar;
+
+  /// No description provided for @productListingFavorites.
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾는 곳'**
+  String get productListingFavorites;
+
+  /// No description provided for @productListingPopular.
+  ///
+  /// In ko, this message translates to:
+  /// **'많이 가는 곳'**
+  String get productListingPopular;
+
+  /// No description provided for @productListingNextDeparture.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 출발'**
+  String get productListingNextDeparture;
+
+  /// No description provided for @productListingCurated.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획 상품'**
+  String get productListingCurated;
+
+  /// No description provided for @productStatusPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get productStatusPending;
+
+  /// No description provided for @productStatusApproved.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개됨'**
+  String get productStatusApproved;
+
+  /// No description provided for @productStatusRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'거절됨'**
+  String get productStatusRejected;
+
+  /// No description provided for @productStatusDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'임시저장'**
+  String get productStatusDraft;
+
+  /// No description provided for @partnerOwnProductsOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너는 본인 샵 상품만 등록·수정할 수 있습니다.'**
+  String get partnerOwnProductsOnly;
+
+  /// No description provided for @partnerProductPendingHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록 후 관리자 승인이 완료되면 여행상품에 노출됩니다.'**
+  String get partnerProductPendingHint;
+
   /// No description provided for @adminPlaqueQueue.
   ///
   /// In ko, this message translates to:
