@@ -2121,8 +2121,14 @@ abstract class AppLocalizations {
   /// No description provided for @exploreResortTraits.
   ///
   /// In ko, this message translates to:
-  /// **'리조트 특성'**
+  /// **'편의시설 · 특징'**
   String get exploreResortTraits;
+
+  /// No description provided for @exploreAmenitiesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'쉼표로 구분 (예: Wi-Fi, 수영장, 나이트록스, 공항 픽업)'**
+  String get exploreAmenitiesHint;
 
   /// No description provided for @exploreRecommended.
   ///
@@ -2199,8 +2205,74 @@ abstract class AppLocalizations {
   /// No description provided for @exploreCoverPhotoHint.
   ///
   /// In ko, this message translates to:
-  /// **'Booking.com·아고다처럼 가로 16:9로 보여 줍니다. 세로 사진은 가운데를 잘라 씁니다.'**
+  /// **'Booking.com·아고다처럼 큰 대표컷 + 작은 사진 격자로 보여 줍니다. 첫 장이 대표 이미지입니다.'**
   String get exploreCoverPhotoHint;
+
+  /// No description provided for @exploreGalleryTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 사진'**
+  String get exploreGalleryTitle;
+
+  /// No description provided for @exploreGalleryHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 12장. 첫 장이 목록·상세의 대표 사진이 됩니다.'**
+  String get exploreGalleryHint;
+
+  /// No description provided for @exploreGalleryAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 추가'**
+  String get exploreGalleryAdd;
+
+  /// No description provided for @exploreGalleryAddMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 더 추가'**
+  String get exploreGalleryAddMore;
+
+  /// No description provided for @exploreGalleryEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진을 첨부하면 아고다처럼 갤러리로 보여 줍니다.'**
+  String get exploreGalleryEmpty;
+
+  /// No description provided for @exploreGalleryCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 {count}장'**
+  String exploreGalleryCount(int count);
+
+  /// No description provided for @exploreGalleryViewAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 사진 보기'**
+  String get exploreGalleryViewAll;
+
+  /// No description provided for @exploreGalleryMakeCover.
+  ///
+  /// In ko, this message translates to:
+  /// **'대표로'**
+  String get exploreGalleryMakeCover;
+
+  /// No description provided for @exploreSaveOk.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 정보가 저장되었습니다.'**
+  String get exploreSaveOk;
+
+  /// No description provided for @exploreSaveFail.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장에 실패했습니다. 권한과 네트워크를 확인한 뒤 다시 시도해 주세요.'**
+  String get exploreSaveFail;
+
+  /// No description provided for @exploreSaving.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 중…'**
+  String get exploreSaving;
 
   /// No description provided for @exploreAttachPhoto.
   ///

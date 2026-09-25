@@ -590,17 +590,46 @@ class MemoryDiverRepository implements DiverRepository {
     required int professionalPrice,
     String? intro,
     String? address,
+    List<String>? amenities,
     Uint8List? coverBytes,
     String? coverFileName,
     String? coverContentType,
     bool removeCover = false,
+    List<ShopGallerySlot>? gallery,
   }) async {
     final current = _shopStats[shopId];
-    final coverUrl = removeCover
-        ? ''
-        : (coverBytes == null
-            ? current?.coverUrl
-            : 'memory://shop-cover-$shopId');
+    List<String> galleryUrls;
+    String? coverUrl;
+
+    if (gallery != null) {
+      galleryUrls = [
+        for (var i = 0; i < gallery.length; i++)
+          if (gallery[i].hasBytes)
+            'memory://shop-gallery-$shopId-$i'
+          else if (gallery[i].hasUrl)
+            gallery[i].url!.trim(),
+      ];
+      coverUrl = galleryUrls.isEmpty ? '' : galleryUrls.first;
+    } else {
+      galleryUrls = current?.galleryUrls ?? const [];
+      coverUrl = removeCover
+          ? ''
+          : (coverBytes == null
+              ? current?.coverUrl
+              : 'memory://shop-cover-$shopId');
+      if (coverBytes != null &&
+          coverBytes.isNotEmpty &&
+          (galleryUrls.isEmpty || galleryUrls.first != coverUrl)) {
+        galleryUrls = [
+          coverUrl!,
+          for (final url in galleryUrls)
+            if (url != coverUrl) url,
+        ];
+      } else if (removeCover) {
+        galleryUrls = const [];
+      }
+    }
+
     _shopStats[shopId] =
         (current ??
                 ShopLiveStats(
@@ -620,7 +649,9 @@ class MemoryDiverRepository implements DiverRepository {
               professionalPrice: professionalPrice,
               intro: intro ?? current?.intro,
               address: address ?? current?.address,
+              amenities: amenities ?? current?.amenities,
               coverUrl: coverUrl,
+              galleryUrls: galleryUrls,
             );
     _shopController.add(_shopStats.values.toList());
   }

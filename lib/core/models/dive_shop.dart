@@ -25,6 +25,7 @@ class DiveShop {
     this.blurb = '',
     this.durationLabel = '',
     this.coverUrl = '',
+    this.galleryUrls = const [],
   });
 
   final String id;
@@ -51,6 +52,18 @@ class DiveShop {
   final String blurb;
   final String durationLabel;
   final String coverUrl;
+  final List<String> galleryUrls;
+
+  /// Cover first, then the rest of the gallery (deduped).
+  List<String> get displayGallery {
+    if (galleryUrls.isNotEmpty) {
+      return galleryUrls;
+    }
+    if (coverUrl.isNotEmpty) {
+      return [coverUrl];
+    }
+    return const [];
+  }
 
   /// 상품 SKU가 여러 개여도 같은 리조트(호텔)로 묶입니다.
   String get hullId {
@@ -74,6 +87,8 @@ class DiveShop {
     String? blurb,
     String? durationLabel,
     String? coverUrl,
+    List<String>? galleryUrls,
+    List<String>? amenities,
   }) {
     return DiveShop(
       id: id ?? this.id,
@@ -86,7 +101,7 @@ class DiveShop {
       stars: stars ?? this.stars,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
-      amenities: amenities,
+      amenities: amenities ?? this.amenities,
       consumerPrice: consumerPrice ?? this.consumerPrice,
       professionalPrice: professionalPrice ?? this.professionalPrice,
       accentColor: accentColor,
@@ -96,6 +111,7 @@ class DiveShop {
       blurb: blurb ?? this.blurb,
       durationLabel: durationLabel ?? this.durationLabel,
       coverUrl: coverUrl ?? this.coverUrl,
+      galleryUrls: galleryUrls ?? this.galleryUrls,
     );
   }
 
@@ -122,6 +138,8 @@ class DiveShop {
       intro: live.intro,
       address: live.address,
       coverUrl: live.coverUrl ?? coverUrl,
+      galleryUrls: live.galleryUrls.isNotEmpty ? live.galleryUrls : galleryUrls,
+      amenities: live.amenities.isNotEmpty ? live.amenities : amenities,
     );
   }
 

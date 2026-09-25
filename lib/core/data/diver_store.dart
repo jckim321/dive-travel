@@ -151,10 +151,17 @@ class DiverStore extends ChangeNotifier {
   }
 
   final Map<String, Uint8List> _coverBytes = {};
+  final Map<String, List<Uint8List>> _galleryBytes = {};
   final Set<String> _favoriteShopIds = {};
 
   Uint8List? coverBytesFor(String id) {
     return _coverBytes[id] ?? _coverBytes[id.split('--').first];
+  }
+
+  List<Uint8List> galleryBytesFor(String id) {
+    return _galleryBytes[id] ??
+        _galleryBytes[id.split('--').first] ??
+        const [];
   }
 
   List<DiveShop> lastCallResorts({int limit = 4}) {
@@ -393,16 +400,32 @@ class DiverStore extends ChangeNotifier {
     required int professionalPrice,
     String? intro,
     String? address,
+    List<String>? amenities,
     Uint8List? coverBytes,
     String? coverFileName,
     String? coverContentType,
     bool removeCover = false,
+    List<ShopGallerySlot>? gallery,
   }) {
-    if (coverBytes != null && coverBytes.isNotEmpty) {
+    if (gallery != null) {
+      final local = [
+        for (final slot in gallery)
+          if (slot.hasBytes) slot.bytes!,
+      ];
+      if (local.isNotEmpty) {
+        _coverBytes[shopId] = local.first;
+        _galleryBytes[shopId] = local;
+      } else if (gallery.isEmpty) {
+        _coverBytes.remove(shopId);
+        _galleryBytes.remove(shopId);
+      }
+      notifyListeners();
+    } else if (coverBytes != null && coverBytes.isNotEmpty) {
       _coverBytes[shopId] = coverBytes;
       notifyListeners();
     } else if (removeCover) {
       _coverBytes.remove(shopId);
+      _galleryBytes.remove(shopId);
       notifyListeners();
     }
     return _repository.saveShopProfile(
@@ -414,10 +437,12 @@ class DiverStore extends ChangeNotifier {
       professionalPrice: professionalPrice,
       intro: intro,
       address: address,
+      amenities: amenities,
       coverBytes: coverBytes,
       coverFileName: coverFileName,
       coverContentType: coverContentType,
       removeCover: removeCover,
+      gallery: gallery,
     );
   }
 

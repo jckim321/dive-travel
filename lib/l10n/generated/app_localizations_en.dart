@@ -1130,7 +1130,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Like choosing a room in a hotel, pick the dive product you want.';
 
   @override
-  String get exploreResortTraits => 'What stands out';
+  String get exploreResortTraits => 'Facilities & features';
+
+  @override
+  String get exploreAmenitiesHint =>
+      'Comma-separated (e.g. Wi-Fi, pool, nitrox, airport pickup)';
 
   @override
   String get exploreRecommended => 'Recommended';
@@ -1175,7 +1179,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exploreCoverPhotoHint =>
-      'Shown in 16:9 landscape, like Booking.com and Agoda. Portrait shots are cropped from the center.';
+      'Shown like Agoda: one large cover plus a photo grid. The first photo is the cover.';
+
+  @override
+  String get exploreGalleryTitle => 'Resort photos';
+
+  @override
+  String get exploreGalleryHint =>
+      'Up to 12 photos. The first becomes the cover on listings and the detail page.';
+
+  @override
+  String get exploreGalleryAdd => 'Add photos';
+
+  @override
+  String get exploreGalleryAddMore => 'Add more photos';
+
+  @override
+  String get exploreGalleryEmpty =>
+      'Attach photos to show an Agoda-style gallery.';
+
+  @override
+  String exploreGalleryCount(int count) {
+    return '$count photos';
+  }
+
+  @override
+  String get exploreGalleryViewAll => 'View all photos';
+
+  @override
+  String get exploreGalleryMakeCover => 'Set as cover';
+
+  @override
+  String get exploreSaveOk => 'Resort details saved.';
+
+  @override
+  String get exploreSaveFail =>
+      'Could not save. Check permissions and network, then try again.';
+
+  @override
+  String get exploreSaving => 'Saving…';
 
   @override
   String get exploreAttachPhoto => 'Attach photo';

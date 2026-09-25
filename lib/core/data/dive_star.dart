@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -61,6 +63,8 @@ class ShopLiveStats {
     this.intro,
     this.address,
     this.coverUrl,
+    this.galleryUrls = const [],
+    this.amenities = const [],
   });
 
   factory ShopLiveStats.fromDocument(String id, Map<String, dynamic> data) {
@@ -101,6 +105,14 @@ class ShopLiveStats {
       intro: data['intro'] as String?,
       address: data['address'] as String?,
       coverUrl: data['cover_url'] as String?,
+      galleryUrls: [
+        for (final item in (data['gallery_urls'] as List<dynamic>? ?? const []))
+          if (item is String && item.trim().isNotEmpty) item.trim(),
+      ],
+      amenities: [
+        for (final item in (data['amenities'] as List<dynamic>? ?? const []))
+          if (item is String && item.trim().isNotEmpty) item.trim(),
+      ],
     );
   }
 
@@ -122,6 +134,20 @@ class ShopLiveStats {
   final String? intro;
   final String? address;
   final String? coverUrl;
+  final List<String> galleryUrls;
+  final List<String> amenities;
+
+  /// Ordered resort photos. First becomes [coverUrl] after save.
+  List<String> get displayGallery {
+    if (galleryUrls.isNotEmpty) {
+      return galleryUrls;
+    }
+    final cover = coverUrl;
+    if (cover != null && cover.isNotEmpty) {
+      return [cover];
+    }
+    return const [];
+  }
 
   bool get qualifiesForPlaque => diveStar >= 1 && reviewCount > 0;
 
@@ -137,6 +163,8 @@ class ShopLiveStats {
     String? intro,
     String? address,
     String? coverUrl,
+    List<String>? galleryUrls,
+    List<String>? amenities,
   }) {
     return ShopLiveStats(
       shopId: shopId,
@@ -157,6 +185,28 @@ class ShopLiveStats {
       intro: intro ?? this.intro,
       address: address ?? this.address,
       coverUrl: coverUrl ?? this.coverUrl,
+      galleryUrls: galleryUrls ?? this.galleryUrls,
+      amenities: amenities ?? this.amenities,
     );
   }
+}
+
+/// One ordered gallery slot for [DiverRepository.saveShopProfile].
+/// Prefer [bytes] for new uploads; [url] keeps an existing remote photo.
+class ShopGallerySlot {
+  const ShopGallerySlot({
+    this.url,
+    this.bytes,
+    this.fileName,
+    this.contentType,
+  });
+
+  final String? url;
+  final Uint8List? bytes;
+  final String? fileName;
+  final String? contentType;
+
+  bool get hasBytes => bytes != null && bytes!.isNotEmpty;
+
+  bool get hasUrl => url != null && url!.trim().isNotEmpty;
 }

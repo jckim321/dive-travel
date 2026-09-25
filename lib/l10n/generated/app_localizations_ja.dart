@@ -1086,7 +1086,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreChooseRoomHint => '호텔에서 객실을 고르듯, 원하는 다이브 상품을 고르세요.';
 
   @override
-  String get exploreResortTraits => '리조트 특성';
+  String get exploreResortTraits => '편의시설 · 특징';
+
+  @override
+  String get exploreAmenitiesHint => '쉼표로 구분 (예: Wi-Fi, 수영장, 나이트록스, 공항 픽업)';
 
   @override
   String get exploreRecommended => '추천';
@@ -1131,7 +1134,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get exploreCoverPhotoHint =>
-      'Booking.com·아고다처럼 가로 16:9로 보여 줍니다. 세로 사진은 가운데를 잘라 씁니다.';
+      'Booking.com·아고다처럼 큰 대표컷 + 작은 사진 격자로 보여 줍니다. 첫 장이 대표 이미지입니다.';
+
+  @override
+  String get exploreGalleryTitle => '리조트 사진';
+
+  @override
+  String get exploreGalleryHint => '최대 12장. 첫 장이 목록·상세의 대표 사진이 됩니다.';
+
+  @override
+  String get exploreGalleryAdd => '사진 추가';
+
+  @override
+  String get exploreGalleryAddMore => '사진 더 추가';
+
+  @override
+  String get exploreGalleryEmpty => '사진을 첨부하면 아고다처럼 갤러리로 보여 줍니다.';
+
+  @override
+  String exploreGalleryCount(int count) {
+    return '사진 $count장';
+  }
+
+  @override
+  String get exploreGalleryViewAll => '모든 사진 보기';
+
+  @override
+  String get exploreGalleryMakeCover => '대표로';
+
+  @override
+  String get exploreSaveOk => '리조트 정보가 저장되었습니다.';
+
+  @override
+  String get exploreSaveFail => '저장에 실패했습니다. 권한과 네트워크를 확인한 뒤 다시 시도해 주세요.';
+
+  @override
+  String get exploreSaving => '저장 중…';
 
   @override
   String get exploreAttachPhoto => '사진 첨부';

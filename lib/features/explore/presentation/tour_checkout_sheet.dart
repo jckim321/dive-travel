@@ -487,7 +487,7 @@ class _PhotoTile extends StatelessWidget {
           children: [
             FractionalTranslation(
               translation: Offset(shift, 0),
-              child: ListingCoverPhoto(shop: shop, opacity: 0.42),
+              child: ListingCoverPhoto(shop: shop),
             ),
             const DecoratedBox(
               decoration: BoxDecoration(

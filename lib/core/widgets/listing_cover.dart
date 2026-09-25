@@ -11,6 +11,9 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 abstract final class ListingCover {
   static const double aspectRatio = 16 / 9;
 
+  /// Prefer full opacity; dimming makes uploaded photos look soft/washed out.
+  static const double photoOpacity = 1;
+
   static double cardExtent(BuildContext context, {double horizontal = 52}) {
     final cellW = (MediaQuery.sizeOf(context).width - horizontal) / 2;
     return cellW / aspectRatio + 120;
@@ -22,7 +25,7 @@ class ListingCoverPhoto extends StatelessWidget {
     super.key,
     required this.shop,
     this.bytes,
-    this.opacity = 0.45,
+    this.opacity = ListingCover.photoOpacity,
     this.radius = 0,
   });
 
@@ -39,23 +42,40 @@ class ListingCoverPhoto extends StatelessWidget {
         store.coverBytesFor(shop.hullId);
     final url = shop.coverUrl;
     final accent = Color(shop.accentColor);
+    final dpr = MediaQuery.devicePixelRatioOf(context);
 
     Widget image;
     if (data != null && data.isNotEmpty) {
-      image = Image.memory(data, fit: BoxFit.cover);
+      image = Image.memory(
+        data,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        gaplessPlayback: true,
+        isAntiAlias: true,
+      );
     } else if (url.isNotEmpty && !url.startsWith('memory://')) {
       image = Image.network(
         url,
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        gaplessPlayback: true,
+        isAntiAlias: true,
+        // Decode near device density so OTA covers stay sharp on retina.
+        cacheWidth: (900 * dpr).round().clamp(600, 1800),
         errorBuilder: (_, _, _) => const SizedBox.shrink(),
       );
     } else {
       image = Image.asset(
         'assets/images/test_dive_photo.png',
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
         errorBuilder: (_, _, _) => const SizedBox.shrink(),
       );
     }
+
+    final photo = opacity >= 0.999
+        ? image
+        : Opacity(opacity: opacity, child: image);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -65,7 +85,7 @@ class ListingCoverPhoto extends StatelessWidget {
           colors: [accent, AppTheme.ocean, AppTheme.oceanDeep],
         ),
       ),
-      child: Opacity(opacity: opacity, child: image),
+      child: photo,
     );
   }
 }

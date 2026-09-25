@@ -112,10 +112,12 @@ abstract class DiverRepository {
     required int professionalPrice,
     String? intro,
     String? address,
+    List<String>? amenities,
     Uint8List? coverBytes,
     String? coverFileName,
     String? coverContentType,
     bool removeCover = false,
+    List<ShopGallerySlot>? gallery,
   });
 
   Future<void> saveShopProduct({

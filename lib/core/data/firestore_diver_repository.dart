@@ -889,14 +889,36 @@ class FirestoreDiverRepository implements DiverRepository {
     required int professionalPrice,
     String? intro,
     String? address,
+    List<String>? amenities,
     Uint8List? coverBytes,
     String? coverFileName,
     String? coverContentType,
     bool removeCover = false,
+    List<ShopGallerySlot>? gallery,
   }) async {
     final catalog = DiveShopCatalog.byId(shopId);
     String? coverUrl;
-    if (coverBytes != null && coverBytes.isNotEmpty) {
+    List<String>? galleryUrls;
+
+    if (gallery != null) {
+      galleryUrls = <String>[];
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+      for (var i = 0; i < gallery.length; i++) {
+        final slot = gallery[i];
+        if (slot.hasBytes) {
+          final extension = _photoExtension(slot.fileName);
+          final url = await _photos.upload(
+            objectKey: 'shops/$shopId/gallery/${stamp}_$i$extension',
+            bytes: slot.bytes!,
+            contentType: slot.contentType ?? 'image/jpeg',
+          );
+          galleryUrls.add(url);
+        } else if (slot.hasUrl) {
+          galleryUrls.add(slot.url!.trim());
+        }
+      }
+      coverUrl = galleryUrls.isEmpty ? null : galleryUrls.first;
+    } else if (coverBytes != null && coverBytes.isNotEmpty) {
       final extension = _photoExtension(coverFileName);
       coverUrl = await _photos.upload(
         objectKey: 'shops/$shopId/cover$extension',
@@ -904,6 +926,7 @@ class FirestoreDiverRepository implements DiverRepository {
         contentType: coverContentType ?? 'image/jpeg',
       );
     }
+
     return _shops.doc(shopId).set({
       'name': name.trim(),
       'location': location.trim(),
@@ -912,8 +935,14 @@ class FirestoreDiverRepository implements DiverRepository {
       'professional_price': professionalPrice,
       if (intro != null) 'intro': intro.trim(),
       if (address != null) 'address': address.trim(),
-      if (coverUrl != null) 'cover_url': coverUrl,
-      if (removeCover && coverUrl == null) 'cover_url': FieldValue.delete(),
+      if (amenities != null) 'amenities': amenities,
+      if (galleryUrls != null) 'gallery_urls': galleryUrls,
+      if (galleryUrls != null && galleryUrls.isEmpty)
+        'cover_url': FieldValue.delete()
+      else if (coverUrl != null)
+        'cover_url': coverUrl
+      else if (removeCover)
+        'cover_url': FieldValue.delete(),
       'country': catalog?.country,
       'continent': catalog?.continent,
       'commission_rate': RefundPolicy.defaultCommissionRate,
@@ -967,8 +996,18 @@ class FirestoreDiverRepository implements DiverRepository {
       'product_name': saved.name,
       'consumer_price': saved.consumerPrice,
       'professional_price': saved.professionalPrice,
-      if (useAsResortCover && saved.coverUrl.isNotEmpty)
+      if (useAsResortCover && saved.coverUrl.isNotEmpty) ...{
         'cover_url': saved.coverUrl,
+        'gallery_urls': [
+          saved.coverUrl,
+          for (final item
+              in (snap.data()?['gallery_urls'] as List<dynamic>? ?? const []))
+            if (item is String &&
+                item.trim().isNotEmpty &&
+                item.trim() != saved.coverUrl)
+              item.trim(),
+        ],
+      },
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

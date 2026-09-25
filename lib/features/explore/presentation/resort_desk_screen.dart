@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+const _kMaxGallery = 12;
 
 class ResortDeskScreen extends StatefulWidget {
   const ResortDeskScreen({super.key, required this.shopId});
@@ -25,10 +28,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _product = TextEditingController();
   final _consumer = TextEditingController();
   final _pro = TextEditingController();
+  final _amenities = TextEditingController();
   final _photoPicker = const DivePhotoPicker();
-  PickedPhoto? _cover;
-  var _removeCover = false;
+  final List<_GallerySlot> _slots = [];
   var _seeded = false;
+  var _saving = false;
 
   @override
   void didChangeDependencies() {
@@ -48,6 +52,48 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _product.text = live?.productName ?? hull?.productName ?? '';
     _consumer.text = '${live?.consumerPrice ?? hull?.consumerPrice ?? 0}';
     _pro.text = '${live?.professionalPrice ?? hull?.professionalPrice ?? 0}';
+    final amenitySource = (live?.amenities.isNotEmpty ?? false)
+        ? live!.amenities
+        : (hull?.amenities ?? const <String>[]);
+    _amenities.text = amenitySource.join(', ');
+
+    final urls = live?.displayGallery ??
+        (hull == null
+            ? const <String>[]
+            : hull.displayGallery);
+    final localBytes = store.galleryBytesFor(widget.shopId);
+    if (localBytes.isNotEmpty && urls.isEmpty) {
+      for (final bytes in localBytes) {
+        _slots.add(
+          _GallerySlot.local(
+            PickedPhoto(
+              bytes: bytes,
+              fileName: 'gallery.jpg',
+              contentType: 'image/jpeg',
+            ),
+          ),
+        );
+      }
+    } else {
+      for (final url in urls) {
+        if (url.isEmpty || url.startsWith('memory://')) {
+          continue;
+        }
+        _slots.add(_GallerySlot.remote(url));
+      }
+      final coverBytes = store.coverBytesFor(widget.shopId);
+      if (_slots.isEmpty && coverBytes != null && coverBytes.isNotEmpty) {
+        _slots.add(
+          _GallerySlot.local(
+            PickedPhoto(
+              bytes: coverBytes,
+              fileName: 'cover.jpg',
+              contentType: 'image/jpeg',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -59,54 +105,123 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _product.dispose();
     _consumer.dispose();
     _pro.dispose();
+    _amenities.dispose();
     super.dispose();
   }
 
-  Future<void> _pickCover() async {
-    final photo = await _photoPicker.pick();
-    if (photo == null || !mounted) {
+  Future<void> _addPhotos() async {
+    final remaining = _kMaxGallery - _slots.length;
+    if (remaining <= 0) {
+      return;
+    }
+    final photos = await _photoPicker.pickMultiple(max: remaining);
+    if (photos.isEmpty || !mounted) {
       return;
     }
     setState(() {
-      _cover = photo;
-      _removeCover = false;
+      for (final photo in photos) {
+        if (_slots.length >= _kMaxGallery) {
+          break;
+        }
+        _slots.add(_GallerySlot.local(photo));
+      }
     });
   }
 
-  Future<void> _useTestCover() async {
+  Future<void> _useTestPhoto() async {
+    if (_slots.length >= _kMaxGallery) {
+      return;
+    }
     final data = await rootBundle.load('assets/images/test_dive_photo.png');
     if (!mounted) {
       return;
     }
     setState(() {
-      _cover = PickedPhoto(
-        bytes: data.buffer.asUint8List(),
-        fileName: 'test_dive_photo.png',
-        contentType: 'image/png',
+      _slots.add(
+        _GallerySlot.local(
+          PickedPhoto(
+            bytes: data.buffer.asUint8List(),
+            fileName: 'test_dive_photo.png',
+            contentType: 'image/png',
+          ),
+        ),
       );
-      _removeCover = false;
+    });
+  }
+
+  void _removeAt(int index) {
+    setState(() => _slots.removeAt(index));
+  }
+
+  void _makeCover(int index) {
+    if (index <= 0 || index >= _slots.length) {
+      return;
+    }
+    setState(() {
+      final item = _slots.removeAt(index);
+      _slots.insert(0, item);
     });
   }
 
   Future<void> _saveProfile() async {
-    await DiverStoreScope.of(context).saveShopProfile(
-      shopId: widget.shopId,
-      name: _name.text,
-      location: _location.text,
-      productName: _product.text,
-      consumerPrice: int.tryParse(_consumer.text) ?? 0,
-      professionalPrice: int.tryParse(_pro.text) ?? 0,
-      intro: _intro.text,
-      address: _address.text,
-      coverBytes: _cover?.bytes,
-      coverFileName: _cover?.fileName,
-      coverContentType: _cover?.contentType,
-      removeCover: _removeCover && _cover == null,
-    );
-    if (mounted) {
+    if (_saving) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final name = _name.text.trim();
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).partnerSave)),
+        SnackBar(content: Text(l10n.partnerShopName)),
       );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      await DiverStoreScope.of(context).saveShopProfile(
+        shopId: widget.shopId,
+        name: name,
+        location: _location.text,
+        productName: _product.text,
+        consumerPrice: int.tryParse(_consumer.text) ?? 0,
+        professionalPrice: int.tryParse(_pro.text) ?? 0,
+        intro: _intro.text,
+        address: _address.text,
+        amenities: [
+          for (final part in _amenities.text.split(RegExp(r'[,，\n]')))
+            if (part.trim().isNotEmpty) part.trim(),
+        ],
+        gallery: [
+          for (final slot in _slots)
+            ShopGallerySlot(
+              url: slot.url,
+              bytes: slot.photo?.bytes,
+              fileName: slot.photo?.fileName,
+              contentType: slot.photo?.contentType,
+            ),
+        ],
+        removeCover: _slots.isEmpty,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exploreSaveOk)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.exploreSaveFail}\n$error'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -116,30 +231,32 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final store = DiverStoreScope.of(context);
     final live = store.liveStatsFor(widget.shopId);
     final listings = store.listingsOnHull(widget.shopId);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.exploreEditResort),
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : _saveProfile,
+            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
+          ),
+        ],
       ),
       body: ListView(
         key: const Key('resort-desk'),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          Text(l10n.exploreDeskHint, style: Theme.of(context).textTheme.bodyMedium),
+          Text(l10n.exploreDeskHint, style: theme.textTheme.bodyMedium),
           const SizedBox(height: 16),
-          _CoverEditor(
-            fieldKey: 'resort-cover-field',
-            bytes: _cover?.bytes ??
-                store.coverBytesFor(widget.shopId),
-            imageUrl: _removeCover ? '' : (live?.coverUrl ?? listings.firstOrNull?.coverUrl),
-            onPick: _pickCover,
-            onTest: _useTestCover,
-            onRemove: () => setState(() {
-              _cover = null;
-              _removeCover = true;
-            }),
+          _AgodaGalleryEditor(
+            slots: _slots,
+            onAdd: _addPhotos,
+            onTest: _useTestPhoto,
+            onRemove: _removeAt,
+            onMakeCover: _makeCover,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           TextField(
             controller: _name,
             decoration: InputDecoration(labelText: l10n.partnerShopName),
@@ -163,6 +280,16 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const Key('resort-amenities-field'),
+            controller: _amenities,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: l10n.exploreResortTraits,
+              hintText: l10n.exploreAmenitiesHint,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
             controller: _product,
             decoration: InputDecoration(labelText: l10n.partnerDefaultProduct),
           ),
@@ -178,21 +305,24 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(labelText: l10n.exploreProPrice),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           FilledButton(
-            onPressed: _saveProfile,
-            child: Text(l10n.partnerSave),
+            key: const Key('resort-save'),
+            onPressed: _saving ? null : _saveProfile,
+            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
           ),
           const SizedBox(height: 28),
-          Text(l10n.partnerProductForm, style: Theme.of(context).textTheme.titleMedium),
+          Text(l10n.partnerProductForm, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(l10n.partnerProductFormHint, style: Theme.of(context).textTheme.bodySmall),
+          Text(l10n.partnerProductFormHint, style: theme.textTheme.bodySmall),
           const SizedBox(height: 12),
           for (final shop in listings)
             Card(
               child: ListTile(
                 title: Text(shop.productName),
-                subtitle: Text(shop.blurb.isEmpty ? shop.durationLabel : shop.blurb),
+                subtitle: Text(
+                  shop.blurb.isEmpty ? shop.durationLabel : shop.blurb,
+                ),
                 trailing: const Icon(Icons.edit_outlined),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -217,8 +347,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             ),
           if (live != null)
             for (final product in live.products)
-              if (!listings.any((shop) =>
-                  shop.id.endsWith(product.id) || shop.productName == product.name))
+              if (!listings.any(
+                (shop) =>
+                    shop.id.endsWith(product.id) ||
+                    shop.productName == product.name,
+              ))
                 Card(
                   child: ListTile(
                     title: Text(product.name),
@@ -245,6 +378,457 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             label: Text(l10n.partnerProductForm),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GallerySlot {
+  const _GallerySlot._({this.url, this.photo});
+
+  factory _GallerySlot.remote(String url) => _GallerySlot._(url: url);
+
+  factory _GallerySlot.local(PickedPhoto photo) => _GallerySlot._(photo: photo);
+
+  final String? url;
+  final PickedPhoto? photo;
+
+  bool get hasImage =>
+      (photo != null && photo!.bytes.isNotEmpty) ||
+      (url != null && url!.isNotEmpty && !url!.startsWith('memory://'));
+}
+
+class _AgodaGalleryEditor extends StatelessWidget {
+  const _AgodaGalleryEditor({
+    required this.slots,
+    required this.onAdd,
+    required this.onTest,
+    required this.onRemove,
+    required this.onMakeCover,
+  });
+
+  final List<_GallerySlot> slots;
+  final VoidCallback onAdd;
+  final VoidCallback onTest;
+  final ValueChanged<int> onRemove;
+  final ValueChanged<int> onMakeCover;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final canAdd = slots.length < _kMaxGallery;
+
+    return Column(
+      key: const Key('resort-cover-field'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.exploreGalleryTitle, style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        Text(l10n.exploreCoverPhotoHint, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 4),
+        Text(
+          slots.isEmpty
+              ? l10n.exploreGalleryEmpty
+              : l10n.exploreGalleryCount(slots.length),
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (slots.isEmpty)
+          _EmptyGalleryDrop(onAdd: onAdd)
+        else
+          _AgodaGalleryGrid(
+            slots: slots,
+            onRemove: onRemove,
+            onMakeCover: onMakeCover,
+            onAdd: canAdd ? onAdd : null,
+          ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.tonalIcon(
+              key: const Key('resort-cover-field-attach'),
+              onPressed: canAdd ? onAdd : null,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(
+                slots.isEmpty
+                    ? l10n.exploreAttachPhoto
+                    : l10n.exploreGalleryAddMore,
+              ),
+            ),
+            OutlinedButton(
+              key: const Key('resort-cover-field-test'),
+              onPressed: canAdd ? onTest : null,
+              child: Text(l10n.logbookUseTestPhoto),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyGalleryDrop extends StatelessWidget {
+  const _EmptyGalleryDrop({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Material(
+      color: const Color(0xFF0B1F33),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onAdd,
+        borderRadius: BorderRadius.circular(14),
+        child: AspectRatio(
+          aspectRatio: ListingCover.aspectRatio,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.add_a_photo_outlined,
+                  size: 36,
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  l10n.exploreGalleryAdd,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.exploreGalleryHint,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AgodaGalleryGrid extends StatelessWidget {
+  const _AgodaGalleryGrid({
+    required this.slots,
+    required this.onRemove,
+    required this.onMakeCover,
+    this.onAdd,
+  });
+
+  final List<_GallerySlot> slots;
+  final ValueChanged<int> onRemove;
+  final ValueChanged<int> onMakeCover;
+  final VoidCallback? onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final extras = slots.length > 1 ? slots.sublist(1) : const <_GallerySlot>[];
+    final showTiles = extras.take(4).toList();
+    final moreCount = slots.length > 5 ? slots.length - 5 : 0;
+
+    return AspectRatio(
+      aspectRatio: 2.05,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 6,
+            child: _GalleryTile(
+              slot: slots.first,
+              isCover: true,
+              label: l10n.exploreCoverPhoto,
+              onRemove: () => onRemove(0),
+              badge: moreCount > 0
+                  ? null
+                  : slots.length > 1
+                      ? l10n.exploreGalleryViewAll
+                      : null,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _smallOrAdd(
+                          context,
+                          index: 1,
+                          showTiles: showTiles,
+                          onAdd: onAdd,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _smallOrAdd(
+                          context,
+                          index: 2,
+                          showTiles: showTiles,
+                          onAdd: onAdd,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _smallOrAdd(
+                          context,
+                          index: 3,
+                          showTiles: showTiles,
+                          onAdd: onAdd,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _smallOrAdd(
+                              context,
+                              index: 4,
+                              showTiles: showTiles,
+                              onAdd: onAdd,
+                            ),
+                            if (moreCount > 0)
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '+$moreCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _smallOrAdd(
+    BuildContext context, {
+    required int index,
+    required List<_GallerySlot> showTiles,
+    required VoidCallback? onAdd,
+  }) {
+    final slotIndex = index;
+    final tileIndex = index - 1;
+    if (tileIndex < showTiles.length) {
+      return _GalleryTile(
+        slot: showTiles[tileIndex],
+        onRemove: () => onRemove(slotIndex),
+        onMakeCover: () => onMakeCover(slotIndex),
+      );
+    }
+    if (onAdd == null) {
+      return const SizedBox.shrink();
+    }
+    return Material(
+      color: const Color(0xFF16324A),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onAdd,
+        borderRadius: BorderRadius.circular(10),
+        child: const Center(
+          child: Icon(Icons.add, color: Colors.white70),
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryTile extends StatelessWidget {
+  const _GalleryTile({
+    required this.slot,
+    required this.onRemove,
+    this.onMakeCover,
+    this.isCover = false,
+    this.label,
+    this.badge,
+  });
+
+  final _GallerySlot slot;
+  final VoidCallback onRemove;
+  final VoidCallback? onMakeCover;
+  final bool isCover;
+  final String? label;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final radius = BorderRadius.circular(isCover ? 14 : 10);
+    return ClipRRect(
+      borderRadius: radius,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(
+            color: const Color(0xFF0B1F33),
+            child: slot.photo != null
+                ? Image.memory(slot.photo!.bytes, fit: BoxFit.cover)
+                : slot.url != null && slot.url!.isNotEmpty
+                    ? Image.network(
+                        slot.url!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      )
+                    : Image.asset(
+                        'assets/images/test_dive_photo.png',
+                        fit: BoxFit.cover,
+                        opacity: const AlwaysStoppedAnimation(0.45),
+                      ),
+          ),
+          if (label != null)
+            Positioned(
+              left: 10,
+              bottom: 10,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    label!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (badge != null)
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.photo_library_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        badge!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (onMakeCover != null)
+                  _TileAction(
+                    tooltip: l10n.exploreGalleryMakeCover,
+                    icon: Icons.star_outline,
+                    onTap: onMakeCover!,
+                  ),
+                _TileAction(
+                  tooltip: l10n.exploreCoverRemove,
+                  icon: Icons.close,
+                  onTap: onRemove,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TileAction extends StatelessWidget {
+  const _TileAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Material(
+        color: Colors.black54,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Tooltip(
+            message: tooltip,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(icon, size: 16, color: Colors.white),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -390,26 +974,39 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
               if (name.isEmpty) {
                 return;
               }
-              await DiverStoreScope.of(context).saveShopProduct(
-                shopId: widget.shopId,
-                product: ShopProduct(
-                  id: widget.existing?.id ??
-                      'p-${DateTime.now().millisecondsSinceEpoch}',
+              try {
+                await DiverStoreScope.of(context).saveShopProduct(
                   shopId: widget.shopId,
-                  name: name,
-                  consumerPrice: int.tryParse(_consumer.text) ?? 0,
-                  professionalPrice: int.tryParse(_pro.text) ?? 0,
-                  blurb: _blurb.text.trim(),
-                  durationLabel: _duration.text.trim(),
-                  coverUrl: widget.existing?.coverUrl ?? '',
-                ),
-                photoBytes: _photo?.bytes,
-                photoFileName: _photo?.fileName,
-                photoContentType: _photo?.contentType,
-                useAsResortCover: _useAsCover,
-              );
-              if (context.mounted) {
-                Navigator.of(context).pop();
+                  product: ShopProduct(
+                    id: widget.existing?.id ??
+                        'p-${DateTime.now().millisecondsSinceEpoch}',
+                    shopId: widget.shopId,
+                    name: name,
+                    consumerPrice: int.tryParse(_consumer.text) ?? 0,
+                    professionalPrice: int.tryParse(_pro.text) ?? 0,
+                    blurb: _blurb.text.trim(),
+                    durationLabel: _duration.text.trim(),
+                    coverUrl: widget.existing?.coverUrl ?? '',
+                  ),
+                  photoBytes: _photo?.bytes,
+                  photoFileName: _photo?.fileName,
+                  photoContentType: _photo?.contentType,
+                  useAsResortCover: _useAsCover,
+                );
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              } catch (error) {
+                if (!context.mounted) {
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${AppLocalizations.of(context).exploreSaveFail}\n$error',
+                    ),
+                  ),
+                );
               }
             },
             child: Text(l10n.partnerSave),
@@ -449,9 +1046,15 @@ class _CoverEditor extends StatelessWidget {
       key: Key(fieldKey),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.exploreCoverPhoto, style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          l10n.exploreCoverPhoto,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         const SizedBox(height: 6),
-        Text(l10n.exploreCoverPhotoHint, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          l10n.exploreCoverPhotoHint,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
@@ -462,14 +1065,14 @@ class _CoverEditor extends StatelessWidget {
               child: bytes != null && bytes!.isNotEmpty
                   ? Image.memory(bytes!, fit: BoxFit.cover)
                   : imageUrl != null &&
-                        imageUrl!.isNotEmpty &&
-                        !imageUrl!.startsWith('memory://')
-                  ? Image.network(imageUrl!, fit: BoxFit.cover)
-                  : Image.asset(
-                      'assets/images/test_dive_photo.png',
-                      fit: BoxFit.cover,
-                      opacity: const AlwaysStoppedAnimation(0.45),
-                    ),
+                          imageUrl!.isNotEmpty &&
+                          !imageUrl!.startsWith('memory://')
+                      ? Image.network(imageUrl!, fit: BoxFit.cover)
+                      : Image.asset(
+                          'assets/images/test_dive_photo.png',
+                          fit: BoxFit.cover,
+                          opacity: const AlwaysStoppedAnimation(0.45),
+                        ),
             ),
           ),
         ),

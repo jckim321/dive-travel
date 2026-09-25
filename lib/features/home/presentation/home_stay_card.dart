@@ -53,7 +53,7 @@ class HomeStayCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  ListingCoverPhoto(shop: shop, opacity: 0.42),
+                  ListingCoverPhoto(shop: shop),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

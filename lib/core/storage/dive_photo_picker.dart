@@ -35,35 +35,56 @@ class DivePhotoPicker {
   const DivePhotoPicker();
 
   Future<PickedPhoto?> pick() async {
+    final many = await pickMultiple(max: 1);
+    return many.isEmpty ? null : many.first;
+  }
+
+  Future<List<PickedPhoto>> pickMultiple({int max = 12}) async {
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS)) {
-      final file = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 2400,
+      final files = await ImagePicker().pickMultiImage(
+        // Keep near-original resolution for OTA gallery sharpness.
+        imageQuality: 98,
+        maxWidth: 4096,
+        limit: max,
       );
-      if (file == null) {
-        return null;
+      if (files.isEmpty) {
+        return const [];
       }
-      final bytes = await file.readAsBytes();
-      return PickedPhoto(
-        bytes: bytes,
-        fileName: file.name,
-        contentType: _contentType(file.name, file.mimeType),
-      );
+      final out = <PickedPhoto>[];
+      for (final file in files.take(max)) {
+        final bytes = await file.readAsBytes();
+        out.add(
+          PickedPhoto(
+            bytes: bytes,
+            fileName: file.name,
+            contentType: _contentType(file.name, file.mimeType),
+          ),
+        );
+      }
+      return out;
     }
 
-    final file = await FilePicker.pickFile(type: FileType.image);
-    if (file == null) {
-      return null;
+    final files = await FilePicker.pickFiles(type: FileType.image);
+    if (files.isEmpty) {
+      return const [];
     }
-    final bytes = await file.readAsBytes();
-    return PickedPhoto(
-      bytes: bytes,
-      fileName: file.name,
-      contentType: _contentType(file.name, file.extension),
-    );
+    final out = <PickedPhoto>[];
+    for (final file in files.take(max)) {
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty) {
+        continue;
+      }
+      out.add(
+        PickedPhoto(
+          bytes: bytes,
+          fileName: file.name,
+          contentType: _contentType(file.name, file.extension),
+        ),
+      );
+    }
+    return out;
   }
 
   static String _contentType(String fileName, String? hint) {
