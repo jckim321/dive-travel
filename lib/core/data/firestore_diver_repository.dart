@@ -879,6 +879,9 @@ class FirestoreDiverRepository implements DiverRepository {
     return _posts.doc(postId).delete();
   }
 
+import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
+
   @override
   Future<void> saveShopProfile({
     required String shopId,
@@ -899,6 +902,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final catalog = DiveShopCatalog.byId(shopId);
     String? coverUrl;
     List<String>? galleryUrls;
+    var photoUploadFailed = false;
 
     if (gallery != null) {
       galleryUrls = <String>[];
@@ -906,28 +910,39 @@ class FirestoreDiverRepository implements DiverRepository {
       for (var i = 0; i < gallery.length; i++) {
         final slot = gallery[i];
         if (slot.hasBytes) {
-          final extension = _photoExtension(slot.fileName);
-          final url = await _photos.upload(
-            objectKey: 'shops/$shopId/gallery/${stamp}_$i$extension',
-            bytes: slot.bytes!,
-            contentType: slot.contentType ?? 'image/jpeg',
-          );
-          galleryUrls.add(url);
+          try {
+            final extension = _photoExtension(slot.fileName);
+            final url = await _photos.upload(
+              objectKey: 'shops/$shopId/gallery/${stamp}_$i$extension',
+              bytes: slot.bytes!,
+              contentType: slot.contentType ?? 'image/jpeg',
+            );
+            galleryUrls.add(url);
+          } catch (_) {
+            photoUploadFailed = true;
+            if (slot.hasUrl) {
+              galleryUrls.add(slot.url!.trim());
+            }
+          }
         } else if (slot.hasUrl) {
           galleryUrls.add(slot.url!.trim());
         }
       }
       coverUrl = galleryUrls.isEmpty ? null : galleryUrls.first;
     } else if (coverBytes != null && coverBytes.isNotEmpty) {
-      final extension = _photoExtension(coverFileName);
-      coverUrl = await _photos.upload(
-        objectKey: 'shops/$shopId/cover$extension',
-        bytes: coverBytes,
-        contentType: coverContentType ?? 'image/jpeg',
-      );
+      try {
+        final extension = _photoExtension(coverFileName);
+        coverUrl = await _photos.upload(
+          objectKey: 'shops/$shopId/cover$extension',
+          bytes: coverBytes,
+          contentType: coverContentType ?? 'image/jpeg',
+        );
+      } catch (_) {
+        photoUploadFailed = true;
+      }
     }
 
-    return _shops.doc(shopId).set({
+    await _shops.doc(shopId).set({
       'name': name.trim(),
       'location': location.trim(),
       'product_name': productName.trim(),
@@ -948,6 +963,12 @@ class FirestoreDiverRepository implements DiverRepository {
       'commission_rate': RefundPolicy.defaultCommissionRate,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    if (photoUploadFailed) {
+      throw const R2UploadException(
+        '리조트 정보는 저장했지만 사진 업로드에 실패했습니다. R2 설정을 확인한 뒤 사진을 다시 첨부해 주세요.',
+      );
+    }
   }
 
   @override
@@ -960,14 +981,19 @@ class FirestoreDiverRepository implements DiverRepository {
     bool useAsResortCover = false,
   }) async {
     var saved = product;
+    var photoUploadFailed = false;
     if (photoBytes != null && photoBytes.isNotEmpty) {
-      final extension = _photoExtension(photoFileName);
-      final url = await _photos.upload(
-        objectKey: 'shops/$shopId/products/${product.id}$extension',
-        bytes: photoBytes,
-        contentType: photoContentType ?? 'image/jpeg',
-      );
-      saved = product.copyWith(coverUrl: url);
+      try {
+        final extension = _photoExtension(photoFileName);
+        final url = await _photos.upload(
+          objectKey: 'shops/$shopId/products/${product.id}$extension',
+          bytes: photoBytes,
+          contentType: photoContentType ?? 'image/jpeg',
+        );
+        saved = product.copyWith(coverUrl: url);
+      } catch (_) {
+        photoUploadFailed = true;
+      }
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
@@ -1000,6 +1026,12 @@ class FirestoreDiverRepository implements DiverRepository {
       },
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    if (photoUploadFailed) {
+      throw const R2UploadException(
+        '상품 정보는 저장했지만 사진 업로드에 실패했습니다. R2 설정을 확인한 뒤 사진을 다시 첨부해 주세요.',
+      );
+    }
   }
 
   @override

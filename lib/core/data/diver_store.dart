@@ -517,12 +517,19 @@ class DiverStore extends ChangeNotifier {
       return Future.error(StateError('Not allowed to edit this shop product'));
     }
 
-    // Final publish always goes through owner approval (pending queue).
-    final gated = product.copyWith(
-      publishStatus: ProductPublishStatus.pending,
-      submittedAt: DateTime.now(),
-      active: false,
-    );
+    // Partners submit for owner approval; admin publish goes live immediately.
+    final gated = _stats.isAdmin
+        ? product.copyWith(
+            publishStatus: ProductPublishStatus.approved,
+            active: true,
+            reviewedAt: DateTime.now(),
+            submittedAt: product.submittedAt ?? DateTime.now(),
+          )
+        : product.copyWith(
+            publishStatus: ProductPublishStatus.pending,
+            submittedAt: DateTime.now(),
+            active: false,
+          );
 
     if (photoBytes != null && photoBytes.isNotEmpty) {
       _coverBytes['$shopId--${gated.id}'] = photoBytes;

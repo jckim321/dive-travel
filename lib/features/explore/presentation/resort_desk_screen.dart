@@ -212,12 +212,18 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       if (!mounted) {
         return;
       }
+      final message = error.toString();
+      final partial = message.contains('정보는 저장했지만');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${l10n.exploreSaveFail}\n$error'),
+          content: Text(partial ? message : '${l10n.exploreSaveFail}\n$error'),
           duration: const Duration(seconds: 5),
         ),
       );
+      if (partial) {
+        // Text fields persisted; leave the desk open so photos can be retried.
+        return;
+      }
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -1012,9 +1018,6 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
                     durationLabel: _duration.text.trim(),
                     coverUrl: widget.existing?.coverUrl ?? '',
                     listingKind: _kind,
-                    publishStatus: ProductPublishStatus.pending,
-                    submittedAt: DateTime.now(),
-                    active: false,
                   ),
                   photoBytes: _photo?.bytes,
                   photoFileName: _photo?.fileName,
@@ -1022,10 +1025,13 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
                   useAsResortCover: _useAsCover,
                 );
                 if (context.mounted) {
+                  final store = DiverStoreScope.of(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        AppLocalizations.of(context).adminProductSubmitted,
+                        store.stats.isAdmin
+                            ? AppLocalizations.of(context).adminProductApproved
+                            : AppLocalizations.of(context).adminProductSubmitted,
                       ),
                     ),
                   );
@@ -1035,13 +1041,20 @@ class _PartnerProductFormScreenState extends State<PartnerProductFormScreen> {
                 if (!context.mounted) {
                   return;
                 }
+                final message = error.toString();
+                final partial = message.contains('정보는 저장했지만');
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '${AppLocalizations.of(context).exploreSaveFail}\n$error',
+                      partial
+                          ? message
+                          : '${AppLocalizations.of(context).exploreSaveFail}\n$error',
                     ),
                   ),
                 );
+                if (partial) {
+                  Navigator.of(context).pop();
+                }
               }
             },
             child: Text(l10n.partnerSave),

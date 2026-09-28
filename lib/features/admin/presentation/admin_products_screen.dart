@@ -236,9 +236,6 @@ class _TravelProductRegistrationScreenState
           durationLabel: _duration.text.trim(),
           coverUrl: widget.existing?.coverUrl ?? '',
           listingKind: _kind,
-          publishStatus: ProductPublishStatus.pending,
-          submittedAt: DateTime.now(),
-          active: false,
         ),
         photoBytes: _photo?.bytes,
         photoFileName: _photo?.fileName,
@@ -248,17 +245,29 @@ class _TravelProductRegistrationScreenState
       if (!mounted) {
         return;
       }
+      final store = DiverStoreScope.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.adminProductSubmitted)),
+        SnackBar(
+          content: Text(
+            store.stats.isAdmin
+                ? l10n.adminProductApproved
+                : l10n.adminProductSubmitted,
+          ),
+        ),
       );
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
         return;
       }
+      final message = error.toString();
+      final partial = message.contains('정보는 저장했지만');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${l10n.exploreSaveFail}\n$error')),
+        SnackBar(content: Text(partial ? message : '${l10n.exploreSaveFail}\n$error')),
       );
+      if (partial) {
+        Navigator.of(context).pop();
+      }
     } finally {
       if (mounted) {
         setState(() => _saving = false);

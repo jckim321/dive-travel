@@ -35,8 +35,15 @@ class R2PhotoStorage {
     required String contentType,
   }) async {
     if (!R2Config.isReady) {
-      throw const R2UploadException(
-        'Cloudflare R2 Access Key 또는 Account ID가 비어 있습니다. lib/core/config/r2_secrets.dart를 확인해 주세요.',
+      final missing = <String>[
+        if (R2Config.accessKeyId.isEmpty) 'Access Key ID',
+        if (R2Config.secretAccessKey.isEmpty) 'Secret Access Key',
+        if (R2Config.accountId.isEmpty) 'Account ID',
+      ];
+      throw R2UploadException(
+        'Cloudflare R2 설정이 비어 있습니다 (${missing.join(', ')}). '
+        '로컬은 lib/core/config/r2_secrets.dart에, '
+        '배포본은 GitHub Secrets(R2_ACCESS_KEY_ID 등)에 넣어 주세요.',
       );
     }
 
