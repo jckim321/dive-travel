@@ -218,23 +218,24 @@ abstract final class DiveShopCatalog {
   static List<DiveShop> withLiveStats(List<ShopLiveStats> live) {
     final map = {for (final stats in live) stats.shopId: stats};
     final result = <DiveShop>[];
-    for (final shop in shops) {
-      final stats = map[shop.id];
-      final merged = shop.overlay(stats);
+    final seen = <String>{};
+
+    void appendShop(DiveShop base, ShopLiveStats? stats) {
+      final merged = base.overlay(stats);
       final products = [
         for (final product in stats?.products ?? const <ShopProduct>[])
           if (product.isListedPublicly) product,
       ];
       if (products.isEmpty) {
         result.add(_withDeparture(merged));
-        continue;
+        return;
       }
       for (var i = 0; i < products.length; i++) {
         final product = products[i];
         result.add(
           _withDeparture(
             merged.copyWith(
-              id: i == 0 ? shop.id : '${shop.id}--${product.id}',
+              id: i == 0 ? base.id : '${base.id}--${product.id}',
               productName: product.name,
               consumerPrice: product.consumerPrice,
               professionalPrice: product.professionalPrice,
@@ -247,6 +248,48 @@ abstract final class DiveShopCatalog {
           ),
         );
       }
+    }
+
+    for (final shop in shops) {
+      seen.add(shop.id);
+      appendShop(shop, map[shop.id]);
+    }
+
+    // Admin-curated / contract-free resorts live only in Firestore.
+    for (final stats in live) {
+      if (!seen.add(stats.shopId)) {
+        continue;
+      }
+      final hasPublic = stats.products.any((p) => p.isListedPublicly);
+      if (!hasPublic && (stats.name == null || stats.name!.trim().isEmpty)) {
+        continue;
+      }
+      appendShop(
+        DiveShop(
+          id: stats.shopId,
+          name: stats.name?.trim().isNotEmpty == true
+              ? stats.name!.trim()
+              : stats.shopId,
+          location: stats.location?.trim() ?? '',
+          country: stats.country?.trim() ?? '',
+          continent: stats.continent?.trim().isNotEmpty == true
+              ? stats.continent!.trim()
+              : ContinentId.asia,
+          sites: const [],
+          productName: stats.productName ?? '',
+          stars: stats.diveStar,
+          rating: stats.avgOverall,
+          reviewCount: stats.reviewCount,
+          amenities: stats.amenities,
+          consumerPrice: stats.consumerPrice ?? 0,
+          professionalPrice: stats.professionalPrice ?? 0,
+          coverUrl: stats.coverUrl ?? '',
+          galleryUrls: stats.galleryUrls,
+          intro: stats.intro ?? '',
+          address: stats.address ?? '',
+        ),
+        stats,
+      );
     }
     return result;
   }

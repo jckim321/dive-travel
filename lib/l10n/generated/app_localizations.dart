@@ -1980,6 +1980,60 @@ abstract class AppLocalizations {
   /// **'가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.'**
   String get productFormPhotoHint;
 
+  /// No description provided for @productFormSourcePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 리조트'**
+  String get productFormSourcePartner;
+
+  /// No description provided for @productFormSourceCurated.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접 기획'**
+  String get productFormSourceCurated;
+
+  /// No description provided for @productFormSourceHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 리조트는 카탈로그에서 고릅니다. 직접 기획은 계약 전에도 리조트 이름을 직접 적어 상품을 만들 수 있습니다.'**
+  String get productFormSourceHint;
+
+  /// No description provided for @productFormCuratedResort.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트(샵) 이름'**
+  String get productFormCuratedResort;
+
+  /// No description provided for @productFormCuratedResortHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 보홀 프라이빗 빌라 다이브'**
+  String get productFormCuratedResortHint;
+
+  /// No description provided for @productFormCuratedLocation.
+  ///
+  /// In ko, this message translates to:
+  /// **'지역'**
+  String get productFormCuratedLocation;
+
+  /// No description provided for @productFormCuratedLocationHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 필리핀 보홀 팡라오'**
+  String get productFormCuratedLocationHint;
+
+  /// No description provided for @productFormCuratedCountry.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가'**
+  String get productFormCuratedCountry;
+
+  /// No description provided for @productFormCuratedCountryHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 필리핀'**
+  String get productFormCuratedCountryHint;
+
   /// No description provided for @productListingKind.
   ///
   /// In ko, this message translates to:

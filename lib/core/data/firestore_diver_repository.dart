@@ -891,6 +891,9 @@ class FirestoreDiverRepository implements DiverRepository {
     String? intro,
     String? address,
     List<String>? amenities,
+    String? country,
+    String? continent,
+    bool? curated,
     Uint8List? coverBytes,
     String? coverFileName,
     String? coverContentType,
@@ -956,8 +959,9 @@ class FirestoreDiverRepository implements DiverRepository {
         'cover_url': coverUrl
       else if (removeCover)
         'cover_url': FieldValue.delete(),
-      'country': catalog?.country,
-      'continent': catalog?.continent,
+      'country': (country ?? catalog?.country)?.trim(),
+      'continent': (continent ?? catalog?.continent)?.trim(),
+      if (curated != null) 'curated': curated,
       'commission_rate': RefundPolicy.defaultCommissionRate,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

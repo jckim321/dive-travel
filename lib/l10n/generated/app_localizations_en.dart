@@ -1054,6 +1054,35 @@ class AppLocalizationsEn extends AppLocalizations {
       '16:9 landscape preferred for cards and detail.';
 
   @override
+  String get productFormSourcePartner => 'Partner resort';
+
+  @override
+  String get productFormSourceCurated => 'Curated by us';
+
+  @override
+  String get productFormSourceHint =>
+      'Partner resorts come from the catalog. Curated lets you type any resort name even before a shop contract.';
+
+  @override
+  String get productFormCuratedResort => 'Resort / shop name';
+
+  @override
+  String get productFormCuratedResortHint => 'e.g. Bohol private villa dive';
+
+  @override
+  String get productFormCuratedLocation => 'Area';
+
+  @override
+  String get productFormCuratedLocationHint =>
+      'e.g. Panglao, Bohol, Philippines';
+
+  @override
+  String get productFormCuratedCountry => 'Country';
+
+  @override
+  String get productFormCuratedCountryHint => 'e.g. Philippines';
+
+  @override
   String get productListingKind => 'Listing kind';
 
   @override

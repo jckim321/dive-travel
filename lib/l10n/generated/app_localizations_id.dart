@@ -1040,6 +1040,34 @@ class AppLocalizationsId extends AppLocalizations {
   String get productFormPhotoHint => '가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.';
 
   @override
+  String get productFormSourcePartner => '제휴 리조트';
+
+  @override
+  String get productFormSourceCurated => '직접 기획';
+
+  @override
+  String get productFormSourceHint =>
+      '제휴 리조트는 카탈로그에서 고릅니다. 직접 기획은 계약 전에도 리조트 이름을 직접 적어 상품을 만들 수 있습니다.';
+
+  @override
+  String get productFormCuratedResort => '리조트(샵) 이름';
+
+  @override
+  String get productFormCuratedResortHint => '예: 보홀 프라이빗 빌라 다이브';
+
+  @override
+  String get productFormCuratedLocation => '지역';
+
+  @override
+  String get productFormCuratedLocationHint => '예: 필리핀 보홀 팡라오';
+
+  @override
+  String get productFormCuratedCountry => '국가';
+
+  @override
+  String get productFormCuratedCountryHint => '예: 필리핀';
+
+  @override
   String get productListingKind => '상품 종류 (노출 위치)';
 
   @override

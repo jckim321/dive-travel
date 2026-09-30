@@ -81,12 +81,16 @@ class _TravelProductRegistrationScreenState
   late final TextEditingController _minGuests;
   late final TextEditingController _maxGuests;
   late final TextEditingController _cancelNote;
+  late final TextEditingController _customResort;
+  late final TextEditingController _customLocation;
+  late final TextEditingController _customCountry;
   final _photoPicker = const DivePhotoPicker();
   final _options = <_OptionEditors>[];
   PickedPhoto? _photo;
   late String _shopId;
   late String _continent;
   late ProductListingKind _kind;
+  var _curatedMode = false;
   var _saving = false;
 
   @override
@@ -97,10 +101,14 @@ class _TravelProductRegistrationScreenState
         existing?.shopId ??
         DiveShopCatalog.shops.first.id;
     final shop = DiveShopCatalog.byId(_shopId);
+    _curatedMode = widget.lockedShopId == null &&
+        (existing?.shopId.startsWith('curated-') == true ||
+            shop == null && existing != null);
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
-    _kind = existing?.listingKind ?? ProductListingKind.diveStar;
+    _kind = existing?.listingKind ??
+        (_curatedMode ? ProductListingKind.curated : ProductListingKind.diveStar);
     _name = TextEditingController(text: existing?.name ?? '');
     _consumer = TextEditingController(
       text: existing == null ? '' : '${existing.consumerPrice}',
@@ -122,6 +130,9 @@ class _TravelProductRegistrationScreenState
       text: (existing?.maxGuests ?? 0) > 0 ? '${existing!.maxGuests}' : '',
     );
     _cancelNote = TextEditingController(text: existing?.cancellationNote ?? '');
+    _customResort = TextEditingController(text: shop?.name ?? '');
+    _customLocation = TextEditingController(text: shop?.location ?? '');
+    _customCountry = TextEditingController(text: shop?.country ?? '');
     final seedOptions = existing?.options ?? const <ShopProductOption>[];
     if (seedOptions.isEmpty) {
       _options.add(_OptionEditors());
@@ -156,6 +167,9 @@ class _TravelProductRegistrationScreenState
     _minGuests.dispose();
     _maxGuests.dispose();
     _cancelNote.dispose();
+    _customResort.dispose();
+    _customLocation.dispose();
+    _customCountry.dispose();
     for (final option in _options) {
       option.dispose();
     }
@@ -195,18 +209,47 @@ class _TravelProductRegistrationScreenState
     if (name.isEmpty || _saving) {
       return;
     }
+    if (_curatedMode && _customResort.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.productFormCuratedResort)),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
+      final store = DiverStoreScope.of(context);
+      var shopId = _shopId;
+      if (_curatedMode) {
+        if (widget.existing == null || !shopId.startsWith('curated-')) {
+          shopId = 'curated-${DateTime.now().millisecondsSinceEpoch}';
+        }
+        await store.saveShopProfile(
+          shopId: shopId,
+          name: _customResort.text.trim(),
+          location: _customLocation.text.trim().isEmpty
+              ? _customResort.text.trim()
+              : _customLocation.text.trim(),
+          productName: name,
+          consumerPrice: int.tryParse(_consumer.text) ?? 0,
+          professionalPrice: int.tryParse(_pro.text) ?? 0,
+          country: _customCountry.text.trim(),
+          continent: _continent,
+          curated: true,
+          intro: _blurb.text.trim(),
+          address: _meeting.text.trim(),
+        );
+      }
+
       final options = [
         for (final draft in _options)
           if (draft.name.text.trim().isNotEmpty) draft.toOption(),
       ];
-      await DiverStoreScope.of(context).saveShopProduct(
-        shopId: _shopId,
+      await store.saveShopProduct(
+        shopId: shopId,
         product: ShopProduct(
           id: widget.existing?.id ??
               'p-${DateTime.now().millisecondsSinceEpoch}',
-          shopId: _shopId,
+          shopId: shopId,
           name: name,
           consumerPrice: int.tryParse(_consumer.text) ?? 0,
           professionalPrice: int.tryParse(_pro.text) ?? 0,
@@ -233,7 +276,6 @@ class _TravelProductRegistrationScreenState
       if (!mounted) {
         return;
       }
-      final store = DiverStoreScope.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -275,7 +317,8 @@ class _TravelProductRegistrationScreenState
             DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first,
           ]
         : _shopsForContinent;
-    if (!shopLocked &&
+    if (!_curatedMode &&
+        !shopLocked &&
         shops.isNotEmpty &&
         !shops.any((shop) => shop.id == _shopId)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -283,6 +326,21 @@ class _TravelProductRegistrationScreenState
           setState(() => _shopId = shops.first.id);
         }
       });
+    }
+
+    if (_curatedMode &&
+        _customResort.text.isEmpty &&
+        widget.existing != null) {
+      final live = DiverStoreScope.of(context).liveStatsFor(_shopId);
+      if (live?.name != null && live!.name!.trim().isNotEmpty) {
+        _customResort.text = live.name!.trim();
+        if (_customLocation.text.isEmpty) {
+          _customLocation.text = live.location?.trim() ?? '';
+        }
+        if (_customCountry.text.isEmpty) {
+          _customCountry.text = live.country?.trim() ?? '';
+        }
+      }
     }
 
     return Scaffold(
@@ -307,6 +365,42 @@ class _TravelProductRegistrationScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (!shopLocked) ...[
+                  Text(
+                    l10n.productFormSourceHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppTheme.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SegmentedButton<bool>(
+                    segments: [
+                      ButtonSegment(
+                        value: false,
+                        label: Text(l10n.productFormSourcePartner),
+                        icon: const Icon(Icons.storefront_outlined, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text(l10n.productFormSourceCurated),
+                        icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                      ),
+                    ],
+                    selected: {_curatedMode},
+                    onSelectionChanged: (value) {
+                      final curated = value.first;
+                      setState(() {
+                        _curatedMode = curated;
+                        if (curated &&
+                            _kind == ProductListingKind.diveStar &&
+                            widget.existing == null) {
+                          _kind = ProductListingKind.curated;
+                        }
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Text(
                   l10n.productFormContinentHint,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -332,43 +426,75 @@ class _TravelProductRegistrationScreenState
                   onChanged: shopLocked ? null : _onContinentChanged,
                 ),
                 const SizedBox(height: 12),
-                InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: l10n.partnerShopName,
-                    helperText: l10n.productFormShopHint,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: const OutlineInputBorder(),
+                if (_curatedMode && !shopLocked) ...[
+                  TextField(
+                    key: const Key('product-curated-resort'),
+                    controller: _customResort,
+                    decoration: InputDecoration(
+                      labelText: l10n.productFormCuratedResort,
+                      hintText: l10n.productFormCuratedResortHint,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
                   ),
-                  child: shopLocked
-                      ? Text(
-                          DiveShopCatalog.byId(_shopId)?.name ?? _shopId,
-                          style: theme.textTheme.titleMedium,
-                        )
-                      : DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            key: const Key('admin-product-shop'),
-                            isExpanded: true,
-                            value: shops.any((s) => s.id == _shopId)
-                                ? _shopId
-                                : (shops.isEmpty ? null : shops.first.id),
-                            hint: Text(l10n.productFormShopHint),
-                            items: [
-                              for (final shop in shops)
-                                DropdownMenuItem(
-                                  value: shop.id,
-                                  child: Text(shop.name),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-                              setState(() => _shopId = value);
-                            },
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _customLocation,
+                    decoration: InputDecoration(
+                      labelText: l10n.productFormCuratedLocation,
+                      hintText: l10n.productFormCuratedLocationHint,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _customCountry,
+                    decoration: InputDecoration(
+                      labelText: l10n.productFormCuratedCountry,
+                      hintText: l10n.productFormCuratedCountryHint,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                ] else
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: l10n.partnerShopName,
+                      helperText: l10n.productFormShopHint,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: const OutlineInputBorder(),
+                    ),
+                    child: shopLocked
+                        ? Text(
+                            DiveShopCatalog.byId(_shopId)?.name ?? _shopId,
+                            style: theme.textTheme.titleMedium,
+                          )
+                        : DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              key: const Key('admin-product-shop'),
+                              isExpanded: true,
+                              value: shops.any((s) => s.id == _shopId)
+                                  ? _shopId
+                                  : (shops.isEmpty ? null : shops.first.id),
+                              hint: Text(l10n.productFormShopHint),
+                              items: [
+                                for (final shop in shops)
+                                  DropdownMenuItem(
+                                    value: shop.id,
+                                    child: Text(shop.name),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setState(() => _shopId = value);
+                              },
+                            ),
                           ),
-                        ),
-                ),
+                  ),
               ],
             ),
           ),

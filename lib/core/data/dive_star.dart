@@ -55,6 +55,9 @@ class ShopLiveStats {
     this.plaqueStatus = PlaqueStatus.none,
     this.name,
     this.location,
+    this.country,
+    this.continent,
+    this.curated = false,
     this.productName,
     this.consumerPrice,
     this.professionalPrice,
@@ -93,6 +96,9 @@ class ShopLiveStats {
       plaqueStatus: PlaqueStatus.parse(data['plaque_status']),
       name: data['name'] as String?,
       location: data['location'] as String?,
+      country: data['country'] as String?,
+      continent: data['continent'] as String?,
+      curated: data['curated'] == true || id.startsWith('curated-'),
       productName: data['product_name'] as String?,
       consumerPrice: (data['consumer_price'] as num?)?.toInt(),
       professionalPrice: (data['professional_price'] as num?)?.toInt(),
@@ -126,6 +132,9 @@ class ShopLiveStats {
   final PlaqueStatus plaqueStatus;
   final String? name;
   final String? location;
+  final String? country;
+  final String? continent;
+  final bool curated;
   final String? productName;
   final int? consumerPrice;
   final int? professionalPrice;
@@ -155,6 +164,9 @@ class ShopLiveStats {
     PlaqueStatus? plaqueStatus,
     String? name,
     String? location,
+    String? country,
+    String? continent,
+    bool? curated,
     String? productName,
     int? consumerPrice,
     int? professionalPrice,
@@ -177,6 +189,9 @@ class ShopLiveStats {
       plaqueStatus: plaqueStatus ?? this.plaqueStatus,
       name: name ?? this.name,
       location: location ?? this.location,
+      country: country ?? this.country,
+      continent: continent ?? this.continent,
+      curated: curated ?? this.curated,
       productName: productName ?? this.productName,
       consumerPrice: consumerPrice ?? this.consumerPrice,
       professionalPrice: professionalPrice ?? this.professionalPrice,
