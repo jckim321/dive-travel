@@ -14,17 +14,11 @@ class HomeStayCard extends StatelessWidget {
     required this.shop,
     required this.quote,
     required this.onDetails,
-    required this.onBuy,
-    this.asResort = true,
-    this.productCount = 1,
   });
 
   final DiveShop shop;
   final TourPriceQuote quote;
   final VoidCallback onDetails;
-  final VoidCallback onBuy;
-  final bool asResort;
-  final int productCount;
 
   static final _price = NumberFormat('#,###');
 
@@ -41,194 +35,79 @@ class HomeStayCard extends StatelessWidget {
             ? l10n.exploreListingNew
             : l10n.exploreListingPendingReview;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: onDetails,
-          child: CCardProductFrame(
+    return GestureDetector(
+      onTap: onDetails,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CCardProductFrame(
             child: AspectRatio(
               aspectRatio: ListingCover.aspectRatio,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   ListingCoverPhoto(shop: shop),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0x33000000),
-                        Color(0x00000000),
-                        Color(0xCC052A4A),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 8,
-                  top: 8,
-                  child: ListingCertBadge(
-                    label: badgeLabel,
-                    certified: certified,
-                  ),
-                ),
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: IconButton(
-                    visualDensity: VisualDensity.compact,
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xCCFFFFFF),
-                      foregroundColor:
-                          saved ? const Color(0xFFE11D48) : AppTheme.navy,
-                      minimumSize: const Size(32, 32),
-                    ),
-                    onPressed: () => store.toggleFavoriteShop(shop.id),
-                    icon: Icon(
-                      saved ? Icons.favorite : Icons.favorite_border,
-                      size: 16,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 6,
-                  right: 6,
-                  bottom: 6,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 32,
-                          child: OutlinedButton(
-                            key: Key('shop-details-${shop.id}'),
-                            onPressed: onDetails,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.navy,
-                              backgroundColor: const Color(0xF2FFFFFF),
-                              side: const BorderSide(
-                                color: AppTheme.gold,
-                                width: 1.1,
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              textStyle: const TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w800,
-                                height: 1.05,
-                              ),
-                            ),
-                            child: Text(
-                              l10n.exploreViewListing,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: SizedBox(
-                          height: 32,
-                          child: FilledButton(
-                            key: Key('shop-buy-${shop.id}'),
-                            onPressed: onBuy,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.navy,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              textStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            child: Text(l10n.exploreBuyNow),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          shop.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.titleSmall,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          asResort
-              ? l10n.exploreResortCardLine(
-                  shop.location,
-                  productCount,
-                )
-              : '${shop.location} · ${shop.productName}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.bodySmall,
-        ),
-        if (!asResort && shop.departure != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            l10n.exploreDepartureLine(
-              shop.departure!.windowLabel,
-              shop.departure!.emptySeats,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: AppTheme.ocean,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    quote.isProfessional
-                        ? l10n.exploreProPrice
-                        : l10n.exploreConsumerPrice,
-                    style: theme.textTheme.labelMedium,
-                  ),
-                  Text(
-                    '${_price.format(quote.amount)}원',
-                    style: theme.textTheme.labelLarge,
-                  ),
-                  if (quote.hasDiscount)
-                    Text(
-                      l10n.exploreOriginalPrice(
-                        _price.format(quote.compareAtAmount!),
-                      ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        decoration: TextDecoration.lineThrough,
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x33000000),
+                          Color(0x00000000),
+                          Color(0x66052A4A),
+                        ],
                       ),
                     ),
+                  ),
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: ListingCertBadge(
+                      label: badgeLabel,
+                      certified: certified,
+                    ),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: IconButton(
+                      visualDensity: VisualDensity.compact,
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xCCFFFFFF),
+                        foregroundColor:
+                            saved ? const Color(0xFFE11D48) : AppTheme.navy,
+                        minimumSize: const Size(32, 32),
+                      ),
+                      onPressed: () => store.toggleFavoriteShop(shop.id),
+                      icon: Icon(
+                        saved ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            if (shop.reviewCount > 0) ...[
-              const Icon(Icons.star_rounded, size: 14, color: AppTheme.gold),
-              const SizedBox(width: 2),
-              Text(
-                shop.rating.toStringAsFixed(1),
-                style: theme.textTheme.labelMedium,
-              ),
-            ],
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            shop.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${_price.format(quote.amount)}원',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelLarge,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -295,9 +174,7 @@ class HomeDiscoverySection extends StatelessWidget {
               return HomeStayCard(
                 shop: shop,
                 quote: store.quoteFor(shop),
-                productCount: store.listingsOnHull(shop.hullId).length,
                 onDetails: () => onOpen(shop),
-                onBuy: () => onOpen(shop),
               );
             },
           ),

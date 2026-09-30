@@ -29,12 +29,23 @@ class HomeScreen extends StatelessWidget {
     final explored = store.regions.length;
     final recommendedShops =
         store.resortsFeaturedAs(ProductListingKind.diveStar, limit: 4);
-    final favoriteShops =
-        store.resortsFeaturedAs(ProductListingKind.favorites);
-    final lastCallShops =
-        store.resortsFeaturedAs(ProductListingKind.nextDeparture);
-    final popularShops =
-        store.resortsFeaturedAs(ProductListingKind.popular);
+    final claimed = <String>{
+      for (final shop in recommendedShops) shop.hullId,
+    };
+    final favoriteShops = store.resortsFeaturedAs(
+      ProductListingKind.favorites,
+      excludeHullIds: claimed,
+    );
+    claimed.addAll(favoriteShops.map((shop) => shop.hullId));
+    final popularShops = store.resortsFeaturedAs(
+      ProductListingKind.popular,
+      excludeHullIds: claimed,
+    );
+    claimed.addAll(popularShops.map((shop) => shop.hullId));
+    final lastCallShops = store.resortsFeaturedAs(
+      ProductListingKind.nextDeparture,
+      excludeHullIds: claimed,
+    );
 
     return Scaffold(
       body: ListView(

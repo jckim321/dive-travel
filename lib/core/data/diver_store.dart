@@ -147,23 +147,55 @@ class DiverStore extends ChangeNotifier {
     return liveStatsFor(shopId)?.products ?? const [];
   }
 
+  /// Home shelf for one listing kind: one card per resort, only that kind.
+  ///
+  /// Previously every public product became its own [DiveShop] row, and empty
+  /// shelves were padded with ranked/popular fallbacks — so one registration
+  /// showed the same resort many times across (and inside) home sections.
   List<DiveShop> resortsFeaturedAs(
     ProductListingKind kind, {
     int limit = 4,
+    Set<String> excludeHullIds = const {},
   }) {
-    final featuredIds = <String>{
-      for (final stats in _shopStats)
-        for (final product in stats.products)
-          if (product.isListedPublicly && product.listingKind == kind)
-            stats.shopId,
-    };
-    final featured = [
-      for (final shop in shops)
-        if (featuredIds.contains(shop.hullId)) shop,
-    ];
-    if (featured.length >= limit) {
-      return featured.take(limit).toList();
+    final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
+    final featured = <DiveShop>[];
+
+    for (final hull in DiveShopCatalog.hulls(shops)) {
+      if (featured.length >= limit) {
+        break;
+      }
+      if (excludeHullIds.contains(hull.hullId)) {
+        continue;
+      }
+      final stats = statsByShop[hull.hullId];
+      final matches = [
+        for (final product in stats?.products ?? const <ShopProduct>[])
+          if (product.isListedPublicly && product.listingKind == kind) product,
+      ];
+      if (matches.isEmpty) {
+        continue;
+      }
+      matches.sort((a, b) {
+        final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bAt.compareTo(aAt);
+      });
+      featured.add(_hullCardForProduct(hull, matches.first));
     }
+
+    if (featured.isNotEmpty) {
+      return featured;
+    }
+
+    // Seed catalog only — once any live product exists, empty kinds stay empty
+    // so fallback shelves do not re-list the same resorts.
+    final hasLiveProducts = _shopStats.any(
+      (stats) => stats.products.any((product) => product.isListedPublicly),
+    );
+    if (hasLiveProducts) {
+      return const [];
+    }
+
     final fallback = switch (kind) {
       ProductListingKind.diveStar => rankedResorts(limit: limit),
       ProductListingKind.favorites => favoriteResorts(limit: limit),
@@ -171,12 +203,24 @@ class DiverStore extends ChangeNotifier {
       ProductListingKind.nextDeparture => lastCallResorts(limit: limit),
       ProductListingKind.curated => rankedResorts(limit: limit),
     };
-    final seen = {for (final shop in featured) shop.hullId};
-    return [
-      ...featured,
-      for (final shop in fallback)
-        if (seen.add(shop.hullId)) shop,
-    ].take(limit).toList();
+    return DiveShopCatalog.hulls(fallback)
+        .where((shop) => !excludeHullIds.contains(shop.hullId))
+        .take(limit)
+        .toList();
+  }
+
+  DiveShop _hullCardForProduct(DiveShop hull, ShopProduct product) {
+    return hull.copyWith(
+      id: hull.hullId,
+      productName: product.name,
+      consumerPrice: product.consumerPrice,
+      professionalPrice: product.professionalPrice,
+      blurb: product.blurb.isNotEmpty ? product.blurb : hull.blurb,
+      durationLabel: product.durationLabel.isNotEmpty
+          ? product.durationLabel
+          : hull.durationLabel,
+      coverUrl: product.coverUrl.isNotEmpty ? product.coverUrl : hull.coverUrl,
+    );
   }
 
   List<GearItem> get gear => List.unmodifiable(_gear);

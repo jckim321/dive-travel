@@ -211,13 +211,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     key: Key('shop-card-${shop.id}'),
                                     shop: shop,
                                     quote: store.quoteFor(shop),
-                                    productCount:
-                                        store.listingsOnHull(shop.hullId).length,
                                     onDetails: () => openResortDetail(
-                                      context,
-                                      shop.hullId,
-                                    ),
-                                    onBuy: () => openResortDetail(
                                       context,
                                       shop.hullId,
                                     ),

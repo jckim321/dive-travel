@@ -98,13 +98,12 @@ void main() {
 
     expect(find.byKey(const Key('explore-search')), findsOneWidget);
     expect(find.text(l10n.exploreConsumerBanner), findsOneWidget);
-    expect(find.text(l10n.exploreConsumerPrice), findsWidgets);
     expect(find.text('180,000원'), findsOneWidget);
     expect(find.text('126,000원'), findsNothing);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     expect(find.text(l10n.exploreDiveStarCertified), findsWidgets);
-    expect(find.text(l10n.exploreViewListing), findsWidgets);
-    expect(find.text(l10n.exploreBuyNow), findsWidgets);
+    expect(find.text(l10n.exploreViewListing), findsNothing);
+    expect(find.text(l10n.exploreBuyNow), findsNothing);
     expect(find.text(l10n.exploreListingNew), findsWidgets);
 
     await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
@@ -146,9 +145,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.exploreProBanner), findsOneWidget);
-    expect(find.text(l10n.exploreProPrice), findsWidgets);
     expect(find.text('126,000원'), findsOneWidget);
-    expect(find.text(l10n.exploreOriginalPrice('180,000')), findsOneWidget);
+    expect(find.text('180,000원'), findsNothing);
   });
 
   testWidgets('투어 검색으로 샵 카드를 좁힌다', (WidgetTester tester) async {
