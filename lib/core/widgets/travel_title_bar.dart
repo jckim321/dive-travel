@@ -9,8 +9,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Full-bleed ocean hero with passport / luggage / boarding accents —
-/// travel mood without a boarding-pass card.
+/// Compact APDI-style hero card: photo background, darkened for type.
 class TravelPosterHeader extends StatefulWidget {
   const TravelPosterHeader({super.key});
 
@@ -21,35 +20,25 @@ class TravelPosterHeader extends StatefulWidget {
 class _TravelPosterHeaderState extends State<TravelPosterHeader>
     with SingleTickerProviderStateMixin {
   late final AnimationController _enter;
-  late final Animation<double> _stampOpacity;
-  late final Animation<double> _brandOpacity;
-  late final Animation<double> _brandTracking;
+  late final Animation<double> _fade;
   late final Animation<double> _stubWidth;
+
+  static const _heroAsset = 'assets/images/home_hero_dive.jpg';
 
   @override
   void initState() {
     super.initState();
     _enter = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 900),
     );
-    _stampOpacity = CurvedAnimation(
+    _fade = CurvedAnimation(
       parent: _enter,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-    );
-    _brandOpacity = CurvedAnimation(
-      parent: _enter,
-      curve: const Interval(0.12, 0.55, curve: Curves.easeOut),
-    );
-    _brandTracking = Tween<double>(begin: 6, end: 2.2).animate(
-      CurvedAnimation(
-        parent: _enter,
-        curve: const Interval(0.12, 0.7, curve: Curves.easeOutCubic),
-      ),
+      curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
     );
     _stubWidth = CurvedAnimation(
       parent: _enter,
-      curve: const Interval(0.45, 1.0, curve: Curves.easeOutCubic),
+      curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
     );
     _enter.forward();
   }
@@ -66,131 +55,146 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
     final english = lookupAppLocalizations(const Locale('en'));
     final session = SessionScope.of(context);
     final stats = DiverStoreScope.of(context).stats;
+    final width = MediaQuery.sizeOf(context).width;
+    // About half the previous tall full-bleed hero.
+    final cardHeight = (width * 0.48).clamp(168.0, 220.0);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF052A4A),
-              Color(0xFF0B1F33),
-              Color(0xFF0A4A73),
-              Color(0xFF16344A),
-            ],
-            stops: [0.0, 0.35, 0.72, 1.0],
-          ),
-        ),
-        child: Stack(
-          children: [
-            const Positioned.fill(child: IgnorePointer(child: _OceanVeil())),
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 12, 28),
-                child: AnimatedBuilder(
+      value: SystemUiOverlayStyle.dark,
+      child: ColoredBox(
+        color: AppTheme.canvas,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _QuietActions(
+                  isAdmin: stats.isAdmin,
+                  isBusiness: stats.isBusiness,
+                  isSignedIn: session.isSignedIn,
+                  onAdmin: () => openAdminMode(context),
+                  onPartner: () => openPartnerMode(context),
+                  onAuth: session.isSignedIn ? () => session.signOut() : null,
+                  signOutLabel: l10n.profileSignOut,
+                  loginLabel: l10n.authLogin,
+                  adminTooltip: l10n.adminMode,
+                  partnerTooltip: l10n.partnerTitle,
+                ),
+                const SizedBox(height: 8),
+                AnimatedBuilder(
                   animation: _enter,
                   builder: (context, _) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _QuietActions(
-                          isAdmin: stats.isAdmin,
-                          isBusiness: stats.isBusiness,
-                          isSignedIn: session.isSignedIn,
-                          onAdmin: () => openAdminMode(context),
-                          onPartner: () => openPartnerMode(context),
-                          onAuth: session.isSignedIn
-                              ? () => session.signOut()
-                              : null,
-                          signOutLabel: l10n.profileSignOut,
-                          loginLabel: l10n.authLogin,
-                          adminTooltip: l10n.adminMode,
-                          partnerTooltip: l10n.partnerTitle,
-                        ),
-                        const SizedBox(height: 28),
-                        Opacity(
-                          opacity: _brandOpacity.value,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Opacity(
-                                opacity: _stampOpacity.value,
-                                child: const _PassportStamp(),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Text(
-                                  english.appTitle.toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: _brandTracking.value,
-                                    height: 1.05,
-                                    color: Colors.white,
+                    return Opacity(
+                      opacity: _fade.value,
+                      child: SizedBox(
+                        height: cardHeight,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                const ColoredBox(color: AppTheme.oceanDeep),
+                                // Slightly darken the bright dive photo for type.
+                                ColorFiltered(
+                                  colorFilter: ColorFilter.mode(
+                                    Colors.black.withValues(alpha: 0.28),
+                                    BlendMode.darken,
+                                  ),
+                                  child: Image.asset(
+                                    _heroAsset,
+                                    fit: BoxFit.cover,
+                                    alignment: const Alignment(0, -0.15),
+                                    errorBuilder: (_, _, _) =>
+                                        const ColoredBox(
+                                      color: AppTheme.oceanDeep,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                const DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color(0x99052A4A),
+                                        Color(0x55052A4A),
+                                        Color(0xCC0B1F33),
+                                      ],
+                                      stops: [0.0, 0.42, 1.0],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const _PassportStamp(),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              english.appTitle.toUpperCase(),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 1.8,
+                                                height: 1.05,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          const _LuggageChip(),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      BilingualRotator(
+                                        alignment: Alignment.centerLeft,
+                                        english: _SloganBlock(
+                                          title: english.homeWelcome,
+                                          subtitle: english.homeSubtitle,
+                                        ),
+                                        localized: _SloganBlock(
+                                          title: l10n.homeWelcome,
+                                          subtitle: l10n.homeSubtitle,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: FractionallySizedBox(
+                                          widthFactor:
+                                              0.35 + (0.55 * _stubWidth.value),
+                                          alignment: Alignment.centerLeft,
+                                          child: const _BoardingStubStrip(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 18),
-                        BilingualRotator(
-                          alignment: Alignment.centerLeft,
-                          english: _SloganBlock(
-                            title: english.homeWelcome,
-                            subtitle: english.homeSubtitle,
-                          ),
-                          localized: _SloganBlock(
-                            title: l10n.homeWelcome,
-                            subtitle: l10n.homeSubtitle,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const _LuggageChip(),
-                        const SizedBox(height: 18),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: FractionallySizedBox(
-                            widthFactor: 0.28 + (0.72 * _stubWidth.value),
-                            alignment: Alignment.centerLeft,
-                            child: const _BoardingStubStrip(),
-                          ),
-                        ),
-                      ],
+                      ),
                     );
                   },
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OceanVeil extends StatelessWidget {
-  const _OceanVeil();
-
-  @override
-  Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment(-0.8, -1),
-          end: Alignment(0.9, 1.1),
-          colors: [
-            Color(0x33C4A35A),
-            Color(0x00000000),
-            Color(0x22156A96),
-            Color(0x44052A4A),
-          ],
-          stops: [0.0, 0.35, 0.7, 1.0],
+          ),
         ),
       ),
     );
@@ -232,9 +236,7 @@ class _QuietActions extends StatelessWidget {
             key: const Key('open-admin-mode-home'),
             tooltip: adminTooltip,
             visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.white.withValues(alpha: 0.92),
-            ),
+            style: IconButton.styleFrom(foregroundColor: AppTheme.navy),
             icon: const Icon(Icons.admin_panel_settings_outlined),
             onPressed: onAdmin,
           ),
@@ -243,16 +245,14 @@ class _QuietActions extends StatelessWidget {
             key: const Key('open-partner-mode-home'),
             tooltip: partnerTooltip,
             visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(
-              foregroundColor: Colors.white.withValues(alpha: 0.92),
-            ),
+            style: IconButton.styleFrom(foregroundColor: AppTheme.navy),
             icon: const Icon(Icons.storefront_outlined),
             onPressed: onPartner,
           ),
         TextButton(
           key: const Key('home-auth-button'),
           style: TextButton.styleFrom(
-            foregroundColor: Colors.white.withValues(alpha: 0.88),
+            foregroundColor: AppTheme.navy,
             minimumSize: const Size(0, 32),
             padding: const EdgeInsets.fromLTRB(8, 6, 4, 6),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -276,38 +276,21 @@ class _PassportStamp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      width: 36,
+      height: 36,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppTheme.gold, width: 1.6),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppTheme.gold, width: 1.4),
+        color: const Color(0x990B1F33),
       ),
-      child: Container(
-        margin: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: AppTheme.gold.withValues(alpha: 0.55),
-            width: 1,
-          ),
-          color: const Color(0xCC0B1F33),
-        ),
-        child: ClipOval(
-          child: Image.asset(
-            'assets/icons/app_icon.png',
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const Icon(
-              Icons.scuba_diving,
-              color: AppTheme.gold,
-              size: 24,
-            ),
+      child: ClipOval(
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const Icon(
+            Icons.scuba_diving,
+            color: AppTheme.gold,
+            size: 18,
           ),
         ),
       ),
@@ -326,39 +309,49 @@ class _SloganBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 88,
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 22,
-              height: 1.22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.2,
-              color: Colors.white,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 18,
+            height: 1.2,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Color(0x66000000),
+                blurRadius: 8,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.3,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.78),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12.5,
+            height: 1.25,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.88),
+            shadows: const [
+              Shadow(
+                color: Color(0x55000000),
+                blurRadius: 6,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -370,30 +363,30 @@ class _LuggageChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0x22F4EBD3),
+        color: const Color(0xCC0B1F33),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.gold.withValues(alpha: 0.7)),
+        border: Border.all(color: AppTheme.gold.withValues(alpha: 0.85)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 12, 6),
+        padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 7,
+              height: 7,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.gold, width: 1.4),
+                border: Border.all(color: AppTheme.gold, width: 1.3),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
-              'DIVE · SS-07',
+              'SS-07',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.4,
+                letterSpacing: 1.2,
                 color: AppTheme.goldSoft.withValues(alpha: 0.95),
               ),
             ),
@@ -413,25 +406,25 @@ class _BoardingStubStrip extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          height: 1.2,
+          height: 1.1,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 AppTheme.gold,
-                AppTheme.gold.withValues(alpha: 0.15),
+                AppTheme.gold.withValues(alpha: 0.12),
                 Colors.transparent,
               ],
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           'BOARDING  ·  SEVEN SEAS',
           style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 2.0,
+            fontSize: 9,
+            letterSpacing: 1.6,
             fontWeight: FontWeight.w700,
-            color: Colors.white.withValues(alpha: 0.55),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
       ],
