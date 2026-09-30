@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
@@ -879,9 +880,6 @@ class FirestoreDiverRepository implements DiverRepository {
     return _posts.doc(postId).delete();
   }
 
-import 'package:dive_travel_app/core/config/r2_config.dart';
-import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
-
   @override
   Future<void> saveShopProfile({
     required String shopId,
@@ -983,16 +981,20 @@ import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
     var saved = product;
     var photoUploadFailed = false;
     if (photoBytes != null && photoBytes.isNotEmpty) {
-      try {
-        final extension = _photoExtension(photoFileName);
-        final url = await _photos.upload(
-          objectKey: 'shops/$shopId/products/${product.id}$extension',
-          bytes: photoBytes,
-          contentType: photoContentType ?? 'image/jpeg',
-        );
-        saved = product.copyWith(coverUrl: url);
-      } catch (_) {
+      if (!R2Config.isReady) {
         photoUploadFailed = true;
+      } else {
+        try {
+          final extension = _photoExtension(photoFileName);
+          final url = await _photos.upload(
+            objectKey: 'shops/$shopId/products/${product.id}$extension',
+            bytes: photoBytes,
+            contentType: photoContentType ?? 'image/jpeg',
+          );
+          saved = product.copyWith(coverUrl: url);
+        } catch (_) {
+          photoUploadFailed = true;
+        }
       }
     }
     final ref = _shops.doc(shopId);
