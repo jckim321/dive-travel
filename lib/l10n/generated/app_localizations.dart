@@ -1746,6 +1746,240 @@ abstract class AppLocalizations {
   /// **'승인 요청이 접수되었습니다.'**
   String get adminProductSubmitted;
 
+  /// No description provided for @productFormHeroTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행상품을 등록하세요'**
+  String get productFormHeroTitle;
+
+  /// No description provided for @productFormHeroBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'대륙 → 샵 → 상세 일정 → 구성 옵션 순으로 채우면 손님 화면에 바로 쓸 수 있습니다.'**
+  String get productFormHeroBody;
+
+  /// No description provided for @productFormSectionLocation.
+  ///
+  /// In ko, this message translates to:
+  /// **'위치'**
+  String get productFormSectionLocation;
+
+  /// No description provided for @productFormSectionListing.
+  ///
+  /// In ko, this message translates to:
+  /// **'노출 위치'**
+  String get productFormSectionListing;
+
+  /// No description provided for @productFormSectionMedia.
+  ///
+  /// In ko, this message translates to:
+  /// **'대표 사진'**
+  String get productFormSectionMedia;
+
+  /// No description provided for @productFormSectionBasics.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 정보'**
+  String get productFormSectionBasics;
+
+  /// No description provided for @productFormSectionItinerary.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정 · 집결'**
+  String get productFormSectionItinerary;
+
+  /// No description provided for @productFormSectionIncludes.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함 · 불포함'**
+  String get productFormSectionIncludes;
+
+  /// No description provided for @productFormSectionCapacity.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원 · 난이도'**
+  String get productFormSectionCapacity;
+
+  /// No description provided for @productFormSectionPricing.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격'**
+  String get productFormSectionPricing;
+
+  /// No description provided for @productFormSectionOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 구성 옵션'**
+  String get productFormSectionOptions;
+
+  /// No description provided for @productFormContinent.
+  ///
+  /// In ko, this message translates to:
+  /// **'대륙'**
+  String get productFormContinent;
+
+  /// No description provided for @productFormContinentHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 대륙을 고르면 해당 지역 샵만 보입니다.'**
+  String get productFormContinentHint;
+
+  /// No description provided for @productFormShopHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록할 리조트(샵)를 선택하세요.'**
+  String get productFormShopHint;
+
+  /// No description provided for @productFormSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 소개'**
+  String get productFormSubtitle;
+
+  /// No description provided for @productFormSubtitleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 체크다이브 후 2탱크, 같은 밴 동행'**
+  String get productFormSubtitleHint;
+
+  /// No description provided for @productFormDurationHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 2박 3일 / 오전 반나절'**
+  String get productFormDurationHint;
+
+  /// No description provided for @productFormMeetingPoint.
+  ///
+  /// In ko, this message translates to:
+  /// **'집결 장소'**
+  String get productFormMeetingPoint;
+
+  /// No description provided for @productFormMeetingHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 팡라오 리조트 로비 07:30'**
+  String get productFormMeetingHint;
+
+  /// No description provided for @productFormSchedule.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정 요약'**
+  String get productFormSchedule;
+
+  /// No description provided for @productFormScheduleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발·다이빙·복귀 시간을 순서대로 적어 주세요.'**
+  String get productFormScheduleHint;
+
+  /// No description provided for @productFormIncludes.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함 사항'**
+  String get productFormIncludes;
+
+  /// No description provided for @productFormIncludesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'보트, 탱크, 가이드, 픽업 등 줄바꿈으로 구분'**
+  String get productFormIncludesHint;
+
+  /// No description provided for @productFormExcludes.
+  ///
+  /// In ko, this message translates to:
+  /// **'불포함 사항'**
+  String get productFormExcludes;
+
+  /// No description provided for @productFormExcludesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'장비 렌탈, 해양공원 입장료 등'**
+  String get productFormExcludesHint;
+
+  /// No description provided for @productFormDifficulty.
+  ///
+  /// In ko, this message translates to:
+  /// **'필요 자격 / 난이도'**
+  String get productFormDifficulty;
+
+  /// No description provided for @productFormDifficultyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: OW 이상 · 초급~중급'**
+  String get productFormDifficultyHint;
+
+  /// No description provided for @productFormMinGuests.
+  ///
+  /// In ko, this message translates to:
+  /// **'최소 인원'**
+  String get productFormMinGuests;
+
+  /// No description provided for @productFormMaxGuests.
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 인원'**
+  String get productFormMaxGuests;
+
+  /// No description provided for @productFormCancelNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소 · 환불 안내'**
+  String get productFormCancelNote;
+
+  /// No description provided for @productFormCancelHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 N일 전 규정 등'**
+  String get productFormCancelHint;
+
+  /// No description provided for @productFormOptionsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'룸타입, 탱크 수, 장비, 트랜스퍼처럼 손님이 고르는 구성을 추가하세요.'**
+  String get productFormOptionsHint;
+
+  /// No description provided for @productFormOptionName.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션명'**
+  String get productFormOptionName;
+
+  /// No description provided for @productFormOptionDesc.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 설명'**
+  String get productFormOptionDesc;
+
+  /// No description provided for @productFormOptionConsumer.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 소비자가'**
+  String get productFormOptionConsumer;
+
+  /// No description provided for @productFormOptionPro.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 강사 우대가'**
+  String get productFormOptionPro;
+
+  /// No description provided for @productFormAddOption.
+  ///
+  /// In ko, this message translates to:
+  /// **'구성 옵션 추가'**
+  String get productFormAddOption;
+
+  /// No description provided for @productFormRemoveOption.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 삭제'**
+  String get productFormRemoveOption;
+
+  /// No description provided for @productFormPhotoHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.'**
+  String get productFormPhotoHint;
+
   /// No description provided for @productListingKind.
   ///
   /// In ko, this message translates to:

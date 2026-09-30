@@ -930,6 +930,130 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminProductSubmitted => 'Submitted for approval.';
 
   @override
+  String get productFormHeroTitle => 'Register a travel product';
+
+  @override
+  String get productFormHeroBody =>
+      'Continent → shop → itinerary → package options. Guests see this on home and explore.';
+
+  @override
+  String get productFormSectionLocation => 'Location';
+
+  @override
+  String get productFormSectionListing => 'Where it appears';
+
+  @override
+  String get productFormSectionMedia => 'Cover photo';
+
+  @override
+  String get productFormSectionBasics => 'Basics';
+
+  @override
+  String get productFormSectionItinerary => 'Schedule & meetup';
+
+  @override
+  String get productFormSectionIncludes => 'Includes & excludes';
+
+  @override
+  String get productFormSectionCapacity => 'Group & level';
+
+  @override
+  String get productFormSectionPricing => 'Pricing';
+
+  @override
+  String get productFormSectionOptions => 'Package options';
+
+  @override
+  String get productFormContinent => 'Continent';
+
+  @override
+  String get productFormContinentHint =>
+      'Pick a continent first to filter shops.';
+
+  @override
+  String get productFormShopHint => 'Choose the resort or dive shop.';
+
+  @override
+  String get productFormSubtitle => 'One-line pitch';
+
+  @override
+  String get productFormSubtitleHint =>
+      'e.g. Check dive then 2 tanks, same van';
+
+  @override
+  String get productFormDurationHint => 'e.g. 2 nights / half-day morning';
+
+  @override
+  String get productFormMeetingPoint => 'Meeting point';
+
+  @override
+  String get productFormMeetingHint => 'e.g. Panglao lobby 07:30';
+
+  @override
+  String get productFormSchedule => 'Itinerary summary';
+
+  @override
+  String get productFormScheduleHint =>
+      'Departure, dives, and return in order.';
+
+  @override
+  String get productFormIncludes => 'Includes';
+
+  @override
+  String get productFormIncludesHint =>
+      'Boat, tanks, guide, pickup — one per line';
+
+  @override
+  String get productFormExcludes => 'Excludes';
+
+  @override
+  String get productFormExcludesHint => 'Gear rental, park fees, etc.';
+
+  @override
+  String get productFormDifficulty => 'Required cert / level';
+
+  @override
+  String get productFormDifficultyHint => 'e.g. OW+ · beginner–intermediate';
+
+  @override
+  String get productFormMinGuests => 'Min guests';
+
+  @override
+  String get productFormMaxGuests => 'Max guests';
+
+  @override
+  String get productFormCancelNote => 'Cancellation note';
+
+  @override
+  String get productFormCancelHint => 'Rules N days before departure';
+
+  @override
+  String get productFormOptionsHint =>
+      'Add chooseable lines: room type, tanks, gear, transfer.';
+
+  @override
+  String get productFormOptionName => 'Option name';
+
+  @override
+  String get productFormOptionDesc => 'Option details';
+
+  @override
+  String get productFormOptionConsumer => 'Guest price';
+
+  @override
+  String get productFormOptionPro => 'Pro price';
+
+  @override
+  String get productFormAddOption => 'Add option';
+
+  @override
+  String get productFormRemoveOption => 'Remove option';
+
+  @override
+  String get productFormPhotoHint =>
+      '16:9 landscape preferred for cards and detail.';
+
+  @override
   String get productListingKind => 'Listing kind';
 
   @override

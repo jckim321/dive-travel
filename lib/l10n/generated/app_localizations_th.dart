@@ -913,6 +913,125 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminProductSubmitted => '승인 요청이 접수되었습니다.';
 
   @override
+  String get productFormHeroTitle => '여행상품을 등록하세요';
+
+  @override
+  String get productFormHeroBody =>
+      '대륙 → 샵 → 상세 일정 → 구성 옵션 순으로 채우면 손님 화면에 바로 쓸 수 있습니다.';
+
+  @override
+  String get productFormSectionLocation => '위치';
+
+  @override
+  String get productFormSectionListing => '노출 위치';
+
+  @override
+  String get productFormSectionMedia => '대표 사진';
+
+  @override
+  String get productFormSectionBasics => '기본 정보';
+
+  @override
+  String get productFormSectionItinerary => '일정 · 집결';
+
+  @override
+  String get productFormSectionIncludes => '포함 · 불포함';
+
+  @override
+  String get productFormSectionCapacity => '인원 · 난이도';
+
+  @override
+  String get productFormSectionPricing => '가격';
+
+  @override
+  String get productFormSectionOptions => '상품 구성 옵션';
+
+  @override
+  String get productFormContinent => '대륙';
+
+  @override
+  String get productFormContinentHint => '먼저 대륙을 고르면 해당 지역 샵만 보입니다.';
+
+  @override
+  String get productFormShopHint => '등록할 리조트(샵)를 선택하세요.';
+
+  @override
+  String get productFormSubtitle => '한 줄 소개';
+
+  @override
+  String get productFormSubtitleHint => '예: 체크다이브 후 2탱크, 같은 밴 동행';
+
+  @override
+  String get productFormDurationHint => '예: 2박 3일 / 오전 반나절';
+
+  @override
+  String get productFormMeetingPoint => '집결 장소';
+
+  @override
+  String get productFormMeetingHint => '예: 팡라오 리조트 로비 07:30';
+
+  @override
+  String get productFormSchedule => '일정 요약';
+
+  @override
+  String get productFormScheduleHint => '출발·다이빙·복귀 시간을 순서대로 적어 주세요.';
+
+  @override
+  String get productFormIncludes => '포함 사항';
+
+  @override
+  String get productFormIncludesHint => '보트, 탱크, 가이드, 픽업 등 줄바꿈으로 구분';
+
+  @override
+  String get productFormExcludes => '불포함 사항';
+
+  @override
+  String get productFormExcludesHint => '장비 렌탈, 해양공원 입장료 등';
+
+  @override
+  String get productFormDifficulty => '필요 자격 / 난이도';
+
+  @override
+  String get productFormDifficultyHint => '예: OW 이상 · 초급~중급';
+
+  @override
+  String get productFormMinGuests => '최소 인원';
+
+  @override
+  String get productFormMaxGuests => '최대 인원';
+
+  @override
+  String get productFormCancelNote => '취소 · 환불 안내';
+
+  @override
+  String get productFormCancelHint => '출발 N일 전 규정 등';
+
+  @override
+  String get productFormOptionsHint =>
+      '룸타입, 탱크 수, 장비, 트랜스퍼처럼 손님이 고르는 구성을 추가하세요.';
+
+  @override
+  String get productFormOptionName => '옵션명';
+
+  @override
+  String get productFormOptionDesc => '옵션 설명';
+
+  @override
+  String get productFormOptionConsumer => '옵션 소비자가';
+
+  @override
+  String get productFormOptionPro => '옵션 강사 우대가';
+
+  @override
+  String get productFormAddOption => '구성 옵션 추가';
+
+  @override
+  String get productFormRemoveOption => '옵션 삭제';
+
+  @override
+  String get productFormPhotoHint => '가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.';
+
+  @override
   String get productListingKind => '상품 종류 (노출 위치)';
 
   @override
