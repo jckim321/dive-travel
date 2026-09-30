@@ -23,7 +23,8 @@ class ExplorationMap extends StatelessWidget {
   final String exploredEnglish;
   final String exploredLocalized;
 
-  static const _aspect = 4 / 3;
+  /// Equirectangular world maps read best near 2:1; 4/3 stretched continents tall.
+  static const _aspect = 1.9;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +130,7 @@ class ExplorationMap extends StatelessWidget {
                               ],
                             ),
                           ),
-                          child: SizedBox(height: 88, width: double.infinity),
+                          child: SizedBox(height: 72, width: double.infinity),
                         ),
                       ),
                       Positioned(
