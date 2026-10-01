@@ -44,15 +44,6 @@ class ForYouSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                style.$1,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(style.$2, style: theme.textTheme.bodySmall),
-              const SizedBox(height: 16),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Stack(
@@ -89,10 +80,26 @@ class ForYouSection extends StatelessWidget {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            style.$1,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            style.$2,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.88),
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           Text(
                             l10n.homeNextOceanTitle,
                             style: theme.textTheme.labelLarge?.copyWith(
