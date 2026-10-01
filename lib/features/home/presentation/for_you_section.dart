@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
-import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -54,40 +53,81 @@ class ForYouSection extends StatelessWidget {
               const SizedBox(height: 6),
               Text(style.$2, style: theme.textTheme.bodySmall),
               const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.canvas,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
                   children: [
-                    Text(
-                      l10n.homeNextOceanTitle,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: AppTheme.ocean,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.homeNextOceanBody(
-                        continentLabel(l10n, insight.nextContinent),
-                      ),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    if (insight.suggestedShop != null) ...[
-                      const SizedBox(height: 12),
-                      FilledButton.tonal(
-                        key: const Key('for-you-shop'),
-                        onPressed: () => onOpenShop(insight.suggestedShop!),
-                        child: Text(
-                          l10n.homeOpenShop(insight.suggestedShop!.name),
+                    Positioned.fill(
+                      child: ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withValues(alpha: 0.22),
+                          BlendMode.darken,
+                        ),
+                        child: Image.asset(
+                          'assets/images/for_you_next_ocean.png',
+                          fit: BoxFit.cover,
+                          alignment: const Alignment(0, -0.1),
+                          errorBuilder: (_, _, _) => const ColoredBox(
+                            color: AppTheme.oceanDeep,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.oceanDeep.withValues(alpha: 0.72),
+                              AppTheme.navy.withValues(alpha: 0.55),
+                              AppTheme.oceanDeep.withValues(alpha: 0.78),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.homeNextOceanTitle,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: AppTheme.goldSoft,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.homeNextOceanBody(
+                              continentLabel(l10n, insight.nextContinent),
+                            ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              height: 1.35,
+                            ),
+                          ),
+                          if (insight.suggestedShop != null) ...[
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              key: const Key('for-you-shop'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppTheme.navy,
+                              ),
+                              onPressed: () =>
+                                  onOpenShop(insight.suggestedShop!),
+                              child: Text(
+                                l10n.homeOpenShop(insight.suggestedShop!.name),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
