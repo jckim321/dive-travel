@@ -147,6 +147,10 @@ class DiverStore extends ChangeNotifier {
     return liveStatsFor(shopId)?.products ?? const [];
   }
 
+  bool get hasAnyPublicProduct => _shopStats.any(
+        (stats) => stats.products.any((product) => product.isListedPublicly),
+      );
+
   /// Home shelf for one listing kind: one card per resort, only that kind.
   ///
   /// Previously every public product became its own [DiveShop] row, and empty
@@ -170,7 +174,8 @@ class DiverStore extends ChangeNotifier {
       final stats = statsByShop[hull.hullId];
       final matches = [
         for (final product in stats?.products ?? const <ShopProduct>[])
-          if (product.isListedPublicly && product.listingKind == kind) product,
+          if (product.isListedPublicly && _matchesHomeShelf(product, kind))
+            product,
       ];
       if (matches.isEmpty) {
         continue;
@@ -221,6 +226,15 @@ class DiverStore extends ChangeNotifier {
           : hull.durationLabel,
       coverUrl: product.coverUrl.isNotEmpty ? product.coverUrl : hull.coverUrl,
     );
+  }
+
+  /// Dive Star 선반은 큐레이션 상품도 함께 노출 (홈/탐색 불일치 방지).
+  static bool _matchesHomeShelf(ShopProduct product, ProductListingKind kind) {
+    if (product.listingKind == kind) {
+      return true;
+    }
+    return kind == ProductListingKind.diveStar &&
+        product.listingKind == ProductListingKind.curated;
   }
 
   List<GearItem> get gear => List.unmodifiable(_gear);

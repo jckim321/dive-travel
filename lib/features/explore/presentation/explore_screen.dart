@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -42,13 +41,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
       builder: (context, _) {
         final isInstructor = store.stats.isInstructor;
         final needle = _search.text.trim().toLowerCase();
-        final shops = DiveShopCatalog.hulls([
+        // Show every public product card (not one-per-resort), so phone/PC
+        // registration updates appear consistently on Explore.
+        final shops = [
           for (final shop in store.shops)
             if ((_continent == ContinentFilter.all ||
                     shop.continent == _continent) &&
-                (needle.isEmpty || shop.searchBlob.contains(needle)))
+                (needle.isEmpty || shop.searchBlob.contains(needle)) &&
+                _showsOnExplore(shop, store))
               shop,
-        ]);
+        ];
         final bookings = store.bookings;
 
         return Scaffold(
@@ -261,6 +263,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
         return '${l10n.bookingConfirmed} · ${l10n.refundPolicyHint(quote.percent)}';
     }
   }
+}
+
+bool _showsOnExplore(DiveShop shop, DiverStore store) {
+  final live = store.liveStatsFor(shop.hullId);
+  final hasPublic =
+      live?.products.any((product) => product.isListedPublicly) ?? false;
+  if (hasPublic) {
+    return true;
+  }
+  // Once any live product exists, hide empty catalog shells so new
+  // registrations aren't buried under seed resorts on PC/web.
+  return !store.hasAnyPublicProduct;
 }
 
 class _PriceRoleBanner extends StatelessWidget {

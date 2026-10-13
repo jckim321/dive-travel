@@ -932,7 +932,31 @@ class FirestoreDiverRepository implements DiverRepository {
       );
     }
 
-    await _shops.doc(shopId).set({
+    final ref = _shops.doc(shopId);
+    final existing = await ref.get();
+    final currentProducts = [
+      for (final item
+          in (existing.data()?['products'] as List<dynamic>? ?? const []))
+        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
+    ];
+    // Keep listing cards in sync: desk price edits used to update only the
+    // shop doc while Explore/Home still read the stale products[] prices.
+    final syncedProducts = currentProducts.isEmpty
+        ? currentProducts
+        : [
+            for (var i = 0; i < currentProducts.length; i++)
+              i == 0
+                  ? currentProducts[i].copyWith(
+                      name: productName.trim().isEmpty
+                          ? currentProducts[i].name
+                          : productName.trim(),
+                      consumerPrice: consumerPrice,
+                      professionalPrice: professionalPrice,
+                    )
+                  : currentProducts[i],
+          ];
+
+    await ref.set({
       'name': name.trim(),
       'location': location.trim(),
       'product_name': productName.trim(),
@@ -951,6 +975,8 @@ class FirestoreDiverRepository implements DiverRepository {
       'country': (country ?? catalog?.country)?.trim(),
       'continent': (continent ?? catalog?.continent)?.trim(),
       if (curated != null) 'curated': curated,
+      if (syncedProducts.isNotEmpty)
+        'products': [for (final item in syncedProducts) item.toMap()],
       'commission_rate': RefundPolicy.defaultCommissionRate,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
