@@ -934,11 +934,8 @@ class FirestoreDiverRepository implements DiverRepository {
 
     final ref = _shops.doc(shopId);
     final existing = await ref.get();
-    final currentProducts = [
-      for (final item
-          in (existing.data()?['products'] as List<dynamic>? ?? const []))
-        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
-    ];
+    final currentProducts =
+        ShopProduct.listFrom(shopId, existing.data()?['products']);
     // Keep listing cards in sync: desk price edits used to update only the
     // shop doc while Explore/Home still read the stale products[] prices.
     final syncedProducts = currentProducts.isEmpty
@@ -1006,34 +1003,42 @@ class FirestoreDiverRepository implements DiverRepository {
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
-    final current = <String, ShopProduct>{};
-    for (final item
-        in (snap.data()?['products'] as List<dynamic>? ?? const [])) {
-      if (item is! Map<String, dynamic>) {
-        continue;
-      }
-      final parsed = ShopProduct.fromMap(shopId, item);
-      if (parsed.id.isEmpty) {
-        continue;
-      }
-      current[parsed.id] = parsed;
+    final current = <String, ShopProduct>{
+      for (final parsed
+          in ShopProduct.listFrom(shopId, snap.data()?['products']))
+        parsed.id: parsed,
+    };
+    // Keep an existing cover if the edit omitted bytes/url (avoids wiping R2).
+    final previous = current[saved.id];
+    if (saved.coverUrl.isEmpty &&
+        previous != null &&
+        previous.coverUrl.isNotEmpty) {
+      saved = saved.copyWith(coverUrl: previous.coverUrl);
     }
     current[saved.id] = saved;
     final next = current.values.toList();
+    final coverForShop = saved.coverUrl.isNotEmpty
+        ? saved.coverUrl
+        : (snap.data()?['cover_url'] as String? ?? '');
     await ref.set({
       'products': [for (final item in next) item.toMap()],
       'product_name': saved.name,
       'consumer_price': saved.consumerPrice,
       'professional_price': saved.professionalPrice,
-      if (useAsResortCover && saved.coverUrl.isNotEmpty) ...{
-        'cover_url': saved.coverUrl,
+      // Always mirror a durable product cover onto the shop so Explore/Home
+      // cards keep a photo even when nested product maps fail to parse.
+      if (coverForShop.isNotEmpty &&
+          (useAsResortCover ||
+              photoBytes != null ||
+              (snap.data()?['cover_url'] as String?)?.isNotEmpty != true)) ...{
+        'cover_url': coverForShop,
         'gallery_urls': [
-          saved.coverUrl,
+          coverForShop,
           for (final item
               in (snap.data()?['gallery_urls'] as List<dynamic>? ?? const []))
             if (item is String &&
                 item.trim().isNotEmpty &&
-                item.trim() != saved.coverUrl)
+                item.trim() != coverForShop)
               item.trim(),
         ],
       },
@@ -1048,11 +1053,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }) async {
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
-    final current = [
-      for (final item
-          in (snap.data()?['products'] as List<dynamic>? ?? const []))
-        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
-    ];
+    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
     final next = [
       for (final item in current)
         if (item.id != productId) item,
@@ -1072,11 +1073,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }) async {
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
-    final current = [
-      for (final item
-          in (snap.data()?['products'] as List<dynamic>? ?? const []))
-        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
-    ];
+    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
     final next = [
       for (final item in current)
         if (item.id == productId)

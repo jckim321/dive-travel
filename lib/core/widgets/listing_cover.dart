@@ -62,7 +62,12 @@ class ListingCoverPhoto extends StatelessWidget {
         isAntiAlias: true,
         // Decode near device density so OTA covers stay sharp on retina.
         cacheWidth: (900 * dpr).round().clamp(600, 1800),
-        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+        errorBuilder: (_, _, _) => Image.asset(
+          'assets/images/test_dive_photo.png',
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+        ),
       );
     } else {
       image = Image.asset(

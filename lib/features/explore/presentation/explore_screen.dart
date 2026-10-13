@@ -51,7 +51,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 (needle.isEmpty || shop.searchBlob.contains(needle)) &&
                 _showsOnExplore(shop, store))
               shop,
-        ]);
+        ])
+          ..sort(
+            (a, b) => store
+                .latestPublicProductAt(b.hullId)
+                .compareTo(store.latestPublicProductAt(a.hullId)),
+          );
         final bookings = store.bookings;
 
         return Scaffold(

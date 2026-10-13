@@ -151,8 +151,8 @@ class DiverStore extends ChangeNotifier {
         (stats) => stats.products.any((product) => product.isListedPublicly),
       );
 
-  /// Home shelf: one card per resort. Never flash catalog seeds then clear them
-  /// once Firestore products arrive (that looked like "appeared then vanished").
+  /// Home shelf: one card per resort, newest registration first.
+  /// Never flash catalog seeds then clear them once Firestore products arrive.
   List<DiveShop> resortsFeaturedAs(
     ProductListingKind kind, {
     int limit = 4,
@@ -160,13 +160,9 @@ class DiverStore extends ChangeNotifier {
   }) {
     final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
     final hasLiveProducts = hasAnyPublicProduct;
-    final featured = <DiveShop>[];
+    final scored = <({DiveShop card, DateTime at})>[];
 
-    // Prefer hulls that already have live product cards (stable order).
     for (final hull in DiveShopCatalog.hulls(shops)) {
-      if (featured.length >= limit) {
-        break;
-      }
       if (excludeHullIds.contains(hull.hullId)) {
         continue;
       }
@@ -184,8 +180,17 @@ class DiverStore extends ChangeNotifier {
         final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
         return bAt.compareTo(aAt);
       });
-      featured.add(_hullCardForProduct(hull, matches.first));
+      final best = matches.first;
+      scored.add((
+        card: _hullCardForProduct(hull, best),
+        at: best.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+      ));
     }
+
+    scored.sort((a, b) => b.at.compareTo(a.at));
+    final featured = [
+      for (final item in scored.take(limit)) item.card,
+    ];
 
     if (featured.isNotEmpty || hasLiveProducts || _loading) {
       // Live data (or still loading): never pad with catalog clones that later
@@ -207,6 +212,9 @@ class DiverStore extends ChangeNotifier {
   }
 
   DiveShop _hullCardForProduct(DiveShop hull, ShopProduct product) {
+    final cover = product.coverUrl.isNotEmpty
+        ? product.coverUrl
+        : (liveStatsFor(hull.hullId)?.coverUrl ?? hull.coverUrl);
     return hull.copyWith(
       id: hull.hullId,
       productName: product.name,
@@ -216,17 +224,33 @@ class DiverStore extends ChangeNotifier {
       durationLabel: product.durationLabel.isNotEmpty
           ? product.durationLabel
           : hull.durationLabel,
-      coverUrl: product.coverUrl.isNotEmpty ? product.coverUrl : hull.coverUrl,
+      coverUrl: cover,
     );
   }
 
-  /// Dive Star = main public shelf (any approved product). Other shelves keep
-  /// their exact kind so one registration is not copied into every section.
+  /// Shelves follow listing_kind. Curated has no home row, so it rides Dive Star.
   static bool _matchesHomeShelf(ShopProduct product, ProductListingKind kind) {
     if (kind == ProductListingKind.diveStar) {
-      return true;
+      return product.listingKind == ProductListingKind.diveStar ||
+          product.listingKind == ProductListingKind.curated;
     }
     return product.listingKind == kind;
+  }
+
+  /// Newest public product time on a hull (explore / home recent sort).
+  DateTime latestPublicProductAt(String hullId) {
+    final products = liveStatsFor(hullId)?.products ?? const <ShopProduct>[];
+    var best = DateTime.fromMillisecondsSinceEpoch(0);
+    for (final product in products) {
+      if (!product.isListedPublicly) {
+        continue;
+      }
+      final at = product.submittedAt;
+      if (at != null && at.isAfter(best)) {
+        best = at;
+      }
+    }
+    return best;
   }
 
   static List<ShopProduct> _dedupedProducts(List<ShopProduct> products) {

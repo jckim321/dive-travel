@@ -129,6 +129,7 @@ class DiveShop {
     if (live == null) {
       return next;
     }
+    final liveCover = live.coverUrl;
     return next.copyWith(
       name: live.name,
       location: live.location,
@@ -137,7 +138,7 @@ class DiveShop {
       professionalPrice: live.professionalPrice,
       intro: live.intro,
       address: live.address,
-      coverUrl: live.coverUrl ?? coverUrl,
+      coverUrl: (liveCover != null && liveCover.isNotEmpty) ? liveCover : coverUrl,
       galleryUrls: live.galleryUrls.isNotEmpty ? live.galleryUrls : galleryUrls,
       amenities: live.amenities.isNotEmpty ? live.amenities : amenities,
     );

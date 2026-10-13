@@ -253,7 +253,9 @@ abstract final class DiveShopCatalog {
             durationLabel: product.durationLabel,
             coverUrl: product.coverUrl.isNotEmpty
                 ? product.coverUrl
-                : merged.coverUrl,
+                : (stats?.coverUrl?.isNotEmpty == true
+                    ? stats!.coverUrl!
+                    : merged.coverUrl),
           ),
         ),
       );

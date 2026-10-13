@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
   test('리뷰가 없으면 Dive Star 0', () {
@@ -44,5 +45,28 @@ void main() {
     expect(ProVerificationStatus.parse(true), ProVerificationStatus.approved);
     expect(ProVerificationStatus.parse(false), ProVerificationStatus.none);
     expect(ProVerificationStatus.pending.firestoreValue, 'pending');
+  });
+
+  test('Firestore loose nested maps still parse products and covers', () {
+    final stats = ShopLiveStats.fromDocument('cairns-gbr', {
+      'name': '케언즈 그레이트리프',
+      'cover_url': 'https://cdn.example/shops/cairns-gbr/cover.jpg',
+      'products': [
+        <Object?, Object?>{
+          'id': 'p-1',
+          'name': '외곽 리프 2탱크',
+          'consumer_price': 260000,
+          'professional_price': 182000,
+          'cover_url': 'https://cdn.example/shops/cairns-gbr/products/p-1.jpg',
+          'listing_kind': 'dive_star',
+          'publish_status': 'approved',
+          'active': true,
+          'submitted_at': '2026-10-13T12:00:00.000Z',
+        },
+      ],
+    });
+    expect(stats.products, hasLength(1));
+    expect(stats.products.first.coverUrl, contains('products/p-1'));
+    expect(stats.products.first.isListedPublicly, isTrue);
   });
 }

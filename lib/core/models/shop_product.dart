@@ -329,4 +329,35 @@ class ShopProduct {
       return null;
     }
   }
+
+  /// Firestore nested maps are often `Map<Object?, Object?>` on mobile.
+  /// Narrow `Map<String, dynamic>` checks silently drop whole products.
+  static Map<String, dynamic>? mapFrom(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return null;
+  }
+
+  static List<ShopProduct> listFrom(String shopId, dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final byId = <String, ShopProduct>{};
+    for (final item in raw) {
+      final map = mapFrom(item);
+      if (map == null) {
+        continue;
+      }
+      final product = ShopProduct.fromMap(shopId, map);
+      if (product.id.isEmpty) {
+        continue;
+      }
+      byId[product.id] = product;
+    }
+    return byId.values.toList();
+  }
 }
