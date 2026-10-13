@@ -1,34 +1,58 @@
-/// Where an approved product is featured on home / explore.
+/// Explore-only vs home shelf placement for an approved product.
 enum ProductListingKind {
+  /// Registered / approved but not pushed to any home shelf.
+  exploreOnly,
   diveStar,
-  favorites,
-  popular,
+  diverPlanned,
+  hotSpot,
   nextDeparture,
   curated;
 
+  static const homeShelves = <ProductListingKind>[
+    diveStar,
+    diverPlanned,
+    hotSpot,
+    nextDeparture,
+    curated,
+  ];
+
+  static const homeShelfLimit = 10;
+
+  bool get isHomeShelf => this != ProductListingKind.exploreOnly;
+
   static ProductListingKind parse(dynamic value) {
     switch (value) {
+      case 'explore_only':
+      case 'none':
+        return ProductListingKind.exploreOnly;
       case 'favorites':
-        return ProductListingKind.favorites;
+      case 'diver_planned':
+        return ProductListingKind.diverPlanned;
       case 'popular':
-        return ProductListingKind.popular;
+      case 'hot_spot':
+        return ProductListingKind.hotSpot;
       case 'next_departure':
         return ProductListingKind.nextDeparture;
       case 'curated':
         return ProductListingKind.curated;
+      case 'dive_star':
+        return ProductListingKind.diveStar;
       default:
+        // Legacy products without listing_kind stayed on Dive Star.
         return ProductListingKind.diveStar;
     }
   }
 
   String get firestoreValue {
     switch (this) {
+      case ProductListingKind.exploreOnly:
+        return 'explore_only';
       case ProductListingKind.diveStar:
         return 'dive_star';
-      case ProductListingKind.favorites:
-        return 'favorites';
-      case ProductListingKind.popular:
-        return 'popular';
+      case ProductListingKind.diverPlanned:
+        return 'diver_planned';
+      case ProductListingKind.hotSpot:
+        return 'hot_spot';
       case ProductListingKind.nextDeparture:
         return 'next_departure';
       case ProductListingKind.curated:
@@ -149,12 +173,15 @@ class ShopProduct {
     this.maxGuests = 0,
     this.cancellationNote = '',
     this.options = const [],
-    this.listingKind = ProductListingKind.diveStar,
+    this.listingKind = ProductListingKind.exploreOnly,
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
+    this.featuredAt,
     this.reviewedAt,
     this.reviewNote = '',
   });
+
+  static const Object _unset = Object();
 
   factory ShopProduct.fromMap(String shopId, Map<String, dynamic> data) {
     final rawOptions = data['options'];
@@ -193,6 +220,7 @@ class ShopProduct {
       listingKind: ProductListingKind.parse(data['listing_kind']),
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
+      featuredAt: _readTime(data['featured_at']),
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
     );
@@ -220,6 +248,8 @@ class ShopProduct {
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
+  /// When an admin last assigned this product to a home shelf.
+  final DateTime? featuredAt;
   final DateTime? reviewedAt;
   final String reviewNote;
 
@@ -249,6 +279,7 @@ class ShopProduct {
     ProductListingKind? listingKind,
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
+    Object? featuredAt = _unset,
     DateTime? reviewedAt,
     String? reviewNote,
   }) {
@@ -275,6 +306,9 @@ class ShopProduct {
       listingKind: listingKind ?? this.listingKind,
       publishStatus: publishStatus ?? this.publishStatus,
       submittedAt: submittedAt ?? this.submittedAt,
+      featuredAt: identical(featuredAt, _unset)
+          ? this.featuredAt
+          : featuredAt as DateTime?,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
     );
@@ -304,6 +338,7 @@ class ShopProduct {
       'listing_kind': listingKind.firestoreValue,
       'publish_status': publishStatus.firestoreValue,
       if (submittedAt != null) 'submitted_at': submittedAt!.toIso8601String(),
+      if (featuredAt != null) 'featured_at': featuredAt!.toIso8601String(),
       if (reviewedAt != null) 'reviewed_at': reviewedAt!.toIso8601String(),
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
     };

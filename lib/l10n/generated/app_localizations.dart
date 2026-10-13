@@ -153,20 +153,38 @@ abstract class AppLocalizations {
   /// 홈 화면 다이브 스타 섹션 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'Dive Star 추천 리조트'**
+  /// **'Dive Star 인증'**
   String get homeDiveStarTitle;
 
-  /// 홈 화면 즐겨찾기·단골 섹션 제목입니다.
+  /// 홈 Dive Star 선반 한 줄 감성 카피입니다.
   ///
   /// In ko, this message translates to:
-  /// **'즐겨 찾는 곳'**
+  /// **'다이버가 직접 검증한 리조트'**
+  String get homeDiveStarShelfHint;
+
+  /// 홈 화면 다이버 직접 기획 섹션 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 만드는 찐 여행'**
   String get homeFavoritesTitle;
 
-  /// 홈 화면 인기 리조트 섹션 제목입니다.
+  /// 내가 만드는 찐 여행 선반 서브카피입니다.
   ///
   /// In ko, this message translates to:
-  /// **'많이 가는 곳'**
+  /// **'다이버가 직접 꾸민 진짜 일정'**
+  String get homeDiverPlannedSubtitle;
+
+  /// 홈 화면 핫 다이빙 스팟 섹션 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 뜨는 스팟'**
   String get homePopularTitle;
+
+  /// 지금 뜨는 스팟 선반 서브카피입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버들이 몰리는 핫 다이빙'**
+  String get homeHotSpotSubtitle;
 
   /// 홈 섹션 우측 더보기입니다.
   ///
@@ -179,6 +197,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'하트를 누르거나 로그를 남기면 단골 리조트가 여기에 모여요.'**
   String get homeFavoritesEmpty;
+
+  /// 홈 선반이 비었을 때 짧은 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 올라온 여행이 없어요. 곧 채워질 거예요.'**
+  String get homeShelfEmpty;
+
+  /// 홈 화면 Dive Travel 기획 스페셜 섹션 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획 스페셜'**
+  String get homeCuratedTitle;
+
+  /// 기획 스페셜 선반 서브카피입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Travel이 꾸민 여행'**
+  String get homeCuratedSubtitle;
+
+  /// 같은 배 마감 임박 선반 서브카피입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈 자리 채우고 함께 출발'**
+  String get homeLastCallSubtitle;
 
   /// 홈 분류 칩의 전체입니다.
   ///
@@ -210,10 +252,10 @@ abstract class AppLocalizations {
   /// **'마감임박'**
   String get homeChipLastMinute;
 
-  /// 홈에서 빈자리가 얼마 안 남은 출발 목록 제목입니다.
+  /// 홈에서 같은 배 마감 임박 목록 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이번 출발'**
+  /// **'같은 배 · 마감 임박'**
   String get homeNextDepartures;
 
   /// 홈 화면 마감 임박 피드 제목입니다.
@@ -1701,7 +1743,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminProductsSubtitle.
   ///
   /// In ko, this message translates to:
-  /// **'상품 종류를 고르고 등록하면, 최종 공개는 승인 결재 후에만 반영됩니다.'**
+  /// **'등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.'**
   String get adminProductsSubtitle;
 
   /// No description provided for @adminProductsTab.
@@ -1709,6 +1751,84 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'상품 등록'**
   String get adminProductsTab;
+
+  /// No description provided for @adminHomeCurationTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈 큐레이션'**
+  String get adminHomeCurationTab;
+
+  /// No description provided for @adminHomeCurationTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈 화면 큐레이션'**
+  String get adminHomeCurationTitle;
+
+  /// No description provided for @adminHomeCurationSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인된 상품을 골라 홈 분류별로 최대 10개까지 내보냅니다.'**
+  String get adminHomeCurationSubtitle;
+
+  /// No description provided for @adminHomeCurationPool.
+  ///
+  /// In ko, this message translates to:
+  /// **'미배치 (여행상품만)'**
+  String get adminHomeCurationPool;
+
+  /// No description provided for @adminHomeCurationOnShelf.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 선반에 올린 상품'**
+  String get adminHomeCurationOnShelf;
+
+  /// No description provided for @adminHomeCurationCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}/{limit}'**
+  String adminHomeCurationCount(int count, int limit);
+
+  /// No description provided for @adminHomeCurationSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 선반으로'**
+  String get adminHomeCurationSend;
+
+  /// No description provided for @adminHomeCurationRemove.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈에서 내리기'**
+  String get adminHomeCurationRemove;
+
+  /// No description provided for @adminHomeCurationFull.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 선반은 이미 10개입니다. 하나를 내린 뒤 다시 올려 주세요.'**
+  String get adminHomeCurationFull;
+
+  /// No description provided for @adminHomeCurationEmptyPool.
+  ///
+  /// In ko, this message translates to:
+  /// **'미배치 공개 상품이 없습니다.'**
+  String get adminHomeCurationEmptyPool;
+
+  /// No description provided for @adminHomeCurationEmptyShelf.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 선반에 올린 상품이 없습니다.'**
+  String get adminHomeCurationEmptyShelf;
+
+  /// No description provided for @adminHomeCurationMoved.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈 선반에 반영했습니다.'**
+  String get adminHomeCurationMoved;
+
+  /// No description provided for @adminHomeCurationCleared.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈에서 내렸습니다.'**
+  String get adminHomeCurationCleared;
 
   /// No description provided for @adminProductPendingQueue.
   ///
@@ -2037,37 +2157,43 @@ abstract class AppLocalizations {
   /// No description provided for @productListingKind.
   ///
   /// In ko, this message translates to:
-  /// **'상품 종류 (노출 위치)'**
+  /// **'홈 선반'**
   String get productListingKind;
+
+  /// No description provided for @productListingExploreOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'미배치 (여행상품만)'**
+  String get productListingExploreOnly;
 
   /// No description provided for @productListingDiveStar.
   ///
   /// In ko, this message translates to:
-  /// **'Dive Star 추천'**
+  /// **'Dive Star 인증'**
   String get productListingDiveStar;
 
   /// No description provided for @productListingFavorites.
   ///
   /// In ko, this message translates to:
-  /// **'즐겨찾는 곳'**
+  /// **'내가 만드는 찐 여행'**
   String get productListingFavorites;
 
   /// No description provided for @productListingPopular.
   ///
   /// In ko, this message translates to:
-  /// **'많이 가는 곳'**
+  /// **'지금 뜨는 스팟'**
   String get productListingPopular;
 
   /// No description provided for @productListingNextDeparture.
   ///
   /// In ko, this message translates to:
-  /// **'이번 출발'**
+  /// **'같은 배 · 마감 임박'**
   String get productListingNextDeparture;
 
   /// No description provided for @productListingCurated.
   ///
   /// In ko, this message translates to:
-  /// **'기획 상품'**
+  /// **'기획 스페셜'**
   String get productListingCurated;
 
   /// No description provided for @productStatusPending.

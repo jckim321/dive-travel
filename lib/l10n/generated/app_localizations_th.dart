@@ -36,16 +36,37 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeDiveStarTitle => 'รีสอร์ต Dive Star ประจำเดือน';
 
   @override
-  String get homeFavoritesTitle => '즐겨 찾는 곳';
+  String get homeDiveStarShelfHint => '다이버가 직접 검증한 리조트';
 
   @override
-  String get homePopularTitle => '많이 가는 곳';
+  String get homeFavoritesTitle => '내가 만드는 찐 여행';
+
+  @override
+  String get homeDiverPlannedSubtitle => '다이버가 직접 꾸민 진짜 일정';
+
+  @override
+  String get homePopularTitle => '지금 뜨는 스팟';
+
+  @override
+  String get homeHotSpotSubtitle => '다이버들이 몰리는 핫 다이빙';
 
   @override
   String get homeSeeAll => '더보기';
 
   @override
   String get homeFavoritesEmpty => '하트를 누르거나 로그를 남기면 단골 리조트가 여기에 모여요.';
+
+  @override
+  String get homeShelfEmpty => '아직 올라온 여행이 없어요. 곧 채워질 거예요.';
+
+  @override
+  String get homeCuratedTitle => '기획 스페셜';
+
+  @override
+  String get homeCuratedSubtitle => 'Dive Travel이 꾸민 여행';
+
+  @override
+  String get homeLastCallSubtitle => '빈 자리 채우고 함께 출발';
 
   @override
   String get homeChipAll => '전체';
@@ -888,10 +909,51 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminProductsSubtitle =>
-      '상품 종류를 고르고 등록하면, 최종 공개는 승인 결재 후에만 반영됩니다.';
+      '등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.';
 
   @override
   String get adminProductsTab => '상품 등록';
+
+  @override
+  String get adminHomeCurationTab => '홈 큐레이션';
+
+  @override
+  String get adminHomeCurationTitle => '홈 화면 큐레이션';
+
+  @override
+  String get adminHomeCurationSubtitle => '승인된 상품을 골라 홈 분류별로 최대 10개까지 내보냅니다.';
+
+  @override
+  String get adminHomeCurationPool => '미배치 (여행상품만)';
+
+  @override
+  String get adminHomeCurationOnShelf => '이 선반에 올린 상품';
+
+  @override
+  String adminHomeCurationCount(int count, int limit) {
+    return '$count/$limit';
+  }
+
+  @override
+  String get adminHomeCurationSend => '이 선반으로';
+
+  @override
+  String get adminHomeCurationRemove => '홈에서 내리기';
+
+  @override
+  String get adminHomeCurationFull => '이 선반은 이미 10개입니다. 하나를 내린 뒤 다시 올려 주세요.';
+
+  @override
+  String get adminHomeCurationEmptyPool => '미배치 공개 상품이 없습니다.';
+
+  @override
+  String get adminHomeCurationEmptyShelf => '이 선반에 올린 상품이 없습니다.';
+
+  @override
+  String get adminHomeCurationMoved => '홈 선반에 반영했습니다.';
+
+  @override
+  String get adminHomeCurationCleared => '홈에서 내렸습니다.';
 
   @override
   String get adminProductPendingQueue => '승인 대기 상품';
@@ -1060,22 +1122,25 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productFormCuratedCountryHint => '예: 필리핀';
 
   @override
-  String get productListingKind => '상품 종류 (노출 위치)';
+  String get productListingKind => '홈 선반';
 
   @override
-  String get productListingDiveStar => 'Dive Star 추천';
+  String get productListingExploreOnly => '미배치 (여행상품만)';
 
   @override
-  String get productListingFavorites => '즐겨찾는 곳';
+  String get productListingDiveStar => 'Dive Star 인증';
 
   @override
-  String get productListingPopular => '많이 가는 곳';
+  String get productListingFavorites => '내가 만드는 찐 여행';
 
   @override
-  String get productListingNextDeparture => '이번 출발';
+  String get productListingPopular => '지금 뜨는 스팟';
 
   @override
-  String get productListingCurated => '기획 상품';
+  String get productListingNextDeparture => '같은 배 · 마감 임박';
+
+  @override
+  String get productListingCurated => '기획 스페셜';
 
   @override
   String get productStatusPending => '승인 대기';

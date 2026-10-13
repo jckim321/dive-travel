@@ -92,7 +92,6 @@ class _TravelProductRegistrationScreenState
   var _removeExistingCover = false;
   late String _shopId;
   late String _continent;
-  late ProductListingKind _kind;
   var _curatedMode = false;
   var _saving = false;
 
@@ -120,8 +119,6 @@ class _TravelProductRegistrationScreenState
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
-    _kind = existing?.listingKind ??
-        (_curatedMode ? ProductListingKind.curated : ProductListingKind.diveStar);
     _name = TextEditingController(text: existing?.name ?? '');
     _consumer = TextEditingController(
       text: existing == null ? '' : '${existing.consumerPrice}',
@@ -280,7 +277,11 @@ class _TravelProductRegistrationScreenState
           maxGuests: int.tryParse(_maxGuests.text) ?? 0,
           cancellationNote: _cancelNote.text.trim(),
           options: options,
-          listingKind: _kind,
+          // New products stay Explore-only until admin home curation.
+          listingKind: widget.existing?.listingKind ??
+              ProductListingKind.exploreOnly,
+          featuredAt: widget.existing?.featuredAt,
+          submittedAt: widget.existing?.submittedAt,
         ),
         photoBytes: _photo?.bytes,
         photoFileName: _photo?.fileName,
@@ -411,15 +412,7 @@ class _TravelProductRegistrationScreenState
                     ],
                     selected: {_curatedMode},
                     onSelectionChanged: (value) {
-                      final curated = value.first;
-                      setState(() {
-                        _curatedMode = curated;
-                        if (curated &&
-                            _kind == ProductListingKind.diveStar &&
-                            widget.existing == null) {
-                          _kind = ProductListingKind.curated;
-                        }
-                      });
+                      setState(() => _curatedMode = value.first);
                     },
                   ),
                   const SizedBox(height: 12),
@@ -517,24 +510,6 @@ class _TravelProductRegistrationScreenState
                               },
                             ),
                           ),
-                  ),
-              ],
-            ),
-          ),
-          _FormSection(
-            icon: Icons.place_outlined,
-            title: l10n.productFormSectionListing,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final kind in ProductListingKind.values)
-                  ChoiceChip(
-                    key: Key('product-kind-${kind.name}'),
-                    label: Text(_kindLabel(l10n, kind)),
-                    selected: _kind == kind,
-                    selectedColor: AppTheme.goldSoft,
-                    onSelected: (_) => setState(() => _kind = kind),
                   ),
               ],
             ),
@@ -1200,17 +1175,3 @@ class _OptionCard extends StatelessWidget {
   }
 }
 
-String _kindLabel(AppLocalizations l10n, ProductListingKind kind) {
-  switch (kind) {
-    case ProductListingKind.diveStar:
-      return l10n.productListingDiveStar;
-    case ProductListingKind.favorites:
-      return l10n.productListingFavorites;
-    case ProductListingKind.popular:
-      return l10n.productListingPopular;
-    case ProductListingKind.nextDeparture:
-      return l10n.productListingNextDeparture;
-    case ProductListingKind.curated:
-      return l10n.productListingCurated;
-  }
-}

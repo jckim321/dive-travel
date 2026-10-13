@@ -1095,6 +1095,32 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setShopProductListingKind({
+    required String shopId,
+    required String productId,
+    required ProductListingKind listingKind,
+  }) async {
+    final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
+    final now = DateTime.now();
+    final next = [
+      for (final item in current)
+        if (item.id == productId)
+          item.copyWith(
+            listingKind: listingKind,
+            featuredAt: listingKind.isHomeShelf ? now : null,
+          )
+        else
+          item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
   Stream<List<TourBooking>> watchShopBookings(String shopId) {
     return _shopBookings(shopId).snapshots().map((snapshot) {
       final bookings = [

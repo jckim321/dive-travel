@@ -124,11 +124,13 @@ class HomeDiscoverySection extends StatelessWidget {
     required this.title,
     required this.shops,
     required this.onOpen,
+    this.subtitle,
     this.emptyText,
     this.onSeeAll,
   });
 
   final String title;
+  final String? subtitle;
   final List<DiveShop> shops;
   final String? emptyText;
   final VoidCallback? onSeeAll;
@@ -139,6 +141,10 @@ class HomeDiscoverySection extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    // One horizontal rail card: wide enough to peek the next, height matches 1:1 cover + labels.
+    final screenW = MediaQuery.sizeOf(context).width;
+    final cardWidth = (screenW * 0.72).clamp(240.0, 320.0);
+    final cardHeight = cardWidth / ListingCover.aspectRatio + 56;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +152,21 @@ class HomeDiscoverySection extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(title, style: theme.textTheme.titleMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleMedium),
+                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppTheme.muted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             if (onSeeAll != null)
               IconButton(
@@ -156,33 +176,34 @@ class HomeDiscoverySection extends StatelessWidget {
               ),
           ],
         ),
+        const SizedBox(height: 10),
         if (shops.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8, right: 8),
+            padding: const EdgeInsets.only(bottom: 4, right: 8),
             child: Text(
-              emptyText ?? l10n.homeFavoritesEmpty,
+              emptyText ?? l10n.homeShelfEmpty,
               style: theme.textTheme.bodySmall,
             ),
           )
         else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: shops.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 8,
-              mainAxisExtent: ListingCover.cardExtent(context),
+          SizedBox(
+            height: cardHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: shops.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final shop = shops[index];
+                return SizedBox(
+                  width: cardWidth,
+                  child: HomeStayCard(
+                    shop: shop,
+                    quote: store.quoteFor(shop),
+                    onDetails: () => onOpen(shop),
+                  ),
+                );
+              },
             ),
-            itemBuilder: (context, index) {
-              final shop = shops[index];
-              return HomeStayCard(
-                shop: shop,
-                quote: store.quoteFor(shop),
-                onDetails: () => onOpen(shop),
-              );
-            },
           ),
       ],
     );

@@ -246,11 +246,13 @@ class _PendingProductTile extends StatelessWidget {
 
 String _kindLabel(AppLocalizations l10n, ProductListingKind kind) {
   switch (kind) {
+    case ProductListingKind.exploreOnly:
+      return l10n.productListingExploreOnly;
     case ProductListingKind.diveStar:
       return l10n.productListingDiveStar;
-    case ProductListingKind.favorites:
+    case ProductListingKind.diverPlanned:
       return l10n.productListingFavorites;
-    case ProductListingKind.popular:
+    case ProductListingKind.hotSpot:
       return l10n.productListingPopular;
     case ProductListingKind.nextDeparture:
       return l10n.productListingNextDeparture;

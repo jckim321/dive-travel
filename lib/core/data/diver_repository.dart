@@ -144,6 +144,12 @@ abstract class DiverRepository {
     String reviewNote = '',
   });
 
+  Future<void> setShopProductListingKind({
+    required String shopId,
+    required String productId,
+    required ProductListingKind listingKind,
+  });
+
   Stream<InstructorDiscount> watchInstructorDiscount();
 
   Future<void> saveInstructorDiscount(InstructorDiscount discount);

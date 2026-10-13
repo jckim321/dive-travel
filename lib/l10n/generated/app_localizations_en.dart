@@ -34,13 +34,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Dive more in one region and the neon light turns gold.';
 
   @override
-  String get homeDiveStarTitle => 'Dive Star picks';
+  String get homeDiveStarTitle => 'Dive Star verified';
 
   @override
-  String get homeFavoritesTitle => 'Your favorites';
+  String get homeDiveStarShelfHint => 'Resorts divers have checked themselves';
 
   @override
-  String get homePopularTitle => 'Most booked';
+  String get homeFavoritesTitle => 'My real trip';
+
+  @override
+  String get homeDiverPlannedSubtitle => 'Itineraries divers build themselves';
+
+  @override
+  String get homePopularTitle => 'Spots heating up';
+
+  @override
+  String get homeHotSpotSubtitle => 'Where divers are heading now';
 
   @override
   String get homeSeeAll => 'See all';
@@ -48,6 +57,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get homeFavoritesEmpty =>
       'Tap a heart or log a dive to collect your regular resorts.';
+
+  @override
+  String get homeShelfEmpty => 'Nothing on this shelf yet — it will fill soon.';
+
+  @override
+  String get homeCuratedTitle => 'Editor specials';
+
+  @override
+  String get homeCuratedSubtitle => 'Trips Dive Travel put together';
+
+  @override
+  String get homeLastCallSubtitle => 'Fill a seat and share the boat';
 
   @override
   String get homeChipAll => 'All';
@@ -65,7 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeChipLastMinute => 'Last call';
 
   @override
-  String get homeNextDepartures => 'This departure';
+  String get homeNextDepartures => 'Same boat · last call';
 
   @override
   String get homeLastMinuteTitle => 'Last-call departures';
@@ -905,10 +926,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminProductsSubtitle =>
-      'Pick a listing kind and submit. Products go live only after owner approval.';
+      'New products appear on Explore by newest first. Home placement is chosen in Home curation.';
 
   @override
   String get adminProductsTab => 'Products';
+
+  @override
+  String get adminHomeCurationTab => 'Home curation';
+
+  @override
+  String get adminHomeCurationTitle => 'Home shelf curation';
+
+  @override
+  String get adminHomeCurationSubtitle =>
+      'Pick approved products for each home shelf — up to 10 each.';
+
+  @override
+  String get adminHomeCurationPool => 'Unplaced (Explore only)';
+
+  @override
+  String get adminHomeCurationOnShelf => 'On this shelf';
+
+  @override
+  String adminHomeCurationCount(int count, int limit) {
+    return '$count/$limit';
+  }
+
+  @override
+  String get adminHomeCurationSend => 'Send to shelf';
+
+  @override
+  String get adminHomeCurationRemove => 'Remove from home';
+
+  @override
+  String get adminHomeCurationFull =>
+      'This shelf already has 10. Remove one before adding.';
+
+  @override
+  String get adminHomeCurationEmptyPool => 'No unplaced public products.';
+
+  @override
+  String get adminHomeCurationEmptyShelf => 'Nothing on this shelf yet.';
+
+  @override
+  String get adminHomeCurationMoved => 'Home shelf updated.';
+
+  @override
+  String get adminHomeCurationCleared => 'Removed from home.';
 
   @override
   String get adminProductPendingQueue => 'Pending approval';
@@ -1083,22 +1147,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormCuratedCountryHint => 'e.g. Philippines';
 
   @override
-  String get productListingKind => 'Listing kind';
+  String get productListingKind => 'Home shelf';
 
   @override
-  String get productListingDiveStar => 'Dive Star picks';
+  String get productListingExploreOnly => 'Unplaced (Explore only)';
 
   @override
-  String get productListingFavorites => 'Favorites';
+  String get productListingDiveStar => 'Dive Star verified';
 
   @override
-  String get productListingPopular => 'Popular';
+  String get productListingFavorites => 'My real trip';
 
   @override
-  String get productListingNextDeparture => 'Departing soon';
+  String get productListingPopular => 'Spots heating up';
 
   @override
-  String get productListingCurated => 'Curated offer';
+  String get productListingNextDeparture => 'Same boat · last call';
+
+  @override
+  String get productListingCurated => 'Editor specials';
 
   @override
   String get productStatusPending => 'Pending';

@@ -33,17 +33,29 @@
   "@homeMapTip": {
     "description": "단골 지역 황금 마커 안내입니다."
   },
-  "homeDiveStarTitle": "Dive Star 추천 리조트",
+  "homeDiveStarTitle": "Dive Star 인증",
   "@homeDiveStarTitle": {
     "description": "홈 화면 다이브 스타 섹션 제목입니다."
   },
-  "homeFavoritesTitle": "즐겨 찾는 곳",
-  "@homeFavoritesTitle": {
-    "description": "홈 화면 즐겨찾기·단골 섹션 제목입니다."
+  "homeDiveStarShelfHint": "다이버가 직접 검증한 리조트",
+  "@homeDiveStarShelfHint": {
+    "description": "홈 Dive Star 선반 한 줄 감성 카피입니다."
   },
-  "homePopularTitle": "많이 가는 곳",
+  "homeFavoritesTitle": "내가 만드는 찐 여행",
+  "@homeFavoritesTitle": {
+    "description": "홈 화면 다이버 직접 기획 섹션 제목입니다."
+  },
+  "homeDiverPlannedSubtitle": "다이버가 직접 꾸민 진짜 일정",
+  "@homeDiverPlannedSubtitle": {
+    "description": "내가 만드는 찐 여행 선반 서브카피입니다."
+  },
+  "homePopularTitle": "지금 뜨는 스팟",
   "@homePopularTitle": {
-    "description": "홈 화면 인기 리조트 섹션 제목입니다."
+    "description": "홈 화면 핫 다이빙 스팟 섹션 제목입니다."
+  },
+  "homeHotSpotSubtitle": "다이버들이 몰리는 핫 다이빙",
+  "@homeHotSpotSubtitle": {
+    "description": "지금 뜨는 스팟 선반 서브카피입니다."
   },
   "homeSeeAll": "더보기",
   "@homeSeeAll": {
@@ -52,6 +64,22 @@
   "homeFavoritesEmpty": "하트를 누르거나 로그를 남기면 단골 리조트가 여기에 모여요.",
   "@homeFavoritesEmpty": {
     "description": "즐겨찾기 섹션이 비었을 때 안내입니다."
+  },
+  "homeShelfEmpty": "아직 올라온 여행이 없어요. 곧 채워질 거예요.",
+  "@homeShelfEmpty": {
+    "description": "홈 선반이 비었을 때 짧은 안내입니다."
+  },
+  "homeCuratedTitle": "기획 스페셜",
+  "@homeCuratedTitle": {
+    "description": "홈 화면 Dive Travel 기획 스페셜 섹션 제목입니다."
+  },
+  "homeCuratedSubtitle": "Dive Travel이 꾸민 여행",
+  "@homeCuratedSubtitle": {
+    "description": "기획 스페셜 선반 서브카피입니다."
+  },
+  "homeLastCallSubtitle": "빈 자리 채우고 함께 출발",
+  "@homeLastCallSubtitle": {
+    "description": "같은 배 마감 임박 선반 서브카피입니다."
   },
   "homeChipAll": "전체",
   "@homeChipAll": {
@@ -73,9 +101,9 @@
   "@homeChipLastMinute": {
     "description": "홈 분류 칩의 마감 임박입니다."
   },
-  "homeNextDepartures": "이번 출발",
+  "homeNextDepartures": "같은 배 · 마감 임박",
   "@homeNextDepartures": {
-    "description": "홈에서 빈자리가 얼마 안 남은 출발 목록 제목입니다."
+    "description": "홈에서 같은 배 마감 임박 목록 제목입니다."
   },
   "homeLastMinuteTitle": "마감 임박 출발",
   "@homeLastMinuteTitle": {
@@ -761,8 +789,27 @@
   "adminShopsTitle": "다이브 스타 · 제휴 샵",
   "adminShopsSubtitle": "오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.",
   "adminProductsTitle": "여행상품 등록",
-  "adminProductsSubtitle": "상품 종류를 고르고 등록하면, 최종 공개는 승인 결재 후에만 반영됩니다.",
+  "adminProductsSubtitle": "등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.",
   "adminProductsTab": "상품 등록",
+  "adminHomeCurationTab": "홈 큐레이션",
+  "adminHomeCurationTitle": "홈 화면 큐레이션",
+  "adminHomeCurationSubtitle": "승인된 상품을 골라 홈 분류별로 최대 10개까지 내보냅니다.",
+  "adminHomeCurationPool": "미배치 (여행상품만)",
+  "adminHomeCurationOnShelf": "이 선반에 올린 상품",
+  "adminHomeCurationCount": "{count}/{limit}",
+  "@adminHomeCurationCount": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "limit": {"type": "int"}
+    }
+  },
+  "adminHomeCurationSend": "이 선반으로",
+  "adminHomeCurationRemove": "홈에서 내리기",
+  "adminHomeCurationFull": "이 선반은 이미 10개입니다. 하나를 내린 뒤 다시 올려 주세요.",
+  "adminHomeCurationEmptyPool": "미배치 공개 상품이 없습니다.",
+  "adminHomeCurationEmptyShelf": "이 선반에 올린 상품이 없습니다.",
+  "adminHomeCurationMoved": "홈 선반에 반영했습니다.",
+  "adminHomeCurationCleared": "홈에서 내렸습니다.",
   "adminProductPendingQueue": "승인 대기 상품",
   "adminProductPendingEmpty": "승인 대기 중인 상품이 없습니다.",
   "adminProductApproved": "상품이 승인되어 공개되었습니다.",
@@ -817,12 +864,13 @@
   "productFormCuratedLocationHint": "예: 필리핀 보홀 팡라오",
   "productFormCuratedCountry": "국가",
   "productFormCuratedCountryHint": "예: 필리핀",
-  "productListingKind": "상품 종류 (노출 위치)",
-  "productListingDiveStar": "Dive Star 추천",
-  "productListingFavorites": "즐겨찾는 곳",
-  "productListingPopular": "많이 가는 곳",
-  "productListingNextDeparture": "이번 출발",
-  "productListingCurated": "기획 상품",
+  "productListingKind": "홈 선반",
+  "productListingExploreOnly": "미배치 (여행상품만)",
+  "productListingDiveStar": "Dive Star 인증",
+  "productListingFavorites": "내가 만드는 찐 여행",
+  "productListingPopular": "지금 뜨는 스팟",
+  "productListingNextDeparture": "같은 배 · 마감 임박",
+  "productListingCurated": "기획 스페셜",
   "productStatusPending": "승인 대기",
   "productStatusApproved": "공개됨",
   "productStatusRejected": "거절됨",

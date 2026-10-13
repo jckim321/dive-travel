@@ -8,6 +8,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_instructors_sc
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
@@ -15,7 +16,7 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _AdminHub { overview, members, certify, shops, ops }
 
-enum _ShopsSub { monitor, products, pricing }
+enum _ShopsSub { monitor, products, homeCuration, pricing }
 
 enum _OpsSub { posts, weather }
 
@@ -103,23 +104,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labels: [
                       l10n.adminShopsTitle,
                       l10n.adminProductsTab,
+                      l10n.adminHomeCurationTab,
                       l10n.adminPricingTitle,
                     ],
                     keys: const [
                       Key('admin-sub-shops'),
                       Key('admin-sub-products'),
+                      Key('admin-sub-home-curation'),
                       Key('admin-menu-pricing'),
                     ],
                     selected: switch (_shopsSub) {
                       _ShopsSub.monitor => 0,
                       _ShopsSub.products => 1,
-                      _ShopsSub.pricing => 2,
+                      _ShopsSub.homeCuration => 2,
+                      _ShopsSub.pricing => 3,
                     },
                     onSelect: (i) => _go(
                       _AdminHub.shops,
                       sub: switch (i) {
                         1 => _ShopsSub.products,
-                        2 => _ShopsSub.pricing,
+                        2 => _ShopsSub.homeCuration,
+                        3 => _ShopsSub.pricing,
                         _ => _ShopsSub.monitor,
                       },
                     ),
@@ -195,6 +200,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return switch (_shopsSub) {
           _ShopsSub.monitor => const AdminShopsScreen(embedded: true),
           _ShopsSub.products => const AdminProductsScreen(embedded: true),
+          _ShopsSub.homeCuration =>
+            const AdminHomeCurationScreen(embedded: true),
           _ShopsSub.pricing => const AdminPricingScreen(embedded: true),
         };
       case _AdminHub.ops:

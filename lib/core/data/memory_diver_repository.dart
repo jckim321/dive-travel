@@ -745,6 +745,31 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setShopProductListingKind({
+    required String shopId,
+    required String productId,
+    required ProductListingKind listingKind,
+  }) async {
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    final now = DateTime.now();
+    final products = [
+      for (final item in current.products)
+        if (item.id == productId)
+          item.copyWith(
+            listingKind: listingKind,
+            featuredAt: listingKind.isHomeShelf ? now : null,
+          )
+        else
+          item,
+    ];
+    _shopStats[shopId] = current.copyWith(products: products);
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
   Stream<List<TourBooking>> watchShopBookings(String shopId) async* {
     yield List<TourBooking>.from(_shopBookings[shopId] ?? const []);
     yield* _shopBookingController.stream;

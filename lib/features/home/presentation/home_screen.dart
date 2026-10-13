@@ -27,23 +27,27 @@ class HomeScreen extends StatelessWidget {
     final stats = store.stats;
     final theme = Theme.of(context);
     final explored = store.regions.length;
-    final recommendedShops =
-        store.resortsFeaturedAs(ProductListingKind.diveStar, limit: 4);
+    final diveStarShops = store.resortsFeaturedAs(ProductListingKind.diveStar);
     final claimed = <String>{
-      for (final shop in recommendedShops) shop.hullId,
+      for (final shop in diveStarShops) shop.hullId,
     };
-    final favoriteShops = store.resortsFeaturedAs(
-      ProductListingKind.favorites,
+    final plannedShops = store.resortsFeaturedAs(
+      ProductListingKind.diverPlanned,
       excludeHullIds: claimed,
     );
-    claimed.addAll(favoriteShops.map((shop) => shop.hullId));
-    final popularShops = store.resortsFeaturedAs(
-      ProductListingKind.popular,
+    claimed.addAll(plannedShops.map((shop) => shop.hullId));
+    final hotShops = store.resortsFeaturedAs(
+      ProductListingKind.hotSpot,
       excludeHullIds: claimed,
     );
-    claimed.addAll(popularShops.map((shop) => shop.hullId));
+    claimed.addAll(hotShops.map((shop) => shop.hullId));
     final lastCallShops = store.resortsFeaturedAs(
       ProductListingKind.nextDeparture,
+      excludeHullIds: claimed,
+    );
+    claimed.addAll(lastCallShops.map((shop) => shop.hullId));
+    final curatedShops = store.resortsFeaturedAs(
+      ProductListingKind.curated,
       excludeHullIds: claimed,
     );
 
@@ -92,38 +96,41 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeDiveStarTitle,
-                  shops: recommendedShops,
+                  subtitle: l10n.homeDiveStarShelfHint,
+                  shops: diveStarShops,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeFavoritesTitle,
-                  shops: favoriteShops,
-                  emptyText: l10n.homeFavoritesEmpty,
+                  subtitle: l10n.homeDiverPlannedSubtitle,
+                  shops: plannedShops,
+                  emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homePopularTitle,
-                  shops: popularShops,
+                  subtitle: l10n.homeHotSpotSubtitle,
+                  shops: hotShops,
+                  emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeNextDepartures,
+                  subtitle: l10n.homeLastCallSubtitle,
                   shops: lastCallShops,
+                  emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  l10n.homeLastMinuteTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                LastMinuteCrewBanner(
-                  onTap: lastCallShops.isEmpty
-                      ? null
-                      : () => _openShop(context, lastCallShops.first),
+                HomeDiscoverySection(
+                  title: l10n.homeCuratedTitle,
+                  subtitle: l10n.homeCuratedSubtitle,
+                  shops: curatedShops,
+                  emptyText: l10n.homeShelfEmpty,
+                  onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 32),
                 ForYouSection(

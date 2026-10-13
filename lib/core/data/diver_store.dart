@@ -151,13 +151,16 @@ class DiverStore extends ChangeNotifier {
         (stats) => stats.products.any((product) => product.isListedPublicly),
       );
 
-  /// Home shelf: one card per resort, newest registration first.
+  /// Home shelf: one card per resort, newest admin feature first.
   /// Never flash catalog seeds then clear them once Firestore products arrive.
   List<DiveShop> resortsFeaturedAs(
     ProductListingKind kind, {
-    int limit = 4,
+    int limit = ProductListingKind.homeShelfLimit,
     Set<String> excludeHullIds = const {},
   }) {
+    if (!kind.isHomeShelf) {
+      return const [];
+    }
     final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
     final hasLiveProducts = hasAnyPublicProduct;
     final scored = <({DiveShop card, DateTime at})>[];
@@ -169,21 +172,16 @@ class DiverStore extends ChangeNotifier {
       final stats = statsByShop[hull.hullId];
       final matches = [
         for (final product in _dedupedProducts(stats?.products ?? const []))
-          if (product.isListedPublicly && _matchesHomeShelf(product, kind))
-            product,
+          if (product.isListedPublicly && product.listingKind == kind) product,
       ];
       if (matches.isEmpty) {
         continue;
       }
-      matches.sort((a, b) {
-        final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bAt.compareTo(aAt);
-      });
+      matches.sort((a, b) => _homeFeatureTime(b).compareTo(_homeFeatureTime(a)));
       final best = matches.first;
       scored.add((
         card: _hullCardForProduct(hull, best),
-        at: best.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+        at: _homeFeatureTime(best),
       ));
     }
 
@@ -198,17 +196,58 @@ class DiverStore extends ChangeNotifier {
       return featured;
     }
 
+    // Empty catalog bootstrap only — never invent home shelves once live products exist.
     final fallback = switch (kind) {
       ProductListingKind.diveStar => rankedResorts(limit: limit),
-      ProductListingKind.favorites => favoriteResorts(limit: limit),
-      ProductListingKind.popular => popularResorts(limit: limit),
+      ProductListingKind.diverPlanned => favoriteResorts(limit: limit),
+      ProductListingKind.hotSpot => popularResorts(limit: limit),
       ProductListingKind.nextDeparture => lastCallResorts(limit: limit),
       ProductListingKind.curated => rankedResorts(limit: limit),
+      ProductListingKind.exploreOnly => const <DiveShop>[],
     };
     return DiveShopCatalog.hulls(fallback)
         .where((shop) => !excludeHullIds.contains(shop.hullId))
         .take(limit)
         .toList();
+  }
+
+  static DateTime _homeFeatureTime(ShopProduct product) {
+    return product.featuredAt ??
+        product.submittedAt ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  /// Public products for admin home curation (newest submit first).
+  List<ShopProduct> get publicProductsForCuration {
+    final out = <ShopProduct>[];
+    for (final stats in _shopStats) {
+      for (final product in _dedupedProducts(stats.products)) {
+        if (product.isListedPublicly) {
+          out.add(product);
+        }
+      }
+    }
+    out.sort((a, b) {
+      final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bAt.compareTo(aAt);
+    });
+    return out;
+  }
+
+  int countOnHomeShelf(ProductListingKind kind) {
+    if (!kind.isHomeShelf) {
+      return 0;
+    }
+    var count = 0;
+    for (final stats in _shopStats) {
+      for (final product in _dedupedProducts(stats.products)) {
+        if (product.isListedPublicly && product.listingKind == kind) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   DiveShop _hullCardForProduct(DiveShop hull, ShopProduct product) {
@@ -226,15 +265,6 @@ class DiverStore extends ChangeNotifier {
           : hull.durationLabel,
       coverUrl: cover,
     );
-  }
-
-  /// Shelves follow listing_kind. Curated has no home row, so it rides Dive Star.
-  static bool _matchesHomeShelf(ShopProduct product, ProductListingKind kind) {
-    if (kind == ProductListingKind.diveStar) {
-      return product.listingKind == ProductListingKind.diveStar ||
-          product.listingKind == ProductListingKind.curated;
-    }
-    return product.listingKind == kind;
   }
 
   /// Newest public product time on a hull (explore / home recent sort).
@@ -680,6 +710,37 @@ class DiverStore extends ChangeNotifier {
       productId: productId,
       status: ProductPublishStatus.rejected,
       reviewNote: reviewNote,
+    );
+  }
+
+  /// Admin-only: place a public product on a home shelf (or clear with exploreOnly).
+  Future<void> setProductHomeShelf({
+    required String shopId,
+    required String productId,
+    required ProductListingKind listingKind,
+  }) {
+    if (!_stats.isAdmin) {
+      return Future.error(StateError('Admin only'));
+    }
+    ShopProduct? current;
+    for (final product in productsForShop(shopId)) {
+      if (product.id == productId) {
+        current = product;
+        break;
+      }
+    }
+    if (current == null || !current.isListedPublicly) {
+      return Future.error(StateError('Product not public'));
+    }
+    if (listingKind.isHomeShelf &&
+        current.listingKind != listingKind &&
+        countOnHomeShelf(listingKind) >= ProductListingKind.homeShelfLimit) {
+      return Future.error(StateError('Home shelf full'));
+    }
+    return _repository.setShopProductListingKind(
+      shopId: shopId,
+      productId: productId,
+      listingKind: listingKind,
     );
   }
 
