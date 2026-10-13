@@ -1051,7 +1051,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get productFormPhotoHint =>
-      '16:9 landscape preferred for cards and detail.';
+      'Square (1:1) preferred for cards and detail.';
 
   @override
   String get productFormSourcePartner => 'Partner resort';

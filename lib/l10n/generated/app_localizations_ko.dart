@@ -1026,7 +1026,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get productFormRemoveOption => '옵션 삭제';
 
   @override
-  String get productFormPhotoHint => '가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.';
+  String get productFormPhotoHint => '정사각(1:1) 권장. 손님 카드·상세 상단에 사용됩니다.';
 
   @override
   String get productFormSourcePartner => '제휴 리조트';

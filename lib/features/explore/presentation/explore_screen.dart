@@ -201,7 +201,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     SliverGridDelegateWithFixedCrossAxisCount(
                                       crossAxisCount: 2,
                                       mainAxisSpacing: 18,
-                                      crossAxisSpacing: 12,
+                                      crossAxisSpacing: 8,
                                       mainAxisExtent:
                                           ListingCover.cardExtent(context),
                                     ),

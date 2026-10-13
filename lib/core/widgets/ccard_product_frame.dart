@@ -7,7 +7,7 @@ class CCardProductFrame extends StatelessWidget {
   const CCardProductFrame({
     super.key,
     required this.child,
-    this.radius = 14,
+    this.radius = 5,
   });
 
   final Widget child;

@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -563,9 +564,9 @@ class _TravelProductRegistrationScreenState
                             ),
                           )
                         : ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(5),
                             child: AspectRatio(
-                              aspectRatio: 16 / 9,
+                              aspectRatio: ListingCover.aspectRatio,
                               child: Image.memory(
                                 _photo!.bytes,
                                 fit: BoxFit.cover,

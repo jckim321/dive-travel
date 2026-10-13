@@ -6,10 +6,9 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 
-/// 숙박 OTA 대표컷. Booking.com은 가로만(최소 2048×1080≈16:9),
-/// Airbnb는 3:2 가로를 권장합니다. 카드·히어로는 16:9 와이드로 자릅니다.
+/// 홈·탐색 카드 대표컷. 2열 그리드에서 여행 사진이 돋보이도록 1:1로 자릅니다.
 abstract final class ListingCover {
-  static const double aspectRatio = 16 / 9;
+  static const double aspectRatio = 1;
 
   /// Prefer full opacity; dimming makes uploaded photos look soft/washed out.
   static const double photoOpacity = 1;

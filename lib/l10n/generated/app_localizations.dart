@@ -1977,7 +1977,7 @@ abstract class AppLocalizations {
   /// No description provided for @productFormPhotoHint.
   ///
   /// In ko, this message translates to:
-  /// **'가로 16:9 권장. 손님 카드·상세 상단에 사용됩니다.'**
+  /// **'정사각(1:1) 권장. 손님 카드·상세 상단에 사용됩니다.'**
   String get productFormPhotoHint;
 
   /// No description provided for @productFormSourcePartner.

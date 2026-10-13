@@ -347,7 +347,7 @@
   "productFormOptionPro": "Pro price",
   "productFormAddOption": "Add option",
   "productFormRemoveOption": "Remove option",
-  "productFormPhotoHint": "16:9 landscape preferred for cards and detail.",
+  "productFormPhotoHint": "Square (1:1) preferred for cards and detail.",
   "productFormSourcePartner": "Partner resort",
   "productFormSourceCurated": "Curated by us",
   "productFormSourceHint": "Partner resorts come from the catalog. Curated lets you type any resort name even before a shop contract.",

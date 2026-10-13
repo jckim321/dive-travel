@@ -97,14 +97,20 @@ class HomeStayCard extends StatelessWidget {
             shop.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: const Color(0xFF4A5560),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             '${_price.format(quote.amount)}원',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: AppTheme.navy,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ],
       ),
@@ -166,7 +172,7 @@ class HomeDiscoverySection extends StatelessWidget {
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 16,
-              crossAxisSpacing: 12,
+              crossAxisSpacing: 8,
               mainAxisExtent: ListingCover.cardExtent(context),
             ),
             itemBuilder: (context, index) {
