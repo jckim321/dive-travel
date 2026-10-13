@@ -33,6 +33,7 @@ class R2PhotoStorage {
     required String objectKey,
     required Uint8List bytes,
     required String contentType,
+    bool requirePublicUrl = false,
   }) async {
     if (!R2Config.isReady) {
       final missing = <String>[
@@ -44,6 +45,13 @@ class R2PhotoStorage {
         'Cloudflare R2 설정이 비어 있습니다 (${missing.join(', ')}). '
         '로컬은 lib/core/config/r2_secrets.dart에, '
         '배포본은 GitHub Secrets(R2_ACCESS_KEY_ID 등)에 넣어 주세요.',
+      );
+    }
+    if (requirePublicUrl && !R2Config.hasPublicBase) {
+      throw const R2UploadException(
+        'R2_PUBLIC_BASE_URL이 비어 있습니다. '
+        '공개 버킷/커스텀 도메인 URL을 넣어야 상품 사진이 새로고침 후에도 유지됩니다. '
+        '로컬은 r2_secrets.dart, 배포는 GitHub Secret R2_PUBLIC_BASE_URL을 설정하세요.',
       );
     }
 
@@ -69,17 +77,22 @@ class R2PhotoStorage {
         final decoded = response.decodeBody();
         final body = decoded is String ? decoded : await decoded;
         throw R2UploadException(
-          'R2 업로드 실패 (${response.statusCode}): $body',
+          'R2 업로드 실패 (${response.statusCode}): $body. '
+          '웹에서는 버킷 CORS에 GitHub Pages 출처(PUT)가 허용돼 있어야 합니다.',
         );
       }
-      if (R2Config.publicBaseUrl.trim().isNotEmpty) {
+      if (R2Config.hasPublicBase) {
         return R2Config.publicUrlFor(objectKey);
       }
+      // Private fallback for logbook-style assets only.
       return await _presignedGetUrl(host: host, path: path);
     } on R2UploadException {
       rethrow;
     } catch (error) {
-      throw R2UploadException('R2 업로드 실패: $error');
+      throw R2UploadException(
+        'R2 업로드 실패: $error. '
+        '웹에서는 버킷 CORS에 현재 사이트 출처가 허용돼 있는지 확인하세요.',
+      );
     }
   }
 

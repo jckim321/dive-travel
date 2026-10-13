@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -88,11 +89,22 @@ class _TravelProductRegistrationScreenState
   final _photoPicker = const DivePhotoPicker();
   final _options = <_OptionEditors>[];
   PickedPhoto? _photo;
+  var _removeExistingCover = false;
   late String _shopId;
   late String _continent;
   late ProductListingKind _kind;
   var _curatedMode = false;
   var _saving = false;
+
+  String get _existingCoverUrl {
+    final url = widget.existing?.coverUrl.trim() ?? '';
+    if (_removeExistingCover || url.isEmpty) {
+      return '';
+    }
+    return url;
+  }
+
+  bool get _hasCoverPreview => _photo != null || _existingCoverUrl.isNotEmpty;
 
   @override
   void initState() {
@@ -245,6 +257,7 @@ class _TravelProductRegistrationScreenState
         for (final draft in _options)
           if (draft.name.text.trim().isNotEmpty) draft.toOption(),
       ];
+      final keptCover = _removeExistingCover ? '' : (widget.existing?.coverUrl ?? '');
       await store.saveShopProduct(
         shopId: shopId,
         product: ShopProduct(
@@ -256,7 +269,7 @@ class _TravelProductRegistrationScreenState
           professionalPrice: int.tryParse(_pro.text) ?? 0,
           blurb: _blurb.text.trim(),
           durationLabel: _duration.text.trim(),
-          coverUrl: widget.existing?.coverUrl ?? '',
+          coverUrl: keptCover,
           continent: _continent,
           meetingPoint: _meeting.text.trim(),
           schedule: _schedule.text.trim(),
@@ -272,7 +285,7 @@ class _TravelProductRegistrationScreenState
         photoBytes: _photo?.bytes,
         photoFileName: _photo?.fileName,
         photoContentType: _photo?.contentType,
-        useAsResortCover: widget.existing == null,
+        useAsResortCover: widget.existing == null || _photo != null,
       );
       if (!mounted) {
         return;
@@ -291,16 +304,12 @@ class _TravelProductRegistrationScreenState
       if (!mounted) {
         return;
       }
-      final message = error.toString();
-      final partial = message.contains('정보는 저장했지만');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(partial ? message : '${l10n.exploreSaveFail}\n$error'),
+          content: Text('$error'),
+          duration: const Duration(seconds: 8),
         ),
       );
-      if (partial) {
-        Navigator.of(context).pop();
-      }
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -349,6 +358,13 @@ class _TravelProductRegistrationScreenState
       appBar: AppBar(
         title: Text(l10n.adminProductsTitle),
         backgroundColor: AppTheme.canvas,
+        actions: [
+          TextButton(
+            key: const Key('product-form-appbar-save'),
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
@@ -359,6 +375,12 @@ class _TravelProductRegistrationScreenState
                 ? l10n.partnerProductPendingHint
                 : l10n.productFormHeroBody,
           ),
+          if (!R2Config.canPersistListingPhotos) ...[
+            const SizedBox(height: 12),
+            _R2SetupBanner(
+              missingPublicBase: R2Config.isReady && !R2Config.hasPublicBase,
+            ),
+          ],
           const SizedBox(height: 16),
           _FormSection(
             icon: Icons.public_outlined,
@@ -532,19 +554,22 @@ class _TravelProductRegistrationScreenState
                 const SizedBox(height: 12),
                 Material(
                   color: const Color(0xFFF0F4F7),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(8),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(8),
                     onTap: () async {
                       final photo = await _photoPicker.pick();
                       if (photo == null || !mounted) {
                         return;
                       }
-                      setState(() => _photo = photo);
+                      setState(() {
+                        _photo = photo;
+                        _removeExistingCover = false;
+                      });
                     },
-                    child: _photo == null
+                    child: !_hasCoverPreview
                         ? SizedBox(
-                            height: 148,
+                            height: 168,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -567,14 +592,59 @@ class _TravelProductRegistrationScreenState
                             borderRadius: BorderRadius.circular(5),
                             child: AspectRatio(
                               aspectRatio: ListingCover.aspectRatio,
-                              child: Image.memory(
-                                _photo!.bytes,
-                                fit: BoxFit.cover,
-                              ),
+                              child: _photo != null
+                                  ? Image.memory(
+                                      _photo!.bytes,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.network(
+                                      _existingCoverUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => const ColoredBox(
+                                        color: AppTheme.oceanDeep,
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                   ),
                 ),
+                if (_hasCoverPreview) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () async {
+                          final photo = await _photoPicker.pick();
+                          if (photo == null || !mounted) {
+                            return;
+                          }
+                          setState(() {
+                            _photo = photo;
+                            _removeExistingCover = false;
+                          });
+                        },
+                        icon: const Icon(Icons.swap_horiz, size: 18),
+                        label: Text(l10n.exploreAttachPhoto),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _photo = null;
+                            _removeExistingCover = true;
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: Text(l10n.exploreCoverRemove),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -621,6 +691,35 @@ class _TravelProductRegistrationScreenState
             ),
           ),
           _FormSection(
+            icon: Icons.payments_outlined,
+            title: l10n.productFormSectionPricing,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _consumer,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: l10n.exploreConsumerPrice,
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _pro,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: l10n.exploreProPrice,
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _CollapsibleFormSection(
             icon: Icons.schedule_outlined,
             title: l10n.productFormSectionItinerary,
             child: Column(
@@ -649,7 +748,7 @@ class _TravelProductRegistrationScreenState
               ],
             ),
           ),
-          _FormSection(
+          _CollapsibleFormSection(
             icon: Icons.checklist_outlined,
             title: l10n.productFormSectionIncludes,
             child: Column(
@@ -691,7 +790,7 @@ class _TravelProductRegistrationScreenState
               ],
             ),
           ),
-          _FormSection(
+          _CollapsibleFormSection(
             icon: Icons.groups_outlined,
             title: l10n.productFormSectionCapacity,
             child: Column(
@@ -742,36 +841,7 @@ class _TravelProductRegistrationScreenState
               ],
             ),
           ),
-          _FormSection(
-            icon: Icons.payments_outlined,
-            title: l10n.productFormSectionPricing,
-            child: Column(
-              children: [
-                TextField(
-                  controller: _consumer,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.exploreConsumerPrice,
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _pro,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.exploreProPrice,
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _FormSection(
+          _CollapsibleFormSection(
             icon: Icons.tune_outlined,
             title: l10n.productFormSectionOptions,
             child: Column(
@@ -875,6 +945,97 @@ class _HeroBanner extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _R2SetupBanner extends StatelessWidget {
+  const _R2SetupBanner({required this.missingPublicBase});
+
+  final bool missingPublicBase;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = missingPublicBase
+        ? '상품 사진을 유지하려면 R2_PUBLIC_BASE_URL(공개 버킷 URL)이 필요합니다. '
+            '지금은 비어 있어 저장이 막히거나 새로고침 후 사진이 사라집니다.'
+        : 'Cloudflare R2 키가 비어 있습니다. 로컬은 r2_secrets.dart, '
+            '배포는 GitHub Secrets를 확인하세요.';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8A54B)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                body,
+                style: const TextStyle(
+                  color: Color(0xFF7C2D12),
+                  height: 1.35,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleFormSection extends StatelessWidget {
+  const _CollapsibleFormSection({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
+            childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: AppTheme.goldSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: AppTheme.navy),
+            ),
+            title: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            children: [child],
+          ),
         ),
       ),
     );

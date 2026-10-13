@@ -558,13 +558,13 @@ class DiverStore extends ChangeNotifier {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
-  }) {
+  }) async {
     // Partners may only manage their own hull; everyone else needs admin.
     final owned = _stats.ownedShopId;
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
     if (!_stats.isAdmin && !isOwnerPartner) {
-      return Future.error(StateError('Not allowed to edit this shop product'));
+      throw StateError('Not allowed to edit this shop product');
     }
 
     // Partners submit for owner approval; admin publish goes live immediately.
@@ -581,14 +581,7 @@ class DiverStore extends ChangeNotifier {
             active: false,
           );
 
-    if (photoBytes != null && photoBytes.isNotEmpty) {
-      _coverBytes['$shopId--${gated.id}'] = photoBytes;
-      if (useAsResortCover) {
-        _coverBytes[shopId] = photoBytes;
-      }
-      notifyListeners();
-    }
-    return _repository.saveShopProduct(
+    await _repository.saveShopProduct(
       shopId: shopId,
       product: gated,
       photoBytes: photoBytes,
@@ -596,6 +589,14 @@ class DiverStore extends ChangeNotifier {
       photoContentType: photoContentType,
       useAsResortCover: useAsResortCover,
     );
+    // Only mirror bytes locally after a durable R2 URL was written.
+    if (photoBytes != null && photoBytes.isNotEmpty) {
+      _coverBytes['$shopId--${gated.id}'] = photoBytes;
+      if (useAsResortCover) {
+        _coverBytes[shopId] = photoBytes;
+      }
+      notifyListeners();
+    }
   }
 
   Future<void> approveShopProduct({

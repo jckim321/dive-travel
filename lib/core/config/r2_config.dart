@@ -67,6 +67,13 @@ abstract final class R2Config {
 
   static bool get isReady => hasCredentials && accountId.isNotEmpty;
 
+  /// Listing/product covers need a durable public CDN URL, not a short-lived
+  /// presigned GET. Empty means uploads must not be treated as permanent.
+  static bool get hasPublicBase => publicBaseUrl.trim().isNotEmpty;
+
+  /// Ready to persist shop/product photos that survive reloads.
+  static bool get canPersistListingPhotos => isReady && hasPublicBase;
+
   static String get endpointHost {
     final api = s3ApiUrl;
     if (api.isNotEmpty) {
