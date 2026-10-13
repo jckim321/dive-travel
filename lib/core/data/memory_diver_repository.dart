@@ -700,6 +700,24 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> deleteShopProduct({
+    required String shopId,
+    required String productId,
+  }) async {
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    _shopStats[shopId] = current.copyWith(
+      products: [
+        for (final item in current.products)
+          if (item.id != productId) item,
+      ],
+    );
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
   Future<void> setShopProductPublishStatus({
     required String shopId,
     required String productId,

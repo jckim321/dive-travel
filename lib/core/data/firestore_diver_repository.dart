@@ -1012,6 +1012,28 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> deleteShopProduct({
+    required String shopId,
+    required String productId,
+  }) async {
+    final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final current = [
+      for (final item
+          in (snap.data()?['products'] as List<dynamic>? ?? const []))
+        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
+    ];
+    final next = [
+      for (final item in current)
+        if (item.id != productId) item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
   Future<void> setShopProductPublishStatus({
     required String shopId,
     required String productId,

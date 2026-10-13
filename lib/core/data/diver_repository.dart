@@ -132,6 +132,11 @@ abstract class DiverRepository {
     bool useAsResortCover = false,
   });
 
+  Future<void> deleteShopProduct({
+    required String shopId,
+    required String productId,
+  });
+
   Future<void> setShopProductPublishStatus({
     required String shopId,
     required String productId,

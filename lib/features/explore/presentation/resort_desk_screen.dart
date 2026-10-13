@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kMaxGallery = 12;
@@ -172,7 +176,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final name = _name.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.partnerShopName)),
+        SnackBar(content: Text('${l10n.partnerShopName} *')),
       );
       return;
     }
@@ -213,23 +217,111 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       if (!mounted) {
         return;
       }
-      final message = error.toString();
-      final partial = message.contains('정보는 저장했지만');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(partial ? message : '${l10n.exploreSaveFail}\n$error'),
-          duration: const Duration(seconds: 5),
+          content: Text('$error'),
+          duration: const Duration(seconds: 6),
         ),
       );
-      if (partial) {
-        // Text fields persisted; leave the desk open so photos can be retried.
-        return;
-      }
     } finally {
       if (mounted) {
         setState(() => _saving = false);
       }
     }
+  }
+
+  void _openPreview() => openResortDetail(context, widget.shopId);
+
+  Future<void> _openProductForm([ShopProduct? existing]) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PartnerProductFormScreen(
+          shopId: widget.shopId,
+          existing: existing,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteProduct(ShopProduct product) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.adminDeletePost),
+        content: Text(product.name),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+            child: Text(l10n.adminDeletePost),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    try {
+      await DiverStoreScope.of(context).deleteShopProduct(
+        shopId: widget.shopId,
+        productId: product.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exploreSaveOk)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
+    }
+  }
+
+  List<ShopProduct> _collectProducts(
+    ShopLiveStats? live,
+    List<DiveShop> listings,
+  ) {
+    final byId = <String, ShopProduct>{};
+    for (final product in live?.products ?? const <ShopProduct>[]) {
+      if (product.id.isNotEmpty) {
+        byId[product.id] = product;
+      }
+    }
+    for (final shop in listings) {
+      final id = shop.id.contains('--')
+          ? shop.id.split('--').last
+          : byId.entries
+              .where((e) => e.value.name == shop.productName)
+              .map((e) => e.key)
+              .firstOrNull;
+      final resolvedId = (id == null || id.isEmpty)
+          ? 'listing-${shop.productName.hashCode}'
+          : id;
+      byId.putIfAbsent(
+        resolvedId,
+        () => ShopProduct(
+          id: resolvedId,
+          shopId: widget.shopId,
+          name: shop.productName,
+          consumerPrice: shop.consumerPrice,
+          professionalPrice: shop.professionalPrice,
+          blurb: shop.blurb,
+          durationLabel: shop.durationLabel,
+          coverUrl: shop.coverUrl,
+        ),
+      );
+    }
+    return byId.values.toList();
   }
 
   @override
@@ -238,153 +330,673 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final store = DiverStoreScope.of(context);
     final live = store.liveStatsFor(widget.shopId);
     final listings = store.listingsOnHull(widget.shopId);
-    final theme = Theme.of(context);
+    final products = _collectProducts(live, listings);
 
     return Scaffold(
+      backgroundColor: AppTheme.canvas,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         title: Text(l10n.exploreEditResort),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : _saveProfile,
-            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
+          TextButton.icon(
+            onPressed: _openPreview,
+            icon: const Icon(Icons.visibility_outlined, size: 18),
+            label: const Text('미리보기'),
+          ),
+          const SizedBox(width: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton(
+              key: const Key('resort-save'),
+              onPressed: _saving ? null : _saveProfile,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.navy,
+                minimumSize: const Size(88, 40),
+              ),
+              child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
+            ),
           ),
         ],
       ),
-      body: ListView(
-        key: const Key('resort-desk'),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-        children: [
-          Text(l10n.exploreDeskHint, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 16),
-          _AgodaGalleryEditor(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 980;
+          final main = _DeskMainColumn(
+            hint: l10n.exploreDeskHint,
+            name: _name,
+            location: _location,
+            address: _address,
+            intro: _intro,
+            amenities: _amenities,
+            product: _product,
             slots: _slots,
-            onAdd: _addPhotos,
-            onTest: _useTestPhoto,
-            onRemove: _removeAt,
+            onAddPhotos: _addPhotos,
+            onTestPhoto: _useTestPhoto,
+            onRemovePhoto: _removeAt,
             onMakeCover: _makeCover,
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _name,
-            decoration: InputDecoration(labelText: l10n.partnerShopName),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _location,
-            decoration: InputDecoration(labelText: l10n.partnerShopLocation),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _address,
-            decoration: InputDecoration(labelText: l10n.exploreResortAddress),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('resort-intro-field'),
-            controller: _intro,
-            maxLines: 5,
-            decoration: InputDecoration(labelText: l10n.exploreResortIntro),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('resort-amenities-field'),
-            controller: _amenities,
-            maxLines: 2,
-            decoration: InputDecoration(
-              labelText: l10n.exploreResortTraits,
-              hintText: l10n.exploreAmenitiesHint,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _product,
-            decoration: InputDecoration(labelText: l10n.partnerDefaultProduct),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _consumer,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: l10n.exploreConsumerPrice),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _pro,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: l10n.exploreProPrice),
-          ),
-          const SizedBox(height: 20),
-          FilledButton(
-            key: const Key('resort-save'),
-            onPressed: _saving ? null : _saveProfile,
-            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
-          ),
-          const SizedBox(height: 28),
-          Text(l10n.partnerProductForm, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(l10n.partnerProductFormHint, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 12),
-          for (final shop in listings)
-            Card(
-              child: ListTile(
-                title: Text(shop.productName),
-                subtitle: Text(
-                  shop.blurb.isEmpty ? shop.durationLabel : shop.blurb,
-                ),
-                trailing: const Icon(Icons.edit_outlined),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => PartnerProductFormScreen(
-                      shopId: widget.shopId,
-                      existing: ShopProduct(
-                        id: shop.id.contains('--')
-                            ? shop.id.split('--').last
-                            : 'default',
-                        shopId: widget.shopId,
-                        name: shop.productName,
-                        consumerPrice: shop.consumerPrice,
-                        professionalPrice: shop.professionalPrice,
-                        blurb: shop.blurb,
-                        durationLabel: shop.durationLabel,
-                        coverUrl: shop.coverUrl,
-                      ),
-                    ),
-                  ),
+            products: products,
+            onAddProduct: () => _openProductForm(),
+            onEditProduct: _openProductForm,
+            onDeleteProduct: _deleteProduct,
+          );
+          final side = _DeskStickySidebar(
+            saving: _saving,
+            consumer: _consumer,
+            pro: _pro,
+            onSave: _saveProfile,
+            onPreview: _openPreview,
+          );
+          if (!wide) {
+            return ListView(
+              key: const Key('resort-desk'),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+              children: [
+                side,
+                const SizedBox(height: 16),
+                main,
+              ],
+            );
+          }
+          return Row(
+            key: const Key('resort-desk'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 7,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 12, 40),
+                  child: main,
                 ),
               ),
-            ),
-          if (live != null)
-            for (final product in live.products)
-              if (!listings.any(
-                (shop) =>
-                    shop.id.endsWith(product.id) ||
-                    shop.productName == product.name,
-              ))
-                Card(
-                  child: ListTile(
-                    title: Text(product.name),
-                    trailing: const Icon(Icons.edit_outlined),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => PartnerProductFormScreen(
-                          shopId: widget.shopId,
-                          existing: product,
-                        ),
-                      ),
-                    ),
-                  ),
+              Expanded(
+                flex: 3,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(8, 20, 20, 40),
+                  child: side,
                 ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            key: const Key('partner-product-form'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => PartnerProductFormScreen(shopId: widget.shopId),
               ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+InputDecoration _deskInputDecoration({
+  required String label,
+  String? hint,
+  bool required = false,
+}) {
+  final border = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    borderSide: const BorderSide(color: Color(0xFFD8DEE5)),
+  );
+  return InputDecoration(
+    label: required ? _RequiredLabel(label) : Text(label),
+    hintText: hint,
+    filled: true,
+    fillColor: const Color(0xFFFBFCFD),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    border: border,
+    enabledBorder: border,
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppTheme.ocean, width: 1.4),
+    ),
+  );
+}
+
+class _RequiredLabel extends StatelessWidget {
+  const _RequiredLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: text),
+          const TextSpan(
+            text: ' *',
+            style: TextStyle(
+              color: Color(0xFFB42318),
+              fontWeight: FontWeight.w800,
             ),
-            icon: const Icon(Icons.add),
-            label: Text(l10n.partnerProductForm),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DeskSectionCard extends StatelessWidget {
+  const _DeskSectionCard({
+    required this.step,
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.trailing,
+  });
+
+  final String step;
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EBEF)),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppTheme.navy,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    step,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppTheme.muted,
+                              ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (trailing != null) trailing!,
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DeskStickySidebar extends StatelessWidget {
+  const _DeskStickySidebar({
+    required this.saving,
+    required this.consumer,
+    required this.pro,
+    required this.onSave,
+    required this.onPreview,
+  });
+
+  final bool saving;
+  final TextEditingController consumer;
+  final TextEditingController pro;
+  final VoidCallback onSave;
+  final VoidCallback onPreview;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EBEF)),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '게시 설정',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: saving ? null : onSave,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.navy,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.save_outlined, size: 18),
+              label: Text(saving ? l10n.exploreSaving : l10n.partnerSave),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: onPreview,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                foregroundColor: AppTheme.navy,
+                side: const BorderSide(color: Color(0xFFD0D7DE)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.visibility_outlined, size: 18),
+              label: const Text('미리보기'),
+            ),
+            const SizedBox(height: 20),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Text(
+              '핵심 금액',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '손님에게 먼저 보이는 대표 가격입니다.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.muted,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: consumer,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: _deskInputDecoration(
+                label: l10n.exploreConsumerPrice,
+                required: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pro,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: _deskInputDecoration(
+                label: l10n.exploreProPrice,
+                required: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DeskMainColumn extends StatelessWidget {
+  const _DeskMainColumn({
+    required this.hint,
+    required this.name,
+    required this.location,
+    required this.address,
+    required this.intro,
+    required this.amenities,
+    required this.product,
+    required this.slots,
+    required this.onAddPhotos,
+    required this.onTestPhoto,
+    required this.onRemovePhoto,
+    required this.onMakeCover,
+    required this.products,
+    required this.onAddProduct,
+    required this.onEditProduct,
+    required this.onDeleteProduct,
+  });
+
+  final String hint;
+  final TextEditingController name;
+  final TextEditingController location;
+  final TextEditingController address;
+  final TextEditingController intro;
+  final TextEditingController amenities;
+  final TextEditingController product;
+  final List<_GallerySlot> slots;
+  final VoidCallback onAddPhotos;
+  final VoidCallback onTestPhoto;
+  final ValueChanged<int> onRemovePhoto;
+  final ValueChanged<int> onMakeCover;
+  final List<ShopProduct> products;
+  final VoidCallback onAddProduct;
+  final ValueChanged<ShopProduct> onEditProduct;
+  final ValueChanged<ShopProduct> onDeleteProduct;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          hint,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.muted,
+              ),
+        ),
+        const SizedBox(height: 16),
+        _DeskSectionCard(
+          step: '1',
+          title: '기본 정보',
+          subtitle: '리조트 이름·위치·소개를 관리합니다.',
+          child: Column(
+            children: [
+              TextField(
+                controller: name,
+                decoration: _deskInputDecoration(
+                  label: l10n.partnerShopName,
+                  required: true,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: location,
+                decoration: _deskInputDecoration(
+                  label: l10n.partnerShopLocation,
+                  required: true,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: address,
+                decoration: _deskInputDecoration(
+                  label: l10n.exploreResortAddress,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                key: const Key('resort-intro-field'),
+                controller: intro,
+                maxLines: 5,
+                decoration: _deskInputDecoration(
+                  label: l10n.exploreResortIntro,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                key: const Key('resort-amenities-field'),
+                controller: amenities,
+                maxLines: 2,
+                decoration: _deskInputDecoration(
+                  label: l10n.exploreResortTraits,
+                  hint: l10n.exploreAmenitiesHint,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: product,
+                decoration: _deskInputDecoration(
+                  label: l10n.partnerDefaultProduct,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _DeskSectionCard(
+          step: '2',
+          title: '미디어 (사진)',
+          subtitle: l10n.exploreCoverPhotoHint,
+          child: _AgodaGalleryEditor(
+            slots: slots,
+            onAdd: onAddPhotos,
+            onTest: onTestPhoto,
+            onRemove: onRemovePhoto,
+            onMakeCover: onMakeCover,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _DeskSectionCard(
+          step: '3',
+          title: '상품 등록',
+          subtitle: l10n.partnerProductFormHint,
+          trailing: FilledButton.tonalIcon(
+            key: const Key('partner-product-form'),
+            onPressed: onAddProduct,
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(l10n.partnerProductForm),
+          ),
+          child: _ProductAdminTable(
+            products: products,
+            onEdit: onEditProduct,
+            onDelete: onDeleteProduct,
+            onAdd: onAddProduct,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProductAdminTable extends StatelessWidget {
+  const _ProductAdminTable({
+    required this.products,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onAdd,
+  });
+
+  final List<ShopProduct> products;
+  final ValueChanged<ShopProduct> onEdit;
+  final ValueChanged<ShopProduct> onDelete;
+  final VoidCallback onAdd;
+
+  static final _price = NumberFormat('#,###');
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (products.isEmpty) {
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F9FB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE6EBEF)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+          child: Column(
+            children: [
+              const Icon(Icons.inventory_2_outlined, color: AppTheme.muted),
+              const SizedBox(height: 10),
+              Text(
+                l10n.partnerProductFormHint,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.muted,
+                    ),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
+                label: Text(l10n.partnerProductForm),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE6EBEF)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF7F9FB),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    '상품명',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    l10n.exploreConsumerPrice,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    l10n.exploreProPrice,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppTheme.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+                const SizedBox(width: 88),
+              ],
+            ),
+          ),
+          for (var i = 0; i < products.length; i++) ...[
+            if (i > 0) const Divider(height: 1),
+            _ProductAdminRow(
+              product: products[i],
+              price: _price,
+              onEdit: () => onEdit(products[i]),
+              onDelete: () => onDelete(products[i]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductAdminRow extends StatelessWidget {
+  const _ProductAdminRow({
+    required this.product,
+    required this.price,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ShopProduct product;
+  final NumberFormat price;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = product.blurb.isNotEmpty
+        ? product.blurb
+        : product.durationLabel;
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    if (detail.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        detail,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.muted,
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text('${price.format(product.consumerPrice)}원'),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text('${price.format(product.professionalPrice)}원'),
+              ),
+              SizedBox(
+                width: 88,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      tooltip: '수정',
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                    ),
+                    IconButton(
+                      tooltip: '삭제',
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -430,10 +1042,6 @@ class _AgodaGalleryEditor extends StatelessWidget {
       key: const Key('resort-cover-field'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.exploreGalleryTitle, style: theme.textTheme.titleSmall),
-        const SizedBox(height: 4),
-        Text(l10n.exploreCoverPhotoHint, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 4),
         Text(
           slots.isEmpty
               ? l10n.exploreGalleryEmpty

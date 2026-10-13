@@ -599,6 +599,19 @@ class DiverStore extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteShopProduct({
+    required String shopId,
+    required String productId,
+  }) {
+    final owned = _stats.ownedShopId;
+    final isOwnerPartner =
+        _stats.isBusiness && owned != null && owned == shopId;
+    if (!_stats.isAdmin && !isOwnerPartner) {
+      return Future.error(StateError('Not allowed to delete this shop product'));
+    }
+    return _repository.deleteShopProduct(shopId: shopId, productId: productId);
+  }
+
   Future<void> approveShopProduct({
     required String shopId,
     required String productId,
