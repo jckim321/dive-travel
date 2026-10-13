@@ -1006,16 +1006,20 @@ class FirestoreDiverRepository implements DiverRepository {
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
-    final current = [
-      for (final item
-          in (snap.data()?['products'] as List<dynamic>? ?? const []))
-        if (item is Map<String, dynamic>) ShopProduct.fromMap(shopId, item),
-    ];
-    final next = [
-      for (final item in current)
-        if (item.id != saved.id) item,
-      saved,
-    ];
+    final current = <String, ShopProduct>{};
+    for (final item
+        in (snap.data()?['products'] as List<dynamic>? ?? const [])) {
+      if (item is! Map<String, dynamic>) {
+        continue;
+      }
+      final parsed = ShopProduct.fromMap(shopId, item);
+      if (parsed.id.isEmpty) {
+        continue;
+      }
+      current[parsed.id] = parsed;
+    }
+    current[saved.id] = saved;
+    final next = current.values.toList();
     await ref.set({
       'products': [for (final item in next) item.toMap()],
       'product_name': saved.name,

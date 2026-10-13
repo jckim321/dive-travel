@@ -151,19 +151,18 @@ class DiverStore extends ChangeNotifier {
         (stats) => stats.products.any((product) => product.isListedPublicly),
       );
 
-  /// Home shelf for one listing kind: one card per resort, only that kind.
-  ///
-  /// Previously every public product became its own [DiveShop] row, and empty
-  /// shelves were padded with ranked/popular fallbacks — so one registration
-  /// showed the same resort many times across (and inside) home sections.
+  /// Home shelf: one card per resort. Never flash catalog seeds then clear them
+  /// once Firestore products arrive (that looked like "appeared then vanished").
   List<DiveShop> resortsFeaturedAs(
     ProductListingKind kind, {
     int limit = 4,
     Set<String> excludeHullIds = const {},
   }) {
     final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
+    final hasLiveProducts = hasAnyPublicProduct;
     final featured = <DiveShop>[];
 
+    // Prefer hulls that already have live product cards (stable order).
     for (final hull in DiveShopCatalog.hulls(shops)) {
       if (featured.length >= limit) {
         break;
@@ -173,7 +172,7 @@ class DiverStore extends ChangeNotifier {
       }
       final stats = statsByShop[hull.hullId];
       final matches = [
-        for (final product in stats?.products ?? const <ShopProduct>[])
+        for (final product in _dedupedProducts(stats?.products ?? const []))
           if (product.isListedPublicly && _matchesHomeShelf(product, kind))
             product,
       ];
@@ -188,17 +187,10 @@ class DiverStore extends ChangeNotifier {
       featured.add(_hullCardForProduct(hull, matches.first));
     }
 
-    if (featured.isNotEmpty) {
+    if (featured.isNotEmpty || hasLiveProducts || _loading) {
+      // Live data (or still loading): never pad with catalog clones that later
+      // disappear and make the same resort look duplicated across shelves.
       return featured;
-    }
-
-    // Seed catalog only — once any live product exists, empty kinds stay empty
-    // so fallback shelves do not re-list the same resorts.
-    final hasLiveProducts = _shopStats.any(
-      (stats) => stats.products.any((product) => product.isListedPublicly),
-    );
-    if (hasLiveProducts) {
-      return const [];
     }
 
     final fallback = switch (kind) {
@@ -228,13 +220,24 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  /// Dive Star 선반은 큐레이션 상품도 함께 노출 (홈/탐색 불일치 방지).
+  /// Dive Star = main public shelf (any approved product). Other shelves keep
+  /// their exact kind so one registration is not copied into every section.
   static bool _matchesHomeShelf(ShopProduct product, ProductListingKind kind) {
-    if (product.listingKind == kind) {
+    if (kind == ProductListingKind.diveStar) {
       return true;
     }
-    return kind == ProductListingKind.diveStar &&
-        product.listingKind == ProductListingKind.curated;
+    return product.listingKind == kind;
+  }
+
+  static List<ShopProduct> _dedupedProducts(List<ShopProduct> products) {
+    final byId = <String, ShopProduct>{};
+    for (final product in products) {
+      if (product.id.isEmpty) {
+        continue;
+      }
+      byId[product.id] = product;
+    }
+    return byId.values.toList();
   }
 
   List<GearItem> get gear => List.unmodifiable(_gear);

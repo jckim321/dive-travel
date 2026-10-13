@@ -104,10 +104,10 @@ class ShopLiveStats {
       professionalPrice: (data['professional_price'] as num?)?.toInt(),
       commissionRate:
           (data['commission_rate'] as num?)?.toDouble() ?? 0.12,
-      products: [
+      products: _dedupeProducts([
         for (final item in (data['products'] as List<dynamic>? ?? const []))
           if (item is Map<String, dynamic>) ShopProduct.fromMap(id, item),
-      ],
+      ]),
       intro: data['intro'] as String?,
       address: data['address'] as String?,
       coverUrl: data['cover_url'] as String?,
@@ -204,6 +204,17 @@ class ShopLiveStats {
       amenities: amenities ?? this.amenities,
     );
   }
+}
+
+List<ShopProduct> _dedupeProducts(List<ShopProduct> products) {
+  final byId = <String, ShopProduct>{};
+  for (final product in products) {
+    if (product.id.isEmpty) {
+      continue;
+    }
+    byId[product.id] = product;
+  }
+  return byId.values.toList();
 }
 
 /// One ordered gallery slot for [DiverRepository.saveShopProfile].

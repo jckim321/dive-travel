@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -41,16 +42,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
       builder: (context, _) {
         final isInstructor = store.stats.isInstructor;
         final needle = _search.text.trim().toLowerCase();
-        // Show every public product card (not one-per-resort), so phone/PC
-        // registration updates appear consistently on Explore.
-        final shops = [
+        // One card per resort (hull). Live public products replace catalog
+        // shells; never expand every SKU into duplicate tiles.
+        final shops = DiveShopCatalog.hulls([
           for (final shop in store.shops)
             if ((_continent == ContinentFilter.all ||
                     shop.continent == _continent) &&
                 (needle.isEmpty || shop.searchBlob.contains(needle)) &&
                 _showsOnExplore(shop, store))
               shop,
-        ];
+        ]);
         final bookings = store.bookings;
 
         return Scaffold(

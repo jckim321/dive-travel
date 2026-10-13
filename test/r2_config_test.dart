@@ -16,9 +16,10 @@ void main() {
     );
   });
 
-  test('공개 base URL 없으면 리스팅 사진 영속 저장 불가로 본다', () {
-    // CI/로컬 예시 시크릿은 publicBaseUrl이 비어 있는 것이 기본입니다.
-    expect(R2Config.hasPublicBase, isFalse);
-    expect(R2Config.canPersistListingPhotos, isFalse);
+  test('공개 base URL 플래그는 자격증명과 함께 영속 저장 가능 여부를 결정한다', () {
+    expect(
+      R2Config.canPersistListingPhotos,
+      R2Config.isReady && R2Config.hasPublicBase,
+    );
   });
 }

@@ -222,32 +222,41 @@ abstract final class DiveShopCatalog {
 
     void appendShop(DiveShop base, ShopLiveStats? stats) {
       final merged = base.overlay(stats);
-      final products = [
-        for (final product in stats?.products ?? const <ShopProduct>[])
-          if (product.isListedPublicly) product,
-      ];
+      // One listing card per resort. Extra SKUs stay on the detail desk,
+      // so Explore/Home do not repeat the same product across the grid.
+      final products = <ShopProduct>[];
+      final seenProductIds = <String>{};
+      for (final product in stats?.products ?? const <ShopProduct>[]) {
+        if (!product.isListedPublicly || !seenProductIds.add(product.id)) {
+          continue;
+        }
+        products.add(product);
+      }
       if (products.isEmpty) {
         result.add(_withDeparture(merged));
         return;
       }
-      for (var i = 0; i < products.length; i++) {
-        final product = products[i];
-        result.add(
-          _withDeparture(
-            merged.copyWith(
-              id: i == 0 ? base.id : '${base.id}--${product.id}',
-              productName: product.name,
-              consumerPrice: product.consumerPrice,
-              professionalPrice: product.professionalPrice,
-              blurb: product.blurb,
-              durationLabel: product.durationLabel,
-              coverUrl: product.coverUrl.isNotEmpty
-                  ? product.coverUrl
-                  : merged.coverUrl,
-            ),
+      products.sort((a, b) {
+        final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bAt.compareTo(aAt);
+      });
+      final product = products.first;
+      result.add(
+        _withDeparture(
+          merged.copyWith(
+            id: base.id,
+            productName: product.name,
+            consumerPrice: product.consumerPrice,
+            professionalPrice: product.professionalPrice,
+            blurb: product.blurb,
+            durationLabel: product.durationLabel,
+            coverUrl: product.coverUrl.isNotEmpty
+                ? product.coverUrl
+                : merged.coverUrl,
           ),
-        );
-      }
+        ),
+      );
     }
 
     for (final shop in shops) {
