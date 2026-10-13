@@ -14,11 +14,13 @@ class HomeStayCard extends StatelessWidget {
     required this.shop,
     required this.quote,
     required this.onDetails,
+    this.coverAspectRatio = ListingCover.aspectRatio,
   });
 
   final DiveShop shop;
   final TourPriceQuote quote;
   final VoidCallback onDetails;
+  final double coverAspectRatio;
 
   static final _price = NumberFormat('#,###');
 
@@ -44,7 +46,7 @@ class HomeStayCard extends StatelessWidget {
         children: [
           CCardProductFrame(
             child: AspectRatio(
-              aspectRatio: ListingCover.aspectRatio,
+              aspectRatio: coverAspectRatio,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -141,10 +143,11 @@ class HomeDiscoverySection extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    // One horizontal rail card: wide enough to peek the next, height matches 1:1 cover + labels.
+    // Compact rail: next card peeks; 4:3 keeps image shorter than the old 1:1 tiles.
+    const coverAspect = 4 / 3;
     final screenW = MediaQuery.sizeOf(context).width;
-    final cardWidth = (screenW * 0.72).clamp(240.0, 320.0);
-    final cardHeight = cardWidth / ListingCover.aspectRatio + 56;
+    final cardWidth = (screenW * 0.55).clamp(168.0, 220.0);
+    final cardHeight = cardWidth / coverAspect + 52;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,6 +202,7 @@ class HomeDiscoverySection extends StatelessWidget {
                   child: HomeStayCard(
                     shop: shop,
                     quote: store.quoteFor(shop),
+                    coverAspectRatio: coverAspect,
                     onDetails: () => onOpen(shop),
                   ),
                 );
