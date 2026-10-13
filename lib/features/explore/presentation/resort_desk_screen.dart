@@ -899,7 +899,7 @@ class _ProductAdminTable extends StatelessWidget {
                         ),
                   ),
                 ),
-                const SizedBox(width: 88),
+                const SizedBox(width: 72),
               ],
             ),
           ),
@@ -941,7 +941,7 @@ class _ProductAdminRow extends StatelessWidget {
       child: InkWell(
         onTap: onEdit,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+          padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -977,19 +977,32 @@ class _ProductAdminRow extends StatelessWidget {
                 child: Text('${price.format(product.professionalPrice)}원'),
               ),
               SizedBox(
-                width: 88,
+                width: 72,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       tooltip: '수정',
                       onPressed: onEdit,
-                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
                     ),
                     IconButton(
                       tooltip: '삭제',
                       onPressed: onDelete,
-                      icon: const Icon(Icons.delete_outline, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 18),
                     ),
                   ],
                 ),
