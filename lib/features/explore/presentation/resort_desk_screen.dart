@@ -502,6 +502,7 @@ class _DeskSectionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 28,
@@ -543,9 +544,12 @@ class _DeskSectionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (trailing != null) trailing!,
               ],
             ),
+            if (trailing != null) ...[
+              const SizedBox(height: 12),
+              Align(alignment: Alignment.centerLeft, child: trailing!),
+            ],
             const SizedBox(height: 16),
             child,
           ],
@@ -980,29 +984,28 @@ class _ProductAdminRow extends StatelessWidget {
                 width: 72,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      tooltip: '수정',
-                      onPressed: onEdit,
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 36,
-                        minHeight: 36,
+                    Tooltip(
+                      message: '수정',
+                      child: InkWell(
+                        onTap: onEdit,
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.edit_outlined, size: 18),
+                        ),
                       ),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
                     ),
-                    IconButton(
-                      tooltip: '삭제',
-                      onPressed: onDelete,
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 36,
-                        minHeight: 36,
+                    Tooltip(
+                      message: '삭제',
+                      child: InkWell(
+                        onTap: onDelete,
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.delete_outline, size: 18),
+                        ),
                       ),
-                      icon: const Icon(Icons.delete_outline, size: 18),
                     ),
                   ],
                 ),
