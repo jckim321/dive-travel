@@ -81,6 +81,8 @@ class R2PhotoStorage {
           '웹에서는 버킷 CORS에 GitHub Pages 출처(PUT)가 허용돼 있어야 합니다.',
         );
       }
+      // Persist the stable public/object path in Firestore. Display may swap
+      // to a signed GET when the r2.dev public bucket returns 401.
       if (R2Config.hasPublicBase) {
         return R2Config.publicUrlFor(objectKey);
       }
@@ -94,6 +96,61 @@ class R2PhotoStorage {
         '웹에서는 버킷 CORS에 현재 사이트 출처가 허용돼 있는지 확인하세요.',
       );
     }
+  }
+
+  /// Turns a stored R2 public URL into a short-lived signed GET when the
+  /// public r2.dev host is locked down (401). Non-R2 URLs pass through.
+  Future<String> readableUrl(String storedUrl) async {
+    final trimmed = storedUrl.trim();
+    if (trimmed.isEmpty || trimmed.startsWith('memory://')) {
+      return trimmed;
+    }
+    if (!R2Config.isReady) {
+      return trimmed;
+    }
+    final key = objectKeyFromStoredUrl(trimmed);
+    if (key == null || key.isEmpty) {
+      return trimmed;
+    }
+    try {
+      return await _presignedGetUrl(
+        host: R2Config.endpointHost,
+        path: '/${R2Config.bucketName}/$key',
+      );
+    } catch (_) {
+      return trimmed;
+    }
+  }
+
+  /// Extracts the object key from a durable public or S3-style R2 URL.
+  static String? objectKeyFromStoredUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty || trimmed.startsWith('memory://')) {
+      return null;
+    }
+    final public = R2Config.publicBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    if (public.isNotEmpty && trimmed.startsWith('$public/')) {
+      return Uri.decodeFull(trimmed.substring(public.length + 1));
+    }
+    final uri = Uri.tryParse(trimmed);
+    if (uri == null || uri.pathSegments.isEmpty) {
+      return null;
+    }
+    final host = uri.host;
+    final segments = [
+      for (final part in uri.pathSegments)
+        if (part.isNotEmpty) part,
+    ];
+    if (host == R2Config.endpointHost ||
+        host.endsWith('.r2.cloudflarestorage.com')) {
+      if (segments.length >= 2 && segments.first == R2Config.bucketName) {
+        return segments.skip(1).join('/');
+      }
+    }
+    if (host.endsWith('.r2.dev') && segments.isNotEmpty) {
+      return segments.join('/');
+    }
+    return null;
   }
 
   Future<String> _presignedGetUrl({

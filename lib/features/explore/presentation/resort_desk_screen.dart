@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -36,6 +37,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _photoPicker = const DivePhotoPicker();
   final List<_GallerySlot> _slots = [];
   var _seeded = false;
+  var _galleryTouched = false;
+  var _gallerySeedDone = false;
   var _saving = false;
 
   @override
@@ -60,11 +63,23 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         ? live!.amenities
         : (hull?.amenities ?? const <String>[]);
     _amenities.text = amenitySource.join(', ');
+    _seedGallery(store, live, hull);
+  }
 
+  void _seedGallery(
+    DiverStore store,
+    ShopLiveStats? live,
+    DiveShop? hull, {
+    bool markDone = false,
+  }) {
+    if (_galleryTouched || _slots.isNotEmpty) {
+      if (markDone) {
+        _gallerySeedDone = true;
+      }
+      return;
+    }
     final urls = live?.displayGallery ??
-        (hull == null
-            ? const <String>[]
-            : hull.displayGallery);
+        (hull == null ? const <String>[] : hull.displayGallery);
     final localBytes = store.galleryBytesFor(widget.shopId);
     if (localBytes.isNotEmpty && urls.isEmpty) {
       for (final bytes in localBytes) {
@@ -98,6 +113,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         );
       }
     }
+    if (markDone || _slots.isNotEmpty || live != null) {
+      _gallerySeedDone = true;
+    }
   }
 
   @override
@@ -123,6 +141,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
     setState(() {
+      _galleryTouched = true;
       for (final photo in photos) {
         if (_slots.length >= _kMaxGallery) {
           break;
@@ -141,6 +160,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
     setState(() {
+      _galleryTouched = true;
       _slots.add(
         _GallerySlot.local(
           PickedPhoto(
@@ -154,7 +174,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   }
 
   void _removeAt(int index) {
-    setState(() => _slots.removeAt(index));
+    setState(() {
+      _galleryTouched = true;
+      _slots.removeAt(index);
+    });
   }
 
   void _makeCover(int index) {
@@ -162,6 +185,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
     setState(() {
+      _galleryTouched = true;
       final item = _slots.removeAt(index);
       _slots.insert(0, item);
     });
@@ -195,16 +219,20 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           for (final part in _amenities.text.split(RegExp(r'[,，\n]')))
             if (part.trim().isNotEmpty) part.trim(),
         ],
-        gallery: [
-          for (final slot in _slots)
-            ShopGallerySlot(
-              url: slot.url,
-              bytes: slot.photo?.bytes,
-              fileName: slot.photo?.fileName,
-              contentType: slot.photo?.contentType,
-            ),
-        ],
-        removeCover: _slots.isEmpty,
+        // Only rewrite gallery/cover when the user edited photos. An empty
+        // _slots from a race before live stats loaded used to wipe cover_url.
+        gallery: _galleryTouched
+            ? [
+                for (final slot in _slots)
+                  ShopGallerySlot(
+                    url: slot.url,
+                    bytes: slot.photo?.bytes,
+                    fileName: slot.photo?.fileName,
+                    contentType: slot.photo?.contentType,
+                  ),
+              ]
+            : null,
+        removeCover: _galleryTouched && _slots.isEmpty,
       );
       if (!mounted) {
         return;
@@ -332,6 +360,17 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final live = store.liveStatsFor(widget.shopId);
+    final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
+        DiveShopCatalog.byId(widget.shopId);
+    // Live stats can arrive after first frame — fill empty gallery once.
+    if (!_gallerySeedDone && !_galleryTouched && _slots.isEmpty && live != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _gallerySeedDone || _galleryTouched) {
+          return;
+        }
+        setState(() => _seedGallery(store, live, hull, markDone: true));
+      });
+    }
     final primary = _primaryProduct(live);
 
     return Scaffold(

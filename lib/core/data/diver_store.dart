@@ -20,6 +20,8 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
 class DiverStore extends ChangeNotifier {
   DiverStore(this._repository) {
@@ -40,6 +42,8 @@ class DiverStore extends ChangeNotifier {
   }
 
   final DiverRepository _repository;
+  final R2PhotoStorage _photos = const R2PhotoStorage();
+  var _shopCoverHydrateGen = 0;
   StreamSubscription<AppUser?>? _authSubscription;
   StreamSubscription<DiverSnapshot>? _diverSubscription;
   StreamSubscription<List<ShopLiveStats>>? _shopSubscription;
@@ -832,6 +836,48 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  Future<void> _hydrateShopCovers(List<ShopLiveStats> stats) async {
+    if (!R2Config.isReady || stats.isEmpty) {
+      return;
+    }
+    final gen = ++_shopCoverHydrateGen;
+    try {
+      final hydrated = await Future.wait([
+        for (final item in stats) _hydrateOneShopCover(item),
+      ]);
+      if (gen != _shopCoverHydrateGen) {
+        return;
+      }
+      _shopStats = hydrated;
+      notifyListeners();
+    } catch (error) {
+      debugPrint('R2 cover hydrate failed: $error');
+    }
+  }
+
+  Future<ShopLiveStats> _hydrateOneShopCover(ShopLiveStats stats) async {
+    final cover = stats.coverUrl;
+    final nextCover = (cover == null || cover.isEmpty)
+        ? cover
+        : await _photos.readableUrl(cover);
+    final nextGallery = [
+      for (final url in stats.galleryUrls) await _photos.readableUrl(url),
+    ];
+    final nextProducts = [
+      for (final product in stats.products)
+        product.coverUrl.isEmpty
+            ? product
+            : product.copyWith(
+                coverUrl: await _photos.readableUrl(product.coverUrl),
+              ),
+    ];
+    return stats.copyWith(
+      coverUrl: nextCover,
+      galleryUrls: nextGallery,
+      products: nextProducts,
+    );
+  }
+
   ShopLiveStats? liveStatsFor(String shopId) {
     for (final stats in _shopStats) {
       if (stats.shopId == shopId) {
@@ -909,6 +955,9 @@ class DiverStore extends ChangeNotifier {
       (stats) {
         _shopStats = stats;
         notifyListeners();
+        // Public r2.dev may 401 even when uploads succeed — swap covers to
+        // signed GETs so Home/Explore keep showing uploaded product photos.
+        unawaited(_hydrateShopCovers(stats));
       },
       onError: (Object error) {
         debugPrint('Firestore 샵 통계 구독 실패: $error');
