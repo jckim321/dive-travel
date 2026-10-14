@@ -39,6 +39,8 @@ jobs:
           R2_S3_API_URL: ${{ secrets.R2_S3_API_URL }}
           R2_REGION: ${{ secrets.R2_REGION }}
         run: |
+          # NOTE: These dart-defines only bake upload credentials into the web
+          # client. They never call Cloudflare's bucket/public-access APIs.
           flutter build web --release --base-href /dive-travel/ \
             --dart-define=R2_ACCESS_KEY_ID="${R2_ACCESS_KEY_ID}" \
             --dart-define=R2_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
@@ -60,3 +62,20 @@ jobs:
     steps:
       - id: pages
         uses: actions/deploy-pages@v4
+
+  # GitHub Pages deploy cannot change R2 settings. This job re-enables the
+  # managed r2.dev public URL after each release so product covers stay readable
+  # even if the dashboard toggle was flipped off elsewhere.
+  ensure-r2-public:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure R2 r2.dev public access stays enabled
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          chmod +x scripts/ensure_r2_public.sh
+          ./scripts/ensure_r2_public.sh

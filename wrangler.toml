@@ -1,0 +1,11 @@
+# Ops reference for Dive Travel media (Cloudflare R2).
+# This file does NOT deploy Workers and is NOT applied by GitHub Pages.
+# Public r2.dev access is enforced by scripts/ensure_r2_public.sh in CI
+# when CLOUDFLARE_API_TOKEN is set.
+
+name = "dive-travel-media"
+compatibility_date = "2024-09-23"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "dive-travel-app-storage"
