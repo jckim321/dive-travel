@@ -53,6 +53,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: ListView(
+        key: const Key('home-scroll'),
         padding: EdgeInsets.zero,
         children: [
           const TravelPosterHeader(),

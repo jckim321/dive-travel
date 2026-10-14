@@ -227,6 +227,34 @@ void main() {
     expect(find.text('보홀'), findsNothing);
   });
 
+  testWidgets('홈 나를 위한 다음 바다는 아틀라스와 여권 peek를 보인다', (
+    WidgetTester tester,
+  ) async {
+    await pumpSignedInApp(tester);
+    final l10n = await loadKo();
+
+    // Nested horizontal rails make scrollUntilVisible ambiguous — drag home list.
+    final peek = find.byKey(const Key('for-you-passport-peek'));
+    for (var i = 0; i < 16 && tester.getRect(peek).center.dy > 420; i++) {
+      await tester.drag(find.byKey(const Key('home-scroll')), const Offset(0, -420));
+      await tester.pump();
+    }
+    expect(find.byKey(const Key('for-you-panel')), findsOneWidget);
+    expect(find.text(l10n.homeForYouTitle), findsOneWidget);
+    expect(find.byKey(const Key('for-you-stamps')), findsOneWidget);
+    expect(find.byKey(const Key('for-you-badge')), findsOneWidget);
+    expect(find.byKey(const Key('for-you-checklist')), findsOneWidget);
+    expect(peek, findsOneWidget);
+    expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
+
+    // Atlas breathe/pulse anims never settle — use fixed pumps after peek tap.
+    await tester.tap(peek);
+    await tester.pump(); // dialog route
+    await tester.pump(); // initiallyOpen post-frame forward
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.byKey(const Key('passport-spread')), findsOneWidget);
+  });
+
   testWidgets('마이페이지에 강사 C-Card 인증 폼이 있다', (WidgetTester tester) async {
     await pumpSignedInApp(tester);
     final l10n = await loadKo();

@@ -109,7 +109,13 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: _screens,
+        children: [
+          for (var i = 0; i < _screens.length; i++)
+            TickerMode(
+              enabled: _index == i,
+              child: _screens[i],
+            ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

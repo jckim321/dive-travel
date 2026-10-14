@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
+import 'package:dive_travel_app/features/home/presentation/ocean_atlas_panel.dart';
 import 'package:dive_travel_app/features/logbook/presentation/checklist_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -30,7 +31,6 @@ class ForYouSection extends StatelessWidget {
     final days = trip == null
         ? null
         : TravelStyleAnalyzer.daysUntil(trip.scheduledFor);
-    final theme = Theme.of(context);
     final remaining = DiverStats.masterLogTarget - store.stats.totalLogCount;
     final style = _styleCopy(l10n, insight);
 
@@ -39,157 +39,53 @@ class ForYouSection extends StatelessWidget {
       children: [
         AppSectionHeader(title: l10n.homeForYouTitle),
         const SizedBox(height: 12),
-        AppCard(
+        KeyedSubtree(
           key: const Key('for-you-panel'),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ColorFiltered(
-                        colorFilter: ColorFilter.mode(
-                          Colors.black.withValues(alpha: 0.22),
-                          BlendMode.darken,
-                        ),
-                        child: Image.asset(
-                          'assets/images/for_you_next_ocean.png',
-                          fit: BoxFit.cover,
-                          alignment: const Alignment(0, -0.1),
-                          errorBuilder: (_, _, _) => const ColoredBox(
-                            color: AppTheme.oceanDeep,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppTheme.oceanDeep.withValues(alpha: 0.72),
-                              AppTheme.navy.withValues(alpha: 0.55),
-                              AppTheme.oceanDeep.withValues(alpha: 0.78),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            style.$1,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            style.$2,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.88),
-                              height: 1.35,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.homeNextOceanTitle,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: AppTheme.goldSoft,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.homeNextOceanBody(
-                              continentLabel(l10n, insight.nextContinent),
-                            ),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.92),
-                              height: 1.35,
-                            ),
-                          ),
-                          if (insight.suggestedShop != null) ...[
-                            const SizedBox(height: 12),
-                            FilledButton(
-                              key: const Key('for-you-shop'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppTheme.navy,
-                              ),
-                              onPressed: () =>
-                                  onOpenShop(insight.suggestedShop!),
-                              child: Text(
-                                l10n.homeOpenShop(insight.suggestedShop!.name),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+              OceanAtlasPanel(
+                stampedContinents: insight.stampedContinents,
+                nextContinent: insight.nextContinent,
+                styleTitle: style.$1,
+                styleBody: style.$2,
+                nextOceanBody: l10n.homeNextOceanBody(
+                  continentLabel(l10n, insight.nextContinent),
                 ),
+                shopButtonLabel: insight.suggestedShop == null
+                    ? null
+                    : l10n.homeOpenShop(insight.suggestedShop!.name),
+                onOpenShop: insight.suggestedShop == null
+                    ? null
+                    : () => onOpenShop(insight.suggestedShop!),
+                stampsLabel: l10n.homeStampsLabel,
+                stampsValue: l10n.homeStampsProgress(
+                  insight.stampCount,
+                  RegionCatalog.passportCountries.length,
+                ),
+                badgeLabel: l10n.homeBadgeLabel,
+                badgeValue: remaining <= 0
+                    ? l10n.homeBadgeDone
+                    : l10n.homeBadgeLeft(remaining),
+                checklistLabel: l10n.homeChecklistLabel,
+                checklistValue: trip == null
+                    ? l10n.homeChecklistIdle
+                    : l10n.homeChecklistSoon(days ?? 0, trip.shopName),
+                checklistHighlight: trip != null && (days ?? 99) <= 21,
+                onOpenStamps: onOpenProfile,
+                onOpenBadge: onOpenProfile,
+                onOpenChecklist: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ChecklistScreen(),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _InsightTile(
-                      key: const Key('for-you-stamps'),
-                      icon: Icons.approval_outlined,
-                      label: l10n.homeStampsLabel,
-                      value: l10n.homeStampsProgress(
-                        insight.stampCount,
-                        RegionCatalog.passportCountries.length,
-                      ),
-                      onTap: onOpenProfile,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _InsightTile(
-                      key: const Key('for-you-badge'),
-                      icon: Icons.workspace_premium_outlined,
-                      label: l10n.homeBadgeLabel,
-                      value: remaining <= 0
-                          ? l10n.homeBadgeDone
-                          : l10n.homeBadgeLeft(remaining),
-                      onTap: onOpenProfile,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _InsightTile(
-                      key: const Key('for-you-checklist'),
-                      icon: Icons.checklist_outlined,
-                      label: l10n.homeChecklistLabel,
-                      value: trip == null
-                          ? l10n.homeChecklistIdle
-                          : l10n.homeChecklistSoon(days ?? 0, trip.shopName),
-                      highlight: trip != null && (days ?? 99) <= 21,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const ChecklistScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              PassportStamps(
-                stamped: insight.stampedCountries,
-                compact: true,
+              Transform.translate(
+                offset: const Offset(0, -10),
+                child: _PassportPeek(
+                  stamped: insight.stampedCountries,
+                ),
               ),
             ],
           ),
@@ -221,58 +117,68 @@ class ForYouSection extends StatelessWidget {
   }
 }
 
-class _InsightTile extends StatelessWidget {
-  const _InsightTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-    this.highlight = false,
-  });
+class _PassportPeek extends StatefulWidget {
+  const _PassportPeek({required this.stamped});
 
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-  final bool highlight;
+  final Set<String> stamped;
+
+  @override
+  State<_PassportPeek> createState() => _PassportPeekState();
+}
+
+class _PassportPeekState extends State<_PassportPeek> {
+  var _pressed = false;
+
+  Future<void> _openPassport() async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: const Color(0x99052A4A),
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 28,
+          ),
+          child: PassportStamps(
+            stamped: widget.stamped,
+            initiallyOpen: true,
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: highlight ? AppTheme.goldSoft : const Color(0xFFF7F4EE),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
-          child: Column(
-            children: [
-              Icon(icon, size: 18, color: AppTheme.navy),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.navy,
+    return GestureDetector(
+      key: const Key('for-you-passport-peek'),
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: _openPassport,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, _pressed ? -6 : 0, 0),
+        child: SizedBox(
+          height: 64,
+          width: double.infinity,
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.topCenter,
+              maxHeight: 130,
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: AppTheme.canvas,
+                  child: PassportStamps(
+                    stamped: widget.stamped,
+                    compact: true,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  height: 1.25,
-                  color: Color(0xFF4A5560),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
