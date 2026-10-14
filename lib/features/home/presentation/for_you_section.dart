@@ -5,7 +5,6 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/features/home/presentation/ocean_atlas_panel.dart';
@@ -81,11 +80,9 @@ class ForYouSection extends StatelessWidget {
                   );
                 },
               ),
-              Transform.translate(
-                offset: const Offset(0, -6),
-                child: _PassportPeek(
-                  stamped: insight.stampedCountries,
-                ),
+              const SizedBox(height: 8),
+              _PassportPeek(
+                stamped: insight.stampedCountries,
               ),
             ],
           ),
@@ -162,25 +159,11 @@ class _PassportPeekState extends State<_PassportPeek> {
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, _pressed ? -6 : 0, 0),
-        // Compact cover is 118 tall — show enough of the top that the
-        // gold seal + title read as a passport peek, not a clipped strip.
-        child: SizedBox(
-          height: 102,
-          width: double.infinity,
-          child: ClipRect(
-            child: OverflowBox(
-              alignment: Alignment.topCenter,
-              maxHeight: 130,
-              child: IgnorePointer(
-                child: ColoredBox(
-                  color: AppTheme.canvas,
-                  child: PassportStamps(
-                    stamped: widget.stamped,
-                    compact: true,
-                  ),
-                ),
-              ),
-            ),
+        width: double.infinity,
+        child: IgnorePointer(
+          child: PassportStamps(
+            stamped: widget.stamped,
+            compact: true,
           ),
         ),
       ),

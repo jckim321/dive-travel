@@ -58,7 +58,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           const TravelPosterHeader(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 48),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 56),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
