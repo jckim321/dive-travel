@@ -235,7 +235,7 @@ void main() {
 
     // Nested horizontal rails make scrollUntilVisible ambiguous — drag home list.
     final peek = find.byKey(const Key('for-you-passport-peek'));
-    for (var i = 0; i < 16 && tester.getRect(peek).center.dy > 420; i++) {
+    for (var i = 0; i < 16 && tester.getRect(peek).center.dy > 400; i++) {
       await tester.drag(find.byKey(const Key('home-scroll')), const Offset(0, -420));
       await tester.pump();
     }

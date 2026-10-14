@@ -82,7 +82,7 @@ class ForYouSection extends StatelessWidget {
                 },
               ),
               Transform.translate(
-                offset: const Offset(0, -10),
+                offset: const Offset(0, -6),
                 child: _PassportPeek(
                   stamped: insight.stampedCountries,
                 ),
@@ -162,8 +162,10 @@ class _PassportPeekState extends State<_PassportPeek> {
         duration: const Duration(milliseconds: 160),
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, _pressed ? -6 : 0, 0),
+        // Compact cover is 118 tall — show enough of the top that the
+        // gold seal + title read as a passport peek, not a clipped strip.
         child: SizedBox(
-          height: 64,
+          height: 102,
           width: double.infinity,
           child: ClipRect(
             child: OverflowBox(
