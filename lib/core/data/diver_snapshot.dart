@@ -11,6 +11,7 @@ class DiverSnapshot {
     required this.stats,
     required this.regions,
     required this.logs,
+    this.favoriteShopIds = const {},
   });
 
   factory DiverSnapshot.empty({
@@ -36,6 +37,7 @@ class DiverSnapshot {
       ),
       regions: const [],
       logs: const [],
+      favoriteShopIds: const {},
     );
   }
 
@@ -45,7 +47,8 @@ class DiverSnapshot {
     required List<DiveLog> logs,
   }) {
     final visited = [
-      for (final value in (data['visited_regions'] as List<dynamic>? ?? const []))
+      for (final value
+          in (data['visited_regions'] as List<dynamic>? ?? const []))
         if (value is String && value.trim().isNotEmpty) value.trim(),
     ];
     final counts = Map<String, dynamic>.from(
@@ -53,11 +56,13 @@ class DiverSnapshot {
     );
     final regions = [
       for (final name in visited)
-        RegionCatalog.resolve(
-          name,
-          (counts[name] as num?)?.toInt() ?? 1,
-        ),
+        RegionCatalog.resolve(name, (counts[name] as num?)?.toInt() ?? 1),
     ];
+    final favoriteShopIds = {
+      for (final value
+          in (data['favorite_shop_ids'] as List<dynamic>? ?? const []))
+        if (value is String && value.trim().isNotEmpty) value.trim(),
+    };
 
     if (regions.isEmpty && logs.isNotEmpty) {
       return DiverSnapshot.fromLogs(
@@ -69,6 +74,7 @@ class DiverSnapshot {
         ownedShopId: data['owned_shop_id'] as String?,
         memberGrade: _memberGradeOf(data),
         logs: logs,
+        favoriteShopIds: favoriteShopIds,
       );
     }
 
@@ -88,6 +94,7 @@ class DiverSnapshot {
       ),
       regions: regions,
       logs: logs,
+      favoriteShopIds: favoriteShopIds,
     );
   }
 
@@ -101,6 +108,7 @@ class DiverSnapshot {
     bool isBusiness = false,
     String? ownedShopId,
     MemberGrade memberGrade = MemberGrade.member,
+    Set<String> favoriteShopIds = const {},
   }) {
     final grouped = <String, DiveRegion>{};
     for (final log in logs) {
@@ -125,6 +133,7 @@ class DiverSnapshot {
       ),
       regions: regions,
       logs: logs,
+      favoriteShopIds: favoriteShopIds,
     );
   }
 
@@ -158,4 +167,5 @@ class DiverSnapshot {
   final DiverStats stats;
   final List<DiveRegion> regions;
   final List<DiveLog> logs;
+  final Set<String> favoriteShopIds;
 }

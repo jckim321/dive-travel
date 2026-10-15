@@ -602,6 +602,45 @@
   "@productFormCreatorShopHint": {
     "description": "다이버 DIY 상품 등록 시 리조트 선택 안내입니다."
   },
+  "profileMyOceanKicker": "MY OCEAN",
+  "profileNextOceanTitle": "다음 바다",
+  "profileNoUpcomingTrip": "아직 정해진 다음 바다가 없어요",
+  "profileNoUpcomingTripHint": "마음에 담아둔 바다에서 다음 여정을 시작해 보세요.",
+  "profileSavedOceansTitle": "내가 기다리는 바다",
+  "profileSavedOceansEmpty": "아직 기다리는 바다가 없어요. 여행상품에서 하트를 눌러 담아보세요.",
+  "profileOceanRecordTitle": "나의 바다 기록",
+  "profileTotalDives": "누적 다이빙",
+  "profileExploredSeas": "탐험 지역",
+  "profileNextMilestone": "다음 마일스톤까지 {count}로그",
+  "@profileNextMilestone": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "profileActivityTitle": "내 활동",
+  "profileBookingHistory": "예약 내역",
+  "profileBookingCount": "{count}건",
+  "@profileBookingCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "profileCraftedCount": "내가 만든 여행 {count}개",
+  "@profileCraftedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "profileSettingsTitle": "설정",
+  "profileMembershipTitle": "멤버십",
+  "profileCredentialsTitle": "자격증 및 등급",
+  "profileWorkModeTitle": "업무용 전환",
+  "profileUpcomingConfirmed": "예약 확정 · {date}",
+  "@profileUpcomingConfirmed": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "profileProBadge": "PRO 강사 인증됨",
   "@profileProBadge": {
     "description": "강사 인증 배지 문구입니다."

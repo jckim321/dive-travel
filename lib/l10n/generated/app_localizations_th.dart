@@ -673,6 +673,71 @@ class AppLocalizationsTh extends AppLocalizations {
       '대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.';
 
   @override
+  String get profileMyOceanKicker => 'MY OCEAN';
+
+  @override
+  String get profileNextOceanTitle => '다음 바다';
+
+  @override
+  String get profileNoUpcomingTrip => '아직 정해진 다음 바다가 없어요';
+
+  @override
+  String get profileNoUpcomingTripHint => '마음에 담아둔 바다에서 다음 여정을 시작해 보세요.';
+
+  @override
+  String get profileSavedOceansTitle => '내가 기다리는 바다';
+
+  @override
+  String get profileSavedOceansEmpty => '아직 기다리는 바다가 없어요. 여행상품에서 하트를 눌러 담아보세요.';
+
+  @override
+  String get profileOceanRecordTitle => '나의 바다 기록';
+
+  @override
+  String get profileTotalDives => '누적 다이빙';
+
+  @override
+  String get profileExploredSeas => '탐험 지역';
+
+  @override
+  String profileNextMilestone(int count) {
+    return '다음 마일스톤까지 $count로그';
+  }
+
+  @override
+  String get profileActivityTitle => '내 활동';
+
+  @override
+  String get profileBookingHistory => '예약 내역';
+
+  @override
+  String profileBookingCount(int count) {
+    return '$count건';
+  }
+
+  @override
+  String profileCraftedCount(int count) {
+    return '내가 만든 여행 $count개';
+  }
+
+  @override
+  String get profileSettingsTitle => '설정';
+
+  @override
+  String get profileMembershipTitle => '멤버십';
+
+  @override
+  String get profileCredentialsTitle => '자격증 및 등급';
+
+  @override
+  String get profileWorkModeTitle => '업무용 전환';
+
+  @override
+  String profileUpcomingConfirmed(String date) {
+    return '예약 확정 · $date';
+  }
+
+  @override
   String get profileProBadge => 'ยืนยันอินสตรักเตอร์ PRO แล้ว';
 
   @override

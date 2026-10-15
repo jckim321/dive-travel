@@ -25,6 +25,7 @@ class TravelProductRegistrationScreen extends StatefulWidget {
 
   final String? lockedShopId;
   final bool partnerMode;
+
   /// Diver "craft a trip" from My — always submits as pending.
   final bool creatorMode;
   final ShopProduct? existing;
@@ -114,11 +115,13 @@ class _TravelProductRegistrationScreenState
   void initState() {
     super.initState();
     final existing = widget.existing;
-    _shopId = widget.lockedShopId ??
+    _shopId =
+        widget.lockedShopId ??
         existing?.shopId ??
         DiveShopCatalog.shops.first.id;
     final shop = DiveShopCatalog.byId(_shopId);
-    final existingCurated = existing?.shopId.startsWith('curated-') == true ||
+    final existingCurated =
+        existing?.shopId.startsWith('curated-') == true ||
         (shop == null && existing != null);
     _curatedMode = widget.creatorMode
         ? existingCurated
@@ -161,8 +164,9 @@ class _TravelProductRegistrationScreenState
             name: option.name,
             description: option.description,
             consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
-            professional:
-                option.professionalPrice > 0 ? '${option.professionalPrice}' : '',
+            professional: option.professionalPrice > 0
+                ? '${option.professionalPrice}'
+                : '',
           ),
         );
       }
@@ -251,17 +255,24 @@ class _TravelProductRegistrationScreenState
     if (name.isEmpty || _saving) {
       return;
     }
-    final useCurated = _curatedMode ||
+    final useCurated =
+        _curatedMode ||
         _shopId == TravelProductRegistrationScreen.notInListShopId;
     if (useCurated && _customResort.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.productFormCuratedResort)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
       return;
     }
     setState(() => _saving = true);
     try {
       final store = DiverStoreScope.of(context);
+      final sessionUid = store.uid ?? '';
+      final originalCreator = widget.existing?.submittedByUid ?? '';
+      if (widget.creatorMode &&
+          widget.existing != null &&
+          (originalCreator.isEmpty || originalCreator != sessionUid)) {
+        throw StateError('Only the original creator can edit this product');
+      }
       var shopId = _shopId;
       if (useCurated) {
         if (!shopId.startsWith('curated-')) {
@@ -281,6 +292,8 @@ class _TravelProductRegistrationScreenState
           curated: true,
           intro: _blurb.text.trim(),
           address: _meeting.text.trim(),
+          creatorProposal: widget.creatorMode,
+          creatorUid: sessionUid,
         );
       }
 
@@ -288,12 +301,14 @@ class _TravelProductRegistrationScreenState
         for (final draft in _options)
           if (draft.name.text.trim().isNotEmpty) draft.toOption(),
       ];
-      final keptCover = _removeExistingCover ? '' : (widget.existing?.coverUrl ?? '');
-      final sessionUid = store.uid ?? '';
+      final keptCover = _removeExistingCover
+          ? ''
+          : (widget.existing?.coverUrl ?? '');
       await store.saveShopProduct(
         shopId: shopId,
         product: ShopProduct(
-          id: widget.existing?.id ??
+          id:
+              widget.existing?.id ??
               'p-${DateTime.now().millisecondsSinceEpoch}',
           shopId: shopId,
           name: name,
@@ -313,8 +328,8 @@ class _TravelProductRegistrationScreenState
           cancellationNote: _cancelNote.text.trim(),
           options: options,
           // New products stay Explore-only until admin home curation.
-          listingKind: widget.existing?.listingKind ??
-              ProductListingKind.exploreOnly,
+          listingKind:
+              widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
           featuredAt: widget.existing?.featuredAt,
           submittedAt: widget.existing?.submittedAt,
           submittedByUid: widget.existing?.submittedByUid.isNotEmpty == true
@@ -346,10 +361,7 @@ class _TravelProductRegistrationScreenState
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$error'),
-          duration: const Duration(seconds: 8),
-        ),
+        SnackBar(content: Text('$error'), duration: const Duration(seconds: 8)),
       );
     } finally {
       if (mounted) {
@@ -364,9 +376,7 @@ class _TravelProductRegistrationScreenState
     final theme = Theme.of(context);
     final shopLocked = widget.lockedShopId != null;
     final shops = shopLocked
-        ? [
-            DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first,
-          ]
+        ? [DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first]
         : _shopsForContinent;
     if (!_curatedMode &&
         !shopLocked &&
@@ -379,9 +389,7 @@ class _TravelProductRegistrationScreenState
       });
     }
 
-    if (_curatedMode &&
-        _customResort.text.isEmpty &&
-        widget.existing != null) {
+    if (_curatedMode && _customResort.text.isEmpty && widget.existing != null) {
       final live = DiverStoreScope.of(context).liveStatsFor(_shopId);
       if (live?.name != null && live!.name!.trim().isNotEmpty) {
         _customResort.text = live.name!.trim();
@@ -508,11 +516,11 @@ class _TravelProductRegistrationScreenState
                     initialValue: creatorNotInList
                         ? TravelProductRegistrationScreen.notInListShopId
                         : (shops.any((s) => s.id == _shopId)
-                            ? _shopId
-                            : (shops.isEmpty
-                                ? TravelProductRegistrationScreen
-                                    .notInListShopId
-                                : shops.first.id)),
+                              ? _shopId
+                              : (shops.isEmpty
+                                    ? TravelProductRegistrationScreen
+                                          .notInListShopId
+                                    : shops.first.id)),
                     decoration: InputDecoration(
                       labelText: l10n.partnerShopName,
                       helperText: l10n.productFormShopHint,
@@ -526,8 +534,7 @@ class _TravelProductRegistrationScreenState
                           child: Text(shop.name),
                         ),
                       DropdownMenuItem(
-                        value:
-                            TravelProductRegistrationScreen.notInListShopId,
+                        value: TravelProductRegistrationScreen.notInListShopId,
                         child: Text(l10n.productFormNotInList),
                       ),
                     ],
@@ -699,15 +706,16 @@ class _TravelProductRegistrationScreenState
                                   : Image.network(
                                       _existingCoverUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) => const ColoredBox(
-                                        color: AppTheme.oceanDeep,
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.broken_image_outlined,
-                                            color: Colors.white70,
+                                      errorBuilder: (_, _, _) =>
+                                          const ColoredBox(
+                                            color: AppTheme.oceanDeep,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
                                     ),
                             ),
                           ),
@@ -989,9 +997,7 @@ class _TravelProductRegistrationScreenState
               minimumSize: const Size.fromHeight(52),
               backgroundColor: AppTheme.navy,
             ),
-            child: Text(
-              _saving ? l10n.exploreSaving : l10n.partnerSave,
-            ),
+            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
           ),
         ],
       ),
@@ -1013,11 +1019,7 @@ class _HeroBanner extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0B1F33),
-            Color(0xFF0A4A73),
-            Color(0xFF156A96),
-          ],
+          colors: [Color(0xFF0B1F33), Color(0xFF0A4A73), Color(0xFF156A96)],
         ),
       ),
       child: Padding(
@@ -1059,9 +1061,9 @@ class _R2SetupBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final body = missingPublicBase
         ? '상품 사진을 유지하려면 R2_PUBLIC_BASE_URL(공개 버킷 URL)이 필요합니다. '
-            '지금은 비어 있어 저장이 막히거나 새로고침 후 사진이 사라집니다.'
+              '지금은 비어 있어 저장이 막히거나 새로고침 후 사진이 사라집니다.'
         : 'Cloudflare R2 키가 비어 있습니다. 로컬은 r2_secrets.dart, '
-            '배포는 GitHub Secrets를 확인하세요.';
+              '배포는 GitHub Secrets를 확인하세요.';
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFFFF4E5),
@@ -1129,9 +1131,8 @@ class _CollapsibleFormSection extends StatelessWidget {
             ),
             title: Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             children: [child],
           ),
@@ -1182,9 +1183,8 @@ class _FormSection extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                   ),
                 ],
@@ -1230,9 +1230,9 @@ class _OptionCard extends StatelessWidget {
                 Text(
                   '${l10n.productFormSectionOptions} ${index + 1}',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppTheme.ocean,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: AppTheme.ocean,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const Spacer(),
                 if (canRemove)
@@ -1298,4 +1298,3 @@ class _OptionCard extends StatelessWidget {
     );
   }
 }
-

@@ -34,10 +34,7 @@ class MyCraftedTripsSection extends StatelessWidget {
       children: [
         AppSectionHeader(title: l10n.profileCraftedTripsTitle),
         const SizedBox(height: 8),
-        Text(
-          l10n.profileCraftedTripsHint,
-          style: theme.textTheme.bodySmall,
-        ),
+        Text(l10n.profileCraftedTripsHint, style: theme.textTheme.bodySmall),
         const SizedBox(height: 14),
         SizedBox(
           height: 132,
@@ -91,9 +88,9 @@ class _NewTripCard extends StatelessWidget {
                 l10n.profileCraftNewTrip,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.navy,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.navy,
+                ),
               ),
             ],
           ),
@@ -160,17 +157,16 @@ class _CraftedTripCard extends StatelessWidget {
                 product.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
               Text(
                 '${product.consumerPrice}원',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.muted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppTheme.muted,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

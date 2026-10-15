@@ -30,7 +30,6 @@ void main() {
 
     expect(find.text(en.homeWelcome), findsOneWidget);
     expect(find.text('DIVE TRAVEL'), findsOneWidget);
-    expect(find.text(l10n.profileSignOut), findsWidgets);
     expect(find.text(l10n.navHome), findsOneWidget);
     expect(find.text(l10n.navLogbook), findsOneWidget);
     expect(find.text(l10n.navExplore), findsOneWidget);
@@ -109,7 +108,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('resort-detail-bohol-hideout')), findsOneWidget);
+    expect(
+      find.byKey(const Key('resort-detail-bohol-hideout')),
+      findsOneWidget,
+    );
     await tester.scrollUntilVisible(
       find.text('2탱크 펀다이빙'),
       240,
@@ -164,9 +166,7 @@ void main() {
     expect(find.text('보홀 오션 하이드아웃'), findsNothing);
   });
 
-  testWidgets('여행상품 대륙 아틀라스 라벨이 전부 보이고 예약 목록은 없다', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('여행상품 대륙 아틀라스 라벨이 전부 보이고 예약 목록은 없다', (WidgetTester tester) async {
     await pumpSignedInApp(tester);
     final l10n = await loadKo();
 
@@ -251,16 +251,17 @@ void main() {
     expect(find.text('보홀'), findsNothing);
   });
 
-  testWidgets('홈 나를 위한 다음 바다는 아틀라스와 여권 peek를 보인다', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('홈 나를 위한 다음 바다는 아틀라스와 여권 peek를 보인다', (WidgetTester tester) async {
     await pumpSignedInApp(tester);
     final l10n = await loadKo();
 
     // Nested horizontal rails make scrollUntilVisible ambiguous — drag home list.
     final peek = find.byKey(const Key('for-you-passport-peek'));
     for (var i = 0; i < 16 && tester.getRect(peek).center.dy > 400; i++) {
-      await tester.drag(find.byKey(const Key('home-scroll')), const Offset(0, -420));
+      await tester.drag(
+        find.byKey(const Key('home-scroll')),
+        const Offset(0, -420),
+      );
       await tester.pump();
     }
     expect(find.byKey(const Key('for-you-panel')), findsOneWidget);
@@ -286,6 +287,8 @@ void main() {
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('open-profile-settings')));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('pro-submit')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.proTitle), findsOneWidget);
@@ -301,8 +304,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('departure-desk-header')), findsOneWidget);
-    expect(find.byKey(const Key('my-crafted-trips')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('craft-new-trip')));
+    expect(find.byKey(const Key('my-crafted-trips')), findsNothing);
+    await tester.drag(
+      find.byKey(const Key('profile-departure-desk')),
+      const Offset(0, -680),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('profile-crafted-trips-link')));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.profileCraftNewTrip), findsWidgets);
@@ -317,9 +325,9 @@ void main() {
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(const Key('passport-cover')));
+    await tester.ensureVisible(find.byKey(const Key('passport-cover-compact')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('passport-cover')));
+    await tester.tap(find.byKey(const Key('passport-cover-compact')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('passport-spread')), findsOneWidget);
@@ -331,7 +339,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('passport-spread')), findsNothing);
-    expect(find.byKey(const Key('passport-cover')), findsOneWidget);
+    expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
   });
 
   testWidgets('같은배 탭은 출발 명부를 보여준다', (WidgetTester tester) async {

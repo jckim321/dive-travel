@@ -230,6 +230,27 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setFavoriteShop({
+    required String uid,
+    required String shopId,
+    required bool favorite,
+  }) async {
+    final next = Set<String>.from(_snapshot.favoriteShopIds);
+    if (favorite) {
+      next.add(shopId);
+    } else {
+      next.remove(shopId);
+    }
+    _snapshot = DiverSnapshot(
+      stats: _snapshot.stats,
+      regions: _snapshot.regions,
+      logs: _snapshot.logs,
+      favoriteShopIds: next,
+    );
+    _emitSnapshot();
+  }
+
+  @override
   Future<void> addLog({
     required String uid,
     required String siteName,
@@ -268,6 +289,7 @@ class MemoryDiverRepository implements DiverRepository {
       ownedShopId: _snapshot.stats.ownedShopId,
       memberGrade: _snapshot.stats.memberGrade,
       logs: logs,
+      favoriteShopIds: _snapshot.favoriteShopIds,
     );
     _diverController.add(_snapshot);
   }
@@ -317,6 +339,7 @@ class MemoryDiverRepository implements DiverRepository {
       ownedShopId: _snapshot.stats.ownedShopId,
       memberGrade: _snapshot.stats.memberGrade,
       logs: logs,
+      favoriteShopIds: _snapshot.favoriteShopIds,
     );
     _diverController.add(_snapshot);
   }
@@ -421,6 +444,7 @@ class MemoryDiverRepository implements DiverRepository {
       stats: _snapshot.stats.copyWith(proStatus: _proStatus),
       regions: _snapshot.regions,
       logs: _snapshot.logs,
+      favoriteShopIds: _snapshot.favoriteShopIds,
     );
     _pending.removeWhere((item) => item.uid == uid);
     _pending.add(
@@ -473,6 +497,7 @@ class MemoryDiverRepository implements DiverRepository {
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
       );
       _emitSnapshot();
     }
@@ -492,6 +517,7 @@ class MemoryDiverRepository implements DiverRepository {
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
       );
       _emitSnapshot();
     }
@@ -513,12 +539,7 @@ class MemoryDiverRepository implements DiverRepository {
       _members[index] = _members[index].copyWith(grade: grade);
     } else {
       _members.add(
-        MemberAccount(
-          uid: uid,
-          email: '',
-          displayName: uid,
-          grade: grade,
-        ),
+        MemberAccount(uid: uid, email: '', displayName: uid, grade: grade),
       );
     }
     _membersController.add(List<MemberAccount>.from(_members));
@@ -533,6 +554,7 @@ class MemoryDiverRepository implements DiverRepository {
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
       );
       _emitSnapshot();
     }
@@ -618,8 +640,8 @@ class MemoryDiverRepository implements DiverRepository {
       coverUrl = removeCover
           ? ''
           : (coverBytes == null
-              ? current?.coverUrl
-              : 'memory://shop-cover-$shopId');
+                ? current?.coverUrl
+                : 'memory://shop-cover-$shopId');
       if (coverBytes != null &&
           coverBytes.isNotEmpty &&
           (galleryUrls.isEmpty || galleryUrls.first != coverUrl)) {
@@ -649,7 +671,8 @@ class MemoryDiverRepository implements DiverRepository {
               location: location,
               country: country ?? current?.country,
               continent: continent ?? current?.continent,
-              curated: curated ?? current?.curated ?? shopId.startsWith('curated-'),
+              curated:
+                  curated ?? current?.curated ?? shopId.startsWith('curated-'),
               productName: productName,
               consumerPrice: consumerPrice,
               professionalPrice: professionalPrice,
@@ -693,7 +716,9 @@ class MemoryDiverRepository implements DiverRepository {
     _shopStats[shopId] = _shopStats[shopId]!.copyWith(
       products: products,
       coverUrl: useAsResortCover
-          ? (photoBytes == null ? saved.coverUrl : 'memory://shop-cover-$shopId')
+          ? (photoBytes == null
+                ? saved.coverUrl
+                : 'memory://shop-cover-$shopId')
           : _shopStats[shopId]!.coverUrl,
     );
     _shopController.add(_shopStats.values.toList());
@@ -733,7 +758,9 @@ class MemoryDiverRepository implements DiverRepository {
         if (item.id == productId)
           item.copyWith(
             publishStatus: status,
-            active: status == ProductPublishStatus.approved ? true : item.active,
+            active: status == ProductPublishStatus.approved
+                ? true
+                : item.active,
             reviewedAt: DateTime.now(),
             reviewNote: reviewNote,
           )

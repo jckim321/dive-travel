@@ -687,6 +687,73 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose a continent, then a resort. If it is missing, type the name yourself.';
 
   @override
+  String get profileMyOceanKicker => 'MY OCEAN';
+
+  @override
+  String get profileNextOceanTitle => 'Your next ocean';
+
+  @override
+  String get profileNoUpcomingTrip => 'Your next ocean is still open';
+
+  @override
+  String get profileNoUpcomingTripHint =>
+      'Start with a place you saved for later.';
+
+  @override
+  String get profileSavedOceansTitle => 'Oceans I’m waiting for';
+
+  @override
+  String get profileSavedOceansEmpty =>
+      'No saved oceans yet. Tap the heart on any travel product.';
+
+  @override
+  String get profileOceanRecordTitle => 'My ocean record';
+
+  @override
+  String get profileTotalDives => 'Total dives';
+
+  @override
+  String get profileExploredSeas => 'Seas explored';
+
+  @override
+  String profileNextMilestone(int count) {
+    return '$count logs to the next milestone';
+  }
+
+  @override
+  String get profileActivityTitle => 'My activity';
+
+  @override
+  String get profileBookingHistory => 'Booking history';
+
+  @override
+  String profileBookingCount(int count) {
+    return '$count bookings';
+  }
+
+  @override
+  String profileCraftedCount(int count) {
+    return '$count trips crafted';
+  }
+
+  @override
+  String get profileSettingsTitle => 'Settings';
+
+  @override
+  String get profileMembershipTitle => 'Membership';
+
+  @override
+  String get profileCredentialsTitle => 'Certification & grade';
+
+  @override
+  String get profileWorkModeTitle => 'Work mode';
+
+  @override
+  String profileUpcomingConfirmed(String date) {
+    return 'Confirmed · $date';
+  }
+
+  @override
   String get profileProBadge => 'PRO instructor verified';
 
   @override

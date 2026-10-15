@@ -254,8 +254,8 @@ abstract final class DiveShopCatalog {
             coverUrl: product.coverUrl.isNotEmpty
                 ? product.coverUrl
                 : (stats?.coverUrl?.isNotEmpty == true
-                    ? stats!.coverUrl!
-                    : merged.coverUrl),
+                      ? stats!.coverUrl!
+                      : merged.coverUrl),
           ),
         ),
       );
@@ -272,7 +272,9 @@ abstract final class DiveShopCatalog {
         continue;
       }
       final hasPublic = stats.products.any((p) => p.isListedPublicly);
-      if (!hasPublic && (stats.name == null || stats.name!.trim().isEmpty)) {
+      // Contract-free/creator-proposed resorts must not surface until an
+      // admin approves at least one product.
+      if (!hasPublic) {
         continue;
       }
       appendShop(
@@ -395,8 +397,9 @@ abstract final class DiveShopCatalog {
       intro: shop.intro.isEmpty ? story.intro : shop.intro,
       address: shop.address.isEmpty ? story.address : shop.address,
       blurb: shop.blurb.isEmpty ? story.defaultBlurb : shop.blurb,
-      durationLabel:
-          shop.durationLabel.isEmpty ? story.defaultDuration : shop.durationLabel,
+      durationLabel: shop.durationLabel.isEmpty
+          ? story.defaultDuration
+          : shop.durationLabel,
     );
   }
 }
@@ -420,28 +423,26 @@ class ResortCopy {
           intro:
               '${shop.name}는 ${shop.location}에서 ${shop.sites.take(2).join(', ')}를 운영합니다. 수심보다 가이드와 장비가 먼저입니다.',
           address: '${shop.location}, ${shop.country}',
-          defaultBlurb: '${shop.productName} · ${shop.amenities.take(2).join(' · ')}',
+          defaultBlurb:
+              '${shop.productName} · ${shop.amenities.take(2).join(' · ')}',
         );
   }
 
   static const _byHull = <String, ResortCopy>{
     'bohol-hideout': ResortCopy(
-      intro:
-          '팡라오 앞바다를 작은 보트로 나갑니다. 발리카삭 조류는 가이드가 읽고, 난파선은 자격과 컨디션이 맞을 때만 엽니다. 깊이 경쟁은 하지 않습니다.',
+      intro: '팡라오 앞바다를 작은 보트로 나갑니다. 발리카삭 조류는 가이드가 읽고, 난파선은 자격과 컨디션이 맞을 때만 엽니다. 깊이 경쟁은 하지 않습니다.',
       address: 'Panglao Island, Bohol, Philippines',
       defaultBlurb: '체크다이브 후 2탱크. 같은 밴이 먼저이고 물속 버디는 샵이 배정합니다.',
       defaultDuration: '오전 반나절',
     ),
     'dahab-bluehole': ResortCopy(
-      intro:
-          '블루홀은 쇼어로 들어갑니다. 아치 너머는 강사와 컨디션이 맞을 때만, 캐년과 아일랜드는 매일 열립니다.',
+      intro: '블루홀은 쇼어로 들어갑니다. 아치 너머는 강사와 컨디션이 맞을 때만, 캐년과 아일랜드는 매일 열립니다.',
       address: 'Blue Hole Road, Dahab, South Sinai, Egypt',
       defaultBlurb: '쇼어 2탱크. 싱글차지를 나누고 싶은 솔로는 같은배에 깃발을 꽂습니다.',
       defaultDuration: '쇼어 반나절',
     ),
     'palau-rock-islands': ResortCopy(
-      intro:
-          '록아일랜드 채널을 스피드보트로 잇습니다. 밀키웨이는 사진, 블루코너는 조류. 출항은 날씨가 허가할 때만입니다.',
+      intro: '록아일랜드 채널을 스피드보트로 잇습니다. 밀키웨이는 사진, 블루코너는 조류. 출항은 날씨가 허가할 때만입니다.',
       address: 'Koror, Palau',
       defaultBlurb: '2탱크 펀다이빙. 기상 취소 시 전액 환불이 상품 조건입니다.',
       defaultDuration: '종일',

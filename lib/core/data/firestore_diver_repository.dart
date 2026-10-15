@@ -228,6 +228,24 @@ class FirestoreDiverRepository implements DiverRepository {
     });
   }
 
+  @override
+  Future<void> setFavoriteShop({
+    required String uid,
+    required String shopId,
+    required bool favorite,
+  }) {
+    final trimmed = shopId.trim();
+    if (trimmed.isEmpty) {
+      return Future.value();
+    }
+    return _userDoc(uid).set({
+      'favorite_shop_ids': favorite
+          ? FieldValue.arrayUnion([trimmed])
+          : FieldValue.arrayRemove([trimmed]),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   DiverSnapshot _toSnapshot(
     DocumentSnapshot<Map<String, dynamic>> userSnap,
     QuerySnapshot<Map<String, dynamic>>? logsSnap,
@@ -832,9 +850,7 @@ class FirestoreDiverRepository implements DiverRepository {
   @override
   Stream<List<MemberAccount>> watchMembers() {
     return _users.snapshots().map((snapshot) {
-      final members = [
-        for (final doc in snapshot.docs) _toMemberAccount(doc),
-      ];
+      final members = [for (final doc in snapshot.docs) _toMemberAccount(doc)];
       members.sort((a, b) => a.displayName.compareTo(b.displayName));
       return members;
     });
@@ -934,8 +950,10 @@ class FirestoreDiverRepository implements DiverRepository {
 
     final ref = _shops.doc(shopId);
     final existing = await ref.get();
-    final currentProducts =
-        ShopProduct.listFrom(shopId, existing.data()?['products']);
+    final currentProducts = ShopProduct.listFrom(
+      shopId,
+      existing.data()?['products'],
+    );
     // Keep listing cards in sync: desk price edits used to update only the
     // shop doc while Explore/Home still read the stale products[] prices.
     final syncedProducts = currentProducts.isEmpty
@@ -1004,8 +1022,10 @@ class FirestoreDiverRepository implements DiverRepository {
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
     final current = <String, ShopProduct>{
-      for (final parsed
-          in ShopProduct.listFrom(shopId, snap.data()?['products']))
+      for (final parsed in ShopProduct.listFrom(
+        shopId,
+        snap.data()?['products'],
+      ))
         parsed.id: parsed,
     };
     // Keep an existing cover if the edit omitted bytes/url (avoids wiping R2).

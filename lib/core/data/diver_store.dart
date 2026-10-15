@@ -152,8 +152,8 @@ class DiverStore extends ChangeNotifier {
   }
 
   bool get hasAnyPublicProduct => _shopStats.any(
-        (stats) => stats.products.any((product) => product.isListedPublicly),
-      );
+    (stats) => stats.products.any((product) => product.isListedPublicly),
+  );
 
   /// Home shelf: one card per resort, newest admin feature first.
   /// Never flash catalog seeds then clear them once Firestore products arrive.
@@ -181,7 +181,9 @@ class DiverStore extends ChangeNotifier {
       if (matches.isEmpty) {
         continue;
       }
-      matches.sort((a, b) => _homeFeatureTime(b).compareTo(_homeFeatureTime(a)));
+      matches.sort(
+        (a, b) => _homeFeatureTime(b).compareTo(_homeFeatureTime(a)),
+      );
       final best = matches.first;
       scored.add((
         card: _hullCardForProduct(hull, best),
@@ -190,9 +192,7 @@ class DiverStore extends ChangeNotifier {
     }
 
     scored.sort((a, b) => b.at.compareTo(a.at));
-    final featured = [
-      for (final item in scored.take(limit)) item.card,
-    ];
+    final featured = [for (final item in scored.take(limit)) item.card];
 
     if (featured.isNotEmpty || hasLiveProducts || _loading) {
       // Live data (or still loading): never pad with catalog clones that later
@@ -333,9 +333,7 @@ class DiverStore extends ChangeNotifier {
   }
 
   List<Uint8List> galleryBytesFor(String id) {
-    return _galleryBytes[id] ??
-        _galleryBytes[id.split('--').first] ??
-        const [];
+    return _galleryBytes[id] ?? _galleryBytes[id.split('--').first] ?? const [];
   }
 
   List<DiveShop> lastCallResorts({int limit = 4}) {
@@ -366,7 +364,7 @@ class DiverStore extends ChangeNotifier {
   List<DiveShop> favoriteResorts({int limit = 4}) {
     final saved = [
       for (final shop in shops)
-        if (_favoriteShopIds.contains(shop.id)) shop,
+        if (_favoriteShopIds.contains(shop.hullId)) shop,
     ];
     if (saved.length >= limit) {
       return saved.take(limit).toList();
@@ -374,22 +372,61 @@ class DiverStore extends ChangeNotifier {
     final needles = [for (final region in _regions) region.name.toLowerCase()];
     final fromLogs = [
       for (final shop in shops)
-        if (!_favoriteShopIds.contains(shop.id) &&
+        if (!_favoriteShopIds.contains(shop.hullId) &&
             needles.any((needle) => shop.searchBlob.contains(needle)))
           shop,
     ];
     return [...saved, ...fromLogs].take(limit).toList();
   }
 
-  bool isFavoriteShop(String shopId) => _favoriteShopIds.contains(shopId);
+  List<DiveShop> get favoriteShops {
+    final seen = <String>{};
+    return [
+      for (final shop in resortHulls)
+        if (_favoriteShopIds.contains(shop.hullId) && seen.add(shop.hullId))
+          shop,
+    ];
+  }
 
-  void toggleFavoriteShop(String shopId) {
-    if (_favoriteShopIds.contains(shopId)) {
-      _favoriteShopIds.remove(shopId);
+  bool isFavoriteShop(String shopId) =>
+      _favoriteShopIds.contains(shopId.split('--').first);
+
+  Future<void> toggleFavoriteShop(String shopId) async {
+    final uid = _uid;
+    if (uid == null) {
+      return;
+    }
+    final hullId = shopId.split('--').first;
+    final wasFavorite = _favoriteShopIds.contains(hullId);
+    if (wasFavorite) {
+      _favoriteShopIds.remove(hullId);
     } else {
-      _favoriteShopIds.add(shopId);
+      _favoriteShopIds.add(hullId);
     }
     notifyListeners();
+    try {
+      await _repository.setFavoriteShop(
+        uid: uid,
+        shopId: hullId,
+        favorite: !wasFavorite,
+      );
+    } catch (_) {
+      if (wasFavorite) {
+        _favoriteShopIds.add(hullId);
+      } else {
+        _favoriteShopIds.remove(hullId);
+      }
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> removeFavoriteShop(String shopId) async {
+    final hullId = shopId.split('--').first;
+    if (!_favoriteShopIds.contains(hullId)) {
+      return;
+    }
+    await toggleFavoriteShop(hullId);
   }
 
   TravelStyleInsight get travelStyle => TravelStyleAnalyzer.analyze(
@@ -583,7 +620,20 @@ class DiverStore extends ChangeNotifier {
     String? coverContentType,
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
+    bool creatorProposal = false,
+    String? creatorUid,
   }) {
+    final owned = _stats.ownedShopId;
+    final isOwnerPartner =
+        _stats.isBusiness && owned != null && owned == shopId;
+    final isCreatorProposal =
+        creatorProposal &&
+        shopId.startsWith('curated-') &&
+        creatorUid != null &&
+        creatorUid == _uid;
+    if (!_stats.isAdmin && !isOwnerPartner && !isCreatorProposal) {
+      throw StateError('Not allowed to edit this shop profile');
+    }
     if (gallery != null) {
       final local = [
         for (final slot in gallery)
@@ -662,6 +712,29 @@ class DiverStore extends ChangeNotifier {
     final owned = _stats.ownedShopId;
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
+    final creatorUid = submitterUid?.trim() ?? '';
+    if (creatorSubmission) {
+      if (creatorUid.isEmpty || creatorUid != _uid) {
+        throw StateError('A signed-in creator is required');
+      }
+      ShopProduct? current;
+      for (final stats in _shopStats) {
+        for (final item in stats.products) {
+          if (item.id == product.id) {
+            current = item;
+            break;
+          }
+        }
+        if (current != null) {
+          break;
+        }
+      }
+      if (current != null &&
+          (current.submittedByUid.isEmpty ||
+              current.submittedByUid != creatorUid)) {
+        throw StateError('Only the original creator can edit this product');
+      }
+    }
     if (!_stats.isAdmin && !isOwnerPartner && !creatorSubmission) {
       throw StateError('Not allowed to edit this shop product');
     }
@@ -673,7 +746,9 @@ class DiverStore extends ChangeNotifier {
             publishStatus: ProductPublishStatus.pending,
             submittedAt: DateTime.now(),
             active: false,
-            submittedByUid: submitterUid ?? product.submittedByUid,
+            submittedByUid: creatorUid.isNotEmpty
+                ? creatorUid
+                : product.submittedByUid,
           )
         : product.copyWith(
             publishStatus: ProductPublishStatus.approved,
@@ -708,7 +783,9 @@ class DiverStore extends ChangeNotifier {
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
     if (!_stats.isAdmin && !isOwnerPartner) {
-      return Future.error(StateError('Not allowed to delete this shop product'));
+      return Future.error(
+        StateError('Not allowed to delete this shop product'),
+      );
     }
     return _repository.deleteShopProduct(shopId: shopId, productId: productId);
   }
@@ -930,6 +1007,7 @@ class DiverStore extends ChangeNotifier {
       );
       _regions = const [];
       _logs = const [];
+      _favoriteShopIds.clear();
       _shopStats = const [];
       _bookings = const [];
       _pendingInstructors = const [];
@@ -961,6 +1039,9 @@ class DiverStore extends ChangeNotifier {
             _stats = snapshot.stats;
             _regions = snapshot.regions;
             _logs = snapshot.logs;
+            _favoriteShopIds
+              ..clear()
+              ..addAll(snapshot.favoriteShopIds);
             _loading = false;
             _bindAdminInbox(snapshot.stats.isAdmin);
             _bindPartnerInbox(
@@ -1021,28 +1102,24 @@ class DiverStore extends ChangeNotifier {
       _members = const [];
       return;
     }
-    if (_pendingSubscription == null) {
-      _pendingSubscription = _repository.watchPendingInstructors().listen(
-        (pending) {
-          _pendingInstructors = pending;
-          notifyListeners();
-        },
-        onError: (Object error) {
-          debugPrint('관리자 강사 대기열 구독 실패: $error');
-        },
-      );
-    }
-    if (_membersSubscription == null) {
-      _membersSubscription = _repository.watchMembers().listen(
-        (members) {
-          _members = members;
-          notifyListeners();
-        },
-        onError: (Object error) {
-          debugPrint('관리자 회원 목록 구독 실패: $error');
-        },
-      );
-    }
+    _pendingSubscription ??= _repository.watchPendingInstructors().listen(
+      (pending) {
+        _pendingInstructors = pending;
+        notifyListeners();
+      },
+      onError: (Object error) {
+        debugPrint('관리자 강사 대기열 구독 실패: $error');
+      },
+    );
+    _membersSubscription ??= _repository.watchMembers().listen(
+      (members) {
+        _members = members;
+        notifyListeners();
+      },
+      onError: (Object error) {
+        debugPrint('관리자 회원 목록 구독 실패: $error');
+      },
+    );
   }
 
   void _bindPartnerInbox(bool isBusiness, String? shopId) {

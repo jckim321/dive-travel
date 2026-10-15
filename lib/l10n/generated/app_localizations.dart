@@ -1320,6 +1320,120 @@ abstract class AppLocalizations {
   /// **'대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.'**
   String get productFormCreatorShopHint;
 
+  /// No description provided for @profileMyOceanKicker.
+  ///
+  /// In ko, this message translates to:
+  /// **'MY OCEAN'**
+  String get profileMyOceanKicker;
+
+  /// No description provided for @profileNextOceanTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 바다'**
+  String get profileNextOceanTitle;
+
+  /// No description provided for @profileNoUpcomingTrip.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 정해진 다음 바다가 없어요'**
+  String get profileNoUpcomingTrip;
+
+  /// No description provided for @profileNoUpcomingTripHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'마음에 담아둔 바다에서 다음 여정을 시작해 보세요.'**
+  String get profileNoUpcomingTripHint;
+
+  /// No description provided for @profileSavedOceansTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 기다리는 바다'**
+  String get profileSavedOceansTitle;
+
+  /// No description provided for @profileSavedOceansEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 기다리는 바다가 없어요. 여행상품에서 하트를 눌러 담아보세요.'**
+  String get profileSavedOceansEmpty;
+
+  /// No description provided for @profileOceanRecordTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 바다 기록'**
+  String get profileOceanRecordTitle;
+
+  /// No description provided for @profileTotalDives.
+  ///
+  /// In ko, this message translates to:
+  /// **'누적 다이빙'**
+  String get profileTotalDives;
+
+  /// No description provided for @profileExploredSeas.
+  ///
+  /// In ko, this message translates to:
+  /// **'탐험 지역'**
+  String get profileExploredSeas;
+
+  /// No description provided for @profileNextMilestone.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 마일스톤까지 {count}로그'**
+  String profileNextMilestone(int count);
+
+  /// No description provided for @profileActivityTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 활동'**
+  String get profileActivityTitle;
+
+  /// No description provided for @profileBookingHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 내역'**
+  String get profileBookingHistory;
+
+  /// No description provided for @profileBookingCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}건'**
+  String profileBookingCount(int count);
+
+  /// No description provided for @profileCraftedCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 만든 여행 {count}개'**
+  String profileCraftedCount(int count);
+
+  /// No description provided for @profileSettingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get profileSettingsTitle;
+
+  /// No description provided for @profileMembershipTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'멤버십'**
+  String get profileMembershipTitle;
+
+  /// No description provided for @profileCredentialsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'자격증 및 등급'**
+  String get profileCredentialsTitle;
+
+  /// No description provided for @profileWorkModeTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'업무용 전환'**
+  String get profileWorkModeTitle;
+
+  /// No description provided for @profileUpcomingConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 확정 · {date}'**
+  String profileUpcomingConfirmed(String date);
+
   /// 강사 인증 배지 문구입니다.
   ///
   /// In ko, this message translates to:

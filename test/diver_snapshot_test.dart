@@ -11,6 +11,7 @@ void main() {
         'unique_regions_count': 2,
         'visited_regions': ['팔라우', '코멜'],
         'region_log_counts': {'팔라우': 7, '코멜': 5},
+        'favorite_shop_ids': ['bohol-hideout', 'palau-rock'],
         'is_instructor': false,
         'is_verified_pro': false,
       },
@@ -21,6 +22,7 @@ void main() {
     expect(snapshot.stats.uniqueRegionsCount, 2);
     expect(snapshot.regions.map((region) => region.name), ['팔라우', '코멜']);
     expect(snapshot.regions.first.logCount, 7);
+    expect(snapshot.favoriteShopIds, {'bohol-hideout', 'palau-rock'});
     expect(snapshot.stats.isAdmin, isTrue);
   });
 

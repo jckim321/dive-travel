@@ -39,9 +39,9 @@ class _ProVerificationCardState extends State<ProVerificationCard> {
       return;
     }
     if (!R2Config.isReady) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.logbookPhotoMissingConfig)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.logbookPhotoMissingConfig)));
       return;
     }
     setState(() => _saving = true);
@@ -55,16 +55,14 @@ class _ProVerificationCardState extends State<ProVerificationCard> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.proSubmitDone)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.proSubmitDone)));
     } on R2UploadException catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       if (!mounted) {
         return;
@@ -88,62 +86,62 @@ class _ProVerificationCardState extends State<ProVerificationCard> {
 
     return AppCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.proTitle, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(l10n.proBody, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 12),
-            Chip(
-              avatar: Icon(
-                status == ProVerificationStatus.approved
-                    ? Icons.verified_outlined
-                    : Icons.hourglass_empty_outlined,
-                size: 16,
-              ),
-              label: Text(_statusLabel(l10n, status)),
-              backgroundColor: status == ProVerificationStatus.approved
-                  ? AppTheme.goldSoft
-                  : theme.colorScheme.secondaryContainer,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.proTitle, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(l10n.proBody, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 12),
+          Chip(
+            avatar: Icon(
+              status == ProVerificationStatus.approved
+                  ? Icons.verified_outlined
+                  : Icons.hourglass_empty_outlined,
+              size: 16,
             ),
-            if (status != ProVerificationStatus.approved) ...[
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _agency,
-                decoration: InputDecoration(
-                  labelText: l10n.proAgency,
-                  border: const OutlineInputBorder(),
-                ),
-                items: [
-                  for (final agency in _agencies)
-                    DropdownMenuItem(value: agency, child: Text(agency)),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _agency = value);
-                  }
-                },
+            label: Text(_statusLabel(l10n, status)),
+            backgroundColor: status == ProVerificationStatus.approved
+                ? AppTheme.goldSoft
+                : theme.colorScheme.secondaryContainer,
+          ),
+          if (status != ProVerificationStatus.approved) ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _agency,
+              decoration: InputDecoration(
+                labelText: l10n.proAgency,
+                border: const OutlineInputBorder(),
               ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                key: const Key('pro-pick-ccard'),
-                onPressed: _saving ? null : _pick,
-                icon: const Icon(Icons.badge_outlined),
-                label: Text(
-                  _photo == null
-                      ? l10n.proPickPhoto
-                      : l10n.logbookPhotoPicked(_photo!.fileName),
-                ),
+              items: [
+                for (final agency in _agencies)
+                  DropdownMenuItem(value: agency, child: Text(agency)),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _agency = value);
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const Key('pro-pick-ccard'),
+              onPressed: _saving ? null : _pick,
+              icon: const Icon(Icons.badge_outlined),
+              label: Text(
+                _photo == null
+                    ? l10n.proPickPhoto
+                    : l10n.logbookPhotoPicked(_photo!.fileName),
               ),
-              const SizedBox(height: 12),
-              FilledButton(
-                key: const Key('pro-submit'),
-                onPressed: _saving || _photo == null ? null : _submit,
-                child: Text(_saving ? l10n.logbookUploading : l10n.proSubmit),
-              ),
-            ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const Key('pro-submit'),
+              onPressed: _saving || _photo == null ? null : _submit,
+              child: Text(_saving ? l10n.logbookUploading : l10n.proSubmit),
+            ),
           ],
-        ),
+        ],
+      ),
     );
   }
 

@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Top of My: name, exploration count, optional next departure.
+/// Quiet identity header for the immersive My Ocean page.
 class DepartureDeskHeader extends StatelessWidget {
   const DepartureDeskHeader({
     super.key,
     required this.displayName,
     required this.regionsCount,
-    this.nextDepartureLabel,
+    required this.logCount,
+    required this.onSettings,
   });
 
   final String displayName;
   final int regionsCount;
-  final String? nextDepartureLabel;
+  final int logCount;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -24,78 +26,70 @@ class DepartureDeskHeader extends StatelessWidget {
     return Container(
       key: const Key('departure-desk-header'),
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppTheme.oceanDeep,
-            Color(0xFF0B3A4F),
-            AppTheme.seaMist,
-          ],
-          stops: [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(20, 12, 12, 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            l10n.profileDepartureDeskKicker,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: AppTheme.goldSoft,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF3C8FB6), Color(0xFF0A4A73)],
+              ),
+              border: Border.all(color: Colors.white24),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            displayName,
-            style: theme.textTheme.headlineSmall?.copyWith(
+            child: const Icon(
+              Icons.scuba_diving_rounded,
               color: Colors.white,
-              fontWeight: FontWeight.w800,
+              size: 25,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.profileRegions(regionsCount),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.88),
-            ),
-          ),
-          if (nextDepartureLabel != null && nextDepartureLabel!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-                border: Border.all(
-                  color: AppTheme.gold.withValues(alpha: 0.45),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.flight_takeoff_outlined,
-                    size: 18,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.profileMyOceanKicker,
+                  style: theme.textTheme.labelSmall?.copyWith(
                     color: AppTheme.goldSoft,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      nextDepartureLabel!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  displayName,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${l10n.profileRegions(regionsCount)} · '
+                  '${l10n.profileTotalDives} $logCount',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          IconButton(
+            key: const Key('open-profile-settings'),
+            tooltip: l10n.profileSettingsTitle,
+            onPressed: onSettings,
+            style: IconButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
+            ),
+            icon: const Icon(Icons.tune_rounded, size: 21),
+          ),
         ],
       ),
     );

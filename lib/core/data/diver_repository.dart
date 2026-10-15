@@ -30,6 +30,12 @@ abstract class DiverRepository {
 
   Stream<DiverSnapshot> watchDiver(String uid);
 
+  Future<void> setFavoriteShop({
+    required String uid,
+    required String shopId,
+    required bool favorite,
+  });
+
   Future<void> addLog({
     required String uid,
     required String siteName,
