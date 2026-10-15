@@ -651,6 +651,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTitle => 'My page';
 
   @override
+  String get profileDepartureDeskKicker => 'Departure desk';
+
+  @override
+  String get profileCraftedTripsTitle => 'Trips I crafted';
+
+  @override
+  String get profileCraftedTripsHint =>
+      'Pick a resort, draft the trip, and it goes live after admin approval.';
+
+  @override
+  String get profileCraftNewTrip => 'Craft a new trip';
+
+  @override
+  String get profileCraftStatusPending => 'Pending';
+
+  @override
+  String get profileCraftStatusLive => 'Live';
+
+  @override
+  String get profileCraftStatusRejected => 'Rejected';
+
+  @override
+  String get profileDeskToolsTitle => 'Desk tools';
+
+  @override
+  String get profileDeskToolsHint =>
+      'Admin, partner, instructor verification, and sign-out live here.';
+
+  @override
+  String get productFormNotInList => 'Resort not in list';
+
+  @override
+  String get productFormCreatorShopHint =>
+      'Choose a continent, then a resort. If it is missing, type the name yourself.';
+
+  @override
   String get profileProBadge => 'PRO instructor verified';
 
   @override

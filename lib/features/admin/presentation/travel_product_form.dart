@@ -13,18 +13,23 @@ import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Shared admin + partner travel-product registration form.
+/// Shared admin + partner + diver-creator travel-product registration form.
 class TravelProductRegistrationScreen extends StatefulWidget {
   const TravelProductRegistrationScreen({
     super.key,
     this.lockedShopId,
     this.partnerMode = false,
+    this.creatorMode = false,
     this.existing,
   });
 
   final String? lockedShopId;
   final bool partnerMode;
+  /// Diver "craft a trip" from My — always submits as pending.
+  final bool creatorMode;
   final ShopProduct? existing;
+
+  static const notInListShopId = '__not_in_list__';
 
   @override
   State<TravelProductRegistrationScreen> createState() =>
@@ -113,9 +118,11 @@ class _TravelProductRegistrationScreenState
         existing?.shopId ??
         DiveShopCatalog.shops.first.id;
     final shop = DiveShopCatalog.byId(_shopId);
-    _curatedMode = widget.lockedShopId == null &&
-        (existing?.shopId.startsWith('curated-') == true ||
-            shop == null && existing != null);
+    final existingCurated = existing?.shopId.startsWith('curated-') == true ||
+        (shop == null && existing != null);
+    _curatedMode = widget.creatorMode
+        ? existingCurated
+        : widget.lockedShopId == null && existingCurated;
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
@@ -203,6 +210,9 @@ class _TravelProductRegistrationScreenState
       if (widget.lockedShopId != null) {
         return;
       }
+      if (_curatedMode) {
+        return;
+      }
       final filtered = _shopsForContinent;
       if (filtered.isEmpty) {
         return;
@@ -213,13 +223,37 @@ class _TravelProductRegistrationScreenState
     });
   }
 
+  void _onCreatorShopChanged(String? value) {
+    if (value == null) {
+      return;
+    }
+    setState(() {
+      final notInList =
+          value == TravelProductRegistrationScreen.notInListShopId;
+      _curatedMode = notInList;
+      if (notInList) {
+        final existingId = widget.existing?.shopId ?? '';
+        _shopId = existingId.startsWith('curated-')
+            ? existingId
+            : TravelProductRegistrationScreen.notInListShopId;
+      } else {
+        _shopId = value;
+        _customResort.clear();
+        _customLocation.clear();
+        _customCountry.clear();
+      }
+    });
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
     if (name.isEmpty || _saving) {
       return;
     }
-    if (_curatedMode && _customResort.text.trim().isEmpty) {
+    final useCurated = _curatedMode ||
+        _shopId == TravelProductRegistrationScreen.notInListShopId;
+    if (useCurated && _customResort.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.productFormCuratedResort)),
       );
@@ -229,8 +263,8 @@ class _TravelProductRegistrationScreenState
     try {
       final store = DiverStoreScope.of(context);
       var shopId = _shopId;
-      if (_curatedMode) {
-        if (widget.existing == null || !shopId.startsWith('curated-')) {
+      if (useCurated) {
+        if (!shopId.startsWith('curated-')) {
           shopId = 'curated-${DateTime.now().millisecondsSinceEpoch}';
         }
         await store.saveShopProfile(
@@ -255,6 +289,7 @@ class _TravelProductRegistrationScreenState
           if (draft.name.text.trim().isNotEmpty) draft.toOption(),
       ];
       final keptCover = _removeExistingCover ? '' : (widget.existing?.coverUrl ?? '');
+      final sessionUid = store.uid ?? '';
       await store.saveShopProduct(
         shopId: shopId,
         product: ShopProduct(
@@ -282,11 +317,16 @@ class _TravelProductRegistrationScreenState
               ProductListingKind.exploreOnly,
           featuredAt: widget.existing?.featuredAt,
           submittedAt: widget.existing?.submittedAt,
+          submittedByUid: widget.existing?.submittedByUid.isNotEmpty == true
+              ? widget.existing!.submittedByUid
+              : sessionUid,
         ),
         photoBytes: _photo?.bytes,
         photoFileName: _photo?.fileName,
         photoContentType: _photo?.contentType,
         useAsResortCover: widget.existing == null || _photo != null,
+        creatorSubmission: widget.creatorMode,
+        submitterUid: sessionUid,
       );
       if (!mounted) {
         return;
@@ -294,7 +334,7 @@ class _TravelProductRegistrationScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            store.stats.isAdmin
+            store.stats.isAdmin && !widget.creatorMode
                 ? l10n.adminProductApproved
                 : l10n.adminProductSubmitted,
           ),
@@ -354,10 +394,19 @@ class _TravelProductRegistrationScreenState
       }
     }
 
+    final creatorNotInList = widget.creatorMode && _curatedMode;
+    final showCuratedFields =
+        (_curatedMode && !shopLocked && !widget.creatorMode) ||
+        creatorNotInList;
+
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: Text(l10n.adminProductsTitle),
+        title: Text(
+          widget.creatorMode
+              ? l10n.profileCraftNewTrip
+              : l10n.adminProductsTitle,
+        ),
         backgroundColor: AppTheme.canvas,
         actions: [
           TextButton(
@@ -371,8 +420,10 @@ class _TravelProductRegistrationScreenState
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
         children: [
           _HeroBanner(
-            title: l10n.productFormHeroTitle,
-            body: widget.partnerMode
+            title: widget.creatorMode
+                ? l10n.profileCraftNewTrip
+                : l10n.productFormHeroTitle,
+            body: widget.creatorMode || widget.partnerMode
                 ? l10n.partnerProductPendingHint
                 : l10n.productFormHeroBody,
           ),
@@ -389,7 +440,7 @@ class _TravelProductRegistrationScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (!shopLocked) ...[
+                if (!shopLocked && !widget.creatorMode) ...[
                   Text(
                     l10n.productFormSourceHint,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -414,6 +465,15 @@ class _TravelProductRegistrationScreenState
                     onSelectionChanged: (value) {
                       setState(() => _curatedMode = value.first);
                     },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (widget.creatorMode) ...[
+                  Text(
+                    l10n.productFormCreatorShopHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppTheme.muted,
+                    ),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -442,7 +502,71 @@ class _TravelProductRegistrationScreenState
                   onChanged: shopLocked ? null : _onContinentChanged,
                 ),
                 const SizedBox(height: 12),
-                if (_curatedMode && !shopLocked) ...[
+                if (widget.creatorMode && !shopLocked) ...[
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('creator-product-shop-$_shopId'),
+                    initialValue: creatorNotInList
+                        ? TravelProductRegistrationScreen.notInListShopId
+                        : (shops.any((s) => s.id == _shopId)
+                            ? _shopId
+                            : (shops.isEmpty
+                                ? TravelProductRegistrationScreen
+                                    .notInListShopId
+                                : shops.first.id)),
+                    decoration: InputDecoration(
+                      labelText: l10n.partnerShopName,
+                      helperText: l10n.productFormShopHint,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: [
+                      for (final shop in shops)
+                        DropdownMenuItem(
+                          value: shop.id,
+                          child: Text(shop.name),
+                        ),
+                      DropdownMenuItem(
+                        value:
+                            TravelProductRegistrationScreen.notInListShopId,
+                        child: Text(l10n.productFormNotInList),
+                      ),
+                    ],
+                    onChanged: _onCreatorShopChanged,
+                  ),
+                  if (showCuratedFields) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('product-curated-resort'),
+                      controller: _customResort,
+                      decoration: InputDecoration(
+                        labelText: l10n.productFormCuratedResort,
+                        hintText: l10n.productFormCuratedResortHint,
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _customLocation,
+                      decoration: InputDecoration(
+                        labelText: l10n.productFormCuratedLocation,
+                        hintText: l10n.productFormCuratedLocationHint,
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _customCountry,
+                      decoration: InputDecoration(
+                        labelText: l10n.productFormCuratedCountry,
+                        hintText: l10n.productFormCuratedCountryHint,
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ] else if (showCuratedFields) ...[
                   TextField(
                     key: const Key('product-curated-resort'),
                     controller: _customResort,

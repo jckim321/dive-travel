@@ -626,6 +626,27 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  /// Products this diver submitted from My (departure desk).
+  List<ShopProduct> craftedProductsFor(String uid) {
+    if (uid.isEmpty) {
+      return const [];
+    }
+    final out = <ShopProduct>[];
+    for (final stats in _shopStats) {
+      for (final product in stats.products) {
+        if (product.submittedByUid == uid) {
+          out.add(product);
+        }
+      }
+    }
+    out.sort((a, b) {
+      final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bAt.compareTo(aAt);
+    });
+    return out;
+  }
+
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,
@@ -633,27 +654,32 @@ class DiverStore extends ChangeNotifier {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
+    bool creatorSubmission = false,
+    String? submitterUid,
   }) async {
-    // Partners may only manage their own hull; everyone else needs admin.
+    // Partners may only manage their own hull; divers may submit as creators;
+    // everyone else needs admin.
     final owned = _stats.ownedShopId;
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
-    if (!_stats.isAdmin && !isOwnerPartner) {
+    if (!_stats.isAdmin && !isOwnerPartner && !creatorSubmission) {
       throw StateError('Not allowed to edit this shop product');
     }
 
-    // Partners submit for owner approval; admin publish goes live immediately.
-    final gated = _stats.isAdmin
+    // Creator/partner submissions stay pending; admin publish goes live.
+    final forcePending = creatorSubmission || !_stats.isAdmin;
+    final gated = forcePending
         ? product.copyWith(
+            publishStatus: ProductPublishStatus.pending,
+            submittedAt: DateTime.now(),
+            active: false,
+            submittedByUid: submitterUid ?? product.submittedByUid,
+          )
+        : product.copyWith(
             publishStatus: ProductPublishStatus.approved,
             active: true,
             reviewedAt: DateTime.now(),
             submittedAt: product.submittedAt ?? DateTime.now(),
-          )
-        : product.copyWith(
-            publishStatus: ProductPublishStatus.pending,
-            submittedAt: DateTime.now(),
-            active: false,
           );
 
     await _repository.saveShopProduct(

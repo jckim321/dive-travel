@@ -11,6 +11,8 @@ abstract final class AppTheme {
   static const Color gold = Color(0xFFC4A35A);
   static const Color goldSoft = Color(0xFFF4EBD3);
   static const Color canvas = Color(0xFFF6F7F9);
+  /// Cool water-mist page wash (not pure white, not dark mode).
+  static const Color seaMist = Color(0xFFF7FBFC);
   static const Color muted = Color(0xFF5C6770);
   static const double radius = 16;
   static const double radiusTight = 12;

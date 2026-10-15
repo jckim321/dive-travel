@@ -647,6 +647,40 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileTitle => 'Mi página';
 
   @override
+  String get profileDepartureDeskKicker => '출항 데스크';
+
+  @override
+  String get profileCraftedTripsTitle => '내가 짠 여행';
+
+  @override
+  String get profileCraftedTripsHint => '리조트를 골라 일정을 짜면 관리자 승인 후 여행상품에 올라갑니다.';
+
+  @override
+  String get profileCraftNewTrip => '새 여행 짜기';
+
+  @override
+  String get profileCraftStatusPending => '승인 대기';
+
+  @override
+  String get profileCraftStatusLive => '공개 중';
+
+  @override
+  String get profileCraftStatusRejected => '반려';
+
+  @override
+  String get profileDeskToolsTitle => '데스크 도구';
+
+  @override
+  String get profileDeskToolsHint => '관리자·파트너·강사 인증과 로그아웃은 여기에 모아 두었습니다.';
+
+  @override
+  String get productFormNotInList => '목록에 없는 리조트';
+
+  @override
+  String get productFormCreatorShopHint =>
+      '대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.';
+
+  @override
   String get profileProBadge => 'Instructor PRO verificado';
 
   @override

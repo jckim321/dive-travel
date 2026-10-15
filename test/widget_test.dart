@@ -286,9 +286,28 @@ void main() {
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('pro-submit')));
+    await tester.pumpAndSettle();
     expect(find.text(l10n.proTitle), findsOneWidget);
     expect(find.text(l10n.proStatusNone), findsOneWidget);
     expect(find.byKey(const Key('pro-submit')), findsOneWidget);
+  });
+
+  testWidgets('출항 데스크에서 새 여행 짜기를 연다', (WidgetTester tester) async {
+    await pumpSignedInApp(tester);
+    final l10n = await loadKo();
+
+    await tester.tap(find.text(l10n.navProfile));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('departure-desk-header')), findsOneWidget);
+    expect(find.byKey(const Key('my-crafted-trips')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('craft-new-trip')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.profileCraftNewTrip), findsWidgets);
+    expect(find.text(l10n.partnerProductPendingHint), findsOneWidget);
+    expect(find.byKey(const Key('product-form-appbar-save')), findsOneWidget);
   });
 
   testWidgets('마이 여권 표지를 누르면 펼쳐진다', (WidgetTester tester) async {
@@ -298,10 +317,8 @@ void main() {
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('passport-cover')),
-      280,
-    );
+    await tester.ensureVisible(find.byKey(const Key('passport-cover')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('passport-cover')));
     await tester.pumpAndSettle();
 

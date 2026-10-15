@@ -77,6 +77,8 @@ void main() {
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('open-admin-mode')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('open-admin-mode')), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-admin-mode')));
     await tester.pumpAndSettle();

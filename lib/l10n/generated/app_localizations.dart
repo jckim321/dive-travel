@@ -1254,6 +1254,72 @@ abstract class AppLocalizations {
   /// **'마이페이지'**
   String get profileTitle;
 
+  /// 마이페이지 출항 데스크 히어로 키커입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'출항 데스크'**
+  String get profileDepartureDeskKicker;
+
+  /// 다이버가 제안한 DIY 여행 상품 섹션 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 짠 여행'**
+  String get profileCraftedTripsTitle;
+
+  /// DIY 여행 상품 섹션 안내 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트를 골라 일정을 짜면 관리자 승인 후 여행상품에 올라갑니다.'**
+  String get profileCraftedTripsHint;
+
+  /// 새 DIY 여행 상품 등록 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 여행 짜기'**
+  String get profileCraftNewTrip;
+
+  /// DIY 상품이 관리자 승인 대기 중일 때 배지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get profileCraftStatusPending;
+
+  /// DIY 상품이 승인되어 공개된 배지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개 중'**
+  String get profileCraftStatusLive;
+
+  /// DIY 상품이 반려된 배지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'반려'**
+  String get profileCraftStatusRejected;
+
+  /// 마이페이지 하단 관리·인증·로그아웃 섹션 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'데스크 도구'**
+  String get profileDeskToolsTitle;
+
+  /// 데스크 도구 섹션 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자·파트너·강사 인증과 로그아웃은 여기에 모아 두었습니다.'**
+  String get profileDeskToolsHint;
+
+  /// 리조트 드롭다운에서 카탈로그에 없을 때 선택하는 항목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에 없는 리조트'**
+  String get productFormNotInList;
+
+  /// 다이버 DIY 상품 등록 시 리조트 선택 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.'**
+  String get productFormCreatorShopHint;
+
   /// 강사 인증 배지 문구입니다.
   ///
   /// In ko, this message translates to:

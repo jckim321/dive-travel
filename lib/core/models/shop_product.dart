@@ -179,6 +179,7 @@ class ShopProduct {
     this.featuredAt,
     this.reviewedAt,
     this.reviewNote = '',
+    this.submittedByUid = '',
   });
 
   static const Object _unset = Object();
@@ -223,6 +224,7 @@ class ShopProduct {
       featuredAt: _readTime(data['featured_at']),
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
+      submittedByUid: data['submitted_by_uid'] as String? ?? '',
     );
   }
 
@@ -252,6 +254,8 @@ class ShopProduct {
   final DateTime? featuredAt;
   final DateTime? reviewedAt;
   final String reviewNote;
+  /// Diver/partner who submitted this trip for approval.
+  final String submittedByUid;
 
   bool get isPendingApproval =>
       publishStatus == ProductPublishStatus.pending;
@@ -282,6 +286,7 @@ class ShopProduct {
     Object? featuredAt = _unset,
     DateTime? reviewedAt,
     String? reviewNote,
+    String? submittedByUid,
   }) {
     return ShopProduct(
       id: id,
@@ -311,6 +316,7 @@ class ShopProduct {
           : featuredAt as DateTime?,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
+      submittedByUid: submittedByUid ?? this.submittedByUid,
     );
   }
 
@@ -341,6 +347,7 @@ class ShopProduct {
       if (featuredAt != null) 'featured_at': featuredAt!.toIso8601String(),
       if (reviewedAt != null) 'reviewed_at': reviewedAt!.toIso8601String(),
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
+      if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
     };
   }
 

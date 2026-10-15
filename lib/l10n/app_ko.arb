@@ -558,6 +558,50 @@
   "@profileTitle": {
     "description": "마이페이지 화면 제목입니다."
   },
+  "profileDepartureDeskKicker": "출항 데스크",
+  "@profileDepartureDeskKicker": {
+    "description": "마이페이지 출항 데스크 히어로 키커입니다."
+  },
+  "profileCraftedTripsTitle": "내가 짠 여행",
+  "@profileCraftedTripsTitle": {
+    "description": "다이버가 제안한 DIY 여행 상품 섹션 제목입니다."
+  },
+  "profileCraftedTripsHint": "리조트를 골라 일정을 짜면 관리자 승인 후 여행상품에 올라갑니다.",
+  "@profileCraftedTripsHint": {
+    "description": "DIY 여행 상품 섹션 안내 문구입니다."
+  },
+  "profileCraftNewTrip": "새 여행 짜기",
+  "@profileCraftNewTrip": {
+    "description": "새 DIY 여행 상품 등록 버튼입니다."
+  },
+  "profileCraftStatusPending": "승인 대기",
+  "@profileCraftStatusPending": {
+    "description": "DIY 상품이 관리자 승인 대기 중일 때 배지입니다."
+  },
+  "profileCraftStatusLive": "공개 중",
+  "@profileCraftStatusLive": {
+    "description": "DIY 상품이 승인되어 공개된 배지입니다."
+  },
+  "profileCraftStatusRejected": "반려",
+  "@profileCraftStatusRejected": {
+    "description": "DIY 상품이 반려된 배지입니다."
+  },
+  "profileDeskToolsTitle": "데스크 도구",
+  "@profileDeskToolsTitle": {
+    "description": "마이페이지 하단 관리·인증·로그아웃 섹션 제목입니다."
+  },
+  "profileDeskToolsHint": "관리자·파트너·강사 인증과 로그아웃은 여기에 모아 두었습니다.",
+  "@profileDeskToolsHint": {
+    "description": "데스크 도구 섹션 안내입니다."
+  },
+  "productFormNotInList": "목록에 없는 리조트",
+  "@productFormNotInList": {
+    "description": "리조트 드롭다운에서 카탈로그에 없을 때 선택하는 항목입니다."
+  },
+  "productFormCreatorShopHint": "대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.",
+  "@productFormCreatorShopHint": {
+    "description": "다이버 DIY 상품 등록 시 리조트 선택 안내입니다."
+  },
   "profileProBadge": "PRO 강사 인증됨",
   "@profileProBadge": {
     "description": "강사 인증 배지 문구입니다."
