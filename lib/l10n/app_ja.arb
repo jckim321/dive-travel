@@ -39,6 +39,13 @@
   "exploreProPrice": "インストラクター価格",
   "exploreSearchHint": "リゾート・ポイント・国を検索",
   "exploreFilterAll": "すべて",
+  "exploreDepartureBanner": "出発 D-{days} · {shop}",
+  "@exploreDepartureBanner": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "shop": {"type": "String"}
+    }
+  },
   "exploreContinentAsia": "アジア",
   "exploreContinentAfrica": "アフリカ",
   "exploreContinentOceania": "オセアニア",

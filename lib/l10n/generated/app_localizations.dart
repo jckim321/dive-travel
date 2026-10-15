@@ -1092,6 +1092,12 @@ abstract class AppLocalizations {
   /// **'내 예약'**
   String get exploreMyBookings;
 
+  /// 여행상품 탭의 짧은 출국 임박 배너입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'출국 D-{days} · {shop}'**
+  String exploreDepartureBanner(int days, String shop);
+
   /// 3대 항목 별점 화면 제목입니다.
   ///
   /// In ko, this message translates to:

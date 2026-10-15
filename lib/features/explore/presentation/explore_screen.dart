@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/core/data/refund_policy.dart';
-import 'package:dive_travel_app/core/models/dive_region.dart';
+import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
-import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
-import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
-import 'package:dive_travel_app/features/community/presentation/open_tide_room.dart';
+import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
+import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
-import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
+import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -30,6 +28,24 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void dispose() {
     _search.dispose();
     super.dispose();
+  }
+
+  void _openMyBookings() {
+    MainShell.goToTab(context, 4);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final target = MyBookingsSection.sectionKey.currentContext;
+        if (target == null) {
+          return;
+        }
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: 0.12,
+        );
+      });
+    });
   }
 
   @override
@@ -57,7 +73,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 .latestPublicProductAt(b.hullId)
                 .compareTo(store.latestPublicProductAt(a.hullId)),
           );
-        final bookings = store.bookings;
+        final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
+        final daysUntil = nextTrip == null
+            ? null
+            : TravelStyleAnalyzer.daysUntil(nextTrip.scheduledFor);
 
         return Scaffold(
           body: SafeArea(
@@ -87,145 +106,54 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  height: 48,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: ContinentFilter.values.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final id = ContinentFilter.values[index];
-                      return ChoiceChip(
-                        showCheckmark: false,
-                        visualDensity: VisualDensity.compact,
-                        labelPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        label: Text(_continentLabel(l10n, id)),
-                        selected: _continent == id,
-                        onSelected: (_) => setState(() => _continent = id),
-                      );
-                    },
-                  ),
+                ContinentAtlasRail(
+                  selectedId: _continent,
+                  onSelected: (id) => setState(() => _continent = id),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: _PriceRoleBanner(isInstructor: isInstructor),
                 ),
+                if (nextTrip != null && daysUntil != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                    child: DepartureTripBanner(
+                      days: daysUntil,
+                      shopName: nextTrip.shopName,
+                      onTap: _openMyBookings,
+                    ),
+                  ),
                 Expanded(
-                  child: shops.isEmpty && bookings.isEmpty
+                  child: shops.isEmpty
                       ? Center(child: Text(l10n.exploreNoResults))
                       : ListView(
                           padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                           children: [
-                            if (bookings.isNotEmpty) ...[
-                              AppSectionHeader(title: l10n.exploreMyBookings),
-                              const SizedBox(height: 14),
-                              for (final booking in bookings) ...[
-                                AppCard(
-                                  onTap: booking.reviewed
-                                      ? null
-                                      : () => openOperationReview(
-                                          context,
-                                          shopId: booking.shopId,
-                                          bookingId: booking.id,
-                                        ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              booking.shopName,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleSmall,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              '${booking.productName}\n${_bookingStatus(l10n, booking)}',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (booking.isActive)
-                                        Column(
-                                          children: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  openTideRoomForBooking(
-                                                context: context,
-                                                booking: booking,
-                                              ),
-                                              child: Text(l10n.communityPlantFlag),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  DiverStoreScope.of(
-                                                context,
-                                              ).cancelBookingAsGuest(booking.id),
-                                              child: Text(l10n.bookingCancel),
-                                            ),
-                                          ],
-                                        )
-                                      else
-                                        Text(
-                                          booking.isWeatherCancelled
-                                              ? l10n.bookingWeatherCancelled
-                                              : l10n.bookingCancelled,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium,
-                                        ),
-                                    ],
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: shops.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 18,
+                                    crossAxisSpacing: 8,
+                                    mainAxisExtent:
+                                        ListingCover.cardExtent(context),
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                              const SizedBox(height: 8),
-                            ],
-                            if (shops.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 24),
-                                child: Center(
-                                  child: Text(l10n.exploreNoResults),
-                                ),
-                              )
-                            else
-                              GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: shops.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      mainAxisSpacing: 18,
-                                      crossAxisSpacing: 8,
-                                      mainAxisExtent:
-                                          ListingCover.cardExtent(context),
-                                    ),
-                                itemBuilder: (context, index) {
-                                  final shop = shops[index];
-                                  return HomeStayCard(
-                                    key: Key('shop-card-${shop.id}'),
-                                    shop: shop,
-                                    quote: store.quoteFor(shop),
-                                    onDetails: () => openResortDetail(
-                                      context,
-                                      shop.hullId,
-                                    ),
-                                  );
-                                },
-                              ),
+                              itemBuilder: (context, index) {
+                                final shop = shops[index];
+                                return HomeStayCard(
+                                  key: Key('shop-card-${shop.id}'),
+                                  shop: shop,
+                                  quote: store.quoteFor(shop),
+                                  onDetails: () => openResortDetail(
+                                    context,
+                                    shop.hullId,
+                                  ),
+                                );
+                              },
+                            ),
                           ],
                         ),
                 ),
@@ -235,39 +163,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
         );
       },
     );
-  }
-
-  String _continentLabel(AppLocalizations l10n, String id) {
-    switch (id) {
-      case ContinentFilter.all:
-        return l10n.exploreFilterAll;
-      case ContinentId.asia:
-        return l10n.exploreContinentAsia;
-      case ContinentId.africa:
-        return l10n.exploreContinentAfrica;
-      case ContinentId.oceania:
-        return l10n.exploreContinentOceania;
-      case ContinentId.americas:
-        return l10n.exploreContinentAmericas;
-      case ContinentId.europe:
-        return l10n.exploreContinentEurope;
-      default:
-        return id;
-    }
-  }
-
-  String _bookingStatus(AppLocalizations l10n, TourBooking booking) {
-    switch (booking.status) {
-      case BookingStatus.cancelled:
-        return l10n.bookingCancelledRefund(booking.refundPercent);
-      case BookingStatus.weatherCancelled:
-        return l10n.bookingWeatherCancelled;
-      case BookingStatus.confirmed:
-        final quote = RefundPolicy.forUserCancel(
-          tourDate: booking.scheduledFor,
-        );
-        return '${l10n.bookingConfirmed} · ${l10n.refundPolicyHint(quote.percent)}';
-    }
   }
 }
 

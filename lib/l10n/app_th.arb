@@ -39,6 +39,13 @@
   "exploreProPrice": "ราคาโปร",
   "exploreSearchHint": "ค้นหารีสอร์ต จุดดำน้ำ ประเทศ",
   "exploreFilterAll": "ทั้งหมด",
+  "exploreDepartureBanner": "ออกเดินทาง D-{days} · {shop}",
+  "@exploreDepartureBanner": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "shop": {"type": "String"}
+    }
+  },
   "exploreContinentAsia": "เอเชีย",
   "exploreContinentAfrica": "แอฟริกา",
   "exploreContinentOceania": "โอเชียเนีย",

@@ -164,6 +164,13 @@
   "exploreBuyNow": "Choose a trip",
   "exploreResortCardLine": "{location} · {count} trips",
   "exploreMyBookings": "My bookings",
+  "exploreDepartureBanner": "Departure D-{days} · {shop}",
+  "@exploreDepartureBanner": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "shop": {"type": "String"}
+    }
+  },
   "reviewTitle": "Operations review",
   "reviewIntro": "Rate safety, the guide, and the boat so Dive Star can update.",
   "reviewShopLabel": "Resort / dive shop",

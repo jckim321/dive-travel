@@ -39,6 +39,13 @@
   "exploreProPrice": "Precio pro",
   "exploreSearchHint": "Buscar resorts, puntos, países",
   "exploreFilterAll": "Todos",
+  "exploreDepartureBanner": "Salida D-{days} · {shop}",
+  "@exploreDepartureBanner": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "shop": {"type": "String"}
+    }
+  },
   "exploreContinentAsia": "Asia",
   "exploreContinentAfrica": "África",
   "exploreContinentOceania": "Oceanía",

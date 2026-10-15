@@ -163,6 +163,29 @@ void main() {
     expect(find.text('보홀 오션 하이드아웃'), findsNothing);
   });
 
+  testWidgets('여행상품 대륙 아틀라스 라벨이 전부 보이고 예약 목록은 없다', (
+    WidgetTester tester,
+  ) async {
+    await pumpSignedInApp(tester);
+    final l10n = await loadKo();
+
+    await tester.tap(find.text(l10n.navExplore));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('continent-atlas-rail')), findsOneWidget);
+    expect(find.text(l10n.exploreFilterAll), findsOneWidget);
+    expect(find.text(l10n.exploreContinentAsia), findsOneWidget);
+    expect(find.text(l10n.exploreContinentAfrica), findsOneWidget);
+    expect(find.text(l10n.exploreContinentOceania), findsOneWidget);
+    expect(find.text(l10n.exploreContinentAmericas), findsOneWidget);
+    expect(find.text(l10n.exploreContinentEurope), findsOneWidget);
+    expect(find.text(l10n.exploreMyBookings), findsNothing);
+
+    await tester.tap(find.byKey(const Key('continent-filter-asia')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+  });
+
   testWidgets('로그북에서 오퍼레이션 리뷰 화면을 연다', (WidgetTester tester) async {
     await pumpSignedInApp(tester);
     final l10n = await loadKo();

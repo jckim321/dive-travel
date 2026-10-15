@@ -563,6 +563,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreMyBookings => 'My bookings';
 
   @override
+  String exploreDepartureBanner(int days, String shop) {
+    return 'Departure D-$days · $shop';
+  }
+
+  @override
   String get reviewTitle => 'Operations review';
 
   @override

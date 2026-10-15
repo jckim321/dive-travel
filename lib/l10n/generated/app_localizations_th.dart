@@ -552,6 +552,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreMyBookings => '내 예약';
 
   @override
+  String exploreDepartureBanner(int days, String shop) {
+    return 'ออกเดินทาง D-$days · $shop';
+  }
+
+  @override
   String get reviewTitle => '오퍼레이션 리뷰';
 
   @override

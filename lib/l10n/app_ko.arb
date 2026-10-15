@@ -502,6 +502,14 @@
   "@exploreMyBookings": {
     "description": "투어 탭의 결제 완료 예약 목록 제목입니다."
   },
+  "exploreDepartureBanner": "출국 D-{days} · {shop}",
+  "@exploreDepartureBanner": {
+    "description": "여행상품 탭의 짧은 출국 임박 배너입니다.",
+    "placeholders": {
+      "days": {"type": "int"},
+      "shop": {"type": "String"}
+    }
+  },
   "reviewTitle": "오퍼레이션 리뷰",
   "@reviewTitle": {
     "description": "3대 항목 별점 화면 제목입니다."
