@@ -96,8 +96,9 @@ void main() {
     await tester.tap(find.text(l10n.navExplore));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('continent-atlas-rail')), findsOneWidget);
     expect(find.byKey(const Key('explore-search')), findsOneWidget);
-    expect(find.text(l10n.exploreConsumerBanner), findsOneWidget);
+    expect(find.text(l10n.exploreConsumerBanner), findsNothing);
     expect(find.text('180,000원'), findsOneWidget);
     expect(find.text('126,000원'), findsNothing);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
@@ -144,7 +145,7 @@ void main() {
     await tester.tap(find.text(l10n.navExplore));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.exploreProBanner), findsOneWidget);
+    expect(find.text(l10n.exploreProBanner), findsNothing);
     expect(find.text('126,000원'), findsOneWidget);
     expect(find.text('180,000원'), findsNothing);
   });

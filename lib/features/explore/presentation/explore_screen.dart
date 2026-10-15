@@ -4,7 +4,6 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
@@ -56,7 +55,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final isInstructor = store.stats.isInstructor;
         final needle = _search.text.trim().toLowerCase();
         // One card per resort (hull). Live public products replace catalog
         // shells; never expand every SKU into duplicate tiles.
@@ -83,8 +81,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
             bottom: false,
             child: Column(
               children: [
+                ContinentAtlasRail(
+                  selectedId: _continent,
+                  onSelected: (id) => setState(() => _continent = id),
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: TextField(
                     key: const Key('explore-search'),
                     controller: _search,
@@ -104,15 +106,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ContinentAtlasRail(
-                  selectedId: _continent,
-                  onSelected: (id) => setState(() => _continent = id),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: _PriceRoleBanner(isInstructor: isInstructor),
                 ),
                 if (nextTrip != null && daysUntil != null)
                   Padding(
@@ -176,44 +169,4 @@ bool _showsOnExplore(DiveShop shop, DiverStore store) {
   // Once any live product exists, hide empty catalog shells so new
   // registrations aren't buried under seed resorts on PC/web.
   return !store.hasAnyPublicProduct;
-}
-
-class _PriceRoleBanner extends StatelessWidget {
-  const _PriceRoleBanner({required this.isInstructor});
-
-  final bool isInstructor;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final color = isInstructor
-        ? AppTheme.goldSoft
-        : theme.colorScheme.primaryContainer;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 280),
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isInstructor ? Icons.verified_outlined : Icons.payments_outlined,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              isInstructor ? l10n.exploreProBanner : l10n.exploreConsumerBanner,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
