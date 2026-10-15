@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
+import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -71,6 +72,21 @@ void main() {
       isTrue,
     );
     expect(find.byType(PulsingMarker), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 2300));
+    await tester.tap(find.text(l10n.navProfile));
+    await tester.pump();
+    await tester.drag(
+      find.byKey(const Key('profile-departure-desk')),
+      const Offset(0, -420),
+    );
+    await tester.pump(const Duration(milliseconds: 1000));
+
+    final tank = tester.widget<TankGauge>(
+      find.byKey(const Key('profile-tank-gauge')),
+    );
+    expect(tank.progress, closeTo(0.01, 0.001));
+    expect(tank.label, '1');
   });
 
   testWidgets('로그 추가 화면에 테스트 사진 버튼이 보인다', (WidgetTester tester) async {
@@ -340,6 +356,27 @@ void main() {
 
     expect(find.byKey(const Key('passport-spread')), findsNothing);
     expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
+  });
+
+  testWidgets('모바일 폭에서 여권과 공기탱크가 같은 카드에 보인다', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(472, 1024);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await pumpSignedInApp(tester);
+    final l10n = await loadKo();
+
+    await tester.tap(find.text(l10n.navProfile));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('profile-departure-desk')),
+      const Offset(0, -360),
+    );
+    await tester.pump(const Duration(milliseconds: 1000));
+
+    expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
+    expect(find.byKey(const Key('profile-tank-gauge')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('같은배 탭은 출발 명부를 보여준다', (WidgetTester tester) async {

@@ -7,8 +7,10 @@ import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/core/theme/century_tank_colors.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
+import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -98,6 +100,7 @@ class ProfileScreen extends StatelessWidget {
                         regions: stats.uniqueRegionsCount,
                         progress: stats.centuryProgress,
                         logsToNext: stats.logsToNextCentury,
+                        target: stats.currentCenturyTarget,
                         stamped: {
                           for (final region in store.regions)
                             RegionCatalog.countryOf(region),
@@ -398,6 +401,7 @@ class _OceanRecordCard extends StatelessWidget {
     required this.regions,
     required this.progress,
     required this.logsToNext,
+    required this.target,
     required this.stamped,
   });
 
@@ -405,6 +409,7 @@ class _OceanRecordCard extends StatelessWidget {
   final int regions;
   final double progress;
   final int logsToNext;
+  final int target;
   final Set<String> stamped;
 
   @override
@@ -412,12 +417,13 @@ class _OceanRecordCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _LightPanel(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 92,
             child: PassportStamps(stamped: stamped, compact: true),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,23 +444,37 @@ class _OceanRecordCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 7,
-                    color: AppTheme.gold,
-                    backgroundColor: const Color(0xFFE4E9EC),
+                const SizedBox(height: 14),
+                Text(
+                  l10n.profileLogsProgress(totalLogs, target),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 3),
                 Text(
                   l10n.profileNextMilestone(logsToNext),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 12),
+          TankGauge(
+            key: const Key('profile-tank-gauge'),
+            progress: progress,
+            isComplete: progress >= 1 && totalLogs > 0,
+            label: '$totalLogs',
+            width: 64,
+            bodyHeight: 126,
+            neckWidth: 26,
+            neckHeight: 12,
+            borderWidth: 3,
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            fillColor: CenturyTankColors.ofLogs(totalLogs),
+            borderColor: CenturyTankColors.ofLogs(totalLogs),
           ),
         ],
       ),
