@@ -226,7 +226,7 @@ class _NextOceanCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: const Key('profile-next-ocean'),
@@ -330,7 +330,7 @@ class _SavedOceansRail extends StatelessWidget {
           final shop = shops[index];
           return Material(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(8),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () => onOpen(shop),
@@ -584,7 +584,7 @@ class _ActivityRow extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           color: const Color(0xFFEAF2F5),
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(icon, color: AppTheme.ocean, size: 19),
       ),
@@ -612,7 +612,7 @@ class _LightPanel extends StatelessWidget {
       color: Colors.white.withValues(alpha: 0.96),
       elevation: 3,
       shadowColor: const Color(0x66001424),
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: padding, child: child),
     );

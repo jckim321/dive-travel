@@ -108,7 +108,7 @@ class _SettingsCard extends StatelessWidget {
       color: Colors.white,
       elevation: 1,
       shadowColor: AppTheme.navy.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(8),
       clipBehavior: Clip.antiAlias,
       child: Padding(padding: const EdgeInsets.all(16), child: child),
     );

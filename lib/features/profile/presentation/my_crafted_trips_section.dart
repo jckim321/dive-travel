@@ -67,16 +67,16 @@ class _NewTripCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         key: const Key('craft-new-trip'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 128,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppTheme.navy.withValues(alpha: 0.12)),
           ),
           child: Column(
@@ -123,15 +123,15 @@ class _CraftedTripCard extends StatelessWidget {
 
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 168,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppTheme.navy.withValues(alpha: 0.1)),
           ),
           child: Column(
