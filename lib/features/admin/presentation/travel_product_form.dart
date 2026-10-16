@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
+import 'package:dive_travel_app/features/admin/presentation/ops_product_workbench.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Shared admin + partner + diver-creator travel-product registration form.
@@ -400,6 +401,14 @@ class _TravelProductRegistrationScreenState
           _customCountry.text = live.country?.trim() ?? '';
         }
       }
+    }
+
+    if (!widget.creatorMode) {
+      return OpsProductWorkbench(
+        lockedShopId: widget.lockedShopId,
+        partnerMode: widget.partnerMode,
+        existing: widget.existing,
+      );
     }
 
     final creatorNotInList = widget.creatorMode && _curatedMode;

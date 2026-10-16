@@ -1157,6 +1157,62 @@
       "percent": { "type": "int" }
     }
   },
+  "workbenchTitle": "출항 작업대",
+  "workbenchDeckHull": "선체",
+  "workbenchDeckStory": "이야기",
+  "workbenchDeckRates": "요금",
+  "workbenchDeckOptions": "옵션",
+  "workbenchCategory": "분류",
+  "workbenchCatResort": "리조트 패키지",
+  "workbenchCatLiveaboard": "라이브어보드",
+  "workbenchCatFun": "펀다이빙",
+  "workbenchCatCourse": "코스",
+  "workbenchCatDay": "데이트립",
+  "workbenchHullFromShop": "선체에서 가져옴",
+  "workbenchOpenMap": "지도에서 열기",
+  "workbenchDetail": "상세 설명",
+  "workbenchItinerary": "표준 일정표",
+  "workbenchAddDay": "일차 추가",
+  "workbenchDayTitle": "{day}일차 제목",
+  "@workbenchDayTitle": {
+    "placeholders": { "day": { "type": "int" } }
+  },
+  "workbenchDayBody": "내용",
+  "workbenchGuestDiver": "다이버",
+  "workbenchGuestNondiver": "비다이버",
+  "workbenchGuestChild": "소아",
+  "workbenchGuestInfant": "유아",
+  "workbenchGuestEnabled": "노출",
+  "workbenchFoc": "FOC",
+  "workbenchFocPay": "결제 인원",
+  "workbenchFocFree": "무료 인원",
+  "workbenchBasePackage": "기본 패키지",
+  "workbenchBasePackageHint": "이야기·일정 구성이 예약 시 옵션 1로 기본 선택됩니다.",
+  "workbenchAddons": "추가 옵션 · 패키지 안에서만",
+  "workbenchIndividuals": "개별 상품 · 패키지 대신",
+  "workbenchBookable": "예약에 노출",
+  "workbenchGuestPreview": "손님 예약",
+  "checkoutStepSelect": "예약 선택",
+  "checkoutStepReview": "예약한 사항",
+  "checkoutStepPay": "구매",
+  "checkoutReviewCta": "예약 내역 보기",
+  "checkoutBack": "이전으로",
+  "checkoutConfirm": "예약 확정",
+  "checkoutNeedChoice": "기본 패키지 또는 개별 상품을 선택하세요.",
+  "checkoutGuests": "인원",
+  "checkoutPackageOn": "기본 패키지",
+  "checkoutTotal": "합계 {amount}원",
+  "@checkoutTotal": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "checkoutFocLine": "FOC {pay}+{free} · 다이버 무료 {count}명",
+  "@checkoutFocLine": {
+    "placeholders": {
+      "pay": { "type": "int" },
+      "free": { "type": "int" },
+      "count": { "type": "int" }
+    }
+  },
   "refundPolicyHint": "지금 취소 시 환불 {percent}%",
   "@refundPolicyHint": {
     "placeholders": {

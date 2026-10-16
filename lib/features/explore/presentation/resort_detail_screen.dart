@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
@@ -159,11 +160,23 @@ class ResortDetailScreen extends StatelessWidget {
                           (post.shopId?.split('--').first == hull.hullId &&
                               post.subtitle == shop.productName))
                       .length,
-                  onBook: () => showTourCheckoutSheet(
-                    context: context,
-                    shop: shop,
-                    quote: store.quoteFor(shop),
-                  ),
+                  onBook: () {
+                    ShopProduct? product;
+                    for (final item
+                        in store.liveStatsFor(hull.hullId)?.products ??
+                            const <ShopProduct>[]) {
+                      if (item.name == shop.productName) {
+                        product = item;
+                        break;
+                      }
+                    }
+                    showTourCheckoutSheet(
+                      context: context,
+                      shop: shop,
+                      quote: store.quoteFor(shop),
+                      product: product,
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
               ],

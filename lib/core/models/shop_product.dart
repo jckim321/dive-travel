@@ -100,6 +100,174 @@ enum ProductPublishStatus {
   bool get isPublic => this == ProductPublishStatus.approved;
 }
 
+enum ProductCategory {
+  resortPackage,
+  liveaboard,
+  funDive,
+  course,
+  dayTrip;
+
+  static ProductCategory parse(dynamic value) {
+    switch (value) {
+      case 'liveaboard':
+        return ProductCategory.liveaboard;
+      case 'fun_dive':
+        return ProductCategory.funDive;
+      case 'course':
+        return ProductCategory.course;
+      case 'day_trip':
+        return ProductCategory.dayTrip;
+      default:
+        return ProductCategory.resortPackage;
+    }
+  }
+
+  String get firestoreValue {
+    switch (this) {
+      case ProductCategory.resortPackage:
+        return 'resort_package';
+      case ProductCategory.liveaboard:
+        return 'liveaboard';
+      case ProductCategory.funDive:
+        return 'fun_dive';
+      case ProductCategory.course:
+        return 'course';
+      case ProductCategory.dayTrip:
+        return 'day_trip';
+    }
+  }
+}
+
+enum GuestRole {
+  diver,
+  nondiver,
+  child,
+  infant;
+
+  static GuestRole parse(dynamic value) {
+    switch (value) {
+      case 'nondiver':
+        return GuestRole.nondiver;
+      case 'child':
+        return GuestRole.child;
+      case 'infant':
+        return GuestRole.infant;
+      default:
+        return GuestRole.diver;
+    }
+  }
+
+  String get firestoreValue {
+    switch (this) {
+      case GuestRole.diver:
+        return 'diver';
+      case GuestRole.nondiver:
+        return 'nondiver';
+      case GuestRole.child:
+        return 'child';
+      case GuestRole.infant:
+        return 'infant';
+    }
+  }
+}
+
+enum ProductOptionKind {
+  basePackage,
+  addon,
+  individual;
+
+  static ProductOptionKind parse(dynamic value) {
+    switch (value) {
+      case 'base_package':
+        return ProductOptionKind.basePackage;
+      case 'individual':
+        return ProductOptionKind.individual;
+      default:
+        return ProductOptionKind.addon;
+    }
+  }
+
+  String get firestoreValue {
+    switch (this) {
+      case ProductOptionKind.basePackage:
+        return 'base_package';
+      case ProductOptionKind.addon:
+        return 'addon';
+      case ProductOptionKind.individual:
+        return 'individual';
+    }
+  }
+}
+
+class ItineraryDay {
+  const ItineraryDay({
+    required this.day,
+    this.title = '',
+    this.body = '',
+  });
+
+  factory ItineraryDay.fromMap(Map<String, dynamic> data) {
+    return ItineraryDay(
+      day: (data['day'] as num?)?.toInt() ?? 0,
+      title: data['title'] as String? ?? '',
+      body: data['body'] as String? ?? '',
+    );
+  }
+
+  final int day;
+  final String title;
+  final String body;
+
+  Map<String, dynamic> toMap() => {
+    'day': day,
+    'title': title,
+    'body': body,
+  };
+}
+
+class GuestRate {
+  const GuestRate({
+    required this.role,
+    this.enabled = true,
+    this.consumer = 0,
+    this.professional = 0,
+  });
+
+  factory GuestRate.fromMap(Map<String, dynamic> data) {
+    return GuestRate(
+      role: GuestRole.parse(data['role']),
+      enabled: data['enabled'] != false,
+      consumer: (data['consumer'] as num?)?.toInt() ?? 0,
+      professional: (data['professional'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final GuestRole role;
+  final bool enabled;
+  final int consumer;
+  final int professional;
+
+  Map<String, dynamic> toMap() => {
+    'role': role.firestoreValue,
+    'enabled': enabled,
+    'consumer': consumer,
+    'professional': professional,
+  };
+
+  GuestRate copyWith({
+    bool? enabled,
+    int? consumer,
+    int? professional,
+  }) {
+    return GuestRate(
+      role: role,
+      enabled: enabled ?? this.enabled,
+      consumer: consumer ?? this.consumer,
+      professional: professional ?? this.professional,
+    );
+  }
+}
+
 /// Add-on / package line item (room type, tank count, gear, transfer, …).
 class ShopProductOption {
   const ShopProductOption({
@@ -108,6 +276,9 @@ class ShopProductOption {
     this.description = '',
     this.consumerPrice = 0,
     this.professionalPrice = 0,
+    this.kind = ProductOptionKind.addon,
+    this.bookable = true,
+    this.guestRole = GuestRole.diver,
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
@@ -117,6 +288,9 @@ class ShopProductOption {
       description: data['description'] as String? ?? '',
       consumerPrice: (data['consumer_price'] as num?)?.toInt() ?? 0,
       professionalPrice: (data['professional_price'] as num?)?.toInt() ?? 0,
+      kind: ProductOptionKind.parse(data['kind']),
+      bookable: data['bookable'] != false,
+      guestRole: GuestRole.parse(data['guest_role']),
     );
   }
 
@@ -125,6 +299,9 @@ class ShopProductOption {
   final String description;
   final int consumerPrice;
   final int professionalPrice;
+  final ProductOptionKind kind;
+  final bool bookable;
+  final GuestRole guestRole;
 
   Map<String, dynamic> toMap() {
     return {
@@ -133,6 +310,9 @@ class ShopProductOption {
       'description': description,
       'consumer_price': consumerPrice,
       'professional_price': professionalPrice,
+      'kind': kind.firestoreValue,
+      'bookable': bookable,
+      'guest_role': guestRole.firestoreValue,
     };
   }
 
@@ -141,6 +321,9 @@ class ShopProductOption {
     String? description,
     int? consumerPrice,
     int? professionalPrice,
+    ProductOptionKind? kind,
+    bool? bookable,
+    GuestRole? guestRole,
   }) {
     return ShopProductOption(
       id: id,
@@ -148,6 +331,9 @@ class ShopProductOption {
       description: description ?? this.description,
       consumerPrice: consumerPrice ?? this.consumerPrice,
       professionalPrice: professionalPrice ?? this.professionalPrice,
+      kind: kind ?? this.kind,
+      bookable: bookable ?? this.bookable,
+      guestRole: guestRole ?? this.guestRole,
     );
   }
 }
@@ -173,6 +359,14 @@ class ShopProduct {
     this.maxGuests = 0,
     this.cancellationNote = '',
     this.options = const [],
+    this.category = ProductCategory.resortPackage,
+    this.detail = '',
+    this.photoUrls = const [],
+    this.itineraryDays = const [],
+    this.guestRates = const [],
+    this.focPayCount = 0,
+    this.focFreeCount = 0,
+    this.focAppliesTo = GuestRole.diver,
     this.listingKind = ProductListingKind.exploreOnly,
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
@@ -218,6 +412,14 @@ class ShopProduct {
       maxGuests: (data['max_guests'] as num?)?.toInt() ?? 0,
       cancellationNote: data['cancellation_note'] as String? ?? '',
       options: options,
+      category: ProductCategory.parse(data['category']),
+      detail: data['detail'] as String? ?? '',
+      photoUrls: _stringList(data['photo_urls']),
+      itineraryDays: _days(data['itinerary_days']),
+      guestRates: _rates(data['guest_rates']),
+      focPayCount: (data['foc_pay_count'] as num?)?.toInt() ?? 0,
+      focFreeCount: (data['foc_free_count'] as num?)?.toInt() ?? 0,
+      focAppliesTo: GuestRole.parse(data['foc_applies_to']),
       listingKind: ProductListingKind.parse(data['listing_kind']),
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
@@ -247,6 +449,14 @@ class ShopProduct {
   final int maxGuests;
   final String cancellationNote;
   final List<ShopProductOption> options;
+  final ProductCategory category;
+  final String detail;
+  final List<String> photoUrls;
+  final List<ItineraryDay> itineraryDays;
+  final List<GuestRate> guestRates;
+  final int focPayCount;
+  final int focFreeCount;
+  final GuestRole focAppliesTo;
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
@@ -261,6 +471,36 @@ class ShopProduct {
       publishStatus == ProductPublishStatus.pending;
 
   bool get isListedPublicly => active && publishStatus.isPublic;
+
+  bool get usesBookingWorkbench {
+    return guestRates.isNotEmpty ||
+        options.any((o) => o.kind != ProductOptionKind.addon) ||
+        focPayCount > 0;
+  }
+
+  List<GuestRate> get resolvedGuestRates {
+    if (guestRates.isNotEmpty) {
+      return guestRates;
+    }
+    return [
+      GuestRate(
+        role: GuestRole.diver,
+        consumer: consumerPrice,
+        professional: professionalPrice,
+      ),
+    ];
+  }
+
+  String get derivedDurationLabel {
+    if (itineraryDays.isEmpty) {
+      return durationLabel;
+    }
+    final n = itineraryDays.length;
+    if (n <= 1) {
+      return durationLabel.isNotEmpty ? durationLabel : '1일';
+    }
+    return '${n - 1}박 $n일';
+  }
 
   ShopProduct copyWith({
     String? name,
@@ -280,6 +520,14 @@ class ShopProduct {
     int? maxGuests,
     String? cancellationNote,
     List<ShopProductOption>? options,
+    ProductCategory? category,
+    String? detail,
+    List<String>? photoUrls,
+    List<ItineraryDay>? itineraryDays,
+    List<GuestRate>? guestRates,
+    int? focPayCount,
+    int? focFreeCount,
+    GuestRole? focAppliesTo,
     ProductListingKind? listingKind,
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
@@ -308,6 +556,14 @@ class ShopProduct {
       maxGuests: maxGuests ?? this.maxGuests,
       cancellationNote: cancellationNote ?? this.cancellationNote,
       options: options ?? this.options,
+      category: category ?? this.category,
+      detail: detail ?? this.detail,
+      photoUrls: photoUrls ?? this.photoUrls,
+      itineraryDays: itineraryDays ?? this.itineraryDays,
+      guestRates: guestRates ?? this.guestRates,
+      focPayCount: focPayCount ?? this.focPayCount,
+      focFreeCount: focFreeCount ?? this.focFreeCount,
+      focAppliesTo: focAppliesTo ?? this.focAppliesTo,
       listingKind: listingKind ?? this.listingKind,
       publishStatus: publishStatus ?? this.publishStatus,
       submittedAt: submittedAt ?? this.submittedAt,
@@ -341,6 +597,16 @@ class ShopProduct {
       if (cancellationNote.isNotEmpty) 'cancellation_note': cancellationNote,
       if (options.isNotEmpty)
         'options': [for (final option in options) option.toMap()],
+      'category': category.firestoreValue,
+      if (detail.isNotEmpty) 'detail': detail,
+      if (photoUrls.isNotEmpty) 'photo_urls': photoUrls,
+      if (itineraryDays.isNotEmpty)
+        'itinerary_days': [for (final day in itineraryDays) day.toMap()],
+      if (guestRates.isNotEmpty)
+        'guest_rates': [for (final rate in guestRates) rate.toMap()],
+      if (focPayCount > 0) 'foc_pay_count': focPayCount,
+      if (focFreeCount > 0) 'foc_free_count': focFreeCount,
+      if (focPayCount > 0) 'foc_applies_to': focAppliesTo.firestoreValue,
       'listing_kind': listingKind.firestoreValue,
       'publish_status': publishStatus.firestoreValue,
       if (submittedAt != null) 'submitted_at': submittedAt!.toIso8601String(),
@@ -349,6 +615,44 @@ class ShopProduct {
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
     };
+  }
+
+  static List<String> _stringList(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw)
+        if (item is String && item.trim().isNotEmpty) item.trim(),
+    ];
+  }
+
+  static List<ItineraryDay> _days(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final out = <ItineraryDay>[];
+    for (final item in raw) {
+      final map = mapFrom(item);
+      if (map != null) {
+        out.add(ItineraryDay.fromMap(map));
+      }
+    }
+    return out;
+  }
+
+  static List<GuestRate> _rates(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final out = <GuestRate>[];
+    for (final item in raw) {
+      final map = mapFrom(item);
+      if (map != null) {
+        out.add(GuestRate.fromMap(map));
+      }
+    }
+    return out;
   }
 
   static DateTime? _readTime(dynamic value) {

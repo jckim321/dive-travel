@@ -1736,6 +1736,143 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get workbenchTitle => 'Departure desk';
+
+  @override
+  String get workbenchDeckHull => 'Hull';
+
+  @override
+  String get workbenchDeckStory => 'Story';
+
+  @override
+  String get workbenchDeckRates => 'Rates';
+
+  @override
+  String get workbenchDeckOptions => 'Options';
+
+  @override
+  String get workbenchCategory => 'Category';
+
+  @override
+  String get workbenchCatResort => 'Resort package';
+
+  @override
+  String get workbenchCatLiveaboard => 'Liveaboard';
+
+  @override
+  String get workbenchCatFun => 'Fun dive';
+
+  @override
+  String get workbenchCatCourse => 'Course';
+
+  @override
+  String get workbenchCatDay => 'Day trip';
+
+  @override
+  String get workbenchHullFromShop => 'From the resort hull';
+
+  @override
+  String get workbenchOpenMap => 'Open in maps';
+
+  @override
+  String get workbenchDetail => 'Full description';
+
+  @override
+  String get workbenchItinerary => 'Standard itinerary';
+
+  @override
+  String get workbenchAddDay => 'Add day';
+
+  @override
+  String workbenchDayTitle(int day) {
+    return 'Day $day title';
+  }
+
+  @override
+  String get workbenchDayBody => 'Details';
+
+  @override
+  String get workbenchGuestDiver => 'Diver';
+
+  @override
+  String get workbenchGuestNondiver => 'Non-diver';
+
+  @override
+  String get workbenchGuestChild => 'Child';
+
+  @override
+  String get workbenchGuestInfant => 'Infant';
+
+  @override
+  String get workbenchGuestEnabled => 'Offer';
+
+  @override
+  String get workbenchFoc => 'FOC';
+
+  @override
+  String get workbenchFocPay => 'Pay for';
+
+  @override
+  String get workbenchFocFree => 'Free';
+
+  @override
+  String get workbenchBasePackage => 'Base package';
+
+  @override
+  String get workbenchBasePackageHint =>
+      'The story and itinerary become option 1, selected by default.';
+
+  @override
+  String get workbenchAddons => 'Add-ons · only with the package';
+
+  @override
+  String get workbenchIndividuals => 'A la carte · instead of the package';
+
+  @override
+  String get workbenchBookable => 'Show at checkout';
+
+  @override
+  String get workbenchGuestPreview => 'Guest booking';
+
+  @override
+  String get checkoutStepSelect => 'Choose';
+
+  @override
+  String get checkoutStepReview => 'Your booking';
+
+  @override
+  String get checkoutStepPay => 'Pay';
+
+  @override
+  String get checkoutReviewCta => 'Review booking';
+
+  @override
+  String get checkoutBack => 'Back';
+
+  @override
+  String get checkoutConfirm => 'Confirm booking';
+
+  @override
+  String get checkoutNeedChoice =>
+      'Select the base package or an a la carte item.';
+
+  @override
+  String get checkoutGuests => 'Guests';
+
+  @override
+  String get checkoutPackageOn => 'Base package';
+
+  @override
+  String checkoutTotal(String amount) {
+    return 'Total $amount won';
+  }
+
+  @override
+  String checkoutFocLine(int pay, int free, int count) {
+    return 'FOC $pay+$free · $count complimentary divers';
+  }
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }

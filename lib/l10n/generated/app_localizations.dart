@@ -3216,6 +3216,264 @@ abstract class AppLocalizations {
   /// **'취소 · 환불 {percent}%'**
   String bookingCancelledRefund(int percent);
 
+  /// No description provided for @workbenchTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'출항 작업대'**
+  String get workbenchTitle;
+
+  /// No description provided for @workbenchDeckHull.
+  ///
+  /// In ko, this message translates to:
+  /// **'선체'**
+  String get workbenchDeckHull;
+
+  /// No description provided for @workbenchDeckStory.
+  ///
+  /// In ko, this message translates to:
+  /// **'이야기'**
+  String get workbenchDeckStory;
+
+  /// No description provided for @workbenchDeckRates.
+  ///
+  /// In ko, this message translates to:
+  /// **'요금'**
+  String get workbenchDeckRates;
+
+  /// No description provided for @workbenchDeckOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션'**
+  String get workbenchDeckOptions;
+
+  /// No description provided for @workbenchCategory.
+  ///
+  /// In ko, this message translates to:
+  /// **'분류'**
+  String get workbenchCategory;
+
+  /// No description provided for @workbenchCatResort.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 패키지'**
+  String get workbenchCatResort;
+
+  /// No description provided for @workbenchCatLiveaboard.
+  ///
+  /// In ko, this message translates to:
+  /// **'라이브어보드'**
+  String get workbenchCatLiveaboard;
+
+  /// No description provided for @workbenchCatFun.
+  ///
+  /// In ko, this message translates to:
+  /// **'펀다이빙'**
+  String get workbenchCatFun;
+
+  /// No description provided for @workbenchCatCourse.
+  ///
+  /// In ko, this message translates to:
+  /// **'코스'**
+  String get workbenchCatCourse;
+
+  /// No description provided for @workbenchCatDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'데이트립'**
+  String get workbenchCatDay;
+
+  /// No description provided for @workbenchHullFromShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'선체에서 가져옴'**
+  String get workbenchHullFromShop;
+
+  /// No description provided for @workbenchOpenMap.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도에서 열기'**
+  String get workbenchOpenMap;
+
+  /// No description provided for @workbenchDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'상세 설명'**
+  String get workbenchDetail;
+
+  /// No description provided for @workbenchItinerary.
+  ///
+  /// In ko, this message translates to:
+  /// **'표준 일정표'**
+  String get workbenchItinerary;
+
+  /// No description provided for @workbenchAddDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'일차 추가'**
+  String get workbenchAddDay;
+
+  /// No description provided for @workbenchDayTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'{day}일차 제목'**
+  String workbenchDayTitle(int day);
+
+  /// No description provided for @workbenchDayBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'내용'**
+  String get workbenchDayBody;
+
+  /// No description provided for @workbenchGuestDiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버'**
+  String get workbenchGuestDiver;
+
+  /// No description provided for @workbenchGuestNondiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버'**
+  String get workbenchGuestNondiver;
+
+  /// No description provided for @workbenchGuestChild.
+  ///
+  /// In ko, this message translates to:
+  /// **'소아'**
+  String get workbenchGuestChild;
+
+  /// No description provided for @workbenchGuestInfant.
+  ///
+  /// In ko, this message translates to:
+  /// **'유아'**
+  String get workbenchGuestInfant;
+
+  /// No description provided for @workbenchGuestEnabled.
+  ///
+  /// In ko, this message translates to:
+  /// **'노출'**
+  String get workbenchGuestEnabled;
+
+  /// No description provided for @workbenchFoc.
+  ///
+  /// In ko, this message translates to:
+  /// **'FOC'**
+  String get workbenchFoc;
+
+  /// No description provided for @workbenchFocPay.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 인원'**
+  String get workbenchFocPay;
+
+  /// No description provided for @workbenchFocFree.
+  ///
+  /// In ko, this message translates to:
+  /// **'무료 인원'**
+  String get workbenchFocFree;
+
+  /// No description provided for @workbenchBasePackage.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 패키지'**
+  String get workbenchBasePackage;
+
+  /// No description provided for @workbenchBasePackageHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이야기·일정 구성이 예약 시 옵션 1로 기본 선택됩니다.'**
+  String get workbenchBasePackageHint;
+
+  /// No description provided for @workbenchAddons.
+  ///
+  /// In ko, this message translates to:
+  /// **'추가 옵션 · 패키지 안에서만'**
+  String get workbenchAddons;
+
+  /// No description provided for @workbenchIndividuals.
+  ///
+  /// In ko, this message translates to:
+  /// **'개별 상품 · 패키지 대신'**
+  String get workbenchIndividuals;
+
+  /// No description provided for @workbenchBookable.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약에 노출'**
+  String get workbenchBookable;
+
+  /// No description provided for @workbenchGuestPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'손님 예약'**
+  String get workbenchGuestPreview;
+
+  /// No description provided for @checkoutStepSelect.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 선택'**
+  String get checkoutStepSelect;
+
+  /// No description provided for @checkoutStepReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약한 사항'**
+  String get checkoutStepReview;
+
+  /// No description provided for @checkoutStepPay.
+  ///
+  /// In ko, this message translates to:
+  /// **'구매'**
+  String get checkoutStepPay;
+
+  /// No description provided for @checkoutReviewCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 내역 보기'**
+  String get checkoutReviewCta;
+
+  /// No description provided for @checkoutBack.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전으로'**
+  String get checkoutBack;
+
+  /// No description provided for @checkoutConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 확정'**
+  String get checkoutConfirm;
+
+  /// No description provided for @checkoutNeedChoice.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 패키지 또는 개별 상품을 선택하세요.'**
+  String get checkoutNeedChoice;
+
+  /// No description provided for @checkoutGuests.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원'**
+  String get checkoutGuests;
+
+  /// No description provided for @checkoutPackageOn.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 패키지'**
+  String get checkoutPackageOn;
+
+  /// No description provided for @checkoutTotal.
+  ///
+  /// In ko, this message translates to:
+  /// **'합계 {amount}원'**
+  String checkoutTotal(String amount);
+
+  /// No description provided for @checkoutFocLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'FOC {pay}+{free} · 다이버 무료 {count}명'**
+  String checkoutFocLine(int pay, int free, int count);
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:

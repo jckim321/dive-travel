@@ -3,7 +3,9 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
@@ -14,6 +16,7 @@ Future<void> showTourCheckoutSheet({
   required BuildContext context,
   required DiveShop shop,
   required TourPriceQuote quote,
+  ShopProduct? product,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -23,7 +26,11 @@ Future<void> showTourCheckoutSheet({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (context) => TourCheckoutSheet(shop: shop, quote: quote),
+    builder: (context) => TourCheckoutSheet(
+      shop: shop,
+      quote: quote,
+      product: product,
+    ),
   );
 }
 
@@ -32,10 +39,12 @@ class TourCheckoutSheet extends StatefulWidget {
     super.key,
     required this.shop,
     required this.quote,
+    this.product,
   });
 
   final DiveShop shop;
   final TourPriceQuote quote;
+  final ShopProduct? product;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -44,6 +53,35 @@ class TourCheckoutSheet extends StatefulWidget {
 class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   static final _priceFormat = NumberFormat('#,###', 'en_US');
   DateTime _tourDate = DateTime.now().add(const Duration(days: 7));
+  var _bookStep = 0;
+  var _qtyDiver = 1;
+  var _qtyNondiver = 0;
+  var _qtyChild = 0;
+  var _qtyInfant = 0;
+  var _bookPackage = true;
+  final _selected = <String>{};
+
+  bool get _workbench {
+    final product = widget.product;
+    return product != null && product.usesBookingWorkbench;
+  }
+
+  BookingQuote get _booking {
+    final product = widget.product;
+    if (product == null) {
+      return const BookingQuote(lines: [], total: 0, freeDivers: 0);
+    }
+    return BookingQuote.compute(
+      product: product,
+      professional: widget.quote.isProfessional,
+      divers: _qtyDiver,
+      nondivers: _qtyNondiver,
+      children: _qtyChild,
+      infants: _qtyInfant,
+      bookPackage: _bookPackage,
+      selectedOptionIds: _selected,
+    );
+  }
 
   @override
   void initState() {
@@ -72,10 +110,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final label = quote.isProfessional
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
-    final formatted = _priceFormat.format(quote.amount);
+    final amount = _workbench ? _booking.total : quote.amount;
+    final formatted = _priceFormat.format(amount);
     await DiverStoreScope.of(context).createBooking(
       shop: widget.shop,
-      price: quote.amount,
+      price: amount,
       tourDate: _tourDate,
     );
     if (!mounted) {
@@ -104,7 +143,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final store = DiverStoreScope.of(context);
     final saved = store.isFavoriteShop(shop.id);
     final refund = RefundPolicy.forUserCancel(tourDate: _tourDate);
-    final formatted = _priceFormat.format(quote.amount);
+    final booking = _workbench ? _booking : null;
+    final payAmount = booking?.total ?? quote.amount;
+    final formatted = _priceFormat.format(payAmount);
     final label = quote.isProfessional
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
@@ -297,6 +338,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      if (_workbench) ...[
+                        _bookingPanel(l10n, theme),
+                        const SizedBox(height: 12),
+                      ],
                       Text(
                         l10n.refundPolicyHint(refund.percent),
                         style: theme.textTheme.bodySmall,
@@ -364,18 +409,21 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       ],
                     ),
                   ),
-                  FilledButton(
-                    key: const Key('explore-checkout-pay'),
-                    onPressed: _pay,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.navy,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 14,
+                  if (!_workbench)
+                    FilledButton(
+                      key: const Key('explore-checkout-pay'),
+                      onPressed: _pay,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.navy,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 14,
+                        ),
                       ),
-                    ),
-                    child: Text(l10n.explorePay),
-                  ),
+                      child: Text(l10n.explorePay),
+                    )
+                  else
+                    _workbenchFooter(l10n),
                 ],
               ),
             ),
@@ -383,6 +431,223 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ],
       ),
     );
+  }
+
+  Widget _workbenchFooter(AppLocalizations l10n) {
+    final canReview = _bookPackage || _selected.isNotEmpty;
+    if (_bookStep == 0) {
+      return FilledButton(
+        key: const Key('checkout-review-cta'),
+        onPressed: canReview ? () => setState(() => _bookStep = 1) : null,
+        style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+        child: Text(l10n.checkoutReviewCta),
+      );
+    }
+    if (_bookStep == 1) {
+      return Row(
+        children: [
+          TextButton(
+            onPressed: () => setState(() => _bookStep = 0),
+            child: Text(l10n.checkoutBack),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            key: const Key('checkout-confirm'),
+            onPressed: () => setState(() => _bookStep = 2),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+            child: Text(l10n.checkoutConfirm),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        TextButton(
+          onPressed: () => setState(() => _bookStep = 1),
+          child: Text(l10n.checkoutBack),
+        ),
+        const SizedBox(width: 8),
+        FilledButton(
+          key: const Key('explore-checkout-pay'),
+          onPressed: _pay,
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+          child: Text(l10n.explorePay),
+        ),
+      ],
+    );
+  }
+
+  Widget _bookingPanel(AppLocalizations l10n, ThemeData theme) {
+    final product = widget.product!;
+    final booking = _booking;
+    if (_bookStep == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.checkoutStepReview, style: theme.textTheme.titleSmall),
+          Text(
+            '${l10n.workbenchGuestDiver} $_qtyDiver · ${l10n.workbenchGuestNondiver} $_qtyNondiver · ${l10n.workbenchGuestChild} $_qtyChild',
+          ),
+          for (final line in booking.lines)
+            Text('${line.label} ${_priceFormat.format(line.amount)}'),
+          if (product.focPayCount > 0)
+            Text(
+              l10n.checkoutFocLine(
+                product.focPayCount,
+                product.focFreeCount,
+                booking.freeDivers,
+              ),
+            ),
+          Text(
+            l10n.checkoutTotal(_priceFormat.format(booking.total)),
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ],
+      );
+    }
+    if (_bookStep == 2) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.checkoutStepPay, style: theme.textTheme.titleSmall),
+          Text(l10n.checkoutTotal(_priceFormat.format(booking.total))),
+        ],
+      );
+    }
+    final addons = [
+      for (final option in product.options)
+        if (option.kind == ProductOptionKind.addon && option.bookable) option,
+    ];
+    final individuals = [
+      for (final option in product.options)
+        if (option.kind == ProductOptionKind.individual && option.bookable)
+          option,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
+        for (final rate in product.resolvedGuestRates)
+          if (rate.enabled)
+            _qtyRow(l10n, rate.role),
+        const SizedBox(height: 8),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _bookPackage,
+          title: Text('${l10n.checkoutPackageOn} · ${product.name}'),
+          onChanged: (value) {
+            setState(() {
+              _bookPackage = value ?? true;
+              if (_bookPackage) {
+                _selected.removeWhere((id) {
+                  for (final option in product.options) {
+                    if (option.id == id &&
+                        option.kind == ProductOptionKind.individual) {
+                      return true;
+                    }
+                  }
+                  return false;
+                });
+              } else {
+                _selected.removeWhere((id) {
+                  for (final option in product.options) {
+                    if (option.id == id &&
+                        option.kind == ProductOptionKind.addon) {
+                      return true;
+                    }
+                  }
+                  return false;
+                });
+              }
+            });
+          },
+        ),
+        for (final option in addons)
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _selected.contains(option.id),
+            title: Text(option.name),
+            enabled: _bookPackage,
+            onChanged: !_bookPackage
+                ? null
+                : (value) {
+                    setState(() {
+                      if (value ?? false) {
+                        _selected.add(option.id);
+                      } else {
+                        _selected.remove(option.id);
+                      }
+                    });
+                  },
+          ),
+        for (final option in individuals)
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _selected.contains(option.id),
+            title: Text(option.name),
+            enabled: !_bookPackage,
+            onChanged: _bookPackage
+                ? null
+                : (value) {
+                    setState(() {
+                      if (value ?? false) {
+                        _selected.add(option.id);
+                      } else {
+                        _selected.remove(option.id);
+                      }
+                    });
+                  },
+          ),
+        Text(
+          l10n.checkoutTotal(_priceFormat.format(booking.total)),
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+
+  Widget _qtyRow(AppLocalizations l10n, GuestRole role) {
+    final label = switch (role) {
+      GuestRole.diver => l10n.workbenchGuestDiver,
+      GuestRole.nondiver => l10n.workbenchGuestNondiver,
+      GuestRole.child => l10n.workbenchGuestChild,
+      GuestRole.infant => l10n.workbenchGuestInfant,
+    };
+    final value = switch (role) {
+      GuestRole.diver => _qtyDiver,
+      GuestRole.nondiver => _qtyNondiver,
+      GuestRole.child => _qtyChild,
+      GuestRole.infant => _qtyInfant,
+    };
+    return Row(
+      children: [
+        Expanded(child: Text(label)),
+        IconButton(
+          onPressed: value == 0
+              ? null
+              : () => setState(() => _setQty(role, value - 1)),
+          icon: const Icon(Icons.remove),
+        ),
+        Text('$value'),
+        IconButton(
+          onPressed: () => setState(() => _setQty(role, value + 1)),
+          icon: const Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+
+  void _setQty(GuestRole role, int value) {
+    switch (role) {
+      case GuestRole.diver:
+        _qtyDiver = value;
+      case GuestRole.nondiver:
+        _qtyNondiver = value;
+      case GuestRole.child:
+        _qtyChild = value;
+      case GuestRole.infant:
+        _qtyInfant = value;
+    }
   }
 }
 

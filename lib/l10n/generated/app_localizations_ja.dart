@@ -1671,6 +1671,141 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get workbenchTitle => '출항 작업대';
+
+  @override
+  String get workbenchDeckHull => '선체';
+
+  @override
+  String get workbenchDeckStory => '이야기';
+
+  @override
+  String get workbenchDeckRates => '요금';
+
+  @override
+  String get workbenchDeckOptions => '옵션';
+
+  @override
+  String get workbenchCategory => '분류';
+
+  @override
+  String get workbenchCatResort => '리조트 패키지';
+
+  @override
+  String get workbenchCatLiveaboard => '라이브어보드';
+
+  @override
+  String get workbenchCatFun => '펀다이빙';
+
+  @override
+  String get workbenchCatCourse => '코스';
+
+  @override
+  String get workbenchCatDay => '데이트립';
+
+  @override
+  String get workbenchHullFromShop => '선체에서 가져옴';
+
+  @override
+  String get workbenchOpenMap => '지도에서 열기';
+
+  @override
+  String get workbenchDetail => '상세 설명';
+
+  @override
+  String get workbenchItinerary => '표준 일정표';
+
+  @override
+  String get workbenchAddDay => '일차 추가';
+
+  @override
+  String workbenchDayTitle(int day) {
+    return '$day일차 제목';
+  }
+
+  @override
+  String get workbenchDayBody => '내용';
+
+  @override
+  String get workbenchGuestDiver => '다이버';
+
+  @override
+  String get workbenchGuestNondiver => '비다이버';
+
+  @override
+  String get workbenchGuestChild => '소아';
+
+  @override
+  String get workbenchGuestInfant => '유아';
+
+  @override
+  String get workbenchGuestEnabled => '노출';
+
+  @override
+  String get workbenchFoc => 'FOC';
+
+  @override
+  String get workbenchFocPay => '결제 인원';
+
+  @override
+  String get workbenchFocFree => '무료 인원';
+
+  @override
+  String get workbenchBasePackage => '기본 패키지';
+
+  @override
+  String get workbenchBasePackageHint => '이야기·일정 구성이 예약 시 옵션 1로 기본 선택됩니다.';
+
+  @override
+  String get workbenchAddons => '추가 옵션 · 패키지 안에서만';
+
+  @override
+  String get workbenchIndividuals => '개별 상품 · 패키지 대신';
+
+  @override
+  String get workbenchBookable => '예약에 노출';
+
+  @override
+  String get workbenchGuestPreview => '손님 예약';
+
+  @override
+  String get checkoutStepSelect => '예약 선택';
+
+  @override
+  String get checkoutStepReview => '예약한 사항';
+
+  @override
+  String get checkoutStepPay => '구매';
+
+  @override
+  String get checkoutReviewCta => '예약 내역 보기';
+
+  @override
+  String get checkoutBack => '이전으로';
+
+  @override
+  String get checkoutConfirm => '예약 확정';
+
+  @override
+  String get checkoutNeedChoice => '기본 패키지 또는 개별 상품을 선택하세요.';
+
+  @override
+  String get checkoutGuests => '인원';
+
+  @override
+  String get checkoutPackageOn => '기본 패키지';
+
+  @override
+  String checkoutTotal(String amount) {
+    return '합계 $amount원';
+  }
+
+  @override
+  String checkoutFocLine(int pay, int free, int count) {
+    return 'FOC $pay+$free · 다이버 무료 $count명';
+  }
+
+  @override
   String refundPolicyHint(int percent) {
     return '今キャンセルすると返金 $percent%';
   }

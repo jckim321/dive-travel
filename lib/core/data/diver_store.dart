@@ -264,8 +264,8 @@ class DiverStore extends ChangeNotifier {
       consumerPrice: product.consumerPrice,
       professionalPrice: product.professionalPrice,
       blurb: product.blurb.isNotEmpty ? product.blurb : hull.blurb,
-      durationLabel: product.durationLabel.isNotEmpty
-          ? product.durationLabel
+      durationLabel: product.derivedDurationLabel.isNotEmpty
+          ? product.derivedDurationLabel
           : hull.durationLabel,
       coverUrl: cover,
     );
