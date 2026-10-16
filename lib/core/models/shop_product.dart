@@ -479,15 +479,27 @@ class ShopProduct {
   }
 
   List<GuestRate> get resolvedGuestRates {
-    if (guestRates.isNotEmpty) {
-      return guestRates;
+    GuestRate? saved(GuestRole role) {
+      for (final rate in guestRates) {
+        if (rate.role == role) {
+          return rate;
+        }
+      }
+      return null;
     }
+
     return [
-      GuestRate(
-        role: GuestRole.diver,
-        consumer: consumerPrice,
-        professional: professionalPrice,
-      ),
+      saved(GuestRole.diver) ??
+          GuestRate(
+            role: GuestRole.diver,
+            consumer: consumerPrice,
+            professional: professionalPrice,
+          ),
+      saved(GuestRole.nondiver) ??
+          const GuestRate(role: GuestRole.nondiver, enabled: true),
+      saved(GuestRole.child) ??
+          const GuestRate(role: GuestRole.child, enabled: true),
+      if (saved(GuestRole.infant)?.enabled == true) saved(GuestRole.infant)!,
     ];
   }
 

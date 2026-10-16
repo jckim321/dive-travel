@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -106,6 +107,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late ProductCategory _category;
   var _deck = 0;
   var _saving = false;
+  var _previewDiver = 1;
+  var _previewNondiver = 0;
+  var _previewChild = 0;
 
   @override
   void initState() {
@@ -423,7 +427,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 width: 280,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(0, 12, 16, 16),
-                  child: _guestCard(l10n, hull),
+                  child: SingleChildScrollView(
+                    child: _guestCard(l10n, hull),
+                  ),
                 ),
               ),
             ],
@@ -971,7 +977,36 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  ShopProduct get _draftProduct {
+    return ShopProduct(
+      id: 'draft',
+      shopId: _shopId,
+      name: _name.text.trim().isEmpty ? '—' : _name.text.trim(),
+      consumerPrice: int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0,
+      professionalPrice: int.tryParse(_ratePro[GuestRole.diver]!.text) ?? 0,
+      guestRates: [
+        for (final role in GuestRole.values)
+          GuestRate(
+            role: role,
+            enabled: _rateEnabled[role] ?? role != GuestRole.infant,
+            consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
+            professional: int.tryParse(_ratePro[role]!.text) ?? 0,
+          ),
+      ],
+    );
+  }
+
   Widget _guestCard(AppLocalizations l10n, DiveShop? hull) {
+    final quote = BookingQuote.compute(
+      product: _draftProduct,
+      professional: false,
+      divers: _previewDiver,
+      nondivers: _previewNondiver,
+      children: _previewChild,
+      infants: 0,
+      bookPackage: true,
+      selectedOptionIds: const {},
+    );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -994,12 +1029,48 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
             Text(_blurb.text.trim()),
+            const SizedBox(height: 10),
+            Text(l10n.checkoutGuests),
+            _previewQty(
+              l10n.workbenchGuestDiver,
+              _previewDiver,
+              (value) => setState(() => _previewDiver = value),
+            ),
+            _previewQty(
+              l10n.workbenchGuestNondiver,
+              _previewNondiver,
+              (value) => setState(() => _previewNondiver = value),
+            ),
+            _previewQty(
+              l10n.workbenchGuestChild,
+              _previewChild,
+              (value) => setState(() => _previewChild = value),
+            ),
+            const SizedBox(height: 8),
             Text(
-              _days.length <= 1 ? '1일' : '${_days.length - 1}박 ${_days.length}일',
+              l10n.checkoutTotal('${quote.total}'),
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _previewQty(String label, int value, ValueChanged<int> onChanged) {
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
+        IconButton(
+          onPressed: value == 0 ? null : () => onChanged(value - 1),
+          icon: const Icon(Icons.remove, size: 18),
+        ),
+        Text('$value'),
+        IconButton(
+          onPressed: () => onChanged(value + 1),
+          icon: const Icon(Icons.add, size: 18),
+        ),
+      ],
     );
   }
 }

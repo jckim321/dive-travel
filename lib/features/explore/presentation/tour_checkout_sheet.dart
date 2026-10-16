@@ -61,6 +61,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   var _bookPackage = true;
   final _selected = <String>{};
 
+  bool get _hasProduct => widget.product != null;
+
   bool get _workbench {
     final product = widget.product;
     return product != null && product.usesBookingWorkbench;
@@ -110,7 +112,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final label = quote.isProfessional
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
-    final amount = _workbench ? _booking.total : quote.amount;
+    final amount = _hasProduct ? _booking.total : quote.amount;
     final formatted = _priceFormat.format(amount);
     await DiverStoreScope.of(context).createBooking(
       shop: widget.shop,
@@ -143,8 +145,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final store = DiverStoreScope.of(context);
     final saved = store.isFavoriteShop(shop.id);
     final refund = RefundPolicy.forUserCancel(tourDate: _tourDate);
-    final booking = _workbench ? _booking : null;
-    final payAmount = booking?.total ?? quote.amount;
+    final payAmount = _hasProduct ? _booking.total : quote.amount;
     final formatted = _priceFormat.format(payAmount);
     final label = quote.isProfessional
         ? l10n.exploreProPrice
@@ -328,16 +329,22 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               onTap: shop.departure == null ? _pickDate : null,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _DateBox(
-                              label: l10n.exploreListingGuests,
-                              value: l10n.exploreListingGuestOne,
+                          if (!_hasProduct) ...[
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _DateBox(
+                                label: l10n.exploreListingGuests,
+                                value: l10n.exploreListingGuestOne,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 12),
+                      if (_hasProduct && (!_workbench || _bookStep == 0)) ...[
+                        _guestQtyBlock(l10n, theme),
+                        const SizedBox(height: 12),
+                      ],
                       if (_workbench) ...[
                         _bookingPanel(l10n, theme),
                         const SizedBox(height: 12),
@@ -526,11 +533,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
-        for (final rate in product.resolvedGuestRates)
-          if (rate.enabled)
-            _qtyRow(l10n, rate.role),
-        const SizedBox(height: 8),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           value: _bookPackage,
@@ -600,6 +602,24 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           ),
         Text(
           l10n.checkoutTotal(_priceFormat.format(booking.total)),
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+
+  Widget _guestQtyBlock(AppLocalizations l10n, ThemeData theme) {
+    final product = widget.product!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
+        for (final rate in product.resolvedGuestRates)
+          if (rate.enabled)
+            _qtyRow(l10n, rate.role),
+        const SizedBox(height: 8),
+        Text(
+          l10n.checkoutTotal(_priceFormat.format(_booking.total)),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ],

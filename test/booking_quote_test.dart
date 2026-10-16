@@ -4,6 +4,30 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
+  test('empty guestRates still expose diver, nondiver, and child', () {
+    const product = ShopProduct(
+      id: 'p1',
+      shopId: 's1',
+      name: 'Trip',
+      consumerPrice: 100,
+      professionalPrice: 80,
+    );
+    final roles = [for (final rate in product.resolvedGuestRates) rate.role];
+    expect(roles, containsAll([GuestRole.diver, GuestRole.nondiver, GuestRole.child]));
+    expect(roles, isNot(contains(GuestRole.infant)));
+    final quote = BookingQuote.compute(
+      product: product,
+      professional: false,
+      divers: 2,
+      nondivers: 1,
+      children: 1,
+      infants: 0,
+      bookPackage: true,
+      selectedOptionIds: {},
+    );
+    expect(quote.total, 200);
+  });
+
   test('FOC 10+1 grants one free diver per eleven', () {
     expect(
       BookingQuote.freeCount(guests: 11, focPay: 10, focFree: 1),

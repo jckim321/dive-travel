@@ -162,14 +162,32 @@ class ResortDetailScreen extends StatelessWidget {
                       .length,
                   onBook: () {
                     ShopProduct? product;
-                    for (final item
-                        in store.liveStatsFor(hull.hullId)?.products ??
-                            const <ShopProduct>[]) {
+                    final products =
+                        store.liveStatsFor(hull.hullId)?.products ??
+                        const <ShopProduct>[];
+                    for (final item in products) {
                       if (item.name == shop.productName) {
                         product = item;
                         break;
                       }
                     }
+                    if (product == null) {
+                      for (final item in products) {
+                        if (item.isListedPublicly) {
+                          product = item;
+                          break;
+                        }
+                      }
+                    }
+                    product ??= ShopProduct(
+                      id: shop.id,
+                      shopId: shop.hullId,
+                      name: shop.productName,
+                      consumerPrice: shop.consumerPrice,
+                      professionalPrice: shop.professionalPrice,
+                      blurb: shop.blurb,
+                      durationLabel: shop.durationLabel,
+                    );
                     showTourCheckoutSheet(
                       context: context,
                       shop: shop,
