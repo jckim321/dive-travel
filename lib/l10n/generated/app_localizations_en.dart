@@ -1469,11 +1469,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityTideKicker => 'SAME TIDE';
 
   @override
-  String get communityTideHeadline => 'Open berths this week';
+  String get communityTideHeadline => 'Leftover seats on trips already going';
 
   @override
   String get communityTideBody =>
-      'Pick by place, date, and empty seats. The shop assigns the water buddy.';
+      'Only products that opened leftover seats for an existing team. Everything else stays on Explore.';
 
   @override
   String get communityTideSafety =>
@@ -1492,7 +1492,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityBoardListHint =>
-      'Open a card to raise a flag or continue to booking.';
+      'Sorted by the sooner of departure and flag deadline. Take a leftover seat to book.';
 
   @override
   String get communityViewSeats => 'View seats';
@@ -1636,6 +1636,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityFilterShop => 'Shop';
 
   @override
+  String get communityFilterDeparting => 'Departing';
+
+  @override
+  String get communityTakeSeat => 'Take a seat';
+
+  @override
+  String communityFlagHoldAsk(String deadline) {
+    return 'This seat stays provisional until $deadline. If you do not pay by then, it opens again.';
+  }
+
+  @override
   String communityBerths(int booked, int capacity) {
     return 'Berths $booked/$capacity';
   }
@@ -1670,7 +1681,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityPickShop => 'Shop to board';
 
   @override
-  String get communityEmpty => 'No tides on the board yet.';
+  String get communityEmpty =>
+      'No leftover-seat trips yet. Regular products stay on Explore.';
 
   @override
   String get communityKindShop => 'Shop crew';
@@ -1773,6 +1785,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workbenchOpenMap => 'Open in maps';
+
+  @override
+  String get workbenchOpenSeats => 'Open leftover seats on Same boat';
+
+  @override
+  String get workbenchOpenSeatsHint =>
+      'Turn on only to fill an existing team for the same dates. Off = a regular listing.';
+
+  @override
+  String get workbenchSeatCount => 'Seat count';
+
+  @override
+  String get workbenchDepartureDate => 'Departure date';
+
+  @override
+  String get workbenchFlagDeadline => 'Flag deadline';
+
+  @override
+  String get workbenchOpenSeatsNeedFields =>
+      'Seat count and departure date are required to open leftover seats.';
 
   @override
   String get workbenchDetail => 'Full description';

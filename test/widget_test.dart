@@ -388,23 +388,6 @@ void main() {
 
     expect(find.byKey(const Key('tide-board')), findsOneWidget);
     expect(find.text(l10n.communityTideKicker), findsOneWidget);
-    await tester.drag(
-      find.byKey(const Key('tide-board')),
-      const Offset(0, -420),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tide-card-seed-buddy-dahab')), findsOneWidget);
-    expect(find.text(l10n.communityKindLast), findsWidgets);
-
-    await tester.tap(find.byKey(const Key('tide-card-seed-buddy-dahab')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('raise-tide-flag')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('raise-tide-flag')));
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.communityRaiseFlagDone), findsOneWidget);
-    expect(find.byKey(const Key('explore-checkout-pay')), findsOneWidget);
-    expect(find.text(l10n.explorePay), findsWidgets);
-    expect(find.byKey(const Key('explore-checkout-pay')), findsOneWidget);
-    expect(find.text(l10n.explorePay), findsWidgets);
+    expect(find.text(l10n.communityEmpty), findsOneWidget);
   });
 }

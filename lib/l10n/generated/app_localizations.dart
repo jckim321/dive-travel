@@ -2751,13 +2751,13 @@ abstract class AppLocalizations {
   /// No description provided for @communityTideHeadline.
   ///
   /// In ko, this message translates to:
-  /// **'이번 주, 빈자리가 열린 배'**
+  /// **'이미 나가는 배의 남은 자리'**
   String get communityTideHeadline;
 
   /// No description provided for @communityTideBody.
   ///
   /// In ko, this message translates to:
-  /// **'목적지·날짜·빈자리만 보고 고르세요. 물속 버디는 샵이 배정합니다.'**
+  /// **'팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.'**
   String get communityTideBody;
 
   /// No description provided for @communityTideSafety.
@@ -2787,7 +2787,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityBoardListHint.
   ///
   /// In ko, this message translates to:
-  /// **'카드를 누르면 승선 의사와 예약을 이어갈 수 있습니다.'**
+  /// **'출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
   String get communityBoardListHint;
 
   /// No description provided for @communityViewSeats.
@@ -3042,6 +3042,24 @@ abstract class AppLocalizations {
   /// **'샵'**
   String get communityFilterShop;
 
+  /// No description provided for @communityFilterDeparting.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발'**
+  String get communityFilterDeparting;
+
+  /// No description provided for @communityTakeSeat.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리 잡기'**
+  String get communityTakeSeat;
+
+  /// No description provided for @communityFlagHoldAsk.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 자리는 {deadline}까지 가확정입니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.'**
+  String communityFlagHoldAsk(String deadline);
+
   /// No description provided for @communityBerths.
   ///
   /// In ko, this message translates to:
@@ -3099,7 +3117,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityEmpty.
   ///
   /// In ko, this message translates to:
-  /// **'아직 떠 있는 밀물이 없습니다.'**
+  /// **'빈자리를 연 상품이 없습니다. 일반 상품은 탐색에서 봅니다.'**
   String get communityEmpty;
 
   /// No description provided for @communityKindShop.
@@ -3293,6 +3311,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지도에서 열기'**
   String get workbenchOpenMap;
+
+  /// No description provided for @workbenchOpenSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배에 빈자리 열기'**
+  String get workbenchOpenSeats;
+
+  /// No description provided for @workbenchOpenSeatsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 팀이 있는데 같은 기간에 인원을 더 뽑을 때만 켭니다. 끄면 일반 상품입니다.'**
+  String get workbenchOpenSeatsHint;
+
+  /// No description provided for @workbenchSeatCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리 수'**
+  String get workbenchSeatCount;
+
+  /// No description provided for @workbenchDepartureDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발일'**
+  String get workbenchDepartureDate;
+
+  /// No description provided for @workbenchFlagDeadline.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발 마감일'**
+  String get workbenchFlagDeadline;
+
+  /// No description provided for @workbenchOpenSeatsNeedFields.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리를 열려면 자리 수와 출발일을 넣으세요.'**
+  String get workbenchOpenSeatsNeedFields;
 
   /// No description provided for @workbenchDetail.
   ///

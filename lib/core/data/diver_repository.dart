@@ -169,6 +169,15 @@ abstract class DiverRepository {
     required String productName,
     required int price,
     DateTime? tourDate,
+    String? productId,
+    int partySize = 0,
+  });
+
+  Future<void> plantSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
   });
 
   Future<void> cancelBookingAsGuest({

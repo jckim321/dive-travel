@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -97,6 +98,27 @@ class DiverStore extends ChangeNotifier {
     for (final post in _posts)
       if (!post.hidden) post,
   ];
+
+  List<ShopProduct> sameBoatProducts(
+    SameBoatFilter filter, {
+    DateTime? now,
+  }) {
+    final all = <ShopProduct>[
+      for (final stats in _shopStats)
+        for (final product in stats.products) product,
+    ];
+    return SameBoatBoard.filtered(all, filter, now ?? DateTime.now());
+  }
+
+  String shopLabelFor(String shopId) {
+    for (final stats in _shopStats) {
+      final name = stats.name;
+      if (stats.shopId == shopId && name != null && name.isNotEmpty) {
+        return name;
+      }
+    }
+    return '';
+  }
   List<TourBooking> get shopBookings => List.unmodifiable(_shopBookings);
   List<TourBooking> get thisMonthShopBookings {
     final now = DateTime.now();
@@ -513,6 +535,8 @@ class DiverStore extends ChangeNotifier {
     required DiveShop shop,
     required int price,
     DateTime? tourDate,
+    String? productId,
+    int partySize = 0,
   }) async {
     final uid = _uid;
     if (uid == null) {
@@ -525,7 +549,35 @@ class DiverStore extends ChangeNotifier {
       productName: shop.productName,
       price: price,
       tourDate: tourDate,
+      productId: productId,
+      partySize: partySize,
     );
+  }
+
+  Future<DateTime?> plantSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+  }) async {
+    final now = DateTime.now();
+    await _repository.plantSeatFlag(
+      shopId: shopId.split('--').first,
+      productId: productId,
+      partySize: partySize,
+      now: now,
+    );
+    ShopProduct? product;
+    for (final stats in _shopStats) {
+      for (final item in stats.products) {
+        if (item.id == productId) {
+          product = item;
+        }
+      }
+    }
+    if (product == null || !product.openEmptySeats) {
+      return null;
+    }
+    return ShopProduct.personalFlagUntil(now, product.flagClosesAt);
   }
 
   Future<void> submitOperationReview({

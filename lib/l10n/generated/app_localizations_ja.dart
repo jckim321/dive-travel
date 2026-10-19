@@ -1416,10 +1416,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityTideKicker => '출발 보드';
 
   @override
-  String get communityTideHeadline => '이번 주, 빈자리가 열린 배';
+  String get communityTideHeadline => '이미 나가는 배의 남은 자리';
 
   @override
-  String get communityTideBody => '목적지·날짜·빈자리만 보고 고르세요. 물속 버디는 샵이 배정합니다.';
+  String get communityTideBody =>
+      '팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.';
 
   @override
   String get communityTideSafety =>
@@ -1437,7 +1438,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityBoardList => '출발 명부';
 
   @override
-  String get communityBoardListHint => '카드를 누르면 승선 의사와 예약을 이어갈 수 있습니다.';
+  String get communityBoardListHint =>
+      '출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
 
   @override
   String get communityViewSeats => '자리 보기';
@@ -1574,6 +1576,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityFilterShop => '샵';
 
   @override
+  String get communityFilterDeparting => '출발';
+
+  @override
+  String get communityTakeSeat => '자리 잡기';
+
+  @override
+  String communityFlagHoldAsk(String deadline) {
+    return '이 자리는 $deadline까지 가확정입니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.';
+  }
+
+  @override
   String communityBerths(int booked, int capacity) {
     return '자리 $booked/$capacity';
   }
@@ -1607,7 +1620,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityPickShop => '탈 샵';
 
   @override
-  String get communityEmpty => '아직 떠 있는 밀물이 없습니다.';
+  String get communityEmpty => '빈자리를 연 상품이 없습니다. 일반 상품은 탐색에서 봅니다.';
 
   @override
   String get communityKindShop => '샵 크루';
@@ -1708,6 +1721,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get workbenchOpenMap => '지도에서 열기';
+
+  @override
+  String get workbenchOpenSeats => '같은배에 빈자리 열기';
+
+  @override
+  String get workbenchOpenSeatsHint =>
+      '이미 팀이 있는데 같은 기간에 인원을 더 뽑을 때만 켭니다. 끄면 일반 상품입니다.';
+
+  @override
+  String get workbenchSeatCount => '자리 수';
+
+  @override
+  String get workbenchDepartureDate => '출발일';
+
+  @override
+  String get workbenchFlagDeadline => '깃발 마감일';
+
+  @override
+  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 자리 수와 출발일을 넣으세요.';
 
   @override
   String get workbenchDetail => '상세 설명';

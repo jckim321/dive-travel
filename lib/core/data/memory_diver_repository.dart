@@ -364,6 +364,8 @@ class MemoryDiverRepository implements DiverRepository {
     required String productName,
     required int price,
     DateTime? tourDate,
+    String? productId,
+    int partySize = 0,
   }) async {
     _bookingSequence += 1;
     final booking = TourBooking(
@@ -382,6 +384,50 @@ class MemoryDiverRepository implements DiverRepository {
     _shopBookingController.add(
       List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
     );
+    _holdOpenSeats(booking.shopId, productId, partySize);
+  }
+
+  void _holdOpenSeats(String shopId, String? productId, int partySize) {
+    if (productId == null || productId.isEmpty || partySize <= 0) {
+      return;
+    }
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    final products = [
+      for (final item in current.products)
+        if (item.id == productId)
+          item.capturePayment(partySize, DateTime.now())
+        else
+          item,
+    ];
+    _shopStats[shopId] = current.copyWith(products: products);
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<void> plantSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
+  }) async {
+    final hull = shopId.split('--').first;
+    final current = _shopStats[hull];
+    if (current == null) {
+      return;
+    }
+    _shopStats[hull] = current.copyWith(
+      products: [
+        for (final item in current.products)
+          if (item.id == productId)
+            item.plantFlag(partySize: partySize, now: now)
+          else
+            item,
+      ],
+    );
+    _shopController.add(_shopStats.values.toList());
   }
 
   @override

@@ -546,6 +546,8 @@ class FirestoreDiverRepository implements DiverRepository {
     required String productName,
     required int price,
     DateTime? tourDate,
+    String? productId,
+    int partySize = 0,
   }) async {
     final id = _bookings(uid).doc().id;
     final booking = TourBooking(
@@ -563,6 +565,53 @@ class FirestoreDiverRepository implements DiverRepository {
     payload['created_at'] = FieldValue.serverTimestamp();
     await _bookings(uid).doc(id).set(payload);
     await _shopBookings(booking.shopId).doc(id).set(payload);
+    await _holdOpenSeats(booking.shopId, productId, partySize);
+  }
+
+  Future<void> _holdOpenSeats(
+    String shopId,
+    String? productId,
+    int partySize,
+  ) async {
+    if (productId == null || productId.isEmpty || partySize <= 0) {
+      return;
+    }
+    final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
+    final next = [
+      for (final item in current)
+        if (item.id == productId)
+          item.capturePayment(partySize, DateTime.now())
+        else
+          item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> plantSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
+  }) async {
+    final hull = shopId.split('--').first;
+    final ref = _shops.doc(hull);
+    final snap = await ref.get();
+    final current = ShopProduct.listFrom(hull, snap.data()?['products']);
+    final next = [
+      for (final item in current)
+        if (item.id == productId)
+          item.plantFlag(partySize: partySize, now: now)
+        else
+          item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
+    }, SetOptions(merge: true));
   }
 
   @override

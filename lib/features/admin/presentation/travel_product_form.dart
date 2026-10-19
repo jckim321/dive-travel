@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -101,6 +102,10 @@ class _TravelProductRegistrationScreenState
   late String _continent;
   var _curatedMode = false;
   var _saving = false;
+  var _openEmptySeats = false;
+  late final TextEditingController _seatCapacity;
+  DateTime? _departureStart;
+  DateTime? _flagClosesAt;
 
   String get _existingCoverUrl {
     final url = widget.existing?.coverUrl.trim() ?? '';
@@ -151,6 +156,12 @@ class _TravelProductRegistrationScreenState
       text: (existing?.maxGuests ?? 0) > 0 ? '${existing!.maxGuests}' : '',
     );
     _cancelNote = TextEditingController(text: existing?.cancellationNote ?? '');
+    _openEmptySeats = existing?.openEmptySeats ?? false;
+    _seatCapacity = TextEditingController(
+      text: (existing?.capacity ?? 0) > 0 ? '${existing!.capacity}' : '',
+    );
+    _departureStart = existing?.departureStart;
+    _flagClosesAt = existing?.flagClosesAt;
     _customResort = TextEditingController(text: shop?.name ?? '');
     _customLocation = TextEditingController(text: shop?.location ?? '');
     _customCountry = TextEditingController(text: shop?.country ?? '');
@@ -189,6 +200,7 @@ class _TravelProductRegistrationScreenState
     _minGuests.dispose();
     _maxGuests.dispose();
     _cancelNote.dispose();
+    _seatCapacity.dispose();
     _customResort.dispose();
     _customLocation.dispose();
     _customCountry.dispose();
@@ -196,6 +208,28 @@ class _TravelProductRegistrationScreenState
       option.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _pickSeatDay({required bool isFlag}) async {
+    final initial = isFlag
+        ? (_flagClosesAt ?? _departureStart ?? DateTime.now())
+        : (_departureStart ?? DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      if (isFlag) {
+        _flagClosesAt = picked;
+      } else {
+        _departureStart = picked;
+      }
+    });
   }
 
   List<DiveShop> get _shopsForContinent {
@@ -264,6 +298,14 @@ class _TravelProductRegistrationScreenState
           .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
       return;
     }
+    if (_openEmptySeats &&
+        ((int.tryParse(_seatCapacity.text) ?? 0) <= 0 ||
+            _departureStart == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchOpenSeatsNeedFields)),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       final store = DiverStoreScope.of(context);
@@ -327,6 +369,14 @@ class _TravelProductRegistrationScreenState
           minGuests: int.tryParse(_minGuests.text) ?? 0,
           maxGuests: int.tryParse(_maxGuests.text) ?? 0,
           cancellationNote: _cancelNote.text.trim(),
+          openEmptySeats: _openEmptySeats,
+          capacity: _openEmptySeats
+              ? (int.tryParse(_seatCapacity.text) ?? 0)
+              : 0,
+          departureStart: _openEmptySeats ? _departureStart : null,
+          flagClosesAt: _openEmptySeats
+              ? (_flagClosesAt ?? _departureStart)
+              : null,
           options: options,
           // New products stay Explore-only until admin home curation.
           listingKind:
@@ -954,6 +1004,51 @@ class _TravelProductRegistrationScreenState
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  key: const Key('product-open-empty-seats'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.workbenchOpenSeats),
+                  subtitle: Text(l10n.workbenchOpenSeatsHint),
+                  value: _openEmptySeats,
+                  onChanged: (value) => setState(() => _openEmptySeats = value),
+                ),
+                if (_openEmptySeats) ...[
+                  TextField(
+                    controller: _seatCapacity,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: InputDecoration(
+                      labelText: l10n.workbenchSeatCount,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.workbenchDepartureDate),
+                    subtitle: Text(
+                      _departureStart == null
+                          ? '—'
+                          : DateFormat('yyyy.MM.dd').format(_departureStart!),
+                    ),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () => _pickSeatDay(isFlag: false),
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.workbenchFlagDeadline),
+                    subtitle: Text(
+                      _flagClosesAt == null
+                          ? '—'
+                          : DateFormat('yyyy.MM.dd').format(_flagClosesAt!),
+                    ),
+                    trailing: const Icon(Icons.flag_outlined),
+                    onTap: () => _pickSeatDay(isFlag: true),
+                  ),
+                ],
               ],
             ),
           ),

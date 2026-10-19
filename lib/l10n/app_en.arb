@@ -488,8 +488,8 @@
   "communityNoComments": "No flags yet.",
   "communityCommentHint": "Leave a short note",
   "communityTideKicker": "SAME TIDE",
-  "communityTideHeadline": "Open berths this week",
-  "communityTideBody": "Pick by place, date, and empty seats. The shop assigns the water buddy.",
+  "communityTideHeadline": "Leftover seats on trips already going",
+  "communityTideBody": "Only products that opened leftover seats for an existing team. Everything else stays on Explore.",
   "communityTideSafety": "The shop assigns the water buddy. This tab shares the van, the table, and the bed of a trip you already booked.",
   "communityStatOpenSeats": "Open seats",
   "communityUrgentBanner": "{count} last-call departures · view now",
@@ -499,7 +499,7 @@
     }
   },
   "communityBoardList": "Departure board",
-  "communityBoardListHint": "Open a card to raise a flag or continue to booking.",
+  "communityBoardListHint": "Sorted by the sooner of departure and flag deadline. Take a leftover seat to book.",
   "communityViewSeats": "View seats",
   "communityWindowOpen": "Dates TBD",
   "communityPlantFlag": "Plant a flag",
@@ -552,6 +552,14 @@
   "communityFilterLastCall": "Last call",
   "communityFilterSolo": "Solo",
   "communityFilterShop": "Shop",
+  "communityFilterDeparting": "Departing",
+  "communityTakeSeat": "Take a seat",
+  "communityFlagHoldAsk": "This seat stays provisional until {deadline}. If you do not pay by then, it opens again.",
+  "@communityFlagHoldAsk": {
+    "placeholders": {
+      "deadline": {"type": "String"}
+    }
+  },
   "communityBerths": "Berths {booked}/{capacity}",
   "@communityBerths": {
     "placeholders": {
@@ -577,7 +585,7 @@
   "communityOpenTrip": "Open this trip",
   "communityWindowLabel": "Window",
   "communityPickShop": "Shop to board",
-  "communityEmpty": "No tides on the board yet.",
+  "communityEmpty": "No leftover-seat trips yet. Regular products stay on Explore.",
   "communityKindShop": "Shop crew",
   "communityKindSolo": "Solo share",
   "communityKindLast": "Last call",
@@ -610,6 +618,12 @@
   "workbenchCatDay": "Day trip",
   "workbenchHullFromShop": "From the resort hull",
   "workbenchOpenMap": "Open in maps",
+  "workbenchOpenSeats": "Open leftover seats on Same boat",
+  "workbenchOpenSeatsHint": "Turn on only to fill an existing team for the same dates. Off = a regular listing.",
+  "workbenchSeatCount": "Seat count",
+  "workbenchDepartureDate": "Departure date",
+  "workbenchFlagDeadline": "Flag deadline",
+  "workbenchOpenSeatsNeedFields": "Seat count and departure date are required to open leftover seats.",
   "workbenchDetail": "Full description",
   "workbenchItinerary": "Standard itinerary",
   "workbenchAddDay": "Add day",

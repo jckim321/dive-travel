@@ -114,10 +114,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         : l10n.exploreConsumerPrice;
     final amount = _hasProduct ? _booking.total : quote.amount;
     final formatted = _priceFormat.format(amount);
+    final product = widget.product;
+    final party = _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
     await DiverStoreScope.of(context).createBooking(
       shop: widget.shop,
       price: amount,
       tourDate: _tourDate,
+      productId: product?.id,
+      partySize: product != null && product.openEmptySeats ? party : 0,
     );
     if (!mounted) {
       return;

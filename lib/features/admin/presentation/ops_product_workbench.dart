@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -110,6 +111,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewDiver = 1;
   var _previewNondiver = 0;
   var _previewChild = 0;
+  var _openEmptySeats = false;
+  late final TextEditingController _capacity;
+  DateTime? _departureStart;
+  DateTime? _flagClosesAt;
 
   @override
   void initState() {
@@ -132,6 +137,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _focFree = TextEditingController(
       text: (existing?.focFreeCount ?? 0) > 0 ? '${existing!.focFreeCount}' : '',
     );
+    _openEmptySeats = existing?.openEmptySeats ?? false;
+    _capacity = TextEditingController(
+      text: (existing?.capacity ?? 0) > 0 ? '${existing!.capacity}' : '',
+    );
+    _departureStart = existing?.departureStart;
+    _flagClosesAt = existing?.flagClosesAt;
     for (final role in GuestRole.values) {
       GuestRate? found;
       for (final rate in existing?.guestRates ?? const <GuestRate>[]) {
@@ -199,6 +210,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _detail.dispose();
     _focPay.dispose();
     _focFree.dispose();
+    _capacity.dispose();
     for (final c in _rateConsumer.values) {
       c.dispose();
     }
@@ -236,6 +248,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
     if (name.isEmpty || _saving) {
+      return;
+    }
+    if (_openEmptySeats &&
+        ((int.tryParse(_capacity.text) ?? 0) <= 0 || _departureStart == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchOpenSeatsNeedFields)),
+      );
       return;
     }
     setState(() => _saving = true);
@@ -309,6 +328,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           guestRates: guestRates,
           focPayCount: int.tryParse(_focPay.text) ?? 0,
           focFreeCount: int.tryParse(_focFree.text) ?? 0,
+          openEmptySeats: _openEmptySeats,
+          capacity: _openEmptySeats ? (int.tryParse(_capacity.text) ?? 0) : 0,
+          departureStart: _openEmptySeats ? _departureStart : null,
+          flagClosesAt: _openEmptySeats
+              ? (_flagClosesAt ?? _departureStart)
+              : null,
           options: options,
           listingKind:
               widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
@@ -644,8 +669,74 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        SwitchListTile(
+          key: const Key('product-open-empty-seats'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.workbenchOpenSeats),
+          subtitle: Text(l10n.workbenchOpenSeatsHint),
+          value: _openEmptySeats,
+          onChanged: (value) => setState(() => _openEmptySeats = value),
+        ),
+        if (_openEmptySeats) ...[
+          TextField(
+            controller: _capacity,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: l10n.workbenchSeatCount,
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.workbenchDepartureDate),
+            subtitle: Text(
+              _departureStart == null
+                  ? '—'
+                  : DateFormat('yyyy.MM.dd').format(_departureStart!),
+            ),
+            trailing: const Icon(Icons.calendar_today_outlined),
+            onTap: () => _pickDay(isFlag: false),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.workbenchFlagDeadline),
+            subtitle: Text(
+              _flagClosesAt == null
+                  ? '—'
+                  : DateFormat('yyyy.MM.dd').format(_flagClosesAt!),
+            ),
+            trailing: const Icon(Icons.flag_outlined),
+            onTap: () => _pickDay(isFlag: true),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _pickDay({required bool isFlag}) async {
+    final initial = isFlag
+        ? (_flagClosesAt ?? _departureStart ?? DateTime.now())
+        : (_departureStart ?? DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      if (isFlag) {
+        _flagClosesAt = picked;
+      } else {
+        _departureStart = picked;
+      }
+    });
   }
 
   Widget _storyDeck(AppLocalizations l10n) {

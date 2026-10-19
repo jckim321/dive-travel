@@ -4,15 +4,17 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
-import 'package:dive_travel_app/features/community/presentation/open_tide_room.dart';
 import 'package:dive_travel_app/features/community/presentation/translatable_text.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-enum _TideFilter { all, lastCall, solo, shop }
+enum _TideFilter { all, lastCall, departing }
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -33,25 +35,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final all = store.visiblePosts;
-        final posts = [for (final post in all) if (_matches(post)) post];
-        final lastCallPosts = [
-          for (final post in all)
-            if (post.kind == TideKind.lastCall) post,
-        ];
+        final now = DateTime.now();
+        final filter = switch (_filter) {
+          _TideFilter.all => SameBoatFilter.all,
+          _TideFilter.lastCall => SameBoatFilter.lastCall,
+          _TideFilter.departing => SameBoatFilter.departing,
+        };
+        final products = store.sameBoatProducts(filter, now: now);
+        final all = store.sameBoatProducts(SameBoatFilter.all, now: now);
+        final lastCallCount = SameBoatBoard.filtered(
+          all,
+          SameBoatFilter.lastCall,
+          now,
+        ).length;
         final openSeats = all.fold<int>(
           0,
-          (sum, post) => sum + post.emptySeats,
+          (sum, product) => sum + product.remainingSeats,
         );
 
         return Scaffold(
           backgroundColor: AppTheme.canvas,
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'community-fab',
-            onPressed: () => _compose(context),
-            tooltip: l10n.communityPlantFlag,
-            child: const Icon(Icons.flag_outlined),
-          ),
           body: SafeArea(
             bottom: false,
             child: ListView(
@@ -61,12 +64,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 _TideHeader(
                   openSeats: openSeats,
                   departureCount: all.length,
-                  lastCallCount: lastCallPosts.length,
+                  lastCallCount: lastCallCount,
                 ),
-                if (lastCallPosts.isNotEmpty) ...[
+                if (lastCallCount > 0) ...[
                   const SizedBox(height: 14),
                   _UrgentStrip(
-                    count: lastCallPosts.length,
+                    count: lastCallCount,
                     onTap: () => setState(() => _filter = _TideFilter.lastCall),
                   ),
                 ],
@@ -86,7 +89,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
-                if (posts.isEmpty)
+                if (products.isEmpty)
                   AppCard(
                     child: Text(
                       l10n.communityEmpty,
@@ -94,17 +97,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   )
                 else
-                  for (final post in posts) ...[
-                    _TideManifestCard(
-                      post: post,
-                      shop: _shopFor(store, post),
-                      compact: true,
-                      onOpen: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) =>
-                              CommunityPostDetailScreen(post: post),
-                        ),
-                      ),
+                  for (final product in products) ...[
+                    _SeatCard(
+                      product: product,
+                      shopName: store.shopLabelFor(product.shopId),
+                      onTake: () => _takeSeat(context, store, product),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -121,53 +118,81 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  bool _matches(CommunityPost post) {
-    switch (_filter) {
-      case _TideFilter.all:
-        return true;
-      case _TideFilter.lastCall:
-        return post.kind == TideKind.lastCall;
-      case _TideFilter.solo:
-        return post.soloShare || post.kind == TideKind.soloShare;
-      case _TideFilter.shop:
-        return post.kind == TideKind.shopCrew ||
-            post.type == CommunityPostType.shopTour;
-    }
-  }
-
-  Future<void> _compose(BuildContext context) async {
+  Future<void> _takeSeat(
+    BuildContext context,
+    DiverStore store,
+    ShopProduct product,
+  ) async {
     final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
-    final active = [
-      for (final booking in store.bookings)
-        if (booking.isActive) booking,
-    ];
-    if (active.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.communityNeedBooking)),
-      );
-      return;
-    }
-    final picked = await showDialog<TourBooking>(
+    final until = ShopProduct.personalFlagUntil(
+      DateTime.now(),
+      product.flagClosesAt,
+    );
+    final deadline = DateFormat('M.d HH:mm').format(until);
+    final plant = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return SimpleDialog(
-          title: Text(l10n.communityPlantFlag),
-          children: [
-            for (final booking in active)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(dialogContext, booking),
-                child: Text('${booking.shopName}\n${booking.productName}'),
-              ),
+        return AlertDialog(
+          content: Text(l10n.communityFlagHoldAsk(deadline)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.communityPlantFlagLater),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.communityPlantFlag),
+            ),
           ],
         );
       },
     );
-    if (picked == null || !context.mounted) {
+    if (plant != true || !context.mounted) {
       return;
     }
-    await openTideRoomForBooking(context: context, booking: picked);
+    await store.plantSeatFlag(
+      shopId: product.shopId,
+      productId: product.id,
+      partySize: 1,
+    );
+    if (!context.mounted) {
+      return;
+    }
+    final shop = _shopForProduct(store, product);
+    if (shop == null) {
+      return;
+    }
+    await showTourCheckoutSheet(
+      context: context,
+      shop: shop,
+      quote: TourPriceQuote(
+        amount: product.consumerPrice,
+        isProfessional: false,
+      ),
+      product: product,
+    );
   }
+}
+
+DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
+  final listings = store.listingsOnHull(product.shopId);
+  for (final shop in listings) {
+    if (shop.productName == product.name || shop.id == product.shopId) {
+      return shop.copyWith(
+        productName: product.name,
+        consumerPrice: product.consumerPrice,
+        professionalPrice: product.professionalPrice,
+      );
+    }
+  }
+  if (listings.isEmpty) {
+    return null;
+  }
+  return listings.first.copyWith(
+    productName: product.name,
+    consumerPrice: product.consumerPrice,
+    professionalPrice: product.professionalPrice,
+  );
 }
 
 DiveShop? _shopFor(DiverStore store, CommunityPost post) {
@@ -204,6 +229,133 @@ DiveShop _withPostDeparture(DiveShop shop, CommunityPost post) {
       soloShare: post.soloShare,
     ),
   );
+}
+
+class _SeatCard extends StatelessWidget {
+  const _SeatCard({
+    required this.product,
+    required this.shopName,
+    required this.onTake,
+  });
+
+  final ShopProduct product;
+  final String shopName;
+  final VoidCallback onTake;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final departure = product.departureStart;
+    final flag = product.flagClosesAt;
+    final date = DateFormat('yyyy.MM.dd');
+    final title = shopName.isEmpty ? product.name : shopName;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: Key('same-boat-${product.id}'),
+        onTap: onTake,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE8EBEE)),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.navy,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  product.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  departure == null ? '—' : date.format(departure),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.ocean,
+                  ),
+                ),
+                if (flag != null)
+                  Text(
+                    '${l10n.workbenchFlagDeadline} ${date.format(flag)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                const SizedBox(height: 8),
+                Text(l10n.communitySeatsLeft(product.remainingSeats)),
+                const SizedBox(height: 8),
+                _SeatMeter(product: product),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: onTake,
+                    child: Text(l10n.communityPlantFlag),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SeatMeter extends StatelessWidget {
+  const _SeatMeter({required this.product});
+
+  final ShopProduct product;
+
+  @override
+  Widget build(BuildContext context) {
+    final capacity = product.capacity;
+    if (capacity <= 0) {
+      return const SizedBox.shrink();
+    }
+    final paid = product.bookedSeats.clamp(0, capacity);
+    final held = product.flaggedSeats.clamp(0, capacity - paid);
+    Color tone(int index) {
+      if (index < paid) {
+        return AppTheme.navy;
+      }
+      if (index < paid + held) {
+        return const Color(0xFFE8A54B);
+      }
+      return const Color(0xFFE4E7EB);
+    }
+    return Row(
+      children: [
+        for (var i = 0; i < capacity; i++)
+          Expanded(
+            child: Container(
+              height: 8,
+              margin: EdgeInsets.only(right: i == capacity - 1 ? 0 : 4),
+              decoration: BoxDecoration(
+                color: tone(i),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _TideHeader extends StatelessWidget {
@@ -403,8 +555,7 @@ class _TideSegmentFilter extends StatelessWidget {
           for (final entry in [
             (_TideFilter.all, l10n.communityFilterAll),
             (_TideFilter.lastCall, l10n.communityFilterLastCall),
-            (_TideFilter.solo, l10n.communityFilterSolo),
-            (_TideFilter.shop, l10n.communityFilterShop),
+            (_TideFilter.departing, l10n.communityFilterDeparting),
           ])
             Expanded(
               child: _SegmentCell(

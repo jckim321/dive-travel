@@ -268,6 +268,30 @@ class GuestRate {
   }
 }
 
+class SeatHold {
+  const SeatHold({required this.seats, required this.expiresAt});
+
+  final int seats;
+  final DateTime expiresAt;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'seats': seats,
+      'expires_at': expiresAt.toIso8601String(),
+    };
+  }
+
+  static SeatHold? fromMap(Map<String, dynamic> data) {
+    final seats = (data['seats'] as num?)?.toInt() ?? 0;
+    final raw = data['expires_at'];
+    final expires = raw is String ? DateTime.tryParse(raw) : null;
+    if (seats <= 0 || expires == null) {
+      return null;
+    }
+    return SeatHold(seats: seats, expiresAt: expires);
+  }
+}
+
 /// Add-on / package line item (room type, tank count, gear, transfer, …).
 class ShopProductOption {
   const ShopProductOption({
@@ -367,6 +391,12 @@ class ShopProduct {
     this.focPayCount = 0,
     this.focFreeCount = 0,
     this.focAppliesTo = GuestRole.diver,
+    this.openEmptySeats = false,
+    this.capacity = 0,
+    this.bookedSeats = 0,
+    this.flagHolds = const [],
+    this.departureStart,
+    this.flagClosesAt,
     this.listingKind = ProductListingKind.exploreOnly,
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
@@ -420,6 +450,12 @@ class ShopProduct {
       focPayCount: (data['foc_pay_count'] as num?)?.toInt() ?? 0,
       focFreeCount: (data['foc_free_count'] as num?)?.toInt() ?? 0,
       focAppliesTo: GuestRole.parse(data['foc_applies_to']),
+      openEmptySeats: data['open_empty_seats'] == true,
+      capacity: (data['capacity'] as num?)?.toInt() ?? 0,
+      bookedSeats: (data['booked_seats'] as num?)?.toInt() ?? 0,
+      flagHolds: _holds(data['flag_holds']),
+      departureStart: _readTime(data['departure_start']),
+      flagClosesAt: _readTime(data['flag_closes_at']),
       listingKind: ProductListingKind.parse(data['listing_kind']),
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
@@ -457,6 +493,12 @@ class ShopProduct {
   final int focPayCount;
   final int focFreeCount;
   final GuestRole focAppliesTo;
+  final bool openEmptySeats;
+  final int capacity;
+  final int bookedSeats;
+  final List<SeatHold> flagHolds;
+  final DateTime? departureStart;
+  final DateTime? flagClosesAt;
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
@@ -471,6 +513,115 @@ class ShopProduct {
       publishStatus == ProductPublishStatus.pending;
 
   bool get isListedPublicly => active && publishStatus.isPublic;
+
+  /// Same-boat board only. Regular Explore listings ignore this.
+  bool get listsOnSameBoat {
+    return isListedPublicly &&
+        openEmptySeats &&
+        capacity > 0 &&
+        departureStart != null;
+  }
+
+  int get flaggedSeats => flaggedSeatsAt(DateTime.now());
+
+  int flaggedSeatsAt(DateTime now) {
+    var total = 0;
+    for (final hold in flagHolds) {
+      if (hold.expiresAt.isAfter(now)) {
+        total += hold.seats;
+      }
+    }
+    return total;
+  }
+
+  int get remainingSeats => remainingSeatsAt(DateTime.now());
+
+  int remainingSeatsAt(DateTime now) {
+    final left = capacity - bookedSeats - flaggedSeatsAt(now);
+    if (left < 0) {
+      return 0;
+    }
+    return left;
+  }
+
+  static DateTime personalFlagUntil(DateTime plantedAt, DateTime? boatDeadline) {
+    final day = plantedAt.add(const Duration(hours: 24));
+    if (boatDeadline != null && boatDeadline.isBefore(day)) {
+      return boatDeadline;
+    }
+    return day;
+  }
+
+  /// Board order: the earlier of departure and flag close.
+  DateTime? get sameBoatSortAt {
+    final start = departureStart;
+    final flag = flagClosesAt;
+    if (start == null) {
+      return flag;
+    }
+    if (flag == null) {
+      return start;
+    }
+    return start.isBefore(flag) ? start : flag;
+  }
+
+  ShopProduct plantFlag({required int partySize, required DateTime now}) {
+    final live = _liveHolds(now);
+    if (!openEmptySeats || partySize <= 0) {
+      return copyWith(flagHolds: live);
+    }
+    final open = capacity - bookedSeats - _countHolds(live);
+    if (open <= 0) {
+      return copyWith(flagHolds: live);
+    }
+    final take = partySize > open ? open : partySize;
+    return copyWith(
+      flagHolds: [
+        ...live,
+        SeatHold(
+          seats: take,
+          expiresAt: personalFlagUntil(now, flagClosesAt),
+        ),
+      ],
+    );
+  }
+
+  ShopProduct capturePayment(int partySize, DateTime now) {
+    final live = _liveHolds(now);
+    if (!openEmptySeats || partySize <= 0) {
+      return copyWith(flagHolds: live);
+    }
+    var left = partySize;
+    final next = <SeatHold>[];
+    for (final hold in live) {
+      if (left <= 0) {
+        next.add(hold);
+        continue;
+      }
+      if (hold.seats <= left) {
+        left -= hold.seats;
+        continue;
+      }
+      next.add(SeatHold(seats: hold.seats - left, expiresAt: hold.expiresAt));
+      left = 0;
+    }
+    return copyWith(flagHolds: next, bookedSeats: bookedSeats + partySize);
+  }
+
+  List<SeatHold> _liveHolds(DateTime now) {
+    return [
+      for (final hold in flagHolds)
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
+  }
+
+  int _countHolds(List<SeatHold> holds) {
+    var total = 0;
+    for (final hold in holds) {
+      total += hold.seats;
+    }
+    return total;
+  }
 
   bool get usesBookingWorkbench {
     return guestRates.isNotEmpty ||
@@ -540,6 +691,12 @@ class ShopProduct {
     int? focPayCount,
     int? focFreeCount,
     GuestRole? focAppliesTo,
+    bool? openEmptySeats,
+    int? capacity,
+    int? bookedSeats,
+    List<SeatHold>? flagHolds,
+    Object? departureStart = _unset,
+    Object? flagClosesAt = _unset,
     ProductListingKind? listingKind,
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
@@ -576,6 +733,16 @@ class ShopProduct {
       focPayCount: focPayCount ?? this.focPayCount,
       focFreeCount: focFreeCount ?? this.focFreeCount,
       focAppliesTo: focAppliesTo ?? this.focAppliesTo,
+      openEmptySeats: openEmptySeats ?? this.openEmptySeats,
+      capacity: capacity ?? this.capacity,
+      bookedSeats: bookedSeats ?? this.bookedSeats,
+      flagHolds: flagHolds ?? this.flagHolds,
+      departureStart: identical(departureStart, _unset)
+          ? this.departureStart
+          : departureStart as DateTime?,
+      flagClosesAt: identical(flagClosesAt, _unset)
+          ? this.flagClosesAt
+          : flagClosesAt as DateTime?,
       listingKind: listingKind ?? this.listingKind,
       publishStatus: publishStatus ?? this.publishStatus,
       submittedAt: submittedAt ?? this.submittedAt,
@@ -619,6 +786,15 @@ class ShopProduct {
       if (focPayCount > 0) 'foc_pay_count': focPayCount,
       if (focFreeCount > 0) 'foc_free_count': focFreeCount,
       if (focPayCount > 0) 'foc_applies_to': focAppliesTo.firestoreValue,
+      'open_empty_seats': openEmptySeats,
+      if (capacity > 0) 'capacity': capacity,
+      if (bookedSeats > 0) 'booked_seats': bookedSeats,
+      if (flagHolds.isNotEmpty)
+        'flag_holds': [for (final hold in flagHolds) hold.toMap()],
+      if (departureStart != null)
+        'departure_start': departureStart!.toIso8601String(),
+      if (flagClosesAt != null)
+        'flag_closes_at': flagClosesAt!.toIso8601String(),
       'listing_kind': listingKind.firestoreValue,
       'publish_status': publishStatus.firestoreValue,
       if (submittedAt != null) 'submitted_at': submittedAt!.toIso8601String(),
@@ -627,6 +803,23 @@ class ShopProduct {
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
     };
+  }
+
+  static List<SeatHold> _holds(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final out = <SeatHold>[];
+    for (final item in raw) {
+      final map = mapFrom(item);
+      if (map != null) {
+        final hold = SeatHold.fromMap(map);
+        if (hold != null) {
+          out.add(hold);
+        }
+      }
+    }
+    return out;
   }
 
   static List<String> _stringList(dynamic raw) {
