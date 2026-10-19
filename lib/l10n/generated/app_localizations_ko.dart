@@ -1611,6 +1611,21 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String communitySeatPaid(int count) {
+    return '결제 $count';
+  }
+
+  @override
+  String communitySeatHeld(int count) {
+    return '가확정 $count';
+  }
+
+  @override
+  String communitySeatOpen(int count) {
+    return '빈자리 $count';
+  }
+
+  @override
   String communitySeatsLeft(int count) {
     return '빈자리 $count';
   }

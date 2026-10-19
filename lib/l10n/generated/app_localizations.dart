@@ -3072,6 +3072,24 @@ abstract class AppLocalizations {
   /// **'깃발 {count}'**
   String communityLooking(int count);
 
+  /// No description provided for @communitySeatPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 {count}'**
+  String communitySeatPaid(int count);
+
+  /// No description provided for @communitySeatHeld.
+  ///
+  /// In ko, this message translates to:
+  /// **'가확정 {count}'**
+  String communitySeatHeld(int count);
+
+  /// No description provided for @communitySeatOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 {count}'**
+  String communitySeatOpen(int count);
+
   /// No description provided for @communitySeatsLeft.
   ///
   /// In ko, this message translates to:

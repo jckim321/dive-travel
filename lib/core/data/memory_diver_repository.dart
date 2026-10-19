@@ -19,7 +19,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
 class MemoryDiverRepository implements DiverRepository {
   MemoryDiverRepository({AppUser? user}) : _user = user {
-    _posts = List<CommunityPost>.from(CommunityPostCatalog.seeds);
+    _posts = [];
     _snapshot = DiverSnapshot.empty(
       displayName: user?.displayName ?? '다이버',
       isAdmin: _resolvedAdmin,
@@ -27,9 +27,6 @@ class MemoryDiverRepository implements DiverRepository {
       ownedShopId: _ownedShopId ?? AppConstants.defaultPartnerShopId,
       memberGrade: _memberGrade,
     );
-    for (final comment in CommunityPostCatalog.seedComments) {
-      _comments.putIfAbsent(comment.postId, () => []).add(comment);
-    }
   }
 
   factory MemoryDiverRepository.forTest({
@@ -85,7 +82,6 @@ class MemoryDiverRepository implements DiverRepository {
   final _comments = <String, List<CommunityComment>>{};
   int _postSequence = 0;
   int _commentSequence = 0;
-  bool _seededPosts = true;
 
   final _authController = StreamController<AppUser?>.broadcast();
   final _diverController = StreamController<DiverSnapshot>.broadcast();
@@ -520,11 +516,12 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Future<void> ensureSeedPosts() async {
-    if (_seededPosts) {
-      return;
+    _posts.removeWhere((post) => post.id.startsWith('seed-'));
+    for (final key in _comments.keys.toList()) {
+      if (key.startsWith('seed-')) {
+        _comments.remove(key);
+      }
     }
-    _posts = List<CommunityPost>.from(CommunityPostCatalog.seeds);
-    _seededPosts = true;
     _postsController.add(List<CommunityPost>.from(_posts));
   }
 

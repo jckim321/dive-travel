@@ -1122,6 +1122,12 @@
       "count": {"type": "int"}
     }
   },
+  "communitySeatPaid": "결제 {count}",
+  "communitySeatHeld": "가확정 {count}",
+  "communitySeatOpen": "빈자리 {count}",
+  "@communitySeatPaid": {"placeholders": {"count": {"type": "int"}}},
+  "@communitySeatHeld": {"placeholders": {"count": {"type": "int"}}},
+  "@communitySeatOpen": {"placeholders": {"count": {"type": "int"}}},
   "communitySeatsLeft": "빈자리 {count}",
   "@communitySeatsLeft": {
     "placeholders": {

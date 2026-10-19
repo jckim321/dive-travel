@@ -573,6 +573,12 @@
       "count": {"type": "int"}
     }
   },
+  "communitySeatPaid": "Paid {count}",
+  "communitySeatHeld": "Hold {count}",
+  "communitySeatOpen": "Open {count}",
+  "@communitySeatPaid": {"placeholders": {"count": {"type": "int"}}},
+  "@communitySeatHeld": {"placeholders": {"count": {"type": "int"}}},
+  "@communitySeatOpen": {"placeholders": {"count": {"type": "int"}}},
   "communitySeatsLeft": "{count} empty",
   "@communitySeatsLeft": {
     "placeholders": {

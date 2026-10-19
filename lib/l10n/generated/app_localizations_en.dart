@@ -1657,6 +1657,21 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String communitySeatPaid(int count) {
+    return 'Paid $count';
+  }
+
+  @override
+  String communitySeatHeld(int count) {
+    return 'Hold $count';
+  }
+
+  @override
+  String communitySeatOpen(int count) {
+    return 'Open $count';
+  }
+
+  @override
   String communitySeatsLeft(int count) {
     return '$count empty';
   }

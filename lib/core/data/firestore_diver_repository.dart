@@ -822,30 +822,15 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> ensureSeedPosts() async {
     final batch = _db.batch();
     var writes = 0;
-    for (final post in CommunityPostCatalog.seeds) {
-      final ref = _posts.doc(post.id);
-      final snap = await ref.get();
-      if (!snap.exists) {
-        batch.set(ref, _postPayload(post));
-        writes += 1;
-      }
-    }
     for (final comment in CommunityPostCatalog.seedComments) {
-      final ref = _posts
-          .doc(comment.postId)
-          .collection('comments')
-          .doc(comment.id);
-      final snap = await ref.get();
-      if (!snap.exists) {
-        batch.set(ref, {
-          'author_uid': comment.authorUid,
-          'author_name': comment.authorName,
-          'body': comment.body,
-          'language': comment.language,
-          'created_at': Timestamp.fromDate(comment.createdAt),
-        });
-        writes += 1;
-      }
+      batch.delete(
+        _posts.doc(comment.postId).collection('comments').doc(comment.id),
+      );
+      writes += 1;
+    }
+    for (final post in CommunityPostCatalog.seeds) {
+      batch.delete(_posts.doc(post.id));
+      writes += 1;
     }
     if (writes > 0) {
       await batch.commit();

@@ -26,15 +26,21 @@ void main() {
 
   test('게시글을 숨기면 공개 목록에서 빠진다', () async {
     final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.addCommunityPost(
+      uid: 'test-user',
+      authorName: 'Tester',
+      title: 'Hide me',
+      subtitle: 'Trip',
+      type: CommunityPostType.shopTour,
+      language: 'ko',
+    );
     final before = await repo.watchCommunityPosts().first;
     expect(before.any((post) => !post.hidden), isTrue);
+    final id = before.first.id;
 
-    await repo.setPostHidden(postId: 'seed-shop-bohol', hidden: true);
+    await repo.setPostHidden(postId: id, hidden: true);
     final after = await repo.watchCommunityPosts().first;
-    expect(
-      after.firstWhere((post) => post.id == 'seed-shop-bohol').hidden,
-      isTrue,
-    );
+    expect(after.firstWhere((post) => post.id == id).hidden, isTrue);
   });
 
   test('관리자는 강사 할인을 비율 또는 금액으로 저장한다', () async {

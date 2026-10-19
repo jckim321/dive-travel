@@ -54,8 +54,8 @@ class ResortDetailScreen extends StatelessWidget {
             AppConstants.defaultPartnerShopId;
         final canEdit = store.stats.isAdmin ||
             (store.stats.isBusiness && owned == hull.hullId);
-        final rooms = store.visiblePosts
-            .where((post) => post.shopId?.split('--').first == hull.hullId)
+        final rooms = (store.liveStatsFor(hull.hullId)?.products ?? const [])
+            .where((product) => product.listsOnSameBoat)
             .length;
 
         return Scaffold(
@@ -154,11 +154,13 @@ class ResortDetailScreen extends StatelessWidget {
                       listings
                           .map((item) => item.consumerPrice)
                           .reduce((a, b) => a < b ? a : b),
-                  openRooms: store.visiblePosts
-                      .where((post) =>
-                          post.shopId == shop.id ||
-                          (post.shopId?.split('--').first == hull.hullId &&
-                              post.subtitle == shop.productName))
+                  openRooms: (store.liveStatsFor(hull.hullId)?.products ??
+                          const <ShopProduct>[])
+                      .where(
+                        (product) =>
+                            product.listsOnSameBoat &&
+                            product.name == shop.productName,
+                      )
                       .length,
                   onBook: () {
                     ShopProduct? product;

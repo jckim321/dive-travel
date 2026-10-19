@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/core/i18n/translation_engine.dart';
-import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:intl/intl.dart';
-import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
-import 'package:dive_travel_app/features/community/presentation/translatable_text.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -195,42 +191,6 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
   );
 }
 
-DiveShop? _shopFor(DiverStore store, CommunityPost post) {
-  final id = post.shopId;
-  if (id == null || id.isEmpty) {
-    return null;
-  }
-  final hullId = id.split('--').first;
-  final listings = store.listingsOnHull(hullId);
-  for (final shop in listings) {
-    if (shop.id == id || shop.productName == post.subtitle) {
-      return _withPostDeparture(shop, post);
-    }
-  }
-  if (listings.isEmpty) {
-    return null;
-  }
-  return _withPostDeparture(listings.first, post);
-}
-
-DiveShop _withPostDeparture(DiveShop shop, CommunityPost post) {
-  return shop.copyWith(
-    productName: post.subtitle.isEmpty ? shop.productName : post.subtitle,
-    departure: TourDeparture(
-      start: shop.departure?.start ??
-          DateTime.now().add(const Duration(days: 7)),
-      windowLabel: post.windowLabel.isNotEmpty
-          ? post.windowLabel
-          : (shop.departure?.windowLabel ?? ''),
-      capacity: post.capacity,
-      bookedSeats: post.bookedSeats,
-      lookingSeats: post.lookingSeats,
-      lastCall: post.kind == TideKind.lastCall,
-      soloShare: post.soloShare,
-    ),
-  );
-}
-
 class _SeatCard extends StatelessWidget {
   const _SeatCard({
     required this.product,
@@ -284,22 +244,28 @@ class _SeatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
-                  departure == null ? '—' : date.format(departure),
+                  departure == null ? '-' : date.format(departure),
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
                     color: AppTheme.ocean,
                   ),
                 ),
-                if (flag != null)
+                if (flag != null) ...[
+                  const SizedBox(height: 2),
                   Text(
                     '${l10n.workbenchFlagDeadline} ${date.format(flag)}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.navy,
+                    ),
                   ),
-                const SizedBox(height: 8),
-                Text(l10n.communitySeatsLeft(product.remainingSeats)),
-                const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 12),
                 _SeatMeter(product: product),
                 const SizedBox(height: 10),
                 Align(
@@ -329,8 +295,8 @@ class _SeatMeter extends StatelessWidget {
     if (capacity <= 0) {
       return const SizedBox.shrink();
     }
-    final paid = product.bookedSeats.clamp(0, capacity);
-    final held = product.flaggedSeats.clamp(0, capacity - paid);
+    final paid = product.bookedSeats.clamp(0, capacity).toInt();
+    final held = product.flaggedSeats.clamp(0, capacity - paid).toInt();
     Color tone(int index) {
       if (index < paid) {
         return AppTheme.navy;
@@ -340,19 +306,35 @@ class _SeatMeter extends StatelessWidget {
       }
       return const Color(0xFFE4E7EB);
     }
-    return Row(
+    final l10n = AppLocalizations.of(context);
+    final open = capacity - paid - held;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < capacity; i++)
-          Expanded(
-            child: Container(
-              height: 8,
-              margin: EdgeInsets.only(right: i == capacity - 1 ? 0 : 4),
-              decoration: BoxDecoration(
-                color: tone(i),
-                borderRadius: BorderRadius.circular(4),
+        Row(
+          children: [
+            for (var i = 0; i < capacity; i++)
+              Expanded(
+                child: Container(
+                  height: 14,
+                  margin: EdgeInsets.only(right: i == capacity - 1 ? 0 : 4),
+                  decoration: BoxDecoration(
+                    color: tone(i),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
-            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '${l10n.communitySeatPaid(paid)} · ${l10n.communitySeatHeld(held)} · ${l10n.communitySeatOpen(open)}',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.muted,
           ),
+        ),
       ],
     );
   }
@@ -608,426 +590,4 @@ class _SegmentCell extends StatelessWidget {
   }
 }
 
-class _TideManifestCard extends StatelessWidget {
-  const _TideManifestCard({
-    required this.post,
-    required this.shop,
-    required this.onOpen,
-    this.compact = false,
-  });
 
-  final CommunityPost post;
-  final DiveShop? shop;
-  final VoidCallback onOpen;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final accent = Color(shop?.accentColor ?? 0xFF0B1F33);
-    final kindLabel = switch (post.kind) {
-      TideKind.lastCall => l10n.communityKindLast,
-      TideKind.soloShare => l10n.communityKindSolo,
-      TideKind.shopCrew => l10n.communityKindShop,
-    };
-    final destination =
-        post.destination.isEmpty ? post.authorName : post.destination;
-    final window =
-        post.windowLabel.isEmpty ? l10n.communityWindowOpen : post.windowLabel;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('tide-card-${post.id}'),
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8EBEE)),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(width: 7, color: accent),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  destination,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.3,
-                                    color: AppTheme.navy,
-                                  ),
-                                ),
-                              ),
-                              _KindPill(
-                                label: kindLabel,
-                                urgent: post.kind == TideKind.lastCall,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_month_outlined,
-                                size: 14,
-                                color: AppTheme.ocean,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                window,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.ocean,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                l10n.communitySeatsLeft(post.emptySeats),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.navy,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (!compact) ...[
-                            const SizedBox(height: 10),
-                            TranslatableText(
-                              text: post.title,
-                              language: post.language,
-                              style: theme.textTheme.titleSmall,
-                            ),
-                            const SizedBox(height: 4),
-                            TranslatableText(
-                              text: post.subtitle,
-                              language: post.language,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ] else if (post.subtitle.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            TranslatableText(
-                              text: post.subtitle,
-                              language: post.language,
-                              style: theme.textTheme.bodySmall,
-                              maxLines: 1,
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          _BerthMeter(post: post),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  l10n.communityBerths(
-                                    post.bookedSeats,
-                                    post.capacity,
-                                  ),
-                                  style: theme.textTheme.labelSmall,
-                                ),
-                              ),
-                              if (compact)
-                                FilledButton(
-                                  onPressed: onOpen,
-                                  style: FilledButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 8,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    textStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  child: Text(l10n.communityViewSeats),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _KindPill extends StatelessWidget {
-  const _KindPill({required this.label, required this.urgent});
-
-  final String label;
-  final bool urgent;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: urgent ? const Color(0xFFFBE9E7) : AppTheme.goldSoft,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: urgent ? const Color(0xFFB42318) : AppTheme.navy,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BerthMeter extends StatelessWidget {
-  const _BerthMeter({required this.post});
-
-  final CommunityPost post;
-
-  @override
-  Widget build(BuildContext context) {
-    final slots = post.capacity.clamp(1, 12);
-    return Row(
-      children: [
-        for (var i = 0; i < slots; i++) ...[
-          if (i > 0) const SizedBox(width: 5),
-          _BerthDot(
-            fill: i < post.bookedSeats
-                ? AppTheme.navy
-                : i < post.bookedSeats + post.lookingSeats
-                    ? AppTheme.gold
-                    : const Color(0xFFD5DBE0),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _BerthDot extends StatelessWidget {
-  const _BerthDot({required this.fill});
-
-  final Color fill;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 12,
-      height: 18,
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-}
-
-class CommunityPostDetailScreen extends StatefulWidget {
-  const CommunityPostDetailScreen({super.key, required this.post});
-
-  final CommunityPost post;
-
-  @override
-  State<CommunityPostDetailScreen> createState() =>
-      _CommunityPostDetailScreenState();
-}
-
-class _CommunityPostDetailScreenState extends State<CommunityPostDetailScreen> {
-  final _comment = TextEditingController();
-
-  @override
-  void dispose() {
-    _comment.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
-    final post = widget.post;
-    final theme = Theme.of(context);
-    final shop = _shopFor(store, post);
-
-    return Scaffold(
-      backgroundColor: AppTheme.canvas,
-      appBar: AppBar(title: Text(l10n.communityManifest)),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<List<CommunityComment>>(
-              stream: store.watchComments(post.id),
-              builder: (context, snapshot) {
-                final comments = snapshot.data ?? const <CommunityComment>[];
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                  children: [
-                    _TideManifestCard(
-                      post: post,
-                      shop: shop,
-                      onOpen: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8EEF2),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        l10n.communityTideSafety,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      key: const Key('raise-tide-flag'),
-                      onPressed: () => _raiseFlag(context, post),
-                      icon: const Icon(Icons.flag_outlined, size: 18),
-                      label: Text(l10n.communityRaiseFlag),
-                    ),
-                    if (shop != null) ...[
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () => showTourCheckoutSheet(
-                          context: context,
-                          shop: shop,
-                          quote: store.quoteFor(shop),
-                        ),
-                        child: Text(l10n.communityOpenTrip),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.communityComments,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    if (comments.isEmpty)
-                      Text(
-                        l10n.communityNoComments,
-                        style: theme.textTheme.bodyMedium,
-                      )
-                    else
-                      for (final item in comments) ...[
-                        AppCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.authorName,
-                                style: theme.textTheme.labelLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              TranslatableText(
-                                text: item.body,
-                                language: item.language,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                  ],
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _comment,
-                      decoration: InputDecoration(
-                        hintText: l10n.communityCommentHint,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () async {
-                      final body = _comment.text.trim();
-                      if (body.isEmpty) {
-                        return;
-                      }
-                      await store.addComment(
-                        postId: post.id,
-                        body: body,
-                        language: LanguageDetector.detect(body),
-                      );
-                      _comment.clear();
-                    },
-                    icon: const Icon(Icons.send_outlined),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _raiseFlag(BuildContext context, CommunityPost post) async {
-    final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
-    await store.addComment(
-      postId: post.id,
-      body: l10n.communityRaiseFlagMessage,
-      language: Localizations.localeOf(context).languageCode,
-    );
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.communityRaiseFlagDone)),
-    );
-    final shop = _shopFor(store, post);
-    if (shop == null) {
-      return;
-    }
-    await showTourCheckoutSheet(
-      context: context,
-      shop: shop,
-      quote: store.quoteFor(shop),
-    );
-  }
-}
