@@ -1626,6 +1626,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get communityDateToday => '오늘';
+
+  @override
   String communitySeatsLeft(int count) {
     return '빈자리 $count';
   }

@@ -3090,6 +3090,12 @@ abstract class AppLocalizations {
   /// **'빈자리 {count}'**
   String communitySeatOpen(int count);
 
+  /// No description provided for @communityDateToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get communityDateToday;
+
   /// No description provided for @communitySeatsLeft.
   ///
   /// In ko, this message translates to:

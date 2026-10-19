@@ -1672,6 +1672,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get communityDateToday => 'Today';
+
+  @override
   String communitySeatsLeft(int count) {
     return '$count empty';
   }

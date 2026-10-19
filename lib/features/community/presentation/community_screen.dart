@@ -207,7 +207,6 @@ class _SeatCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final departure = product.departureStart;
     final flag = product.flagClosesAt;
-    final date = DateFormat('yyyy.MM.dd');
     final title = shopName.isEmpty ? product.name : shopName;
     return Material(
       color: Colors.transparent,
@@ -244,28 +243,15 @@ class _SeatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  departure == null ? '-' : date.format(departure),
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                    color: AppTheme.ocean,
-                  ),
-                ),
-                if (flag != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '${l10n.workbenchFlagDeadline} ${date.format(flag)}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.navy,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
+                _DateLine(
+                  departure: departure,
+                  flagClose: flag,
+                  todayLabel: l10n.communityDateToday,
+                  flagLabel: l10n.workbenchFlagDeadline,
+                  departureLabel: l10n.workbenchDepartureDate,
+                ),
+                const SizedBox(height: 14),
                 _SeatMeter(product: product),
                 const SizedBox(height: 10),
                 Align(
@@ -280,6 +266,90 @@ class _SeatCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DateLine extends StatelessWidget {
+  const _DateLine({
+    required this.departure,
+    required this.flagClose,
+    required this.todayLabel,
+    required this.flagLabel,
+    required this.departureLabel,
+  });
+
+  final DateTime? departure;
+  final DateTime? flagClose;
+  final String todayLabel;
+  final String flagLabel;
+  final String departureLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final marks = <({DateTime at, String label, Color color})>[
+      (
+        at: DateTime.now(),
+        label: todayLabel,
+        color: AppTheme.muted,
+      ),
+      if (flagClose != null)
+        (
+          at: flagClose!,
+          label: flagLabel,
+          color: const Color(0xFFE8A54B),
+        ),
+      if (departure != null)
+        (
+          at: departure!,
+          label: departureLabel,
+          color: AppTheme.ocean,
+        ),
+    ]..sort((a, b) => a.at.compareTo(b.at));
+    final day = DateFormat('M.d');
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < marks.length; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.only(top: 5),
+                color: const Color(0xFFE4E7EB),
+              ),
+            ),
+          Column(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: marks[i].color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                marks[i].label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.navy,
+                ),
+              ),
+              Text(
+                day.format(marks[i].at),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.muted,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
@@ -311,17 +381,17 @@ class _SeatMeter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
           children: [
             for (var i = 0; i < capacity; i++)
-              Expanded(
-                child: Container(
-                  height: 14,
-                  margin: EdgeInsets.only(right: i == capacity - 1 ? 0 : 4),
-                  decoration: BoxDecoration(
-                    color: tone(i),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+              Container(
+                width: 22,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: tone(i),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
           ],

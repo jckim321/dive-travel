@@ -1125,6 +1125,7 @@
   "communitySeatPaid": "결제 {count}",
   "communitySeatHeld": "가확정 {count}",
   "communitySeatOpen": "빈자리 {count}",
+  "communityDateToday": "오늘",
   "@communitySeatPaid": {"placeholders": {"count": {"type": "int"}}},
   "@communitySeatHeld": {"placeholders": {"count": {"type": "int"}}},
   "@communitySeatOpen": {"placeholders": {"count": {"type": "int"}}},

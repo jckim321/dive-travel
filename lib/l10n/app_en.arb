@@ -576,6 +576,7 @@
   "communitySeatPaid": "Paid {count}",
   "communitySeatHeld": "Hold {count}",
   "communitySeatOpen": "Open {count}",
+  "communityDateToday": "Today",
   "@communitySeatPaid": {"placeholders": {"count": {"type": "int"}}},
   "@communitySeatHeld": {"placeholders": {"count": {"type": "int"}}},
   "@communitySeatOpen": {"placeholders": {"count": {"type": "int"}}},
