@@ -72,7 +72,7 @@ void main() {
     expect(find.text(l10n.partnerProductForm), findsOneWidget);
   });
 
-  testWidgets('버디 탭의 영어 글에 번역 보기가 뜬다', (tester) async {
+  testWidgets('같은배 탭은 빈자리를 연 상품이 없으면 탐색으로 안내한다', (tester) async {
     tester.platformDispatcher.localeTestValue = const Locale('ko');
     addTearDown(tester.platformDispatcher.clearLocaleTestValue);
 
@@ -88,11 +88,7 @@ void main() {
 
     await tester.tap(find.text(l10n.navCommunity));
     await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const Key('tide-board')),
-      const Offset(0, -420),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.translateAction), findsWidgets);
+    expect(find.byKey(const Key('tide-board')), findsOneWidget);
+    expect(find.text(l10n.communityEmpty), findsOneWidget);
   });
 }
