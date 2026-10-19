@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
@@ -54,9 +55,9 @@ class ResortDetailScreen extends StatelessWidget {
             AppConstants.defaultPartnerShopId;
         final canEdit = store.stats.isAdmin ||
             (store.stats.isBusiness && owned == hull.hullId);
-        final rooms = (store.liveStatsFor(hull.hullId)?.products ?? const [])
-            .where((product) => product.listsOnSameBoat)
-            .length;
+        final rooms = SameBoatBoard.offers(
+          store.liveStatsFor(hull.hullId)?.products ?? const [],
+        ).length;
 
         return Scaffold(
           appBar: AppBar(
@@ -154,14 +155,10 @@ class ResortDetailScreen extends StatelessWidget {
                       listings
                           .map((item) => item.consumerPrice)
                           .reduce((a, b) => a < b ? a : b),
-                  openRooms: (store.liveStatsFor(hull.hullId)?.products ??
-                          const <ShopProduct>[])
-                      .where(
-                        (product) =>
-                            product.listsOnSameBoat &&
-                            product.name == shop.productName,
-                      )
-                      .length,
+                  openRooms: SameBoatBoard.offers(
+                    store.liveStatsFor(hull.hullId)?.products ??
+                        const <ShopProduct>[],
+                  ).where((offer) => offer.product.name == shop.productName).length,
                   onBook: () {
                     ShopProduct? product;
                     final products =

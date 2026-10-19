@@ -1645,6 +1645,24 @@ class AppLocalizationsId extends AppLocalizations {
   String get communityDateToday => '오늘';
 
   @override
+  String get communityNeedSignIn => '깃발을 꽂으려면 로그인하세요.';
+
+  @override
+  String get communityFlagAlready => '이미 이 자리를 가확정했습니다.';
+
+  @override
+  String get communitySeatsShort => '이 옵션의 남은 자리가 부족합니다.';
+
+  @override
+  String get communityOfferDetail => '이 자리 내용';
+
+  @override
+  String get workbenchSeatOption => '자리를 열 옵션';
+
+  @override
+  String get workbenchSeatBase => '기본 상품';
+
+  @override
   String communitySeatsLeft(int count) {
     return '빈자리 $count';
   }

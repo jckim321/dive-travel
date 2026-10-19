@@ -269,15 +269,21 @@ class GuestRate {
 }
 
 class SeatHold {
-  const SeatHold({required this.seats, required this.expiresAt});
+  const SeatHold({
+    required this.seats,
+    required this.expiresAt,
+    this.uid = '',
+  });
 
   final int seats;
   final DateTime expiresAt;
+  final String uid;
 
   Map<String, dynamic> toMap() {
     return {
       'seats': seats,
       'expires_at': expiresAt.toIso8601String(),
+      if (uid.isNotEmpty) 'uid': uid,
     };
   }
 
@@ -288,9 +294,15 @@ class SeatHold {
     if (seats <= 0 || expires == null) {
       return null;
     }
-    return SeatHold(seats: seats, expiresAt: expires);
+    return SeatHold(
+      seats: seats,
+      expiresAt: expires,
+      uid: data['uid'] as String? ?? '',
+    );
   }
 }
+
+enum SeatFlagPlant { planted, alreadyHeld, unavailable }
 
 /// Add-on / package line item (room type, tank count, gear, transfer, …).
 class ShopProductOption {
@@ -303,6 +315,12 @@ class ShopProductOption {
     this.kind = ProductOptionKind.addon,
     this.bookable = true,
     this.guestRole = GuestRole.diver,
+    this.openEmptySeats = false,
+    this.capacity = 0,
+    this.bookedSeats = 0,
+    this.flagHolds = const [],
+    this.departureStart,
+    this.flagClosesAt,
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
@@ -315,6 +333,12 @@ class ShopProductOption {
       kind: ProductOptionKind.parse(data['kind']),
       bookable: data['bookable'] != false,
       guestRole: GuestRole.parse(data['guest_role']),
+      openEmptySeats: data['open_empty_seats'] == true,
+      capacity: (data['capacity'] as num?)?.toInt() ?? 0,
+      bookedSeats: (data['booked_seats'] as num?)?.toInt() ?? 0,
+      flagHolds: _optionHolds(data['flag_holds']),
+      departureStart: _optionTime(data['departure_start']),
+      flagClosesAt: _optionTime(data['flag_closes_at']),
     );
   }
 
@@ -326,6 +350,16 @@ class ShopProductOption {
   final ProductOptionKind kind;
   final bool bookable;
   final GuestRole guestRole;
+  final bool openEmptySeats;
+  final int capacity;
+  final int bookedSeats;
+  final List<SeatHold> flagHolds;
+  final DateTime? departureStart;
+  final DateTime? flagClosesAt;
+
+  bool get listsOnSameBoat {
+    return openEmptySeats && capacity > 0 && departureStart != null;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -337,6 +371,14 @@ class ShopProductOption {
       'kind': kind.firestoreValue,
       'bookable': bookable,
       'guest_role': guestRole.firestoreValue,
+      'open_empty_seats': openEmptySeats,
+      if (capacity > 0) 'capacity': capacity,
+      if (bookedSeats > 0) 'booked_seats': bookedSeats,
+      if (flagHolds.isNotEmpty)
+        'flag_holds': [for (final hold in flagHolds) hold.toMap()],
+      if (departureStart != null)
+        'departure_start': departureStart!.toIso8601String(),
+      if (flagClosesAt != null) 'flag_closes_at': flagClosesAt!.toIso8601String(),
     };
   }
 
@@ -348,6 +390,13 @@ class ShopProductOption {
     ProductOptionKind? kind,
     bool? bookable,
     GuestRole? guestRole,
+    bool? openEmptySeats,
+    int? capacity,
+    int? bookedSeats,
+    List<SeatHold>? flagHolds,
+    DateTime? departureStart,
+    DateTime? flagClosesAt,
+    bool clearDates = false,
   }) {
     return ShopProductOption(
       id: id,
@@ -358,7 +407,41 @@ class ShopProductOption {
       kind: kind ?? this.kind,
       bookable: bookable ?? this.bookable,
       guestRole: guestRole ?? this.guestRole,
+      openEmptySeats: openEmptySeats ?? this.openEmptySeats,
+      capacity: capacity ?? this.capacity,
+      bookedSeats: bookedSeats ?? this.bookedSeats,
+      flagHolds: flagHolds ?? this.flagHolds,
+      departureStart: clearDates ? null : (departureStart ?? this.departureStart),
+      flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
     );
+  }
+
+  static List<SeatHold> _optionHolds(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final out = <SeatHold>[];
+    for (final item in raw) {
+      if (item is Map<String, dynamic>) {
+        final hold = SeatHold.fromMap(item);
+        if (hold != null) {
+          out.add(hold);
+        }
+      } else if (item is Map) {
+        final hold = SeatHold.fromMap(Map<String, dynamic>.from(item));
+        if (hold != null) {
+          out.add(hold);
+        }
+      }
+    }
+    return out;
+  }
+
+  static DateTime? _optionTime(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 }
 
@@ -565,36 +648,222 @@ class ShopProduct {
     return start.isBefore(flag) ? start : flag;
   }
 
-  ShopProduct plantFlag({required int partySize, required DateTime now}) {
-    final live = _liveHolds(now);
-    if (!openEmptySeats || partySize <= 0) {
-      return copyWith(flagHolds: live);
+  bool memberHasLiveFlag(String uid, DateTime now, {String optionId = ''}) {
+    if (uid.isEmpty) {
+      return false;
     }
-    final open = capacity - bookedSeats - _countHolds(live);
-    if (open <= 0) {
-      return copyWith(flagHolds: live);
+    final holds = _holdsFor(optionId);
+    for (final hold in holds) {
+      if (hold.uid == uid && hold.expiresAt.isAfter(now)) {
+        return true;
+      }
     }
-    final take = partySize > open ? open : partySize;
+    return false;
+  }
+
+  int bookableSeatsFor(String uid, DateTime now, {String optionId = ''}) {
+    final holds = [
+      for (final hold in _holdsFor(optionId))
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
+    final booked = optionId.isEmpty ? bookedSeats : _option(optionId)?.bookedSeats ?? 0;
+    final cap = optionId.isEmpty ? capacity : _option(optionId)?.capacity ?? 0;
+    var own = 0;
+    var flagged = 0;
+    for (final hold in holds) {
+      flagged += hold.seats;
+      if (uid.isEmpty || hold.uid == uid) {
+        own += hold.seats;
+      }
+    }
+    final left = cap - booked - flagged + own;
+    return left < 0 ? 0 : left;
+  }
+
+  ShopProduct plantFlag({
+    required int partySize,
+    required DateTime now,
+    String uid = '',
+    String optionId = '',
+  }) {
+    if (optionId.isNotEmpty) {
+      return _mapOption(optionId, (option) {
+        final planted = _plantHolds(
+          open: option.openEmptySeats,
+          capacity: option.capacity,
+          booked: option.bookedSeats,
+          holds: option.flagHolds,
+          partySize: partySize,
+          now: now,
+          flagClosesAt: option.flagClosesAt,
+          uid: uid,
+        );
+        return option.copyWith(flagHolds: planted);
+      });
+    }
     return copyWith(
-      flagHolds: [
-        ...live,
-        SeatHold(
-          seats: take,
-          expiresAt: personalFlagUntil(now, flagClosesAt),
-        ),
+      flagHolds: _plantHolds(
+        open: openEmptySeats,
+        capacity: capacity,
+        booked: bookedSeats,
+        holds: flagHolds,
+        partySize: partySize,
+        now: now,
+        flagClosesAt: flagClosesAt,
+        uid: uid,
+      ),
+    );
+  }
+
+  ShopProduct capturePayment(
+    int partySize,
+    DateTime now, {
+    String uid = '',
+    String optionId = '',
+  }) {
+    if (optionId.isNotEmpty) {
+      return _mapOption(optionId, (option) {
+        if (!_canCapture(
+          open: option.openEmptySeats,
+          capacity: option.capacity,
+          booked: option.bookedSeats,
+          holds: option.flagHolds,
+          partySize: partySize,
+          now: now,
+          uid: uid,
+        )) {
+          return option;
+        }
+        final next = _consumeHolds(option.flagHolds, partySize, now, uid);
+        return option.copyWith(
+          flagHolds: next,
+          bookedSeats: option.bookedSeats + partySize,
+        );
+      });
+    }
+    if (!_canCapture(
+      open: openEmptySeats,
+      capacity: capacity,
+      booked: bookedSeats,
+      holds: flagHolds,
+      partySize: partySize,
+      now: now,
+      uid: uid,
+    )) {
+      return copyWith(flagHolds: _liveHolds(now));
+    }
+    return copyWith(
+      flagHolds: _consumeHolds(flagHolds, partySize, now, uid),
+      bookedSeats: bookedSeats + partySize,
+    );
+  }
+
+  ShopProductOption? _option(String optionId) {
+    for (final option in options) {
+      if (option.id == optionId) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  List<SeatHold> _holdsFor(String optionId) {
+    if (optionId.isEmpty) {
+      return flagHolds;
+    }
+    return _option(optionId)?.flagHolds ?? const [];
+  }
+
+  ShopProduct _mapOption(
+    String optionId,
+    ShopProductOption Function(ShopProductOption option) update,
+  ) {
+    return copyWith(
+      options: [
+        for (final option in options)
+          if (option.id == optionId) update(option) else option,
       ],
     );
   }
 
-  ShopProduct capturePayment(int partySize, DateTime now) {
-    final live = _liveHolds(now);
-    if (!openEmptySeats || partySize <= 0) {
-      return copyWith(flagHolds: live);
+  List<SeatHold> _plantHolds({
+    required bool open,
+    required int capacity,
+    required int booked,
+    required List<SeatHold> holds,
+    required int partySize,
+    required DateTime now,
+    required DateTime? flagClosesAt,
+    required String uid,
+  }) {
+    final live = [
+      for (final hold in holds)
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
+    if (!open || partySize <= 0) {
+      return live;
     }
+    if (uid.isNotEmpty && live.any((hold) => hold.uid == uid)) {
+      return live;
+    }
+    final openSeats = capacity - booked - _countHolds(live);
+    if (openSeats <= 0) {
+      return live;
+    }
+    final take = partySize > openSeats ? openSeats : partySize;
+    return [
+      ...live,
+      SeatHold(
+        seats: take,
+        expiresAt: personalFlagUntil(now, flagClosesAt),
+        uid: uid,
+      ),
+    ];
+  }
+
+  bool _canCapture({
+    required bool open,
+    required int capacity,
+    required int booked,
+    required List<SeatHold> holds,
+    required int partySize,
+    required DateTime now,
+    required String uid,
+  }) {
+    if (!open || partySize <= 0) {
+      return false;
+    }
+    final live = [
+      for (final hold in holds)
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
+    var own = 0;
+    var flagged = 0;
+    for (final hold in live) {
+      flagged += hold.seats;
+      if (uid.isEmpty || hold.uid == uid) {
+        own += hold.seats;
+      }
+    }
+    final room = capacity - booked - flagged + own;
+    return partySize <= room;
+  }
+
+  List<SeatHold> _consumeHolds(
+    List<SeatHold> holds,
+    int partySize,
+    DateTime now,
+    String uid,
+  ) {
+    final live = [
+      for (final hold in holds)
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
     var left = partySize;
     final next = <SeatHold>[];
     for (final hold in live) {
-      if (left <= 0) {
+      final mine = uid.isEmpty || hold.uid == uid;
+      if (!mine || left <= 0) {
         next.add(hold);
         continue;
       }
@@ -602,10 +871,12 @@ class ShopProduct {
         left -= hold.seats;
         continue;
       }
-      next.add(SeatHold(seats: hold.seats - left, expiresAt: hold.expiresAt));
+      next.add(
+        SeatHold(seats: hold.seats - left, expiresAt: hold.expiresAt, uid: hold.uid),
+      );
       left = 0;
     }
-    return copyWith(flagHolds: next, bookedSeats: bookedSeats + partySize);
+    return next;
   }
 
   List<SeatHold> _liveHolds(DateTime now) {

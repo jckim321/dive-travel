@@ -1675,6 +1675,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityDateToday => 'Today';
 
   @override
+  String get communityNeedSignIn => 'Sign in to plant a flag.';
+
+  @override
+  String get communityFlagAlready => 'You already hold this seat.';
+
+  @override
+  String get communitySeatsShort => 'Not enough seats left on this option.';
+
+  @override
+  String get communityOfferDetail => 'This berth';
+
+  @override
+  String get workbenchSeatOption => 'Option opening seats';
+
+  @override
+  String get workbenchSeatBase => 'Base product';
+
+  @override
   String communitySeatsLeft(int count) {
     return '$count empty';
   }

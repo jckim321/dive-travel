@@ -103,6 +103,7 @@ class _TravelProductRegistrationScreenState
   var _curatedMode = false;
   var _saving = false;
   var _openEmptySeats = false;
+  var _seatOptionId = '';
   late final TextEditingController _seatCapacity;
   DateTime? _departureStart;
   DateTime? _flagClosesAt;
@@ -157,11 +158,26 @@ class _TravelProductRegistrationScreenState
     );
     _cancelNote = TextEditingController(text: existing?.cancellationNote ?? '');
     _openEmptySeats = existing?.openEmptySeats ?? false;
+    for (final option in existing?.options ?? const <ShopProductOption>[]) {
+      if (option.openEmptySeats) {
+        _openEmptySeats = true;
+        _seatOptionId = option.id;
+      }
+    }
     _seatCapacity = TextEditingController(
       text: (existing?.capacity ?? 0) > 0 ? '${existing!.capacity}' : '',
     );
     _departureStart = existing?.departureStart;
     _flagClosesAt = existing?.flagClosesAt;
+    if (_seatOptionId.isNotEmpty) {
+      for (final option in existing?.options ?? const <ShopProductOption>[]) {
+        if (option.id == _seatOptionId) {
+          _seatCapacity.text = option.capacity > 0 ? '${option.capacity}' : '';
+          _departureStart = option.departureStart;
+          _flagClosesAt = option.flagClosesAt;
+        }
+      }
+    }
     _customResort = TextEditingController(text: shop?.name ?? '');
     _customLocation = TextEditingController(text: shop?.location ?? '');
     _customCountry = TextEditingController(text: shop?.country ?? '');
@@ -208,6 +224,25 @@ class _TravelProductRegistrationScreenState
       option.dispose();
     }
     super.dispose();
+  }
+
+  ShopProductOption _withSeatOption(ShopProductOption option) {
+    ShopProductOption? previous;
+    for (final item in widget.existing?.options ?? const <ShopProductOption>[]) {
+      if (item.id == option.id) {
+        previous = item;
+      }
+    }
+    final chosen = _openEmptySeats && option.id == _seatOptionId;
+    return option.copyWith(
+      openEmptySeats: chosen,
+      capacity: chosen ? (int.tryParse(_seatCapacity.text) ?? 0) : 0,
+      bookedSeats: previous?.bookedSeats ?? 0,
+      flagHolds: previous?.flagHolds ?? const [],
+      departureStart: chosen ? _departureStart : null,
+      flagClosesAt: chosen ? (_flagClosesAt ?? _departureStart) : null,
+      clearDates: !chosen,
+    );
   }
 
   Future<void> _pickSeatDay({required bool isFlag}) async {
@@ -369,15 +404,19 @@ class _TravelProductRegistrationScreenState
           minGuests: int.tryParse(_minGuests.text) ?? 0,
           maxGuests: int.tryParse(_maxGuests.text) ?? 0,
           cancellationNote: _cancelNote.text.trim(),
-          openEmptySeats: _openEmptySeats,
-          capacity: _openEmptySeats
+          openEmptySeats: _openEmptySeats && _seatOptionId.isEmpty,
+          capacity: _openEmptySeats && _seatOptionId.isEmpty
               ? (int.tryParse(_seatCapacity.text) ?? 0)
               : 0,
-          departureStart: _openEmptySeats ? _departureStart : null,
-          flagClosesAt: _openEmptySeats
+          departureStart: _openEmptySeats && _seatOptionId.isEmpty
+              ? _departureStart
+              : null,
+          flagClosesAt: _openEmptySeats && _seatOptionId.isEmpty
               ? (_flagClosesAt ?? _departureStart)
               : null,
-          options: options,
+          options: [
+            for (final option in options) _withSeatOption(option),
+          ],
           // New products stay Explore-only until admin home curation.
           listingKind:
               widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
@@ -1014,6 +1053,28 @@ class _TravelProductRegistrationScreenState
                   onChanged: (value) => setState(() => _openEmptySeats = value),
                 ),
                 if (_openEmptySeats) ...[
+                  DropdownButtonFormField<String>(
+                    initialValue: _seatOptionId,
+                    decoration: InputDecoration(
+                      labelText: l10n.workbenchSeatOption,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(l10n.workbenchSeatBase),
+                      ),
+                      for (final draft in _options)
+                        if (draft.name.text.trim().isNotEmpty)
+                          DropdownMenuItem(
+                            value: draft.id,
+                            child: Text(draft.name.text.trim()),
+                          ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _seatOptionId = value ?? ''),
+                  ),
                   TextField(
                     controller: _seatCapacity,
                     keyboardType: TextInputType.number,

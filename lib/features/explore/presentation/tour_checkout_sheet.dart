@@ -17,6 +17,7 @@ Future<void> showTourCheckoutSheet({
   required DiveShop shop,
   required TourPriceQuote quote,
   ShopProduct? product,
+  String lockedOptionId = '',
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -30,6 +31,7 @@ Future<void> showTourCheckoutSheet({
       shop: shop,
       quote: quote,
       product: product,
+      lockedOptionId: lockedOptionId,
     ),
   );
 }
@@ -40,11 +42,13 @@ class TourCheckoutSheet extends StatefulWidget {
     required this.shop,
     required this.quote,
     this.product,
+    this.lockedOptionId = '',
   });
 
   final DiveShop shop;
   final TourPriceQuote quote;
   final ShopProduct? product;
+  final String lockedOptionId;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -92,6 +96,29 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (start != null) {
       _tourDate = start;
     }
+    final locked = widget.lockedOptionId;
+    final product = widget.product;
+    if (locked.isEmpty || product == null) {
+      return;
+    }
+    ShopProductOption? option;
+    for (final item in product.options) {
+      if (item.id == locked) {
+        option = item;
+      }
+    }
+    if (option == null) {
+      return;
+    }
+    if (option.kind == ProductOptionKind.individual) {
+      _bookPackage = false;
+      _selected
+        ..clear()
+        ..add(option.id);
+    } else {
+      _bookPackage = true;
+      _selected.add(option.id);
+    }
   }
 
   Future<void> _pickDate() async {
@@ -116,12 +143,29 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final formatted = _priceFormat.format(amount);
     final product = widget.product;
     final party = _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
+    final seatOption = widget.lockedOptionId;
+    final opensSeats = product != null &&
+        (seatOption.isNotEmpty || product.openEmptySeats);
+    if (opensSeats) {
+      final room = product.bookableSeatsFor(
+        DiverStoreScope.of(context).uid ?? '',
+        DateTime.now(),
+        optionId: seatOption,
+      );
+      if (party > room) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.communitySeatsShort)),
+        );
+        return;
+      }
+    }
     await DiverStoreScope.of(context).createBooking(
       shop: widget.shop,
       price: amount,
       tourDate: _tourDate,
       productId: product?.id,
-      partySize: product != null && product.openEmptySeats ? party : 0,
+      partySize: opensSeats ? party : 0,
+      optionId: seatOption,
     );
     if (!mounted) {
       return;
@@ -541,7 +585,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           contentPadding: EdgeInsets.zero,
           value: _bookPackage,
           title: Text('${l10n.checkoutPackageOn} · ${product.name}'),
-          onChanged: (value) {
+          onChanged: widget.lockedOptionId.isEmpty
+              ? (value) {
             setState(() {
               _bookPackage = value ?? true;
               if (_bookPackage) {
@@ -566,15 +611,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                 });
               }
             });
-          },
+          }
+              : null,
         ),
         for (final option in addons)
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: _selected.contains(option.id),
             title: Text(option.name),
-            enabled: _bookPackage,
-            onChanged: !_bookPackage
+            enabled: _bookPackage && widget.lockedOptionId != option.id,
+            onChanged: !_bookPackage || widget.lockedOptionId == option.id
                 ? null
                 : (value) {
                     setState(() {
@@ -591,8 +637,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             contentPadding: EdgeInsets.zero,
             value: _selected.contains(option.id),
             title: Text(option.name),
-            enabled: !_bookPackage,
-            onChanged: _bookPackage
+            enabled: !_bookPackage && widget.lockedOptionId.isEmpty,
+            onChanged: _bookPackage || widget.lockedOptionId.isNotEmpty
                 ? null
                 : (value) {
                     setState(() {

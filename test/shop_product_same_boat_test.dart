@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
@@ -99,6 +100,49 @@ void main() {
       open.capturePayment(0, later).bookedSeats,
       0,
     );
+  });
+
+  test('the same member cannot hold a second flag on one option', () {
+    final now = DateTime(2026, 10, 19, 9);
+    final cabin = ShopProductOption(
+      id: 'cabin',
+      name: 'Deluxe',
+      description: 'Upper deck',
+      openEmptySeats: true,
+      capacity: 3,
+      departureStart: DateTime(2026, 11, 1),
+    );
+    final product = ShopProduct(
+      id: 'p',
+      shopId: 's',
+      name: 'Liveaboard',
+      consumerPrice: 1,
+      professionalPrice: 1,
+      options: [cabin],
+    );
+    final once = product.plantFlag(
+      partySize: 1,
+      now: now,
+      uid: 'diver-a',
+      optionId: 'cabin',
+    );
+    final twice = once.plantFlag(
+      partySize: 1,
+      now: now,
+      uid: 'diver-a',
+      optionId: 'cabin',
+    );
+    expect(twice.options.single.flagHolds.single.seats, 1);
+    expect(twice.memberHasLiveFlag('diver-a', now, optionId: 'cabin'), isTrue);
+    final other = twice.plantFlag(
+      partySize: 1,
+      now: now,
+      uid: 'diver-b',
+      optionId: 'cabin',
+    );
+    expect(other.options.single.flagHolds.length, 2);
+    final offers = SameBoatBoard.offers([product]);
+    expect(offers.single.optionName, 'Deluxe');
   });
 
   test('personal flag deadline is the sooner of 24 hours and the boat close', () {

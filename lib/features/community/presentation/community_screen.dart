@@ -37,16 +37,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
           _TideFilter.lastCall => SameBoatFilter.lastCall,
           _TideFilter.departing => SameBoatFilter.departing,
         };
-        final products = store.sameBoatProducts(filter, now: now);
-        final all = store.sameBoatProducts(SameBoatFilter.all, now: now);
-        final lastCallCount = SameBoatBoard.filtered(
-          all,
-          SameBoatFilter.lastCall,
-          now,
-        ).length;
+        final offers = store.sameBoatOffers(filter, now: now);
+        final all = store.sameBoatOffers(SameBoatFilter.all, now: now);
+        final lastCallCount = store
+            .sameBoatOffers(SameBoatFilter.lastCall, now: now)
+            .length;
         final openSeats = all.fold<int>(
           0,
-          (sum, product) => sum + product.remainingSeats,
+          (sum, offer) => sum + offer.remainingSeatsAt(now),
         );
 
         return Scaffold(
@@ -85,7 +83,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
-                if (products.isEmpty)
+                if (offers.isEmpty)
                   AppCard(
                     child: Text(
                       l10n.communityEmpty,
@@ -93,11 +91,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   )
                 else
-                  for (final product in products) ...[
+                  for (final offer in offers) ...[
                     _SeatCard(
-                      product: product,
-                      shopName: store.shopLabelFor(product.shopId),
-                      onTake: () => _takeSeat(context, store, product),
+                      offer: offer,
+                      shopName: store.shopLabelFor(offer.product.shopId),
+                      onTake: () => _takeSeat(context, store, offer),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -117,12 +115,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
   Future<void> _takeSeat(
     BuildContext context,
     DiverStore store,
-    ShopProduct product,
+    SameBoatOffer offer,
   ) async {
     final l10n = AppLocalizations.of(context);
+    final product = offer.product;
+    if (store.uid == null || store.uid!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communityNeedSignIn)),
+      );
+      return;
+    }
     final until = ShopProduct.personalFlagUntil(
       DateTime.now(),
-      product.flagClosesAt,
+      offer.flagClosesAt,
     );
     final deadline = DateFormat('M.d HH:mm').format(until);
     final plant = await showDialog<bool>(
@@ -146,11 +151,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (plant != true || !context.mounted) {
       return;
     }
-    await store.plantSeatFlag(
+    final planted = await store.plantSeatFlag(
       shopId: product.shopId,
       productId: product.id,
       partySize: 1,
+      optionId: offer.optionId,
     );
+    if (!context.mounted) {
+      return;
+    }
+    if (planted == SeatFlagPlant.alreadyHeld) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communityFlagAlready)),
+      );
+    }
+    if (planted == SeatFlagPlant.unavailable) {
+      return;
+    }
     if (!context.mounted) {
       return;
     }
@@ -166,6 +183,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         isProfessional: false,
       ),
       product: product,
+      lockedOptionId: offer.optionId,
     );
   }
 }
@@ -193,25 +211,26 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
 
 class _SeatCard extends StatelessWidget {
   const _SeatCard({
-    required this.product,
+    required this.offer,
     required this.shopName,
     required this.onTake,
   });
 
-  final ShopProduct product;
+  final SameBoatOffer offer;
   final String shopName;
   final VoidCallback onTake;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final departure = product.departureStart;
-    final flag = product.flagClosesAt;
+    final product = offer.product;
+    final departure = offer.departureStart;
+    final flag = offer.flagClosesAt;
     final title = shopName.isEmpty ? product.name : shopName;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        key: Key('same-boat-${product.id}'),
+        key: Key('same-boat-${product.id}-${offer.optionId}'),
         onTap: onTake,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
@@ -238,11 +257,37 @@ class _SeatCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  product.name,
-                  maxLines: 1,
+                  offer.optionName.isEmpty
+                      ? product.name
+                      : '${product.name} / ${offer.optionName}',
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (product.detail.isNotEmpty ||
+                    product.blurb.isNotEmpty ||
+                    offer.optionDescription.isNotEmpty)
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(l10n.communityOfferDetail),
+                    children: [
+                      if (product.blurb.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(product.blurb),
+                        ),
+                      if (product.detail.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(product.detail),
+                        ),
+                      if (offer.optionDescription.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(offer.optionDescription),
+                        ),
+                    ],
+                  ),
                 const SizedBox(height: 12),
                 _DateLine(
                   departure: departure,
@@ -252,7 +297,11 @@ class _SeatCard extends StatelessWidget {
                   departureLabel: l10n.workbenchDepartureDate,
                 ),
                 const SizedBox(height: 14),
-                _SeatMeter(product: product),
+                _SeatMeter(
+                  capacity: offer.capacity,
+                  paid: offer.bookedSeats,
+                  held: offer.flaggedSeatsAt(DateTime.now()),
+                ),
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
@@ -355,29 +404,34 @@ class _DateLine extends StatelessWidget {
 }
 
 class _SeatMeter extends StatelessWidget {
-  const _SeatMeter({required this.product});
+  const _SeatMeter({
+    required this.capacity,
+    required this.paid,
+    required this.held,
+  });
 
-  final ShopProduct product;
+  final int capacity;
+  final int paid;
+  final int held;
 
   @override
   Widget build(BuildContext context) {
-    final capacity = product.capacity;
     if (capacity <= 0) {
       return const SizedBox.shrink();
     }
-    final paid = product.bookedSeats.clamp(0, capacity).toInt();
-    final held = product.flaggedSeats.clamp(0, capacity - paid).toInt();
+    final paidSeats = paid.clamp(0, capacity).toInt();
+    final heldSeats = held.clamp(0, capacity - paidSeats).toInt();
     Color tone(int index) {
-      if (index < paid) {
+      if (index < paidSeats) {
         return AppTheme.navy;
       }
-      if (index < paid + held) {
+      if (index < paidSeats + heldSeats) {
         return const Color(0xFFE8A54B);
       }
       return const Color(0xFFE4E7EB);
     }
     final l10n = AppLocalizations.of(context);
-    final open = capacity - paid - held;
+    final open = capacity - paidSeats - heldSeats;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -398,7 +452,7 @@ class _SeatMeter extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${l10n.communitySeatPaid(paid)} · ${l10n.communitySeatHeld(held)} · ${l10n.communitySeatOpen(open)}',
+          '${l10n.communitySeatPaid(paidSeats)} · ${l10n.communitySeatHeld(heldSeats)} · ${l10n.communitySeatOpen(open)}',
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,

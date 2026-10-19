@@ -548,6 +548,7 @@ class FirestoreDiverRepository implements DiverRepository {
     DateTime? tourDate,
     String? productId,
     int partySize = 0,
+    String optionId = '',
   }) async {
     final id = _bookings(uid).doc().id;
     final booking = TourBooking(
@@ -565,14 +566,22 @@ class FirestoreDiverRepository implements DiverRepository {
     payload['created_at'] = FieldValue.serverTimestamp();
     await _bookings(uid).doc(id).set(payload);
     await _shopBookings(booking.shopId).doc(id).set(payload);
-    await _holdOpenSeats(booking.shopId, productId, partySize);
+    await _holdOpenSeats(
+      booking.shopId,
+      productId,
+      partySize,
+      optionId: optionId,
+      uid: uid,
+    );
   }
 
   Future<void> _holdOpenSeats(
     String shopId,
     String? productId,
-    int partySize,
-  ) async {
+    int partySize, {
+    String optionId = '',
+    String uid = '',
+  }) async {
     if (productId == null || productId.isEmpty || partySize <= 0) {
       return;
     }
@@ -582,7 +591,12 @@ class FirestoreDiverRepository implements DiverRepository {
     final next = [
       for (final item in current)
         if (item.id == productId)
-          item.capturePayment(partySize, DateTime.now())
+          item.capturePayment(
+            partySize,
+            DateTime.now(),
+            uid: uid,
+            optionId: optionId,
+          )
         else
           item,
     ];
@@ -597,6 +611,8 @@ class FirestoreDiverRepository implements DiverRepository {
     required String productId,
     required int partySize,
     required DateTime now,
+    String optionId = '',
+    String uid = '',
   }) async {
     final hull = shopId.split('--').first;
     final ref = _shops.doc(hull);
@@ -605,7 +621,12 @@ class FirestoreDiverRepository implements DiverRepository {
     final next = [
       for (final item in current)
         if (item.id == productId)
-          item.plantFlag(partySize: partySize, now: now)
+          item.plantFlag(
+            partySize: partySize,
+            now: now,
+            optionId: optionId,
+            uid: uid,
+          )
         else
           item,
     ];

@@ -3096,6 +3096,42 @@ abstract class AppLocalizations {
   /// **'오늘'**
   String get communityDateToday;
 
+  /// No description provided for @communityNeedSignIn.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발을 꽂으려면 로그인하세요.'**
+  String get communityNeedSignIn;
+
+  /// No description provided for @communityFlagAlready.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 이 자리를 가확정했습니다.'**
+  String get communityFlagAlready;
+
+  /// No description provided for @communitySeatsShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 옵션의 남은 자리가 부족합니다.'**
+  String get communitySeatsShort;
+
+  /// No description provided for @communityOfferDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 자리 내용'**
+  String get communityOfferDetail;
+
+  /// No description provided for @workbenchSeatOption.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리를 열 옵션'**
+  String get workbenchSeatOption;
+
+  /// No description provided for @workbenchSeatBase.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 상품'**
+  String get workbenchSeatBase;
+
   /// No description provided for @communitySeatsLeft.
   ///
   /// In ko, this message translates to:

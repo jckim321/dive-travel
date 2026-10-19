@@ -171,6 +171,7 @@ abstract class DiverRepository {
     DateTime? tourDate,
     String? productId,
     int partySize = 0,
+    String optionId = '',
   });
 
   Future<void> plantSeatFlag({
@@ -178,6 +179,8 @@ abstract class DiverRepository {
     required String productId,
     required int partySize,
     required DateTime now,
+    String optionId = '',
+    String uid = '',
   });
 
   Future<void> cancelBookingAsGuest({

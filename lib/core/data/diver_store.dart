@@ -99,7 +99,7 @@ class DiverStore extends ChangeNotifier {
       if (!post.hidden) post,
   ];
 
-  List<ShopProduct> sameBoatProducts(
+  List<SameBoatOffer> sameBoatOffers(
     SameBoatFilter filter, {
     DateTime? now,
   }) {
@@ -107,7 +107,7 @@ class DiverStore extends ChangeNotifier {
       for (final stats in _shopStats)
         for (final product in stats.products) product,
     ];
-    return SameBoatBoard.filtered(all, filter, now ?? DateTime.now());
+    return SameBoatBoard.filteredOffers(all, filter, now ?? DateTime.now());
   }
 
   String shopLabelFor(String shopId) {
@@ -537,6 +537,7 @@ class DiverStore extends ChangeNotifier {
     DateTime? tourDate,
     String? productId,
     int partySize = 0,
+    String optionId = '',
   }) async {
     final uid = _uid;
     if (uid == null) {
@@ -551,33 +552,44 @@ class DiverStore extends ChangeNotifier {
       tourDate: tourDate,
       productId: productId,
       partySize: partySize,
+      optionId: optionId,
     );
   }
 
-  Future<DateTime?> plantSeatFlag({
+  Future<SeatFlagPlant> plantSeatFlag({
     required String shopId,
     required String productId,
     required int partySize,
+    String optionId = '',
   }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return SeatFlagPlant.unavailable;
+    }
     final now = DateTime.now();
+    ShopProduct? current;
+    for (final stats in _shopStats) {
+      for (final item in stats.products) {
+        if (item.id == productId) {
+          current = item;
+        }
+      }
+    }
+    if (current == null) {
+      return SeatFlagPlant.unavailable;
+    }
+    if (current.memberHasLiveFlag(uid, now, optionId: optionId)) {
+      return SeatFlagPlant.alreadyHeld;
+    }
     await _repository.plantSeatFlag(
       shopId: shopId.split('--').first,
       productId: productId,
       partySize: partySize,
       now: now,
+      optionId: optionId,
+      uid: uid,
     );
-    ShopProduct? product;
-    for (final stats in _shopStats) {
-      for (final item in stats.products) {
-        if (item.id == productId) {
-          product = item;
-        }
-      }
-    }
-    if (product == null || !product.openEmptySeats) {
-      return null;
-    }
-    return ShopProduct.personalFlagUntil(now, product.flagClosesAt);
+    return SeatFlagPlant.planted;
   }
 
   Future<void> submitOperationReview({

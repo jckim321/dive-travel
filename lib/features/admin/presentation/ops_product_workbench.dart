@@ -112,6 +112,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewNondiver = 0;
   var _previewChild = 0;
   var _openEmptySeats = false;
+  var _seatOptionId = '';
   late final TextEditingController _capacity;
   DateTime? _departureStart;
   DateTime? _flagClosesAt;
@@ -138,11 +139,26 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       text: (existing?.focFreeCount ?? 0) > 0 ? '${existing!.focFreeCount}' : '',
     );
     _openEmptySeats = existing?.openEmptySeats ?? false;
+    for (final option in existing?.options ?? const <ShopProductOption>[]) {
+      if (option.openEmptySeats) {
+        _openEmptySeats = true;
+        _seatOptionId = option.id;
+      }
+    }
     _capacity = TextEditingController(
       text: (existing?.capacity ?? 0) > 0 ? '${existing!.capacity}' : '',
     );
     _departureStart = existing?.departureStart;
     _flagClosesAt = existing?.flagClosesAt;
+    if (_seatOptionId.isNotEmpty) {
+      for (final option in existing?.options ?? const <ShopProductOption>[]) {
+        if (option.id == _seatOptionId) {
+          _capacity.text = option.capacity > 0 ? '${option.capacity}' : '';
+          _departureStart = option.departureStart;
+          _flagClosesAt = option.flagClosesAt;
+        }
+      }
+    }
     for (final role in GuestRole.values) {
       GuestRate? found;
       for (final rate in existing?.guestRates ?? const <GuestRate>[]) {
@@ -227,6 +243,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       day.dispose();
     }
     super.dispose();
+  }
+
+  ShopProductOption _withSeatOption(ShopProductOption option) {
+    ShopProductOption? previous;
+    for (final item in widget.existing?.options ?? const <ShopProductOption>[]) {
+      if (item.id == option.id) {
+        previous = item;
+      }
+    }
+    final chosen = _openEmptySeats && option.id == _seatOptionId;
+    return option.copyWith(
+      openEmptySeats: chosen,
+      capacity: chosen ? (int.tryParse(_capacity.text) ?? 0) : 0,
+      bookedSeats: previous?.bookedSeats ?? 0,
+      flagHolds: previous?.flagHolds ?? const [],
+      departureStart: chosen ? _departureStart : null,
+      flagClosesAt: chosen ? (_flagClosesAt ?? _departureStart) : null,
+      clearDates: !chosen,
+    );
   }
 
   List<DiveShop> get _shopsForContinent {
@@ -328,13 +363,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           guestRates: guestRates,
           focPayCount: int.tryParse(_focPay.text) ?? 0,
           focFreeCount: int.tryParse(_focFree.text) ?? 0,
-          openEmptySeats: _openEmptySeats,
-          capacity: _openEmptySeats ? (int.tryParse(_capacity.text) ?? 0) : 0,
-          departureStart: _openEmptySeats ? _departureStart : null,
-          flagClosesAt: _openEmptySeats
+          openEmptySeats: _openEmptySeats && _seatOptionId.isEmpty,
+          capacity: _openEmptySeats && _seatOptionId.isEmpty
+              ? (int.tryParse(_capacity.text) ?? 0)
+              : 0,
+          departureStart:
+              _openEmptySeats && _seatOptionId.isEmpty ? _departureStart : null,
+          flagClosesAt: _openEmptySeats && _seatOptionId.isEmpty
               ? (_flagClosesAt ?? _departureStart)
               : null,
-          options: options,
+          options: [
+            for (final option in options) _withSeatOption(option),
+          ],
           listingKind:
               widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
           featuredAt: widget.existing?.featuredAt,
@@ -679,6 +719,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           onChanged: (value) => setState(() => _openEmptySeats = value),
         ),
         if (_openEmptySeats) ...[
+          DropdownButtonFormField<String>(
+            initialValue: _seatOptionId,
+            decoration: InputDecoration(
+              labelText: l10n.workbenchSeatOption,
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(l10n.workbenchSeatBase),
+              ),
+              for (final draft in [..._addons, ..._individuals])
+                if (draft.name.text.trim().isNotEmpty)
+                  DropdownMenuItem(
+                    value: draft.id,
+                    child: Text(draft.name.text.trim()),
+                  ),
+            ],
+            onChanged: (value) => setState(() => _seatOptionId = value ?? ''),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _capacity,
             keyboardType: TextInputType.number,

@@ -362,6 +362,7 @@ class MemoryDiverRepository implements DiverRepository {
     DateTime? tourDate,
     String? productId,
     int partySize = 0,
+    String optionId = '',
   }) async {
     _bookingSequence += 1;
     final booking = TourBooking(
@@ -380,10 +381,22 @@ class MemoryDiverRepository implements DiverRepository {
     _shopBookingController.add(
       List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
     );
-    _holdOpenSeats(booking.shopId, productId, partySize);
+    _holdOpenSeats(
+      booking.shopId,
+      productId,
+      partySize,
+      optionId: optionId,
+      uid: uid,
+    );
   }
 
-  void _holdOpenSeats(String shopId, String? productId, int partySize) {
+  void _holdOpenSeats(
+    String shopId,
+    String? productId,
+    int partySize, {
+    String optionId = '',
+    String uid = '',
+  }) {
     if (productId == null || productId.isEmpty || partySize <= 0) {
       return;
     }
@@ -394,7 +407,12 @@ class MemoryDiverRepository implements DiverRepository {
     final products = [
       for (final item in current.products)
         if (item.id == productId)
-          item.capturePayment(partySize, DateTime.now())
+          item.capturePayment(
+            partySize,
+            DateTime.now(),
+            uid: uid,
+            optionId: optionId,
+          )
         else
           item,
     ];
@@ -408,6 +426,8 @@ class MemoryDiverRepository implements DiverRepository {
     required String productId,
     required int partySize,
     required DateTime now,
+    String optionId = '',
+    String uid = '',
   }) async {
     final hull = shopId.split('--').first;
     final current = _shopStats[hull];
@@ -418,7 +438,12 @@ class MemoryDiverRepository implements DiverRepository {
       products: [
         for (final item in current.products)
           if (item.id == productId)
-            item.plantFlag(partySize: partySize, now: now)
+            item.plantFlag(
+              partySize: partySize,
+              now: now,
+              optionId: optionId,
+              uid: uid,
+            )
           else
             item,
       ],
