@@ -1504,6 +1504,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityPlantFlag => 'Plant a flag';
 
   @override
+  String get communityFlagOneSeat =>
+      'A flag holds one seat. Companions are chosen at payment.';
+
+  @override
   String get communityPlantFlagAsk =>
       'Put this booking on Same Tide so friends or a club can join?';
 

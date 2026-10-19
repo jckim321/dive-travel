@@ -2808,6 +2808,12 @@ abstract class AppLocalizations {
   /// **'깃발 꽂기'**
   String get communityPlantFlag;
 
+  /// No description provided for @communityFlagOneSeat.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발은 1자리입니다. 동행은 결제에서 고릅니다.'**
+  String get communityFlagOneSeat;
+
   /// No description provided for @communityPlantFlagAsk.
   ///
   /// In ko, this message translates to:

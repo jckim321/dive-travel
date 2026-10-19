@@ -1484,6 +1484,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get communityPlantFlag => '깃발 꽂기';
 
   @override
+  String get communityFlagOneSeat => '깃발은 1자리입니다. 동행은 결제에서 고릅니다.';
+
+  @override
   String get communityPlantFlagAsk => '이 예약을 같은배에 올려 지인이나 동호회가 조인하게 할까요?';
 
   @override

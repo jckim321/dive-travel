@@ -91,11 +91,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   )
                 else
-                  for (final offer in offers) ...[
+                  for (var i = 0; i < offers.length; i++) ...[
                     _SeatCard(
-                      offer: offer,
-                      shopName: store.shopLabelFor(offer.product.shopId),
-                      onTake: () => _takeSeat(context, store, offer),
+                      offer: offers[i],
+                      plate: i,
+                      shopName: store.shopLabelFor(offers[i].product.shopId),
+                      onTake: () => _takeSeat(context, store, offers[i]),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -212,13 +213,22 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
 class _SeatCard extends StatelessWidget {
   const _SeatCard({
     required this.offer,
+    required this.plate,
     required this.shopName,
     required this.onTake,
   });
 
   final SameBoatOffer offer;
+  final int plate;
   final String shopName;
   final VoidCallback onTake;
+
+  static const _plates = [
+    (fill: Color(0xFFF7F6F4), edge: Color(0xFFC5C1BA)),
+    (fill: Color(0xFFF3F5F7), edge: Color(0xFFB7C0C8)),
+    (fill: Color(0xFFF4F2EE), edge: Color(0xFFC4BDB4)),
+    (fill: Color(0xFFF6F4EF), edge: Color(0xFFC9C2B4)),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +237,7 @@ class _SeatCard extends StatelessWidget {
     final departure = offer.departureStart;
     final flag = offer.flagClosesAt;
     final title = shopName.isEmpty ? product.name : shopName;
+    final metal = _plates[plate % _plates.length];
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -235,12 +246,19 @@ class _SeatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: Ink(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: metal.fill,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFFE8EBEE)),
             boxShadow: AppTheme.cardShadow,
           ),
-          child: Padding(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 4, color: metal.edge),
+                Expanded(
+                  child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,13 +275,32 @@ class _SeatCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  offer.optionName.isEmpty
-                      ? product.name
-                      : '${product.name} / ${offer.optionName}',
+                  product.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (offer.optionName.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: metal.edge.withValues(alpha: 0.28),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      offer.optionName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.navy,
+                      ),
+                    ),
+                  ),
+                ],
                 if (product.detail.isNotEmpty ||
                     product.blurb.isNotEmpty ||
                     offer.optionDescription.isNotEmpty)
@@ -302,12 +339,25 @@ class _SeatCard extends StatelessWidget {
                   paid: offer.bookedSeats,
                   held: offer.flaggedSeatsAt(DateTime.now()),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.communityFlagOneSeat,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.muted,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
                   child: FilledButton(
                     onPressed: onTake,
                     child: Text(l10n.communityPlantFlag),
+                  ),
+                ),
+              ],
+            ),
                   ),
                 ),
               ],
