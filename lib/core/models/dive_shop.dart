@@ -71,6 +71,15 @@ class DiveShop {
     return cut < 0 ? id : id.substring(0, cut);
   }
 
+  /// Listing cards encode the live product as `{hullId}--{productId}`.
+  String? get listingProductId {
+    final cut = id.indexOf('--');
+    if (cut < 0 || cut + 2 >= id.length) {
+      return null;
+    }
+    return id.substring(cut + 2);
+  }
+
   DiveShop copyWith({
     String? id,
     String? name,

@@ -159,6 +159,7 @@
   "explorePerTrip": " / trip",
   "exploreCheckoutTitle": "Checkout",
   "exploreCheckoutBody": "{shop} · {product}",
+  "exploreBookingNotSaved": "The booking was not saved because the seats could not be held. Check the open seats and try again.",
   "exploreCheckoutDone": "Seat request sent for {label} {price}.",
   "exploreConsumerPayHint": "This is the shop's listed guest price.",
   "exploreNoResults": "No shops match that search.",
@@ -328,6 +329,20 @@
       "count": { "type": "int" }
     }
   },
+  "adminSalesTitle": "Sales this month",
+  "adminSalesTotal": "Total {amount} KRW",
+  "@adminSalesTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "adminSalesExplore": "Regular trips",
+  "adminSalesFlag": "Flag holds",
+  "adminSalesDiverPlanned": "Diver-crafted",
+  "adminSalesCurated": "Curated specials",
+  "adminSalesDiveStar": "Dive Star",
+  "adminSalesHotSpot": "Hot spots",
+  "adminSalesNextDeparture": "Last call",
   "adminAttentionTitle": "Needs attention",
   "adminAttentionClear": "No urgent items in the queue.",
   "adminAttentionCertify": "{count} instructor cards awaiting approval",
@@ -741,5 +756,23 @@
   "checkoutPackageOn": "Base package",
   "checkoutTotal": "Total {amount} won",
   "checkoutFocLine": "FOC {pay}+{free} · {count} complimentary divers",
+  "checkoutGuestsBelowMin": "At least {min} guests are required for this trip.",
+  "@checkoutGuestsBelowMin": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+  "checkoutGuestsAboveMax": "This trip allows up to {max} guests.",
+  "@checkoutGuestsAboveMax": {
+    "placeholders": { "max": { "type": "int" } }
+  },
+  "checkoutSignInRequired": "Sign in to complete this booking.",
+  "bookingPartySummary": "{diver} diver · {nondiver} non-diver · {child} child · {infant} infant",
+  "@bookingPartySummary": {
+    "placeholders": {
+      "diver": { "type": "int" },
+      "nondiver": { "type": "int" },
+      "child": { "type": "int" },
+      "infant": { "type": "int" }
+    }
+  },
   "refundPolicyHint": "Cancel now for a {percent}% refund"
 }

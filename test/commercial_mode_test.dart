@@ -5,7 +5,9 @@ import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -41,6 +43,71 @@ void main() {
     expect(bookings.first.status, BookingStatus.weatherCancelled);
     expect(bookings.first.refundPercent, 100);
     expect(bookings.first.paymentStatus, 'refunded');
+  });
+
+  test('자리가 부족하면 결제 완료 예약을 만들지 않는다', () async {
+    final repo = MemoryDiverRepository.forTest();
+    const shopId = AppConstants.defaultPartnerShopId;
+    const product = ShopProduct(
+      id: 'seat-1',
+      shopId: shopId,
+      name: '2탱크',
+      consumerPrice: 180000,
+      professionalPrice: 126000,
+      openEmptySeats: true,
+      capacity: 1,
+      listingKind: ProductListingKind.diverPlanned,
+      publishStatus: ProductPublishStatus.approved,
+    );
+    await repo.saveShopProduct(shopId: shopId, product: product);
+
+    final blocked = await repo.createBooking(
+      uid: 'test-user',
+      shopId: shopId,
+      shopName: '보홀',
+      productName: product.name,
+      price: 180000,
+      productId: product.id,
+      partySize: 2,
+      optionId: 'pkg',
+      listingKind: ProductListingKind.diverPlanned,
+    );
+    expect(blocked, isFalse);
+    expect(await repo.watchBookings('test-user').first, isEmpty);
+
+    final saved = await repo.createBooking(
+      uid: 'test-user',
+      shopId: shopId,
+      shopName: '보홀',
+      productName: product.name,
+      price: 126000,
+      productId: product.id,
+      partySize: 1,
+      optionId: 'pkg',
+      seatOptionId: '',
+      listingKind: ProductListingKind.diverPlanned,
+      fromFlag: true,
+      divers: 1,
+      nondivers: 0,
+      children: 0,
+      infants: 0,
+      quoteLines: const [
+        BookingLine(label: '2탱크', amount: 126000),
+      ],
+    );
+    expect(saved, isTrue);
+    final bookings = await repo.watchBookings('test-user').first;
+    expect(bookings, hasLength(1));
+    expect(bookings.first.productId, product.id);
+    expect(bookings.first.optionId, 'pkg');
+    expect(bookings.first.listingKind, ProductListingKind.diverPlanned);
+    expect(bookings.first.fromFlag, isTrue);
+    expect(bookings.first.salesKind, 'flag');
+    expect(bookings.first.partySize, 1);
+    expect(bookings.first.divers, 1);
+    expect(bookings.first.hasPartyDetail, isTrue);
+    expect(bookings.first.quoteLines, hasLength(1));
+    expect(bookings.first.quoteLines.first.amount, 126000);
   });
 
   testWidgets('마이페이지에서 파트너 모드로 들어간다', (tester) async {

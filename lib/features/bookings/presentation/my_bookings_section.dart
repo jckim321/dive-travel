@@ -54,7 +54,9 @@ class MyBookingsSection extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${booking.productName}\n${_bookingStatus(l10n, booking)}',
+                          '${booking.productName}\n'
+                          '${_partyLine(l10n, booking)}'
+                          '${_bookingStatus(l10n, booking)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -92,6 +94,21 @@ class MyBookingsSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _partyLine(AppLocalizations l10n, TourBooking booking) {
+    if (!booking.hasPartyDetail && booking.partySize <= 0) {
+      return '';
+    }
+    if (booking.hasPartyDetail) {
+      return '${l10n.bookingPartySummary(
+        booking.divers,
+        booking.nondivers,
+        booking.children,
+        booking.infants,
+      )}\n';
+    }
+    return '${l10n.checkoutGuests} ${booking.partySize}\n';
   }
 
   String _bookingStatus(AppLocalizations l10n, TourBooking booking) {

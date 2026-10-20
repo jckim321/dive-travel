@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
@@ -191,6 +192,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           shopCount: store.shops.length,
           pendingProducts: pendingProducts,
           members: store.members,
+          salesByKind: store.salesThisMonthByKind(),
         );
       case _AdminHub.members:
         return const AdminMembersScreen(embedded: true);
@@ -440,6 +442,7 @@ class _OverviewPane extends StatelessWidget {
     required this.shopCount,
     required this.pendingProducts,
     required this.members,
+    required this.salesByKind,
   });
 
   final void Function(_AdminHub hub, {Object? sub}) onJump;
@@ -451,6 +454,7 @@ class _OverviewPane extends StatelessWidget {
   final int shopCount;
   final int pendingProducts;
   final List<MemberAccount> members;
+  final Map<String, int> salesByKind;
 
   @override
   Widget build(BuildContext context) {
@@ -519,6 +523,8 @@ class _OverviewPane extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        _SalesByKindCard(salesByKind: salesByKind),
         const SizedBox(height: 20),
         _SectionHeader(
           icon: Icons.bolt_outlined,
@@ -608,6 +614,78 @@ class _OverviewPane extends StatelessWidget {
           onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.monitor),
         ),
       ],
+    );
+  }
+}
+
+class _SalesByKindCard extends StatelessWidget {
+  const _SalesByKindCard({required this.salesByKind});
+
+  final Map<String, int> salesByKind;
+
+  static final _money = NumberFormat('#,###', 'en_US');
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final won = Localizations.localeOf(context).languageCode == 'ko';
+    var total = 0;
+    for (final amount in salesByKind.values) {
+      total += amount;
+    }
+    final rows = <(String, String)>[
+      ('explore_only', l10n.adminSalesExplore),
+      ('flag', l10n.adminSalesFlag),
+      ('diver_planned', l10n.adminSalesDiverPlanned),
+      ('curated', l10n.adminSalesCurated),
+      ('dive_star', l10n.adminSalesDiveStar),
+      ('hot_spot', l10n.adminSalesHotSpot),
+      ('next_departure', l10n.adminSalesNextDeparture),
+    ];
+    return Material(
+      color: AdminConsoleTheme.surfaceHigh,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AdminConsoleTheme.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.adminSalesTitle,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.adminSalesTotal(_money.format(total)),
+              style: const TextStyle(
+                color: AdminConsoleTheme.aqua,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final (kind, label) in rows)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(label)),
+                    Text(
+                      won
+                          ? '${_money.format(salesByKind[kind] ?? 0)}원'
+                          : '${_money.format(salesByKind[kind] ?? 0)} KRW',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

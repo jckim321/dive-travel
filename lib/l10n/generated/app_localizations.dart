@@ -1062,6 +1062,12 @@ abstract class AppLocalizations {
   /// **'{shop} · {product}'**
   String exploreCheckoutBody(String shop, String product);
 
+  /// 자리 확보가 실패해 결제 예약을 저장하지 않았을 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리를 확보하지 못해 예약을 만들지 않았습니다. 빈자리를 다시 확인해 주세요.'**
+  String get exploreBookingNotSaved;
+
   /// 결제 버튼을 눌렀을 때 안내입니다.
   ///
   /// In ko, this message translates to:
@@ -1943,6 +1949,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'제휴 샵 {count}곳'**
   String adminMetricShops(int count);
+
+  /// No description provided for @adminSalesTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 매출'**
+  String get adminSalesTitle;
+
+  /// No description provided for @adminSalesTotal.
+  ///
+  /// In ko, this message translates to:
+  /// **'합계 {amount}원'**
+  String adminSalesTotal(String amount);
+
+  /// No description provided for @adminSalesExplore.
+  ///
+  /// In ko, this message translates to:
+  /// **'일반 상품'**
+  String get adminSalesExplore;
+
+  /// No description provided for @adminSalesFlag.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발 꽂기'**
+  String get adminSalesFlag;
+
+  /// No description provided for @adminSalesDiverPlanned.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 짠 상품'**
+  String get adminSalesDiverPlanned;
+
+  /// No description provided for @adminSalesCurated.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획 스페셜'**
+  String get adminSalesCurated;
+
+  /// No description provided for @adminSalesDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브 스타'**
+  String get adminSalesDiveStar;
+
+  /// No description provided for @adminSalesHotSpot.
+  ///
+  /// In ko, this message translates to:
+  /// **'핫스팟'**
+  String get adminSalesHotSpot;
+
+  /// No description provided for @adminSalesNextDeparture.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감 임박'**
+  String get adminSalesNextDeparture;
 
   /// No description provided for @adminAttentionTitle.
   ///
@@ -3965,6 +4025,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'FOC {pay}+{free} · 다이버 무료 {count}명'**
   String checkoutFocLine(int pay, int free, int count);
+
+  /// No description provided for @checkoutGuestsBelowMin.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 상품은 최소 {min}명이 필요합니다.'**
+  String checkoutGuestsBelowMin(int min);
+
+  /// No description provided for @checkoutGuestsAboveMax.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 상품은 최대 {max}명까지 예약할 수 있습니다.'**
+  String checkoutGuestsAboveMax(int max);
+
+  /// No description provided for @checkoutSignInRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약을 완료하려면 로그인해 주세요.'**
+  String get checkoutSignInRequired;
+
+  /// No description provided for @bookingPartySummary.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 {diver} · 비다이버 {nondiver} · 아동 {child} · 유아 {infant}'**
+  String bookingPartySummary(int diver, int nondiver, int child, int infant);
 
   /// No description provided for @refundPolicyHint.
   ///

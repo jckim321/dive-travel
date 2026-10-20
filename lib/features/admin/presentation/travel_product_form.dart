@@ -181,7 +181,10 @@ class _TravelProductRegistrationScreenState
     _customResort = TextEditingController(text: shop?.name ?? '');
     _customLocation = TextEditingController(text: shop?.location ?? '');
     _customCountry = TextEditingController(text: shop?.country ?? '');
-    final seedOptions = existing?.options ?? const <ShopProductOption>[];
+    final seedOptions = [
+      for (final option in existing?.options ?? const <ShopProductOption>[])
+        if (option.kind != ProductOptionKind.basePackage) option,
+    ];
     if (seedOptions.isEmpty) {
       _options.add(_OptionEditors());
     } else {
@@ -319,6 +322,23 @@ class _TravelProductRegistrationScreenState
     });
   }
 
+  ProductListingKind _shelfKindForSave() {
+    final current = widget.existing?.listingKind;
+    if (widget.creatorMode &&
+        (current == null || current == ProductListingKind.exploreOnly)) {
+      return ProductListingKind.diverPlanned;
+    }
+    return current ?? ProductListingKind.exploreOnly;
+  }
+
+  DateTime? _featuredAtForSave() {
+    final kind = _shelfKindForSave();
+    if (!kind.isHomeShelf) {
+      return widget.existing?.featuredAt;
+    }
+    return widget.existing?.featuredAt ?? DateTime.now();
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
@@ -375,13 +395,66 @@ class _TravelProductRegistrationScreenState
         );
       }
 
-      final options = [
+      final consumerPrice = int.tryParse(_consumer.text) ?? 0;
+      final professionalPrice = int.tryParse(_pro.text) ?? 0;
+      final existingRates = widget.existing?.guestRates ?? const <GuestRate>[];
+      GuestRate? existingRate(GuestRole role) {
+        for (final rate in existingRates) {
+          if (rate.role == role) {
+            return rate;
+          }
+        }
+        return null;
+      }
+
+      final guestRates = [
+        GuestRate(
+          role: GuestRole.diver,
+          enabled: existingRate(GuestRole.diver)?.enabled ?? true,
+          consumer: consumerPrice,
+          professional: professionalPrice,
+        ),
+        for (final role in [
+          GuestRole.nondiver,
+          GuestRole.child,
+          GuestRole.infant,
+        ])
+          existingRate(role) ??
+              GuestRate(
+                role: role,
+                enabled: role != GuestRole.infant,
+                consumer: 0,
+                professional: 0,
+              ),
+      ];
+      var baseOptionId = 'base-${DateTime.now().millisecondsSinceEpoch}';
+      for (final option in widget.existing?.options ?? const <ShopProductOption>[]) {
+        if (option.kind == ProductOptionKind.basePackage) {
+          baseOptionId = option.id;
+          break;
+        }
+      }
+      final options = <ShopProductOption>[
+        ShopProductOption(
+          id: baseOptionId,
+          name: name,
+          description: _blurb.text.trim(),
+          consumerPrice: consumerPrice,
+          professionalPrice: professionalPrice,
+          kind: ProductOptionKind.basePackage,
+        ),
         for (final draft in _options)
-          if (draft.name.text.trim().isNotEmpty) draft.toOption(),
+          if (draft.name.text.trim().isNotEmpty)
+            draft.toOption().copyWith(kind: ProductOptionKind.addon),
       ];
       final keptCover = _removeExistingCover
           ? ''
           : (widget.existing?.coverUrl ?? '');
+      final keptPhotos = [
+        if (keptCover.isNotEmpty) keptCover,
+        for (final url in widget.existing?.photoUrls ?? const <String>[])
+          if (url.trim().isNotEmpty && url.trim() != keptCover) url.trim(),
+      ];
       await store.saveShopProduct(
         shopId: shopId,
         product: ShopProduct(
@@ -390,11 +463,12 @@ class _TravelProductRegistrationScreenState
               'p-${DateTime.now().millisecondsSinceEpoch}',
           shopId: shopId,
           name: name,
-          consumerPrice: int.tryParse(_consumer.text) ?? 0,
-          professionalPrice: int.tryParse(_pro.text) ?? 0,
+          consumerPrice: consumerPrice,
+          professionalPrice: professionalPrice,
           blurb: _blurb.text.trim(),
           durationLabel: _duration.text.trim(),
           coverUrl: keptCover,
+          photoUrls: keptPhotos,
           continent: _continent,
           meetingPoint: _meeting.text.trim(),
           schedule: _schedule.text.trim(),
@@ -404,10 +478,18 @@ class _TravelProductRegistrationScreenState
           minGuests: int.tryParse(_minGuests.text) ?? 0,
           maxGuests: int.tryParse(_maxGuests.text) ?? 0,
           cancellationNote: _cancelNote.text.trim(),
+          category: widget.existing?.category ?? ProductCategory.resortPackage,
+          itineraryDays: widget.existing?.itineraryDays ?? const [],
+          guestRates: guestRates,
+          focPayCount: widget.existing?.focPayCount ?? 0,
+          focFreeCount: widget.existing?.focFreeCount ?? 0,
+          focAppliesTo: widget.existing?.focAppliesTo ?? GuestRole.diver,
           openEmptySeats: _openEmptySeats && _seatOptionId.isEmpty,
           capacity: _openEmptySeats && _seatOptionId.isEmpty
               ? (int.tryParse(_seatCapacity.text) ?? 0)
               : 0,
+          bookedSeats: widget.existing?.bookedSeats ?? 0,
+          flagHolds: widget.existing?.flagHolds ?? const [],
           departureStart: _openEmptySeats && _seatOptionId.isEmpty
               ? _departureStart
               : null,
@@ -417,10 +499,8 @@ class _TravelProductRegistrationScreenState
           options: [
             for (final option in options) _withSeatOption(option),
           ],
-          // New products stay Explore-only until admin home curation.
-          listingKind:
-              widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
-          featuredAt: widget.existing?.featuredAt,
+          listingKind: _shelfKindForSave(),
+          featuredAt: _featuredAtForSave(),
           submittedAt: widget.existing?.submittedAt,
           submittedByUid: widget.existing?.submittedByUid.isNotEmpty == true
               ? widget.existing!.submittedByUid

@@ -108,6 +108,7 @@ class PartnerDashboardScreen extends StatelessWidget {
                   title: Text(booking.productName),
                   subtitle: Text(
                     '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}\n'
+                    '${_partyLabel(l10n, booking)}'
                     '${_statusLabel(l10n, booking)} · ${l10n.explorePriceWon(money.format(booking.price))}',
                   ),
                   isThreeLine: true,
@@ -127,6 +128,21 @@ class PartnerDashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _partyLabel(AppLocalizations l10n, TourBooking booking) {
+    if (booking.hasPartyDetail) {
+      return '${l10n.bookingPartySummary(
+        booking.divers,
+        booking.nondivers,
+        booking.children,
+        booking.infants,
+      )}\n';
+    }
+    if (booking.partySize > 0) {
+      return '${l10n.checkoutGuests} ${booking.partySize}\n';
+    }
+    return '';
   }
 
   String _statusLabel(AppLocalizations l10n, TourBooking booking) {

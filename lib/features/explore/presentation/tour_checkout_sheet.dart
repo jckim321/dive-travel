@@ -19,6 +19,7 @@ Future<void> showTourCheckoutSheet({
   ShopProduct? product,
   String lockedOptionId = '',
   String presetOptionId = '',
+  bool fromFlag = false,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -34,6 +35,7 @@ Future<void> showTourCheckoutSheet({
       product: product,
       lockedOptionId: lockedOptionId,
       presetOptionId: presetOptionId,
+      fromFlag: fromFlag,
     ),
   );
 }
@@ -46,6 +48,7 @@ class TourCheckoutSheet extends StatefulWidget {
     this.product,
     this.lockedOptionId = '',
     this.presetOptionId = '',
+    this.fromFlag = false,
   });
 
   final DiveShop shop;
@@ -53,6 +56,7 @@ class TourCheckoutSheet extends StatefulWidget {
   final ShopProduct? product;
   final String lockedOptionId;
   final String presetOptionId;
+  final bool fromFlag;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -199,8 +203,49 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
   }
 
+  int get _partySize => _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
+
+  bool get _dateLocked {
+    if (widget.product?.departureStart != null) {
+      return true;
+    }
+    if (widget.product != null) {
+      return false;
+    }
+    return widget.shop.departure != null;
+  }
+
+  DiveShop get _displayShop {
+    final product = widget.product;
+    if (product == null) {
+      return widget.shop;
+    }
+    final photos = [
+      for (final url in product.photoUrls)
+        if (url.trim().isNotEmpty) url.trim(),
+    ];
+    final cover = product.coverUrl.trim().isNotEmpty
+        ? product.coverUrl.trim()
+        : (photos.isNotEmpty ? photos.first : widget.shop.coverUrl);
+    return widget.shop.copyWith(
+      productName: product.name,
+      consumerPrice: product.consumerPrice,
+      professionalPrice: product.professionalPrice,
+      blurb: product.blurb.isNotEmpty ? product.blurb : widget.shop.blurb,
+      coverUrl: cover,
+      galleryUrls: photos.isNotEmpty ? photos : widget.shop.galleryUrls,
+    );
+  }
+
   Future<void> _pay() async {
     final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    if (store.uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.checkoutSignInRequired)),
+      );
+      return;
+    }
     final quote = widget.quote;
     final label = quote.isProfessional
         ? l10n.exploreProPrice
@@ -208,12 +253,26 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final amount = _hasProduct ? _booking.total : quote.amount;
     final formatted = _priceFormat.format(amount);
     final product = widget.product;
-    final party = _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
+    final party = _hasProduct ? _partySize : 1;
+    if (product != null) {
+      if (product.minGuests > 0 && party < product.minGuests) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.checkoutGuestsBelowMin(product.minGuests))),
+        );
+        return;
+      }
+      if (product.maxGuests > 0 && party > product.maxGuests) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.checkoutGuestsAboveMax(product.maxGuests))),
+        );
+        return;
+      }
+    }
     final seatOption = _seatOptionId;
     final opensSeats = _checksSeats;
     if (opensSeats && product != null) {
       final room = product.bookableSeatsFor(
-        DiverStoreScope.of(context).uid ?? '',
+        store.uid ?? '',
         DateTime.now(),
         optionId: seatOption,
       );
@@ -234,15 +293,35 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (paid != true || !mounted) {
       return;
     }
-    await DiverStoreScope.of(context).createBooking(
+    final recordOption = seatOption.isNotEmpty
+        ? seatOption
+        : (widget.presetOptionId.isNotEmpty
+              ? widget.presetOptionId
+              : (_selected.isEmpty ? '' : _selected.first));
+    final saved = await store.createBooking(
       shop: widget.shop,
       price: amount,
       tourDate: _tourDate,
       productId: product?.id,
-      partySize: opensSeats ? party : 0,
-      optionId: seatOption,
+      productName: product?.name,
+      partySize: party,
+      optionId: recordOption,
+      seatOptionId: seatOption,
+      listingKind: product?.listingKind ?? ProductListingKind.exploreOnly,
+      fromFlag: widget.fromFlag,
+      divers: _hasProduct ? _qtyDiver : 1,
+      nondivers: _hasProduct ? _qtyNondiver : 0,
+      children: _hasProduct ? _qtyChild : 0,
+      infants: _hasProduct ? _qtyInfant : 0,
+      quoteLines: _hasProduct ? _booking.lines : const [],
     );
     if (!mounted) {
+      return;
+    }
+    if (!saved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exploreBookingNotSaved)),
+      );
       return;
     }
     Navigator.of(context).pop();
@@ -263,10 +342,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final shop = widget.shop;
+    final shop = _displayShop;
+    final product = widget.product;
     final quote = widget.quote;
     final store = DiverStoreScope.of(context);
-    final saved = store.isFavoriteShop(shop.id);
+    final saved = store.isFavoriteShop(widget.shop.id);
     final refund = RefundPolicy.forUserCancel(tourDate: _tourDate);
     final payAmount = _hasProduct ? _booking.total : quote.amount;
     final formatted = _priceFormat.format(payAmount);
@@ -274,6 +354,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final cancelNote = product?.cancellationNote.trim() ?? '';
 
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.94,
@@ -299,7 +380,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               certified: shop.isDiveStarCertified,
                               onClose: () => Navigator.of(context).pop(),
                               onFavorite: () =>
-                                  store.toggleFavoriteShop(shop.id),
+                                  store.toggleFavoriteShop(widget.shop.id),
                             ),
                           ),
                         ),
@@ -332,6 +413,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                 color: AppTheme.muted,
                               ),
                             ),
+                            if (product != null &&
+                                product.blurb.trim().isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Text(
+                                product.blurb.trim(),
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ],
                             if (shop.departure != null) ...[
                               const SizedBox(height: 16),
                               _HighlightCard(
@@ -399,62 +488,69 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               title: l10n.exploreListingSafetyTitle,
                               body: l10n.exploreListingSafetyBody,
                             ),
-                            const SizedBox(height: 22),
-                            Text(
-                              l10n.exploreListingSites,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final site in shop.sites)
-                                  Chip(
-                                    avatar: const Icon(
-                                      Icons.waves_outlined,
-                                      size: 16,
-                                    ),
-                                    label: Text(site),
-                                    backgroundColor: const Color(0xFFF7F4EE),
-                                    side: const BorderSide(
-                                      color: Color(0xFFE8E1D4),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 22),
-                            Text(
-                              l10n.exploreListingAmenities,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            for (final amenity in shop.amenities)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                            if (product != null) ...[
+                              ..._productDetailCards(l10n, theme, product),
+                            ],
+                            if (shop.sites.isNotEmpty) ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                l10n.exploreListingSites,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.check,
-                                      size: 18,
-                                      color: AppTheme.navy,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        amenity,
-                                        style: theme.textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final site in shop.sites)
+                                    Chip(
+                                      avatar: const Icon(
+                                        Icons.waves_outlined,
+                                        size: 16,
+                                      ),
+                                      label: Text(site),
+                                      backgroundColor: const Color(0xFFF7F4EE),
+                                      side: const BorderSide(
+                                        color: Color(0xFFE8E1D4),
                                       ),
                                     ),
-                                  ],
+                                ],
+                              ),
+                            ],
+                            if (shop.amenities.isNotEmpty) ...[
+                              const SizedBox(height: 22),
+                              Text(
+                                l10n.exploreListingAmenities,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
+                              const SizedBox(height: 8),
+                              for (final amenity in shop.amenities)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: AppTheme.navy,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          amenity,
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                             const SizedBox(height: 18),
                             Text(
                               l10n.exploreCheckoutTitle,
@@ -470,9 +566,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     label: l10n.weatherTourDate,
                                     value: DateFormat('yyyy.MM.dd')
                                         .format(_tourDate),
-                                    onTap: shop.departure == null
-                                        ? _pickDate
-                                        : null,
+                                    onTap: _dateLocked ? null : _pickDate,
                                   ),
                                 ),
                                 if (!_hasProduct) ...[
@@ -497,7 +591,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               const SizedBox(height: 12),
                             ],
                             Text(
-                              l10n.refundPolicyHint(refund.percent),
+                              cancelNote.isNotEmpty
+                                  ? cancelNote
+                                  : l10n.refundPolicyHint(refund.percent),
                               style: theme.textTheme.bodySmall,
                             ),
                             const SizedBox(height: 8),
@@ -691,9 +787,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             if (flag != null) _summaryLine(l10n.workbenchFlagDeadline, flag),
             _summaryLine(
               l10n.checkoutGuests,
-              '${l10n.workbenchGuestDiver} $_qtyDiver · '
-              '${l10n.workbenchGuestNondiver} $_qtyNondiver · '
-              '${l10n.workbenchGuestChild} $_qtyChild',
+              l10n.bookingPartySummary(
+                _qtyDiver,
+                _qtyNondiver,
+                _qtyChild,
+                _qtyInfant,
+              ),
             ),
             const Divider(height: 24),
             for (final line in booking.lines)
@@ -792,6 +891,60 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           _findOption(id)!.name,
     ];
     return names.isEmpty ? product.name : names.join(' · ');
+  }
+
+  List<Widget> _productDetailCards(
+    AppLocalizations l10n,
+    ThemeData theme,
+    ShopProduct product,
+  ) {
+    final cards = <Widget>[];
+    void addCard(IconData icon, String title, String body) {
+      if (body.trim().isEmpty) {
+        return;
+      }
+      cards.add(const SizedBox(height: 16));
+      cards.add(
+        _HighlightCard(icon: icon, title: title, body: body.trim()),
+      );
+    }
+
+    addCard(
+      Icons.place_outlined,
+      l10n.productFormMeetingPoint,
+      product.meetingPoint,
+    );
+    addCard(
+      Icons.route_outlined,
+      l10n.productFormSchedule,
+      product.schedule,
+    );
+    addCard(
+      Icons.check_circle_outline,
+      l10n.productFormIncludes,
+      product.includes,
+    );
+    addCard(
+      Icons.remove_circle_outline,
+      l10n.productFormExcludes,
+      product.excludes,
+    );
+    addCard(
+      Icons.school_outlined,
+      l10n.productFormDifficulty,
+      product.difficulty,
+    );
+    if (product.minGuests > 0 || product.maxGuests > 0) {
+      final range = [
+        if (product.minGuests > 0) l10n.productFormMinGuests,
+        if (product.minGuests > 0) '${product.minGuests}',
+        if (product.minGuests > 0 && product.maxGuests > 0) '·',
+        if (product.maxGuests > 0) l10n.productFormMaxGuests,
+        if (product.maxGuests > 0) '${product.maxGuests}',
+      ].join(' ');
+      addCard(Icons.groups_outlined, l10n.checkoutGuests, range);
+    }
+    return cards;
   }
 
   Widget _bookingPanel(AppLocalizations l10n, ThemeData theme) {

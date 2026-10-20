@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -353,7 +354,7 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> createBooking({
+  Future<bool> createBooking({
     required String uid,
     required String shopId,
     required String shopName,
@@ -363,17 +364,46 @@ class MemoryDiverRepository implements DiverRepository {
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String seatOptionId = '',
+    ProductListingKind listingKind = ProductListingKind.exploreOnly,
+    bool fromFlag = false,
+    int divers = 0,
+    int nondivers = 0,
+    int children = 0,
+    int infants = 0,
+    List<BookingLine> quoteLines = const [],
   }) async {
+    final hullId = shopId.split('--').first;
+    final held = _holdOpenSeats(
+      hullId,
+      productId,
+      partySize,
+      optionId: seatOptionId,
+      uid: uid,
+    );
+    if (!held) {
+      return false;
+    }
     _bookingSequence += 1;
     final booking = TourBooking(
       id: 'booking-$_bookingSequence',
       uid: uid,
-      shopId: shopId.split('--').first,
+      shopId: hullId,
       shopName: shopName,
       productName: productName,
+      productId: productId ?? '',
+      optionId: optionId,
+      listingKind: listingKind,
+      fromFlag: fromFlag,
       price: price,
       createdAt: DateTime.now(),
       tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
+      partySize: partySize,
+      divers: divers,
+      nondivers: nondivers,
+      children: children,
+      infants: infants,
+      quoteLines: quoteLines,
     );
     _bookings.insert(0, booking);
     _shopBookings.putIfAbsent(booking.shopId, () => []).insert(0, booking);
@@ -381,16 +411,10 @@ class MemoryDiverRepository implements DiverRepository {
     _shopBookingController.add(
       List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
     );
-    _holdOpenSeats(
-      booking.shopId,
-      productId,
-      partySize,
-      optionId: optionId,
-      uid: uid,
-    );
+    return true;
   }
 
-  void _holdOpenSeats(
+  bool _holdOpenSeats(
     String shopId,
     String? productId,
     int partySize, {
@@ -398,26 +422,53 @@ class MemoryDiverRepository implements DiverRepository {
     String uid = '',
   }) {
     if (productId == null || productId.isEmpty || partySize <= 0) {
-      return;
+      return true;
     }
     final current = _shopStats[shopId];
     if (current == null) {
-      return;
+      return false;
     }
-    final products = [
-      for (final item in current.products)
-        if (item.id == productId)
-          item.capturePayment(
-            partySize,
-            DateTime.now(),
-            uid: uid,
-            optionId: optionId,
-          )
-        else
-          item,
-    ];
-    _shopStats[shopId] = current.copyWith(products: products);
+    ShopProduct? target;
+    for (final item in current.products) {
+      if (item.id == productId) {
+        target = item;
+        break;
+      }
+    }
+    if (target == null) {
+      return false;
+    }
+    var opens = target.openEmptySeats;
+    if (optionId.isNotEmpty) {
+      opens = false;
+      for (final option in target.options) {
+        if (option.id == optionId) {
+          opens = option.openEmptySeats;
+          break;
+        }
+      }
+    }
+    if (!opens) {
+      return true;
+    }
+    final before = target.bookedSeatsFor(optionId);
+    final captured = target.capturePayment(
+      partySize,
+      DateTime.now(),
+      uid: uid,
+      optionId: optionId,
+    );
+    if (captured.bookedSeatsFor(optionId) <= before) {
+      return false;
+    }
+    _shopStats[shopId] = current.copyWith(
+      products: [
+        for (final item in current.products)
+          if (item.id == productId) captured else item,
+      ],
+    );
     _shopController.add(_shopStats.values.toList());
+    return true;
   }
 
   @override

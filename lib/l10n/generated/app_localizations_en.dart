@@ -537,6 +537,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get exploreBookingNotSaved =>
+      'The booking was not saved because the seats could not be held. Check the open seats and try again.';
+
+  @override
   String exploreCheckoutDone(String label, String price) {
     return 'Seat request sent for $label $price.';
   }
@@ -1032,6 +1036,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String adminMetricShops(int count) {
     return '$count partner shops';
   }
+
+  @override
+  String get adminSalesTitle => 'Sales this month';
+
+  @override
+  String adminSalesTotal(String amount) {
+    return 'Total $amount KRW';
+  }
+
+  @override
+  String get adminSalesExplore => 'Regular trips';
+
+  @override
+  String get adminSalesFlag => 'Flag holds';
+
+  @override
+  String get adminSalesDiverPlanned => 'Diver-crafted';
+
+  @override
+  String get adminSalesCurated => 'Curated specials';
+
+  @override
+  String get adminSalesDiveStar => 'Dive Star';
+
+  @override
+  String get adminSalesHotSpot => 'Hot spots';
+
+  @override
+  String get adminSalesNextDeparture => 'Last call';
 
   @override
   String get adminAttentionTitle => 'Needs attention';
@@ -2139,6 +2172,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String checkoutFocLine(int pay, int free, int count) {
     return 'FOC $pay+$free · $count complimentary divers';
+  }
+
+  @override
+  String checkoutGuestsBelowMin(int min) {
+    return 'At least $min guests are required for this trip.';
+  }
+
+  @override
+  String checkoutGuestsAboveMax(int max) {
+    return 'This trip allows up to $max guests.';
+  }
+
+  @override
+  String get checkoutSignInRequired => 'Sign in to complete this booking.';
+
+  @override
+  String bookingPartySummary(int diver, int nondiver, int child, int infant) {
+    return '$diver diver · $nondiver non-diver · $child child · $infant infant';
   }
 
   @override

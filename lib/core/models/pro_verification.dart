@@ -1,3 +1,6 @@
+import 'package:dive_travel_app/core/models/booking_quote.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
+
 enum ProVerificationStatus {
   none,
   pending,
@@ -49,6 +52,16 @@ class TourBooking {
     this.refundNoticeSeen = false,
     this.commissionRate = 0.12,
     this.paymentStatus = 'captured',
+    this.productId = '',
+    this.optionId = '',
+    this.listingKind = ProductListingKind.exploreOnly,
+    this.fromFlag = false,
+    this.partySize = 0,
+    this.divers = 0,
+    this.nondivers = 0,
+    this.children = 0,
+    this.infants = 0,
+    this.quoteLines = const [],
   });
 
   final String id;
@@ -56,6 +69,10 @@ class TourBooking {
   final String shopId;
   final String shopName;
   final String productName;
+  final String productId;
+  final String optionId;
+  final ProductListingKind listingKind;
+  final bool fromFlag;
   final int price;
   final DateTime createdAt;
   final DateTime? tourDate;
@@ -66,6 +83,12 @@ class TourBooking {
   final bool refundNoticeSeen;
   final double commissionRate;
   final String paymentStatus;
+  final int partySize;
+  final int divers;
+  final int nondivers;
+  final int children;
+  final int infants;
+  final List<BookingLine> quoteLines;
 
   DateTime get scheduledFor => tourDate ?? createdAt;
 
@@ -73,6 +96,13 @@ class TourBooking {
   bool get isWeatherCancelled => status == BookingStatus.weatherCancelled;
   bool get needsRefundNotice =>
       isWeatherCancelled && !refundNoticeSeen;
+
+  /// Flag checkouts stay in their own sales bucket.
+  String get salesKind =>
+      fromFlag ? 'flag' : listingKind.firestoreValue;
+
+  bool get hasPartyDetail =>
+      divers > 0 || nondivers > 0 || children > 0 || infants > 0;
 
   TourBooking copyWith({
     bool? reviewed,
@@ -89,6 +119,10 @@ class TourBooking {
       shopId: shopId,
       shopName: shopName,
       productName: productName,
+      productId: productId,
+      optionId: optionId,
+      listingKind: listingKind,
+      fromFlag: fromFlag,
       price: price,
       createdAt: createdAt,
       tourDate: tourDate ?? this.tourDate,
@@ -99,6 +133,12 @@ class TourBooking {
       refundNoticeSeen: refundNoticeSeen ?? this.refundNoticeSeen,
       commissionRate: commissionRate,
       paymentStatus: paymentStatus ?? this.paymentStatus,
+      partySize: partySize,
+      divers: divers,
+      nondivers: nondivers,
+      children: children,
+      infants: infants,
+      quoteLines: quoteLines,
     );
   }
 }

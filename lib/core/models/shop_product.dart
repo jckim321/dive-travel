@@ -667,6 +667,13 @@ class ShopProduct {
     return false;
   }
 
+  int bookedSeatsFor(String optionId) {
+    if (optionId.isEmpty) {
+      return bookedSeats;
+    }
+    return _option(optionId)?.bookedSeats ?? bookedSeats;
+  }
+
   int bookableSeatsFor(String uid, DateTime now, {String optionId = ''}) {
     final holds = [
       for (final hold in _holdsFor(optionId))

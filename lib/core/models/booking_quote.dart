@@ -8,6 +8,35 @@ class BookingLine {
 
   final String label;
   final int amount;
+
+  Map<String, dynamic> toMap() => {
+        'label': label,
+        'amount': amount,
+      };
+
+  static BookingLine? fromMap(dynamic raw) {
+    if (raw is! Map) {
+      return null;
+    }
+    final data = Map<String, dynamic>.from(raw);
+    final label = data['label'] as String? ?? '';
+    if (label.isEmpty) {
+      return null;
+    }
+    return BookingLine(
+      label: label,
+      amount: (data['amount'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  static List<BookingLine> listFrom(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw) ?fromMap(item),
+    ];
+  }
 }
 
 class BookingQuote {

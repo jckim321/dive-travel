@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -504,6 +505,18 @@ class FirestoreDiverRepository implements DiverRepository {
           (data['commission_rate'] as num?)?.toDouble() ??
           RefundPolicy.defaultCommissionRate,
       paymentStatus: data['payment_status'] as String? ?? 'captured',
+      productId: data['product_id'] as String? ?? '',
+      optionId: data['option_id'] as String? ?? '',
+      listingKind: data.containsKey('listing_kind')
+          ? ProductListingKind.parse(data['listing_kind'])
+          : ProductListingKind.exploreOnly,
+      fromFlag: data['from_flag'] == true,
+      partySize: (data['party_size'] as num?)?.toInt() ?? 0,
+      divers: (data['divers'] as num?)?.toInt() ?? 0,
+      nondivers: (data['nondivers'] as num?)?.toInt() ?? 0,
+      children: (data['children'] as num?)?.toInt() ?? 0,
+      infants: (data['infants'] as num?)?.toInt() ?? 0,
+      quoteLines: BookingLine.listFrom(data['quote_lines']),
     );
   }
 
@@ -521,6 +534,19 @@ class FirestoreDiverRepository implements DiverRepository {
       'refund_notice_seen': booking.refundNoticeSeen,
       'commission_rate': booking.commissionRate,
       'payment_status': booking.paymentStatus,
+      'product_id': booking.productId,
+      'option_id': booking.optionId,
+      'listing_kind': booking.listingKind.firestoreValue,
+      'from_flag': booking.fromFlag,
+      'party_size': booking.partySize,
+      'divers': booking.divers,
+      'nondivers': booking.nondivers,
+      'children': booking.children,
+      'infants': booking.infants,
+      if (booking.quoteLines.isNotEmpty)
+        'quote_lines': [
+          for (final line in booking.quoteLines) line.toMap(),
+        ],
       'tour_date': Timestamp.fromDate(booking.scheduledFor),
       'created_at': Timestamp.fromDate(booking.createdAt),
       'updated_at': FieldValue.serverTimestamp(),
@@ -539,7 +565,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> createBooking({
+  Future<bool> createBooking({
     required String uid,
     required String shopId,
     required String shopName,
@@ -549,33 +575,56 @@ class FirestoreDiverRepository implements DiverRepository {
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String seatOptionId = '',
+    ProductListingKind listingKind = ProductListingKind.exploreOnly,
+    bool fromFlag = false,
+    int divers = 0,
+    int nondivers = 0,
+    int children = 0,
+    int infants = 0,
+    List<BookingLine> quoteLines = const [],
   }) async {
+    final hullId = shopId.split('--').first;
+    final held = await _holdOpenSeats(
+      hullId,
+      productId,
+      partySize,
+      optionId: seatOptionId,
+      uid: uid,
+    );
+    if (!held) {
+      return false;
+    }
     final id = _bookings(uid).doc().id;
     final booking = TourBooking(
       id: id,
       uid: uid,
-      shopId: shopId.split('--').first,
+      shopId: hullId,
       shopName: shopName,
       productName: productName,
+      productId: productId ?? '',
+      optionId: optionId,
+      listingKind: listingKind,
+      fromFlag: fromFlag,
       price: price,
       createdAt: DateTime.now(),
       tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
       commissionRate: RefundPolicy.defaultCommissionRate,
+      partySize: partySize,
+      divers: divers,
+      nondivers: nondivers,
+      children: children,
+      infants: infants,
+      quoteLines: quoteLines,
     );
     final payload = _bookingPayload(booking);
     payload['created_at'] = FieldValue.serverTimestamp();
     await _bookings(uid).doc(id).set(payload);
     await _shopBookings(booking.shopId).doc(id).set(payload);
-    await _holdOpenSeats(
-      booking.shopId,
-      productId,
-      partySize,
-      optionId: optionId,
-      uid: uid,
-    );
+    return true;
   }
 
-  Future<void> _holdOpenSeats(
+  Future<bool> _holdOpenSeats(
     String shopId,
     String? productId,
     int partySize, {
@@ -583,26 +632,51 @@ class FirestoreDiverRepository implements DiverRepository {
     String uid = '',
   }) async {
     if (productId == null || productId.isEmpty || partySize <= 0) {
-      return;
+      return true;
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
     final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
-    final next = [
-      for (final item in current)
-        if (item.id == productId)
-          item.capturePayment(
-            partySize,
-            DateTime.now(),
-            uid: uid,
-            optionId: optionId,
-          )
-        else
-          item,
-    ];
+    ShopProduct? target;
+    for (final item in current) {
+      if (item.id == productId) {
+        target = item;
+        break;
+      }
+    }
+    if (target == null) {
+      return false;
+    }
+    var opens = target.openEmptySeats;
+    if (optionId.isNotEmpty) {
+      opens = false;
+      for (final option in target.options) {
+        if (option.id == optionId) {
+          opens = option.openEmptySeats;
+          break;
+        }
+      }
+    }
+    if (!opens) {
+      return true;
+    }
+    final before = target.bookedSeatsFor(optionId);
+    final captured = target.capturePayment(
+      partySize,
+      DateTime.now(),
+      uid: uid,
+      optionId: optionId,
+    );
+    if (captured.bookedSeatsFor(optionId) <= before) {
+      return false;
+    }
     await ref.set({
-      'products': [for (final item in next) item.toMap()],
+      'products': [
+        for (final item in current)
+          if (item.id == productId) captured.toMap() else item.toMap(),
+      ],
     }, SetOptions(merge: true));
+    return true;
   }
 
   @override

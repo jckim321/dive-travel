@@ -432,6 +432,10 @@
       "product": { "type": "String" }
     }
   },
+  "exploreBookingNotSaved": "자리를 확보하지 못해 예약을 만들지 않았습니다. 빈자리를 다시 확인해 주세요.",
+  "@exploreBookingNotSaved": {
+    "description": "자리 확보가 실패해 결제 예약을 저장하지 않았을 때 안내입니다."
+  },
   "exploreCheckoutDone": "{label} {price}원 자리 요청을 샵에 전달했습니다.",
   "@exploreCheckoutDone": {
     "description": "결제 버튼을 눌렀을 때 안내입니다.",
@@ -857,6 +861,20 @@
       "count": { "type": "int" }
     }
   },
+  "adminSalesTitle": "이번 달 매출",
+  "adminSalesTotal": "합계 {amount}원",
+  "@adminSalesTotal": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "adminSalesExplore": "일반 상품",
+  "adminSalesFlag": "깃발 꽂기",
+  "adminSalesDiverPlanned": "내가 짠 상품",
+  "adminSalesCurated": "기획 스페셜",
+  "adminSalesDiveStar": "다이브 스타",
+  "adminSalesHotSpot": "핫스팟",
+  "adminSalesNextDeparture": "마감 임박",
   "adminAttentionTitle": "지금 처리할 일",
   "adminAttentionClear": "대기 중인 긴급 작업이 없습니다.",
   "adminAttentionCertify": "강사 자격증 {count}건 승인 대기",
@@ -1312,6 +1330,24 @@
       "pay": { "type": "int" },
       "free": { "type": "int" },
       "count": { "type": "int" }
+    }
+  },
+  "checkoutGuestsBelowMin": "이 상품은 최소 {min}명이 필요합니다.",
+  "@checkoutGuestsBelowMin": {
+    "placeholders": { "min": { "type": "int" } }
+  },
+  "checkoutGuestsAboveMax": "이 상품은 최대 {max}명까지 예약할 수 있습니다.",
+  "@checkoutGuestsAboveMax": {
+    "placeholders": { "max": { "type": "int" } }
+  },
+  "checkoutSignInRequired": "예약을 완료하려면 로그인해 주세요.",
+  "bookingPartySummary": "다이버 {diver} · 비다이버 {nondiver} · 아동 {child} · 유아 {infant}",
+  "@bookingPartySummary": {
+    "placeholders": {
+      "diver": { "type": "int" },
+      "nondiver": { "type": "int" },
+      "child": { "type": "int" },
+      "infant": { "type": "int" }
     }
   },
   "refundPolicyHint": "지금 취소 시 환불 {percent}%",

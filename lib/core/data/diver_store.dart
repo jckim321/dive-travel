@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -71,6 +72,10 @@ class DiverStore extends ChangeNotifier {
   List<MemberAccount> _members = const [];
   List<CommunityPost> _posts = const [];
   List<TourBooking> _shopBookings = const [];
+  List<TourBooking> _salesBookings = const [];
+  final _salesByShop = <String, List<TourBooking>>{};
+  final _salesSubscriptions =
+      <String, StreamSubscription<List<TourBooking>>>{};
   late List<GearItem> _gear;
   InstructorDiscount _instructorDiscount = InstructorDiscount.standard;
   bool _loading = true;
@@ -171,6 +176,43 @@ class DiverStore extends ChangeNotifier {
 
   int get partnerNetThisMonth => RefundPolicy.netPayout(partnerGrossThisMonth);
 
+  static const salesKindOrder = <String>[
+    'explore_only',
+    'flag',
+    'diver_planned',
+    'curated',
+    'dive_star',
+    'hot_spot',
+    'next_departure',
+  ];
+
+  List<TourBooking> get salesBookings => List.unmodifiable(_salesBookings);
+
+  Map<String, int> salesThisMonthByKind([DateTime? now]) {
+    final clock = now ?? DateTime.now();
+    final totals = {for (final kind in salesKindOrder) kind: 0};
+    for (final booking in _salesBookings) {
+      if (!booking.isActive || booking.paymentStatus != 'captured') {
+        continue;
+      }
+      final at = booking.createdAt;
+      if (at.year != clock.year || at.month != clock.month) {
+        continue;
+      }
+      final key = booking.salesKind;
+      totals[key] = (totals[key] ?? 0) + booking.price;
+    }
+    return totals;
+  }
+
+  int get salesTotalThisMonth {
+    var total = 0;
+    for (final amount in salesThisMonthByKind().values) {
+      total += amount;
+    }
+    return total;
+  }
+
   List<ShopLiveStats> get plaqueQueue => [
     for (final stats in _shopStats)
       if (stats.qualifiesForPlaque || stats.plaqueStatus != PlaqueStatus.none)
@@ -223,7 +265,6 @@ class DiverStore extends ChangeNotifier {
       return const [];
     }
     final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
-    final hasLiveProducts = hasAnyPublicProduct;
     final scored = <({DiveShop card, DateTime at})>[];
 
     for (final hull in DiveShopCatalog.hulls(shops)) {
@@ -249,27 +290,7 @@ class DiverStore extends ChangeNotifier {
     }
 
     scored.sort((a, b) => b.at.compareTo(a.at));
-    final featured = [for (final item in scored.take(limit)) item.card];
-
-    if (featured.isNotEmpty || hasLiveProducts || _loading) {
-      // Live data (or still loading): never pad with catalog clones that later
-      // disappear and make the same resort look duplicated across shelves.
-      return featured;
-    }
-
-    // Empty catalog bootstrap only — never invent home shelves once live products exist.
-    final fallback = switch (kind) {
-      ProductListingKind.diveStar => rankedResorts(limit: limit),
-      ProductListingKind.diverPlanned => favoriteResorts(limit: limit),
-      ProductListingKind.hotSpot => popularResorts(limit: limit),
-      ProductListingKind.nextDeparture => lastCallResorts(limit: limit),
-      ProductListingKind.curated => rankedResorts(limit: limit),
-      ProductListingKind.exploreOnly => const <DiveShop>[],
-    };
-    return DiveShopCatalog.hulls(fallback)
-        .where((shop) => !excludeHullIds.contains(shop.hullId))
-        .take(limit)
-        .toList();
+    return [for (final item in scored.take(limit)) item.card];
   }
 
   static DateTime _homeFeatureTime(ShopProduct product) {
@@ -311,12 +332,21 @@ class DiverStore extends ChangeNotifier {
     return count;
   }
 
+  /// Home / explore card for one public product (id carries product sku).
+  DiveShop listingCardForProduct(DiveShop hull, ShopProduct product) {
+    return _hullCardForProduct(hull, product);
+  }
+
   DiveShop _hullCardForProduct(DiveShop hull, ShopProduct product) {
     final cover = product.coverUrl.isNotEmpty
         ? product.coverUrl
         : (liveStatsFor(hull.hullId)?.coverUrl ?? hull.coverUrl);
+    final gallery = [
+      for (final url in product.photoUrls)
+        if (url.trim().isNotEmpty) url.trim(),
+    ];
     return hull.copyWith(
-      id: hull.hullId,
+      id: '${hull.hullId}--${product.id}',
       productName: product.name,
       consumerPrice: product.consumerPrice,
       professionalPrice: product.professionalPrice,
@@ -325,6 +355,7 @@ class DiverStore extends ChangeNotifier {
           ? product.derivedDurationLabel
           : hull.durationLabel,
       coverUrl: cover,
+      galleryUrls: gallery.isNotEmpty ? gallery : hull.galleryUrls,
     );
   }
 
@@ -396,49 +427,6 @@ class DiverStore extends ChangeNotifier {
 
   List<Uint8List?> productFramesFor(String id) {
     return _productFrames[id] ?? const [];
-  }
-
-  List<DiveShop> lastCallResorts({int limit = 4}) {
-    final last = [
-      for (final shop in shops)
-        if (shop.departure?.lastCall == true ||
-            (shop.departure?.emptySeats ?? 99) <= 2)
-          shop,
-    ];
-    last.sort((a, b) {
-      final aStart = a.departure?.start ?? DateTime(2099);
-      final bStart = b.departure?.start ?? DateTime(2099);
-      return aStart.compareTo(bStart);
-    });
-    return last.take(limit).toList();
-  }
-
-  List<DiveShop> rankedResorts({int limit = 3}) {
-    return DiveShopCatalog.ranked(shops, limit: limit);
-  }
-
-  List<DiveShop> popularResorts({int limit = 4}) {
-    final copy = [...shops];
-    copy.sort((a, b) => b.reviewCount.compareTo(a.reviewCount));
-    return copy.take(limit).toList();
-  }
-
-  List<DiveShop> favoriteResorts({int limit = 4}) {
-    final saved = [
-      for (final shop in shops)
-        if (_favoriteShopIds.contains(shop.hullId)) shop,
-    ];
-    if (saved.length >= limit) {
-      return saved.take(limit).toList();
-    }
-    final needles = [for (final region in _regions) region.name.toLowerCase()];
-    final fromLogs = [
-      for (final shop in shops)
-        if (!_favoriteShopIds.contains(shop.hullId) &&
-            needles.any((needle) => shop.searchBlob.contains(needle)))
-          shop,
-    ];
-    return [...saved, ...fromLogs].take(limit).toList();
   }
 
   List<DiveShop> get favoriteShops {
@@ -571,28 +559,45 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  Future<void> createBooking({
+  Future<bool> createBooking({
     required DiveShop shop,
     required int price,
     DateTime? tourDate,
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String seatOptionId = '',
+    ProductListingKind listingKind = ProductListingKind.exploreOnly,
+    bool fromFlag = false,
+    String? productName,
+    int divers = 0,
+    int nondivers = 0,
+    int children = 0,
+    int infants = 0,
+    List<BookingLine> quoteLines = const [],
   }) async {
     final uid = _uid;
     if (uid == null) {
-      return;
+      return false;
     }
-    await _repository.createBooking(
+    return _repository.createBooking(
       uid: uid,
       shopId: shop.id,
       shopName: shop.name,
-      productName: shop.productName,
+      productName: productName ?? shop.productName,
       price: price,
       tourDate: tourDate,
       productId: productId,
       partySize: partySize,
       optionId: optionId,
+      seatOptionId: seatOptionId,
+      listingKind: listingKind,
+      fromFlag: fromFlag,
+      divers: divers,
+      nondivers: nondivers,
+      children: children,
+      infants: infants,
+      quoteLines: quoteLines,
     );
   }
 
@@ -1188,6 +1193,7 @@ class DiverStore extends ChangeNotifier {
       _members = const [];
       _posts = const [];
       _shopBookings = const [];
+      _dropSalesWatchers();
       _loadingTimeout?.cancel();
       _loading = false;
       notifyListeners();
@@ -1235,6 +1241,7 @@ class DiverStore extends ChangeNotifier {
     _shopSubscription = _repository.watchShopStats().listen(
       (stats) {
         _shopStats = stats;
+        _syncSalesWatchers();
         notifyListeners();
         // Public r2.dev may 401 even when uploads succeed — swap covers to
         // signed GETs so Home/Explore keep showing uploaded product photos.
@@ -1274,8 +1281,10 @@ class DiverStore extends ChangeNotifier {
       _membersSubscription = null;
       _pendingInstructors = const [];
       _members = const [];
+      _dropSalesWatchers();
       return;
     }
+    _syncSalesWatchers();
     _pendingSubscription ??= _repository.watchPendingInstructors().listen(
       (pending) {
         _pendingInstructors = pending;
@@ -1319,9 +1328,70 @@ class DiverStore extends ChangeNotifier {
         );
   }
 
+  void _syncSalesWatchers() {
+    if (!_stats.isAdmin) {
+      return;
+    }
+    final ids = <String>{
+      for (final stats in _shopStats)
+        if (stats.shopId.isNotEmpty) stats.shopId,
+    };
+    final stale = [
+      for (final id in _salesSubscriptions.keys)
+        if (!ids.contains(id)) id,
+    ];
+    for (final id in stale) {
+      _salesSubscriptions.remove(id)?.cancel();
+      _salesByShop.remove(id);
+    }
+    var opened = false;
+    for (final id in ids) {
+      if (_salesSubscriptions.containsKey(id)) {
+        continue;
+      }
+      opened = true;
+      _salesSubscriptions[id] = _repository.watchShopBookings(id).listen(
+        (bookings) {
+          _salesByShop[id] = bookings;
+          _publishSales();
+        },
+        onError: (Object error) {
+          debugPrint('관리자 매출 구독 실패: $error');
+        },
+      );
+    }
+    if (stale.isNotEmpty || opened) {
+      _publishSales();
+    }
+  }
+
+  void _publishSales() {
+    _salesBookings = [
+      for (final list in _salesByShop.values) ...list,
+    ];
+    notifyListeners();
+  }
+
+  void _dropSalesWatchers() {
+    for (final sub in _salesSubscriptions.values) {
+      sub.cancel();
+    }
+    _salesSubscriptions.clear();
+    _salesByShop.clear();
+    if (_salesBookings.isEmpty) {
+      return;
+    }
+    _salesBookings = const [];
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _loadingTimeout?.cancel();
+    for (final sub in _salesSubscriptions.values) {
+      sub.cancel();
+    }
+    _salesSubscriptions.clear();
     _authSubscription?.cancel();
     _diverSubscription?.cancel();
     _shopSubscription?.cancel();

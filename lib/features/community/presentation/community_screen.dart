@@ -300,35 +300,36 @@ class _CommunityScreenState extends State<CommunityScreen> {
     await showTourCheckoutSheet(
       context: context,
       shop: shop,
-      quote: TourPriceQuote(
-        amount: product.consumerPrice,
-        isProfessional: false,
-      ),
+      quote: store.quoteFor(shop),
       product: product,
       lockedOptionId: offer.optionId,
+      fromFlag: true,
     );
   }
 }
 
 DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
-  final listings = store.listingsOnHull(product.shopId);
+  final hullId = product.shopId.split('--').first;
+  final listings = store.listingsOnHull(hullId);
+  DiveShop? hull;
   for (final shop in listings) {
-    if (shop.productName == product.name || shop.id == product.shopId) {
-      return shop.copyWith(
-        productName: product.name,
-        consumerPrice: product.consumerPrice,
-        professionalPrice: product.professionalPrice,
-      );
+    if (shop.listingProductId == product.id) {
+      return store.listingCardForProduct(shop, product);
+    }
+    hull ??= shop;
+  }
+  if (hull == null) {
+    for (final shop in store.shops) {
+      if (shop.hullId == hullId) {
+        hull = shop;
+        break;
+      }
     }
   }
-  if (listings.isEmpty) {
+  if (hull == null) {
     return null;
   }
-  return listings.first.copyWith(
-    productName: product.name,
-    consumerPrice: product.consumerPrice,
-    professionalPrice: product.professionalPrice,
-  );
+  return store.listingCardForProduct(hull, product);
 }
 
 class _SeatCard extends StatelessWidget {

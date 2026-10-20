@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -163,7 +164,7 @@ abstract class DiverRepository {
 
   Stream<List<TourBooking>> watchShopBookings(String shopId);
 
-  Future<void> createBooking({
+  Future<bool> createBooking({
     required String uid,
     required String shopId,
     required String shopName,
@@ -173,6 +174,14 @@ abstract class DiverRepository {
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String seatOptionId = '',
+    ProductListingKind listingKind = ProductListingKind.exploreOnly,
+    bool fromFlag = false,
+    int divers = 0,
+    int nondivers = 0,
+    int children = 0,
+    int infants = 0,
+    List<BookingLine> quoteLines = const [],
   });
 
   Future<void> plantSeatFlag({

@@ -164,36 +164,13 @@ class ResortDetailScreen extends StatelessWidget {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 14),
-                for (final shop in listings) ...[
-                  _ProductBox(
-                    shop: shop,
-                    product: _listingProduct(shop, products),
-                    quote: store.quoteFor(shop),
-                    recommended:
-                        hull.isDiveStarCertified &&
-                        shop.id == listings.first.id,
-                    lightest:
-                        shop.consumerPrice ==
-                        listings
-                            .map((item) => item.consumerPrice)
-                            .reduce((a, b) => a < b ? a : b),
-                    openRooms: SameBoatBoard.offers(products)
-                        .where(
-                          (offer) => offer.product.name == shop.productName,
-                        )
-                        .length,
-                    onBook: (presetOptionId) {
-                      showTourCheckoutSheet(
-                        context: context,
-                        shop: shop,
-                        quote: store.quoteFor(shop),
-                        product: _listingProduct(shop, products),
-                        presetOptionId: presetOptionId,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                ..._productBoxes(
+                  context: context,
+                  store: store,
+                  hull: hull,
+                  catalogListings: listings,
+                  products: products,
+                ),
               ],
             ),
           ),
@@ -203,7 +180,84 @@ class ResortDetailScreen extends StatelessWidget {
   }
 }
 
+List<Widget> _productBoxes({
+  required BuildContext context,
+  required DiverStore store,
+  required DiveShop hull,
+  required List<DiveShop> catalogListings,
+  required List<ShopProduct> products,
+}) {
+  final bookingListings = _bookingListings(
+    store: store,
+    hull: hull,
+    catalogListings: catalogListings,
+    products: products,
+  );
+  if (bookingListings.isEmpty) {
+    return const [];
+  }
+  final lightest = bookingListings
+      .map((item) => item.consumerPrice)
+      .reduce((a, b) => a < b ? a : b);
+  final out = <Widget>[];
+  for (final shop in bookingListings) {
+    final product = _listingProduct(shop, products);
+    out.add(
+      _ProductBox(
+        shop: shop,
+        product: product,
+        quote: store.quoteFor(shop),
+        recommended:
+            hull.isDiveStarCertified && shop.id == bookingListings.first.id,
+        lightest: shop.consumerPrice == lightest,
+        openRooms: SameBoatBoard.offers(products)
+            .where((offer) => offer.product.id == product.id)
+            .length,
+        onBook: (presetOptionId) {
+          showTourCheckoutSheet(
+            context: context,
+            shop: shop,
+            quote: store.quoteFor(shop),
+            product: product,
+            presetOptionId: presetOptionId,
+          );
+        },
+      ),
+    );
+    out.add(const SizedBox(height: 12));
+  }
+  return out;
+}
+
+/// Prefer live public products (id-stable). Fall back to catalog SKUs.
+List<DiveShop> _bookingListings({
+  required DiverStore store,
+  required DiveShop hull,
+  required List<DiveShop> catalogListings,
+  required List<ShopProduct> products,
+}) {
+  final public = [
+    for (final product in products)
+      if (product.isListedPublicly) product,
+  ];
+  if (public.isNotEmpty) {
+    return [
+      for (final product in public)
+        store.listingCardForProduct(hull, product),
+    ];
+  }
+  return catalogListings;
+}
+
 ShopProduct _listingProduct(DiveShop shop, List<ShopProduct> products) {
+  final productId = shop.listingProductId;
+  if (productId != null && productId.isNotEmpty) {
+    for (final item in products) {
+      if (item.id == productId) {
+        return item;
+      }
+    }
+  }
   for (final item in products) {
     if (item.name == shop.productName) {
       return item;
@@ -215,7 +269,7 @@ ShopProduct _listingProduct(DiveShop shop, List<ShopProduct> products) {
     }
   }
   return ShopProduct(
-    id: shop.id,
+    id: productId ?? shop.id,
     shopId: shop.hullId,
     name: shop.productName,
     consumerPrice: shop.consumerPrice,

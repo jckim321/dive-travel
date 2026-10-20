@@ -551,6 +551,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return false;
   }
 
+  ProductListingKind _shelfKindForSave(ShopProduct? existing) {
+    final current = existing?.listingKind;
+    if (current != null && current != ProductListingKind.exploreOnly) {
+      return current;
+    }
+    if (_namedResort) {
+      return ProductListingKind.curated;
+    }
+    return ProductListingKind.exploreOnly;
+  }
+
+  DateTime? _featuredAtForSave(ShopProduct? existing) {
+    final kind = _shelfKindForSave(existing);
+    if (!kind.isHomeShelf) {
+      return existing?.featuredAt;
+    }
+    return existing?.featuredAt ?? DateTime.now();
+  }
+
   Future<void> _save(ProductSaveIntent intent) async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
@@ -684,10 +703,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               ? (_flagClosesAt ?? _departureStart)
               : null,
           options: [for (final option in options) _withSeatOption(option)],
-          listingKind: existing?.listingKind ?? ProductListingKind.exploreOnly,
+          listingKind: _shelfKindForSave(existing),
+          featuredAt: _featuredAtForSave(existing),
           publishStatus:
               existing?.publishStatus ?? ProductPublishStatus.approved,
-          featuredAt: existing?.featuredAt,
           submittedAt: existing?.submittedAt,
           reviewedAt: existing?.reviewedAt,
           reviewNote: existing?.reviewNote ?? '',

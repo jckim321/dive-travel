@@ -523,6 +523,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get exploreBookingNotSaved =>
+      '자리를 확보하지 못해 예약을 만들지 않았습니다. 빈자리를 다시 확인해 주세요.';
+
+  @override
   String exploreCheckoutDone(String label, String price) {
     return '$label $price원 자리 요청을 샵에 전달했습니다.';
   }
@@ -1006,6 +1010,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String adminMetricShops(int count) {
     return '제휴 샵 $count곳';
   }
+
+  @override
+  String get adminSalesTitle => '이번 달 매출';
+
+  @override
+  String adminSalesTotal(String amount) {
+    return '합계 $amount원';
+  }
+
+  @override
+  String get adminSalesExplore => '일반 상품';
+
+  @override
+  String get adminSalesFlag => '깃발 꽂기';
+
+  @override
+  String get adminSalesDiverPlanned => '내가 짠 상품';
+
+  @override
+  String get adminSalesCurated => '기획 스페셜';
+
+  @override
+  String get adminSalesDiveStar => '다이브 스타';
+
+  @override
+  String get adminSalesHotSpot => '핫스팟';
+
+  @override
+  String get adminSalesNextDeparture => '마감 임박';
 
   @override
   String get adminAttentionTitle => '지금 처리할 일';
@@ -2080,6 +2113,24 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String checkoutFocLine(int pay, int free, int count) {
     return 'FOC $pay+$free · 다이버 무료 $count명';
+  }
+
+  @override
+  String checkoutGuestsBelowMin(int min) {
+    return '이 상품은 최소 $min명이 필요합니다.';
+  }
+
+  @override
+  String checkoutGuestsAboveMax(int max) {
+    return '이 상품은 최대 $max명까지 예약할 수 있습니다.';
+  }
+
+  @override
+  String get checkoutSignInRequired => '예약을 완료하려면 로그인해 주세요.';
+
+  @override
+  String bookingPartySummary(int diver, int nondiver, int child, int infant) {
+    return '다이버 $diver · 비다이버 $nondiver · 아동 $child · 유아 $infant';
   }
 
   @override
