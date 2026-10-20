@@ -1882,6 +1882,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchDeckOptions => 'Options';
 
   @override
+  String get workbenchNext => 'Next';
+
+  @override
+  String get workbenchNeedName => 'Enter a product name before saving.';
+
+  @override
   String get workbenchCategory => 'Category';
 
   @override

@@ -654,6 +654,8 @@
   "workbenchDeckStory": "Story",
   "workbenchDeckRates": "Rates",
   "workbenchDeckOptions": "Options",
+  "workbenchNext": "Next",
+  "workbenchNeedName": "Enter a product name before saving.",
   "workbenchCategory": "Category",
   "workbenchCatResort": "Resort package",
   "workbenchCatLiveaboard": "Liveaboard",

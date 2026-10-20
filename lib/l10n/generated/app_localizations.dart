@@ -3474,6 +3474,18 @@ abstract class AppLocalizations {
   /// **'옵션'**
   String get workbenchDeckOptions;
 
+  /// No description provided for @workbenchNext.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get workbenchNext;
+
+  /// No description provided for @workbenchNeedName.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 이름을 적은 뒤에 저장합니다.'**
+  String get workbenchNeedName;
+
   /// No description provided for @workbenchCategory.
   ///
   /// In ko, this message translates to:

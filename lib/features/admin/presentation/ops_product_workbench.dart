@@ -90,6 +90,7 @@ class _DayEditors {
 
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _name;
+  late final TextEditingController _resortName;
   late final TextEditingController _blurb;
   late final TextEditingController _detail;
   late final TextEditingController _focPay;
@@ -131,6 +132,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         : (shop?.continent ?? ContinentId.asia);
     _category = existing?.category ?? ProductCategory.resortPackage;
     _name = TextEditingController(text: existing?.name ?? '');
+    _resortName = TextEditingController(text: shop?.name ?? '');
     _blurb = TextEditingController(text: existing?.blurb ?? '');
     _detail = TextEditingController(text: existing?.detail ?? '');
     _focPay = TextEditingController(
@@ -224,6 +226,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   @override
   void dispose() {
     _name.dispose();
+    _resortName.dispose();
     _blurb.dispose();
     _detail.dispose();
     _focPay.dispose();
@@ -284,7 +287,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
-    if (name.isEmpty || _saving) {
+    if (_saving) {
+      return;
+    }
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchNeedName)),
+      );
+      return;
+    }
+    if (_special && _resortName.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.productFormCuratedResort)),
+      );
       return;
     }
     if (_openEmptySeats &&
@@ -344,13 +359,31 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           : itinerary.length <= 1
           ? '1일'
           : '${itinerary.length - 1}박 ${itinerary.length}일';
+      var shopId = _shopId;
+      if (_special) {
+        if (!shopId.startsWith('curated-')) {
+          shopId = 'curated-${DateTime.now().millisecondsSinceEpoch}';
+          _shopId = shopId;
+        }
+        await store.saveShopProfile(
+          shopId: shopId,
+          name: _resortName.text.trim(),
+          location: _resortName.text.trim(),
+          productName: name,
+          consumerPrice: diverRate.consumer,
+          professionalPrice: diverRate.professional,
+          continent: _continent,
+          curated: true,
+          intro: _blurb.text.trim(),
+        );
+      }
       await store.saveShopProduct(
-        shopId: _shopId,
+        shopId: shopId,
         product: ShopProduct(
           id:
               widget.existing?.id ??
               'p-${DateTime.now().millisecondsSinceEpoch}',
-          shopId: _shopId,
+          shopId: shopId,
           name: name,
           consumerPrice: diverRate.consumer,
           professionalPrice: diverRate.professional,
@@ -449,13 +482,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       appBar: AppBar(
         title: Text(l10n.workbenchTitle),
         backgroundColor: AppTheme.canvas,
-        actions: [
-          TextButton(
-            key: const Key('product-form-appbar-save'),
-            onPressed: _saving ? null : _save,
-            child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
-          ),
-        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -466,26 +492,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               children: [
                 _deckChips(l10n),
                 Expanded(child: editor),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: FilledButton(
-                      key: Key(
-                        widget.partnerMode
-                            ? 'partner-product-save'
-                            : 'admin-product-submit',
-                      ),
-                      onPressed: _saving ? null : _save,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: AppTheme.navy,
-                      ),
-                      child: Text(
-                        _saving ? l10n.exploreSaving : l10n.partnerSave,
-                      ),
-                    ),
-                  ),
-                ),
+                _stepButton(l10n),
               ],
             );
           }
@@ -493,7 +500,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(width: 168, child: _deckRail(l10n)),
-              Expanded(child: editor),
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: editor),
+                    _stepButton(l10n),
+                  ],
+                ),
+              ),
               SizedBox(
                 width: 280,
                 child: Padding(
@@ -506,6 +520,44 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _stepButton(AppLocalizations l10n) {
+    final last = _deck >= 3;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: FilledButton(
+          key: Key(
+            last
+                ? (widget.partnerMode
+                    ? 'partner-product-save'
+                    : 'admin-product-submit')
+                : 'product-form-next',
+          ),
+          onPressed: _saving
+              ? null
+              : () {
+                  if (!last) {
+                    setState(() => _deck += 1);
+                    return;
+                  }
+                  _save();
+                },
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+            backgroundColor: AppTheme.navy,
+          ),
+          child: Text(
+            _saving
+                ? l10n.exploreSaving
+                : last
+                ? l10n.partnerSave
+                : l10n.workbenchNext,
+          ),
+        ),
       ),
     );
   }
@@ -597,6 +649,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _photoBlock(l10n),
         if (!widget.partnerMode) ...[
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -661,27 +714,40 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 },
         ),
         const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: shops.any((shop) => shop.id == _shopId)
-              ? _shopId
-              : (shops.isEmpty ? null : shops.first.id),
-          decoration: InputDecoration(
-            labelText: l10n.productFormShopHint,
-            filled: true,
-            fillColor: Colors.white,
+        if (_special)
+          TextField(
+            key: const Key('product-curated-resort'),
+            controller: _resortName,
+            decoration: InputDecoration(
+              labelText: l10n.productFormCuratedResort,
+              hintText: l10n.productFormCuratedResortHint,
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          )
+        else
+          DropdownButtonFormField<String>(
+            key: ValueKey('shop-$_continent-$_shopId'),
+            initialValue: shops.any((shop) => shop.id == _shopId)
+                ? _shopId
+                : null,
+            decoration: InputDecoration(
+              labelText: l10n.productFormShopHint,
+              filled: true,
+              fillColor: Colors.white,
+            ),
+            items: [
+              for (final shop in shops)
+                DropdownMenuItem(value: shop.id, child: Text(shop.name)),
+            ],
+            onChanged: shopLocked
+                ? null
+                : (value) {
+                    if (value != null) {
+                      setState(() => _shopId = value);
+                    }
+                  },
           ),
-          items: [
-            for (final shop in shops)
-              DropdownMenuItem(value: shop.id, child: Text(shop.name)),
-          ],
-          onChanged: shopLocked
-              ? null
-              : (value) {
-                  if (value != null) {
-                    setState(() => _shopId = value);
-                  }
-                },
-        ),
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -700,12 +766,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  hull?.name ?? live?.name ?? _shopId,
+                  _special
+                      ? _resortName.text.trim()
+                      : (hull?.name ?? live?.name ?? _shopId),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                Text(
-                  '${hull?.country ?? ''} · ${hull?.location ?? live?.location ?? ''}',
-                ),
+                if (!_special)
+                  Text(
+                    '${hull?.country ?? ''} · ${hull?.location ?? live?.location ?? ''}',
+                  ),
                 if (address.isNotEmpty) Text(address),
                 if (address.isNotEmpty)
                   TextButton(
@@ -816,8 +885,55 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
+  Widget _photoBlock(AppLocalizations l10n) {
+    final cover = _photo != null ||
+        (!_removeExistingCover && _existingCoverUrl.isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!R2Config.canPersistListingPhotos)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.productFormPhotoHint,
+              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+            ),
+          ),
+        if (cover)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              height: 120,
+              width: double.infinity,
+              child: _photo != null
+                  ? Image.memory(_photo!.bytes, fit: BoxFit.cover)
+                  : Image.network(_existingCoverUrl, fit: BoxFit.cover),
+            ),
+          ),
+        Row(
+          children: [
+            TextButton.icon(
+              onPressed: _pickPhoto,
+              icon: const Icon(Icons.add_a_photo_outlined),
+              label: Text(l10n.exploreAttachPhoto),
+            ),
+            if (cover)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _photo = null;
+                    _removeExistingCover = true;
+                  });
+                },
+                child: Text(l10n.exploreCoverRemove),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _storyDeck(AppLocalizations l10n) {
-    final cover = _photo != null || _existingCoverUrl.isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -841,38 +957,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ),
         ),
         const SizedBox(height: 12),
-        if (cover)
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: _photo != null
-                ? Image.memory(_photo!.bytes, fit: BoxFit.cover)
-                : Image.network(_existingCoverUrl, fit: BoxFit.cover),
-          ),
-        Row(
-          children: [
-            TextButton.icon(
-              onPressed: _pickPhoto,
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: Text(l10n.exploreAttachPhoto),
-            ),
-            if (cover)
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _photo = null;
-                    _removeExistingCover = true;
-                  });
-                },
-                child: Text(l10n.exploreCoverRemove),
-              ),
-          ],
-        ),
-        if (!R2Config.canPersistListingPhotos)
-          Text(
-            l10n.productFormPhotoHint,
-            style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-          ),
+        _photoBlock(l10n),
         const SizedBox(height: 16),
         Text(
           l10n.workbenchItinerary,

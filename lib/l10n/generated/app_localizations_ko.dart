@@ -1828,6 +1828,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workbenchDeckOptions => '옵션';
 
   @override
+  String get workbenchNext => '다음';
+
+  @override
+  String get workbenchNeedName => '상품 이름을 적은 뒤에 저장합니다.';
+
+  @override
   String get workbenchCategory => '분류';
 
   @override
