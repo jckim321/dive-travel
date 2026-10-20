@@ -136,6 +136,7 @@ abstract class DiverRepository {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
+    List<ShopGallerySlot>? gallery,
   });
 
   Future<void> deleteShopProduct({

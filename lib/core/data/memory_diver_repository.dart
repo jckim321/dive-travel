@@ -761,12 +761,33 @@ class MemoryDiverRepository implements DiverRepository {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
+    List<ShopGallerySlot>? gallery,
   }) async {
     final current = _shopStats[shopId];
-    final coverUrl = photoBytes == null
-        ? product.coverUrl
-        : 'memory://shop-product-$shopId-${product.id}';
-    final saved = product.copyWith(coverUrl: coverUrl);
+    final ShopProduct saved;
+    Uint8List? coverBytes;
+    if (gallery != null) {
+      final urls = <String>[];
+      for (var i = 0; i < gallery.length; i++) {
+        final slot = gallery[i];
+        if (slot.hasBytes) {
+          urls.add('memory://shop-product-$shopId-${product.id}-$i');
+          coverBytes ??= slot.bytes;
+        } else if (slot.hasUrl) {
+          urls.add(slot.url!.trim());
+        }
+      }
+      saved = product.copyWith(
+        photoUrls: urls,
+        coverUrl: urls.isEmpty ? '' : urls.first,
+      );
+    } else {
+      final coverUrl = photoBytes == null
+          ? product.coverUrl
+          : 'memory://shop-product-$shopId-${product.id}';
+      saved = product.copyWith(coverUrl: coverUrl);
+      coverBytes = photoBytes;
+    }
     final products = [
       for (final item in current?.products ?? const <ShopProduct>[])
         if (item.id != product.id) item,
@@ -779,15 +800,18 @@ class MemoryDiverRepository implements DiverRepository {
       productName: product.name,
       consumerPrice: product.consumerPrice,
       professionalPrice: product.professionalPrice,
-      coverBytes: useAsResortCover ? photoBytes : null,
+      coverBytes: useAsResortCover ? coverBytes : null,
     );
+    final shopCover = !useAsResortCover
+        ? _shopStats[shopId]!.coverUrl
+        : (coverBytes != null
+              ? 'memory://shop-cover-$shopId'
+              : (saved.coverUrl.isNotEmpty
+                    ? saved.coverUrl
+                    : _shopStats[shopId]!.coverUrl));
     _shopStats[shopId] = _shopStats[shopId]!.copyWith(
       products: products,
-      coverUrl: useAsResortCover
-          ? (photoBytes == null
-                ? saved.coverUrl
-                : 'memory://shop-cover-$shopId')
-          : _shopStats[shopId]!.coverUrl,
+      coverUrl: shopCover,
     );
     _shopController.add(_shopStats.values.toList());
   }

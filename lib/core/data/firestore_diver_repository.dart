@@ -1060,11 +1060,35 @@ class FirestoreDiverRepository implements DiverRepository {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
+    List<ShopGallerySlot>? gallery,
   }) async {
     var saved = product;
     // Upload first so we never persist a product that looks saved without a
     // durable cover URL (local memory cache used to fake success briefly).
-    if (photoBytes != null && photoBytes.isNotEmpty) {
+    if (gallery != null) {
+      final urls = <String>[];
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+      for (var i = 0; i < gallery.length; i++) {
+        final slot = gallery[i];
+        if (slot.hasBytes) {
+          final extension = _photoExtension(slot.fileName);
+          final url = await _photos.upload(
+            objectKey:
+                'shops/$shopId/products/${product.id}/gallery/${stamp}_$i$extension',
+            bytes: slot.bytes!,
+            contentType: slot.contentType ?? 'image/jpeg',
+            requirePublicUrl: true,
+          );
+          urls.add(url);
+        } else if (slot.hasUrl) {
+          urls.add(slot.url!.trim());
+        }
+      }
+      saved = product.copyWith(
+        photoUrls: urls,
+        coverUrl: urls.isEmpty ? '' : urls.first,
+      );
+    } else if (photoBytes != null && photoBytes.isNotEmpty) {
       final extension = _photoExtension(photoFileName);
       final url = await _photos.upload(
         objectKey: 'shops/$shopId/products/${product.id}$extension',
@@ -1084,8 +1108,10 @@ class FirestoreDiverRepository implements DiverRepository {
         parsed.id: parsed,
     };
     // Keep an existing cover if the edit omitted bytes/url (avoids wiping R2).
+    // An explicit gallery, even an empty one, is the new photo list.
     final previous = current[saved.id];
-    if (saved.coverUrl.isEmpty &&
+    if (gallery == null &&
+        saved.coverUrl.isEmpty &&
         previous != null &&
         previous.coverUrl.isNotEmpty) {
       saved = saved.copyWith(coverUrl: previous.coverUrl);

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -90,7 +88,11 @@ class ResortDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ResortPhotoGallery(shop: hull),
+                _ResortPhotoGallery(
+                  shop: hull,
+                  productId: _heroProduct(products)?.id,
+                  photoUrls: _heroPhotoUrls(products),
+                ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
@@ -223,6 +225,34 @@ ShopProduct _listingProduct(DiveShop shop, List<ShopProduct> products) {
   );
 }
 
+ShopProduct? _heroProduct(List<ShopProduct> products) {
+  for (final product in products) {
+    if (product.isListedPublicly) {
+      return product;
+    }
+  }
+  return null;
+}
+
+List<String> _heroPhotoUrls(List<ShopProduct> products) {
+  final product = _heroProduct(products);
+  if (product == null) {
+    return const [];
+  }
+  final urls = [
+    for (final url in product.photoUrls)
+      if (url.trim().isNotEmpty) url.trim(),
+  ];
+  if (urls.isNotEmpty) {
+    return urls;
+  }
+  final cover = product.coverUrl.trim();
+  if (cover.isNotEmpty) {
+    return [cover];
+  }
+  return const [];
+}
+
 /// Agoda-style attachment gallery window over the current screen.
 void openResortDetail(BuildContext context, String hullId) {
   showModalBottomSheet<void>(
@@ -244,305 +274,187 @@ void openResortDetail(BuildContext context, String hullId) {
   );
 }
 
-class _ResortPhotoGallery extends StatelessWidget {
-  const _ResortPhotoGallery({required this.shop});
+class _ResortPhotoGallery extends StatefulWidget {
+  const _ResortPhotoGallery({
+    required this.shop,
+    this.productId,
+    this.photoUrls = const [],
+  });
 
   final DiveShop shop;
+  final String? productId;
+  final List<String> photoUrls;
 
-  void _openViewer(BuildContext context, int index) {
+  @override
+  State<_ResortPhotoGallery> createState() => _ResortPhotoGalleryState();
+}
+
+class _ResortPhotoGalleryState extends State<_ResortPhotoGallery> {
+  var _index = 0;
+
+  List<ImageProvider> _slides() {
     final store = DiverStoreScope.of(context);
-    final providers = <ImageProvider>[];
-    final local = store.galleryBytesFor(shop.hullId);
-    if (local.isNotEmpty) {
-      for (final bytes in local) {
-        providers.add(MemoryImage(bytes));
-      }
-    } else {
-      for (final url in shop.displayGallery) {
-        if (url.isEmpty || url.startsWith('memory://')) {
+    final productId = widget.productId;
+    if (widget.photoUrls.isNotEmpty && productId != null) {
+      final frames = store.productFramesFor(
+        '${widget.shop.hullId}--$productId',
+      );
+      final slides = <ImageProvider>[];
+      for (var i = 0; i < widget.photoUrls.length; i++) {
+        final url = widget.photoUrls[i];
+        if (i < frames.length && frames[i] != null && frames[i]!.isNotEmpty) {
+          slides.add(MemoryImage(frames[i]!));
           continue;
         }
-        providers.add(NetworkImage(url));
-      }
-      if (providers.isEmpty) {
-        final cover =
-            store.coverBytesFor(shop.id) ?? store.coverBytesFor(shop.hullId);
-        if (cover != null && cover.isNotEmpty) {
-          providers.add(MemoryImage(cover));
+        if (url.isNotEmpty && !url.startsWith('memory://')) {
+          slides.add(NetworkImage(url));
         }
       }
+      if (slides.isNotEmpty) {
+        return slides;
+      }
     }
-    if (providers.isEmpty) {
-      return;
+    final local = store.galleryBytesFor(widget.shop.hullId);
+    if (local.isNotEmpty) {
+      return [for (final bytes in local) MemoryImage(bytes)];
     }
-    final start = index.clamp(0, providers.length - 1);
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black87,
-      builder: (_) =>
-          _GalleryLightbox(providers: providers, initialIndex: start),
+    final urls = [
+      for (final url in widget.shop.displayGallery)
+        if (url.isNotEmpty && !url.startsWith('memory://')) url,
+    ];
+    if (urls.isNotEmpty) {
+      return [for (final url in urls) NetworkImage(url)];
+    }
+    final cover =
+        store.coverBytesFor(widget.shop.id) ??
+        store.coverBytesFor(widget.shop.hullId);
+    if (cover != null && cover.isNotEmpty) {
+      return [MemoryImage(cover)];
+    }
+    return const [];
+  }
+
+  void _openAlbum(List<ImageProvider> slides) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _PhotoAlbumPage(providers: slides),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
-    final dpr = MediaQuery.devicePixelRatioOf(context);
-    final urls = [
-      for (final url in shop.displayGallery)
-        if (url.isNotEmpty && !url.startsWith('memory://')) url,
-    ];
-    final local = store.galleryBytesFor(shop.hullId);
-    final coverBytes =
-        store.coverBytesFor(shop.id) ?? store.coverBytesFor(shop.hullId);
-
-    Widget sharpMemory(Uint8List bytes) {
-      return Image.memory(
-        bytes,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.high,
-        gaplessPlayback: true,
-        isAntiAlias: true,
-      );
-    }
-
-    Widget sharpNetwork(String url) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.high,
-        gaplessPlayback: true,
-        isAntiAlias: true,
-        cacheWidth: (1100 * dpr).round().clamp(800, 2200),
-        errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0B1F33)),
-      );
-    }
-
-    if (urls.isEmpty && local.isEmpty && coverBytes == null) {
-      return GestureDetector(
-        onTap: () => _openViewer(context, 0),
-        child: CCardProductFrame(
-          radius: 20,
-          child: AspectRatio(
-            aspectRatio: ListingCover.aspectRatio,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ListingCoverPhoto(shop: shop),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0x22000000),
-                        Color(0x00000000),
-                        Color(0x99052A4A),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: Text(
-                    shop.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    final slides = _slides();
+    if (slides.isEmpty) {
+      return CCardProductFrame(
+        radius: 20,
+        child: AspectRatio(
+          aspectRatio: 16 / 10,
+          child: ListingCoverPhoto(shop: widget.shop),
         ),
       );
     }
-
-    Widget coverImage() {
-      if (local.isNotEmpty) {
-        return sharpMemory(local.first);
-      }
-      if (coverBytes != null && coverBytes.isNotEmpty && urls.isEmpty) {
-        return sharpMemory(coverBytes);
-      }
-      if (urls.isNotEmpty) {
-        return sharpNetwork(urls.first);
-      }
-      return ListingCoverPhoto(shop: shop);
-    }
-
-    Widget thumb(int index) {
-      if (index < local.length) {
-        return sharpMemory(local[index]);
-      }
-      if (index < urls.length) {
-        return sharpNetwork(urls[index]);
-      }
-      return const ColoredBox(color: Color(0xFF16324A));
-    }
-
-    final photoCount = local.isNotEmpty ? local.length : urls.length;
-    final sideCount = photoCount > 1 ? (photoCount - 1).clamp(0, 4) : 0;
-    final more = photoCount > 5 ? photoCount - 5 : 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AspectRatio(
-          aspectRatio: 2.05,
-          child: Row(
-            children: [
-              Expanded(
-                flex: 6,
-                child: GestureDetector(
-                  onTap: () => _openViewer(context, 0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        coverImage(),
-                        const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0x22000000),
-                                Color(0x00000000),
-                                Color(0x99052A4A),
-                              ],
-                            ),
-                          ),
+    final index = _index.clamp(0, slides.length - 1);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: AspectRatio(
+        aspectRatio: 16 / 10,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              key: const Key('resort-photo-pager'),
+              itemCount: slides.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, i) {
+                return GestureDetector(
+                  onTap: () => _openAlbum(slides),
+                  child: Image(
+                    image: slides[i],
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                    gaplessPlayback: true,
+                    isAntiAlias: true,
+                  ),
+                );
+              },
+            ),
+            if (slides.length > 1)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        '${index + 1} / ${slides.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
                         ),
-                        Positioned(
-                          left: 14,
-                          right: 14,
-                          bottom: 14,
-                          child: Text(
-                            shop.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              height: 1.15,
-                            ),
-                          ),
-                        ),
-                        if (photoCount > 1)
-                          Positioned(
-                            right: 12,
-                            bottom: 12,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.photo_library_outlined,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      l10n.exploreGalleryViewAll,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              if (sideCount > 0) ...[
-                const SizedBox(width: 6),
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _openViewer(context, 1),
-                                child: _DetailThumb(child: thumb(1)),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: sideCount >= 2
-                                  ? GestureDetector(
-                                      onTap: () => _openViewer(context, 2),
-                                      child: _DetailThumb(child: thumb(2)),
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: sideCount >= 3
-                                  ? GestureDetector(
-                                      onTap: () => _openViewer(context, 3),
-                                      child: _DetailThumb(child: thumb(3)),
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: sideCount >= 4
-                                  ? GestureDetector(
-                                      onTap: () => _openViewer(context, 4),
-                                      child: _DetailThumb(
-                                        overlay: more > 0 ? '+$more' : null,
-                                        child: thumb(4),
-                                      ),
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
+          ],
         ),
-        if (photoCount > 0) ...[
-          const SizedBox(height: 8),
-          Text(
-            l10n.exploreGalleryCount(photoCount),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-        ],
-      ],
+      ),
+    );
+  }
+}
+
+class _PhotoAlbumPage extends StatelessWidget {
+  const _PhotoAlbumPage({required this.providers});
+
+  final List<ImageProvider> providers;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(l10n.exploreGalleryTitle),
+      ),
+      body: GridView.builder(
+        padding: const EdgeInsets.all(8),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
+        ),
+        itemCount: providers.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () {
+              showDialog<void>(
+                context: context,
+                barrierColor: Colors.black87,
+                builder: (_) =>
+                    _GalleryLightbox(providers: providers, initialIndex: index),
+              );
+            },
+            child: Image(
+              image: providers[index],
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.high,
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -624,40 +536,6 @@ class _GalleryLightboxState extends State<_GalleryLightbox> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _DetailThumb extends StatelessWidget {
-  const _DetailThumb({required this.child, this.overlay});
-
-  final Widget child;
-  final String? overlay;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          child,
-          if (overlay != null)
-            ColoredBox(
-              color: Colors.black54,
-              child: Center(
-                child: Text(
-                  overlay!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

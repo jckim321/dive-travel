@@ -144,14 +144,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _individuals = <_LineEditors>[];
   final _days = <_DayEditors>[];
   final _photoPicker = const DivePhotoPicker();
+  final _gallery = <_BriefPhoto>[];
+  var _galleryTouched = false;
   final _sectionKeys = List<GlobalKey>.generate(
     _sectionCount,
     (_) => GlobalKey(),
   );
   final _briefKey = GlobalKey();
   final _draftListeners = <TextEditingController>[];
-  PickedPhoto? _photo;
-  var _removeExistingCover = false;
+  static const _maxGallery = 12;
   late String _shopId;
   late String _continent;
   late ProductCategory _category;
@@ -293,6 +294,24 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(_blurb);
     _listen(_resortName);
     _listen(_rateConsumer[GuestRole.diver]!);
+    _seedGallery(existing);
+  }
+
+  void _seedGallery(ShopProduct? existing) {
+    final urls = [
+      for (final url in existing?.photoUrls ?? const <String>[])
+        if (url.trim().isNotEmpty) url.trim(),
+    ];
+    if (urls.isNotEmpty) {
+      _gallery.addAll([
+        for (final url in urls.take(_maxGallery)) _BriefPhoto.url(url),
+      ]);
+      return;
+    }
+    final cover = existing?.coverUrl.trim() ?? '';
+    if (cover.isNotEmpty) {
+      _gallery.add(_BriefPhoto.url(cover));
+    }
   }
 
   void _listen(TextEditingController controller) {
@@ -385,12 +404,43 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ];
   }
 
-  String get _existingCoverUrl {
-    final url = widget.existing?.coverUrl.trim() ?? '';
-    if (_removeExistingCover || url.isEmpty) {
+  List<ShopGallerySlot> get _gallerySlots => [
+    for (final item in _gallery)
+      if (item.photo != null)
+        ShopGallerySlot(
+          bytes: item.photo!.bytes,
+          fileName: item.photo!.fileName,
+          contentType: item.photo!.contentType,
+        )
+      else if (item.url != null && item.url!.trim().isNotEmpty)
+        ShopGallerySlot(url: item.url),
+  ];
+
+  String get _galleryCoverUrl {
+    if (_gallery.isEmpty) {
       return '';
     }
-    return url;
+    return _gallery.first.url?.trim() ?? '';
+  }
+
+  Future<void> _addPhotos() async {
+    final remaining = _maxGallery - _gallery.length;
+    if (remaining <= 0) {
+      return;
+    }
+    final photos = await _photoPicker.pickMultiple(max: remaining);
+    if (photos.isEmpty || !mounted) {
+      return;
+    }
+    setState(() {
+      _galleryTouched = true;
+      for (final photo in photos) {
+        if (_gallery.length >= _maxGallery) {
+          break;
+        }
+        _gallery.add(_BriefPhoto.local(photo));
+      }
+    });
   }
 
   String get _baseOptionId {
@@ -604,7 +654,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           active: existing?.active ?? true,
           blurb: _blurb.text.trim(),
           durationLabel: _nightsLabel,
-          coverUrl: _existingCoverUrl,
+          coverUrl: _galleryCoverUrl,
           continent: _continent,
           meetingPoint: _meeting.text.trim(),
           schedule: _schedule.text.trim(),
@@ -616,7 +666,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           cancellationNote: _cancel.text.trim(),
           category: _category,
           detail: existing?.detail ?? '',
-          photoUrls: existing?.photoUrls ?? const [],
+          photoUrls: [
+            for (final item in _gallery)
+              if (item.url != null && item.url!.isNotEmpty) item.url!,
+          ],
           itineraryDays: itinerary,
           guestRates: guestRates,
           focPayCount: int.tryParse(_focPay.text) ?? 0,
@@ -642,10 +695,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               ? existing!.submittedByUid
               : sessionUid,
         ),
-        photoBytes: _photo?.bytes,
-        photoFileName: _photo?.fileName,
-        photoContentType: _photo?.contentType,
-        useAsResortCover: existing == null || _photo != null,
+        gallery: _gallerySlots,
+        useAsResortCover: existing == null || _galleryTouched,
         creatorSubmission: false,
         submitterUid: sessionUid,
         intent: intent,
@@ -668,17 +719,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         setState(() => _savingIntent = null);
       }
     }
-  }
-
-  Future<void> _pickPhoto() async {
-    final photo = await _photoPicker.pick();
-    if (photo == null || !mounted) {
-      return;
-    }
-    setState(() {
-      _photo = photo;
-      _removeExistingCover = false;
-    });
   }
 
   Future<void> _pickDay({required bool isFlag}) async {
@@ -989,51 +1029,100 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _photoBlock(AppLocalizations l10n) {
-    final cover =
-        _photo != null ||
-        (!_removeExistingCover && _existingCoverUrl.isNotEmpty);
+    final canAdd = _gallery.length < _maxGallery;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          l10n.exploreGalleryHint,
+          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+        ),
         if (!R2Config.canPersistListingPhotos)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(top: 8),
             child: Text(
               l10n.productFormPhotoHint,
               style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
           ),
-        if (cover)
+        if (_gallery.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(l10n.exploreGalleryCount(_gallery.length)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < _gallery.length; i++) _galleryThumb(l10n, i),
+            ],
+          ),
+        ],
+        TextButton.icon(
+          key: const Key('brief-gallery-add'),
+          onPressed: canAdd ? _addPhotos : null,
+          icon: const Icon(Icons.add_photo_alternate_outlined),
+          label: Text(
+            _gallery.isEmpty
+                ? l10n.exploreGalleryAdd
+                : l10n.exploreGalleryAddMore,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _galleryThumb(AppLocalizations l10n, int index) {
+    final item = _gallery[index];
+    return SizedBox(
+      width: 108,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
-              height: 160,
-              width: double.infinity,
-              child: _photo != null
-                  ? Image.memory(_photo!.bytes, fit: BoxFit.cover)
-                  : Image.network(_existingCoverUrl, fit: BoxFit.cover),
+              height: 72,
+              width: 108,
+              child: item.photo != null
+                  ? Image.memory(item.photo!.bytes, fit: BoxFit.cover)
+                  : Image.network(item.url!, fit: BoxFit.cover),
             ),
           ),
-        Row(
-          children: [
-            TextButton.icon(
-              onPressed: _pickPhoto,
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: Text(l10n.exploreAttachPhoto),
-            ),
-            if (cover)
-              TextButton(
+          Row(
+            children: [
+              if (index == 0)
+                const Padding(
+                  padding: EdgeInsets.only(left: 4),
+                  child: Icon(Icons.star, size: 16, color: AppTheme.navy),
+                )
+              else
+                IconButton(
+                  tooltip: l10n.exploreUseAsCover,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    setState(() {
+                      _galleryTouched = true;
+                      final moved = _gallery.removeAt(index);
+                      _gallery.insert(0, moved);
+                    });
+                  },
+                  icon: const Icon(Icons.vertical_align_top, size: 18),
+                ),
+              IconButton(
+                tooltip: l10n.exploreCoverRemove,
+                visualDensity: VisualDensity.compact,
                 onPressed: () {
                   setState(() {
-                    _photo = null;
-                    _removeExistingCover = true;
+                    _galleryTouched = true;
+                    _gallery.removeAt(index);
                   });
                 },
-                child: Text(l10n.exploreCoverRemove),
+                icon: const Icon(Icons.close, size: 18),
               ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1703,9 +1792,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ? (_resortName.text.trim().isEmpty ? '—' : _resortName.text.trim())
         : (hull?.name ?? '');
     final start = int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
-    final cover =
-        _photo != null ||
-        (!_removeExistingCover && _existingCoverUrl.isNotEmpty);
+    final cover = _gallery.isEmpty ? null : _gallery.first;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1722,18 +1809,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            if (cover)
+            if (cover != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: SizedBox(
                   height: 96,
                   width: double.infinity,
-                  child: _photo != null
-                      ? Image.memory(_photo!.bytes, fit: BoxFit.cover)
-                      : Image.network(_existingCoverUrl, fit: BoxFit.cover),
+                  child: cover.photo != null
+                      ? Image.memory(cover.photo!.bytes, fit: BoxFit.cover)
+                      : Image.network(cover.url!, fit: BoxFit.cover),
                 ),
               ),
-            if (cover) const SizedBox(height: 8),
+            if (cover != null) const SizedBox(height: 8),
             Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
             Text(
               resort,
@@ -1790,4 +1877,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ],
     );
   }
+}
+
+class _BriefPhoto {
+  const _BriefPhoto.url(this.url) : photo = null;
+
+  const _BriefPhoto.local(this.photo) : url = null;
+
+  final String? url;
+  final PickedPhoto? photo;
 }

@@ -383,6 +383,7 @@ class DiverStore extends ChangeNotifier {
 
   final Map<String, Uint8List> _coverBytes = {};
   final Map<String, List<Uint8List>> _galleryBytes = {};
+  final Map<String, List<Uint8List?>> _productFrames = {};
   final Set<String> _favoriteShopIds = {};
 
   Uint8List? coverBytesFor(String id) {
@@ -391,6 +392,10 @@ class DiverStore extends ChangeNotifier {
 
   List<Uint8List> galleryBytesFor(String id) {
     return _galleryBytes[id] ?? _galleryBytes[id.split('--').first] ?? const [];
+  }
+
+  List<Uint8List?> productFramesFor(String id) {
+    return _productFrames[id] ?? const [];
   }
 
   List<DiveShop> lastCallResorts({int limit = 4}) {
@@ -803,6 +808,7 @@ class DiverStore extends ChangeNotifier {
     String? photoFileName,
     String? photoContentType,
     bool useAsResortCover = false,
+    List<ShopGallerySlot>? gallery,
     bool creatorSubmission = false,
     String? submitterUid,
     ProductSaveIntent? intent,
@@ -853,9 +859,30 @@ class DiverStore extends ChangeNotifier {
       photoFileName: photoFileName,
       photoContentType: photoContentType,
       useAsResortCover: useAsResortCover,
+      gallery: gallery,
     );
     // Only mirror bytes locally after a durable R2 URL was written.
-    if (photoBytes != null && photoBytes.isNotEmpty) {
+    if (gallery != null) {
+      final frames = <Uint8List?>[
+        for (final slot in gallery)
+          if (slot.hasBytes || slot.hasUrl) slot.hasBytes ? slot.bytes : null,
+      ];
+      _productFrames['$shopId--${gated.id}'] = frames;
+      Uint8List? first;
+      for (final frame in frames) {
+        if (frame != null && frame.isNotEmpty) {
+          first = frame;
+          break;
+        }
+      }
+      if (first != null) {
+        _coverBytes['$shopId--${gated.id}'] = first;
+        if (useAsResortCover) {
+          _coverBytes[shopId] = first;
+        }
+      }
+      notifyListeners();
+    } else if (photoBytes != null && photoBytes.isNotEmpty) {
       _coverBytes['$shopId--${gated.id}'] = photoBytes;
       if (useAsResortCover) {
         _coverBytes[shopId] = photoBytes;
