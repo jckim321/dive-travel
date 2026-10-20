@@ -240,6 +240,15 @@
   "profileCraftedCount": "{count} trips crafted",
   "profileSettingsTitle": "Settings",
   "profileMembershipTitle": "Membership",
+  "profileGradeFirstTide": "Pay for your first trip and you cross into Gold.",
+  "profileGradeStepsLeft": "{count} more trips until {next}.",
+  "@profileGradeStepsLeft": {
+    "placeholders": {
+      "next": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "profileGradeDeepest": "You are already at the deepest grade, Platinum.",
   "profileCredentialsTitle": "Certification & grade",
   "profileWorkModeTitle": "Work mode",
   "profileUpcomingConfirmed": "Confirmed · {date}",

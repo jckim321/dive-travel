@@ -17,9 +17,6 @@ class ProVerificationCard extends StatefulWidget {
 }
 
 class _ProVerificationCardState extends State<ProVerificationCard> {
-  static const _agencies = ['PADI', 'SSI', 'NAUI', 'RAID', 'CMAS'];
-
-  String _agency = 'PADI';
   PickedPhoto? _photo;
   bool _saving = false;
   final _picker = const DivePhotoPicker();
@@ -47,7 +44,7 @@ class _ProVerificationCardState extends State<ProVerificationCard> {
     setState(() => _saving = true);
     try {
       await DiverStoreScope.of(context).submitProVerification(
-        agency: _agency,
+        agency: '',
         photoBytes: photo.bytes,
         photoFileName: photo.fileName,
         photoContentType: photo.contentType,
@@ -105,23 +102,6 @@ class _ProVerificationCardState extends State<ProVerificationCard> {
                 : theme.colorScheme.secondaryContainer,
           ),
           if (status != ProVerificationStatus.approved) ...[
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _agency,
-              decoration: InputDecoration(
-                labelText: l10n.proAgency,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                for (final agency in _agencies)
-                  DropdownMenuItem(value: agency, child: Text(agency)),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _agency = value);
-                }
-              },
-            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               key: const Key('pro-pick-ccard'),

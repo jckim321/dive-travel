@@ -791,6 +791,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMembershipTitle => 'Membership';
 
   @override
+  String get profileGradeFirstTide =>
+      'Pay for your first trip and you cross into Gold.';
+
+  @override
+  String profileGradeStepsLeft(String next, int count) {
+    return '$count more trips until $next.';
+  }
+
+  @override
+  String get profileGradeDeepest =>
+      'You are already at the deepest grade, Platinum.';
+
+  @override
   String get profileCredentialsTitle => 'Certification & grade';
 
   @override

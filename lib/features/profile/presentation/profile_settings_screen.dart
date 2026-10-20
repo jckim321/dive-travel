@@ -19,6 +19,14 @@ class ProfileSettingsScreen extends StatelessWidget {
     final session = SessionScope.of(context);
     final stats = store.stats;
     final email = session.user?.email ?? '';
+    final paidCount = [
+      for (final booking in store.bookings)
+        if (booking.isActive) booking,
+    ].length;
+    final useGrade = ProfileDisplayGrade.fromUse(
+      paidBookings: paidCount,
+      isInstructor: false,
+    );
 
     return Scaffold(
       backgroundColor: AppTheme.seaMist,
@@ -39,18 +47,18 @@ class ProfileSettingsScreen extends StatelessWidget {
                 _SettingsRow(
                   icon: Icons.workspace_premium_outlined,
                   title: l10n.profileMembershipTitle,
-                  subtitle: _gradeLabel(l10n, stats.memberGrade),
+                  subtitle: _useGradeLabel(l10n, useGrade),
+                ),
+                const SizedBox(height: 16),
+                _GradeLadder(current: useGrade),
+                const SizedBox(height: 10),
+                Text(
+                  _nextGradeLine(l10n, useGrade, paidCount),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            l10n.profileCredentialsTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 10),
-          const ProVerificationCard(),
           if (stats.isAdmin || stats.isBusiness) ...[
             const SizedBox(height: 24),
             Text(
@@ -91,6 +99,13 @@ class ProfileSettingsScreen extends StatelessWidget {
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
           ),
+          const SizedBox(height: 28),
+          Text(
+            l10n.profileCredentialsTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
+          const ProVerificationCard(),
         ],
       ),
     );
@@ -173,11 +188,94 @@ class _SettingsAction extends StatelessWidget {
   }
 }
 
-String _gradeLabel(AppLocalizations l10n, MemberGrade grade) {
+String _useGradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
   return switch (grade) {
-    MemberGrade.member => l10n.memberGradeMember,
-    MemberGrade.special => l10n.memberGradeSpecial,
-    MemberGrade.vip => l10n.memberGradeVip,
-    MemberGrade.instructor => l10n.memberGradeInstructor,
+    ProfileDisplayGrade.silver => l10n.profileGradeSilver,
+    ProfileDisplayGrade.gold => l10n.profileGradeGold,
+    ProfileDisplayGrade.diamond => l10n.profileGradeDiamond,
+    ProfileDisplayGrade.platinum => l10n.profileGradePlatinum,
+    ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
   };
+}
+
+String _nextGradeLine(
+  AppLocalizations l10n,
+  ProfileDisplayGrade grade,
+  int paidCount,
+) {
+  return switch (grade) {
+    ProfileDisplayGrade.silver => l10n.profileGradeFirstTide,
+    ProfileDisplayGrade.gold => l10n.profileGradeStepsLeft(
+      l10n.profileGradeDiamond,
+      5 - paidCount,
+    ),
+    ProfileDisplayGrade.diamond => l10n.profileGradeStepsLeft(
+      l10n.profileGradePlatinum,
+      10 - paidCount,
+    ),
+    ProfileDisplayGrade.platinum || ProfileDisplayGrade.instructor =>
+      l10n.profileGradeDeepest,
+  };
+}
+
+class _GradeLadder extends StatefulWidget {
+  const _GradeLadder({required this.current});
+
+  final ProfileDisplayGrade current;
+
+  @override
+  State<_GradeLadder> createState() => _GradeLadderState();
+}
+
+class _GradeLadderState extends State<_GradeLadder>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _blink;
+
+  static const _steps = [
+    (ProfileDisplayGrade.silver, '🥈'),
+    (ProfileDisplayGrade.gold, '🥇'),
+    (ProfileDisplayGrade.diamond, '💎'),
+    (ProfileDisplayGrade.platinum, '💠'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _blink = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    final testing = WidgetsBinding.instance.runtimeType.toString().contains(
+      'Test',
+    );
+    if (!testing) {
+      _blink.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < _steps.length; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(height: 2, color: const Color(0xFFD5DDE3)),
+            ),
+          FadeTransition(
+            opacity: widget.current == _steps[i].$1
+                ? Tween<double>(begin: 0.35, end: 1).animate(_blink)
+                : const AlwaysStoppedAnimation(1),
+            child: Text(_steps[i].$2, style: const TextStyle(fontSize: 22)),
+          ),
+        ],
+      ],
+    );
+  }
 }

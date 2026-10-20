@@ -764,6 +764,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileMembershipTitle => '멤버십';
 
   @override
+  String get profileGradeFirstTide => '첫 바다를 결제하면 골드로 건너갑니다.';
+
+  @override
+  String profileGradeStepsLeft(String next, int count) {
+    return '$next까지 $count번의 여행이 남았습니다.';
+  }
+
+  @override
+  String get profileGradeDeepest => '이미 가장 깊은 등급, 플래티넘입니다.';
+
+  @override
   String get profileCredentialsTitle => '자격증 및 등급';
 
   @override

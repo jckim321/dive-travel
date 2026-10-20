@@ -649,6 +649,15 @@
   },
   "profileSettingsTitle": "설정",
   "profileMembershipTitle": "멤버십",
+  "profileGradeFirstTide": "첫 바다를 결제하면 골드로 건너갑니다.",
+  "profileGradeStepsLeft": "{next}까지 {count}번의 여행이 남았습니다.",
+  "@profileGradeStepsLeft": {
+    "placeholders": {
+      "next": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "profileGradeDeepest": "이미 가장 깊은 등급, 플래티넘입니다.",
   "profileCredentialsTitle": "자격증 및 등급",
   "profileWorkModeTitle": "업무용 전환",
   "profileUpcomingConfirmed": "예약 확정 · {date}",

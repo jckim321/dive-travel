@@ -1512,6 +1512,24 @@ abstract class AppLocalizations {
   /// **'멤버십'**
   String get profileMembershipTitle;
 
+  /// No description provided for @profileGradeFirstTide.
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 바다를 결제하면 골드로 건너갑니다.'**
+  String get profileGradeFirstTide;
+
+  /// No description provided for @profileGradeStepsLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'{next}까지 {count}번의 여행이 남았습니다.'**
+  String profileGradeStepsLeft(String next, int count);
+
+  /// No description provided for @profileGradeDeepest.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 가장 깊은 등급, 플래티넘입니다.'**
+  String get profileGradeDeepest;
+
   /// No description provided for @profileCredentialsTitle.
   ///
   /// In ko, this message translates to:
