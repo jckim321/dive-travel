@@ -1721,7 +1721,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exploreCoverPhotoHint =>
-      'Shown like Agoda: one large cover plus a photo grid. The first photo is the cover.';
+      'Shown like Booking.com: one large cover plus a photo grid. The first photo is the cover.';
 
   @override
   String get exploreGalleryTitle => 'Resort photos';

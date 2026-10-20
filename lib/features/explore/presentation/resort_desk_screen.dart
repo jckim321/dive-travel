@@ -10,7 +10,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
-import 'package:dive_travel_app/core/widgets/listing_cover.dart';
+import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -36,7 +36,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _pro = TextEditingController();
   final _amenities = TextEditingController();
   final _photoPicker = const DivePhotoPicker();
-  final List<_GallerySlot> _slots = [];
+  final List<BookingGalleryItem> _slots = [];
   var _seeded = false;
   var _galleryTouched = false;
   var _gallerySeedDone = false;
@@ -85,7 +85,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     if (localBytes.isNotEmpty && urls.isEmpty) {
       for (final bytes in localBytes) {
         _slots.add(
-          _GallerySlot.local(
+          BookingGalleryItem.local(
             PickedPhoto(
               bytes: bytes,
               fileName: 'gallery.jpg',
@@ -99,12 +99,12 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         if (url.isEmpty || url.startsWith('memory://')) {
           continue;
         }
-        _slots.add(_GallerySlot.remote(url));
+        _slots.add(BookingGalleryItem.remote(url));
       }
       final coverBytes = store.coverBytesFor(widget.shopId);
       if (_slots.isEmpty && coverBytes != null && coverBytes.isNotEmpty) {
         _slots.add(
-          _GallerySlot.local(
+          BookingGalleryItem.local(
             PickedPhoto(
               bytes: coverBytes,
               fileName: 'cover.jpg',
@@ -147,7 +147,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         if (_slots.length >= _kMaxGallery) {
           break;
         }
-        _slots.add(_GallerySlot.local(photo));
+        _slots.add(BookingGalleryItem.local(photo));
       }
     });
   }
@@ -163,7 +163,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     setState(() {
       _galleryTouched = true;
       _slots.add(
-        _GallerySlot.local(
+        BookingGalleryItem.local(
           PickedPhoto(
             bytes: data.buffer.asUint8List(),
             fileName: 'test_dive_photo.png',
@@ -474,20 +474,20 @@ InputDecoration _deskInputDecoration({
   bool required = false,
 }) {
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: Color(0xFFD8DEE5)),
+    borderRadius: BorderRadius.circular(4),
+    borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
   );
   return InputDecoration(
     label: required ? _RequiredLabel(label) : Text(label),
     hintText: hint,
     filled: true,
-    fillColor: const Color(0xFFFBFCFD),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: border,
     enabledBorder: border,
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppTheme.ocean, width: 1.4),
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
     ),
   );
 }
@@ -516,93 +516,6 @@ class _RequiredLabel extends StatelessWidget {
   }
 }
 
-class _DeskSectionCard extends StatelessWidget {
-  const _DeskSectionCard({
-    required this.step,
-    required this.title,
-    required this.child,
-    this.subtitle,
-    this.trailing,
-  });
-
-  final String step;
-  final String title;
-  final String? subtitle;
-  final Widget child;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6EBEF)),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppTheme.navy,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    step,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppTheme.muted,
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (trailing != null) ...[
-              const SizedBox(height: 12),
-              Align(alignment: Alignment.centerLeft, child: trailing!),
-            ],
-            const SizedBox(height: 16),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _DeskStickySidebar extends StatelessWidget {
   const _DeskStickySidebar({
     required this.saving,
@@ -624,9 +537,15 @@ class _DeskStickySidebar extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6EBEF)),
-        boxShadow: AppTheme.cardShadow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE7E7E7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F0B1F33),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
@@ -646,7 +565,7 @@ class _DeskStickySidebar extends StatelessWidget {
                 backgroundColor: AppTheme.navy,
                 minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
               icon: const Icon(Icons.save_outlined, size: 18),
@@ -658,9 +577,9 @@ class _DeskStickySidebar extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(44),
                 foregroundColor: AppTheme.navy,
-                side: const BorderSide(color: Color(0xFFD0D7DE)),
+                side: const BorderSide(color: Color(0xFFBDBDBD)),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
               icon: const Icon(Icons.visibility_outlined, size: 18),
@@ -736,7 +655,7 @@ class _DeskMainColumn extends StatelessWidget {
   final TextEditingController intro;
   final TextEditingController amenities;
   final TextEditingController product;
-  final List<_GallerySlot> slots;
+  final List<BookingGalleryItem> slots;
   final VoidCallback onAddPhotos;
   final VoidCallback onTestPhoto;
   final ValueChanged<int> onRemovePhoto;
@@ -759,7 +678,7 @@ class _DeskMainColumn extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 16),
-        _DeskSectionCard(
+        BookingFormSection(
           step: '1',
           title: '기본 정보',
           subtitle: '리조트 이름·위치·소개를 관리합니다.',
@@ -818,20 +737,24 @@ class _DeskMainColumn extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _DeskSectionCard(
+        BookingFormSection(
           step: '2',
           title: '미디어 (사진)',
           subtitle: l10n.exploreCoverPhotoHint,
-          child: _AgodaGalleryEditor(
-            slots: slots,
+          child: BookingGalleryEditor(
+            items: slots,
             onAdd: onAddPhotos,
             onTest: onTestPhoto,
             onRemove: onRemovePhoto,
             onMakeCover: onMakeCover,
+            maxItems: _kMaxGallery,
+            fieldKey: const Key('resort-cover-field'),
+            attachKey: const Key('resort-cover-field-attach'),
+            testKey: const Key('resort-cover-field-test'),
           ),
         ),
         const SizedBox(height: 16),
-        _DeskSectionCard(
+        BookingFormSection(
           step: '3',
           title: '상품 옵션',
           subtitle: '룸·탱크·장비 등 선택 옵션을 이 창에서 바로 추가·수정합니다.',
@@ -1174,453 +1097,6 @@ class _ProductOptionEditorDialogState extends State<_ProductOptionEditorDialog> 
           child: Text(l10n.partnerSave),
         ),
       ],
-    );
-  }
-}
-
-class _GallerySlot {
-  const _GallerySlot._({this.url, this.photo});
-
-  factory _GallerySlot.remote(String url) => _GallerySlot._(url: url);
-
-  factory _GallerySlot.local(PickedPhoto photo) => _GallerySlot._(photo: photo);
-
-  final String? url;
-  final PickedPhoto? photo;
-
-  bool get hasImage =>
-      (photo != null && photo!.bytes.isNotEmpty) ||
-      (url != null && url!.isNotEmpty && !url!.startsWith('memory://'));
-}
-
-class _AgodaGalleryEditor extends StatelessWidget {
-  const _AgodaGalleryEditor({
-    required this.slots,
-    required this.onAdd,
-    required this.onTest,
-    required this.onRemove,
-    required this.onMakeCover,
-  });
-
-  final List<_GallerySlot> slots;
-  final VoidCallback onAdd;
-  final VoidCallback onTest;
-  final ValueChanged<int> onRemove;
-  final ValueChanged<int> onMakeCover;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final canAdd = slots.length < _kMaxGallery;
-
-    return Column(
-      key: const Key('resort-cover-field'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          slots.isEmpty
-              ? l10n.exploreGalleryEmpty
-              : l10n.exploreGalleryCount(slots.length),
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (slots.isEmpty)
-          _EmptyGalleryDrop(onAdd: onAdd)
-        else
-          _AgodaGalleryGrid(
-            slots: slots,
-            onRemove: onRemove,
-            onMakeCover: onMakeCover,
-            onAdd: canAdd ? onAdd : null,
-          ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilledButton.tonalIcon(
-              key: const Key('resort-cover-field-attach'),
-              onPressed: canAdd ? onAdd : null,
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(
-                slots.isEmpty
-                    ? l10n.exploreAttachPhoto
-                    : l10n.exploreGalleryAddMore,
-              ),
-            ),
-            OutlinedButton(
-              key: const Key('resort-cover-field-test'),
-              onPressed: canAdd ? onTest : null,
-              child: Text(l10n.logbookUseTestPhoto),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyGalleryDrop extends StatelessWidget {
-  const _EmptyGalleryDrop({required this.onAdd});
-
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Material(
-      color: const Color(0xFF0B1F33),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onAdd,
-        borderRadius: BorderRadius.circular(14),
-        child: AspectRatio(
-          aspectRatio: ListingCover.aspectRatio,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.add_a_photo_outlined,
-                  size: 36,
-                  color: Colors.white.withValues(alpha: 0.85),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  l10n.exploreGalleryAdd,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.exploreGalleryHint,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AgodaGalleryGrid extends StatelessWidget {
-  const _AgodaGalleryGrid({
-    required this.slots,
-    required this.onRemove,
-    required this.onMakeCover,
-    this.onAdd,
-  });
-
-  final List<_GallerySlot> slots;
-  final ValueChanged<int> onRemove;
-  final ValueChanged<int> onMakeCover;
-  final VoidCallback? onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final extras = slots.length > 1 ? slots.sublist(1) : const <_GallerySlot>[];
-    final showTiles = extras.take(4).toList();
-    final moreCount = slots.length > 5 ? slots.length - 5 : 0;
-
-    return AspectRatio(
-      aspectRatio: 2.05,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 6,
-            child: _GalleryTile(
-              slot: slots.first,
-              isCover: true,
-              label: l10n.exploreCoverPhoto,
-              onRemove: () => onRemove(0),
-              badge: moreCount > 0
-                  ? null
-                  : slots.length > 1
-                      ? l10n.exploreGalleryViewAll
-                      : null,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            flex: 4,
-            child: Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _smallOrAdd(
-                          context,
-                          index: 1,
-                          showTiles: showTiles,
-                          onAdd: onAdd,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: _smallOrAdd(
-                          context,
-                          index: 2,
-                          showTiles: showTiles,
-                          onAdd: onAdd,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _smallOrAdd(
-                          context,
-                          index: 3,
-                          showTiles: showTiles,
-                          onAdd: onAdd,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _smallOrAdd(
-                              context,
-                              index: 4,
-                              showTiles: showTiles,
-                              onAdd: onAdd,
-                            ),
-                            if (moreCount > 0)
-                              Positioned.fill(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '+$moreCount',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _smallOrAdd(
-    BuildContext context, {
-    required int index,
-    required List<_GallerySlot> showTiles,
-    required VoidCallback? onAdd,
-  }) {
-    final slotIndex = index;
-    final tileIndex = index - 1;
-    if (tileIndex < showTiles.length) {
-      return _GalleryTile(
-        slot: showTiles[tileIndex],
-        onRemove: () => onRemove(slotIndex),
-        onMakeCover: () => onMakeCover(slotIndex),
-      );
-    }
-    if (onAdd == null) {
-      return const SizedBox.shrink();
-    }
-    return Material(
-      color: const Color(0xFF16324A),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onAdd,
-        borderRadius: BorderRadius.circular(10),
-        child: const Center(
-          child: Icon(Icons.add, color: Colors.white70),
-        ),
-      ),
-    );
-  }
-}
-
-class _GalleryTile extends StatelessWidget {
-  const _GalleryTile({
-    required this.slot,
-    required this.onRemove,
-    this.onMakeCover,
-    this.isCover = false,
-    this.label,
-    this.badge,
-  });
-
-  final _GallerySlot slot;
-  final VoidCallback onRemove;
-  final VoidCallback? onMakeCover;
-  final bool isCover;
-  final String? label;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final radius = BorderRadius.circular(isCover ? 14 : 10);
-    return ClipRRect(
-      borderRadius: radius,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ColoredBox(
-            color: const Color(0xFF0B1F33),
-            child: slot.photo != null
-                ? Image.memory(slot.photo!.bytes, fit: BoxFit.cover)
-                : slot.url != null && slot.url!.isNotEmpty
-                    ? Image.network(
-                        slot.url!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                      )
-                    : Image.asset(
-                        'assets/images/test_dive_photo.png',
-                        fit: BoxFit.cover,
-                        opacity: const AlwaysStoppedAnimation(0.45),
-                      ),
-          ),
-          if (label != null)
-            Positioned(
-              left: 10,
-              bottom: 10,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: Text(
-                    label!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          if (badge != null)
-            Positioned(
-              right: 10,
-              bottom: 10,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.photo_library_outlined, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        badge!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          Positioned(
-            top: 6,
-            right: 6,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (onMakeCover != null)
-                  _TileAction(
-                    tooltip: l10n.exploreGalleryMakeCover,
-                    icon: Icons.star_outline,
-                    onTap: onMakeCover!,
-                  ),
-                _TileAction(
-                  tooltip: l10n.exploreCoverRemove,
-                  icon: Icons.close,
-                  onTap: onRemove,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TileAction extends StatelessWidget {
-  const _TileAction({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Material(
-        color: Colors.black54,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Tooltip(
-            message: tooltip,
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(icon, size: 16, color: Colors.white),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

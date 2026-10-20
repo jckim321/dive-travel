@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class OpsProductWorkbench extends StatefulWidget {
@@ -145,7 +146,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _individuals = <_LineEditors>[];
   final _days = <_DayEditors>[];
   final _photoPicker = const DivePhotoPicker();
-  final _gallery = <_BriefPhoto>[];
+  final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
   final _sectionKeys = List<GlobalKey>.generate(
     _sectionCount,
@@ -305,13 +306,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ];
     if (urls.isNotEmpty) {
       _gallery.addAll([
-        for (final url in urls.take(_maxGallery)) _BriefPhoto.url(url),
+        for (final url in urls.take(_maxGallery))
+          BookingGalleryItem.remote(url),
       ]);
       return;
     }
     final cover = existing?.coverUrl.trim() ?? '';
     if (cover.isNotEmpty) {
-      _gallery.add(_BriefPhoto.url(cover));
+      _gallery.add(BookingGalleryItem.remote(cover));
     }
   }
 
@@ -439,8 +441,29 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         if (_gallery.length >= _maxGallery) {
           break;
         }
-        _gallery.add(_BriefPhoto.local(photo));
+        _gallery.add(BookingGalleryItem.local(photo));
       }
+    });
+  }
+
+  void _removePhoto(int index) {
+    if (index < 0 || index >= _gallery.length) {
+      return;
+    }
+    setState(() {
+      _galleryTouched = true;
+      _gallery.removeAt(index);
+    });
+  }
+
+  void _makeCover(int index) {
+    if (index <= 0 || index >= _gallery.length) {
+      return;
+    }
+    setState(() {
+      _galleryTouched = true;
+      final item = _gallery.removeAt(index);
+      _gallery.insert(0, item);
     });
   }
 
@@ -976,29 +999,37 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return KeyedSubtree(
       key: _sectionKeys[index],
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-            const SizedBox(height: 12),
-            ...children,
-          ],
+        padding: const EdgeInsets.only(bottom: 16),
+        child: BookingFormSection(
+          step: '${index + 1}',
+          title: title,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
         ),
       ),
     );
   }
 
   InputDecoration _field(String label, {String? hint, int? lines}) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
+    );
     return InputDecoration(
       labelText: label,
       hintText: hint,
       alignLabelWithHint: (lines ?? 1) > 1,
       filled: true,
       fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
+      ),
     );
   }
 
@@ -1049,12 +1080,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _photoBlock(AppLocalizations l10n) {
-    final canAdd = _gallery.length < _maxGallery;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.exploreGalleryHint,
+          l10n.exploreCoverPhotoHint,
           style: const TextStyle(color: AppTheme.muted, fontSize: 12),
         ),
         if (!R2Config.canPersistListingPhotos)
@@ -1065,84 +1095,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
           ),
-        if (_gallery.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(l10n.exploreGalleryCount(_gallery.length)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var i = 0; i < _gallery.length; i++) _galleryThumb(l10n, i),
-            ],
-          ),
-        ],
-        TextButton.icon(
-          key: const Key('brief-gallery-add'),
-          onPressed: canAdd ? _addPhotos : null,
-          icon: const Icon(Icons.add_photo_alternate_outlined),
-          label: Text(
-            _gallery.isEmpty
-                ? l10n.exploreGalleryAdd
-                : l10n.exploreGalleryAddMore,
-          ),
+        const SizedBox(height: 12),
+        BookingGalleryEditor(
+          items: _gallery,
+          onAdd: _addPhotos,
+          onRemove: _removePhoto,
+          onMakeCover: _makeCover,
+          maxItems: _maxGallery,
+          attachKey: const Key('brief-gallery-add'),
         ),
       ],
-    );
-  }
-
-  Widget _galleryThumb(AppLocalizations l10n, int index) {
-    final item = _gallery[index];
-    return SizedBox(
-      width: 108,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              height: 72,
-              width: 108,
-              child: item.photo != null
-                  ? Image.memory(item.photo!.bytes, fit: BoxFit.cover)
-                  : Image.network(item.url!, fit: BoxFit.cover),
-            ),
-          ),
-          Row(
-            children: [
-              if (index == 0)
-                const Padding(
-                  padding: EdgeInsets.only(left: 4),
-                  child: Icon(Icons.star, size: 16, color: AppTheme.navy),
-                )
-              else
-                IconButton(
-                  tooltip: l10n.exploreUseAsCover,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    setState(() {
-                      _galleryTouched = true;
-                      final moved = _gallery.removeAt(index);
-                      _gallery.insert(0, moved);
-                    });
-                  },
-                  icon: const Icon(Icons.vertical_align_top, size: 18),
-                ),
-              IconButton(
-                tooltip: l10n.exploreCoverRemove,
-                visualDensity: VisualDensity.compact,
-                onPressed: () {
-                  setState(() {
-                    _galleryTouched = true;
-                    _gallery.removeAt(index);
-                  });
-                },
-                icon: const Icon(Icons.close, size: 18),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -1899,11 +1861,3 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 }
 
-class _BriefPhoto {
-  const _BriefPhoto.url(this.url) : photo = null;
-
-  const _BriefPhoto.local(this.photo) : url = null;
-
-  final String? url;
-  final PickedPhoto? photo;
-}
