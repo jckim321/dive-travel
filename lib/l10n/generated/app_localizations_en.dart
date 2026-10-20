@@ -1992,6 +1992,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchGuestPreview => 'Guest booking';
 
   @override
+  String get briefTitle => 'Departure brief';
+
+  @override
+  String get briefSectionCover => 'Cover';
+
+  @override
+  String get briefSectionPlace => 'Where';
+
+  @override
+  String get briefSectionDays => 'Itinerary';
+
+  @override
+  String get briefSectionTerms => 'Terms';
+
+  @override
+  String get briefSectionPrice => 'Price';
+
+  @override
+  String get briefSectionSeats => 'Open seats';
+
+  @override
+  String get briefSourceCatalog => 'Resort from the list';
+
+  @override
+  String get briefSourceNamed => 'Resort you name';
+
+  @override
+  String get briefAddLine => 'Add a line';
+
+  @override
+  String get briefRemoveLine => 'Remove line';
+
+  @override
+  String get briefOpenSeats => 'Open leftover seats on this trip?';
+
+  @override
+  String get briefFocApplies => 'Applies to';
+
+  @override
+  String get briefStartPrice => 'Diver starting price';
+
+  @override
+  String get briefGuestCard => 'Guest card';
+
+  @override
   String get checkoutStepSelect => 'Choose';
 
   @override

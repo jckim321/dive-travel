@@ -1940,6 +1940,51 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workbenchGuestPreview => '손님 예약';
 
   @override
+  String get briefTitle => '출항 브리프';
+
+  @override
+  String get briefSectionCover => '표지';
+
+  @override
+  String get briefSectionPlace => '가는 곳';
+
+  @override
+  String get briefSectionDays => '일정';
+
+  @override
+  String get briefSectionTerms => '조건';
+
+  @override
+  String get briefSectionPrice => '가격';
+
+  @override
+  String get briefSectionSeats => '빈자리';
+
+  @override
+  String get briefSourceCatalog => '목록의 리조트';
+
+  @override
+  String get briefSourceNamed => '직접 적은 리조트';
+
+  @override
+  String get briefAddLine => '한 줄 추가';
+
+  @override
+  String get briefRemoveLine => '줄 삭제';
+
+  @override
+  String get briefOpenSeats => '이 일정에 남는 자리를 열까요?';
+
+  @override
+  String get briefFocApplies => '적용 대상';
+
+  @override
+  String get briefStartPrice => '다이버 시작 가격';
+
+  @override
+  String get briefGuestCard => '손님 카드';
+
+  @override
   String get checkoutStepSelect => '예약 선택';
 
   @override

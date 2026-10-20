@@ -3684,6 +3684,96 @@ abstract class AppLocalizations {
   /// **'손님 예약'**
   String get workbenchGuestPreview;
 
+  /// No description provided for @briefTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'출항 브리프'**
+  String get briefTitle;
+
+  /// No description provided for @briefSectionCover.
+  ///
+  /// In ko, this message translates to:
+  /// **'표지'**
+  String get briefSectionCover;
+
+  /// No description provided for @briefSectionPlace.
+  ///
+  /// In ko, this message translates to:
+  /// **'가는 곳'**
+  String get briefSectionPlace;
+
+  /// No description provided for @briefSectionDays.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정'**
+  String get briefSectionDays;
+
+  /// No description provided for @briefSectionTerms.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건'**
+  String get briefSectionTerms;
+
+  /// No description provided for @briefSectionPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격'**
+  String get briefSectionPrice;
+
+  /// No description provided for @briefSectionSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리'**
+  String get briefSectionSeats;
+
+  /// No description provided for @briefSourceCatalog.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록의 리조트'**
+  String get briefSourceCatalog;
+
+  /// No description provided for @briefSourceNamed.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접 적은 리조트'**
+  String get briefSourceNamed;
+
+  /// No description provided for @briefAddLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 추가'**
+  String get briefAddLine;
+
+  /// No description provided for @briefRemoveLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 삭제'**
+  String get briefRemoveLine;
+
+  /// No description provided for @briefOpenSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 일정에 남는 자리를 열까요?'**
+  String get briefOpenSeats;
+
+  /// No description provided for @briefFocApplies.
+  ///
+  /// In ko, this message translates to:
+  /// **'적용 대상'**
+  String get briefFocApplies;
+
+  /// No description provided for @briefStartPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 시작 가격'**
+  String get briefStartPrice;
+
+  /// No description provided for @briefGuestCard.
+  ///
+  /// In ko, this message translates to:
+  /// **'손님 카드'**
+  String get briefGuestCard;
+
   /// No description provided for @checkoutStepSelect.
   ///
   /// In ko, this message translates to:
