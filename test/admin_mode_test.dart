@@ -109,5 +109,15 @@ void main() {
     expect(find.byKey(const Key('admin-menu-shops')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-posts')), findsOneWidget);
+
+    await tester.tap(find.text(l10n.adminHqClose));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('open-admin-mode')));
+    await tester.tap(find.byKey(const Key('open-admin-mode')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('admin-pin-field')), findsNothing);
+    expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
   });
 }

@@ -79,8 +79,27 @@ class DiverStore extends ChangeNotifier {
   late List<GearItem> _gear;
   InstructorDiscount _instructorDiscount = InstructorDiscount.standard;
   bool _loading = true;
+  /// PIN unlock for admin console; cleared on sign-out.
+  var _adminConsoleUnlocked = false;
 
   DiverStats get stats => _stats;
+  bool get adminConsoleUnlocked => _adminConsoleUnlocked;
+
+  void unlockAdminConsole() {
+    if (_adminConsoleUnlocked) {
+      return;
+    }
+    _adminConsoleUnlocked = true;
+    notifyListeners();
+  }
+
+  void lockAdminConsole() {
+    if (!_adminConsoleUnlocked) {
+      return;
+    }
+    _adminConsoleUnlocked = false;
+    notifyListeners();
+  }
   List<DiveRegion> get regions => List.unmodifiable(_regions);
   List<DiveLog> get logs {
     final copy = [..._logs];
@@ -1194,6 +1213,7 @@ class DiverStore extends ChangeNotifier {
     _postsSubscription?.cancel();
     _shopBookingSubscription?.cancel();
     if (user == null) {
+      _adminConsoleUnlocked = false;
       _stats = const DiverStats(
         displayName: '다이버',
         totalLogCount: 0,

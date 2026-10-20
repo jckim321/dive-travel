@@ -1,0 +1,20 @@
+---
+description: Always finish work with git commit and GitHub Pages deploy
+alwaysApply: true
+---
+
+# Always commit and deploy
+
+After completing a user-requested code change (feature, fix, or UI update):
+
+1. **Commit** — stage relevant files and create a git commit with a clear message (follow repo commit style). Do not wait for a separate "please commit" ask.
+2. **Deploy** — `git push origin HEAD` (or the current branch's remote) so GitHub Actions "Build and deploy web" runs for Pages.
+3. **Verify** — watch the deploy workflow until it succeeds (or report failure with the run URL). Site: https://jckim321.github.io/dive-travel/
+
+Exceptions (do **not** auto-commit/push):
+
+- User explicitly says not to commit or not to push
+- Only exploratory/read-only work with no code changes
+- Secrets or credential files
+
+Still follow normal git safety: no force-push to main, no config changes, no `--no-verify` unless asked.

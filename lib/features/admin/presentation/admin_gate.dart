@@ -10,22 +10,30 @@ Future<void> openAdminMode(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
   final store = DiverStoreScope.of(context);
   if (!store.stats.isAdmin) {
+    store.lockAdminConsole();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l10n.adminAccessDenied)),
     );
     return;
   }
-  final unlocked = await showDialog<bool>(
-    context: context,
-    builder: (_) => const _AdminPinDialog(),
-  );
-  if (unlocked == true && context.mounted) {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const AdminDashboardScreen(),
-      ),
+  if (!store.adminConsoleUnlocked) {
+    final unlocked = await showDialog<bool>(
+      context: context,
+      builder: (_) => const _AdminPinDialog(),
     );
+    if (unlocked != true || !context.mounted) {
+      return;
+    }
+    store.unlockAdminConsole();
   }
+  if (!context.mounted) {
+    return;
+  }
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => const AdminDashboardScreen(),
+    ),
+  );
 }
 
 class _AdminPinDialog extends StatefulWidget {
