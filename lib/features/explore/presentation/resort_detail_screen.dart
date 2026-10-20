@@ -51,13 +51,14 @@ class ResortDetailScreen extends StatelessWidget {
         }
         final hull = listings.first;
         final theme = Theme.of(context);
-        final owned = store.stats.ownedShopId ??
-            AppConstants.defaultPartnerShopId;
-        final canEdit = store.stats.isAdmin ||
+        final owned =
+            store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
+        final canEdit =
+            store.stats.isAdmin ||
             (store.stats.isBusiness && owned == hull.hullId);
-        final rooms = SameBoatBoard.offers(
-          store.liveStatsFor(hull.hullId)?.products ?? const [],
-        ).length;
+        final products =
+            store.liveStatsFor(hull.hullId)?.products ?? const <ShopProduct>[];
+        final rooms = SameBoatBoard.offers(products).length;
 
         return Scaffold(
           appBar: AppBar(
@@ -89,114 +90,108 @@ class ResortDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              _ResortPhotoGallery(shop: hull),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _StarBadge(stars: hull.stars, certified: hull.isDiveStarCertified),
-                  Chip(
-                    visualDensity: VisualDensity.compact,
-                    label: Text(
-                      hull.reviewCount > 0
-                          ? l10n.exploreRating(
-                              hull.rating.toStringAsFixed(2),
-                              hull.reviewCount,
-                            )
-                          : l10n.exploreListingPendingReview,
+                _ResortPhotoGallery(shop: hull),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StarBadge(
+                      stars: hull.stars,
+                      certified: hull.isDiveStarCertified,
                     ),
-                  ),
-                  Chip(
-                    avatar: const Icon(Icons.cloud_off_outlined, size: 16),
-                    visualDensity: VisualDensity.compact,
-                    label: Text(l10n.exploreWeatherRefundTitle),
-                  ),
-                  if (rooms > 0)
-                    Chip(
-                      avatar: const Icon(Icons.flag_outlined, size: 16),
-                      visualDensity: VisualDensity.compact,
-                      label: Text(l10n.exploreOpenRooms(rooms)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(l10n.exploreResortIntro, style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Text(hull.intro, style: theme.textTheme.bodyLarge),
-              const SizedBox(height: 16),
-              _MapCard(address: hull.address, location: hull.location),
-              const SizedBox(height: 16),
-              Text(l10n.exploreResortTraits, style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final item in [...hull.amenities, ...hull.sites])
                     Chip(
                       visualDensity: VisualDensity.compact,
-                      avatar: const Icon(Icons.check_rounded, size: 16),
-                      label: Text(item),
+                      label: Text(
+                        hull.reviewCount > 0
+                            ? l10n.exploreRating(
+                                hull.rating.toStringAsFixed(2),
+                                hull.reviewCount,
+                              )
+                            : l10n.exploreListingPendingReview,
+                      ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Text(l10n.exploreChooseRoom, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 6),
-              Text(l10n.exploreChooseRoomHint, style: theme.textTheme.bodySmall),
-              const SizedBox(height: 14),
-              for (final shop in listings) ...[
-                _ProductBox(
-                  shop: shop,
-                  quote: store.quoteFor(shop),
-                  recommended: hull.isDiveStarCertified && shop.id == listings.first.id,
-                  lightest: shop.consumerPrice ==
-                      listings
-                          .map((item) => item.consumerPrice)
-                          .reduce((a, b) => a < b ? a : b),
-                  openRooms: SameBoatBoard.offers(
-                    store.liveStatsFor(hull.hullId)?.products ??
-                        const <ShopProduct>[],
-                  ).where((offer) => offer.product.name == shop.productName).length,
-                  onBook: () {
-                    ShopProduct? product;
-                    final products =
-                        store.liveStatsFor(hull.hullId)?.products ??
-                        const <ShopProduct>[];
-                    for (final item in products) {
-                      if (item.name == shop.productName) {
-                        product = item;
-                        break;
-                      }
-                    }
-                    if (product == null) {
-                      for (final item in products) {
-                        if (item.isListedPublicly) {
-                          product = item;
-                          break;
-                        }
-                      }
-                    }
-                    product ??= ShopProduct(
-                      id: shop.id,
-                      shopId: shop.hullId,
-                      name: shop.productName,
-                      consumerPrice: shop.consumerPrice,
-                      professionalPrice: shop.professionalPrice,
-                      blurb: shop.blurb,
-                      durationLabel: shop.durationLabel,
-                    );
-                    showTourCheckoutSheet(
-                      context: context,
-                      shop: shop,
-                      quote: store.quoteFor(shop),
-                      product: product,
-                    );
-                  },
+                    Chip(
+                      avatar: const Icon(Icons.cloud_off_outlined, size: 16),
+                      visualDensity: VisualDensity.compact,
+                      label: Text(l10n.exploreWeatherRefundTitle),
+                    ),
+                    if (rooms > 0)
+                      Chip(
+                        avatar: const Icon(Icons.flag_outlined, size: 16),
+                        visualDensity: VisualDensity.compact,
+                        label: Text(l10n.exploreOpenRooms(rooms)),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
+                const SizedBox(height: 16),
+                Text(
+                  l10n.exploreResortIntro,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(hull.intro, style: theme.textTheme.bodyLarge),
+                const SizedBox(height: 16),
+                _MapCard(address: hull.address, location: hull.location),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.exploreResortTraits,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final item in [...hull.amenities, ...hull.sites])
+                      Chip(
+                        visualDensity: VisualDensity.compact,
+                        avatar: const Icon(Icons.check_rounded, size: 16),
+                        label: Text(item),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  l10n.exploreChooseRoom,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.exploreChooseRoomHint,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 14),
+                for (final shop in listings) ...[
+                  _ProductBox(
+                    shop: shop,
+                    product: _listingProduct(shop, products),
+                    quote: store.quoteFor(shop),
+                    recommended:
+                        hull.isDiveStarCertified &&
+                        shop.id == listings.first.id,
+                    lightest:
+                        shop.consumerPrice ==
+                        listings
+                            .map((item) => item.consumerPrice)
+                            .reduce((a, b) => a < b ? a : b),
+                    openRooms: SameBoatBoard.offers(products)
+                        .where(
+                          (offer) => offer.product.name == shop.productName,
+                        )
+                        .length,
+                    onBook: (presetOptionId) {
+                      showTourCheckoutSheet(
+                        context: context,
+                        shop: shop,
+                        quote: store.quoteFor(shop),
+                        product: _listingProduct(shop, products),
+                        presetOptionId: presetOptionId,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ],
             ),
           ),
@@ -204,6 +199,28 @@ class ResortDetailScreen extends StatelessWidget {
       },
     );
   }
+}
+
+ShopProduct _listingProduct(DiveShop shop, List<ShopProduct> products) {
+  for (final item in products) {
+    if (item.name == shop.productName) {
+      return item;
+    }
+  }
+  for (final item in products) {
+    if (item.isListedPublicly) {
+      return item;
+    }
+  }
+  return ShopProduct(
+    id: shop.id,
+    shopId: shop.hullId,
+    name: shop.productName,
+    consumerPrice: shop.consumerPrice,
+    professionalPrice: shop.professionalPrice,
+    blurb: shop.blurb,
+    durationLabel: shop.durationLabel,
+  );
 }
 
 /// Agoda-style attachment gallery window over the current screen.
@@ -262,10 +279,8 @@ class _ResortPhotoGallery extends StatelessWidget {
     showDialog<void>(
       context: context,
       barrierColor: Colors.black87,
-      builder: (_) => _GalleryLightbox(
-        providers: providers,
-        initialIndex: start,
-      ),
+      builder: (_) =>
+          _GalleryLightbox(providers: providers, initialIndex: start),
     );
   }
 
@@ -533,10 +548,7 @@ class _ResortPhotoGallery extends StatelessWidget {
 }
 
 class _GalleryLightbox extends StatefulWidget {
-  const _GalleryLightbox({
-    required this.providers,
-    required this.initialIndex,
-  });
+  const _GalleryLightbox({required this.providers, required this.initialIndex});
 
   final List<ImageProvider> providers;
   final int initialIndex;
@@ -677,13 +689,8 @@ class _StarBadge extends StatelessWidget {
             ),
           const SizedBox(width: 6),
           Text(
-            certified
-                ? l10n.exploreDiveStar(stars)
-                : l10n.exploreStarPending,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
+            certified ? l10n.exploreDiveStar(stars) : l10n.exploreStarPending,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
           ),
         ],
       ),
@@ -762,6 +769,7 @@ class _MapCard extends StatelessWidget {
 class _ProductBox extends StatelessWidget {
   const _ProductBox({
     required this.shop,
+    required this.product,
     required this.quote,
     required this.recommended,
     required this.lightest,
@@ -770,11 +778,12 @@ class _ProductBox extends StatelessWidget {
   });
 
   final DiveShop shop;
+  final ShopProduct product;
   final TourPriceQuote quote;
   final bool recommended;
   final bool lightest;
   final int openRooms;
-  final VoidCallback onBook;
+  final ValueChanged<String> onBook;
 
   IconData get _kindIcon {
     final text = '${shop.productName}${shop.durationLabel}'.toLowerCase();
@@ -784,7 +793,9 @@ class _ProductBox extends StatelessWidget {
     if (text.contains('라이브') || text.contains('liveaboard')) {
       return Icons.directions_boat_outlined;
     }
-    if (text.contains('오픈워터') || text.contains('코스') || text.contains('course')) {
+    if (text.contains('오픈워터') ||
+        text.contains('코스') ||
+        text.contains('course')) {
       return Icons.school_outlined;
     }
     return Icons.scuba_diving;
@@ -903,29 +914,164 @@ class _ProductBox extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
+            if (!_hasOptionRows)
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          quote.isProfessional
+                              ? l10n.exploreProPrice
+                              : l10n.exploreConsumerPrice,
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        Text(
+                          l10n.explorePriceWon(_price.format(quote.amount)),
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton(
+                    key: Key('shop-book-${shop.id}'),
+                    onPressed: () => onBook(''),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.navy,
+                    ),
+                    child: Text(l10n.exploreBook),
+                  ),
+                ],
+              )
+            else ...[
+              _offerRow(
+                context,
+                title: product.name,
+                note: _packageNote,
+                price: quote.amount,
+                button: l10n.optionBookPackage,
+                buttonKey: Key('shop-book-${shop.id}'),
+                onPressed: () => onBook(''),
+              ),
+              for (final option in _addons) ...[
+                const SizedBox(height: 8),
+                _offerRow(
+                  context,
+                  title: option.name,
+                  note: option.description,
+                  price: _optionPrice(option),
+                  button: l10n.optionBookAddon,
+                  buttonKey: Key('shop-book-addon-${option.id}'),
+                  onPressed: () => onBook(option.id),
+                ),
+              ],
+              for (final option in _individuals) ...[
+                const SizedBox(height: 8),
+                _offerRow(
+                  context,
+                  title: option.name,
+                  note: option.description,
+                  price: _optionPrice(option),
+                  button: l10n.optionBookIndividual,
+                  buttonKey: Key('shop-book-individual-${option.id}'),
+                  onPressed: () => onBook(option.id),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<ShopProductOption> get _addons => [
+    for (final option in product.options)
+      if (option.bookable && option.kind == ProductOptionKind.addon) option,
+  ];
+
+  List<ShopProductOption> get _individuals => [
+    for (final option in product.options)
+      if (option.bookable && option.kind == ProductOptionKind.individual)
+        option,
+  ];
+
+  bool get _hasOptionRows => _addons.isNotEmpty || _individuals.isNotEmpty;
+
+  String get _packageNote {
+    final cancel = product.cancellationNote.trim();
+    if (cancel.isNotEmpty) {
+      return cancel;
+    }
+    for (final line in product.includes.split('\n')) {
+      if (line.trim().isNotEmpty) {
+        return line.trim();
+      }
+    }
+    return '';
+  }
+
+  int _optionPrice(ShopProductOption option) {
+    return quote.isProfessional
+        ? option.professionalPrice
+        : option.consumerPrice;
+  }
+
+  Widget _offerRow(
+    BuildContext context, {
+    required String title,
+    required String note,
+    required int price,
+    required String button,
+    required Key buttonKey,
+    required VoidCallback onPressed,
+  }) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE4E8EC)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (note.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                note.trim(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppTheme.muted,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        quote.isProfessional
-                            ? l10n.exploreProPrice
-                            : l10n.exploreConsumerPrice,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                      Text(
-                        l10n.explorePriceWon(_price.format(quote.amount)),
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ],
+                  child: Text(
+                    l10n.explorePriceWon(_price.format(price)),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 FilledButton(
-                  key: Key('shop-book-${shop.id}'),
-                  onPressed: onBook,
-                  child: Text(l10n.exploreBook),
+                  key: buttonKey,
+                  onPressed: onPressed,
+                  style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+                  child: Text(button),
                 ),
               ],
             ),

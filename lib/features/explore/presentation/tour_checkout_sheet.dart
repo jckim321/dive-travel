@@ -18,6 +18,7 @@ Future<void> showTourCheckoutSheet({
   required TourPriceQuote quote,
   ShopProduct? product,
   String lockedOptionId = '',
+  String presetOptionId = '',
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -32,6 +33,7 @@ Future<void> showTourCheckoutSheet({
       quote: quote,
       product: product,
       lockedOptionId: lockedOptionId,
+      presetOptionId: presetOptionId,
     ),
   );
 }
@@ -43,12 +45,14 @@ class TourCheckoutSheet extends StatefulWidget {
     required this.quote,
     this.product,
     this.lockedOptionId = '',
+    this.presetOptionId = '',
   });
 
   final DiveShop shop;
   final TourPriceQuote quote;
   final ShopProduct? product;
   final String lockedOptionId;
+  final String presetOptionId;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -69,7 +73,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
 
   bool get _workbench {
     final product = widget.product;
-    return product != null && product.usesBookingWorkbench;
+    if (product == null) {
+      return false;
+    }
+    if (product.usesBookingWorkbench) {
+      return true;
+    }
+    return product.options.any(
+      (option) => option.bookable && option.kind == ProductOptionKind.addon,
+    );
   }
 
   BookingQuote get _booking {
@@ -96,14 +108,22 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (start != null) {
       _tourDate = start;
     }
-    final locked = widget.lockedOptionId;
+    _applyOption(widget.presetOptionId);
+    _applyOption(widget.lockedOptionId);
+    final departure = widget.product?.departureStart;
+    if (departure != null) {
+      _tourDate = departure;
+    }
+  }
+
+  void _applyOption(String id) {
     final product = widget.product;
-    if (locked.isEmpty || product == null) {
+    if (id.isEmpty || product == null) {
       return;
     }
     ShopProductOption? option;
     for (final item in product.options) {
-      if (item.id == locked) {
+      if (item.id == id) {
         option = item;
       }
     }
@@ -119,6 +139,52 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       _bookPackage = true;
       _selected.add(option.id);
     }
+  }
+
+  ShopProductOption? _findOption(String id) {
+    final product = widget.product;
+    if (product == null || id.isEmpty) {
+      return null;
+    }
+    for (final option in product.options) {
+      if (option.id == id) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  /// Seat inventory id. An add-on chosen on the product card is a price line,
+  /// not the berth the party occupies.
+  String get _seatOptionId {
+    if (widget.lockedOptionId.isNotEmpty) {
+      return widget.lockedOptionId;
+    }
+    if (!_bookPackage) {
+      for (final id in _selected) {
+        final option = _findOption(id);
+        if (option != null &&
+            option.kind == ProductOptionKind.individual &&
+            option.openEmptySeats) {
+          return id;
+        }
+      }
+    }
+    return '';
+  }
+
+  bool get _checksSeats {
+    final product = widget.product;
+    if (product == null) {
+      return false;
+    }
+    if (widget.lockedOptionId.isNotEmpty) {
+      return true;
+    }
+    if (_seatOptionId.isNotEmpty) {
+      return true;
+    }
+    return product.openEmptySeats && _bookPackage;
   }
 
   Future<void> _pickDate() async {
@@ -143,19 +209,17 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final formatted = _priceFormat.format(amount);
     final product = widget.product;
     final party = _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
-    final seatOption = widget.lockedOptionId;
-    final opensSeats = product != null &&
-        (seatOption.isNotEmpty || product.openEmptySeats);
-    if (opensSeats) {
+    final seatOption = _seatOptionId;
+    final opensSeats = _checksSeats;
+    if (opensSeats && product != null) {
       final room = product.bookableSeatsFor(
         DiverStoreScope.of(context).uid ?? '',
         DateTime.now(),
         optionId: seatOption,
       );
       if (party > room) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.communitySeatsShort)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.communitySeatsShort)));
         return;
       }
     }
@@ -205,215 +269,239 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       child: Column(
         children: [
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                    child: CCardProductFrame(
-                      child: _PhotoMosaic(
-                        shop: shop,
-                        saved: saved,
-                        badgeLabel: shop.isDiveStarCertified
-                            ? l10n.exploreDiveStarCertified
-                            : shop.isNewListing
-                                ? l10n.exploreListingNew
-                                : l10n.exploreListingPendingReview,
-                        certified: shop.isDiveStarCertified,
-                        onClose: () => Navigator.of(context).pop(),
-                        onFavorite: () => store.toggleFavoriteShop(shop.id),
-                      ),
-                    ),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-                  sliver: SliverList.list(
-                    children: [
-                      Text(
-                        shop.productName,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.exploreCheckoutBody(shop.name, shop.location),
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${shop.country} · ${shop.location}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.muted,
-                        ),
-                      ),
-                      if (shop.departure != null) ...[
-                        const SizedBox(height: 16),
-                        _HighlightCard(
-                          icon: Icons.sailing_outlined,
-                          title: shop.departure!.windowLabel,
-                          body: l10n.exploreDepartureBody(
-                            shop.departure!.emptySeats,
-                            shop.departure!.capacity,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _HighlightCard(
-                          icon: Icons.cloud_off_outlined,
-                          title: l10n.exploreWeatherRefundTitle,
-                          body: l10n.exploreWeatherRefundBody,
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        children: [
-                          const Icon(Icons.star_rounded,
-                              size: 16, color: AppTheme.navy),
-                          Text(
-                            shop.reviewCount > 0
-                                ? l10n.exploreRating(
-                                    shop.rating.toStringAsFixed(2),
-                                    shop.reviewCount,
-                                  )
-                                : l10n.exploreStarPending,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
+            child: _workbench && _bookStep > 0
+                ? _reviewPage(l10n, theme, refund)
+                : CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                          child: CCardProductFrame(
+                            child: _PhotoMosaic(
+                              shop: shop,
+                              saved: saved,
+                              badgeLabel: shop.isDiveStarCertified
+                                  ? l10n.exploreDiveStarCertified
+                                  : shop.isNewListing
+                                  ? l10n.exploreListingNew
+                                  : l10n.exploreListingPendingReview,
+                              certified: shop.isDiveStarCertified,
+                              onClose: () => Navigator.of(context).pop(),
+                              onFavorite: () =>
+                                  store.toggleFavoriteShop(shop.id),
                             ),
                           ),
-                          if (shop.stars > 0)
+                        ),
+                      ),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                        sliver: SliverList.list(
+                          children: [
                             Text(
-                              '· ${l10n.exploreDiveStar(shop.stars)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
+                              shop.productName,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      const Divider(),
-                      const SizedBox(height: 14),
-                      _HostRow(shop: shop, l10n: l10n),
-                      if (shop.stars > 0) ...[
-                        const SizedBox(height: 16),
-                        _HighlightCard(
-                          icon: Icons.workspace_premium_outlined,
-                          title: l10n.exploreRareFind,
-                          body: l10n.exploreRareFindBody,
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      _HighlightCard(
-                        icon: Icons.health_and_safety_outlined,
-                        title: l10n.exploreListingSafetyTitle,
-                        body: l10n.exploreListingSafetyBody,
-                      ),
-                      const SizedBox(height: 22),
-                      Text(
-                        l10n.exploreListingSites,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final site in shop.sites)
-                            Chip(
-                              avatar: const Icon(Icons.waves_outlined, size: 16),
-                              label: Text(site),
-                              backgroundColor: const Color(0xFFF7F4EE),
-                              side: const BorderSide(color: Color(0xFFE8E1D4)),
+                            const SizedBox(height: 6),
+                            Text(
+                              l10n.exploreCheckoutBody(
+                                shop.name,
+                                shop.location,
+                              ),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 22),
-                      Text(
-                        l10n.exploreListingAmenities,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      for (final amenity in shop.amenities)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.check, size: 18, color: AppTheme.navy),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  amenity,
-                                  style: theme.textTheme.bodyLarge,
+                            const SizedBox(height: 4),
+                            Text(
+                              '${shop.country} · ${shop.location}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.muted,
+                              ),
+                            ),
+                            if (shop.departure != null) ...[
+                              const SizedBox(height: 16),
+                              _HighlightCard(
+                                icon: Icons.sailing_outlined,
+                                title: shop.departure!.windowLabel,
+                                body: l10n.exploreDepartureBody(
+                                  shop.departure!.emptySeats,
+                                  shop.departure!.capacity,
                                 ),
                               ),
+                              const SizedBox(height: 16),
+                              _HighlightCard(
+                                icon: Icons.cloud_off_outlined,
+                                title: l10n.exploreWeatherRefundTitle,
+                                body: l10n.exploreWeatherRefundBody,
+                              ),
                             ],
-                          ),
-                        ),
-                      const SizedBox(height: 18),
-                      Text(
-                        l10n.exploreCheckoutTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DateBox(
-                              label: l10n.weatherTourDate,
-                              value: DateFormat('yyyy.MM.dd').format(_tourDate),
-                              onTap: shop.departure == null ? _pickDate : null,
+                            const SizedBox(height: 10),
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6,
+                              children: [
+                                const Icon(
+                                  Icons.star_rounded,
+                                  size: 16,
+                                  color: AppTheme.navy,
+                                ),
+                                Text(
+                                  shop.reviewCount > 0
+                                      ? l10n.exploreRating(
+                                          shop.rating.toStringAsFixed(2),
+                                          shop.reviewCount,
+                                        )
+                                      : l10n.exploreStarPending,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (shop.stars > 0)
+                                  Text(
+                                    '· ${l10n.exploreDiveStar(shop.stars)}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
-                          if (!_hasProduct) ...[
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _DateBox(
-                                label: l10n.exploreListingGuests,
-                                value: l10n.exploreListingGuestOne,
+                            const SizedBox(height: 18),
+                            const Divider(),
+                            const SizedBox(height: 14),
+                            _HostRow(shop: shop, l10n: l10n),
+                            if (shop.stars > 0) ...[
+                              const SizedBox(height: 16),
+                              _HighlightCard(
+                                icon: Icons.workspace_premium_outlined,
+                                title: l10n.exploreRareFind,
+                                body: l10n.exploreRareFindBody,
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            _HighlightCard(
+                              icon: Icons.health_and_safety_outlined,
+                              title: l10n.exploreListingSafetyTitle,
+                              body: l10n.exploreListingSafetyBody,
+                            ),
+                            const SizedBox(height: 22),
+                            Text(
+                              l10n.exploreListingSites,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final site in shop.sites)
+                                  Chip(
+                                    avatar: const Icon(
+                                      Icons.waves_outlined,
+                                      size: 16,
+                                    ),
+                                    label: Text(site),
+                                    backgroundColor: const Color(0xFFF7F4EE),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE8E1D4),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 22),
+                            Text(
+                              l10n.exploreListingAmenities,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            for (final amenity in shop.amenities)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check,
+                                      size: 18,
+                                      color: AppTheme.navy,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        amenity,
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 18),
+                            Text(
+                              l10n.exploreCheckoutTitle,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _DateBox(
+                                    label: l10n.weatherTourDate,
+                                    value: DateFormat('yyyy.MM.dd')
+                                        .format(_tourDate),
+                                    onTap: shop.departure == null
+                                        ? _pickDate
+                                        : null,
+                                  ),
+                                ),
+                                if (!_hasProduct) ...[
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _DateBox(
+                                      label: l10n.exploreListingGuests,
+                                      value: l10n.exploreListingGuestOne,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            if (_hasProduct &&
+                                (!_workbench || _bookStep == 0)) ...[
+                              _guestQtyBlock(l10n, theme),
+                              const SizedBox(height: 12),
+                            ],
+                            if (_workbench) ...[
+                              _bookingPanel(l10n, theme),
+                              const SizedBox(height: 12),
+                            ],
+                            Text(
+                              l10n.refundPolicyHint(refund.percent),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.exploreWontChargeYet,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppTheme.muted,
+                              ),
+                            ),
+                            const SizedBox(height: 88),
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (_hasProduct && (!_workbench || _bookStep == 0)) ...[
-                        _guestQtyBlock(l10n, theme),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_workbench) ...[
-                        _bookingPanel(l10n, theme),
-                        const SizedBox(height: 12),
-                      ],
-                      Text(
-                        l10n.refundPolicyHint(refund.percent),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.exploreWontChargeYet,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppTheme.muted,
                         ),
                       ),
-                      const SizedBox(height: 88),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
           Material(
             elevation: 12,
@@ -532,40 +620,186 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     );
   }
 
-  Widget _bookingPanel(AppLocalizations l10n, ThemeData theme) {
-    final product = widget.product!;
-    final booking = _booking;
-    if (_bookStep == 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.checkoutStepReview, style: theme.textTheme.titleSmall),
-          Text(
-            '${l10n.workbenchGuestDiver} $_qtyDiver · ${l10n.workbenchGuestNondiver} $_qtyNondiver · ${l10n.workbenchGuestChild} $_qtyChild',
+  Widget _reviewPage(
+    AppLocalizations l10n,
+    ThemeData theme,
+    RefundQuote refund,
+  ) {
+    final title = _bookStep == 2
+        ? l10n.checkoutStepPay
+        : l10n.checkoutStepReview;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
           ),
-          for (final line in booking.lines)
-            Text('${line.label} ${_priceFormat.format(line.amount)}'),
-          if (product.focPayCount > 0)
+        ),
+        const SizedBox(height: 16),
+        _summaryCard(l10n, theme, refund),
+      ],
+    );
+  }
+
+  Widget _summaryCard(
+    AppLocalizations l10n,
+    ThemeData theme,
+    RefundQuote refund,
+  ) {
+    final product = widget.product;
+    final booking = _booking;
+    final departure = _summaryDeparture();
+    final flag = _summaryFlag();
+    final chosen = _chosenLabels();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4E8EC)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              l10n.checkoutFocLine(
-                product.focPayCount,
-                product.focFreeCount,
-                booking.freeDivers,
+              widget.shop.name,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
               ),
             ),
-          Text(
-            l10n.checkoutTotal(_priceFormat.format(booking.total)),
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            if (chosen.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(chosen, style: theme.textTheme.bodyMedium),
+            ],
+            const SizedBox(height: 12),
+            if (departure != null)
+              _summaryLine(l10n.workbenchDepartureDate, departure),
+            if (flag != null) _summaryLine(l10n.workbenchFlagDeadline, flag),
+            _summaryLine(
+              l10n.checkoutGuests,
+              '${l10n.workbenchGuestDiver} $_qtyDiver · '
+              '${l10n.workbenchGuestNondiver} $_qtyNondiver · '
+              '${l10n.workbenchGuestChild} $_qtyChild',
+            ),
+            const Divider(height: 24),
+            for (final line in booking.lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Expanded(child: Text(line.label)),
+                    Text(_priceFormat.format(line.amount)),
+                  ],
+                ),
+              ),
+            if (product != null && product.focPayCount > 0)
+              Text(
+                l10n.checkoutFocLine(
+                  product.focPayCount,
+                  product.focFreeCount,
+                  booking.freeDivers,
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.checkoutTotal(_priceFormat.format(booking.total)),
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.refundPolicyHint(refund.percent),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryLine(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 88,
+            child: Text(label, style: const TextStyle(color: AppTheme.muted)),
           ),
+          Expanded(child: Text(value)),
         ],
-      );
+      ),
+    );
+  }
+
+  String? _summaryDeparture() {
+    final product = widget.product;
+    final option = _findOption(_seatOptionId);
+    final start = option?.departureStart ?? product?.departureStart;
+    if (start != null) {
+      return DateFormat('yyyy.MM.dd').format(start);
     }
-    if (_bookStep == 2) {
+    final window = widget.shop.departure?.windowLabel;
+    if (window != null && window.isNotEmpty) {
+      return window;
+    }
+    return DateFormat('yyyy.MM.dd').format(_tourDate);
+  }
+
+  String? _summaryFlag() {
+    final option = _findOption(_seatOptionId);
+    final flag = option?.flagClosesAt ?? widget.product?.flagClosesAt;
+    if (flag == null) {
+      return null;
+    }
+    return DateFormat('yyyy.MM.dd').format(flag);
+  }
+
+  String _chosenLabels() {
+    final product = widget.product;
+    if (product == null) {
+      return widget.shop.productName;
+    }
+    if (_bookPackage) {
+      final extras = [
+        for (final id in _selected)
+          if (_findOption(id)?.kind == ProductOptionKind.addon)
+            _findOption(id)!.name,
+      ];
+      if (extras.isEmpty) {
+        return product.name;
+      }
+      return '${product.name} · ${extras.join(' · ')}';
+    }
+    final names = [
+      for (final id in _selected)
+        if (_findOption(id)?.kind == ProductOptionKind.individual)
+          _findOption(id)!.name,
+    ];
+    return names.isEmpty ? product.name : names.join(' · ');
+  }
+
+  Widget _bookingPanel(AppLocalizations l10n, ThemeData theme) {
+    final product = widget.product!;
+    if (!_bookPackage) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.checkoutStepPay, style: theme.textTheme.titleSmall),
-          Text(l10n.checkoutTotal(_priceFormat.format(booking.total))),
+          Text(
+            _chosenLabels(),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.checkoutTotal(_priceFormat.format(_booking.total)),
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
         ],
       );
     }
@@ -573,72 +807,25 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       for (final option in product.options)
         if (option.kind == ProductOptionKind.addon && option.bookable) option,
     ];
-    final individuals = [
-      for (final option in product.options)
-        if (option.kind == ProductOptionKind.individual && option.bookable)
-          option,
-    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CheckboxListTile(
-          contentPadding: EdgeInsets.zero,
-          value: _bookPackage,
-          title: Text('${l10n.checkoutPackageOn} · ${product.name}'),
-          onChanged: widget.lockedOptionId.isEmpty
-              ? (value) {
-            setState(() {
-              _bookPackage = value ?? true;
-              if (_bookPackage) {
-                _selected.removeWhere((id) {
-                  for (final option in product.options) {
-                    if (option.id == id &&
-                        option.kind == ProductOptionKind.individual) {
-                      return true;
-                    }
-                  }
-                  return false;
-                });
-              } else {
-                _selected.removeWhere((id) {
-                  for (final option in product.options) {
-                    if (option.id == id &&
-                        option.kind == ProductOptionKind.addon) {
-                      return true;
-                    }
-                  }
-                  return false;
-                });
-              }
-            });
-          }
-              : null,
+        Text(
+          '${l10n.checkoutPackageOn} · ${product.name}',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
         ),
         for (final option in addons)
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: _selected.contains(option.id),
             title: Text(option.name),
-            enabled: _bookPackage && widget.lockedOptionId != option.id,
-            onChanged: !_bookPackage || widget.lockedOptionId == option.id
+            subtitle: option.description.trim().isEmpty
                 ? null
-                : (value) {
-                    setState(() {
-                      if (value ?? false) {
-                        _selected.add(option.id);
-                      } else {
-                        _selected.remove(option.id);
-                      }
-                    });
-                  },
-          ),
-        for (final option in individuals)
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _selected.contains(option.id),
-            title: Text(option.name),
-            enabled: !_bookPackage && widget.lockedOptionId.isEmpty,
-            onChanged: _bookPackage || widget.lockedOptionId.isNotEmpty
+                : Text(option.description.trim()),
+            enabled: widget.lockedOptionId != option.id,
+            onChanged: widget.lockedOptionId == option.id
                 ? null
                 : (value) {
                     setState(() {
@@ -651,7 +838,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   },
           ),
         Text(
-          l10n.checkoutTotal(_priceFormat.format(booking.total)),
+          l10n.checkoutTotal(_priceFormat.format(_booking.total)),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ],
@@ -665,8 +852,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       children: [
         Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
         for (final rate in product.resolvedGuestRates)
-          if (rate.enabled)
-            _qtyRow(l10n, rate.role),
+          if (rate.enabled) _qtyRow(l10n, rate.role),
         const SizedBox(height: 8),
         Text(
           l10n.checkoutTotal(_priceFormat.format(_booking.total)),
@@ -766,15 +952,9 @@ class _PhotoMosaic extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _RoundIcon(
-                  icon: Icons.close,
-                  onPressed: onClose,
-                ),
+                _RoundIcon(icon: Icons.close, onPressed: onClose),
                 const SizedBox(height: 8),
-                ListingCertBadge(
-                  label: badgeLabel,
-                  certified: certified,
-                ),
+                ListingCertBadge(label: badgeLabel, certified: certified),
               ],
             ),
           ),
@@ -794,11 +974,7 @@ class _PhotoMosaic extends StatelessWidget {
 }
 
 class _PhotoTile extends StatelessWidget {
-  const _PhotoTile({
-    required this.shop,
-    this.shift = 0,
-    this.radius = 0,
-  });
+  const _PhotoTile({required this.shop, this.shift = 0, this.radius = 0});
 
   final DiveShop shop;
   final double shift;
@@ -952,11 +1128,7 @@ class _HighlightCard extends StatelessWidget {
 }
 
 class _DateBox extends StatelessWidget {
-  const _DateBox({
-    required this.label,
-    required this.value,
-    this.onTap,
-  });
+  const _DateBox({required this.label, required this.value, this.onTap});
 
   final String label;
   final String value;

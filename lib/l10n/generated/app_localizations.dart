@@ -894,6 +894,24 @@ abstract class AppLocalizations {
   /// **'예약하기'**
   String get exploreBook;
 
+  /// No description provided for @optionBookPackage.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 상품 예약'**
+  String get optionBookPackage;
+
+  /// No description provided for @optionBookAddon.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 구성 더해 예약'**
+  String get optionBookAddon;
+
+  /// No description provided for @optionBookIndividual.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 구성만 예약'**
+  String get optionBookIndividual;
+
   /// 체크아웃 시트의 자리 요청 버튼입니다. 결제는 샵 확정 후입니다.
   ///
   /// In ko, this message translates to:

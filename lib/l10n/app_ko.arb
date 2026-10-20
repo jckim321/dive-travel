@@ -374,6 +374,9 @@
   "@exploreBook": {
     "description": "샵 카드의 예약 버튼입니다."
   },
+  "optionBookPackage": "이 상품 예약",
+  "optionBookAddon": "이 구성 더해 예약",
+  "optionBookIndividual": "이 구성만 예약",
   "explorePay": "자리 요청",
   "@explorePay": {
     "description": "체크아웃 시트의 자리 요청 버튼입니다. 결제는 샵 확정 후입니다."

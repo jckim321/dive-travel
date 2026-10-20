@@ -439,6 +439,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreBook => 'Book';
 
   @override
+  String get optionBookPackage => 'Book this trip';
+
+  @override
+  String get optionBookAddon => 'Add this and book';
+
+  @override
+  String get optionBookIndividual => 'Book this only';
+
+  @override
   String get explorePay => 'Request a seat';
 
   @override

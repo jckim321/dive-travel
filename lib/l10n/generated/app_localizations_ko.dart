@@ -428,6 +428,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exploreBook => '예약하기';
 
   @override
+  String get optionBookPackage => '이 상품 예약';
+
+  @override
+  String get optionBookAddon => '이 구성 더해 예약';
+
+  @override
+  String get optionBookIndividual => '이 구성만 예약';
+
+  @override
   String get explorePay => '자리 요청';
 
   @override

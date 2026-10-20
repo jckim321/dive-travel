@@ -422,6 +422,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreBook => '予約する';
 
   @override
+  String get optionBookPackage => '이 상품 예약';
+
+  @override
+  String get optionBookAddon => '이 구성 더해 예약';
+
+  @override
+  String get optionBookIndividual => '이 구성만 예약';
+
+  @override
   String get explorePay => '座席をリクエスト';
 
   @override
