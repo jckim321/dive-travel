@@ -440,6 +440,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get explorePay => '자리 요청';
 
   @override
+  String get simPayTitle => '가상 결제';
+
+  @override
+  String get simPayNotice => '실제 결제되지 않습니다. 예약이 끝까지 이어지는지만 확인합니다.';
+
+  @override
+  String get simPayAction => '결제하기';
+
+  @override
+  String get simPayProcessing => '결제 처리 중';
+
+  @override
+  String get simPayDoneTitle => '결제 완료';
+
+  @override
+  String get simPayDoneBody => '가상 결제가 끝났습니다. 이어서 예약을 저장합니다.';
+
+  @override
+  String get simPayClose => '확인';
+
+  @override
   String exploreDepartureLine(String window, int seats) {
     return '$window · 빈자리 $seats';
   }

@@ -918,6 +918,48 @@ abstract class AppLocalizations {
   /// **'자리 요청'**
   String get explorePay;
 
+  /// No description provided for @simPayTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'가상 결제'**
+  String get simPayTitle;
+
+  /// No description provided for @simPayNotice.
+  ///
+  /// In ko, this message translates to:
+  /// **'실제 결제되지 않습니다. 예약이 끝까지 이어지는지만 확인합니다.'**
+  String get simPayNotice;
+
+  /// No description provided for @simPayAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제하기'**
+  String get simPayAction;
+
+  /// No description provided for @simPayProcessing.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 처리 중'**
+  String get simPayProcessing;
+
+  /// No description provided for @simPayDoneTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 완료'**
+  String get simPayDoneTitle;
+
+  /// No description provided for @simPayDoneBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'가상 결제가 끝났습니다. 이어서 예약을 저장합니다.'**
+  String get simPayDoneBody;
+
+  /// No description provided for @simPayClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인'**
+  String get simPayClose;
+
   /// No description provided for @exploreDepartureLine.
   ///
   /// In ko, this message translates to:

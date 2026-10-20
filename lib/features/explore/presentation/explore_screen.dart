@@ -139,7 +139,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 return HomeStayCard(
                                   key: Key('shop-card-${shop.id}'),
                                   shop: shop,
-                                  quote: store.quoteFor(shop),
                                   onDetails: () => openResortDetail(
                                     context,
                                     shop.hullId,

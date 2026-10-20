@@ -381,6 +381,13 @@
   "@explorePay": {
     "description": "체크아웃 시트의 자리 요청 버튼입니다. 결제는 샵 확정 후입니다."
   },
+  "simPayTitle": "가상 결제",
+  "simPayNotice": "실제 결제되지 않습니다. 예약이 끝까지 이어지는지만 확인합니다.",
+  "simPayAction": "결제하기",
+  "simPayProcessing": "결제 처리 중",
+  "simPayDoneTitle": "결제 완료",
+  "simPayDoneBody": "가상 결제가 끝났습니다. 이어서 예약을 저장합니다.",
+  "simPayClose": "확인",
   "exploreDepartureLine": "{window} · 빈자리 {seats}",
   "@exploreDepartureLine": {
     "placeholders": {

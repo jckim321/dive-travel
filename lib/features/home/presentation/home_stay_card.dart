@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -12,17 +11,13 @@ class HomeStayCard extends StatelessWidget {
   const HomeStayCard({
     super.key,
     required this.shop,
-    required this.quote,
     required this.onDetails,
     this.coverAspectRatio = ListingCover.aspectRatio,
   });
 
   final DiveShop shop;
-  final TourPriceQuote quote;
   final VoidCallback onDetails;
   final double coverAspectRatio;
-
-  static final _price = NumberFormat('#,###');
 
   @override
   Widget build(BuildContext context) {
@@ -104,16 +99,6 @@ class HomeStayCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            '${_price.format(quote.amount)}원',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: AppTheme.navy,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
         ],
       ),
     );
@@ -142,12 +127,11 @@ class HomeDiscoverySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
     // Compact rail: next card peeks; 4:3 keeps image shorter than the old 1:1 tiles.
     const coverAspect = 4 / 3;
     final screenW = MediaQuery.sizeOf(context).width;
     final cardWidth = (screenW * 0.55).clamp(168.0, 220.0);
-    final cardHeight = cardWidth / coverAspect + 52;
+    final cardHeight = cardWidth / coverAspect + 32;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +185,6 @@ class HomeDiscoverySection extends StatelessWidget {
                   width: cardWidth,
                   child: HomeStayCard(
                     shop: shop,
-                    quote: store.quoteFor(shop),
                     coverAspectRatio: coverAspect,
                     onDetails: () => onOpen(shop),
                   ),

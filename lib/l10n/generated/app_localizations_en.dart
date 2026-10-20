@@ -451,6 +451,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get explorePay => 'Request a seat';
 
   @override
+  String get simPayTitle => 'Virtual payment';
+
+  @override
+  String get simPayNotice =>
+      'This does not charge a card. It only walks the booking through to the end.';
+
+  @override
+  String get simPayAction => 'Pay';
+
+  @override
+  String get simPayProcessing => 'Processing payment';
+
+  @override
+  String get simPayDoneTitle => 'Payment complete';
+
+  @override
+  String get simPayDoneBody =>
+      'The simulated payment is done. The booking will be saved next.';
+
+  @override
+  String get simPayClose => 'OK';
+
+  @override
   String exploreDepartureLine(String window, int seats) {
     return '$window · $seats berths left';
   }

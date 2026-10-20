@@ -223,6 +223,17 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         return;
       }
     }
+    final paid = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _SimPayDialog(
+        title: _hasProduct ? _chosenLabels() : widget.shop.name,
+        amount: formatted,
+      ),
+    );
+    if (paid != true || !mounted) {
+      return;
+    }
     await DiverStoreScope.of(context).createBooking(
       shop: widget.shop,
       price: amount,
@@ -1171,6 +1182,88 @@ class _DateBox extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SimPayDialog extends StatefulWidget {
+  const _SimPayDialog({required this.title, required this.amount});
+
+  final String title;
+  final String amount;
+
+  @override
+  State<_SimPayDialog> createState() => _SimPayDialogState();
+}
+
+class _SimPayDialogState extends State<_SimPayDialog> {
+  var _phase = 0;
+
+  Future<void> _submit() async {
+    setState(() => _phase = 1);
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (!mounted) {
+      return;
+    }
+    setState(() => _phase = 2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final done = _phase == 2;
+    return AlertDialog(
+      key: const Key('sim-pay-dialog'),
+      title: Text(done ? l10n.simPayDoneTitle : l10n.simPayTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            done ? l10n.simPayDoneBody : l10n.simPayNotice,
+            style: const TextStyle(color: AppTheme.muted),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.title,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.amount,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.navy,
+            ),
+          ),
+          if (_phase == 1) ...[
+            const SizedBox(height: 16),
+            const LinearProgressIndicator(),
+            const SizedBox(height: 8),
+            Text(l10n.simPayProcessing),
+          ],
+        ],
+      ),
+      actions: [
+        if (!done)
+          TextButton(
+            onPressed: _phase == 1
+                ? null
+                : () => Navigator.of(context).pop(false),
+            child: Text(l10n.checkoutBack),
+          ),
+        FilledButton(
+          key: Key(done ? 'sim-pay-done' : 'sim-pay-submit'),
+          onPressed: _phase == 1
+              ? null
+              : done
+              ? () => Navigator.of(context).pop(true)
+              : _submit,
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+          child: Text(done ? l10n.simPayClose : l10n.simPayAction),
+        ),
+      ],
     );
   }
 }
