@@ -26,7 +26,14 @@ class DepartureDeskHeader extends StatelessWidget {
     return Container(
       key: const Key('departure-desk-header'),
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 12, 12, 20),
+      margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F6F4),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE8EBEE)),
+        boxShadow: AppTheme.cardShadow,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -40,7 +47,7 @@ class DepartureDeskHeader extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [Color(0xFF3C8FB6), Color(0xFF0A4A73)],
               ),
-              border: Border.all(color: Colors.white24),
+              border: Border.all(color: const Color(0xFFC5C1BA)),
             ),
             child: const Icon(
               Icons.scuba_diving_rounded,
@@ -56,7 +63,7 @@ class DepartureDeskHeader extends StatelessWidget {
                 Text(
                   l10n.profileMyOceanKicker,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppTheme.goldSoft,
+                    color: AppTheme.ocean,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.4,
                   ),
@@ -65,7 +72,7 @@ class DepartureDeskHeader extends StatelessWidget {
                 Text(
                   displayName,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
+                    color: AppTheme.navy,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -74,7 +81,7 @@ class DepartureDeskHeader extends StatelessWidget {
                   '${l10n.profileRegions(regionsCount)} · '
                   '${l10n.profileTotalDives} $logCount',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white70,
+                    color: AppTheme.muted,
                   ),
                 ),
               ],
@@ -85,8 +92,8 @@ class DepartureDeskHeader extends StatelessWidget {
             tooltip: l10n.profileSettingsTitle,
             onPressed: onSettings,
             style: IconButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              foregroundColor: AppTheme.navy,
+              backgroundColor: const Color(0xFFE8EBEE),
             ),
             icon: const Icon(Icons.tune_rounded, size: 21),
           ),

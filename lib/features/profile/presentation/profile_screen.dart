@@ -28,7 +28,7 @@ class ProfileScreen extends StatelessWidget {
     final store = DiverStoreScope.of(context);
 
     return Scaffold(
-      backgroundColor: AppTheme.oceanDeep,
+      backgroundColor: AppTheme.canvas,
       body: ListenableBuilder(
         listenable: store,
         builder: (context, _) {
@@ -40,19 +40,7 @@ class ProfileScreen extends StatelessWidget {
           final crafted = store.craftedProductsFor(store.uid ?? '');
           final favorites = store.favoriteShops;
 
-          return DecoratedBox(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF061B2E),
-                  AppTheme.oceanDeep,
-                  Color(0xFF0A3B55),
-                ],
-              ),
-            ),
-            child: ListView(
+          return ListView(
               key: const Key('profile-departure-desk'),
               padding: EdgeInsets.zero,
               children: [
@@ -74,6 +62,7 @@ class ProfileScreen extends StatelessWidget {
                       _OceanSectionTitle(title: l10n.profileNextOceanTitle),
                       const SizedBox(height: 12),
                       _NextOceanCard(
+                        plate: 0,
                         booking: nextTrip,
                         shop: nextShop,
                         onTap: nextShop == null
@@ -87,6 +76,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _SavedOceansRail(
+                        plate: 1,
                         shops: favorites,
                         onOpen: (shop) =>
                             openResortDetail(context, shop.hullId),
@@ -96,6 +86,7 @@ class ProfileScreen extends StatelessWidget {
                       _OceanSectionTitle(title: l10n.profileOceanRecordTitle),
                       const SizedBox(height: 12),
                       _OceanRecordCard(
+                        plate: 2,
                         totalLogs: stats.totalLogCount,
                         regions: stats.uniqueRegionsCount,
                         progress: stats.centuryProgress,
@@ -110,6 +101,7 @@ class ProfileScreen extends StatelessWidget {
                       _OceanSectionTitle(title: l10n.profileActivityTitle),
                       const SizedBox(height: 12),
                       _ActivityCard(
+                        plate: 3,
                         bookingsCount: store.bookings.length,
                         craftedCount: crafted.length,
                         proStatus: stats.proStatus,
@@ -129,6 +121,7 @@ class ProfileScreen extends StatelessWidget {
                       if (crafted.isNotEmpty) ...[
                         const SizedBox(height: 24),
                         _LightPanel(
+                          plate: 0,
                           child: MyCraftedTripsSection(products: crafted),
                         ),
                       ],
@@ -136,7 +129,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
           );
         },
       ),
@@ -192,14 +184,14 @@ class _OceanSectionTitle extends StatelessWidget {
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                ?.copyWith(color: AppTheme.navy, fontWeight: FontWeight.w800),
           ),
         ),
         if (count != null)
           Text(
             '$count',
             style: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(color: AppTheme.goldSoft),
+                ?.copyWith(color: AppTheme.muted),
           ),
       ],
     );
@@ -208,11 +200,13 @@ class _OceanSectionTitle extends StatelessWidget {
 
 class _NextOceanCard extends StatelessWidget {
   const _NextOceanCard({
+    required this.plate,
     required this.booking,
     required this.shop,
     required this.onTap,
   });
 
+  final int plate;
   final TourBooking? booking;
   final DiveShop? shop;
   final VoidCallback? onTap;
@@ -224,10 +218,8 @@ class _NextOceanCard extends StatelessWidget {
         ? null
         : TravelStyleAnalyzer.daysUntil(booking!.scheduledFor);
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      clipBehavior: Clip.antiAlias,
+    return _MetalPlate(
+      plate: plate,
       child: InkWell(
         key: const Key('profile-next-ocean'),
         onTap: onTap,
@@ -291,11 +283,13 @@ class _NextOceanCard extends StatelessWidget {
 
 class _SavedOceansRail extends StatelessWidget {
   const _SavedOceansRail({
+    required this.plate,
     required this.shops,
     required this.onOpen,
     required this.onRemove,
   });
 
+  final int plate;
   final List<DiveShop> shops;
   final ValueChanged<DiveShop> onOpen;
   final Future<void> Function(String shopId) onRemove;
@@ -305,6 +299,7 @@ class _SavedOceansRail extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     if (shops.isEmpty) {
       return _LightPanel(
+        plate: plate,
         child: Row(
           children: [
             const Icon(Icons.favorite_border_rounded, color: AppTheme.ocean),
@@ -328,10 +323,8 @@ class _SavedOceansRail extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final shop = shops[index];
-          return Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            clipBehavior: Clip.antiAlias,
+          return _MetalPlate(
+            plate: (plate + index) % _metalPlates.length,
             child: InkWell(
               onTap: () => onOpen(shop),
               child: SizedBox(
@@ -397,6 +390,7 @@ class _SavedOceansRail extends StatelessWidget {
 
 class _OceanRecordCard extends StatelessWidget {
   const _OceanRecordCard({
+    required this.plate,
     required this.totalLogs,
     required this.regions,
     required this.progress,
@@ -405,6 +399,7 @@ class _OceanRecordCard extends StatelessWidget {
     required this.stamped,
   });
 
+  final int plate;
   final int totalLogs;
   final int regions;
   final double progress;
@@ -416,6 +411,7 @@ class _OceanRecordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return _LightPanel(
+      plate: plate,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -506,6 +502,7 @@ class _Stat extends StatelessWidget {
 
 class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
+    required this.plate,
     required this.bookingsCount,
     required this.craftedCount,
     required this.proStatus,
@@ -514,6 +511,7 @@ class _ActivityCard extends StatelessWidget {
     required this.onCraft,
   });
 
+  final int plate;
   final int bookingsCount;
   final int craftedCount;
   final ProVerificationStatus proStatus;
@@ -525,6 +523,7 @@ class _ActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return _LightPanel(
+      plate: plate,
       padding: EdgeInsets.zero,
       child: Column(
         children: [
@@ -599,22 +598,64 @@ class _ActivityRow extends StatelessWidget {
 
 class _LightPanel extends StatelessWidget {
   const _LightPanel({
+    required this.plate,
     required this.child,
     this.padding = const EdgeInsets.all(18),
   });
 
+  final int plate;
   final Widget child;
   final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.96),
-      elevation: 3,
-      shadowColor: const Color(0x66001424),
-      borderRadius: BorderRadius.circular(8),
-      clipBehavior: Clip.antiAlias,
+    return _MetalPlate(
+      plate: plate,
       child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
+const _metalPlates = [
+  (fill: Color(0xFFF7F6F4), edge: Color(0xFFC5C1BA)),
+  (fill: Color(0xFFF3F5F7), edge: Color(0xFFB7C0C8)),
+  (fill: Color(0xFFF4F2EE), edge: Color(0xFFC4BDB4)),
+  (fill: Color(0xFFF6F4EF), edge: Color(0xFFC9C2B4)),
+];
+
+class _MetalPlate extends StatelessWidget {
+  const _MetalPlate({required this.plate, required this.child});
+
+  final int plate;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final metal = _metalPlates[plate % _metalPlates.length];
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Material(
+      color: metal.fill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE8EBEE)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(width: 4, color: metal.edge),
+              Expanded(child: child),
+            ],
+          ),
+        ),
+      ),
+      ),
     );
   }
 }
