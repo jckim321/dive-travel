@@ -12,6 +12,106 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _TideFilter { all, lastCall, departing }
 
+class _DesignPreview {
+  const _DesignPreview({required this.offer, required this.shopName});
+
+  final SameBoatOffer offer;
+  final String shopName;
+}
+
+List<_DesignPreview> _designPreviews(DateTime now) {
+  final soon = now.add(const Duration(days: 4));
+  final later = now.add(const Duration(days: 18));
+  final earlyDeparture = now.add(const Duration(days: 3));
+  final lateFlag = now.add(const Duration(days: 12));
+  return [
+    _DesignPreview(
+      shopName: '블루홀 다이브',
+      offer: SameBoatOffer(
+        product: ShopProduct(
+          id: 'preview-blue-hole',
+          shopId: 'preview-blue-hole',
+          name: '블루홀 라이브어보드',
+          consumerPrice: 890000,
+          professionalPrice: 790000,
+          blurb: '팀이 잡힌 3박 4일 일정에 캐빈 한 자리가 남았습니다.',
+          options: [
+            ShopProductOption(
+              id: 'deluxe',
+              name: '디럭스 캐빈',
+              description: '2인실, 전용 욕실.',
+              kind: ProductOptionKind.individual,
+              openEmptySeats: true,
+              capacity: 8,
+              bookedSeats: 3,
+              flagHolds: [
+                SeatHold(
+                  seats: 2,
+                  expiresAt: now.add(const Duration(hours: 20)),
+                ),
+              ],
+              departureStart: later,
+              flagClosesAt: soon,
+            ),
+          ],
+        ),
+        option: ShopProductOption(
+          id: 'deluxe',
+          name: '디럭스 캐빈',
+          description: '2인실, 전용 욕실.',
+          kind: ProductOptionKind.individual,
+          openEmptySeats: true,
+          capacity: 8,
+          bookedSeats: 3,
+          flagHolds: [
+            SeatHold(
+              seats: 2,
+              expiresAt: now.add(const Duration(hours: 20)),
+            ),
+          ],
+          departureStart: later,
+          flagClosesAt: soon,
+        ),
+      ),
+    ),
+    _DesignPreview(
+      shopName: '케라마 보트',
+      offer: SameBoatOffer(
+        product: ShopProduct(
+          id: 'preview-kerama',
+          shopId: 'preview-kerama',
+          name: '케라마 당일 보트',
+          consumerPrice: 180000,
+          professionalPrice: 150000,
+          openEmptySeats: true,
+          capacity: 6,
+          bookedSeats: 4,
+          departureStart: later,
+          flagClosesAt: soon,
+        ),
+      ),
+    ),
+    _DesignPreview(
+      shopName: '팔라우 어젠다',
+      offer: SameBoatOffer(
+        product: ShopProduct(
+          id: 'preview-palau',
+          shopId: 'preview-palau',
+          name: '저먼 채널 데이 트립',
+          consumerPrice: 240000,
+          professionalPrice: 210000,
+          detail: '오전 출항, 오후 귀항.',
+          openEmptySeats: true,
+          capacity: 5,
+          bookedSeats: 1,
+          departureStart: earlyDeparture,
+          flagClosesAt: lateFlag,
+        ),
+      ),
+    ),
+  ];
+}
+
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
@@ -83,7 +183,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
-                if (offers.isEmpty)
+                if (all.isEmpty) ...[
+                  Text(
+                    l10n.communityDesignPreview,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  for (final entry in _designPreviews(now).indexed) ...[
+                    _SeatCard(
+                      offer: entry.$2.offer,
+                      plate: entry.$1,
+                      shopName: entry.$2.shopName,
+                      onTake: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.communityDesignPreviewFlag),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ] else if (offers.isEmpty)
                   AppCard(
                     child: Text(
                       l10n.communityEmpty,
@@ -253,7 +374,8 @@ class _SeatCard extends StatelessWidget {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: Row(
+            child: IntrinsicHeight(
+              child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(width: 4, color: metal.edge),
@@ -361,6 +483,7 @@ class _SeatCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),

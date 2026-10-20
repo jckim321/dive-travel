@@ -1725,6 +1725,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No leftover-seat trips yet. Regular products stay on Explore.';
 
   @override
+  String get communityDesignPreview => 'Design preview';
+
+  @override
+  String get communityDesignPreviewFlag =>
+      'This preview card does not hold a seat.';
+
+  @override
   String get communityKindShop => 'Shop crew';
 
   @override

@@ -89,6 +89,6 @@ void main() {
     await tester.tap(find.text(l10n.navCommunity));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('tide-board')), findsOneWidget);
-    expect(find.text(l10n.communityEmpty), findsOneWidget);
+    expect(find.text(l10n.communityDesignPreview), findsOneWidget);
   });
 }

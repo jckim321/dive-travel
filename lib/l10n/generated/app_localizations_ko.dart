@@ -1676,6 +1676,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get communityEmpty => '빈자리를 연 상품이 없습니다. 일반 상품은 탐색에서 봅니다.';
 
   @override
+  String get communityDesignPreview => '디자인 확인용';
+
+  @override
+  String get communityDesignPreviewFlag => '확인용 카드라 자리는 잡지 않습니다.';
+
+  @override
   String get communityKindShop => '샵 크루';
 
   @override

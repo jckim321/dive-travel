@@ -388,6 +388,7 @@ void main() {
 
     expect(find.byKey(const Key('tide-board')), findsOneWidget);
     expect(find.text(l10n.communityTideKicker), findsOneWidget);
-    expect(find.text(l10n.communityEmpty), findsOneWidget);
+    expect(find.text(l10n.communityDesignPreview), findsOneWidget);
+    expect(find.text('디럭스 캐빈'), findsOneWidget);
   });
 }

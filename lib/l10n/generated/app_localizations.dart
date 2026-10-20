@@ -3186,6 +3186,18 @@ abstract class AppLocalizations {
   /// **'빈자리를 연 상품이 없습니다. 일반 상품은 탐색에서 봅니다.'**
   String get communityEmpty;
 
+  /// No description provided for @communityDesignPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'디자인 확인용'**
+  String get communityDesignPreview;
+
+  /// No description provided for @communityDesignPreviewFlag.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인용 카드라 자리는 잡지 않습니다.'**
+  String get communityDesignPreviewFlag;
+
   /// No description provided for @communityKindShop.
   ///
   /// In ko, this message translates to:

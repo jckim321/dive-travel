@@ -600,6 +600,8 @@
   "communityWindowLabel": "Window",
   "communityPickShop": "Shop to board",
   "communityEmpty": "No leftover-seat trips yet. Regular products stay on Explore.",
+  "communityDesignPreview": "Design preview",
+  "communityDesignPreviewFlag": "This preview card does not hold a seat.",
   "communityKindShop": "Shop crew",
   "communityKindSolo": "Solo share",
   "communityKindLast": "Last call",
