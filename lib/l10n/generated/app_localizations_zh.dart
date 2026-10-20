@@ -434,22 +434,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get explorePay => '申请席位';
 
   @override
-  String get simPayTitle => '가상 결제';
+  String get simPayTitle => '예약 요청 확인';
 
   @override
-  String get simPayNotice => '실제 결제되지 않습니다. 예약이 끝까지 이어지는지만 확인합니다.';
+  String get simPayNotice => '지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.';
 
   @override
-  String get simPayAction => '결제하기';
+  String get simPayAction => '예약 요청';
 
   @override
-  String get simPayProcessing => '결제 처리 중';
+  String get simPayProcessing => '예약 요청 처리 중';
 
   @override
-  String get simPayDoneTitle => '결제 완료';
+  String get simPayDoneTitle => '예약 요청 완료';
 
   @override
-  String get simPayDoneBody => '가상 결제가 끝났습니다. 이어서 예약을 저장합니다.';
+  String get simPayDoneBody => '예약 요청이 저장됩니다. 결제 상태는 미결제로 표시됩니다.';
 
   @override
   String get simPayClose => '확인';
@@ -759,13 +759,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileBookingStatus => '나의 예약';
 
   @override
-  String get profilePaidBookingsEmpty => '결제된 예약이 없습니다.';
+  String get profilePaidBookingsEmpty => '결제 완료된 예약이 없습니다.';
+
+  @override
+  String get profileRequestedBookingsEmpty => '요청 중인 예약이 없습니다.';
 
   @override
   String get profileBookingFilterAll => '전체';
 
   @override
-  String get profileBookingFilterHolding => '예약중';
+  String get profileBookingFilterRequested => '예약 요청';
+
+  @override
+  String get profileBookingFilterHolding => '좌석 홀딩';
 
   @override
   String get profileBookingFilterPaid => '결제 완료';
@@ -1847,6 +1853,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bookingConfirmed => '已确认';
 
   @override
+  String get bookingRequested => '예약 요청';
+
+  @override
   String get bookingCancelled => '已取消';
 
   @override
@@ -1859,6 +1868,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String bookingCancelledRefund(int percent) {
     return '已取消 · 退款 $percent%';
   }
+
+  @override
+  String get bookingPaymentUnpaid => '미결제';
+
+  @override
+  String get bookingPaymentCaptured => '결제 완료';
+
+  @override
+  String get bookingPaymentRefunded => '환불됨';
+
+  @override
+  String get bookingListEmpty => '아직 예약이 없습니다. 탐색에서 상품을 예약해 보세요.';
+
+  @override
+  String get bookingQuoteBreakdown => '요금 내역';
+
+  @override
+  String get bookingConfirmAndCapture => '확정 · 결제 완료';
+
+  @override
+  String get bookingConfirmDone => '예약을 확정하고 결제를 완료 처리했습니다.';
+
+  @override
+  String get bookingConfirmFailed => '확정할 수 없는 예약입니다.';
+
+  @override
+  String get adminBookingsTitle => '예약 확정';
+
+  @override
+  String get adminBookingsEmpty => '아직 집계할 예약이 없습니다.';
 
   @override
   String get workbenchTitle => '출항 작업대';

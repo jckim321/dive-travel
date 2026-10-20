@@ -451,24 +451,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get explorePay => 'Request a seat';
 
   @override
-  String get simPayTitle => 'Virtual payment';
+  String get simPayTitle => 'Confirm booking request';
 
   @override
   String get simPayNotice =>
-      'This does not charge a card. It only walks the booking through to the end.';
+      'No charge yet. Payment continues after the shop confirms.';
 
   @override
-  String get simPayAction => 'Pay';
+  String get simPayAction => 'Request booking';
 
   @override
-  String get simPayProcessing => 'Processing payment';
+  String get simPayProcessing => 'Submitting request';
 
   @override
-  String get simPayDoneTitle => 'Payment complete';
+  String get simPayDoneTitle => 'Request submitted';
 
   @override
   String get simPayDoneBody =>
-      'The simulated payment is done. The booking will be saved next.';
+      'Your booking request will be saved as unpaid until the shop confirms.';
 
   @override
   String get simPayClose => 'OK';
@@ -791,7 +791,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profilePaidBookingsEmpty => 'No paid bookings yet.';
 
   @override
+  String get profileRequestedBookingsEmpty => 'No booking requests yet.';
+
+  @override
   String get profileBookingFilterAll => 'All';
+
+  @override
+  String get profileBookingFilterRequested => 'Requested';
 
   @override
   String get profileBookingFilterHolding => 'Holding';
@@ -1918,6 +1924,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingConfirmed => 'Confirmed';
 
   @override
+  String get bookingRequested => 'Requested';
+
+  @override
   String get bookingCancelled => 'Cancelled';
 
   @override
@@ -1930,6 +1939,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String bookingCancelledRefund(int percent) {
     return 'Cancelled · $percent% refund';
   }
+
+  @override
+  String get bookingPaymentUnpaid => 'Unpaid';
+
+  @override
+  String get bookingPaymentCaptured => 'Paid';
+
+  @override
+  String get bookingPaymentRefunded => 'Refunded';
+
+  @override
+  String get bookingListEmpty => 'No bookings yet. Book a trip from Explore.';
+
+  @override
+  String get bookingQuoteBreakdown => 'Price breakdown';
+
+  @override
+  String get bookingConfirmAndCapture => 'Confirm · mark paid';
+
+  @override
+  String get bookingConfirmDone => 'Booking confirmed and marked as paid.';
+
+  @override
+  String get bookingConfirmFailed => 'This booking cannot be confirmed.';
+
+  @override
+  String get adminBookingsTitle => 'Booking confirm';
+
+  @override
+  String get adminBookingsEmpty => 'No bookings to review yet.';
 
   @override
   String get workbenchTitle => 'Departure desk';

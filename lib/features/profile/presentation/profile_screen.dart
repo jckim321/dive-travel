@@ -40,10 +40,18 @@ class ProfileScreen extends StatelessWidget {
           final favorites = store.favoriteShops;
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
-          final paid = [
+          final activeBookings = [
             for (final booking in store.bookings)
               if (booking.isActive) booking,
           ]..sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
+          final paidBookings = [
+            for (final booking in activeBookings)
+              if (booking.isPaid) booking,
+          ];
+          final requestedBookings = [
+            for (final booking in activeBookings)
+              if (!booking.isPaid) booking,
+          ];
           final flags = store.myLiveFlags(now: now);
           final insight = TravelStyleAnalyzer.analyze(
             regions: store.regions,
@@ -71,7 +79,7 @@ class ProfileScreen extends StatelessWidget {
                     displayName: stats.displayName,
                     regionsCount: stats.uniqueRegionsCount,
                     logCount: stats.totalLogCount,
-                    paidBookings: paid.length,
+                    paidBookings: activeBookings.length,
                     isInstructor: stats.isInstructor,
                     onSettings: () => _openSettings(context),
                   ),
@@ -85,12 +93,13 @@ class ProfileScreen extends StatelessWidget {
                       _OceanSectionTitle(title: l10n.profileBookingStatus),
                       const SizedBox(height: 12),
                       _BookingBoards(
-                        paid: paid,
+                        requested: requestedBookings,
+                        paid: paidBookings,
                         flags: flags,
                         now: now,
-                        onOpenPaid: paid.isEmpty
+                        onOpenBookings: store.bookings.isEmpty
                             ? null
-                            : () => _openBookings(context, store),
+                            : () => _openBookings(context),
                       ),
                       const SizedBox(height: 30),
                       _OceanSectionTitle(
@@ -131,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
                           empty: l10n.profileCraftedTripsHint,
                           onTap: () {
                             final grade = ProfileDisplayGrade.fromUse(
-                              paidBookings: paid.length,
+                              paidBookings: activeBookings.length,
                               isInstructor: stats.isInstructor,
                             );
                             if (grade == ProfileDisplayGrade.silver) {
@@ -218,7 +227,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openBookings(BuildContext context, DiverStore store) {
+  Future<void> _openBookings(BuildContext context) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -231,7 +240,7 @@ class ProfileScreen extends StatelessWidget {
         builder: (context, controller) => SingleChildScrollView(
           controller: controller,
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 36),
-          child: MyBookingsSection(bookings: store.bookings),
+          child: const MyBookingsSection(),
         ),
       ),
     );
@@ -319,20 +328,22 @@ class _Line extends StatelessWidget {
   }
 }
 
-enum _BookingFilter { all, holding, paid }
+enum _BookingFilter { all, requested, paid, holding }
 
 class _BookingBoards extends StatefulWidget {
   const _BookingBoards({
+    required this.requested,
     required this.paid,
     required this.flags,
     required this.now,
-    required this.onOpenPaid,
+    required this.onOpenBookings,
   });
 
+  final List<TourBooking> requested;
   final List<TourBooking> paid;
   final List<SameBoatOffer> flags;
   final DateTime now;
-  final VoidCallback? onOpenPaid;
+  final VoidCallback? onOpenBookings;
 
   @override
   State<_BookingBoards> createState() => _BookingBoardsState();
@@ -344,6 +355,8 @@ class _BookingBoardsState extends State<_BookingBoards> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final showRequested =
+        _filter == _BookingFilter.all || _filter == _BookingFilter.requested;
     final showPaid =
         _filter == _BookingFilter.all || _filter == _BookingFilter.paid;
     final showFlags =
@@ -363,6 +376,25 @@ class _BookingBoardsState extends State<_BookingBoards> {
               ),
           ],
         ),
+        if (showRequested) ...[
+          const SizedBox(height: 12),
+          _OceanSectionTitle(title: l10n.profileBookingFilterRequested),
+          const SizedBox(height: 8),
+          _HintOrList(
+            plate: 0,
+            empty: l10n.profileRequestedBookingsEmpty,
+            onTap: widget.onOpenBookings,
+            children: [
+              for (final booking in widget.requested)
+                _Line(
+                  title: booking.displayTitle,
+                  detail:
+                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}'
+                      ' · ${l10n.bookingPaymentUnpaid}',
+                ),
+            ],
+          ),
+        ],
         if (showPaid) ...[
           const SizedBox(height: 12),
           _OceanSectionTitle(title: l10n.profileBookingFilterPaid),
@@ -370,13 +402,14 @@ class _BookingBoardsState extends State<_BookingBoards> {
           _HintOrList(
             plate: 0,
             empty: l10n.profilePaidBookingsEmpty,
-            onTap: widget.onOpenPaid,
+            onTap: widget.onOpenBookings,
             children: [
               for (final booking in widget.paid)
                 _Line(
-                  title: booking.productName,
+                  title: booking.displayTitle,
                   detail:
-                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}',
+                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}'
+                      ' · ${l10n.bookingPaymentCaptured}',
                 ),
             ],
           ),
@@ -406,6 +439,7 @@ class _BookingBoardsState extends State<_BookingBoards> {
   String _filterLabel(AppLocalizations l10n, _BookingFilter filter) {
     return switch (filter) {
       _BookingFilter.all => l10n.profileBookingFilterAll,
+      _BookingFilter.requested => l10n.profileBookingFilterRequested,
       _BookingFilter.holding => l10n.profileBookingFilterHolding,
       _BookingFilter.paid => l10n.profileBookingFilterPaid,
     };

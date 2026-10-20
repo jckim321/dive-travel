@@ -12,6 +12,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -19,7 +20,7 @@ enum _AdminHub { overview, members, certify, shops, ops }
 
 enum _ShopsSub { monitor, products, homeCuration, pricing }
 
-enum _OpsSub { posts, weather }
+enum _OpsSub { posts, bookings, weather }
 
 /// Dive Travel HQ 관리자 콘솔.
 /// 상단 1차 탭 + 필요 시 2차 탭, 현황 탭에 KPI·대기 작업·등급 분포.
@@ -134,16 +135,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   _SubTabStrip(
                     labels: [
                       l10n.adminPostsTitle,
+                      l10n.adminBookingsTitle,
                       l10n.weatherAdminTitle,
                     ],
                     keys: const [
                       Key('admin-sub-posts'),
+                      Key('admin-sub-bookings'),
                       Key('admin-menu-weather'),
                     ],
-                    selected: _opsSub == _OpsSub.posts ? 0 : 1,
+                    selected: switch (_opsSub) {
+                      _OpsSub.posts => 0,
+                      _OpsSub.bookings => 1,
+                      _OpsSub.weather => 2,
+                    },
                     onSelect: (i) => _go(
                       _AdminHub.ops,
-                      sub: i == 0 ? _OpsSub.posts : _OpsSub.weather,
+                      sub: switch (i) {
+                        1 => _OpsSub.bookings,
+                        2 => _OpsSub.weather,
+                        _ => _OpsSub.posts,
+                      },
                     ),
                   ),
                 Expanded(
@@ -207,9 +218,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _ShopsSub.pricing => const AdminPricingScreen(embedded: true),
         };
       case _AdminHub.ops:
-        return _opsSub == _OpsSub.posts
-            ? const AdminPostsScreen(embedded: true)
-            : const AdminWeatherScreen(embedded: true);
+        return switch (_opsSub) {
+          _OpsSub.posts => const AdminPostsScreen(embedded: true),
+          _OpsSub.bookings => const AdminBookingsScreen(embedded: true),
+          _OpsSub.weather => const AdminWeatherScreen(embedded: true),
+        };
     }
   }
 }

@@ -164,7 +164,7 @@ class DiverStore extends ChangeNotifier {
   int get partnerGrossThisMonth {
     var total = 0;
     for (final booking in thisMonthShopBookings) {
-      if (booking.isActive) {
+      if (booking.isActive && booking.isPaid) {
         total += booking.price;
       }
     }
@@ -192,7 +192,7 @@ class DiverStore extends ChangeNotifier {
     final clock = now ?? DateTime.now();
     final totals = {for (final kind in salesKindOrder) kind: 0};
     for (final booking in _salesBookings) {
-      if (!booking.isActive || booking.paymentStatus != 'captured') {
+      if (!booking.isActive || !booking.isPaid) {
         continue;
       }
       final at = booking.createdAt;
@@ -575,6 +575,8 @@ class DiverStore extends ChangeNotifier {
     int children = 0,
     int infants = 0,
     List<BookingLine> quoteLines = const [],
+    BookingStatus status = BookingStatus.requested,
+    PaymentStatus paymentStatus = PaymentStatus.unpaid,
   }) async {
     final uid = _uid;
     if (uid == null) {
@@ -598,6 +600,8 @@ class DiverStore extends ChangeNotifier {
       children: children,
       infants: infants,
       quoteLines: quoteLines,
+      status: status,
+      paymentStatus: paymentStatus,
     );
   }
 
@@ -1040,6 +1044,16 @@ class DiverStore extends ChangeNotifier {
       return Future.value();
     }
     return _repository.cancelBookingAsGuest(uid: uid, bookingId: bookingId);
+  }
+
+  Future<bool> confirmShopBooking({
+    required String shopId,
+    required String bookingId,
+  }) {
+    return _repository.confirmShopBooking(
+      shopId: shopId,
+      bookingId: bookingId,
+    );
   }
 
   Future<void> cancelBookingsForWeather({

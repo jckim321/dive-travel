@@ -504,7 +504,7 @@ class FirestoreDiverRepository implements DiverRepository {
       commissionRate:
           (data['commission_rate'] as num?)?.toDouble() ??
           RefundPolicy.defaultCommissionRate,
-      paymentStatus: data['payment_status'] as String? ?? 'captured',
+      paymentStatus: PaymentStatus.parse(data['payment_status']),
       productId: data['product_id'] as String? ?? '',
       optionId: data['option_id'] as String? ?? '',
       listingKind: data.containsKey('listing_kind')
@@ -533,7 +533,7 @@ class FirestoreDiverRepository implements DiverRepository {
       'refund_amount': booking.refundAmount,
       'refund_notice_seen': booking.refundNoticeSeen,
       'commission_rate': booking.commissionRate,
-      'payment_status': booking.paymentStatus,
+      'payment_status': booking.paymentStatus.firestoreValue,
       'product_id': booking.productId,
       'option_id': booking.optionId,
       'listing_kind': booking.listingKind.firestoreValue,
@@ -583,6 +583,8 @@ class FirestoreDiverRepository implements DiverRepository {
     int children = 0,
     int infants = 0,
     List<BookingLine> quoteLines = const [],
+    BookingStatus status = BookingStatus.requested,
+    PaymentStatus paymentStatus = PaymentStatus.unpaid,
   }) async {
     final hullId = shopId.split('--').first;
     final held = await _holdOpenSeats(
@@ -609,6 +611,8 @@ class FirestoreDiverRepository implements DiverRepository {
       price: price,
       createdAt: DateTime.now(),
       tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
+      status: status,
+      paymentStatus: paymentStatus,
       commissionRate: RefundPolicy.defaultCommissionRate,
       partySize: partySize,
       divers: divers,
@@ -1319,11 +1323,14 @@ class FirestoreDiverRepository implements DiverRepository {
       return;
     }
     final quote = RefundPolicy.forUserCancel(tourDate: booking.scheduledFor);
+    final nextPayment = !booking.isPaid
+        ? PaymentStatus.unpaid
+        : (quote.percent > 0 ? PaymentStatus.refunded : PaymentStatus.captured);
     final patch = {
       'status': BookingStatus.cancelled.firestoreValue,
       'refund_percent': quote.percent,
       'refund_amount': quote.amountFor(booking.price),
-      'payment_status': quote.percent > 0 ? 'refunded' : 'captured',
+      'payment_status': nextPayment.firestoreValue,
       'cancelled_at': FieldValue.serverTimestamp(),
       'updated_at': FieldValue.serverTimestamp(),
     };
@@ -1331,6 +1338,35 @@ class FirestoreDiverRepository implements DiverRepository {
     await _shopBookings(booking.shopId)
         .doc(bookingId)
         .set(patch, SetOptions(merge: true));
+  }
+
+  @override
+  Future<bool> confirmShopBooking({
+    required String shopId,
+    required String bookingId,
+  }) async {
+    final shopRef = _shopBookings(shopId).doc(bookingId);
+    final snap = await shopRef.get();
+    if (!snap.exists) {
+      return false;
+    }
+    final booking = _toBooking(snap.id, snap.data() ?? {});
+    if (!booking.awaitsShopConfirm) {
+      return false;
+    }
+    final patch = {
+      'status': BookingStatus.confirmed.firestoreValue,
+      'payment_status': PaymentStatus.captured.firestoreValue,
+      'confirmed_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    await shopRef.set(patch, SetOptions(merge: true));
+    if (booking.uid.isNotEmpty) {
+      await _bookings(booking.uid)
+          .doc(bookingId)
+          .set(patch, SetOptions(merge: true));
+    }
+    return true;
   }
 
   @override
@@ -1353,7 +1389,9 @@ class FirestoreDiverRepository implements DiverRepository {
         'status': BookingStatus.weatherCancelled.firestoreValue,
         'refund_percent': 100,
         'refund_amount': quote.amountFor(booking.price),
-        'payment_status': 'refunded',
+        'payment_status': booking.isPaid
+            ? PaymentStatus.refunded.firestoreValue
+            : PaymentStatus.unpaid.firestoreValue,
         'refund_notice_seen': false,
         'cancelled_at': FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),

@@ -182,6 +182,8 @@ abstract class DiverRepository {
     int children = 0,
     int infants = 0,
     List<BookingLine> quoteLines = const [],
+    BookingStatus status = BookingStatus.requested,
+    PaymentStatus paymentStatus = PaymentStatus.unpaid,
   });
 
   Future<void> plantSeatFlag({
@@ -195,6 +197,12 @@ abstract class DiverRepository {
 
   Future<void> cancelBookingAsGuest({
     required String uid,
+    required String bookingId,
+  });
+
+  /// Shop/admin confirms a guest request and records payment as captured.
+  Future<bool> confirmShopBooking({
+    required String shopId,
     required String bookingId,
   });
 

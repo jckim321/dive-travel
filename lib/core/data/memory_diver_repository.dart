@@ -349,8 +349,12 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Stream<List<TourBooking>> watchBookings(String uid) async* {
-    yield List<TourBooking>.from(_bookings);
-    yield* _bookingController.stream;
+    List<TourBooking> forUid() => [
+          for (final booking in _bookings)
+            if (booking.uid == uid || uid.isEmpty) booking,
+        ];
+    yield forUid();
+    yield* _bookingController.stream.map((_) => forUid());
   }
 
   @override
@@ -372,6 +376,8 @@ class MemoryDiverRepository implements DiverRepository {
     int children = 0,
     int infants = 0,
     List<BookingLine> quoteLines = const [],
+    BookingStatus status = BookingStatus.requested,
+    PaymentStatus paymentStatus = PaymentStatus.unpaid,
   }) async {
     final hullId = shopId.split('--').first;
     final held = _holdOpenSeats(
@@ -398,6 +404,8 @@ class MemoryDiverRepository implements DiverRepository {
       price: price,
       createdAt: DateTime.now(),
       tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
+      status: status,
+      paymentStatus: paymentStatus,
       partySize: partySize,
       divers: divers,
       nondivers: nondivers,
@@ -961,7 +969,9 @@ class MemoryDiverRepository implements DiverRepository {
       status: BookingStatus.cancelled,
       refundPercent: quote.percent,
       refundAmount: quote.amountFor(booking.price),
-      paymentStatus: quote.percent > 0 ? 'refunded' : 'captured',
+      paymentStatus: booking.isPaid
+          ? (quote.percent > 0 ? PaymentStatus.refunded : PaymentStatus.captured)
+          : PaymentStatus.unpaid,
     );
     _bookings[index] = updated;
     _replaceShopBooking(updated);
@@ -969,6 +979,39 @@ class MemoryDiverRepository implements DiverRepository {
     _shopBookingController.add(
       List<TourBooking>.from(_shopBookings[updated.shopId] ?? const []),
     );
+  }
+
+  @override
+  Future<bool> confirmShopBooking({
+    required String shopId,
+    required String bookingId,
+  }) async {
+    final list = _shopBookings[shopId];
+    if (list == null) {
+      return false;
+    }
+    final shopIndex = list.indexWhere((item) => item.id == bookingId);
+    if (shopIndex < 0) {
+      return false;
+    }
+    final booking = list[shopIndex];
+    if (!booking.awaitsShopConfirm) {
+      return false;
+    }
+    final updated = booking.copyWith(
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
+    );
+    list[shopIndex] = updated;
+    final userIndex = _bookings.indexWhere((item) => item.id == bookingId);
+    if (userIndex >= 0) {
+      _bookings[userIndex] = updated;
+    } else {
+      _bookings.insert(0, updated);
+    }
+    _bookingController.add(List<TourBooking>.from(_bookings));
+    _shopBookingController.add(List<TourBooking>.from(list));
+    return true;
   }
 
   @override
@@ -991,7 +1034,9 @@ class MemoryDiverRepository implements DiverRepository {
         refundPercent: 100,
         refundAmount: quote.amountFor(booking.price),
         refundNoticeSeen: false,
-        paymentStatus: 'refunded',
+        paymentStatus: booking.isPaid
+            ? PaymentStatus.refunded
+            : PaymentStatus.unpaid,
       );
       _replaceShopBooking(_bookings[i]);
     }

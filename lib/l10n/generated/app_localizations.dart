@@ -921,37 +921,37 @@ abstract class AppLocalizations {
   /// No description provided for @simPayTitle.
   ///
   /// In ko, this message translates to:
-  /// **'가상 결제'**
+  /// **'예약 요청 확인'**
   String get simPayTitle;
 
   /// No description provided for @simPayNotice.
   ///
   /// In ko, this message translates to:
-  /// **'실제 결제되지 않습니다. 예약이 끝까지 이어지는지만 확인합니다.'**
+  /// **'지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.'**
   String get simPayNotice;
 
   /// No description provided for @simPayAction.
   ///
   /// In ko, this message translates to:
-  /// **'결제하기'**
+  /// **'예약 요청'**
   String get simPayAction;
 
   /// No description provided for @simPayProcessing.
   ///
   /// In ko, this message translates to:
-  /// **'결제 처리 중'**
+  /// **'예약 요청 처리 중'**
   String get simPayProcessing;
 
   /// No description provided for @simPayDoneTitle.
   ///
   /// In ko, this message translates to:
-  /// **'결제 완료'**
+  /// **'예약 요청 완료'**
   String get simPayDoneTitle;
 
   /// No description provided for @simPayDoneBody.
   ///
   /// In ko, this message translates to:
-  /// **'가상 결제가 끝났습니다. 이어서 예약을 저장합니다.'**
+  /// **'예약 요청이 저장됩니다. 결제 상태는 미결제로 표시됩니다.'**
   String get simPayDoneBody;
 
   /// No description provided for @simPayClose.
@@ -1509,8 +1509,14 @@ abstract class AppLocalizations {
   /// No description provided for @profilePaidBookingsEmpty.
   ///
   /// In ko, this message translates to:
-  /// **'결제된 예약이 없습니다.'**
+  /// **'결제 완료된 예약이 없습니다.'**
   String get profilePaidBookingsEmpty;
+
+  /// No description provided for @profileRequestedBookingsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청 중인 예약이 없습니다.'**
+  String get profileRequestedBookingsEmpty;
 
   /// No description provided for @profileBookingFilterAll.
   ///
@@ -1518,10 +1524,16 @@ abstract class AppLocalizations {
   /// **'전체'**
   String get profileBookingFilterAll;
 
+  /// No description provided for @profileBookingFilterRequested.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 요청'**
+  String get profileBookingFilterRequested;
+
   /// No description provided for @profileBookingFilterHolding.
   ///
   /// In ko, this message translates to:
-  /// **'예약중'**
+  /// **'좌석 홀딩'**
   String get profileBookingFilterHolding;
 
   /// No description provided for @profileBookingFilterPaid.
@@ -3540,6 +3552,12 @@ abstract class AppLocalizations {
   /// **'예약 확정'**
   String get bookingConfirmed;
 
+  /// No description provided for @bookingRequested.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 요청'**
+  String get bookingRequested;
+
   /// No description provided for @bookingCancelled.
   ///
   /// In ko, this message translates to:
@@ -3563,6 +3581,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'취소 · 환불 {percent}%'**
   String bookingCancelledRefund(int percent);
+
+  /// No description provided for @bookingPaymentUnpaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'미결제'**
+  String get bookingPaymentUnpaid;
+
+  /// No description provided for @bookingPaymentCaptured.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 완료'**
+  String get bookingPaymentCaptured;
+
+  /// No description provided for @bookingPaymentRefunded.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불됨'**
+  String get bookingPaymentRefunded;
+
+  /// No description provided for @bookingListEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 예약이 없습니다. 탐색에서 상품을 예약해 보세요.'**
+  String get bookingListEmpty;
+
+  /// No description provided for @bookingQuoteBreakdown.
+  ///
+  /// In ko, this message translates to:
+  /// **'요금 내역'**
+  String get bookingQuoteBreakdown;
+
+  /// No description provided for @bookingConfirmAndCapture.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정 · 결제 완료'**
+  String get bookingConfirmAndCapture;
+
+  /// No description provided for @bookingConfirmDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약을 확정하고 결제를 완료 처리했습니다.'**
+  String get bookingConfirmDone;
+
+  /// No description provided for @bookingConfirmFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정할 수 없는 예약입니다.'**
+  String get bookingConfirmFailed;
+
+  /// No description provided for @adminBookingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 확정'**
+  String get adminBookingsTitle;
+
+  /// No description provided for @adminBookingsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 집계할 예약이 없습니다.'**
+  String get adminBookingsEmpty;
 
   /// No description provided for @workbenchTitle.
   ///

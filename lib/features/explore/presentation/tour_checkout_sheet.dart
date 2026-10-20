@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
@@ -303,7 +304,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       price: amount,
       tourDate: _tourDate,
       productId: product?.id,
-      productName: product?.name,
+      productName: _hasProduct ? _chosenLabels() : widget.shop.productName,
       partySize: party,
       optionId: recordOption,
       seatOptionId: seatOption,
@@ -314,6 +315,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       children: _hasProduct ? _qtyChild : 0,
       infants: _hasProduct ? _qtyInfant : 0,
       quoteLines: _hasProduct ? _booking.lines : const [],
+      status: BookingStatus.requested,
+      paymentStatus: PaymentStatus.unpaid,
     );
     if (!mounted) {
       return;

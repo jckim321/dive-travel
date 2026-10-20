@@ -34,6 +34,8 @@ void main() {
       productName: '2탱크 펀다이빙',
       price: 180000,
       tourDate: tour,
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
     );
     await repo.cancelBookingsForWeather(
       shopId: AppConstants.defaultPartnerShopId,
@@ -42,7 +44,7 @@ void main() {
     final bookings = await repo.watchBookings('test-user').first;
     expect(bookings.first.status, BookingStatus.weatherCancelled);
     expect(bookings.first.refundPercent, 100);
-    expect(bookings.first.paymentStatus, 'refunded');
+    expect(bookings.first.paymentStatus, PaymentStatus.refunded);
   });
 
   test('자리가 부족하면 결제 완료 예약을 만들지 않는다', () async {
@@ -108,6 +110,77 @@ void main() {
     expect(bookings.first.hasPartyDetail, isTrue);
     expect(bookings.first.quoteLines, hasLength(1));
     expect(bookings.first.quoteLines.first.amount, 126000);
+    expect(bookings.first.status, BookingStatus.requested);
+    expect(bookings.first.paymentStatus, PaymentStatus.unpaid);
+    expect(bookings.first.isPaid, isFalse);
+    expect(bookings.first.isActive, isTrue);
+  });
+
+  test('파트너 확정은 requested·unpaid 를 confirmed·captured 로 올린다', () async {
+    final repo = MemoryDiverRepository.forTest();
+    final tour = DateTime(2026, 12, 1);
+    await repo.createBooking(
+      uid: 'test-user',
+      shopId: AppConstants.defaultPartnerShopId,
+      shopName: '보홀',
+      productName: '2탱크 · 나이트',
+      price: 210000,
+      tourDate: tour,
+      quoteLines: const [
+        BookingLine(label: '2탱크', amount: 180000),
+        BookingLine(label: '나이트', amount: 30000),
+      ],
+    );
+    final before = (await repo.watchBookings('test-user').first).first;
+    expect(before.status, BookingStatus.requested);
+    expect(before.paymentStatus, PaymentStatus.unpaid);
+
+    final ok = await repo.confirmShopBooking(
+      shopId: AppConstants.defaultPartnerShopId,
+      bookingId: before.id,
+    );
+    expect(ok, isTrue);
+
+    final after = (await repo.watchBookings('test-user').first).first;
+    expect(after.status, BookingStatus.confirmed);
+    expect(after.paymentStatus, PaymentStatus.captured);
+    expect(after.isPaid, isTrue);
+    expect(after.awaitsShopConfirm, isFalse);
+
+    final again = await repo.confirmShopBooking(
+      shopId: AppConstants.defaultPartnerShopId,
+      bookingId: before.id,
+    );
+    expect(again, isFalse);
+  });
+
+  test('체크아웃 스냅샷은 합성 상품명과 견적 라인을 마이페이지용으로 보관한다', () async {
+    final repo = MemoryDiverRepository.forTest();
+    final saved = await repo.createBooking(
+      uid: 'test-user',
+      shopId: AppConstants.defaultPartnerShopId,
+      shopName: '보홀',
+      productName: '2탱크 패키지 · 나이트 다이빙',
+      price: 210000,
+      partySize: 2,
+      divers: 2,
+      quoteLines: const [
+        BookingLine(label: '2탱크 패키지', amount: 180000),
+        BookingLine(label: '나이트 다이빙', amount: 30000),
+      ],
+    );
+    expect(saved, isTrue);
+    final bookings = await repo.watchBookings('test-user').first;
+    expect(bookings, hasLength(1));
+    final booking = bookings.first;
+    expect(booking.displayTitle, '2탱크 패키지 · 나이트 다이빙');
+    expect(booking.status, BookingStatus.requested);
+    expect(booking.paymentStatus, PaymentStatus.unpaid);
+    expect(booking.quoteLines, hasLength(2));
+    expect(booking.quoteLines.map((line) => line.label).toList(), [
+      '2탱크 패키지',
+      '나이트 다이빙',
+    ]);
   });
 
   testWidgets('마이페이지에서 파트너 모드로 들어간다', (tester) async {

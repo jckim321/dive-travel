@@ -46,12 +46,12 @@ class TourBooking {
     this.uid = '',
     this.tourDate,
     this.reviewed = false,
-    this.status = BookingStatus.confirmed,
+    this.status = BookingStatus.requested,
     this.refundPercent = 0,
     this.refundAmount = 0,
     this.refundNoticeSeen = false,
     this.commissionRate = 0.12,
-    this.paymentStatus = 'captured',
+    this.paymentStatus = PaymentStatus.unpaid,
     this.productId = '',
     this.optionId = '',
     this.listingKind = ProductListingKind.exploreOnly,
@@ -82,7 +82,7 @@ class TourBooking {
   final int refundAmount;
   final bool refundNoticeSeen;
   final double commissionRate;
-  final String paymentStatus;
+  final PaymentStatus paymentStatus;
   final int partySize;
   final int divers;
   final int nondivers;
@@ -92,7 +92,18 @@ class TourBooking {
 
   DateTime get scheduledFor => tourDate ?? createdAt;
 
-  bool get isActive => status == BookingStatus.confirmed;
+  /// Guest can still cancel / shop can still act on this booking.
+  bool get isActive =>
+      status == BookingStatus.requested || status == BookingStatus.confirmed;
+
+  bool get isPaid => paymentStatus == PaymentStatus.captured;
+
+  /// Shop/admin can still confirm the request and/or capture payment.
+  bool get awaitsShopConfirm =>
+      isActive &&
+      (status == BookingStatus.requested ||
+          paymentStatus == PaymentStatus.unpaid);
+
   bool get isWeatherCancelled => status == BookingStatus.weatherCancelled;
   bool get needsRefundNotice =>
       isWeatherCancelled && !refundNoticeSeen;
@@ -104,13 +115,17 @@ class TourBooking {
   bool get hasPartyDetail =>
       divers > 0 || nondivers > 0 || children > 0 || infants > 0;
 
+  /// Title shown on My Bookings; falls back to shop name when empty.
+  String get displayTitle =>
+      productName.trim().isEmpty ? shopName : productName.trim();
+
   TourBooking copyWith({
     bool? reviewed,
     BookingStatus? status,
     int? refundPercent,
     int? refundAmount,
     bool? refundNoticeSeen,
-    String? paymentStatus,
+    PaymentStatus? paymentStatus,
     DateTime? tourDate,
   }) {
     return TourBooking(
@@ -143,30 +158,73 @@ class TourBooking {
   }
 }
 
+/// Guest lifecycle for a tour booking.
+///
+/// Checkout creates [requested]; shop confirmation moves to [confirmed].
 enum BookingStatus {
+  requested,
   confirmed,
   cancelled,
   weatherCancelled;
 
   static BookingStatus parse(dynamic value) {
     switch (value) {
+      case 'requested':
+        return BookingStatus.requested;
       case 'cancelled':
         return BookingStatus.cancelled;
       case 'weather_cancelled':
         return BookingStatus.weatherCancelled;
+      case 'confirmed':
+        return BookingStatus.confirmed;
       default:
+        // Legacy docs without status were treated as already confirmed.
         return BookingStatus.confirmed;
     }
   }
 
   String get firestoreValue {
     switch (this) {
+      case BookingStatus.requested:
+        return 'requested';
       case BookingStatus.cancelled:
         return 'cancelled';
       case BookingStatus.weatherCancelled:
         return 'weather_cancelled';
       case BookingStatus.confirmed:
         return 'confirmed';
+    }
+  }
+}
+
+enum PaymentStatus {
+  unpaid,
+  captured,
+  refunded;
+
+  static PaymentStatus parse(dynamic value) {
+    switch (value) {
+      case 'unpaid':
+      case 'pending':
+        return PaymentStatus.unpaid;
+      case 'refunded':
+        return PaymentStatus.refunded;
+      case 'captured':
+        return PaymentStatus.captured;
+      default:
+        // Legacy bookings without the field were already paid.
+        return PaymentStatus.captured;
+    }
+  }
+
+  String get firestoreValue {
+    switch (this) {
+      case PaymentStatus.unpaid:
+        return 'unpaid';
+      case PaymentStatus.captured:
+        return 'captured';
+      case PaymentStatus.refunded:
+        return 'refunded';
     }
   }
 }
