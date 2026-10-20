@@ -664,6 +664,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileCraftNewTrip => 'Craft a new trip';
 
   @override
+  String get profileCraftNeedsGold =>
+      'Gold and above can craft a trip. Pay for your first trip to reach Gold.';
+
+  @override
   String get profileCraftStatusPending => 'Pending';
 
   @override
@@ -1148,6 +1152,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminProductPendingEmpty => 'No products waiting for approval.';
+
+  @override
+  String get adminAllProducts => 'Registered products';
+
+  @override
+  String get adminProductSpecial =>
+      'Publish on the home shelf as a planned special';
 
   @override
   String get adminProductApproved => 'Product approved and published.';

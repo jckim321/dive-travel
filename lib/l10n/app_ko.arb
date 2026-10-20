@@ -571,6 +571,7 @@
     "description": "DIY 여행 상품 섹션 안내 문구입니다."
   },
   "profileCraftNewTrip": "새 여행 짜기",
+  "profileCraftNeedsGold": "골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.",
   "@profileCraftNewTrip": {
     "description": "새 DIY 여행 상품 등록 버튼입니다."
   },
@@ -928,6 +929,8 @@
   "adminHomeCurationCleared": "홈에서 내렸습니다.",
   "adminProductPendingQueue": "승인 대기 상품",
   "adminProductPendingEmpty": "승인 대기 중인 상품이 없습니다.",
+  "adminAllProducts": "등록된 상품",
+  "adminProductSpecial": "기획 스페셜로 첫 화면에 올리기",
   "adminProductApproved": "상품이 승인되어 공개되었습니다.",
   "adminProductRejected": "상품 등록이 거절되었습니다.",
   "adminProductSubmitHint": "저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.",

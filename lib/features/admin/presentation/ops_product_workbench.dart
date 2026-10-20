@@ -113,6 +113,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewChild = 0;
   var _openEmptySeats = false;
   var _seatOptionId = '';
+  var _special = false;
   late final TextEditingController _capacity;
   DateTime? _departureStart;
   DateTime? _flagClosesAt;
@@ -139,6 +140,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       text: (existing?.focFreeCount ?? 0) > 0 ? '${existing!.focFreeCount}' : '',
     );
     _openEmptySeats = existing?.openEmptySeats ?? false;
+    _special = existing?.listingKind == ProductListingKind.curated;
     for (final option in existing?.options ?? const <ShopProductOption>[]) {
       if (option.openEmptySeats) {
         _openEmptySeats = true;
@@ -375,8 +377,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           options: [
             for (final option in options) _withSeatOption(option),
           ],
-          listingKind:
-              widget.existing?.listingKind ?? ProductListingKind.exploreOnly,
+          listingKind: _special
+              ? ProductListingKind.curated
+              : (widget.existing?.listingKind == ProductListingKind.curated
+                  ? ProductListingKind.exploreOnly
+                  : widget.existing?.listingKind ??
+                      ProductListingKind.exploreOnly),
           featuredAt: widget.existing?.featuredAt,
           submittedAt: widget.existing?.submittedAt,
           submittedByUid: widget.existing?.submittedByUid.isNotEmpty == true
@@ -591,6 +597,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (!widget.partnerMode) ...[
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.adminProductSpecial),
+            value: _special,
+            onChanged: (value) => setState(() => _special = value),
+          ),
+          const SizedBox(height: 8),
+        ],
         Text(l10n.workbenchCategory),
         const SizedBox(height: 8),
         Wrap(

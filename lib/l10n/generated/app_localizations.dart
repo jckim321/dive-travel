@@ -1278,6 +1278,12 @@ abstract class AppLocalizations {
   /// **'새 여행 짜기'**
   String get profileCraftNewTrip;
 
+  /// No description provided for @profileCraftNeedsGold.
+  ///
+  /// In ko, this message translates to:
+  /// **'골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.'**
+  String get profileCraftNeedsGold;
+
   /// DIY 상품이 관리자 승인 대기 중일 때 배지입니다.
   ///
   /// In ko, this message translates to:
@@ -2141,6 +2147,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'승인 대기 중인 상품이 없습니다.'**
   String get adminProductPendingEmpty;
+
+  /// No description provided for @adminAllProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 상품'**
+  String get adminAllProducts;
+
+  /// No description provided for @adminProductSpecial.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획 스페셜로 첫 화면에 올리기'**
+  String get adminProductSpecial;
 
   /// No description provided for @adminProductApproved.
   ///

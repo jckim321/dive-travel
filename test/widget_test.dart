@@ -334,9 +334,8 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-crafted-trips-link')));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.profileCraftNewTrip), findsWidgets);
-    expect(find.text(l10n.partnerProductPendingHint), findsOneWidget);
-    expect(find.byKey(const Key('product-form-appbar-save')), findsOneWidget);
+    expect(find.text(l10n.profileCraftNeedsGold), findsOneWidget);
+    expect(find.byKey(const Key('product-form-appbar-save')), findsNothing);
   });
 
   testWidgets('마이 여권 표지를 누르면 펼쳐진다', (WidgetTester tester) async {

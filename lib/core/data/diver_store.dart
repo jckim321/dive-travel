@@ -197,6 +197,15 @@ class DiverStore extends ChangeNotifier {
     return out;
   }
 
+  List<ShopProduct> get allShopProducts {
+    final out = <ShopProduct>[
+      for (final stats in _shopStats)
+        for (final product in stats.products) product,
+    ];
+    out.sort((a, b) => a.name.compareTo(b.name));
+    return out;
+  }
+
   List<ShopProduct> productsForShop(String shopId) {
     return liveStatsFor(shopId)?.products ?? const [];
   }

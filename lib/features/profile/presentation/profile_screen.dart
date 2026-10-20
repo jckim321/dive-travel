@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/theme/century_tank_colors.dart';
@@ -128,14 +129,28 @@ class ProfileScreen extends StatelessWidget {
                         _HintOrList(
                           plate: 0,
                           empty: l10n.profileCraftedTripsHint,
-                          onTap: () => Navigator.of(context).push<void>(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const TravelProductRegistrationScreen(
-                                    creatorMode: true,
-                                  ),
-                            ),
-                          ),
+                          onTap: () {
+                            final grade = ProfileDisplayGrade.fromUse(
+                              paidBookings: paid.length,
+                              isInstructor: stats.isInstructor,
+                            );
+                            if (grade == ProfileDisplayGrade.silver) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.profileCraftNeedsGold),
+                                ),
+                              );
+                              return;
+                            }
+                            Navigator.of(context).push<void>(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const TravelProductRegistrationScreen(
+                                      creatorMode: true,
+                                    ),
+                              ),
+                            );
+                          },
                           tapKey: const Key('profile-crafted-trips-link'),
                           children: const [],
                         )

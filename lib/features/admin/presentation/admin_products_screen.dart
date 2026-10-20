@@ -112,6 +112,37 @@ class AdminProductsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
+            if (!partnerMode) ...[
+              const SizedBox(height: 24),
+              Text(
+                l10n.adminAllProducts,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: embedded ? Colors.white : null,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final product in store.allShopProducts) ...[
+                Card(
+                  color: embedded ? AdminConsoleTheme.surfaceHigh : null,
+                  child: ListTile(
+                    title: Text(product.name),
+                    subtitle: Text(
+                      '${_kindLabel(l10n, product.listingKind)} · '
+                      '${_statusLabel(l10n, product.publishStatus)}',
+                    ),
+                    trailing: const Icon(Icons.edit_outlined),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TravelProductRegistrationScreen(
+                          existing: product,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
             if (partnerMode) ...[
               const SizedBox(height: 24),
               Text(

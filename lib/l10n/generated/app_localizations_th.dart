@@ -651,6 +651,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileCraftNewTrip => '새 여행 짜기';
 
   @override
+  String get profileCraftNeedsGold =>
+      '골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.';
+
+  @override
   String get profileCraftStatusPending => '승인 대기';
 
   @override
@@ -1123,6 +1127,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminProductPendingEmpty => '승인 대기 중인 상품이 없습니다.';
+
+  @override
+  String get adminAllProducts => '등록된 상품';
+
+  @override
+  String get adminProductSpecial => '기획 스페셜로 첫 화면에 올리기';
 
   @override
   String get adminProductApproved => '상품이 승인되어 공개되었습니다.';
