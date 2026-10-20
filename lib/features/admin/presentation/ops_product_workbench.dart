@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -152,7 +153,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   );
   final _briefKey = GlobalKey();
   final _draftListeners = <TextEditingController>[];
-  static const _maxGallery = 12;
+  static const _maxGallery = GalleryLimits.maxProductPhotos;
   late String _shopId;
   late String _continent;
   late ProductCategory _category;

@@ -1138,7 +1138,7 @@
   "exploreCoverPhoto": "대표 이미지",
   "exploreCoverPhotoHint": "Booking.com·아고다처럼 큰 대표컷 + 작은 사진 격자로 보여 줍니다. 첫 장이 대표 이미지입니다.",
   "exploreGalleryTitle": "리조트 사진",
-  "exploreGalleryHint": "최대 12장. 첫 장이 목록·상세의 대표 사진이 됩니다.",
+  "exploreGalleryHint": "최대 30장. 첫 장이 목록·상세의 대표 사진이 됩니다.",
   "exploreGalleryAdd": "사진 추가",
   "exploreGalleryAddMore": "사진 더 추가",
   "exploreGalleryEmpty": "사진을 첨부하면 아고다처럼 갤러리로 보여 줍니다.",

@@ -1,6 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+
+import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 
 class PickedPhoto {
   const PickedPhoto({
@@ -39,14 +42,15 @@ class DivePhotoPicker {
     return many.isEmpty ? null : many.first;
   }
 
-  Future<List<PickedPhoto>> pickMultiple({int max = 12}) async {
+  Future<List<PickedPhoto>> pickMultiple({
+    int max = GalleryLimits.maxProductPhotos,
+  }) async {
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS)) {
       final files = await ImagePicker().pickMultiImage(
-        // Keep near-original resolution for OTA gallery sharpness.
-        imageQuality: 98,
-        maxWidth: 4096,
+        imageQuality: GalleryLimits.jpegQuality,
+        maxWidth: GalleryLimits.maxEdgePx.toDouble(),
         limit: max,
       );
       if (files.isEmpty) {
@@ -56,10 +60,12 @@ class DivePhotoPicker {
       for (final file in files.take(max)) {
         final bytes = await file.readAsBytes();
         out.add(
-          PickedPhoto(
-            bytes: bytes,
-            fileName: file.name,
-            contentType: _contentType(file.name, file.mimeType),
+          await _compressIfNeeded(
+            PickedPhoto(
+              bytes: bytes,
+              fileName: file.name,
+              contentType: _contentType(file.name, file.mimeType),
+            ),
           ),
         );
       }
@@ -77,14 +83,64 @@ class DivePhotoPicker {
         continue;
       }
       out.add(
-        PickedPhoto(
-          bytes: bytes,
-          fileName: file.name,
-          contentType: _contentType(file.name, file.extension),
+        await _compressIfNeeded(
+          PickedPhoto(
+            bytes: bytes,
+            fileName: file.name,
+            contentType: _contentType(file.name, file.extension),
+          ),
         ),
       );
     }
     return out;
+  }
+
+  /// Downscale long edge and re-encode as JPEG so large galleries fit in memory.
+  static Future<PickedPhoto> _compressIfNeeded(PickedPhoto photo) async {
+    if (photo.bytes.lengthInBytes < 400 * 1024 &&
+        photo.contentType == 'image/jpeg') {
+      return photo;
+    }
+    try {
+      final compressed = await compute(_compressIsolate, photo.bytes);
+      if (compressed == null || compressed.isEmpty) {
+        return photo;
+      }
+      final base = photo.fileName.contains('.')
+          ? photo.fileName.substring(0, photo.fileName.lastIndexOf('.'))
+          : photo.fileName;
+      return PickedPhoto(
+        bytes: compressed,
+        fileName: '$base.jpg',
+        contentType: 'image/jpeg',
+      );
+    } catch (_) {
+      return photo;
+    }
+  }
+
+  static Uint8List? _compressIsolate(Uint8List raw) {
+    final decoded = img.decodeImage(raw);
+    if (decoded == null) {
+      return null;
+    }
+    final longest =
+        decoded.width > decoded.height ? decoded.width : decoded.height;
+    final sized = longest <= GalleryLimits.maxEdgePx
+        ? decoded
+        : img.copyResize(
+            decoded,
+            width: decoded.width >= decoded.height
+                ? GalleryLimits.maxEdgePx
+                : null,
+            height: decoded.height > decoded.width
+                ? GalleryLimits.maxEdgePx
+                : null,
+            interpolation: img.Interpolation.average,
+          );
+    return Uint8List.fromList(
+      img.encodeJpg(sized, quality: GalleryLimits.jpegQuality),
+    );
   }
 
   static String _contentType(String fileName, String? hint) {

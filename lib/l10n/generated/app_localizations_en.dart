@@ -1728,7 +1728,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exploreGalleryHint =>
-      'Up to 12 photos. The first becomes the cover on listings and the detail page.';
+      'Up to 30 photos. The first becomes the cover on listings and the detail page.';
 
   @override
   String get exploreGalleryAdd => 'Add photos';

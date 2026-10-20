@@ -21,6 +21,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/storage/gallery_upload.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
 class FirestoreDiverRepository implements DiverRepository {
@@ -1057,23 +1058,11 @@ class FirestoreDiverRepository implements DiverRepository {
     List<String>? galleryUrls;
 
     if (gallery != null) {
-      galleryUrls = <String>[];
-      final stamp = DateTime.now().millisecondsSinceEpoch;
-      for (var i = 0; i < gallery.length; i++) {
-        final slot = gallery[i];
-        if (slot.hasBytes) {
-          final extension = _photoExtension(slot.fileName);
-          final url = await _photos.upload(
-            objectKey: 'shops/$shopId/gallery/${stamp}_$i$extension',
-            bytes: slot.bytes!,
-            contentType: slot.contentType ?? 'image/jpeg',
-            requirePublicUrl: true,
-          );
-          galleryUrls.add(url);
-        } else if (slot.hasUrl) {
-          galleryUrls.add(slot.url!.trim());
-        }
-      }
+      galleryUrls = await uploadGallerySlots(
+        gallery: gallery,
+        keyPrefix: 'shops/$shopId/gallery',
+        upload: _photos.upload,
+      );
       coverUrl = galleryUrls.isEmpty ? null : galleryUrls.first;
     } else if (coverBytes != null && coverBytes.isNotEmpty) {
       final extension = _photoExtension(coverFileName);
@@ -1148,24 +1137,11 @@ class FirestoreDiverRepository implements DiverRepository {
     // Upload first so we never persist a product that looks saved without a
     // durable cover URL (local memory cache used to fake success briefly).
     if (gallery != null) {
-      final urls = <String>[];
-      final stamp = DateTime.now().millisecondsSinceEpoch;
-      for (var i = 0; i < gallery.length; i++) {
-        final slot = gallery[i];
-        if (slot.hasBytes) {
-          final extension = _photoExtension(slot.fileName);
-          final url = await _photos.upload(
-            objectKey:
-                'shops/$shopId/products/${product.id}/gallery/${stamp}_$i$extension',
-            bytes: slot.bytes!,
-            contentType: slot.contentType ?? 'image/jpeg',
-            requirePublicUrl: true,
-          );
-          urls.add(url);
-        } else if (slot.hasUrl) {
-          urls.add(slot.url!.trim());
-        }
-      }
+      final urls = await uploadGallerySlots(
+        gallery: gallery,
+        keyPrefix: 'shops/$shopId/products/${product.id}/gallery',
+        upload: _photos.upload,
+      );
       saved = product.copyWith(
         photoUrls: urls,
         coverUrl: urls.isEmpty ? '' : urls.first,

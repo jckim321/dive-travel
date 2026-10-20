@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -14,7 +15,7 @@ import 'package:dive_travel_app/features/admin/presentation/travel_product_form.
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-const _kMaxGallery = 12;
+const _kMaxGallery = GalleryLimits.maxProductPhotos;
 
 class ResortDeskScreen extends StatefulWidget {
   const ResortDeskScreen({super.key, required this.shopId});

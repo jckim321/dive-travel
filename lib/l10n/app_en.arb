@@ -586,7 +586,7 @@
   "exploreCoverPhoto": "Cover photo",
   "exploreCoverPhotoHint": "Shown like Agoda: one large cover plus a photo grid. The first photo is the cover.",
   "exploreGalleryTitle": "Resort photos",
-  "exploreGalleryHint": "Up to 12 photos. The first becomes the cover on listings and the detail page.",
+  "exploreGalleryHint": "Up to 30 photos. The first becomes the cover on listings and the detail page.",
   "exploreGalleryAdd": "Add photos",
   "exploreGalleryAddMore": "Add more photos",
   "exploreGalleryEmpty": "Attach photos to show an Agoda-style gallery.",

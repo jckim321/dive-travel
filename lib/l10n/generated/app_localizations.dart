@@ -3213,7 +3213,7 @@ abstract class AppLocalizations {
   /// No description provided for @exploreGalleryHint.
   ///
   /// In ko, this message translates to:
-  /// **'최대 12장. 첫 장이 목록·상세의 대표 사진이 됩니다.'**
+  /// **'최대 30장. 첫 장이 목록·상세의 대표 사진이 됩니다.'**
   String get exploreGalleryHint;
 
   /// No description provided for @exploreGalleryAdd.

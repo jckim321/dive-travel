@@ -1694,7 +1694,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreGalleryTitle => '리조트 사진';
 
   @override
-  String get exploreGalleryHint => '최대 12장. 첫 장이 목록·상세의 대표 사진이 됩니다.';
+  String get exploreGalleryHint => '최대 30장. 첫 장이 목록·상세의 대표 사진이 됩니다.';
 
   @override
   String get exploreGalleryAdd => '사진 추가';
