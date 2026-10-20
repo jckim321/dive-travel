@@ -99,10 +99,7 @@ class DiverStore extends ChangeNotifier {
       if (!post.hidden) post,
   ];
 
-  List<SameBoatOffer> sameBoatOffers(
-    SameBoatFilter filter, {
-    DateTime? now,
-  }) {
+  List<SameBoatOffer> sameBoatOffers(SameBoatFilter filter, {DateTime? now}) {
     final all = <ShopProduct>[
       for (final stats in _shopStats)
         for (final product in stats.products) product,
@@ -147,6 +144,7 @@ class DiverStore extends ChangeNotifier {
     }
     return '';
   }
+
   List<TourBooking> get shopBookings => List.unmodifiable(_shopBookings);
   List<TourBooking> get thisMonthShopBookings {
     final now = DateTime.now();
@@ -807,6 +805,7 @@ class DiverStore extends ChangeNotifier {
     bool useAsResortCover = false,
     bool creatorSubmission = false,
     String? submitterUid,
+    ProductSaveIntent? intent,
   }) async {
     // Partners may only manage their own hull; divers may submit as creators;
     // everyone else needs admin.
@@ -840,23 +839,12 @@ class DiverStore extends ChangeNotifier {
       throw StateError('Not allowed to edit this shop product');
     }
 
-    // Creator/partner submissions stay pending; admin publish goes live.
-    final forcePending = creatorSubmission || !_stats.isAdmin;
-    final gated = forcePending
-        ? product.copyWith(
-            publishStatus: ProductPublishStatus.pending,
-            submittedAt: DateTime.now(),
-            active: false,
-            submittedByUid: creatorUid.isNotEmpty
-                ? creatorUid
-                : product.submittedByUid,
-          )
-        : product.copyWith(
-            publishStatus: ProductPublishStatus.approved,
-            active: true,
-            reviewedAt: DateTime.now(),
-            submittedAt: product.submittedAt ?? DateTime.now(),
-          );
+    final gated = _withSaveIntent(
+      product: product,
+      creatorSubmission: creatorSubmission,
+      creatorUid: creatorUid,
+      intent: intent,
+    );
 
     await _repository.saveShopProduct(
       shopId: shopId,
@@ -873,6 +861,64 @@ class DiverStore extends ChangeNotifier {
         _coverBytes[shopId] = photoBytes;
       }
       notifyListeners();
+    }
+  }
+
+  ShopProduct _withSaveIntent({
+    required ShopProduct product,
+    required bool creatorSubmission,
+    required String creatorUid,
+    required ProductSaveIntent? intent,
+  }) {
+    final submitter = creatorUid.isNotEmpty
+        ? creatorUid
+        : product.submittedByUid;
+    // Callers that do not pick a branch keep the old rule: creators and
+    // partners wait, an admin save goes live.
+    if (creatorSubmission || intent == null) {
+      final forcePending = creatorSubmission || !_stats.isAdmin;
+      return forcePending
+          ? product.copyWith(
+              publishStatus: ProductPublishStatus.pending,
+              submittedAt: DateTime.now(),
+              active: false,
+              submittedByUid: submitter,
+            )
+          : product.copyWith(
+              publishStatus: ProductPublishStatus.approved,
+              active: true,
+              reviewedAt: DateTime.now(),
+              submittedAt: product.submittedAt ?? DateTime.now(),
+            );
+    }
+    switch (intent) {
+      case ProductSaveIntent.keepEditing:
+        return product.copyWith(
+          publishStatus: ProductPublishStatus.draft,
+          active: false,
+          submittedByUid: submitter,
+        );
+      case ProductSaveIntent.submitForReview:
+        return product.copyWith(
+          publishStatus: ProductPublishStatus.pending,
+          submittedAt: DateTime.now(),
+          active: false,
+          reviewNote: '',
+          submittedByUid: submitter,
+        );
+      case ProductSaveIntent.publish:
+        if (!_stats.isAdmin) {
+          throw StateError('Admin only');
+        }
+        return product.copyWith(
+          publishStatus: ProductPublishStatus.approved,
+          active: true,
+          reviewedAt: DateTime.now(),
+          reviewNote: '',
+          submittedAt: product.submittedAt ?? DateTime.now(),
+        );
+      case ProductSaveIntent.takeDown:
+        return product.copyWith(active: false);
     }
   }
 

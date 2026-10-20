@@ -826,9 +826,7 @@ class MemoryDiverRepository implements DiverRepository {
         if (item.id == productId)
           item.copyWith(
             publishStatus: status,
-            active: status == ProductPublishStatus.approved
-                ? true
-                : item.active,
+            active: status == ProductPublishStatus.approved,
             reviewedAt: DateTime.now(),
             reviewNote: reviewNote,
           )

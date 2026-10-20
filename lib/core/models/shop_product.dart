@@ -100,6 +100,21 @@ enum ProductPublishStatus {
   bool get isPublic => this == ProductPublishStatus.approved;
 }
 
+/// Where a saved product should sit after the writer finishes the brief.
+enum ProductSaveIntent {
+  /// Keep the words, leave it off the guest list.
+  keepEditing,
+
+  /// Hand it to the admin queue.
+  submitForReview,
+
+  /// Admin puts it on the public trip list.
+  publish,
+
+  /// Leave the words and the approval, hide it from guests.
+  takeDown,
+}
+
 enum ProductCategory {
   resortPackage,
   liveaboard,
@@ -200,11 +215,7 @@ enum ProductOptionKind {
 }
 
 class ItineraryDay {
-  const ItineraryDay({
-    required this.day,
-    this.title = '',
-    this.body = '',
-  });
+  const ItineraryDay({required this.day, this.title = '', this.body = ''});
 
   factory ItineraryDay.fromMap(Map<String, dynamic> data) {
     return ItineraryDay(
@@ -218,11 +229,7 @@ class ItineraryDay {
   final String title;
   final String body;
 
-  Map<String, dynamic> toMap() => {
-    'day': day,
-    'title': title,
-    'body': body,
-  };
+  Map<String, dynamic> toMap() => {'day': day, 'title': title, 'body': body};
 }
 
 class GuestRate {
@@ -254,11 +261,7 @@ class GuestRate {
     'professional': professional,
   };
 
-  GuestRate copyWith({
-    bool? enabled,
-    int? consumer,
-    int? professional,
-  }) {
+  GuestRate copyWith({bool? enabled, int? consumer, int? professional}) {
     return GuestRate(
       role: role,
       enabled: enabled ?? this.enabled,
@@ -269,11 +272,7 @@ class GuestRate {
 }
 
 class SeatHold {
-  const SeatHold({
-    required this.seats,
-    required this.expiresAt,
-    this.uid = '',
-  });
+  const SeatHold({required this.seats, required this.expiresAt, this.uid = ''});
 
   final int seats;
   final DateTime expiresAt;
@@ -378,7 +377,8 @@ class ShopProductOption {
         'flag_holds': [for (final hold in flagHolds) hold.toMap()],
       if (departureStart != null)
         'departure_start': departureStart!.toIso8601String(),
-      if (flagClosesAt != null) 'flag_closes_at': flagClosesAt!.toIso8601String(),
+      if (flagClosesAt != null)
+        'flag_closes_at': flagClosesAt!.toIso8601String(),
     };
   }
 
@@ -411,7 +411,9 @@ class ShopProductOption {
       capacity: capacity ?? this.capacity,
       bookedSeats: bookedSeats ?? this.bookedSeats,
       flagHolds: flagHolds ?? this.flagHolds,
-      departureStart: clearDates ? null : (departureStart ?? this.departureStart),
+      departureStart: clearDates
+          ? null
+          : (departureStart ?? this.departureStart),
       flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
     );
   }
@@ -585,15 +587,16 @@ class ShopProduct {
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
+
   /// When an admin last assigned this product to a home shelf.
   final DateTime? featuredAt;
   final DateTime? reviewedAt;
   final String reviewNote;
+
   /// Diver/partner who submitted this trip for approval.
   final String submittedByUid;
 
-  bool get isPendingApproval =>
-      publishStatus == ProductPublishStatus.pending;
+  bool get isPendingApproval => publishStatus == ProductPublishStatus.pending;
 
   bool get isListedPublicly => active && publishStatus.isPublic;
 
@@ -627,7 +630,10 @@ class ShopProduct {
     return left;
   }
 
-  static DateTime personalFlagUntil(DateTime plantedAt, DateTime? boatDeadline) {
+  static DateTime personalFlagUntil(
+    DateTime plantedAt,
+    DateTime? boatDeadline,
+  ) {
     final day = plantedAt.add(const Duration(hours: 24));
     if (boatDeadline != null && boatDeadline.isBefore(day)) {
       return boatDeadline;
@@ -666,7 +672,9 @@ class ShopProduct {
       for (final hold in _holdsFor(optionId))
         if (hold.expiresAt.isAfter(now)) hold,
     ];
-    final booked = optionId.isEmpty ? bookedSeats : _option(optionId)?.bookedSeats ?? 0;
+    final booked = optionId.isEmpty
+        ? bookedSeats
+        : _option(optionId)?.bookedSeats ?? 0;
     final cap = optionId.isEmpty ? capacity : _option(optionId)?.capacity ?? 0;
     var own = 0;
     var flagged = 0;
@@ -872,7 +880,11 @@ class ShopProduct {
         continue;
       }
       next.add(
-        SeatHold(seats: hold.seats - left, expiresAt: hold.expiresAt, uid: hold.uid),
+        SeatHold(
+          seats: hold.seats - left,
+          expiresAt: hold.expiresAt,
+          uid: hold.uid,
+        ),
       );
       left = 0;
     }

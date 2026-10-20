@@ -3774,6 +3774,72 @@ abstract class AppLocalizations {
   /// **'손님 카드'**
   String get briefGuestCard;
 
+  /// No description provided for @briefKeepEditing.
+  ///
+  /// In ko, this message translates to:
+  /// **'이어서 두기'**
+  String get briefKeepEditing;
+
+  /// No description provided for @briefSubmitReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get briefSubmitReview;
+
+  /// No description provided for @briefPublishNow.
+  ///
+  /// In ko, this message translates to:
+  /// **'바로 공개'**
+  String get briefPublishNow;
+
+  /// No description provided for @briefTakeDown.
+  ///
+  /// In ko, this message translates to:
+  /// **'내려두기'**
+  String get briefTakeDown;
+
+  /// No description provided for @briefKept.
+  ///
+  /// In ko, this message translates to:
+  /// **'이어서 쓸 수 있게 저장했습니다.'**
+  String get briefKept;
+
+  /// No description provided for @briefTakenDown.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품을 손님 화면에서 내려 두었습니다.'**
+  String get briefTakenDown;
+
+  /// No description provided for @adminProductDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get adminProductDelete;
+
+  /// No description provided for @adminProductDeleteBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'「{name}」을 삭제하면 상품 목록에서 빠집니다.'**
+  String adminProductDeleteBody(String name);
+
+  /// No description provided for @adminProductDeleted.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품을 삭제했습니다.'**
+  String get adminProductDeleted;
+
+  /// No description provided for @adminProductRejectNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'거절 사유'**
+  String get adminProductRejectNote;
+
+  /// No description provided for @adminProductRejectNoteHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너에게 보이는 이유를 적습니다.'**
+  String get adminProductRejectNoteHint;
+
   /// No description provided for @checkoutStepSelect.
   ///
   /// In ko, this message translates to:

@@ -1267,6 +1267,22 @@
   "briefFocApplies": "적용 대상",
   "briefStartPrice": "다이버 시작 가격",
   "briefGuestCard": "손님 카드",
+  "briefKeepEditing": "이어서 두기",
+  "briefSubmitReview": "승인 대기",
+  "briefPublishNow": "바로 공개",
+  "briefTakeDown": "내려두기",
+  "briefKept": "이어서 쓸 수 있게 저장했습니다.",
+  "briefTakenDown": "상품을 손님 화면에서 내려 두었습니다.",
+  "adminProductDelete": "삭제",
+  "adminProductDeleteBody": "「{name}」을 삭제하면 상품 목록에서 빠집니다.",
+  "@adminProductDeleteBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "adminProductDeleted": "상품을 삭제했습니다.",
+  "adminProductRejectNote": "거절 사유",
+  "adminProductRejectNoteHint": "파트너에게 보이는 이유를 적습니다.",
   "checkoutStepSelect": "예약 선택",
   "checkoutStepReview": "예약한 사항",
   "checkoutStepPay": "구매",

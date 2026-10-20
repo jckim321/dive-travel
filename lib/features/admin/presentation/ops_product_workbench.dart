@@ -156,7 +156,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late String _continent;
   late ProductCategory _category;
   var _section = 0;
-  var _saving = false;
+  ProductSaveIntent? _savingIntent;
   var _previewDiver = 1;
   var _previewNondiver = 0;
   var _previewChild = 0;
@@ -501,10 +501,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return false;
   }
 
-  Future<void> _save() async {
+  Future<void> _save(ProductSaveIntent intent) async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
-    if (_saving) {
+    if (_savingIntent != null) {
       return;
     }
     if (name.isEmpty) {
@@ -527,7 +527,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       );
       return;
     }
-    setState(() => _saving = true);
+    setState(() => _savingIntent = intent);
     try {
       final store = DiverStoreScope.of(context);
       final sessionUid = store.uid ?? '';
@@ -648,19 +648,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         useAsResortCover: existing == null || _photo != null,
         creatorSubmission: false,
         submitterUid: sessionUid,
+        intent: intent,
       );
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            store.stats.isAdmin
-                ? l10n.adminProductApproved
-                : l10n.adminProductSubmitted,
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_savedMessage(l10n, intent))));
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
@@ -671,7 +665,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       );
     } finally {
       if (mounted) {
-        setState(() => _saving = false);
+        setState(() => _savingIntent = null);
       }
     }
   }
@@ -717,7 +711,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ? [DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first]
         : _shopsForContinent;
     final hull = DiveShopCatalog.byId(_shopId);
-    final live = DiverStoreScope.of(context).liveStatsFor(_shopId);
+    final store = DiverStoreScope.of(context);
+    final live = store.liveStatsFor(_shopId);
+    final canPublish = store.stats.isAdmin && !widget.partnerMode;
     final labels = _sectionLabels(l10n);
 
     return Scaffold(
@@ -751,7 +747,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       )
                     : brief,
               ),
-              _saveBar(l10n),
+              _saveBar(l10n, canPublish: canPublish),
             ],
           );
         },
@@ -811,24 +807,82 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _saveBar(AppLocalizations l10n) {
+  String _savedMessage(AppLocalizations l10n, ProductSaveIntent intent) {
+    return switch (intent) {
+      ProductSaveIntent.keepEditing => l10n.briefKept,
+      ProductSaveIntent.submitForReview => l10n.adminProductSubmitted,
+      ProductSaveIntent.publish => l10n.adminProductApproved,
+      ProductSaveIntent.takeDown => l10n.briefTakenDown,
+    };
+  }
+
+  String _intentLabel(AppLocalizations l10n, ProductSaveIntent intent) {
+    return switch (intent) {
+      ProductSaveIntent.keepEditing => l10n.briefKeepEditing,
+      ProductSaveIntent.submitForReview => l10n.briefSubmitReview,
+      ProductSaveIntent.publish => l10n.briefPublishNow,
+      ProductSaveIntent.takeDown => l10n.briefTakeDown,
+    };
+  }
+
+  Widget _saveBar(AppLocalizations l10n, {required bool canPublish}) {
+    final intents = <ProductSaveIntent>[
+      ProductSaveIntent.keepEditing,
+      ProductSaveIntent.submitForReview,
+      if (canPublish) ProductSaveIntent.publish,
+      if (widget.existing != null) ProductSaveIntent.takeDown,
+    ];
+    final primary = canPublish
+        ? ProductSaveIntent.publish
+        : ProductSaveIntent.submitForReview;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: FilledButton(
-          key: Key(
-            widget.partnerMode
-                ? 'partner-product-save'
-                : 'admin-product-submit',
-          ),
-          onPressed: _saving ? null : _save,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-            backgroundColor: AppTheme.navy,
-          ),
-          child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final intent in intents) ...[
+              _intentButton(l10n, intent, filled: intent == primary),
+              if (intent != intents.last) const SizedBox(height: 8),
+            ],
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _intentButton(
+    AppLocalizations l10n,
+    ProductSaveIntent intent, {
+    required bool filled,
+  }) {
+    final busy = _savingIntent != null;
+    final label = _savingIntent == intent
+        ? l10n.exploreSaving
+        : _intentLabel(l10n, intent);
+    final onPressed = busy ? null : () => _save(intent);
+    final key = switch (intent) {
+      ProductSaveIntent.publish => const Key('admin-product-submit'),
+      ProductSaveIntent.submitForReview => const Key('partner-product-save'),
+      ProductSaveIntent.keepEditing => const Key('brief-keep-editing'),
+      ProductSaveIntent.takeDown => const Key('brief-take-down'),
+    };
+    if (filled) {
+      return FilledButton(
+        key: key,
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          backgroundColor: AppTheme.navy,
+        ),
+        child: Text(label),
+      );
+    }
+    return OutlinedButton(
+      key: key,
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+      child: Text(label),
     );
   }
 

@@ -2001,6 +2001,41 @@ class AppLocalizationsEs extends AppLocalizations {
   String get briefGuestCard => '손님 카드';
 
   @override
+  String get briefKeepEditing => '이어서 두기';
+
+  @override
+  String get briefSubmitReview => '승인 대기';
+
+  @override
+  String get briefPublishNow => '바로 공개';
+
+  @override
+  String get briefTakeDown => '내려두기';
+
+  @override
+  String get briefKept => '이어서 쓸 수 있게 저장했습니다.';
+
+  @override
+  String get briefTakenDown => '상품을 손님 화면에서 내려 두었습니다.';
+
+  @override
+  String get adminProductDelete => '삭제';
+
+  @override
+  String adminProductDeleteBody(String name) {
+    return '「$name」을 삭제하면 상품 목록에서 빠집니다.';
+  }
+
+  @override
+  String get adminProductDeleted => '상품을 삭제했습니다.';
+
+  @override
+  String get adminProductRejectNote => '거절 사유';
+
+  @override
+  String get adminProductRejectNoteHint => '파트너에게 보이는 이유를 적습니다.';
+
+  @override
   String get checkoutStepSelect => '예약 선택';
 
   @override

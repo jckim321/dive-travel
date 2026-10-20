@@ -29,8 +29,8 @@ class AdminProductsScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final owned = store.stats.ownedShopId ??
-            AppConstants.defaultPartnerShopId;
+        final owned =
+            store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
         final pending = partnerMode
             ? [
                 for (final product in store.pendingProductApprovals)
@@ -45,9 +45,8 @@ class AdminProductsScreen extends StatelessWidget {
               partnerMode
                   ? l10n.partnerProductPendingHint
                   : l10n.adminProductsSubtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: embedded ? AdminConsoleTheme.muted : null,
-                  ),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: embedded ? AdminConsoleTheme.muted : null),
             ),
             if (partnerMode) ...[
               const SizedBox(height: 8),
@@ -87,9 +86,8 @@ class AdminProductsScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               l10n.adminProductPendingQueue,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: embedded ? Colors.white : null,
-                  ),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(color: embedded ? Colors.white : null),
             ),
             const SizedBox(height: 8),
             if (pending.isEmpty)
@@ -116,9 +114,8 @@ class AdminProductsScreen extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 l10n.adminAllProducts,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: embedded ? Colors.white : null,
-                ),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: embedded ? Colors.white : null),
               ),
               const SizedBox(height: 8),
               for (final product in store.allShopProducts) ...[
@@ -126,16 +123,24 @@ class AdminProductsScreen extends StatelessWidget {
                   color: embedded ? AdminConsoleTheme.surfaceHigh : null,
                   child: ListTile(
                     title: Text(product.name),
-                    subtitle: Text(
-                      '${_kindLabel(l10n, product.listingKind)} · '
-                      '${_statusLabel(l10n, product.publishStatus)}',
+                    subtitle: _productLines(
+                      l10n,
+                      product,
+                      color: embedded ? AdminConsoleTheme.muted : null,
                     ),
-                    trailing: const Icon(Icons.edit_outlined),
+                    trailing: IconButton(
+                      key: Key('delete-product-${product.id}'),
+                      tooltip: l10n.adminProductDelete,
+                      onPressed: () => _confirmDeleteProduct(context, product),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: embedded ? AdminConsoleTheme.muted : null,
+                      ),
+                    ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => TravelProductRegistrationScreen(
-                          existing: product,
-                        ),
+                        builder: (_) =>
+                            TravelProductRegistrationScreen(existing: product),
                       ),
                     ),
                   ),
@@ -154,11 +159,13 @@ class AdminProductsScreen extends StatelessWidget {
                 Card(
                   child: ListTile(
                     title: Text(product.name),
-                    subtitle: Text(
-                      '${_kindLabel(l10n, product.listingKind)} · '
-                      '${_statusLabel(l10n, product.publishStatus)}',
+                    subtitle: _productLines(l10n, product),
+                    trailing: IconButton(
+                      key: Key('delete-product-${product.id}'),
+                      tooltip: l10n.adminProductDelete,
+                      onPressed: () => _confirmDeleteProduct(context, product),
+                      icon: const Icon(Icons.delete_outline),
                     ),
-                    trailing: const Icon(Icons.edit_outlined),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => TravelProductRegistrationScreen(
@@ -187,10 +194,7 @@ class AdminProductsScreen extends StatelessWidget {
 }
 
 class _PendingProductTile extends StatelessWidget {
-  const _PendingProductTile({
-    required this.product,
-    required this.canApprove,
-  });
+  const _PendingProductTile({required this.product, required this.canApprove});
 
   final ShopProduct product;
   final bool canApprove;
@@ -230,10 +234,20 @@ class _PendingProductTile extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
-            if (canApprove) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
+            if (product.reviewNote.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                product.reviewNote,
+                style: const TextStyle(
+                  color: AdminConsoleTheme.muted,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (canApprove) ...[
                   FilledButton(
                     key: Key('approve-product-${product.id}'),
                     onPressed: () async {
@@ -253,9 +267,17 @@ class _PendingProductTile extends StatelessWidget {
                   OutlinedButton(
                     key: Key('reject-product-${product.id}'),
                     onPressed: () async {
+                      final note = await showDialog<String>(
+                        context: context,
+                        builder: (_) => const _RejectNoteDialog(),
+                      );
+                      if (note == null || !context.mounted) {
+                        return;
+                      }
                       await store.rejectShopProduct(
                         shopId: product.shopId,
                         productId: product.id,
+                        reviewNote: note,
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -266,8 +288,18 @@ class _PendingProductTile extends StatelessWidget {
                     child: Text(l10n.adminReject),
                   ),
                 ],
-              ),
-            ],
+                const Spacer(),
+                IconButton(
+                  key: Key('delete-pending-product-${product.id}'),
+                  tooltip: l10n.adminProductDelete,
+                  onPressed: () => _confirmDeleteProduct(context, product),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AdminConsoleTheme.muted,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -302,5 +334,111 @@ String _statusLabel(AppLocalizations l10n, ProductPublishStatus status) {
       return l10n.productStatusRejected;
     case ProductPublishStatus.draft:
       return l10n.productStatusDraft;
+  }
+}
+
+Widget _productLines(
+  AppLocalizations l10n,
+  ShopProduct product, {
+  Color? color,
+}) {
+  final style = TextStyle(color: color);
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '${_kindLabel(l10n, product.listingKind)} · '
+        '${_statusLabel(l10n, product.publishStatus)}',
+        style: style,
+      ),
+      if (product.reviewNote.isNotEmpty)
+        Text(product.reviewNote, style: style.copyWith(fontSize: 12)),
+    ],
+  );
+}
+
+Future<void> _confirmDeleteProduct(
+  BuildContext context,
+  ShopProduct product,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final store = DiverStoreScope.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.adminProductDelete),
+      content: Text(l10n.adminProductDeleteBody(product.name)),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.adminHqClose),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n.adminProductDelete),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) {
+    return;
+  }
+  try {
+    await store.deleteShopProduct(
+      shopId: product.shopId,
+      productId: product.id,
+    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.adminProductDeleted)));
+    }
+  } catch (error) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+}
+
+class _RejectNoteDialog extends StatefulWidget {
+  const _RejectNoteDialog();
+
+  @override
+  State<_RejectNoteDialog> createState() => _RejectNoteDialogState();
+}
+
+class _RejectNoteDialogState extends State<_RejectNoteDialog> {
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final note = _note.text.trim();
+    return AlertDialog(
+      title: Text(l10n.adminProductRejectNote),
+      content: TextField(
+        controller: _note,
+        autofocus: true,
+        maxLines: 3,
+        decoration: InputDecoration(hintText: l10n.adminProductRejectNoteHint),
+        onChanged: (_) => setState(() {}),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.adminHqClose),
+        ),
+        FilledButton(
+          onPressed: note.isEmpty ? null : () => Navigator.pop(context, note),
+          child: Text(l10n.adminReject),
+        ),
+      ],
+    );
   }
 }

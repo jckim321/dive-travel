@@ -2037,6 +2037,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefGuestCard => 'Guest card';
 
   @override
+  String get briefKeepEditing => 'Keep editing';
+
+  @override
+  String get briefSubmitReview => 'Submit for review';
+
+  @override
+  String get briefPublishNow => 'Publish now';
+
+  @override
+  String get briefTakeDown => 'Take down';
+
+  @override
+  String get briefKept => 'Saved so you can keep writing.';
+
+  @override
+  String get briefTakenDown => 'The trip is hidden from guests.';
+
+  @override
+  String get adminProductDelete => 'Delete';
+
+  @override
+  String adminProductDeleteBody(String name) {
+    return 'Delete \"$name\" from the product list.';
+  }
+
+  @override
+  String get adminProductDeleted => 'Product deleted.';
+
+  @override
+  String get adminProductRejectNote => 'Reason for rejection';
+
+  @override
+  String get adminProductRejectNoteHint => 'The partner will see this note.';
+
+  @override
   String get checkoutStepSelect => 'Choose';
 
   @override

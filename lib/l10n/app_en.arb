@@ -704,6 +704,22 @@
   "briefFocApplies": "Applies to",
   "briefStartPrice": "Diver starting price",
   "briefGuestCard": "Guest card",
+  "briefKeepEditing": "Keep editing",
+  "briefSubmitReview": "Submit for review",
+  "briefPublishNow": "Publish now",
+  "briefTakeDown": "Take down",
+  "briefKept": "Saved so you can keep writing.",
+  "briefTakenDown": "The trip is hidden from guests.",
+  "adminProductDelete": "Delete",
+  "adminProductDeleteBody": "Delete \"{name}\" from the product list.",
+  "@adminProductDeleteBody": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "adminProductDeleted": "Product deleted.",
+  "adminProductRejectNote": "Reason for rejection",
+  "adminProductRejectNoteHint": "The partner will see this note.",
   "checkoutStepSelect": "Choose",
   "checkoutStepReview": "Your booking",
   "checkoutStepPay": "Pay",
