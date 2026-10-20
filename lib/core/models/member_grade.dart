@@ -58,3 +58,31 @@ enum MemberGrade {
     return MemberGrade.member;
   }
 }
+
+/// 상단 프로필에만 보이는 이용 등급. 저장된 [MemberGrade]는 바꾸지 않습니다.
+enum ProfileDisplayGrade {
+  silver,
+  gold,
+  diamond,
+  platinum,
+  instructor;
+
+  static ProfileDisplayGrade fromUse({
+    required int paidBookings,
+    required bool isInstructor,
+  }) {
+    if (isInstructor) {
+      return ProfileDisplayGrade.instructor;
+    }
+    if (paidBookings >= 10) {
+      return ProfileDisplayGrade.platinum;
+    }
+    if (paidBookings >= 5) {
+      return ProfileDisplayGrade.diamond;
+    }
+    if (paidBookings >= 1) {
+      return ProfileDisplayGrade.gold;
+    }
+    return ProfileDisplayGrade.silver;
+  }
+}

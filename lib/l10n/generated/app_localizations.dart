@@ -1326,6 +1326,42 @@ abstract class AppLocalizations {
   /// **'MY OCEAN'**
   String get profileMyOceanKicker;
 
+  /// No description provided for @profileGradeSilver.
+  ///
+  /// In ko, this message translates to:
+  /// **'실버'**
+  String get profileGradeSilver;
+
+  /// No description provided for @profileGradeGold.
+  ///
+  /// In ko, this message translates to:
+  /// **'골드'**
+  String get profileGradeGold;
+
+  /// No description provided for @profileGradeDiamond.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이아몬드'**
+  String get profileGradeDiamond;
+
+  /// No description provided for @profileGradePlatinum.
+  ///
+  /// In ko, this message translates to:
+  /// **'플래티넘'**
+  String get profileGradePlatinum;
+
+  /// No description provided for @profileGradeInstructor.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사'**
+  String get profileGradeInstructor;
+
+  /// No description provided for @profileViewMyInfo.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 정보 보기'**
+  String get profileViewMyInfo;
+
   /// No description provided for @profileNextOceanTitle.
   ///
   /// In ko, this message translates to:

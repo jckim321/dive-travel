@@ -665,6 +665,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileMyOceanKicker => 'MY OCEAN';
 
   @override
+  String get profileGradeSilver => '실버';
+
+  @override
+  String get profileGradeGold => '골드';
+
+  @override
+  String get profileGradeDiamond => '다이아몬드';
+
+  @override
+  String get profileGradePlatinum => '플래티넘';
+
+  @override
+  String get profileGradeInstructor => '강사';
+
+  @override
+  String get profileViewMyInfo => '나의 정보 보기';
+
+  @override
   String get profileNextOceanTitle => '다음 바다';
 
   @override

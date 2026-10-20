@@ -81,4 +81,27 @@ void main() {
     expect(find.text(l10n.adminMembersTitle), findsWidgets);
     expect(find.text('대기 강사'), findsOneWidget);
   });
+
+  test('표시 등급은 결제 횟수와 강사 승인으로 나뉜다', () {
+    expect(
+      ProfileDisplayGrade.fromUse(paidBookings: 0, isInstructor: false),
+      ProfileDisplayGrade.silver,
+    );
+    expect(
+      ProfileDisplayGrade.fromUse(paidBookings: 1, isInstructor: false),
+      ProfileDisplayGrade.gold,
+    );
+    expect(
+      ProfileDisplayGrade.fromUse(paidBookings: 5, isInstructor: false),
+      ProfileDisplayGrade.diamond,
+    );
+    expect(
+      ProfileDisplayGrade.fromUse(paidBookings: 10, isInstructor: false),
+      ProfileDisplayGrade.platinum,
+    );
+    expect(
+      ProfileDisplayGrade.fromUse(paidBookings: 0, isInstructor: true),
+      ProfileDisplayGrade.instructor,
+    );
+  });
 }

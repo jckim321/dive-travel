@@ -603,6 +603,12 @@
     "description": "다이버 DIY 상품 등록 시 리조트 선택 안내입니다."
   },
   "profileMyOceanKicker": "MY OCEAN",
+  "profileGradeSilver": "실버",
+  "profileGradeGold": "골드",
+  "profileGradeDiamond": "다이아몬드",
+  "profileGradePlatinum": "플래티넘",
+  "profileGradeInstructor": "강사",
+  "profileViewMyInfo": "나의 정보 보기",
   "profileNextOceanTitle": "다음 바다",
   "profileNoUpcomingTrip": "아직 정해진 다음 바다가 없어요",
   "profileNoUpcomingTripHint": "마음에 담아둔 바다에서 다음 여정을 시작해 보세요.",

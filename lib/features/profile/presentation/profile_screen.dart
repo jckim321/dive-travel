@@ -70,6 +70,8 @@ class ProfileScreen extends StatelessWidget {
                     displayName: stats.displayName,
                     regionsCount: stats.uniqueRegionsCount,
                     logCount: stats.totalLogCount,
+                    paidBookings: paid.length,
+                    isInstructor: stats.isInstructor,
                     onSettings: () => _openSettings(context),
                   ),
                 ),

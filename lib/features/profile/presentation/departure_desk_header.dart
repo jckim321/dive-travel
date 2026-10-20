@@ -1,37 +1,67 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Quiet identity header for the immersive My Ocean page.
+/// Identity header on My page. Grade is a display ladder, not the stored admin grade.
 class DepartureDeskHeader extends StatelessWidget {
   const DepartureDeskHeader({
     super.key,
     required this.displayName,
     required this.regionsCount,
     required this.logCount,
+    required this.paidBookings,
+    required this.isInstructor,
     required this.onSettings,
   });
 
   final String displayName;
   final int regionsCount;
   final int logCount;
+  final int paidBookings;
+  final bool isInstructor;
   final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final grade = ProfileDisplayGrade.fromUse(
+      paidBookings: paidBookings,
+      isInstructor: isInstructor,
+    );
+    final gradeLabel = switch (grade) {
+      ProfileDisplayGrade.silver => l10n.profileGradeSilver,
+      ProfileDisplayGrade.gold => l10n.profileGradeGold,
+      ProfileDisplayGrade.diamond => l10n.profileGradeDiamond,
+      ProfileDisplayGrade.platinum => l10n.profileGradePlatinum,
+      ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
+    };
+    final gradeMark = switch (grade) {
+      ProfileDisplayGrade.silver => '🥈',
+      ProfileDisplayGrade.gold => '🥇',
+      ProfileDisplayGrade.diamond => '💎',
+      ProfileDisplayGrade.platinum => '💠',
+      ProfileDisplayGrade.instructor => '🎓',
+    };
 
     return Container(
       key: const Key('departure-desk-header'),
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F6F4),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF052A4A),
+            Color(0xFF0B3A4F),
+            Color(0xFF164A5C),
+          ],
+        ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE8EBEE)),
         boxShadow: AppTheme.cardShadow,
       ),
       child: Row(
@@ -47,7 +77,7 @@ class DepartureDeskHeader extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: [Color(0xFF3C8FB6), Color(0xFF0A4A73)],
               ),
-              border: Border.all(color: const Color(0xFFC5C1BA)),
+              border: Border.all(color: Colors.white24),
             ),
             child: const Icon(
               Icons.scuba_diving_rounded,
@@ -63,7 +93,7 @@ class DepartureDeskHeader extends StatelessWidget {
                 Text(
                   l10n.profileMyOceanKicker,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppTheme.ocean,
+                    color: const Color(0xFFD7E7EF),
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.4,
                   ),
@@ -72,30 +102,37 @@ class DepartureDeskHeader extends StatelessWidget {
                 Text(
                   displayName,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: AppTheme.navy,
+                    color: Colors.white,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
+                  '$gradeMark $gradeLabel',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
                   '${l10n.profileRegions(regionsCount)} · '
                   '${l10n.profileTotalDives} $logCount',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.muted,
+                    color: Colors.white70,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
+          TextButton(
             key: const Key('open-profile-settings'),
-            tooltip: l10n.profileSettingsTitle,
             onPressed: onSettings,
-            style: IconButton.styleFrom(
-              foregroundColor: AppTheme.navy,
-              backgroundColor: const Color(0xFFE8EBEE),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
-            icon: const Icon(Icons.tune_rounded, size: 21),
+            child: Text('👤 ${l10n.profileViewMyInfo}'),
           ),
         ],
       ),

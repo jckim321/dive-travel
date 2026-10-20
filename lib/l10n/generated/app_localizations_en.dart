@@ -690,6 +690,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileMyOceanKicker => 'MY OCEAN';
 
   @override
+  String get profileGradeSilver => 'Silver';
+
+  @override
+  String get profileGradeGold => 'Gold';
+
+  @override
+  String get profileGradeDiamond => 'Diamond';
+
+  @override
+  String get profileGradePlatinum => 'Platinum';
+
+  @override
+  String get profileGradeInstructor => 'Instructor';
+
+  @override
+  String get profileViewMyInfo => 'View my info';
+
+  @override
   String get profileNextOceanTitle => 'Your next ocean';
 
   @override
