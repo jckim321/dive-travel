@@ -732,6 +732,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profilePaidBookingsEmpty => '결제된 예약이 없습니다.';
 
   @override
+  String get profileBookingFilterAll => '전체';
+
+  @override
+  String get profileBookingFilterHolding => '예약중';
+
+  @override
+  String get profileBookingFilterPaid => '결제 완료';
+
+  @override
   String get profileLiveFlagsTitle => '꽂아 둔 깃발';
 
   @override

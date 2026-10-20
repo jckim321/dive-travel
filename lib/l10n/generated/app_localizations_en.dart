@@ -751,6 +751,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profilePaidBookingsEmpty => 'No paid bookings yet.';
 
   @override
+  String get profileBookingFilterAll => 'All';
+
+  @override
+  String get profileBookingFilterHolding => 'Holding';
+
+  @override
+  String get profileBookingFilterPaid => 'Paid';
+
+  @override
   String get profileLiveFlagsTitle => 'Flags I planted';
 
   @override

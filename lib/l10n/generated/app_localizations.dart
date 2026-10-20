@@ -1440,6 +1440,24 @@ abstract class AppLocalizations {
   /// **'결제된 예약이 없습니다.'**
   String get profilePaidBookingsEmpty;
 
+  /// No description provided for @profileBookingFilterAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get profileBookingFilterAll;
+
+  /// No description provided for @profileBookingFilterHolding.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약중'**
+  String get profileBookingFilterHolding;
+
+  /// No description provided for @profileBookingFilterPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 완료'**
+  String get profileBookingFilterPaid;
+
   /// No description provided for @profileLiveFlagsTitle.
   ///
   /// In ko, this message translates to:

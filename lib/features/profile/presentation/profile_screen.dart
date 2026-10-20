@@ -83,36 +83,13 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       _OceanSectionTitle(title: l10n.profileBookingStatus),
                       const SizedBox(height: 12),
-                      _HintOrList(
-                        plate: 0,
-                        empty: l10n.profilePaidBookingsEmpty,
-                        onTap: paid.isEmpty
+                      _BookingBoards(
+                        paid: paid,
+                        flags: flags,
+                        now: now,
+                        onOpenPaid: paid.isEmpty
                             ? null
                             : () => _openBookings(context, store),
-                        children: [
-                          for (final booking in paid.take(3))
-                            _Line(
-                              title: booking.productName,
-                              detail:
-                                  '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}',
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _OceanSectionTitle(title: l10n.profileLiveFlagsTitle),
-                      const SizedBox(height: 8),
-                      _HintOrList(
-                        plate: 1,
-                        empty: l10n.profileLiveFlagsEmpty,
-                        children: [
-                          for (final offer in flags)
-                            _Line(
-                              title: offer.optionName.isEmpty
-                                  ? offer.product.name
-                                  : '${offer.product.name} / ${offer.optionName}',
-                              detail: _flagDetail(offer, now),
-                            ),
-                        ],
                       ),
                       const SizedBox(height: 30),
                       _OceanSectionTitle(
@@ -324,6 +301,99 @@ class _Line extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+enum _BookingFilter { all, holding, paid }
+
+class _BookingBoards extends StatefulWidget {
+  const _BookingBoards({
+    required this.paid,
+    required this.flags,
+    required this.now,
+    required this.onOpenPaid,
+  });
+
+  final List<TourBooking> paid;
+  final List<SameBoatOffer> flags;
+  final DateTime now;
+  final VoidCallback? onOpenPaid;
+
+  @override
+  State<_BookingBoards> createState() => _BookingBoardsState();
+}
+
+class _BookingBoardsState extends State<_BookingBoards> {
+  _BookingFilter _filter = _BookingFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final showPaid =
+        _filter == _BookingFilter.all || _filter == _BookingFilter.paid;
+    final showFlags =
+        _filter == _BookingFilter.all || _filter == _BookingFilter.holding;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final filter in _BookingFilter.values)
+              ChoiceChip(
+                label: Text(_filterLabel(l10n, filter)),
+                selected: _filter == filter,
+                onSelected: (_) => setState(() => _filter = filter),
+              ),
+          ],
+        ),
+        if (showPaid) ...[
+          const SizedBox(height: 12),
+          _OceanSectionTitle(title: l10n.profileBookingFilterPaid),
+          const SizedBox(height: 8),
+          _HintOrList(
+            plate: 0,
+            empty: l10n.profilePaidBookingsEmpty,
+            onTap: widget.onOpenPaid,
+            children: [
+              for (final booking in widget.paid)
+                _Line(
+                  title: booking.productName,
+                  detail:
+                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}',
+                ),
+            ],
+          ),
+        ],
+        if (showFlags) ...[
+          const SizedBox(height: 12),
+          _OceanSectionTitle(title: l10n.profileBookingFilterHolding),
+          const SizedBox(height: 8),
+          _HintOrList(
+            plate: 1,
+            empty: l10n.profileLiveFlagsEmpty,
+            children: [
+              for (final offer in widget.flags)
+                _Line(
+                  title: offer.optionName.isEmpty
+                      ? offer.product.name
+                      : '${offer.product.name} / ${offer.optionName}',
+                  detail: _flagDetail(offer, widget.now),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _filterLabel(AppLocalizations l10n, _BookingFilter filter) {
+    return switch (filter) {
+      _BookingFilter.all => l10n.profileBookingFilterAll,
+      _BookingFilter.holding => l10n.profileBookingFilterHolding,
+      _BookingFilter.paid => l10n.profileBookingFilterPaid,
+    };
   }
 }
 
