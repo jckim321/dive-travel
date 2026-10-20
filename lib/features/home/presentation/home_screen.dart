@@ -97,14 +97,12 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeDiveStarTitle,
-                  subtitle: l10n.homeDiveStarShelfHint,
                   shops: diveStarShops,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeFavoritesTitle,
-                  subtitle: l10n.homeDiverPlannedSubtitle,
                   shops: plannedShops,
                   emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
@@ -112,7 +110,6 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homePopularTitle,
-                  subtitle: l10n.homeHotSpotSubtitle,
                   shops: hotShops,
                   emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
@@ -120,7 +117,6 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeNextDepartures,
-                  subtitle: l10n.homeLastCallSubtitle,
                   shops: lastCallShops,
                   emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
@@ -128,7 +124,6 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 HomeDiscoverySection(
                   title: l10n.homeCuratedTitle,
-                  subtitle: l10n.homeCuratedSubtitle,
                   shops: curatedShops,
                   emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
