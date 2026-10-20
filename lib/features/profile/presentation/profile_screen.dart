@@ -247,23 +247,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-String _flagDetail(SameBoatOffer offer, DateTime now) {
-  final holds = offer.option?.flagHolds ?? offer.product.flagHolds;
-  DateTime? until;
-  for (final hold in holds) {
-    if (!hold.expiresAt.isAfter(now)) {
-      continue;
-    }
-    if (until == null || hold.expiresAt.isBefore(until)) {
-      until = hold.expiresAt;
-    }
-  }
-  if (until == null) {
-    return '';
-  }
-  return DateFormat('M.d HH:mm').format(until);
-}
-
 class _HintOrList extends StatelessWidget {
   const _HintOrList({
     required this.plate,
@@ -328,6 +311,82 @@ class _Line extends StatelessWidget {
   }
 }
 
+class _BookingProgressLine extends StatelessWidget {
+  const _BookingProgressLine({
+    required this.productName,
+    required this.optionName,
+    required this.statusLabel,
+    this.onDetail,
+  });
+
+  final String productName;
+  final String optionName;
+  final String statusLabel;
+  final VoidCallback? onDetail;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  productName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (optionName.trim().isNotEmpty)
+                  Text(
+                    optionName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8EEF2),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navy,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onDetail,
+                child: Text(l10n.bookingDetailCta),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 enum _BookingFilter { all, requested, paid, holding }
 
 class _BookingBoards extends StatefulWidget {
@@ -386,11 +445,11 @@ class _BookingBoardsState extends State<_BookingBoards> {
             onTap: widget.onOpenBookings,
             children: [
               for (final booking in widget.requested)
-                _Line(
-                  title: booking.displayTitle,
-                  detail:
-                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}'
-                      ' · ${l10n.bookingPaymentUnpaid}',
+                _BookingProgressLine(
+                  productName: booking.productLabel,
+                  optionName: booking.optionLabel,
+                  statusLabel: l10n.bookingRequested,
+                  onDetail: () => openBookingDetail(context, booking),
                 ),
             ],
           ),
@@ -405,11 +464,11 @@ class _BookingBoardsState extends State<_BookingBoards> {
             onTap: widget.onOpenBookings,
             children: [
               for (final booking in widget.paid)
-                _Line(
-                  title: booking.displayTitle,
-                  detail:
-                      '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}'
-                      ' · ${l10n.bookingPaymentCaptured}',
+                _BookingProgressLine(
+                  productName: booking.productLabel,
+                  optionName: booking.optionLabel,
+                  statusLabel: l10n.bookingPaymentCaptured,
+                  onDetail: () => openBookingDetail(context, booking),
                 ),
             ],
           ),
@@ -421,13 +480,14 @@ class _BookingBoardsState extends State<_BookingBoards> {
           _HintOrList(
             plate: 1,
             empty: l10n.profileLiveFlagsEmpty,
+            onTap: widget.onOpenBookings,
             children: [
               for (final offer in widget.flags)
-                _Line(
-                  title: offer.optionName.isEmpty
-                      ? offer.product.name
-                      : '${offer.product.name} / ${offer.optionName}',
-                  detail: _flagDetail(offer, widget.now),
+                _BookingProgressLine(
+                  productName: offer.product.name,
+                  optionName: offer.optionName,
+                  statusLabel: l10n.profileBookingFilterHolding,
+                  onDetail: widget.onOpenBookings,
                 ),
             ],
           ),

@@ -1965,6 +1965,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingConfirmFailed => 'This booking cannot be confirmed.';
 
   @override
+  String get bookingDetailCta => 'Details';
+
+  @override
+  String get bookingDetailTitle => 'Booking details';
+
+  @override
+  String get bookingCreatedAt => 'Requested';
+
+  @override
   String get adminBookingsTitle => 'Booking confirm';
 
   @override

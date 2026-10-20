@@ -154,13 +154,14 @@ void main() {
     expect(again, isFalse);
   });
 
-  test('체크아웃 스냅샷은 합성 상품명과 견적 라인을 마이페이지용으로 보관한다', () async {
+  test('체크아웃 스냅샷은 상품명과 옵션명을 따로 마이페이지용으로 보관한다', () async {
     final repo = MemoryDiverRepository.forTest();
     final saved = await repo.createBooking(
       uid: 'test-user',
       shopId: AppConstants.defaultPartnerShopId,
       shopName: '보홀',
-      productName: '2탱크 패키지 · 나이트 다이빙',
+      productName: '2탱크 패키지',
+      optionName: '나이트 다이빙',
       price: 210000,
       partySize: 2,
       divers: 2,
@@ -173,14 +174,12 @@ void main() {
     final bookings = await repo.watchBookings('test-user').first;
     expect(bookings, hasLength(1));
     final booking = bookings.first;
+    expect(booking.productLabel, '2탱크 패키지');
+    expect(booking.optionLabel, '나이트 다이빙');
     expect(booking.displayTitle, '2탱크 패키지 · 나이트 다이빙');
     expect(booking.status, BookingStatus.requested);
     expect(booking.paymentStatus, PaymentStatus.unpaid);
     expect(booking.quoteLines, hasLength(2));
-    expect(booking.quoteLines.map((line) => line.label).toList(), [
-      '2탱크 패키지',
-      '나이트 다이빙',
-    ]);
   });
 
   testWidgets('마이페이지에서 파트너 모드로 들어간다', (tester) async {

@@ -54,6 +54,7 @@ class TourBooking {
     this.paymentStatus = PaymentStatus.unpaid,
     this.productId = '',
     this.optionId = '',
+    this.optionName = '',
     this.listingKind = ProductListingKind.exploreOnly,
     this.fromFlag = false,
     this.partySize = 0,
@@ -71,6 +72,8 @@ class TourBooking {
   final String productName;
   final String productId;
   final String optionId;
+  /// Add-on or individual option labels, separate from [productName].
+  final String optionName;
   final ProductListingKind listingKind;
   final bool fromFlag;
   final int price;
@@ -115,9 +118,45 @@ class TourBooking {
   bool get hasPartyDetail =>
       divers > 0 || nondivers > 0 || children > 0 || infants > 0;
 
+  /// Package / product title for list rows.
+  String get productLabel {
+    final name = productName.trim();
+    if (name.isEmpty) {
+      return shopName;
+    }
+    if (optionName.trim().isNotEmpty) {
+      return name;
+    }
+    final parts = name.split(' · ');
+    return parts.first.trim().isEmpty ? shopName : parts.first.trim();
+  }
+
+  /// Option / add-on line; recovers from quote lines or legacy combined names.
+  String get optionLabel {
+    final named = optionName.trim();
+    if (named.isNotEmpty) {
+      return named;
+    }
+    if (quoteLines.length > 1) {
+      return [
+        for (final line in quoteLines.skip(1)) line.label.trim(),
+      ].where((label) => label.isNotEmpty).join(' · ');
+    }
+    final parts = productName.split(' · ');
+    if (parts.length > 1) {
+      return parts.skip(1).join(' · ').trim();
+    }
+    return '';
+  }
+
   /// Title shown on My Bookings; falls back to shop name when empty.
-  String get displayTitle =>
-      productName.trim().isEmpty ? shopName : productName.trim();
+  String get displayTitle {
+    final option = optionLabel;
+    if (option.isEmpty) {
+      return productLabel;
+    }
+    return '$productLabel · $option';
+  }
 
   TourBooking copyWith({
     bool? reviewed,
@@ -136,6 +175,7 @@ class TourBooking {
       productName: productName,
       productId: productId,
       optionId: optionId,
+      optionName: optionName,
       listingKind: listingKind,
       fromFlag: fromFlag,
       price: price,

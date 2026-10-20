@@ -3630,6 +3630,24 @@ abstract class AppLocalizations {
   /// **'확정할 수 없는 예약입니다.'**
   String get bookingConfirmFailed;
 
+  /// No description provided for @bookingDetailCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'상세내역'**
+  String get bookingDetailCta;
+
+  /// No description provided for @bookingDetailTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 상세내역'**
+  String get bookingDetailTitle;
+
+  /// No description provided for @bookingCreatedAt.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청일'**
+  String get bookingCreatedAt;
+
   /// No description provided for @adminBookingsTitle.
   ///
   /// In ko, this message translates to:

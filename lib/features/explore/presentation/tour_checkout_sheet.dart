@@ -304,7 +304,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       price: amount,
       tourDate: _tourDate,
       productId: product?.id,
-      productName: _hasProduct ? _chosenLabels() : widget.shop.productName,
+      productName: _hasProduct
+          ? (product?.name ?? widget.shop.productName)
+          : widget.shop.productName,
+      optionName: _optionLabelsOnly(),
       partySize: party,
       optionId: recordOption,
       seatOptionId: seatOption,
@@ -877,23 +880,34 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (product == null) {
       return widget.shop.productName;
     }
+    final options = _optionLabelsOnly();
+    if (options.isEmpty) {
+      return product.name;
+    }
     if (_bookPackage) {
-      final extras = [
+      return '${product.name} · $options';
+    }
+    return options;
+  }
+
+  /// Option / add-on names only (no package product name).
+  String _optionLabelsOnly() {
+    final product = widget.product;
+    if (product == null) {
+      return '';
+    }
+    if (_bookPackage) {
+      return [
         for (final id in _selected)
           if (_findOption(id)?.kind == ProductOptionKind.addon)
             _findOption(id)!.name,
-      ];
-      if (extras.isEmpty) {
-        return product.name;
-      }
-      return '${product.name} · ${extras.join(' · ')}';
+      ].join(' · ');
     }
-    final names = [
+    return [
       for (final id in _selected)
         if (_findOption(id)?.kind == ProductOptionKind.individual)
           _findOption(id)!.name,
-    ];
-    return names.isEmpty ? product.name : names.join(' · ');
+    ].join(' · ');
   }
 
   List<Widget> _productDetailCards(

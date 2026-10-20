@@ -507,6 +507,7 @@ class FirestoreDiverRepository implements DiverRepository {
       paymentStatus: PaymentStatus.parse(data['payment_status']),
       productId: data['product_id'] as String? ?? '',
       optionId: data['option_id'] as String? ?? '',
+      optionName: data['option_name'] as String? ?? '',
       listingKind: data.containsKey('listing_kind')
           ? ProductListingKind.parse(data['listing_kind'])
           : ProductListingKind.exploreOnly,
@@ -536,6 +537,7 @@ class FirestoreDiverRepository implements DiverRepository {
       'payment_status': booking.paymentStatus.firestoreValue,
       'product_id': booking.productId,
       'option_id': booking.optionId,
+      'option_name': booking.optionName,
       'listing_kind': booking.listingKind.firestoreValue,
       'from_flag': booking.fromFlag,
       'party_size': booking.partySize,
@@ -575,6 +577,7 @@ class FirestoreDiverRepository implements DiverRepository {
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String optionName = '',
     String seatOptionId = '',
     ProductListingKind listingKind = ProductListingKind.exploreOnly,
     bool fromFlag = false,
@@ -606,6 +609,7 @@ class FirestoreDiverRepository implements DiverRepository {
       productName: productName,
       productId: productId ?? '',
       optionId: optionId,
+      optionName: optionName,
       listingKind: listingKind,
       fromFlag: fromFlag,
       price: price,

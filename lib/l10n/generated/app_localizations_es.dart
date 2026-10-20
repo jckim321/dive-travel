@@ -1929,6 +1929,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bookingConfirmFailed => '확정할 수 없는 예약입니다.';
 
   @override
+  String get bookingDetailCta => '상세내역';
+
+  @override
+  String get bookingDetailTitle => '예약 상세내역';
+
+  @override
+  String get bookingCreatedAt => '요청일';
+
+  @override
   String get adminBookingsTitle => '예약 확정';
 
   @override

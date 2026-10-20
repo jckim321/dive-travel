@@ -174,6 +174,7 @@ abstract class DiverRepository {
     String? productId,
     int partySize = 0,
     String optionId = '',
+    String optionName = '',
     String seatOptionId = '',
     ProductListingKind listingKind = ProductListingKind.exploreOnly,
     bool fromFlag = false,
