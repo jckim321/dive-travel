@@ -1392,6 +1392,48 @@ abstract class AppLocalizations {
   /// **'예약 내역'**
   String get profileBookingHistory;
 
+  /// No description provided for @profileBookingStatus.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 예약'**
+  String get profileBookingStatus;
+
+  /// No description provided for @profilePaidBookingsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제된 예약이 없습니다.'**
+  String get profilePaidBookingsEmpty;
+
+  /// No description provided for @profileLiveFlagsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'꽂아 둔 깃발'**
+  String get profileLiveFlagsTitle;
+
+  /// No description provided for @profileLiveFlagsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'꽂아 둔 깃발이 없습니다.'**
+  String get profileLiveFlagsEmpty;
+
+  /// No description provided for @profileAfterTripTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다녀온 뒤'**
+  String get profileAfterTripTitle;
+
+  /// No description provided for @profileAfterTripEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'남길 리뷰가 없습니다.'**
+  String get profileAfterTripEmpty;
+
+  /// No description provided for @profileNextTripSuggest.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음에 가볼 바다'**
+  String get profileNextTripSuggest;
+
   /// No description provided for @profileBookingCount.
   ///
   /// In ko, this message translates to:

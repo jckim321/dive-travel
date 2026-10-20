@@ -719,6 +719,27 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileBookingHistory => '예약 내역';
 
   @override
+  String get profileBookingStatus => '나의 예약';
+
+  @override
+  String get profilePaidBookingsEmpty => '결제된 예약이 없습니다.';
+
+  @override
+  String get profileLiveFlagsTitle => '꽂아 둔 깃발';
+
+  @override
+  String get profileLiveFlagsEmpty => '꽂아 둔 깃발이 없습니다.';
+
+  @override
+  String get profileAfterTripTitle => '다녀온 뒤';
+
+  @override
+  String get profileAfterTripEmpty => '남길 리뷰가 없습니다.';
+
+  @override
+  String get profileNextTripSuggest => '다음에 가볼 바다';
+
+  @override
   String profileBookingCount(int count) {
     return '$count건';
   }

@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/theme/century_tank_colors.dart';
@@ -14,6 +15,7 @@ import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
+import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
 import 'package:dive_travel_app/features/profile/presentation/profile_settings_screen.dart';
@@ -33,12 +35,30 @@ class ProfileScreen extends StatelessWidget {
         listenable: store,
         builder: (context, _) {
           final stats = store.stats;
-          final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
-          final nextShop = nextTrip == null
-              ? null
-              : _shopFor(store, nextTrip.shopId);
           final crafted = store.craftedProductsFor(store.uid ?? '');
           final favorites = store.favoriteShops;
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final paid = [
+            for (final booking in store.bookings)
+              if (booking.isActive) booking,
+          ]..sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
+          final flags = store.myLiveFlags(now: now);
+          final insight = TravelStyleAnalyzer.analyze(
+            regions: store.regions,
+            stats: stats,
+            shops: store.resortHulls,
+          );
+          final suggested = favorites.isNotEmpty
+              ? favorites.first
+              : insight.suggestedShop;
+          final toReview = [
+            for (final booking in store.bookings)
+              if (booking.isActive &&
+                  !booking.reviewed &&
+                  booking.scheduledFor.isBefore(today))
+                booking,
+          ];
 
           return ListView(
               key: const Key('profile-departure-desk'),
@@ -59,15 +79,38 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _OceanSectionTitle(title: l10n.profileNextOceanTitle),
+                      _OceanSectionTitle(title: l10n.profileBookingStatus),
                       const SizedBox(height: 12),
-                      _NextOceanCard(
+                      _HintOrList(
                         plate: 0,
-                        booking: nextTrip,
-                        shop: nextShop,
-                        onTap: nextShop == null
+                        empty: l10n.profilePaidBookingsEmpty,
+                        onTap: paid.isEmpty
                             ? null
-                            : () => openResortDetail(context, nextShop.hullId),
+                            : () => _openBookings(context, store),
+                        children: [
+                          for (final booking in paid.take(3))
+                            _Line(
+                              title: booking.productName,
+                              detail:
+                                  '${booking.shopName} · ${DateFormat('yyyy.MM.dd').format(booking.scheduledFor)}',
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _OceanSectionTitle(title: l10n.profileLiveFlagsTitle),
+                      const SizedBox(height: 8),
+                      _HintOrList(
+                        plate: 1,
+                        empty: l10n.profileLiveFlagsEmpty,
+                        children: [
+                          for (final offer in flags)
+                            _Line(
+                              title: offer.optionName.isEmpty
+                                  ? offer.product.name
+                                  : '${offer.product.name} / ${offer.optionName}',
+                              detail: _flagDetail(offer, now),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 30),
                       _OceanSectionTitle(
@@ -76,17 +119,57 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _SavedOceansRail(
-                        plate: 1,
+                        plate: 2,
                         shops: favorites,
                         onOpen: (shop) =>
                             openResortDetail(context, shop.hullId),
                         onRemove: store.removeFavoriteShop,
                       ),
                       const SizedBox(height: 30),
+                      _OceanSectionTitle(title: l10n.profileNextTripSuggest),
+                      const SizedBox(height: 12),
+                      _HintOrList(
+                        plate: 3,
+                        empty: l10n.profileNoUpcomingTrip,
+                        onTap: suggested == null
+                            ? null
+                            : () => openResortDetail(context, suggested.hullId),
+                        children: [
+                          if (suggested != null)
+                            _Line(
+                              title: suggested.name,
+                              detail: suggested.location,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      _OceanSectionTitle(title: l10n.profileCraftedTripsTitle),
+                      const SizedBox(height: 12),
+                      if (crafted.isEmpty)
+                        _HintOrList(
+                          plate: 0,
+                          empty: l10n.profileCraftedTripsHint,
+                          onTap: () => Navigator.of(context).push<void>(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const TravelProductRegistrationScreen(
+                                    creatorMode: true,
+                                  ),
+                            ),
+                          ),
+                          tapKey: const Key('profile-crafted-trips-link'),
+                          children: const [],
+                        )
+                      else
+                        _LightPanel(
+                          plate: 0,
+                          child: MyCraftedTripsSection(products: crafted),
+                        ),
+                      const SizedBox(height: 30),
                       _OceanSectionTitle(title: l10n.profileOceanRecordTitle),
                       const SizedBox(height: 12),
                       _OceanRecordCard(
-                        plate: 2,
+                        plate: 1,
                         totalLogs: stats.totalLogCount,
                         regions: stats.uniqueRegionsCount,
                         progress: stats.centuryProgress,
@@ -98,33 +181,24 @@ class ProfileScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 30),
-                      _OceanSectionTitle(title: l10n.profileActivityTitle),
+                      _OceanSectionTitle(title: l10n.profileAfterTripTitle),
                       const SizedBox(height: 12),
-                      _ActivityCard(
-                        plate: 3,
-                        bookingsCount: store.bookings.length,
-                        craftedCount: crafted.length,
-                        proStatus: stats.proStatus,
-                        onBookings: store.bookings.isEmpty
-                            ? null
-                            : () => _openBookings(context, store),
-                        onSettings: () => _openSettings(context),
-                        onCraft: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                const TravelProductRegistrationScreen(
-                                  creatorMode: true,
-                                ),
-                          ),
-                        ),
+                      _HintOrList(
+                        plate: 2,
+                        empty: l10n.profileAfterTripEmpty,
+                        children: [
+                          for (final booking in toReview)
+                            _Line(
+                              title: booking.productName,
+                              detail: booking.shopName,
+                              onTap: () => openOperationReview(
+                                context,
+                                shopId: booking.shopId,
+                                bookingId: booking.id,
+                              ),
+                            ),
+                        ],
                       ),
-                      if (crafted.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        _LightPanel(
-                          plate: 0,
-                          child: MyCraftedTripsSection(products: crafted),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -164,6 +238,87 @@ class ProfileScreen extends StatelessWidget {
           controller: controller,
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 36),
           child: MyBookingsSection(bookings: store.bookings),
+        ),
+      ),
+    );
+  }
+}
+
+String _flagDetail(SameBoatOffer offer, DateTime now) {
+  final holds = offer.option?.flagHolds ?? offer.product.flagHolds;
+  DateTime? until;
+  for (final hold in holds) {
+    if (!hold.expiresAt.isAfter(now)) {
+      continue;
+    }
+    if (until == null || hold.expiresAt.isBefore(until)) {
+      until = hold.expiresAt;
+    }
+  }
+  if (until == null) {
+    return '';
+  }
+  return DateFormat('M.d HH:mm').format(until);
+}
+
+class _HintOrList extends StatelessWidget {
+  const _HintOrList({
+    required this.plate,
+    required this.empty,
+    required this.children,
+    this.onTap,
+    this.tapKey,
+  });
+
+  final int plate;
+  final String empty;
+  final List<Widget> children;
+  final VoidCallback? onTap;
+  final Key? tapKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = children.isEmpty
+        ? Text(empty, style: Theme.of(context).textTheme.bodyMedium)
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          );
+    return _LightPanel(
+      plate: plate,
+      child: InkWell(key: tapKey, onTap: onTap, child: body),
+    );
+  }
+}
+
+class _Line extends StatelessWidget {
+  const _Line({required this.title, required this.detail, this.onTap});
+
+  final String title;
+  final String detail;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (detail.isNotEmpty)
+              Text(detail, style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
       ),
     );

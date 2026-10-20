@@ -727,6 +727,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileBookingHistory => 'Booking history';
 
   @override
+  String get profileBookingStatus => 'My bookings';
+
+  @override
+  String get profilePaidBookingsEmpty => 'No paid bookings yet.';
+
+  @override
+  String get profileLiveFlagsTitle => 'Flags I planted';
+
+  @override
+  String get profileLiveFlagsEmpty => 'No live flags.';
+
+  @override
+  String get profileAfterTripTitle => 'After the trip';
+
+  @override
+  String get profileAfterTripEmpty => 'Nothing to review.';
+
+  @override
+  String get profileNextTripSuggest => 'A sea to try next';
+
+  @override
   String profileBookingCount(int count) {
     return '$count bookings';
   }

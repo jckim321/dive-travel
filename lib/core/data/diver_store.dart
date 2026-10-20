@@ -110,6 +110,34 @@ class DiverStore extends ChangeNotifier {
     return SameBoatBoard.filteredOffers(all, filter, now ?? DateTime.now());
   }
 
+  List<SameBoatOffer> myLiveFlags({DateTime? now}) {
+    final member = uid;
+    if (member == null || member.isEmpty) {
+      return const [];
+    }
+    final clock = now ?? DateTime.now();
+    final found = <SameBoatOffer>[];
+    for (final stats in _shopStats) {
+      for (final product in stats.products) {
+        for (final option in product.options) {
+          final mine = option.flagHolds.any(
+            (hold) => hold.uid == member && hold.expiresAt.isAfter(clock),
+          );
+          if (mine) {
+            found.add(SameBoatOffer(product: product, option: option));
+          }
+        }
+        final mine = product.flagHolds.any(
+          (hold) => hold.uid == member && hold.expiresAt.isAfter(clock),
+        );
+        if (mine) {
+          found.add(SameBoatOffer(product: product));
+        }
+      }
+    }
+    return found;
+  }
+
   String shopLabelFor(String shopId) {
     for (final stats in _shopStats) {
       final name = stats.name;

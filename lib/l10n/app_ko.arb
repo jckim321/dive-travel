@@ -619,6 +619,13 @@
   },
   "profileActivityTitle": "내 활동",
   "profileBookingHistory": "예약 내역",
+  "profileBookingStatus": "나의 예약",
+  "profilePaidBookingsEmpty": "결제된 예약이 없습니다.",
+  "profileLiveFlagsTitle": "꽂아 둔 깃발",
+  "profileLiveFlagsEmpty": "꽂아 둔 깃발이 없습니다.",
+  "profileAfterTripTitle": "다녀온 뒤",
+  "profileAfterTripEmpty": "남길 리뷰가 없습니다.",
+  "profileNextTripSuggest": "다음에 가볼 바다",
   "profileBookingCount": "{count}건",
   "@profileBookingCount": {
     "placeholders": {
