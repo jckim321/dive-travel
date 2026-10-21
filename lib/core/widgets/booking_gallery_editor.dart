@@ -24,7 +24,7 @@ class BookingGalleryItem {
       (url != null && url!.trim().isNotEmpty && !url!.startsWith('memory://'));
 }
 
-/// Booking.com-style editor: large cover + secondary grid.
+/// Booking.com-style editor: large cover + horizontal scroll of all photos.
 class BookingGalleryEditor extends StatelessWidget {
   const BookingGalleryEditor({
     super.key,
@@ -74,7 +74,7 @@ class BookingGalleryEditor extends StatelessWidget {
         if (items.isEmpty)
           _EmptyDrop(onAdd: onAdd, cornerRadius: cornerRadius)
         else
-          _BookingMosaic(
+          _CoverWithStrip(
             items: items,
             onRemove: onRemove,
             onMakeCover: onMakeCover,
@@ -181,8 +181,8 @@ class _EmptyDrop extends StatelessWidget {
   }
 }
 
-class _BookingMosaic extends StatelessWidget {
-  const _BookingMosaic({
+class _CoverWithStrip extends StatelessWidget {
+  const _CoverWithStrip({
     required this.items,
     required this.onRemove,
     required this.onMakeCover,
@@ -196,151 +196,91 @@ class _BookingMosaic extends StatelessWidget {
   final VoidCallback? onAdd;
   final double cornerRadius;
 
+  static const _stripHeight = 92.0;
+  static const _thumbSize = 88.0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final extras = items.length > 1 ? items.sublist(1) : const <BookingGalleryItem>[];
-    final showTiles = extras.take(4).toList();
-    final moreCount = items.length > 5 ? items.length - 5 : 0;
-    final narrow = MediaQuery.sizeOf(context).width < 560;
+    final thumbRadius = cornerRadius > 2 ? cornerRadius * 0.67 : cornerRadius;
 
-    final cover = _GalleryTile(
-      item: items.first,
-      isCover: true,
-      cornerRadius: cornerRadius,
-      label: l10n.exploreCoverPhoto,
-      badge: items.length > 1 ? l10n.exploreGalleryViewAll : null,
-      onRemove: () => onRemove(0),
-    );
-
-    final grid = _SecondaryGrid(
-      showTiles: showTiles,
-      moreCount: moreCount,
-      onAdd: onAdd,
-      onRemove: onRemove,
-      onMakeCover: onMakeCover,
-      cornerRadius: cornerRadius,
-    );
-
-    if (narrow) {
-      return Column(
-        children: [
-          AspectRatio(aspectRatio: 16 / 10, child: cover),
-          const SizedBox(height: 6),
-          AspectRatio(aspectRatio: 2.2, child: grid),
-        ],
-      );
-    }
-
-    return AspectRatio(
-      aspectRatio: 2.05,
-      child: Row(
-        children: [
-          Expanded(flex: 6, child: cover),
-          const SizedBox(width: 6),
-          Expanded(flex: 4, child: grid),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 10,
+          child: _GalleryTile(
+            item: items.first,
+            isCover: true,
+            cornerRadius: cornerRadius,
+            label: l10n.exploreCoverPhoto,
+            onRemove: () => onRemove(0),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: _stripHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length + (onAdd != null ? 1 : 0),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              if (index >= items.length) {
+                return _StripAddTile(
+                  size: _thumbSize,
+                  cornerRadius: thumbRadius,
+                  onTap: onAdd!,
+                );
+              }
+              final isCover = index == 0;
+              return SizedBox(
+                width: _thumbSize,
+                height: _thumbSize,
+                child: _GalleryTile(
+                  item: items[index],
+                  isCover: isCover,
+                  cornerRadius: thumbRadius,
+                  label: isCover ? '★' : null,
+                  onRemove: () => onRemove(index),
+                  onMakeCover: isCover ? null : () => onMakeCover(index),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _SecondaryGrid extends StatelessWidget {
-  const _SecondaryGrid({
-    required this.showTiles,
-    required this.moreCount,
-    required this.onRemove,
-    required this.onMakeCover,
-    this.onAdd,
-    this.cornerRadius = 12,
+class _StripAddTile extends StatelessWidget {
+  const _StripAddTile({
+    required this.size,
+    required this.cornerRadius,
+    required this.onTap,
   });
 
-  final List<BookingGalleryItem> showTiles;
-  final int moreCount;
-  final ValueChanged<int> onRemove;
-  final ValueChanged<int> onMakeCover;
-  final VoidCallback? onAdd;
+  final double size;
   final double cornerRadius;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final tileRadius = cornerRadius > 2 ? cornerRadius * 0.67 : cornerRadius;
-    Widget cell(int slotIndex) {
-      final tileIndex = slotIndex - 1;
-      if (tileIndex < showTiles.length) {
-        final tile = _GalleryTile(
-          item: showTiles[tileIndex],
-          cornerRadius: tileRadius,
-          onRemove: () => onRemove(slotIndex),
-          onMakeCover: () => onMakeCover(slotIndex),
-        );
-        if (slotIndex == 4 && moreCount > 0) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              tile,
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(tileRadius),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '+$moreCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-        return tile;
-      }
-      if (onAdd == null) {
-        return const SizedBox.shrink();
-      }
-      final radius = BorderRadius.circular(tileRadius);
-      return Material(
+    final radius = BorderRadius.circular(cornerRadius);
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Material(
         color: const Color(0xFF16324A),
         borderRadius: radius,
         child: InkWell(
-          onTap: onAdd,
+          onTap: onTap,
           borderRadius: radius,
           child: const Center(
             child: Icon(Icons.add, color: Colors.white70, size: 28),
           ),
         ),
-      );
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: Row(
-            children: [
-              Expanded(child: cell(1)),
-              const SizedBox(width: 6),
-              Expanded(child: cell(2)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Expanded(
-          child: Row(
-            children: [
-              Expanded(child: cell(3)),
-              const SizedBox(width: 6),
-              Expanded(child: cell(4)),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -353,7 +293,6 @@ class _GalleryTile extends StatelessWidget {
     this.isCover = false,
     this.cornerRadius = 8,
     this.label,
-    this.badge,
   });
 
   final BookingGalleryItem item;
@@ -362,7 +301,6 @@ class _GalleryTile extends StatelessWidget {
   final bool isCover;
   final double cornerRadius;
   final String? label;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -412,37 +350,6 @@ class _GalleryTile extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
-                  ),
-                ),
-              ),
-            ),
-          if (badge != null)
-            Positioned(
-              right: 10,
-              bottom: 10,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(chipRadius),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.photo_library_outlined, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        badge!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -608,4 +515,4 @@ class BookingFormSection extends StatelessWidget {
 }
 
 @visibleForTesting
-bool bookingGalleryUsesStackedLayout(double width) => width < 560;
+bool bookingGalleryUsesStackedLayout(double width) => true;

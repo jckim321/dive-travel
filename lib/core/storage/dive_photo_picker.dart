@@ -52,9 +52,11 @@ class DivePhotoPicker {
         defaultTargetPlatform == TargetPlatform.iOS;
     if (useImagePicker) {
       try {
+        final edge = GalleryLimits.maxEdgePx.toDouble();
         final files = await ImagePicker().pickMultiImage(
           imageQuality: GalleryLimits.jpegQuality,
-          maxWidth: GalleryLimits.maxEdgePx.toDouble(),
+          maxWidth: edge,
+          maxHeight: edge,
           limit: max,
         );
         if (files.isEmpty) {
@@ -112,11 +114,10 @@ class DivePhotoPicker {
   }
 
   /// Downscale long edge and re-encode as JPEG so large galleries fit in memory.
+  ///
+  /// Skips only when the decoded long edge is already within [GalleryLimits.maxEdgePx]
+  /// and the payload is a small JPEG. Oversized images always get resized.
   static Future<PickedPhoto> _compressIfNeeded(PickedPhoto photo) async {
-    if (photo.bytes.lengthInBytes < 400 * 1024 &&
-        photo.contentType == 'image/jpeg') {
-      return photo;
-    }
     try {
       final compressed = await compute(_compressIsolate, photo.bytes);
       if (compressed == null || compressed.isEmpty) {
@@ -135,6 +136,7 @@ class DivePhotoPicker {
     }
   }
 
+  /// Returns null when the original bytes should be kept (small + within edge).
   static Uint8List? _compressIsolate(Uint8List raw) {
     final decoded = img.decodeImage(raw);
     if (decoded == null) {
@@ -142,7 +144,15 @@ class DivePhotoPicker {
     }
     final longest =
         decoded.width > decoded.height ? decoded.width : decoded.height;
-    final sized = longest <= GalleryLimits.maxEdgePx
+    final withinEdge = longest <= GalleryLimits.maxEdgePx;
+    final smallJpeg = raw.lengthInBytes < 400 * 1024 &&
+        raw.length >= 2 &&
+        raw[0] == 0xFF &&
+        raw[1] == 0xD8;
+    if (withinEdge && smallJpeg) {
+      return null;
+    }
+    final sized = withinEdge
         ? decoded
         : img.copyResize(
             decoded,
