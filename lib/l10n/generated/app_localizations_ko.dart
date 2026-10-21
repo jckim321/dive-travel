@@ -1007,6 +1007,112 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String adminMembersPurchasesReviews(int purchases, int reviews) {
+    return '구매 $purchases회 · 리뷰 $reviews건';
+  }
+
+  @override
+  String get adminMembersGradeLocked => '수동 조정됨 · 자동 승급이 잠겨 있습니다.';
+
+  @override
+  String get adminMembersUnlockAuto => '자동 승급 허용';
+
+  @override
+  String get adminPulseTitle => '오늘의 맥박';
+
+  @override
+  String get adminPulseSalesMonth => '이번 달 매출';
+
+  @override
+  String get adminPulseConversion => '결제 전환율';
+
+  @override
+  String adminPulseFunnelHint(int paid, int requested) {
+    return '결제 $paid · 요청 $requested';
+  }
+
+  @override
+  String get adminPulseNewWeek => '이번 주 신규';
+
+  @override
+  String get adminVisitsTitle => '방문 빈도';
+
+  @override
+  String get adminVisitsDau => '오늘 방문 (DAU)';
+
+  @override
+  String get adminVisitsWau => '7일 방문 (WAU)';
+
+  @override
+  String get adminVisitsMau => '30일 방문 (MAU)';
+
+  @override
+  String get adminVisitsDormant => '휴면 (30일+)';
+
+  @override
+  String get adminNewMembersTitle => '신규 회원';
+
+  @override
+  String get adminNewMembersToday => '오늘 가입';
+
+  @override
+  String get adminNewMembersWeek => '7일 가입';
+
+  @override
+  String get adminNewMembersMonth => '30일 가입';
+
+  @override
+  String get adminNewMembersPaid => '신규→첫결제 (30일)';
+
+  @override
+  String get adminFunnelTitle => '예약 퍼널';
+
+  @override
+  String get adminFunnelRequested => '요청(미결제)';
+
+  @override
+  String get adminFunnelPaid => '결제·확정';
+
+  @override
+  String get adminFunnelCancelled => '취소·종료';
+
+  @override
+  String get adminFunnelUnreviewed => '리뷰 미작성 결제';
+
+  @override
+  String get adminNearUpgradeTitle => '승급 임박';
+
+  @override
+  String adminNearUpgradeHint(int purchases, int reviews) {
+    return '다음 등급까지 구매 $purchases · 리뷰 $reviews';
+  }
+
+  @override
+  String get adminProductSignalTitle => '상품·제휴 신호';
+
+  @override
+  String get adminProductSignalPublic => '공개 상품';
+
+  @override
+  String get adminProductSignalPending => '승인 대기';
+
+  @override
+  String get adminProductSignalShops => '제휴 샵';
+
+  @override
+  String gradeCelebrationTitle(String grade) {
+    return '$grade으로 승급했습니다!';
+  }
+
+  @override
+  String gradeCelebrationBody(String grade) {
+    return '바다를 함께 채워 주셔서 감사합니다. $grade 여정을 Dive Travel이 응원합니다.';
+  }
+
+  @override
+  String get gradeCelebrationThanks => '고마워요';
+
+  @override
   String get adminMembersBadgeInstructor => '강사';
 
   @override

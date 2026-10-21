@@ -79,11 +79,16 @@ class ProfileScreen extends StatelessWidget {
                     displayName: stats.displayName,
                     regionsCount: stats.uniqueRegionsCount,
                     logCount: stats.totalLogCount,
-                    paidBookings: activeBookings.length,
+                    memberGrade: stats.memberGrade,
                     isInstructor: stats.isInstructor,
                     onSettings: () => _openSettings(context),
                   ),
                 ),
+                if (stats.gradeCelebrationPending)
+                  _GradeCelebrationHost(
+                    grade: stats.gradeCelebrationTo ?? stats.memberGrade,
+                    onDismiss: store.clearGradeCelebration,
+                  ),
                 if (store.loading) const LinearProgressIndicator(minHeight: 2),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
@@ -139,8 +144,8 @@ class ProfileScreen extends StatelessWidget {
                           plate: 0,
                           empty: l10n.profileCraftedTripsHint,
                           onTap: () {
-                            final grade = ProfileDisplayGrade.fromUse(
-                              paidBookings: activeBookings.length,
+                            final grade = ProfileDisplayGrade.fromMember(
+                              grade: stats.memberGrade,
                               isInstructor: stats.isInstructor,
                             );
                             if (grade == ProfileDisplayGrade.silver) {
@@ -1021,4 +1026,117 @@ class _Pill extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 승급 시 축포 + 감사 인사. 한 번만 띄우고 [onDismiss]로 pending 클리어.
+class _GradeCelebrationHost extends StatefulWidget {
+  const _GradeCelebrationHost({
+    required this.grade,
+    required this.onDismiss,
+  });
+
+  final MemberGrade grade;
+  final Future<void> Function() onDismiss;
+
+  @override
+  State<_GradeCelebrationHost> createState() => _GradeCelebrationHostState();
+}
+
+class _GradeCelebrationHostState extends State<_GradeCelebrationHost>
+    with SingleTickerProviderStateMixin {
+  var _shown = false;
+  late final AnimationController _burst;
+
+  @override
+  void initState() {
+    super.initState();
+    _burst = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _open());
+  }
+
+  @override
+  void dispose() {
+    _burst.dispose();
+    super.dispose();
+  }
+
+  Future<void> _open() async {
+    if (_shown || !mounted) {
+      return;
+    }
+    _shown = true;
+    final l10n = AppLocalizations.of(context);
+    final label = switch (widget.grade) {
+      MemberGrade.silver => l10n.memberGradeSilver,
+      MemberGrade.gold => l10n.memberGradeGold,
+      MemberGrade.diamond => l10n.memberGradeDiamond,
+      MemberGrade.platinum => l10n.memberGradePlatinum,
+    };
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Stack(
+          children: [
+            AnimatedBuilder(
+              animation: _burst,
+              builder: (context, _) {
+                return CustomPaint(
+                  painter: _ConfettiPainter(progress: _burst.value),
+                  size: Size.infinite,
+                );
+              },
+            ),
+            AlertDialog(
+              key: const Key('grade-celebration-dialog'),
+              title: Text(l10n.gradeCelebrationTitle(label)),
+              content: Text(l10n.gradeCelebrationBody(label)),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.gradeCelebrationThanks),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+    await widget.onDismiss();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+class _ConfettiPainter extends CustomPainter {
+  _ConfettiPainter({required this.progress});
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    const colors = [
+      Color(0xFFFFD54F),
+      Color(0xFF4FC3F7),
+      Color(0xFFFF8A65),
+      Color(0xFF81C784),
+      Color(0xFFCE93D8),
+    ];
+    for (var i = 0; i < 48; i++) {
+      final t = (progress + i * 0.017) % 1.0;
+      final x = (i * 47 % size.width);
+      final y = size.height * 0.15 + t * size.height * 0.7;
+      paint.color = colors[i % colors.length].withValues(alpha: 1 - t * 0.6);
+      canvas.drawCircle(Offset(x, y), 3 + (i % 3).toDouble(), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConfettiPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

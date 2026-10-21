@@ -253,6 +253,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           pendingProducts: pendingProducts,
           members: store.members,
           salesByKind: store.salesThisMonthByKind(),
+          salesTotal: store.salesTotalThisMonth,
+          ops: store.adminOpsSnapshot(),
+          publicProductCount: [
+            for (final s in store.shops)
+              for (final p in (store.liveStatsFor(s.hullId)?.products ??
+                  store.liveStatsFor(s.id)?.products ??
+                  const []))
+                if (p.isListedPublicly) p,
+          ].length,
         );
       case _AdminHub.members:
         return switch (_membersSub) {
@@ -559,6 +568,9 @@ class _OverviewPane extends StatelessWidget {
     required this.pendingProducts,
     required this.members,
     required this.salesByKind,
+    required this.salesTotal,
+    required this.ops,
+    required this.publicProductCount,
   });
 
   final void Function(_AdminHub hub, {Object? sub, String? shopFilter}) onJump;
@@ -571,6 +583,9 @@ class _OverviewPane extends StatelessWidget {
   final int pendingProducts;
   final List<MemberAccount> members;
   final Map<String, int> salesByKind;
+  final int salesTotal;
+  final AdminOpsSnapshot ops;
+  final int publicProductCount;
 
   @override
   Widget build(BuildContext context) {
@@ -581,6 +596,7 @@ class _OverviewPane extends StatelessWidget {
     for (final m in members) {
       gradeCounts[m.grade] = (gradeCounts[m.grade] ?? 0) + 1;
     }
+    final conversionPct = (ops.conversionRate * 100).round();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
@@ -592,6 +608,11 @@ class _OverviewPane extends StatelessWidget {
         const SizedBox(height: 4),
         Text(l10n.adminDashboardSubtitle),
         const SizedBox(height: 16),
+        _SectionHeader(
+          icon: Icons.favorite_outline,
+          title: l10n.adminPulseTitle,
+        ),
+        const SizedBox(height: 10),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -601,9 +622,23 @@ class _OverviewPane extends StatelessWidget {
           childAspectRatio: 1.55,
           children: [
             _MetricCard(
-              label: l10n.adminMetricMembers,
-              value: '$memberCount',
+              label: l10n.adminPulseSalesMonth,
+              value: NumberFormat.compact(locale: 'ko').format(salesTotal),
               accent: AdminConsoleTheme.aqua,
+            ),
+            _MetricCard(
+              label: l10n.adminPulseConversion,
+              value: '$conversionPct%',
+              accent: AdminConsoleTheme.ice,
+              hint: l10n.adminPulseFunnelHint(
+                ops.bookingPaid,
+                ops.bookingRequested,
+              ),
+            ),
+            _MetricCard(
+              label: l10n.adminPulseNewWeek,
+              value: '${ops.new7d}',
+              accent: AdminConsoleTheme.amber,
               onTap: () => onJump(_AdminHub.members, sub: _MembersSub.divers),
             ),
             _MetricCard(
@@ -616,11 +651,10 @@ class _OverviewPane extends StatelessWidget {
                   onJump(_AdminHub.members, sub: _MembersSub.instructors),
             ),
             _MetricCard(
-              label: l10n.adminMetricPlaques,
-              value: '$plaqueCount',
-              accent: AdminConsoleTheme.amber,
-              onTap: () =>
-                  onJump(_AdminHub.members, sub: _MembersSub.partners),
+              label: l10n.adminMetricMembers,
+              value: '$memberCount',
+              accent: AdminConsoleTheme.aqua,
+              onTap: () => onJump(_AdminHub.members, sub: _MembersSub.divers),
             ),
             _MetricCard(
               label: l10n.adminProductsTab,
@@ -630,19 +664,83 @@ class _OverviewPane extends StatelessWidget {
                   : AdminConsoleTheme.aqua,
               onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.products),
             ),
-            _MetricCard(
-              label: l10n.adminMetricPosts,
-              value: '$postCount',
-              accent: AdminConsoleTheme.ice,
-              hint: hiddenCount > 0
-                  ? l10n.adminMetricHidden(hiddenCount)
-                  : null,
-              onTap: () => onJump(_AdminHub.ops, sub: _OpsSub.posts),
+          ],
+        ),
+        const SizedBox(height: 20),
+        _SectionHeader(
+          icon: Icons.visibility_outlined,
+          title: l10n.adminVisitsTitle,
+        ),
+        const SizedBox(height: 10),
+        _StatRowCard(
+          rows: [
+            (l10n.adminVisitsDau, '${ops.seenToday}'),
+            (l10n.adminVisitsWau, '${ops.seen7d}'),
+            (l10n.adminVisitsMau, '${ops.seen30d}'),
+            (l10n.adminVisitsDormant, '${ops.dormant}'),
+          ],
+        ),
+        const SizedBox(height: 20),
+        _SectionHeader(
+          icon: Icons.person_add_alt_1_outlined,
+          title: l10n.adminNewMembersTitle,
+        ),
+        const SizedBox(height: 10),
+        _StatRowCard(
+          rows: [
+            (l10n.adminNewMembersToday, '${ops.newToday}'),
+            (l10n.adminNewMembersWeek, '${ops.new7d}'),
+            (l10n.adminNewMembersMonth, '${ops.new30d}'),
+            (
+              l10n.adminNewMembersPaid,
+              ops.new30d == 0
+                  ? '—'
+                  : '${((ops.newPaid30d / ops.new30d) * 100).round()}%',
             ),
           ],
         ),
         const SizedBox(height: 20),
+        _SectionHeader(
+          icon: Icons.filter_alt_outlined,
+          title: l10n.adminFunnelTitle,
+        ),
+        const SizedBox(height: 10),
+        _StatRowCard(
+          rows: [
+            (l10n.adminFunnelRequested, '${ops.bookingRequested}'),
+            (l10n.adminFunnelPaid, '${ops.bookingPaid}'),
+            (l10n.adminFunnelCancelled, '${ops.bookingCancelled}'),
+            (l10n.adminFunnelUnreviewed, '${ops.unpaidReviewCount}'),
+          ],
+        ),
+        const SizedBox(height: 20),
         _SalesByKindCard(salesByKind: salesByKind),
+        const SizedBox(height: 20),
+        if (ops.nearUpgrade.isNotEmpty) ...[
+          _SectionHeader(
+            icon: Icons.trending_up,
+            title: l10n.adminNearUpgradeTitle,
+          ),
+          const SizedBox(height: 10),
+          for (final m in ops.nearUpgrade) ...[
+            _NearUpgradeTile(member: m),
+            const SizedBox(height: 8),
+          ],
+          const SizedBox(height: 12),
+        ],
+        _SectionHeader(
+          icon: Icons.inventory_2_outlined,
+          title: l10n.adminProductSignalTitle,
+        ),
+        const SizedBox(height: 10),
+        _StatRowCard(
+          rows: [
+            (l10n.adminProductSignalPublic, '$publicProductCount'),
+            (l10n.adminProductSignalPending, '$pendingProducts'),
+            (l10n.adminMetricPlaques, '$plaqueCount'),
+            (l10n.adminProductSignalShops, '$shopCount'),
+          ],
+        ),
         const SizedBox(height: 20),
         _SectionHeader(
           icon: Icons.bolt_outlined,
@@ -752,6 +850,88 @@ class _OverviewPane extends StatelessWidget {
   }
 }
 
+class _StatRowCard extends StatelessWidget {
+  const _StatRowCard({required this.rows});
+
+  final List<(String, String)> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AdminConsoleTheme.surfaceHigh,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Column(
+          children: [
+            for (final row in rows)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        row.$1,
+                        style: const TextStyle(color: AdminConsoleTheme.muted),
+                      ),
+                    ),
+                    Text(
+                      row.$2,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NearUpgradeTile extends StatelessWidget {
+  const _NearUpgradeTile({required this.member});
+
+  final MemberAccount member;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final deficit = MemberGrade.deficitToNext(
+      current: member.grade,
+      paidPurchases: member.paidPurchaseCount,
+      reviews: member.reviewCount,
+    );
+    return Material(
+      color: AdminConsoleTheme.surfaceHigh,
+      borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        dense: true,
+        title: Text(member.displayName),
+        subtitle: Text(
+          l10n.adminNearUpgradeHint(deficit.$1, deficit.$2),
+        ),
+        trailing: Text(
+          memberGradeShort(l10n, member.grade),
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AdminConsoleTheme.aqua,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String memberGradeShort(AppLocalizations l10n, MemberGrade grade) {
+  return switch (grade) {
+    MemberGrade.silver => l10n.memberGradeSilver,
+    MemberGrade.gold => l10n.memberGradeGold,
+    MemberGrade.diamond => l10n.memberGradeDiamond,
+    MemberGrade.platinum => l10n.memberGradePlatinum,
+  };
+}
+
 class _SalesByKindCard extends StatelessWidget {
   const _SalesByKindCard({required this.salesByKind});
 
@@ -829,14 +1009,14 @@ class _MetricCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.accent,
-    required this.onTap,
+    this.onTap,
     this.hint,
   });
 
   final String label;
   final String value;
   final Color accent;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String? hint;
 
   @override

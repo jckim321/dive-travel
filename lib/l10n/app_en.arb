@@ -323,6 +323,66 @@
       "count": { "type": "int" }
     }
   },
+  "adminMembersPurchasesReviews": "{purchases} purchases · {reviews} reviews",
+  "@adminMembersPurchasesReviews": {
+    "placeholders": {
+      "purchases": { "type": "int" },
+      "reviews": { "type": "int" }
+    }
+  },
+  "adminMembersGradeLocked": "Manually set · auto-upgrade locked.",
+  "adminMembersUnlockAuto": "Allow auto-upgrade",
+  "adminPulseTitle": "Pulse",
+  "adminPulseSalesMonth": "Sales this month",
+  "adminPulseConversion": "Paid conversion",
+  "adminPulseFunnelHint": "Paid {paid} · requested {requested}",
+  "@adminPulseFunnelHint": {
+    "placeholders": {
+      "paid": { "type": "int" },
+      "requested": { "type": "int" }
+    }
+  },
+  "adminPulseNewWeek": "New this week",
+  "adminVisitsTitle": "Visit frequency",
+  "adminVisitsDau": "Today (DAU)",
+  "adminVisitsWau": "7-day (WAU)",
+  "adminVisitsMau": "30-day (MAU)",
+  "adminVisitsDormant": "Dormant (30d+)",
+  "adminNewMembersTitle": "New members",
+  "adminNewMembersToday": "Joined today",
+  "adminNewMembersWeek": "Joined in 7d",
+  "adminNewMembersMonth": "Joined in 30d",
+  "adminNewMembersPaid": "New→first pay (30d)",
+  "adminFunnelTitle": "Booking funnel",
+  "adminFunnelRequested": "Requested (unpaid)",
+  "adminFunnelPaid": "Paid / confirmed",
+  "adminFunnelCancelled": "Cancelled / closed",
+  "adminFunnelUnreviewed": "Paid, no review",
+  "adminNearUpgradeTitle": "Near upgrade",
+  "adminNearUpgradeHint": "Need {purchases} purchases · {reviews} reviews",
+  "@adminNearUpgradeHint": {
+    "placeholders": {
+      "purchases": { "type": "int" },
+      "reviews": { "type": "int" }
+    }
+  },
+  "adminProductSignalTitle": "Product signals",
+  "adminProductSignalPublic": "Public products",
+  "adminProductSignalPending": "Pending approval",
+  "adminProductSignalShops": "Partner shops",
+  "gradeCelebrationTitle": "You reached {grade}!",
+  "@gradeCelebrationTitle": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "gradeCelebrationBody": "Thank you for diving with us. Dive Travel cheers your {grade} journey.",
+  "@gradeCelebrationBody": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "gradeCelebrationThanks": "Thanks",
   "adminMembersBadgeInstructor": "Instructor",
   "adminMembersBadgePartner": "Partner",
   "adminPartnerTierAll": "All",

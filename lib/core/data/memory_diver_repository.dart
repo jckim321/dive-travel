@@ -131,12 +131,14 @@ class MemoryDiverRepository implements DiverRepository {
         ),
       );
       _members.add(
-        const MemberAccount(
+        MemberAccount(
           uid: 'pending-instructor',
           email: 'instructor@dive.local',
           displayName: '대기 강사',
           grade: MemberGrade.silver,
           totalLogCount: 12,
+          createdAt: DateTime.now().subtract(const Duration(days: 2)),
+          lastSeenAt: DateTime.now().subtract(const Duration(days: 1)),
         ),
       );
     }
@@ -555,6 +557,7 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
     _shopController.add(_shopStats.values.toList());
+    _bumpActivityLocal(uid: uid, reviewDelta: 1);
   }
 
   @override
@@ -655,24 +658,133 @@ class MemoryDiverRepository implements DiverRepository {
     yield* _membersController.stream;
   }
 
+  void _bumpActivityLocal({
+    required String uid,
+    int purchaseDelta = 0,
+    int reviewDelta = 0,
+  }) {
+    final index = _members.indexWhere((item) => item.uid == uid);
+    MemberAccount? member = index >= 0 ? _members[index] : null;
+    final purchases = (member?.paidPurchaseCount ??
+            (_user?.uid == uid ? _snapshot.stats.paidPurchaseCount : 0)) +
+        purchaseDelta;
+    final reviews = (member?.reviewCount ??
+            (_user?.uid == uid ? _snapshot.stats.reviewCount : 0)) +
+        reviewDelta;
+    final locked = member?.gradeLocked ??
+        (_user?.uid == uid && _snapshot.stats.gradeLocked);
+    final current = member?.grade ??
+        (_user?.uid == uid ? _snapshot.stats.memberGrade : MemberGrade.silver);
+    final earned = MemberGrade.fromActivity(
+      paidPurchases: purchases,
+      reviews: reviews,
+    );
+    final upgraded = !locked && earned.rank > current.rank;
+    final nextGrade = upgraded ? earned : current;
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(
+        grade: nextGrade,
+        paidPurchaseCount: purchases,
+        reviewCount: reviews,
+      );
+    }
+    _membersController.add(List<MemberAccount>.from(_members));
+    if (_user?.uid == uid) {
+      _memberGrade = nextGrade;
+      _snapshot = DiverSnapshot(
+        stats: _snapshot.stats.copyWith(
+          memberGrade: nextGrade,
+          paidPurchaseCount: purchases,
+          reviewCount: reviews,
+          gradeCelebrationPending: upgraded ? true : null,
+          gradeCelebrationTo: upgraded ? earned : null,
+        ),
+        regions: _snapshot.regions,
+        logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
+      );
+      _emitSnapshot();
+    }
+  }
+
   @override
   Future<void> setMemberGrade({
     required String uid,
     required MemberGrade grade,
   }) async {
     final index = _members.indexWhere((item) => item.uid == uid);
+    final prev = index >= 0 ? _members[index].grade : MemberGrade.silver;
+    final celebrate = grade.rank > prev.rank;
     if (index >= 0) {
-      _members[index] = _members[index].copyWith(grade: grade);
+      _members[index] = _members[index].copyWith(
+        grade: grade,
+        gradeLocked: true,
+      );
     } else {
       _members.add(
-        MemberAccount(uid: uid, email: '', displayName: uid, grade: grade),
+        MemberAccount(
+          uid: uid,
+          email: '',
+          displayName: uid,
+          grade: grade,
+          gradeLocked: true,
+        ),
       );
     }
     _membersController.add(List<MemberAccount>.from(_members));
     if (_user?.uid == uid) {
       _memberGrade = grade;
       _snapshot = DiverSnapshot(
-        stats: _snapshot.stats.copyWith(memberGrade: grade),
+        stats: _snapshot.stats.copyWith(
+          memberGrade: grade,
+          gradeLocked: true,
+          gradeCelebrationPending: celebrate ? true : null,
+          gradeCelebrationTo: celebrate ? grade : null,
+        ),
+        regions: _snapshot.regions,
+        logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
+      );
+      _emitSnapshot();
+    }
+  }
+
+  @override
+  Future<void> unlockMemberGrade(String uid) async {
+    final index = _members.indexWhere((item) => item.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(gradeLocked: false);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+    if (_user?.uid == uid) {
+      _snapshot = DiverSnapshot(
+        stats: _snapshot.stats.copyWith(gradeLocked: false),
+        regions: _snapshot.regions,
+        logs: _snapshot.logs,
+        favoriteShopIds: _snapshot.favoriteShopIds,
+      );
+      _emitSnapshot();
+    }
+  }
+
+  @override
+  Future<void> touchLastSeen(String uid) async {
+    final now = DateTime.now();
+    final index = _members.indexWhere((item) => item.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(lastSeenAt: now);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+  }
+
+  @override
+  Future<void> clearGradeCelebration(String uid) async {
+    if (_user?.uid == uid) {
+      _snapshot = DiverSnapshot(
+        stats: _snapshot.stats.copyWith(
+          gradeCelebrationPending: false,
+          clearCelebrationTo: true,
+        ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
         favoriteShopIds: _snapshot.favoriteShopIds,
@@ -1029,6 +1141,9 @@ class MemoryDiverRepository implements DiverRepository {
     }
     _bookingController.add(List<TourBooking>.from(_bookings));
     _shopBookingController.add(List<TourBooking>.from(list));
+    if (updated.uid.isNotEmpty) {
+      _bumpActivityLocal(uid: updated.uid, purchaseDelta: 1);
+    }
     return true;
   }
 

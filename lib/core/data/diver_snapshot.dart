@@ -91,6 +91,14 @@ class DiverSnapshot {
         isBusiness: _isBusinessOf(data),
         ownedShopId: data['owned_shop_id'] as String?,
         memberGrade: _memberGradeOf(data),
+        paidPurchaseCount:
+            (data['paid_purchase_count'] as num?)?.toInt() ?? 0,
+        reviewCount: (data['review_count'] as num?)?.toInt() ?? 0,
+        gradeLocked: data['member_grade_locked'] == true,
+        gradeCelebrationPending: data['grade_celebration_pending'] == true,
+        gradeCelebrationTo: data['grade_celebration_to'] == null
+            ? null
+            : MemberGrade.parse(data['grade_celebration_to']),
       ),
       regions: regions,
       logs: logs,

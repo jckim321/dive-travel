@@ -855,6 +855,66 @@
       "count": { "type": "int" }
     }
   },
+  "adminMembersPurchasesReviews": "구매 {purchases}회 · 리뷰 {reviews}건",
+  "@adminMembersPurchasesReviews": {
+    "placeholders": {
+      "purchases": { "type": "int" },
+      "reviews": { "type": "int" }
+    }
+  },
+  "adminMembersGradeLocked": "수동 조정됨 · 자동 승급이 잠겨 있습니다.",
+  "adminMembersUnlockAuto": "자동 승급 허용",
+  "adminPulseTitle": "오늘의 맥박",
+  "adminPulseSalesMonth": "이번 달 매출",
+  "adminPulseConversion": "결제 전환율",
+  "adminPulseFunnelHint": "결제 {paid} · 요청 {requested}",
+  "@adminPulseFunnelHint": {
+    "placeholders": {
+      "paid": { "type": "int" },
+      "requested": { "type": "int" }
+    }
+  },
+  "adminPulseNewWeek": "이번 주 신규",
+  "adminVisitsTitle": "방문 빈도",
+  "adminVisitsDau": "오늘 방문 (DAU)",
+  "adminVisitsWau": "7일 방문 (WAU)",
+  "adminVisitsMau": "30일 방문 (MAU)",
+  "adminVisitsDormant": "휴면 (30일+)",
+  "adminNewMembersTitle": "신규 회원",
+  "adminNewMembersToday": "오늘 가입",
+  "adminNewMembersWeek": "7일 가입",
+  "adminNewMembersMonth": "30일 가입",
+  "adminNewMembersPaid": "신규→첫결제 (30일)",
+  "adminFunnelTitle": "예약 퍼널",
+  "adminFunnelRequested": "요청(미결제)",
+  "adminFunnelPaid": "결제·확정",
+  "adminFunnelCancelled": "취소·종료",
+  "adminFunnelUnreviewed": "리뷰 미작성 결제",
+  "adminNearUpgradeTitle": "승급 임박",
+  "adminNearUpgradeHint": "다음 등급까지 구매 {purchases} · 리뷰 {reviews}",
+  "@adminNearUpgradeHint": {
+    "placeholders": {
+      "purchases": { "type": "int" },
+      "reviews": { "type": "int" }
+    }
+  },
+  "adminProductSignalTitle": "상품·제휴 신호",
+  "adminProductSignalPublic": "공개 상품",
+  "adminProductSignalPending": "승인 대기",
+  "adminProductSignalShops": "제휴 샵",
+  "gradeCelebrationTitle": "{grade}으로 승급했습니다!",
+  "@gradeCelebrationTitle": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "gradeCelebrationBody": "바다를 함께 채워 주셔서 감사합니다. {grade} 여정을 Dive Travel이 응원합니다.",
+  "@gradeCelebrationBody": {
+    "placeholders": {
+      "grade": { "type": "String" }
+    }
+  },
+  "gradeCelebrationThanks": "고마워요",
   "adminMembersBadgeInstructor": "강사",
   "adminMembersBadgePartner": "제휴",
   "adminPartnerTierAll": "전체",

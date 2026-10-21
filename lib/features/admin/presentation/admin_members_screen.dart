@@ -45,7 +45,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       case _MemberGradeFilter.all:
         return true;
       case _MemberGradeFilter.needsAction:
-        return pendingUids.contains(member.uid) || member.isBusiness;
+        return pendingUids.contains(member.uid);
       case _MemberGradeFilter.silver:
         return member.grade == MemberGrade.silver;
       case _MemberGradeFilter.gold:
@@ -260,6 +260,13 @@ class _MemberCard extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             Text(
+              l10n.adminMembersPurchasesReviews(
+                member.paidPurchaseCount,
+                member.reviewCount,
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+            Text(
               l10n.adminMembersActivity(
                 member.totalLogCount,
                 member.uniqueRegionsCount,
@@ -271,6 +278,15 @@ class _MemberCard extends StatelessWidget {
               Text(
                 l10n.adminMembersSuggested(memberGradeLabel(l10n, suggested)),
                 style: theme.textTheme.bodySmall,
+              ),
+            ],
+            if (member.gradeLocked) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.adminMembersGradeLocked,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AdminConsoleTheme.amber,
+                ),
               ),
             ],
             const SizedBox(height: 12),
@@ -297,6 +313,17 @@ class _MemberCard extends StatelessWidget {
                       store.setMemberGrade(uid: member.uid, grade: value);
                     },
             ),
+            if (member.gradeLocked && !member.isAdmin) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  key: Key('admin-member-unlock-${member.uid}'),
+                  onPressed: () => store.unlockMemberGrade(member.uid),
+                  child: Text(l10n.adminMembersUnlockAuto),
+                ),
+              ),
+            ],
           ],
         ),
       ),

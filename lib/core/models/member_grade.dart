@@ -1,4 +1,4 @@
-/// 신규 가입 기본값은 [silver]. 승급은 관리자가 활동 기준으로 조정합니다.
+/// 신규 가입 기본값은 [silver]. 활동 기준 자동 승급 + 관리자 수동 조정.
 enum MemberGrade {
   silver,
   gold,
@@ -12,6 +12,8 @@ enum MemberGrade {
     MemberGrade.platinum,
   ];
 
+  int get rank => valuesInOrder.indexOf(this);
+
   static MemberGrade parse(dynamic value, {bool isInstructor = false}) {
     final parsed = switch (value) {
       'silver' || 'member' => MemberGrade.silver,
@@ -20,7 +22,6 @@ enum MemberGrade {
       'platinum' || 'instructor' => MemberGrade.platinum,
       _ => MemberGrade.silver,
     };
-    // Legacy docs sometimes omit grade; instructor role alone does not change tier.
     return isInstructor && value == null ? MemberGrade.silver : parsed;
   }
 
@@ -37,27 +38,60 @@ enum MemberGrade {
     }
   }
 
-  /// 자동 승급이 아니라 관리자 화면의 참고용입니다.
-  static MemberGrade suggested({
-    required int totalLogCount,
-    required int uniqueRegionsCount,
-    required bool isInstructor,
+  /// 구매·리뷰 동시충족(AND). 골드 3/1, 다이아 10/5, 플래티넘 30/15.
+  static MemberGrade fromActivity({
+    required int paidPurchases,
+    required int reviews,
   }) {
-    // Role (instructor) is separate from membership tier.
-    if (totalLogCount >= 50 || uniqueRegionsCount >= 5) {
+    if (paidPurchases >= 30 && reviews >= 15) {
       return MemberGrade.platinum;
     }
-    if (totalLogCount >= 25 || uniqueRegionsCount >= 3) {
+    if (paidPurchases >= 10 && reviews >= 5) {
       return MemberGrade.diamond;
     }
-    if (totalLogCount >= 10) {
+    if (paidPurchases >= 3 && reviews >= 1) {
       return MemberGrade.gold;
     }
     return MemberGrade.silver;
   }
+
+  /// 관리자 참고용 — [fromActivity]와 동일.
+  static MemberGrade suggested({
+    required int paidPurchases,
+    required int reviews,
+    int totalLogCount = 0,
+    int uniqueRegionsCount = 0,
+    bool isInstructor = false,
+  }) {
+    return fromActivity(paidPurchases: paidPurchases, reviews: reviews);
+  }
+
+  static MemberGrade higher(MemberGrade a, MemberGrade b) {
+    return a.rank >= b.rank ? a : b;
+  }
+
+  /// 다음 등급까지 부족한 구매·리뷰. 이미 플래티넘이면 (0,0).
+  static (int purchases, int reviews) deficitToNext({
+    required MemberGrade current,
+    required int paidPurchases,
+    required int reviews,
+  }) {
+    final target = switch (current) {
+      MemberGrade.silver => (3, 1),
+      MemberGrade.gold => (10, 5),
+      MemberGrade.diamond => (30, 15),
+      MemberGrade.platinum => (0, 0),
+    };
+    if (target.$1 == 0 && target.$2 == 0) {
+      return (0, 0);
+    }
+    final needP = (target.$1 - paidPurchases).clamp(0, 999);
+    final needR = (target.$2 - reviews).clamp(0, 999);
+    return (needP, needR);
+  }
 }
 
-/// 상단 프로필에만 보이는 이용 등급. 저장된 [MemberGrade]는 바꾸지 않습니다.
+/// 마이페이지 표시용. 저장된 [MemberGrade] (+강사 역할)을 따릅니다.
 enum ProfileDisplayGrade {
   silver,
   gold,
@@ -65,22 +99,39 @@ enum ProfileDisplayGrade {
   platinum,
   instructor;
 
-  static ProfileDisplayGrade fromUse({
-    required int paidBookings,
+  static ProfileDisplayGrade fromMember({
+    required MemberGrade grade,
     required bool isInstructor,
   }) {
     if (isInstructor) {
       return ProfileDisplayGrade.instructor;
     }
-    if (paidBookings >= 10) {
-      return ProfileDisplayGrade.platinum;
+    return switch (grade) {
+      MemberGrade.silver => ProfileDisplayGrade.silver,
+      MemberGrade.gold => ProfileDisplayGrade.gold,
+      MemberGrade.diamond => ProfileDisplayGrade.diamond,
+      MemberGrade.platinum => ProfileDisplayGrade.platinum,
+    };
+  }
+
+  /// 레거시 호출 호환 — [fromMember] 사용을 권장.
+  static ProfileDisplayGrade fromUse({
+    required int paidBookings,
+    required bool isInstructor,
+    MemberGrade? memberGrade,
+  }) {
+    if (memberGrade != null) {
+      return fromMember(grade: memberGrade, isInstructor: isInstructor);
     }
-    if (paidBookings >= 5) {
-      return ProfileDisplayGrade.diamond;
+    if (isInstructor) {
+      return ProfileDisplayGrade.instructor;
     }
-    if (paidBookings >= 1) {
-      return ProfileDisplayGrade.gold;
-    }
-    return ProfileDisplayGrade.silver;
+    return fromMember(
+      grade: MemberGrade.fromActivity(
+        paidPurchases: paidBookings,
+        reviews: paidBookings > 0 ? 1 : 0,
+      ),
+      isInstructor: false,
+    );
   }
 }

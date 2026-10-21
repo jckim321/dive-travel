@@ -8,27 +8,27 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
-  test('신규 회원 기본 등급은 실버회원이다', () {
+  test('활동 AND 조건으로 등급이 정해진다', () {
     expect(MemberGrade.parse(null), MemberGrade.silver);
-    expect(MemberGrade.parse('member'), MemberGrade.silver);
-    expect(MemberGrade.parse('special'), MemberGrade.gold);
-    expect(MemberGrade.parse('vip'), MemberGrade.diamond);
-    expect(MemberGrade.parse('instructor'), MemberGrade.platinum);
     expect(
-      MemberGrade.suggested(
-        totalLogCount: 0,
-        uniqueRegionsCount: 0,
-        isInstructor: false,
-      ),
+      MemberGrade.fromActivity(paidPurchases: 0, reviews: 0),
       MemberGrade.silver,
     );
     expect(
-      MemberGrade.suggested(
-        totalLogCount: 12,
-        uniqueRegionsCount: 1,
-        isInstructor: false,
-      ),
+      MemberGrade.fromActivity(paidPurchases: 3, reviews: 0),
+      MemberGrade.silver,
+    );
+    expect(
+      MemberGrade.fromActivity(paidPurchases: 3, reviews: 1),
       MemberGrade.gold,
+    );
+    expect(
+      MemberGrade.fromActivity(paidPurchases: 10, reviews: 5),
+      MemberGrade.diamond,
+    );
+    expect(
+      MemberGrade.fromActivity(paidPurchases: 30, reviews: 15),
+      MemberGrade.platinum,
     );
   });
 
@@ -42,10 +42,9 @@ void main() {
       grade: MemberGrade.diamond,
     );
     final after = await repo.watchMembers().first;
-    expect(
-      after.firstWhere((item) => item.uid == 'pending-instructor').grade,
-      MemberGrade.diamond,
-    );
+    final member = after.firstWhere((item) => item.uid == 'pending-instructor');
+    expect(member.grade, MemberGrade.diamond);
+    expect(member.gradeLocked, isTrue);
   });
 
   testWidgets('관리자 대시보드에 회원 관리 메뉴가 있다', (tester) async {
@@ -86,25 +85,26 @@ void main() {
     expect(find.text('대기 강사'), findsOneWidget);
   });
 
-  test('표시 등급은 결제 횟수와 강사 승인으로 나뉜다', () {
+  test('표시 등급은 저장된 회원 등급을 따른다', () {
     expect(
-      ProfileDisplayGrade.fromUse(paidBookings: 0, isInstructor: false),
+      ProfileDisplayGrade.fromMember(
+        grade: MemberGrade.silver,
+        isInstructor: false,
+      ),
       ProfileDisplayGrade.silver,
     );
     expect(
-      ProfileDisplayGrade.fromUse(paidBookings: 1, isInstructor: false),
+      ProfileDisplayGrade.fromMember(
+        grade: MemberGrade.gold,
+        isInstructor: false,
+      ),
       ProfileDisplayGrade.gold,
     );
     expect(
-      ProfileDisplayGrade.fromUse(paidBookings: 5, isInstructor: false),
-      ProfileDisplayGrade.diamond,
-    );
-    expect(
-      ProfileDisplayGrade.fromUse(paidBookings: 10, isInstructor: false),
-      ProfileDisplayGrade.platinum,
-    );
-    expect(
-      ProfileDisplayGrade.fromUse(paidBookings: 0, isInstructor: true),
+      ProfileDisplayGrade.fromMember(
+        grade: MemberGrade.silver,
+        isInstructor: true,
+      ),
       ProfileDisplayGrade.instructor,
     );
   });

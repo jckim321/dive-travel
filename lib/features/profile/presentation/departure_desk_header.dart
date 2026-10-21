@@ -4,14 +4,14 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Identity header on My page. Grade is a display ladder, not the stored admin grade.
+/// Identity header on My page. Grade follows stored [MemberGrade].
 class DepartureDeskHeader extends StatelessWidget {
   const DepartureDeskHeader({
     super.key,
     required this.displayName,
     required this.regionsCount,
     required this.logCount,
-    required this.paidBookings,
+    required this.memberGrade,
     required this.isInstructor,
     required this.onSettings,
   });
@@ -19,7 +19,7 @@ class DepartureDeskHeader extends StatelessWidget {
   final String displayName;
   final int regionsCount;
   final int logCount;
-  final int paidBookings;
+  final MemberGrade memberGrade;
   final bool isInstructor;
   final VoidCallback onSettings;
 
@@ -27,8 +27,8 @@ class DepartureDeskHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final grade = ProfileDisplayGrade.fromUse(
-      paidBookings: paidBookings,
+    final grade = ProfileDisplayGrade.fromMember(
+      grade: memberGrade,
       isInstructor: isInstructor,
     );
     final gradeLabel = switch (grade) {

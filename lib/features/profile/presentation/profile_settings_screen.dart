@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
@@ -19,13 +20,9 @@ class ProfileSettingsScreen extends StatelessWidget {
     final session = SessionScope.of(context);
     final stats = store.stats;
     final email = session.user?.email ?? '';
-    final paidCount = [
-      for (final booking in store.bookings)
-        if (booking.isActive) booking,
-    ].length;
-    final useGrade = ProfileDisplayGrade.fromUse(
-      paidBookings: paidCount,
-      isInstructor: false,
+    final useGrade = ProfileDisplayGrade.fromMember(
+      grade: stats.memberGrade,
+      isInstructor: stats.isInstructor,
     );
 
     return Scaffold(
@@ -53,7 +50,7 @@ class ProfileSettingsScreen extends StatelessWidget {
                 _GradeLadder(current: useGrade),
                 const SizedBox(height: 10),
                 Text(
-                  _nextGradeLine(l10n, useGrade, paidCount),
+                  _nextGradeLine(l10n, stats),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -198,24 +195,22 @@ String _useGradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
   };
 }
 
-String _nextGradeLine(
-  AppLocalizations l10n,
-  ProfileDisplayGrade grade,
-  int paidCount,
-) {
-  return switch (grade) {
-    ProfileDisplayGrade.silver => l10n.profileGradeFirstTide,
-    ProfileDisplayGrade.gold => l10n.profileGradeStepsLeft(
-      l10n.profileGradeDiamond,
-      5 - paidCount,
-    ),
-    ProfileDisplayGrade.diamond => l10n.profileGradeStepsLeft(
-      l10n.profileGradePlatinum,
-      10 - paidCount,
-    ),
-    ProfileDisplayGrade.platinum || ProfileDisplayGrade.instructor =>
-      l10n.profileGradeDeepest,
+String _nextGradeLine(AppLocalizations l10n, DiverStats stats) {
+  if (stats.isInstructor || stats.memberGrade == MemberGrade.platinum) {
+    return l10n.profileGradeDeepest;
+  }
+  final deficit = MemberGrade.deficitToNext(
+    current: stats.memberGrade,
+    paidPurchases: stats.paidPurchaseCount,
+    reviews: stats.reviewCount,
+  );
+  final nextLabel = switch (stats.memberGrade) {
+    MemberGrade.silver => l10n.profileGradeGold,
+    MemberGrade.gold => l10n.profileGradeDiamond,
+    MemberGrade.diamond => l10n.profileGradePlatinum,
+    MemberGrade.platinum => l10n.profileGradePlatinum,
   };
+  return '${l10n.adminNearUpgradeHint(deficit.$1, deficit.$2)} → $nextLabel';
 }
 
 class _GradeLadder extends StatefulWidget {

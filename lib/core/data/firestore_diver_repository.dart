@@ -796,6 +796,7 @@ class FirestoreDiverRepository implements DiverRepository {
         }, SetOptions(merge: true));
       }
     });
+    await _bumpActivityAndMaybeUpgrade(uid: uid, reviewDelta: 1);
   }
 
   @override
@@ -969,6 +970,16 @@ class FirestoreDiverRepository implements DiverRepository {
     final business = data['is_business'] == true ||
         data['isBusiness'] == true ||
         owned.isNotEmpty;
+    DateTime? createdAt;
+    final createdRaw = data['created_at'];
+    if (createdRaw is Timestamp) {
+      createdAt = createdRaw.toDate();
+    }
+    DateTime? lastSeenAt;
+    final seenRaw = data['last_seen_at'];
+    if (seenRaw is Timestamp) {
+      lastSeenAt = seenRaw.toDate();
+    }
     return MemberAccount(
       uid: doc.id,
       email: data['email'] as String? ?? '',
@@ -986,7 +997,51 @@ class FirestoreDiverRepository implements DiverRepository {
       isInstructor: instructor,
       isBusiness: business,
       ownedShopId: owned,
+      paidPurchaseCount: (data['paid_purchase_count'] as num?)?.toInt() ?? 0,
+      reviewCount: (data['review_count'] as num?)?.toInt() ?? 0,
+      gradeLocked: data['member_grade_locked'] == true,
+      createdAt: createdAt,
+      lastSeenAt: lastSeenAt,
     );
+  }
+
+  Future<void> _bumpActivityAndMaybeUpgrade({
+    required String uid,
+    int purchaseDelta = 0,
+    int reviewDelta = 0,
+  }) async {
+    if (uid.isEmpty || (purchaseDelta == 0 && reviewDelta == 0)) {
+      return;
+    }
+    final ref = _userDoc(uid);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? <String, dynamic>{};
+      final purchases =
+          ((data['paid_purchase_count'] as num?)?.toInt() ?? 0) +
+          purchaseDelta;
+      final reviews =
+          ((data['review_count'] as num?)?.toInt() ?? 0) + reviewDelta;
+      final locked = data['member_grade_locked'] == true;
+      final current = MemberGrade.parse(
+        data['member_grade'] ?? data['memberGrade'],
+      );
+      final earned = MemberGrade.fromActivity(
+        paidPurchases: purchases,
+        reviews: reviews,
+      );
+      final patch = <String, dynamic>{
+        'paid_purchase_count': purchases,
+        'review_count': reviews,
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+      if (!locked && earned.rank > current.rank) {
+        patch['member_grade'] = earned.firestoreValue;
+        patch['grade_celebration_pending'] = true;
+        patch['grade_celebration_to'] = earned.firestoreValue;
+      }
+      tx.set(ref, patch, SetOptions(merge: true));
+    });
   }
 
   @override
@@ -1002,9 +1057,47 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> setMemberGrade({
     required String uid,
     required MemberGrade grade,
-  }) {
-    return _userDoc(uid).set({
+  }) async {
+    final snap = await _userDoc(uid).get();
+    final current = MemberGrade.parse(
+      snap.data()?['member_grade'] ?? snap.data()?['memberGrade'],
+    );
+    final patch = <String, dynamic>{
       'member_grade': grade.firestoreValue,
+      'member_grade_locked': true,
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    if (grade.rank > current.rank) {
+      patch['grade_celebration_pending'] = true;
+      patch['grade_celebration_to'] = grade.firestoreValue;
+    }
+    await _userDoc(uid).set(patch, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> unlockMemberGrade(String uid) {
+    return _userDoc(uid).set({
+      'member_grade_locked': false,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> touchLastSeen(String uid) {
+    if (uid.isEmpty) {
+      return Future.value();
+    }
+    return _userDoc(uid).set({
+      'last_seen_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> clearGradeCelebration(String uid) {
+    return _userDoc(uid).set({
+      'grade_celebration_pending': false,
+      'grade_celebration_to': FieldValue.delete(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
@@ -1363,6 +1456,10 @@ class FirestoreDiverRepository implements DiverRepository {
       await _bookings(booking.uid)
           .doc(bookingId)
           .set(patch, SetOptions(merge: true));
+      await _bumpActivityAndMaybeUpgrade(
+        uid: booking.uid,
+        purchaseDelta: 1,
+      );
     }
     return true;
   }

@@ -1944,6 +1944,198 @@ abstract class AppLocalizations {
   /// **'강사 승인 대기 {count}건 — 강사인증 탭에서 처리하세요.'**
   String adminMembersNeedsActionHint(int count);
 
+  /// No description provided for @adminMembersPurchasesReviews.
+  ///
+  /// In ko, this message translates to:
+  /// **'구매 {purchases}회 · 리뷰 {reviews}건'**
+  String adminMembersPurchasesReviews(int purchases, int reviews);
+
+  /// No description provided for @adminMembersGradeLocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'수동 조정됨 · 자동 승급이 잠겨 있습니다.'**
+  String get adminMembersGradeLocked;
+
+  /// No description provided for @adminMembersUnlockAuto.
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 승급 허용'**
+  String get adminMembersUnlockAuto;
+
+  /// No description provided for @adminPulseTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘의 맥박'**
+  String get adminPulseTitle;
+
+  /// No description provided for @adminPulseSalesMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 매출'**
+  String get adminPulseSalesMonth;
+
+  /// No description provided for @adminPulseConversion.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 전환율'**
+  String get adminPulseConversion;
+
+  /// No description provided for @adminPulseFunnelHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 {paid} · 요청 {requested}'**
+  String adminPulseFunnelHint(int paid, int requested);
+
+  /// No description provided for @adminPulseNewWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주 신규'**
+  String get adminPulseNewWeek;
+
+  /// No description provided for @adminVisitsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'방문 빈도'**
+  String get adminVisitsTitle;
+
+  /// No description provided for @adminVisitsDau.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 방문 (DAU)'**
+  String get adminVisitsDau;
+
+  /// No description provided for @adminVisitsWau.
+  ///
+  /// In ko, this message translates to:
+  /// **'7일 방문 (WAU)'**
+  String get adminVisitsWau;
+
+  /// No description provided for @adminVisitsMau.
+  ///
+  /// In ko, this message translates to:
+  /// **'30일 방문 (MAU)'**
+  String get adminVisitsMau;
+
+  /// No description provided for @adminVisitsDormant.
+  ///
+  /// In ko, this message translates to:
+  /// **'휴면 (30일+)'**
+  String get adminVisitsDormant;
+
+  /// No description provided for @adminNewMembersTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'신규 회원'**
+  String get adminNewMembersTitle;
+
+  /// No description provided for @adminNewMembersToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 가입'**
+  String get adminNewMembersToday;
+
+  /// No description provided for @adminNewMembersWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'7일 가입'**
+  String get adminNewMembersWeek;
+
+  /// No description provided for @adminNewMembersMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'30일 가입'**
+  String get adminNewMembersMonth;
+
+  /// No description provided for @adminNewMembersPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'신규→첫결제 (30일)'**
+  String get adminNewMembersPaid;
+
+  /// No description provided for @adminFunnelTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 퍼널'**
+  String get adminFunnelTitle;
+
+  /// No description provided for @adminFunnelRequested.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청(미결제)'**
+  String get adminFunnelRequested;
+
+  /// No description provided for @adminFunnelPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제·확정'**
+  String get adminFunnelPaid;
+
+  /// No description provided for @adminFunnelCancelled.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·종료'**
+  String get adminFunnelCancelled;
+
+  /// No description provided for @adminFunnelUnreviewed.
+  ///
+  /// In ko, this message translates to:
+  /// **'리뷰 미작성 결제'**
+  String get adminFunnelUnreviewed;
+
+  /// No description provided for @adminNearUpgradeTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'승급 임박'**
+  String get adminNearUpgradeTitle;
+
+  /// No description provided for @adminNearUpgradeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 등급까지 구매 {purchases} · 리뷰 {reviews}'**
+  String adminNearUpgradeHint(int purchases, int reviews);
+
+  /// No description provided for @adminProductSignalTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품·제휴 신호'**
+  String get adminProductSignalTitle;
+
+  /// No description provided for @adminProductSignalPublic.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개 상품'**
+  String get adminProductSignalPublic;
+
+  /// No description provided for @adminProductSignalPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get adminProductSignalPending;
+
+  /// No description provided for @adminProductSignalShops.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 샵'**
+  String get adminProductSignalShops;
+
+  /// No description provided for @gradeCelebrationTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'{grade}으로 승급했습니다!'**
+  String gradeCelebrationTitle(String grade);
+
+  /// No description provided for @gradeCelebrationBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'바다를 함께 채워 주셔서 감사합니다. {grade} 여정을 Dive Travel이 응원합니다.'**
+  String gradeCelebrationBody(String grade);
+
+  /// No description provided for @gradeCelebrationThanks.
+  ///
+  /// In ko, this message translates to:
+  /// **'고마워요'**
+  String get gradeCelebrationThanks;
+
   /// No description provided for @adminMembersBadgeInstructor.
   ///
   /// In ko, this message translates to:

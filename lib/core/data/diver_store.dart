@@ -232,6 +232,95 @@ class DiverStore extends ChangeNotifier {
     return total;
   }
 
+  /// 경영 대시보드용 방문·신규·퍼널 집계.
+  AdminOpsSnapshot adminOpsSnapshot([DateTime? now]) {
+    final clock = now ?? DateTime.now();
+    final todayStart = DateTime(clock.year, clock.month, clock.day);
+    final weekAgo = todayStart.subtract(const Duration(days: 7));
+    final monthAgo = todayStart.subtract(const Duration(days: 30));
+    var seenToday = 0;
+    var seen7 = 0;
+    var seen30 = 0;
+    var dormant = 0;
+    var newToday = 0;
+    var new7 = 0;
+    var new30 = 0;
+    var newPaid30 = 0;
+    for (final m in _members) {
+      final seen = m.lastSeenAt;
+      if (seen != null) {
+        if (!seen.isBefore(todayStart)) seenToday++;
+        if (!seen.isBefore(weekAgo)) seen7++;
+        if (!seen.isBefore(monthAgo)) {
+          seen30++;
+        } else {
+          dormant++;
+        }
+      } else {
+        dormant++;
+      }
+      final created = m.createdAt;
+      if (created != null) {
+        if (!created.isBefore(todayStart)) newToday++;
+        if (!created.isBefore(weekAgo)) new7++;
+        if (!created.isBefore(monthAgo)) {
+          new30++;
+          if (m.paidPurchaseCount > 0) newPaid30++;
+        }
+      }
+    }
+    var requested = 0;
+    var paid = 0;
+    var cancelled = 0;
+    var unpaidReviews = 0;
+    for (final b in _salesBookings) {
+      if (b.isPaid && b.isActive) {
+        paid++;
+        if (!b.reviewed) unpaidReviews++;
+      } else if (b.isActive && !b.isPaid) {
+        requested++;
+      } else if (!b.isActive) {
+        cancelled++;
+      }
+    }
+    final conversion = (paid + requested) == 0
+        ? 0.0
+        : paid / (paid + requested);
+    final nearUpgrade = [
+      for (final m in _members)
+        if (m.grade != MemberGrade.platinum && !m.gradeLocked)
+          m,
+    ]..sort((a, b) {
+        final da = MemberGrade.deficitToNext(
+          current: a.grade,
+          paidPurchases: a.paidPurchaseCount,
+          reviews: a.reviewCount,
+        );
+        final db = MemberGrade.deficitToNext(
+          current: b.grade,
+          paidPurchases: b.paidPurchaseCount,
+          reviews: b.reviewCount,
+        );
+        return (da.$1 + da.$2).compareTo(db.$1 + db.$2);
+      });
+    return AdminOpsSnapshot(
+      seenToday: seenToday,
+      seen7d: seen7,
+      seen30d: seen30,
+      dormant: dormant,
+      newToday: newToday,
+      new7d: new7,
+      new30d: new30,
+      newPaid30d: newPaid30,
+      bookingRequested: requested,
+      bookingPaid: paid,
+      bookingCancelled: cancelled,
+      conversionRate: conversion,
+      unpaidReviewCount: unpaidReviews,
+      nearUpgrade: nearUpgrade.take(5).toList(),
+    );
+  }
+
   List<ShopLiveStats> get plaqueQueue => [
     for (final stats in _shopStats)
       if (stats.qualifiesForPlaque || stats.plaqueStatus != PlaqueStatus.none)
@@ -715,6 +804,26 @@ class DiverStore extends ChangeNotifier {
     required MemberGrade grade,
   }) {
     return _repository.setMemberGrade(uid: uid, grade: grade);
+  }
+
+  Future<void> unlockMemberGrade(String uid) {
+    return _repository.unlockMemberGrade(uid);
+  }
+
+  Future<void> touchLastSeen() {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return Future.value();
+    }
+    return _repository.touchLastSeen(uid);
+  }
+
+  Future<void> clearGradeCelebration() {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return Future.value();
+    }
+    return _repository.clearGradeCelebration(uid);
   }
 
   Future<void> rejectInstructor(String uid) {
@@ -1254,6 +1363,7 @@ class DiverStore extends ChangeNotifier {
       notifyListeners();
     });
     unawaited(_repository.ensureSeedPosts());
+    unawaited(_repository.touchLastSeen(user.uid));
     _diverSubscription = _repository
         .watchDiver(user.uid)
         .listen(

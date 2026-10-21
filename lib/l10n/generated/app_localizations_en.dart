@@ -1033,6 +1033,112 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String adminMembersPurchasesReviews(int purchases, int reviews) {
+    return '$purchases purchases · $reviews reviews';
+  }
+
+  @override
+  String get adminMembersGradeLocked => 'Manually set · auto-upgrade locked.';
+
+  @override
+  String get adminMembersUnlockAuto => 'Allow auto-upgrade';
+
+  @override
+  String get adminPulseTitle => 'Pulse';
+
+  @override
+  String get adminPulseSalesMonth => 'Sales this month';
+
+  @override
+  String get adminPulseConversion => 'Paid conversion';
+
+  @override
+  String adminPulseFunnelHint(int paid, int requested) {
+    return 'Paid $paid · requested $requested';
+  }
+
+  @override
+  String get adminPulseNewWeek => 'New this week';
+
+  @override
+  String get adminVisitsTitle => 'Visit frequency';
+
+  @override
+  String get adminVisitsDau => 'Today (DAU)';
+
+  @override
+  String get adminVisitsWau => '7-day (WAU)';
+
+  @override
+  String get adminVisitsMau => '30-day (MAU)';
+
+  @override
+  String get adminVisitsDormant => 'Dormant (30d+)';
+
+  @override
+  String get adminNewMembersTitle => 'New members';
+
+  @override
+  String get adminNewMembersToday => 'Joined today';
+
+  @override
+  String get adminNewMembersWeek => 'Joined in 7d';
+
+  @override
+  String get adminNewMembersMonth => 'Joined in 30d';
+
+  @override
+  String get adminNewMembersPaid => 'New→first pay (30d)';
+
+  @override
+  String get adminFunnelTitle => 'Booking funnel';
+
+  @override
+  String get adminFunnelRequested => 'Requested (unpaid)';
+
+  @override
+  String get adminFunnelPaid => 'Paid / confirmed';
+
+  @override
+  String get adminFunnelCancelled => 'Cancelled / closed';
+
+  @override
+  String get adminFunnelUnreviewed => 'Paid, no review';
+
+  @override
+  String get adminNearUpgradeTitle => 'Near upgrade';
+
+  @override
+  String adminNearUpgradeHint(int purchases, int reviews) {
+    return 'Need $purchases purchases · $reviews reviews';
+  }
+
+  @override
+  String get adminProductSignalTitle => 'Product signals';
+
+  @override
+  String get adminProductSignalPublic => 'Public products';
+
+  @override
+  String get adminProductSignalPending => 'Pending approval';
+
+  @override
+  String get adminProductSignalShops => 'Partner shops';
+
+  @override
+  String gradeCelebrationTitle(String grade) {
+    return 'You reached $grade!';
+  }
+
+  @override
+  String gradeCelebrationBody(String grade) {
+    return 'Thank you for diving with us. Dive Travel cheers your $grade journey.';
+  }
+
+  @override
+  String get gradeCelebrationThanks => 'Thanks';
+
+  @override
   String get adminMembersBadgeInstructor => 'Instructor';
 
   @override

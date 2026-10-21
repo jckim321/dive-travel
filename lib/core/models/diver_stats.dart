@@ -12,6 +12,11 @@ class DiverStats {
     this.isBusiness = false,
     this.ownedShopId,
     this.memberGrade = MemberGrade.silver,
+    this.paidPurchaseCount = 0,
+    this.reviewCount = 0,
+    this.gradeLocked = false,
+    this.gradeCelebrationPending = false,
+    this.gradeCelebrationTo,
   });
 
   final String displayName;
@@ -23,6 +28,11 @@ class DiverStats {
   final bool isBusiness;
   final String? ownedShopId;
   final MemberGrade memberGrade;
+  final int paidPurchaseCount;
+  final int reviewCount;
+  final bool gradeLocked;
+  final bool gradeCelebrationPending;
+  final MemberGrade? gradeCelebrationTo;
 
   bool get isVerifiedPro => proStatus == ProVerificationStatus.approved;
   bool get isProPending => proStatus == ProVerificationStatus.pending;
@@ -97,6 +107,12 @@ class DiverStats {
     bool? isBusiness,
     String? ownedShopId,
     MemberGrade? memberGrade,
+    int? paidPurchaseCount,
+    int? reviewCount,
+    bool? gradeLocked,
+    bool? gradeCelebrationPending,
+    MemberGrade? gradeCelebrationTo,
+    bool clearCelebrationTo = false,
   }) {
     return DiverStats(
       displayName: displayName,
@@ -108,6 +124,14 @@ class DiverStats {
       isBusiness: isBusiness ?? this.isBusiness,
       ownedShopId: ownedShopId ?? this.ownedShopId,
       memberGrade: memberGrade ?? this.memberGrade,
+      paidPurchaseCount: paidPurchaseCount ?? this.paidPurchaseCount,
+      reviewCount: reviewCount ?? this.reviewCount,
+      gradeLocked: gradeLocked ?? this.gradeLocked,
+      gradeCelebrationPending:
+          gradeCelebrationPending ?? this.gradeCelebrationPending,
+      gradeCelebrationTo: clearCelebrationTo
+          ? null
+          : (gradeCelebrationTo ?? this.gradeCelebrationTo),
     );
   }
 }

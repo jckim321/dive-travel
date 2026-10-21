@@ -101,6 +101,12 @@ abstract class DiverRepository {
     required MemberGrade grade,
   });
 
+  Future<void> unlockMemberGrade(String uid);
+
+  Future<void> touchLastSeen(String uid);
+
+  Future<void> clearGradeCelebration(String uid);
+
   Future<void> setPlaqueStatus({
     required String shopId,
     required PlaqueStatus status,

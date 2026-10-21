@@ -176,6 +176,11 @@ class MemberAccount {
     this.isInstructor = false,
     this.isBusiness = false,
     this.ownedShopId = '',
+    this.paidPurchaseCount = 0,
+    this.reviewCount = 0,
+    this.gradeLocked = false,
+    this.createdAt,
+    this.lastSeenAt,
   });
 
   final String uid;
@@ -188,17 +193,26 @@ class MemberAccount {
   final bool isInstructor;
   final bool isBusiness;
   final String ownedShopId;
+  final int paidPurchaseCount;
+  final int reviewCount;
+  final bool gradeLocked;
+  final DateTime? createdAt;
+  final DateTime? lastSeenAt;
 
-  MemberGrade get suggestedGrade => MemberGrade.suggested(
-        totalLogCount: totalLogCount,
-        uniqueRegionsCount: uniqueRegionsCount,
-        isInstructor: isInstructor,
+  MemberGrade get suggestedGrade => MemberGrade.fromActivity(
+        paidPurchases: paidPurchaseCount,
+        reviews: reviewCount,
       );
 
   MemberAccount copyWith({
     MemberGrade? grade,
     bool? isBusiness,
     String? ownedShopId,
+    int? paidPurchaseCount,
+    int? reviewCount,
+    bool? gradeLocked,
+    DateTime? createdAt,
+    DateTime? lastSeenAt,
   }) {
     return MemberAccount(
       uid: uid,
@@ -211,8 +225,47 @@ class MemberAccount {
       isInstructor: isInstructor,
       isBusiness: isBusiness ?? this.isBusiness,
       ownedShopId: ownedShopId ?? this.ownedShopId,
+      paidPurchaseCount: paidPurchaseCount ?? this.paidPurchaseCount,
+      reviewCount: reviewCount ?? this.reviewCount,
+      gradeLocked: gradeLocked ?? this.gradeLocked,
+      createdAt: createdAt ?? this.createdAt,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
     );
   }
+}
+
+class AdminOpsSnapshot {
+  const AdminOpsSnapshot({
+    required this.seenToday,
+    required this.seen7d,
+    required this.seen30d,
+    required this.dormant,
+    required this.newToday,
+    required this.new7d,
+    required this.new30d,
+    required this.newPaid30d,
+    required this.bookingRequested,
+    required this.bookingPaid,
+    required this.bookingCancelled,
+    required this.conversionRate,
+    required this.unpaidReviewCount,
+    required this.nearUpgrade,
+  });
+
+  final int seenToday;
+  final int seen7d;
+  final int seen30d;
+  final int dormant;
+  final int newToday;
+  final int new7d;
+  final int new30d;
+  final int newPaid30d;
+  final int bookingRequested;
+  final int bookingPaid;
+  final int bookingCancelled;
+  final double conversionRate;
+  final int unpaidReviewCount;
+  final List<MemberAccount> nearUpgrade;
 }
 
 abstract final class CommunityPostCatalog {
