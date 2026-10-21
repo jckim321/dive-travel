@@ -1206,6 +1206,36 @@ abstract class AppLocalizations {
   /// **'★ {rating} (후기 {count}개)'**
   String reviewCountLabel(String rating, int count);
 
+  /// 상품 상세 하단의 후기 목록 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 후기'**
+  String get reviewSectionTitle;
+
+  /// 후기 구역 상단의 평균·개수 요약입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'★ {rating} · 후기 {count}개'**
+  String reviewSectionSummary(String rating, int count);
+
+  /// 상세 후기 목록이 비어 있을 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 후기가 없어요. 첫 후기를 남겨 보세요'**
+  String get reviewSectionEmpty;
+
+  /// 후기를 10개씩 더 불러오는 버튼입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get reviewLoadMore;
+
+  /// 후기 작성자 이름이 없을 때 표시합니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버'**
+  String get reviewAuthorFallback;
+
   /// No description provided for @reviewSafety.
   ///
   /// In ko, this message translates to:

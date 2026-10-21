@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
@@ -73,6 +74,8 @@ class MemoryDiverRepository implements DiverRepository {
   ProVerificationStatus _proStatus = ProVerificationStatus.none;
   MemberGrade _memberGrade = MemberGrade.silver;
   final _shopStats = <String, ShopLiveStats>{};
+  final _shopReviews = <String, List<GuestReview>>{};
+  int _reviewSequence = 0;
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
   final _members = <MemberAccount>[];
@@ -523,6 +526,7 @@ class MemoryDiverRepository implements DiverRepository {
     String? logId,
     String? productId,
     String? comment,
+    String? authorDisplayName,
   }) async {
     final current = _shopStats[shopId];
     final count = (current?.reviewCount ?? 0) + 1;
@@ -541,6 +545,18 @@ class MemoryDiverRepository implements DiverRepository {
         else
           item,
     ];
+    _reviewSequence += 1;
+    final review = GuestReview(
+      id: 'review-$_reviewSequence',
+      shopId: shopId,
+      stars: guestStars,
+      comment: comment?.trim() ?? '',
+      createdAt: DateTime.now().toUtc(),
+      authorDisplayName: authorDisplayName?.trim() ?? '',
+      productId: resolvedProductId ?? '',
+    );
+    final existing = _shopReviews[shopId] ?? <GuestReview>[];
+    _shopReviews[shopId] = [review, ...existing];
     _shopStats[shopId] = ShopLiveStats(
       shopId: shopId,
       reviewCount: count,
@@ -586,6 +602,35 @@ class MemoryDiverRepository implements DiverRepository {
     }
     _shopController.add(_shopStats.values.toList());
     _bumpActivityLocal(uid: uid, reviewDelta: 1);
+  }
+
+  @override
+  Future<GuestReviewsPage> fetchShopReviewsPage({
+    required String shopId,
+    int limit = 10,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 10 : limit;
+    final all = List<GuestReview>.from(_shopReviews[shopId] ?? const []);
+    all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    var start = 0;
+    if (cursor is int) {
+      start = cursor;
+    }
+    if (start < 0) {
+      start = 0;
+    }
+    if (start >= all.length) {
+      return const GuestReviewsPage(reviews: [], hasMore: false);
+    }
+    final end = (start + pageSize).clamp(0, all.length);
+    final page = all.sublist(start, end);
+    final next = end;
+    return GuestReviewsPage(
+      reviews: page,
+      hasMore: next < all.length,
+      cursor: next < all.length ? next : null,
+    );
   }
 
   @override

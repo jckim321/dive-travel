@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
+import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
@@ -767,6 +768,7 @@ class DiverStore extends ChangeNotifier {
     if (uid == null) {
       return;
     }
+    final name = _stats.displayName.trim();
     await _repository.submitOperationReview(
       uid: uid,
       shopId: shopId,
@@ -777,6 +779,19 @@ class DiverStore extends ChangeNotifier {
       logId: logId,
       productId: productId,
       comment: comment,
+      authorDisplayName: name.isEmpty ? null : name,
+    );
+  }
+
+  Future<GuestReviewsPage> fetchShopReviewsPage({
+    required String shopId,
+    int limit = 10,
+    Object? cursor,
+  }) {
+    return _repository.fetchShopReviewsPage(
+      shopId: shopId,
+      limit: limit,
+      cursor: cursor,
     );
   }
 

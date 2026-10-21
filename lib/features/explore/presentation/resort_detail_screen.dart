@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
+import 'package:dive_travel_app/features/explore/presentation/diver_reviews_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -177,6 +178,12 @@ class ResortDetailScreen extends StatelessWidget {
                   hull: hull,
                   catalogListings: listings,
                   products: products,
+                ),
+                const SizedBox(height: 28),
+                DiverReviewsSection(
+                  shopId: hull.hullId,
+                  rating: ratingValue,
+                  reviewCount: ratingCount,
                 ),
               ],
             ),

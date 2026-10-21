@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
@@ -726,6 +727,7 @@ class FirestoreDiverRepository implements DiverRepository {
     String? logId,
     String? productId,
     String? comment,
+    String? authorDisplayName,
   }) async {
     final shop = DiveShopCatalog.byId(shopId);
     final shopRef = _shops.doc(shopId);
@@ -735,6 +737,7 @@ class FirestoreDiverRepository implements DiverRepository {
         ? null
         : _bookings(uid).doc(bookingId);
     final resolvedProductId = productId?.trim();
+    final publicName = authorDisplayName?.trim();
 
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(shopRef);
@@ -785,6 +788,8 @@ class FirestoreDiverRepository implements DiverRepository {
         'booking_id': ?bookingId,
         'log_id': ?logId,
         'product_id': ?resolvedProductId,
+        if (publicName != null && publicName.isNotEmpty)
+          'author_display_name': publicName,
         'created_at': FieldValue.serverTimestamp(),
       };
       transaction.set(reviewRef, review);
@@ -813,6 +818,34 @@ class FirestoreDiverRepository implements DiverRepository {
       }
     });
     await _bumpActivityAndMaybeUpgrade(uid: uid, reviewDelta: 1);
+  }
+
+  @override
+  Future<GuestReviewsPage> fetchShopReviewsPage({
+    required String shopId,
+    int limit = 10,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 10 : limit;
+    Query<Map<String, dynamic>> query = _shops
+        .doc(shopId)
+        .collection('reviews')
+        .orderBy('created_at', descending: true)
+        .limit(pageSize + 1);
+    if (cursor is DocumentSnapshot<Map<String, dynamic>>) {
+      query = query.startAfterDocument(cursor);
+    }
+    final snap = await query.get();
+    final docs = snap.docs;
+    final hasMore = docs.length > pageSize;
+    final pageDocs = hasMore ? docs.sublist(0, pageSize) : docs;
+    return GuestReviewsPage(
+      reviews: [
+        for (final doc in pageDocs) GuestReview.fromMap(doc.id, doc.data()),
+      ],
+      hasMore: hasMore,
+      cursor: pageDocs.isEmpty ? null : pageDocs.last,
+    );
   }
 
   @override

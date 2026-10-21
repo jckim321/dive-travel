@@ -622,6 +622,23 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get reviewSectionTitle => '다이버 후기';
+
+  @override
+  String reviewSectionSummary(String rating, int count) {
+    return '★ $rating · 후기 $count개';
+  }
+
+  @override
+  String get reviewSectionEmpty => '아직 후기가 없어요. 첫 후기를 남겨 보세요';
+
+  @override
+  String get reviewLoadMore => '더 보기';
+
+  @override
+  String get reviewAuthorFallback => '다이버';
+
+  @override
   String get reviewSafety => '① 안전 및 장비 관리';
 
   @override

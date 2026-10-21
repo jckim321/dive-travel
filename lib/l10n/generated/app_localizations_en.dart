@@ -627,6 +627,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get reviewSectionTitle => 'Diver reviews';
+
+  @override
+  String reviewSectionSummary(String rating, int count) {
+    return '★ $rating · $count reviews';
+  }
+
+  @override
+  String get reviewSectionEmpty => 'No reviews yet. Be the first to leave one.';
+
+  @override
+  String get reviewLoadMore => 'Load more';
+
+  @override
+  String get reviewAuthorFallback => 'Diver';
+
+  @override
   String get reviewSafety => '1. Safety and gear';
 
   @override

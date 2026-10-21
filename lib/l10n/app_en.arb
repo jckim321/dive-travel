@@ -195,6 +195,17 @@
       "count": { "type": "int" }
     }
   },
+  "reviewSectionTitle": "Diver reviews",
+  "reviewSectionSummary": "★ {rating} · {count} reviews",
+  "@reviewSectionSummary": {
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "reviewSectionEmpty": "No reviews yet. Be the first to leave one.",
+  "reviewLoadMore": "Load more",
+  "reviewAuthorFallback": "Diver",
   "reviewSafety": "1. Safety and gear",
   "reviewGuide": "2. Guide professionalism",
   "reviewBoat": "3. Boat and facilities",

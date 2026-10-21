@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 abstract class DiverRepository {
@@ -75,6 +76,14 @@ abstract class DiverRepository {
     String? logId,
     String? productId,
     String? comment,
+    String? authorDisplayName,
+  });
+
+  /// Newest-first page of guest reviews for a shop (default 10).
+  Future<GuestReviewsPage> fetchShopReviewsPage({
+    required String shopId,
+    int limit = 10,
+    Object? cursor,
   });
 
   Future<void> submitProVerification({
