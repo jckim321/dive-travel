@@ -580,6 +580,19 @@
   "reviewDone": "리뷰 완료",
   "reviewSaved": "후기가 저장되었습니다.",
   "reviewSaveFailed": "후기 저장에 실패했습니다.",
+  "reviewAlreadySubmitted": "이미 후기를 작성했어요",
+  "@reviewAlreadySubmitted": {
+    "description": "같은 예약에 후기를 다시 쓸 때 안내입니다."
+  },
+  "reviewBookingRequired": "다녀온 예약이 확인된 경우에만 후기를 남길 수 있어요",
+  "@reviewBookingRequired": {
+    "description": "예약 없이 후기를 쓰려 할 때 안내입니다."
+  },
+  "reviewInvalidStars": "별점은 1부터 5까지만 가능해요",
+  "reviewCommentTooLong": "후기는 2,000자까지 작성할 수 있어요",
+  "@reviewCommentTooLong": {
+    "description": "후기 글자 수 초과 안내입니다."
+  },
   "homeDiveStarSubtitle": "오퍼레이션 평균 {rating} · 리뷰 {count}건",
   "@homeDiveStarSubtitle": {
     "description": "홈 추천 리조트 서브타이틀입니다.",

@@ -671,6 +671,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewSaveFailed => 'Could not save the review.';
 
   @override
+  String get reviewAlreadySubmitted =>
+      'You already left a review for this trip.';
+
+  @override
+  String get reviewBookingRequired =>
+      'You can leave a review only for a completed booking.';
+
+  @override
+  String get reviewInvalidStars => 'Ratings must be between 1 and 5.';
+
+  @override
+  String get reviewCommentTooLong => 'Reviews can be up to 2,000 characters.';
+
+  @override
   String homeDiveStarSubtitle(String rating, int count) {
     return 'Ops average $rating · $count reviews';
   }

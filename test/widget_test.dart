@@ -229,8 +229,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text(l10n.reviewTitle), findsOneWidget);
-    expect(find.text(l10n.reviewStarsLabel), findsOneWidget);
-    expect(find.byKey(const Key('review-star-5')), findsOneWidget);
+    expect(find.byKey(const Key('review-gate-message')), findsOneWidget);
+    expect(find.text(l10n.reviewBookingRequired), findsOneWidget);
     expect(find.byKey(const Key('review-submit')), findsOneWidget);
   });
 

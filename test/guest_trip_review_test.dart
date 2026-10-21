@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
+import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
@@ -50,6 +51,20 @@ void main() {
         professionalPrice: 160,
       );
       await repo.saveShopProduct(shopId: shopId, product: product);
+      repo.seedBooking(
+        TourBooking(
+          id: 'booking-1',
+          uid: 'test-user',
+          shopId: shopId,
+          shopName: 'Shop A',
+          productName: 'Blue Trip',
+          productId: 'prod-1',
+          price: 200,
+          createdAt: DateTime.now().subtract(const Duration(days: 5)),
+          tourDate: DateTime.now().subtract(const Duration(days: 1)),
+          status: BookingStatus.confirmed,
+        ),
+      );
 
       await repo.submitOperationReview(
         uid: 'test-user',
@@ -57,6 +72,7 @@ void main() {
         safety: 4,
         guide: 4,
         boat: 4,
+        bookingId: 'booking-1',
         productId: 'prod-1',
         comment: 'Nice trip',
       );

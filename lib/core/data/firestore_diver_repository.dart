@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
@@ -729,28 +730,48 @@ class FirestoreDiverRepository implements DiverRepository {
     String? comment,
     String? authorDisplayName,
   }) async {
+    final resolvedBookingId = bookingId?.trim() ?? '';
+    if (resolvedBookingId.isEmpty) {
+      throw const ReviewValidationException(ReviewValidationCode.bookingRequired);
+    }
+    final safeSafety = OperationReviewPolicy.clampStars(safety);
+    final safeGuide = OperationReviewPolicy.clampStars(guide);
+    final safeBoat = OperationReviewPolicy.clampStars(boat);
+    OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
+    final safeComment = OperationReviewPolicy.normalizeComment(comment);
+
     final shop = DiveShopCatalog.byId(shopId);
     final shopRef = _shops.doc(shopId);
     final reviewRef = shopRef.collection('reviews').doc();
     final userReviewRef = _userDoc(uid).collection('reviews').doc(reviewRef.id);
-    final bookingRef = bookingId == null || bookingId.isEmpty
-        ? null
-        : _bookings(uid).doc(bookingId);
+    final bookingRef = _bookings(uid).doc(resolvedBookingId);
     final resolvedProductId = productId?.trim();
     final publicName = authorDisplayName?.trim();
 
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(shopRef);
-      if (bookingRef != null) {
-        await transaction.get(bookingRef);
+      final bookingSnap = await transaction.get(bookingRef);
+      if (!bookingSnap.exists) {
+        throw const ReviewValidationException(
+          ReviewValidationCode.bookingNotFound,
+        );
       }
+      final booking = _toBooking(bookingSnap.id, bookingSnap.data() ?? {});
+      OperationReviewPolicy.requireEligibleBooking(
+        bookingId: resolvedBookingId,
+        bookings: [booking],
+        uid: uid,
+        shopId: shopId,
+      );
+
       final data = snapshot.data() ?? {};
       final count = (data['review_count'] as num?)?.toInt() ?? 0;
       final nextCount = count + 1;
       final sumSafety =
-          ((data['sum_safety'] as num?)?.toDouble() ?? 0) + safety;
-      final sumGuide = ((data['sum_guide'] as num?)?.toDouble() ?? 0) + guide;
-      final sumBoat = ((data['sum_boat'] as num?)?.toDouble() ?? 0) + boat;
+          ((data['sum_safety'] as num?)?.toDouble() ?? 0) + safeSafety;
+      final sumGuide =
+          ((data['sum_guide'] as num?)?.toDouble() ?? 0) + safeGuide;
+      final sumBoat = ((data['sum_boat'] as num?)?.toDouble() ?? 0) + safeBoat;
       final avgSafety = sumSafety / nextCount;
       final avgGuide = sumGuide / nextCount;
       final avgBoat = sumBoat / nextCount;
@@ -765,13 +786,18 @@ class FirestoreDiverRepository implements DiverRepository {
         boat: avgBoat,
         reviewCount: nextCount,
       );
-      final guestStars = ((safety + guide + boat) / 3).round().clamp(1, 5);
+      final guestStars =
+          ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
+      final productKey = (resolvedProductId != null &&
+              resolvedProductId.isNotEmpty)
+          ? resolvedProductId
+          : (booking.productId.isNotEmpty ? booking.productId : null);
       List<Map<String, dynamic>>? nextProducts;
-      if (resolvedProductId != null && resolvedProductId.isNotEmpty) {
+      if (productKey != null) {
         final products = ShopProduct.listFrom(shopId, data['products']);
         nextProducts = [
           for (final item in products)
-            if (item.id == resolvedProductId)
+            if (item.id == productKey)
               item.withGuestStarReview(guestStars).toMap()
             else
               item.toMap(),
@@ -780,14 +806,14 @@ class FirestoreDiverRepository implements DiverRepository {
       final review = <String, dynamic>{
         'uid': uid,
         'shop_id': shopId,
-        'safety': safety,
-        'guide': guide,
-        'boat': boat,
-        'overall': (safety + guide + boat) / 3,
-        'comment': ?comment,
-        'booking_id': ?bookingId,
+        'safety': safeSafety,
+        'guide': safeGuide,
+        'boat': safeBoat,
+        'overall': (safeSafety + safeGuide + safeBoat) / 3,
+        'comment': ?safeComment,
+        'booking_id': resolvedBookingId,
         'log_id': ?logId,
-        'product_id': ?resolvedProductId,
+        'product_id': ?productKey,
         if (publicName != null && publicName.isNotEmpty)
           'author_display_name': publicName,
         'created_at': FieldValue.serverTimestamp(),
@@ -810,12 +836,10 @@ class FirestoreDiverRepository implements DiverRepository {
         'products': ?nextProducts,
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      if (bookingRef != null) {
-        transaction.set(bookingRef, {
-          'reviewed': true,
-          'updated_at': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      }
+      transaction.set(bookingRef, {
+        'reviewed': true,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     });
     await _bumpActivityAndMaybeUpgrade(uid: uid, reviewDelta: 1);
   }

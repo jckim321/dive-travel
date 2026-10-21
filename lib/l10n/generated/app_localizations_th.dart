@@ -658,6 +658,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get reviewSaveFailed => '후기 저장에 실패했습니다.';
 
   @override
+  String get reviewAlreadySubmitted => '이미 후기를 작성했어요';
+
+  @override
+  String get reviewBookingRequired => '다녀온 예약이 확인된 경우에만 후기를 남길 수 있어요';
+
+  @override
+  String get reviewInvalidStars => '별점은 1부터 5까지만 가능해요';
+
+  @override
+  String get reviewCommentTooLong => '후기는 2,000자까지 작성할 수 있어요';
+
+  @override
   String homeDiveStarSubtitle(String rating, int count) {
     return '오퍼레이션 평균 $rating · 리뷰 $count건';
   }

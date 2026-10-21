@@ -29,6 +29,41 @@ service cloud.firestore {
       return isBusiness() && userDoc().owned_shop_id == shopId;
     }
 
+    function scoreInRange(value) {
+      return value is number && value >= 1 && value <= 5;
+    }
+
+    function reviewCommentOk() {
+      return !('comment' in request.resource.data)
+        || (request.resource.data.comment is string
+            && request.resource.data.comment.size() <= 2000);
+    }
+
+    function ownBookingPath(bookingId) {
+      return /databases/$(database)/documents/users/$(request.auth.uid)/bookings/$(bookingId);
+    }
+
+    function reviewBookingEligible(shopId) {
+      return request.resource.data.keys().hasAll(['booking_id'])
+        && request.resource.data.booking_id is string
+        && request.resource.data.booking_id.size() > 0
+        && exists(ownBookingPath(request.resource.data.booking_id))
+        && get(ownBookingPath(request.resource.data.booking_id)).data.shop_id == shopId
+        && get(ownBookingPath(request.resource.data.booking_id)).data.reviewed != true
+        && get(ownBookingPath(request.resource.data.booking_id)).data.status in ['requested', 'confirmed'];
+    }
+
+    function validShopReviewCreate(shopId) {
+      return isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.shop_id == shopId
+        && scoreInRange(request.resource.data.safety)
+        && scoreInRange(request.resource.data.guide)
+        && scoreInRange(request.resource.data.boat)
+        && reviewCommentOk()
+        && reviewBookingEligible(shopId);
+    }
+
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -49,7 +84,16 @@ service cloud.firestore {
       }
 
       match /reviews/{reviewId} {
-        allow get, list, create: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId)
+          && request.resource.data.uid == request.auth.uid
+          && scoreInRange(request.resource.data.safety)
+          && scoreInRange(request.resource.data.guide)
+          && scoreInRange(request.resource.data.boat)
+          && reviewCommentOk()
+          && request.resource.data.keys().hasAll(['booking_id'])
+          && request.resource.data.booking_id is string
+          && request.resource.data.booking_id.size() > 0;
       }
     }
 
@@ -59,7 +103,7 @@ service cloud.firestore {
 
       match /reviews/{reviewId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow create: if validShopReviewCreate(shopId);
       }
 
       match /bookings/{bookingId} {

@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
@@ -528,19 +529,38 @@ class MemoryDiverRepository implements DiverRepository {
     String? comment,
     String? authorDisplayName,
   }) async {
+    final resolvedBookingId = bookingId?.trim() ?? '';
+    if (resolvedBookingId.isEmpty) {
+      throw const ReviewValidationException(ReviewValidationCode.bookingRequired);
+    }
+    final safeSafety = OperationReviewPolicy.clampStars(safety);
+    final safeGuide = OperationReviewPolicy.clampStars(guide);
+    final safeBoat = OperationReviewPolicy.clampStars(boat);
+    OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
+    final safeComment = OperationReviewPolicy.normalizeComment(comment);
+    final booking = OperationReviewPolicy.requireEligibleBooking(
+      bookingId: resolvedBookingId,
+      bookings: _bookings,
+      uid: uid,
+      shopId: shopId,
+    );
+
     final current = _shopStats[shopId];
     final count = (current?.reviewCount ?? 0) + 1;
     final avgSafety =
-        ((current?.avgSafety ?? 0) * (count - 1) + safety) / count;
-    final avgGuide = ((current?.avgGuide ?? 0) * (count - 1) + guide) / count;
-    final avgBoat = ((current?.avgBoat ?? 0) * (count - 1) + boat) / count;
-    final guestStars = ((safety + guide + boat) / 3).round().clamp(1, 5);
-    final resolvedProductId = productId?.trim();
+        ((current?.avgSafety ?? 0) * (count - 1) + safeSafety) / count;
+    final avgGuide =
+        ((current?.avgGuide ?? 0) * (count - 1) + safeGuide) / count;
+    final avgBoat =
+        ((current?.avgBoat ?? 0) * (count - 1) + safeBoat) / count;
+    final guestStars =
+        ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
+    final resolvedProductId = (productId?.trim().isNotEmpty ?? false)
+        ? productId!.trim()
+        : (booking.productId.isNotEmpty ? booking.productId : null);
     final products = [
       for (final item in current?.products ?? const <ShopProduct>[])
-        if (resolvedProductId != null &&
-            resolvedProductId.isNotEmpty &&
-            item.id == resolvedProductId)
+        if (resolvedProductId != null && item.id == resolvedProductId)
           item.withGuestStarReview(guestStars)
         else
           item,
@@ -550,7 +570,7 @@ class MemoryDiverRepository implements DiverRepository {
       id: 'review-$_reviewSequence',
       shopId: shopId,
       stars: guestStars,
-      comment: comment?.trim() ?? '',
+      comment: safeComment ?? '',
       createdAt: DateTime.now().toUtc(),
       authorDisplayName: authorDisplayName?.trim() ?? '',
       productId: resolvedProductId ?? '',
@@ -592,16 +612,21 @@ class MemoryDiverRepository implements DiverRepository {
       galleryUrls: current?.galleryUrls ?? const [],
       amenities: current?.amenities ?? const [],
     );
-    if (bookingId != null) {
-      final index = _bookings.indexWhere((item) => item.id == bookingId);
-      if (index >= 0) {
-        final old = _bookings[index];
-        _bookings[index] = old.copyWith(reviewed: true);
-        _bookingController.add(List<TourBooking>.from(_bookings));
-      }
+    final index = _bookings.indexWhere((item) => item.id == resolvedBookingId);
+    if (index >= 0) {
+      final old = _bookings[index];
+      _bookings[index] = old.copyWith(reviewed: true);
+      _bookingController.add(List<TourBooking>.from(_bookings));
     }
     _shopController.add(_shopStats.values.toList());
     _bumpActivityLocal(uid: uid, reviewDelta: 1);
+  }
+
+  /// Test helper: insert a booking into the in-memory list.
+  void seedBooking(TourBooking booking) {
+    _bookings.removeWhere((item) => item.id == booking.id);
+    _bookings.add(booking);
+    _bookingController.add(List<TourBooking>.from(_bookings));
   }
 
   @override

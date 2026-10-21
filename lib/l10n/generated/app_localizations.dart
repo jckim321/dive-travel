@@ -1290,6 +1290,30 @@ abstract class AppLocalizations {
   /// **'후기 저장에 실패했습니다.'**
   String get reviewSaveFailed;
 
+  /// 같은 예약에 후기를 다시 쓸 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 후기를 작성했어요'**
+  String get reviewAlreadySubmitted;
+
+  /// 예약 없이 후기를 쓰려 할 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'다녀온 예약이 확인된 경우에만 후기를 남길 수 있어요'**
+  String get reviewBookingRequired;
+
+  /// No description provided for @reviewInvalidStars.
+  ///
+  /// In ko, this message translates to:
+  /// **'별점은 1부터 5까지만 가능해요'**
+  String get reviewInvalidStars;
+
+  /// 후기 글자 수 초과 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기는 2,000자까지 작성할 수 있어요'**
+  String get reviewCommentTooLong;
+
   /// 홈 추천 리조트 서브타이틀입니다.
   ///
   /// In ko, this message translates to:
