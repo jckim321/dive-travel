@@ -1,4 +1,5 @@
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
 
 /// Client + repository checks for guest trip reviews (anti-fake rules 1–4).
 abstract final class OperationReviewPolicy {
@@ -112,6 +113,77 @@ abstract final class OperationReviewPolicy {
     }
     return null;
   }
+
+  /// Empty details pass; present values must be allow-listed.
+  static ReviewDetails normalizeDetails(ReviewDetails? raw) {
+    if (raw == null || raw.isEmpty) {
+      return const ReviewDetails();
+    }
+    final level = raw.diverLevel?.trim();
+    if (level != null &&
+        level.isNotEmpty &&
+        !ReviewDetailOptions.isDiverLevel(level)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    final band = raw.diveCountBand?.trim();
+    if (band != null &&
+        band.isNotEmpty &&
+        !ReviewDetailOptions.isDiveCountBand(band)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    final vis = raw.visibility?.trim();
+    if (vis != null &&
+        vis.isNotEmpty &&
+        !ReviewDetailOptions.isVisibility(vis)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    final current = raw.current?.trim();
+    if (current != null &&
+        current.isNotEmpty &&
+        !ReviewDetailOptions.isCurrent(current)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    final crowd = raw.guideCrowd?.trim();
+    if (crowd != null &&
+        crowd.isNotEmpty &&
+        !ReviewDetailOptions.isGuideCrowd(crowd)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    final revisit = raw.revisitIntent?.trim();
+    if (revisit != null &&
+        revisit.isNotEmpty &&
+        !ReviewDetailOptions.isRevisitIntent(revisit)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidDetails);
+    }
+    if (!ReviewDetailOptions.isWaterTempOk(raw.waterTempC)) {
+      throw const ReviewValidationException(ReviewValidationCode.invalidWaterTemp);
+    }
+    final audiences = <String>[];
+    for (final item in raw.recommendFor) {
+      final key = item.trim();
+      if (key.isEmpty) {
+        continue;
+      }
+      if (!ReviewDetailOptions.isAudience(key)) {
+        throw const ReviewValidationException(
+          ReviewValidationCode.invalidDetails,
+        );
+      }
+      if (!audiences.contains(key)) {
+        audiences.add(key);
+      }
+    }
+    return ReviewDetails(
+      diverLevel: (level == null || level.isEmpty) ? null : level,
+      diveCountBand: (band == null || band.isEmpty) ? null : band,
+      visibility: (vis == null || vis.isEmpty) ? null : vis,
+      current: (current == null || current.isEmpty) ? null : current,
+      waterTempC: raw.waterTempC,
+      guideCrowd: (crowd == null || crowd.isEmpty) ? null : crowd,
+      recommendFor: audiences,
+      revisitIntent: (revisit == null || revisit.isEmpty) ? null : revisit,
+    );
+  }
 }
 
 enum ReviewValidationCode {
@@ -124,6 +196,8 @@ enum ReviewValidationCode {
   tripNotEnded,
   invalidStars,
   commentTooLong,
+  invalidDetails,
+  invalidWaterTemp,
 }
 
 class ReviewValidationException implements Exception {

@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
@@ -528,6 +529,7 @@ class MemoryDiverRepository implements DiverRepository {
     String? productId,
     String? comment,
     String? authorDisplayName,
+    ReviewDetails? details,
   }) async {
     final resolvedBookingId = bookingId?.trim() ?? '';
     if (resolvedBookingId.isEmpty) {
@@ -538,6 +540,7 @@ class MemoryDiverRepository implements DiverRepository {
     final safeBoat = OperationReviewPolicy.clampStars(boat);
     OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
     final safeComment = OperationReviewPolicy.normalizeComment(comment);
+    final safeDetails = OperationReviewPolicy.normalizeDetails(details);
     final booking = OperationReviewPolicy.requireEligibleBooking(
       bookingId: resolvedBookingId,
       bookings: _bookings,
@@ -574,6 +577,7 @@ class MemoryDiverRepository implements DiverRepository {
       createdAt: DateTime.now().toUtc(),
       authorDisplayName: authorDisplayName?.trim() ?? '',
       productId: resolvedProductId ?? '',
+      details: safeDetails,
     );
     final existing = _shopReviews[shopId] ?? <GuestReview>[];
     _shopReviews[shopId] = [review, ...existing];

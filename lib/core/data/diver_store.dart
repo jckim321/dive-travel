@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
@@ -763,6 +764,7 @@ class DiverStore extends ChangeNotifier {
     String? logId,
     String? productId,
     String? comment,
+    ReviewDetails? details,
   }) async {
     final uid = _uid;
     if (uid == null) {
@@ -780,6 +782,7 @@ class DiverStore extends ChangeNotifier {
       productId: productId,
       comment: comment,
       authorDisplayName: name.isEmpty ? null : name,
+      details: details,
     );
   }
 

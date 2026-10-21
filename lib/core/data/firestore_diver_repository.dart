@@ -22,6 +22,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -729,6 +730,7 @@ class FirestoreDiverRepository implements DiverRepository {
     String? productId,
     String? comment,
     String? authorDisplayName,
+    ReviewDetails? details,
   }) async {
     final resolvedBookingId = bookingId?.trim() ?? '';
     if (resolvedBookingId.isEmpty) {
@@ -739,6 +741,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final safeBoat = OperationReviewPolicy.clampStars(boat);
     OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
     final safeComment = OperationReviewPolicy.normalizeComment(comment);
+    final safeDetails = OperationReviewPolicy.normalizeDetails(details);
 
     final shop = DiveShopCatalog.byId(shopId);
     final shopRef = _shops.doc(shopId);
@@ -816,6 +819,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'product_id': ?productKey,
         if (publicName != null && publicName.isNotEmpty)
           'author_display_name': publicName,
+        ...safeDetails.toFirestoreFields(),
         'created_at': FieldValue.serverTimestamp(),
       };
       transaction.set(reviewRef, review);

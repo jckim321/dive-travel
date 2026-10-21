@@ -1,3 +1,5 @@
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
+
 /// One guest trip review shown on a shop detail page.
 class GuestReview {
   const GuestReview({
@@ -8,6 +10,7 @@ class GuestReview {
     required this.createdAt,
     this.authorDisplayName = '',
     this.productId = '',
+    this.details = const ReviewDetails(),
   });
 
   final String id;
@@ -17,6 +20,7 @@ class GuestReview {
   final DateTime createdAt;
   final String authorDisplayName;
   final String productId;
+  final ReviewDetails details;
 
   factory GuestReview.fromMap(String id, Map<String, dynamic> data) {
     final overall = (data['overall'] as num?)?.toDouble();
@@ -26,7 +30,8 @@ class GuestReview {
     final stars = overall != null
         ? overall.round().clamp(1, 5)
         : (((safety ?? 0) + (guide ?? 0) + (boat ?? 0)) / 3).round().clamp(1, 5);
-    final created = _readTime(data['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    final created =
+        _readTime(data['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0);
     return GuestReview(
       id: id,
       shopId: data['shop_id'] as String? ?? '',
@@ -35,6 +40,7 @@ class GuestReview {
       createdAt: created,
       authorDisplayName: (data['author_display_name'] as String? ?? '').trim(),
       productId: data['product_id'] as String? ?? '',
+      details: ReviewDetails.fromMap(data),
     );
   }
 
@@ -45,7 +51,6 @@ class GuestReview {
     if (raw is DateTime) {
       return raw;
     }
-    // Firestore Timestamp without importing cloud_firestore in the model.
     try {
       final dynamic value = raw;
       if (value.toDate is Function) {

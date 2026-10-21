@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 abstract class DiverRepository {
@@ -77,6 +78,7 @@ abstract class DiverRepository {
     String? productId,
     String? comment,
     String? authorDisplayName,
+    ReviewDetails? details,
   });
 
   /// Newest-first page of guest reviews for a shop (default 10).

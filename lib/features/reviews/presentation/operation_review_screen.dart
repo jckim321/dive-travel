@@ -6,6 +6,8 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/features/reviews/presentation/review_detail_labels.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class OperationReviewScreen extends StatefulWidget {
@@ -31,8 +33,16 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   String? _bookingId;
   int _stars = 5;
   final _comment = TextEditingController();
+  final _waterTemp = TextEditingController();
   bool _saving = false;
   String? _gateMessage;
+  String? _diverLevel;
+  String? _diveCountBand;
+  String? _visibility;
+  String? _current;
+  String? _guideCrowd;
+  String? _revisitIntent;
+  final _audiences = <String>{};
 
   @override
   void initState() {
@@ -52,6 +62,7 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   @override
   void dispose() {
     _comment.dispose();
+    _waterTemp.dispose();
     super.dispose();
   }
 
@@ -131,7 +142,29 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
         return l10n.reviewInvalidStars;
       case ReviewValidationCode.commentTooLong:
         return l10n.reviewCommentTooLong;
+      case ReviewValidationCode.invalidDetails:
+        return l10n.reviewInvalidDetails;
+      case ReviewValidationCode.invalidWaterTemp:
+        return l10n.reviewInvalidWaterTemp;
     }
+  }
+
+  ReviewDetails _collectDetails() {
+    double? temp;
+    final rawTemp = _waterTemp.text.trim();
+    if (rawTemp.isNotEmpty) {
+      temp = double.tryParse(rawTemp.replaceAll(',', '.'));
+    }
+    return ReviewDetails(
+      diverLevel: _diverLevel,
+      diveCountBand: _diveCountBand,
+      visibility: _visibility,
+      current: _current,
+      waterTempC: temp,
+      guideCrowd: _guideCrowd,
+      recommendFor: _audiences.toList(),
+      revisitIntent: _revisitIntent,
+    );
   }
 
   String? _resolveProductId(DiverStore store, String bookingId) {
@@ -171,6 +204,7 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
     try {
       final stars = OperationReviewPolicy.clampStars(_stars);
       final comment = OperationReviewPolicy.normalizeComment(_comment.text);
+      final details = OperationReviewPolicy.normalizeDetails(_collectDetails());
       await store.submitOperationReview(
         shopId: _shopId,
         safety: stars,
@@ -180,6 +214,7 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
         logId: widget.logId,
         productId: _resolveProductId(store, bookingId),
         comment: comment,
+        details: details,
       );
       if (!mounted) {
         return;
@@ -305,11 +340,190 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
               border: const OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          ExpansionTile(
+            key: const Key('review-details-expand'),
+            initiallyExpanded: false,
+            title: Text(l10n.reviewDetailsExpand),
+            subtitle: Text(l10n.reviewDetailOptionalHint),
+            childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+            children: [
+              _ChoiceSection(
+                label: l10n.reviewDetailLevel,
+                values: ReviewDetailOptions.diverLevels,
+                selected: _diverLevel,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _diverLevel = value),
+              ),
+              _ChoiceSection(
+                label: l10n.reviewDetailDives,
+                values: ReviewDetailOptions.diveCountBands,
+                selected: _diveCountBand,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _diveCountBand = value),
+              ),
+              _ChoiceSection(
+                label: l10n.reviewDetailVisibility,
+                values: ReviewDetailOptions.visibility,
+                selected: _visibility,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _visibility = value),
+              ),
+              _ChoiceSection(
+                label: l10n.reviewDetailCurrent,
+                values: ReviewDetailOptions.currents,
+                selected: _current,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _current = value),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  controller: _waterTemp,
+                  enabled: !blocked,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: l10n.reviewDetailWaterTemp,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              _ChoiceSection(
+                label: l10n.reviewDetailCrowd,
+                values: ReviewDetailOptions.guideCrowds,
+                selected: _guideCrowd,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _guideCrowd = value),
+              ),
+              _MultiChoiceSection(
+                label: l10n.reviewDetailAudience,
+                values: ReviewDetailOptions.audiences,
+                selected: _audiences,
+                enabled: !blocked,
+                l10n: l10n,
+                onToggle: (value) {
+                  setState(() {
+                    if (_audiences.contains(value)) {
+                      _audiences.remove(value);
+                    } else {
+                      _audiences.add(value);
+                    }
+                  });
+                },
+              ),
+              _ChoiceSection(
+                label: l10n.reviewDetailRevisit,
+                values: ReviewDetailOptions.revisitIntents,
+                selected: _revisitIntent,
+                enabled: !blocked,
+                l10n: l10n,
+                onSelected: (value) => setState(() => _revisitIntent = value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           FilledButton(
             key: const Key('review-submit'),
             onPressed: (_saving || blocked) ? null : _submit,
             child: Text(_saving ? l10n.logbookUploading : l10n.reviewSubmit),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoiceSection extends StatelessWidget {
+  const _ChoiceSection({
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.enabled,
+    required this.l10n,
+    required this.onSelected,
+  });
+
+  final String label;
+  final List<String> values;
+  final String? selected;
+  final bool enabled;
+  final AppLocalizations l10n;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final value in values)
+                ChoiceChip(
+                  label: Text(reviewDetailLabel(l10n, value) ?? value),
+                  selected: selected == value,
+                  onSelected: enabled
+                      ? (picked) => onSelected(picked ? value : null)
+                      : null,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MultiChoiceSection extends StatelessWidget {
+  const _MultiChoiceSection({
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.enabled,
+    required this.l10n,
+    required this.onToggle,
+  });
+
+  final String label;
+  final List<String> values;
+  final Set<String> selected;
+  final bool enabled;
+  final AppLocalizations l10n;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final value in values)
+                FilterChip(
+                  label: Text(reviewDetailLabel(l10n, value) ?? value),
+                  selected: selected.contains(value),
+                  onSelected: enabled ? (_) => onToggle(value) : null,
+                ),
+            ],
           ),
         ],
       ),

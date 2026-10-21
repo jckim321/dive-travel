@@ -685,6 +685,132 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewCommentTooLong => 'Reviews can be up to 2,000 characters.';
 
   @override
+  String get reviewDetailsExpand => 'Add more trip details';
+
+  @override
+  String get reviewDetailLevel => 'Diver level';
+
+  @override
+  String get reviewDetailDives => 'Total dives';
+
+  @override
+  String get reviewDetailVisibility => 'Visibility';
+
+  @override
+  String get reviewDetailCurrent => 'Current';
+
+  @override
+  String get reviewDetailWaterTemp => 'Water temp (°C)';
+
+  @override
+  String get reviewDetailCrowd => 'Divers per guide';
+
+  @override
+  String get reviewDetailAudience => 'Best for';
+
+  @override
+  String get reviewDetailRevisit => 'Would visit again';
+
+  @override
+  String get reviewDetailOptionalHint => 'All fields are optional';
+
+  @override
+  String get reviewDetailOpenWater => 'Open Water';
+
+  @override
+  String get reviewDetailAdvanced => 'Advanced';
+
+  @override
+  String get reviewDetailRescuePlus => 'Rescue+';
+
+  @override
+  String get reviewDetailInstructor => 'Instructor';
+
+  @override
+  String get reviewDetailFreediver => 'Freediver';
+
+  @override
+  String get reviewDetailDivesUnder50 => 'Under 50';
+
+  @override
+  String get reviewDetailDives50to200 => '50–200';
+
+  @override
+  String get reviewDetailDives200Plus => '200+';
+
+  @override
+  String get reviewDetailVisPoor => 'Poor';
+
+  @override
+  String get reviewDetailVisOk => 'OK';
+
+  @override
+  String get reviewDetailVisGood => 'Good';
+
+  @override
+  String get reviewDetailVisExcellent => 'Excellent';
+
+  @override
+  String get reviewDetailCurrentMild => 'Mild';
+
+  @override
+  String get reviewDetailCurrentOk => 'Moderate';
+
+  @override
+  String get reviewDetailCurrentStrong => 'Strong';
+
+  @override
+  String get reviewDetailCrowdRelaxed => 'Relaxed';
+
+  @override
+  String get reviewDetailCrowdOk => 'OK';
+
+  @override
+  String get reviewDetailCrowdBusy => 'Busy';
+
+  @override
+  String get reviewDetailAudienceBeginner => 'Beginners';
+
+  @override
+  String get reviewDetailAudienceExperienced => 'Experienced';
+
+  @override
+  String get reviewDetailAudienceCouple => 'Couples';
+
+  @override
+  String get reviewDetailAudienceFamily => 'Families';
+
+  @override
+  String get reviewDetailAudiencePhoto => 'Photo divers';
+
+  @override
+  String get reviewDetailAudienceFreediver => 'Freedivers';
+
+  @override
+  String get reviewDetailAudienceTech => 'Technical';
+
+  @override
+  String get reviewDetailRevisitYes => 'Yes';
+
+  @override
+  String get reviewDetailRevisitNo => 'No';
+
+  @override
+  String get reviewDetailRevisitUnsure => 'Not sure';
+
+  @override
+  String reviewDetailWaterTempChip(String temp) {
+    return '$temp°C';
+  }
+
+  @override
+  String get reviewInvalidDetails => 'One of the detail options is invalid.';
+
+  @override
+  String get reviewInvalidWaterTemp =>
+      'Water temp must be between -2°C and 40°C.';
+
+  @override
   String homeDiveStarSubtitle(String rating, int count) {
     return 'Ops average $rating · $count reviews';
   }

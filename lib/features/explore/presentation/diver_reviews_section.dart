@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
+import 'package:dive_travel_app/features/reviews/presentation/review_detail_labels.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Shop detail block: average summary + paginated guest review cards.
@@ -225,15 +226,71 @@ class _ReviewCard extends StatelessWidget {
             Text(review.comment, style: theme.textTheme.bodyMedium),
           ],
           const SizedBox(height: 10),
-          Text(
-            author,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: const Color(0xFF4A5560),
-              fontWeight: FontWeight.w600,
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: author,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: const Color(0xFF4A5560),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_authorMeta(l10n).isNotEmpty)
+                  TextSpan(
+                    text: ' · ${_authorMeta(l10n)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppTheme.muted,
+                    ),
+                  ),
+              ],
             ),
           ),
+          if (_detailChips(l10n).isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final label in _detailChips(l10n))
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(label, style: const TextStyle(fontSize: 12)),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: EdgeInsets.zero,
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _authorMeta(AppLocalizations l10n) {
+    final parts = <String>[
+      if (reviewDetailLabel(l10n, review.details.diverLevel) case final label?)
+        label,
+      if (reviewDetailLabel(l10n, review.details.diveCountBand)
+          case final label?)
+        label,
+    ];
+    return parts.join(' · ');
+  }
+
+  List<String> _detailChips(AppLocalizations l10n) {
+    final temp = review.details.waterTempC;
+    final tempLabel = temp == null
+        ? null
+        : l10n.reviewDetailWaterTempChip(
+            temp == temp.roundToDouble()
+                ? temp.round().toString()
+                : temp.toStringAsFixed(1),
+          );
+    return [
+      ?reviewDetailLabel(l10n, review.details.visibility),
+      ?reviewDetailLabel(l10n, review.details.current),
+      ?tempLabel,
+    ];
   }
 }

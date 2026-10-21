@@ -39,6 +39,49 @@ service cloud.firestore {
             && request.resource.data.comment.size() <= 2000);
     }
 
+    function optionalStringIn(field, allowed) {
+      return !(field in request.resource.data)
+        || (request.resource.data[field] is string
+            && request.resource.data[field] in allowed);
+    }
+
+    function reviewDetailsOk() {
+      return optionalStringIn('diver_level', [
+            'open_water', 'advanced', 'rescue_plus', 'instructor', 'freediver'
+          ])
+        && optionalStringIn('dive_count_band', [
+            'dives_under_50', 'dives_50_200', 'dives_200_plus'
+          ])
+        && optionalStringIn('visibility', [
+            'vis_poor', 'vis_ok', 'vis_good', 'vis_excellent'
+          ])
+        && optionalStringIn('current', [
+            'current_mild', 'current_ok', 'current_strong'
+          ])
+        && optionalStringIn('guide_crowd', [
+            'crowd_relaxed', 'crowd_ok', 'crowd_busy'
+          ])
+        && optionalStringIn('revisit_intent', [
+            'revisit_yes', 'revisit_no', 'revisit_unsure'
+          ])
+        && (!('water_temp_c' in request.resource.data)
+            || (request.resource.data.water_temp_c is number
+                && request.resource.data.water_temp_c >= -2
+                && request.resource.data.water_temp_c <= 40))
+        && (!('recommend_for' in request.resource.data)
+            || (request.resource.data.recommend_for is list
+                && request.resource.data.recommend_for.size() <= 7
+                && request.resource.data.recommend_for.hasOnly([
+                  'audience_beginner',
+                  'audience_experienced',
+                  'audience_couple',
+                  'audience_family',
+                  'audience_photo',
+                  'audience_freediver',
+                  'audience_tech'
+                ])));
+    }
+
     function ownBookingPath(bookingId) {
       return /databases/$(database)/documents/users/$(request.auth.uid)/bookings/$(bookingId);
     }
@@ -61,6 +104,7 @@ service cloud.firestore {
         && scoreInRange(request.resource.data.guide)
         && scoreInRange(request.resource.data.boat)
         && reviewCommentOk()
+        && reviewDetailsOk()
         && reviewBookingEligible(shopId);
     }
 
@@ -91,6 +135,7 @@ service cloud.firestore {
           && scoreInRange(request.resource.data.guide)
           && scoreInRange(request.resource.data.boat)
           && reviewCommentOk()
+          && reviewDetailsOk()
           && request.resource.data.keys().hasAll(['booking_id'])
           && request.resource.data.booking_id is string
           && request.resource.data.booking_id.size() > 0;

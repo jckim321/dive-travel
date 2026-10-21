@@ -668,6 +668,131 @@ class AppLocalizationsKo extends AppLocalizations {
   String get reviewCommentTooLong => '후기는 2,000자까지 작성할 수 있어요';
 
   @override
+  String get reviewDetailsExpand => '더 자세히 알려주기';
+
+  @override
+  String get reviewDetailLevel => '다이버 레벨';
+
+  @override
+  String get reviewDetailDives => '총 다이빙 횟수';
+
+  @override
+  String get reviewDetailVisibility => '시야';
+
+  @override
+  String get reviewDetailCurrent => '조류';
+
+  @override
+  String get reviewDetailWaterTemp => '수온 (°C)';
+
+  @override
+  String get reviewDetailCrowd => '가이드 대비 다이버 수';
+
+  @override
+  String get reviewDetailAudience => '추천 대상';
+
+  @override
+  String get reviewDetailRevisit => '재방문 의사';
+
+  @override
+  String get reviewDetailOptionalHint => '모두 선택 사항입니다';
+
+  @override
+  String get reviewDetailOpenWater => '오픈워터';
+
+  @override
+  String get reviewDetailAdvanced => '어드밴스드';
+
+  @override
+  String get reviewDetailRescuePlus => '레스큐 이상';
+
+  @override
+  String get reviewDetailInstructor => '강사';
+
+  @override
+  String get reviewDetailFreediver => '프리다이버';
+
+  @override
+  String get reviewDetailDivesUnder50 => '~50';
+
+  @override
+  String get reviewDetailDives50to200 => '50~200';
+
+  @override
+  String get reviewDetailDives200Plus => '200 이상';
+
+  @override
+  String get reviewDetailVisPoor => '나쁨';
+
+  @override
+  String get reviewDetailVisOk => '보통';
+
+  @override
+  String get reviewDetailVisGood => '좋음';
+
+  @override
+  String get reviewDetailVisExcellent => '아주 좋음';
+
+  @override
+  String get reviewDetailCurrentMild => '약함';
+
+  @override
+  String get reviewDetailCurrentOk => '보통';
+
+  @override
+  String get reviewDetailCurrentStrong => '강함';
+
+  @override
+  String get reviewDetailCrowdRelaxed => '여유로움';
+
+  @override
+  String get reviewDetailCrowdOk => '보통';
+
+  @override
+  String get reviewDetailCrowdBusy => '붐빔';
+
+  @override
+  String get reviewDetailAudienceBeginner => '초보';
+
+  @override
+  String get reviewDetailAudienceExperienced => '숙련';
+
+  @override
+  String get reviewDetailAudienceCouple => '커플';
+
+  @override
+  String get reviewDetailAudienceFamily => '가족';
+
+  @override
+  String get reviewDetailAudiencePhoto => '사진 다이버';
+
+  @override
+  String get reviewDetailAudienceFreediver => '프리다이버';
+
+  @override
+  String get reviewDetailAudienceTech => '테크니컬';
+
+  @override
+  String get reviewDetailRevisitYes => '예';
+
+  @override
+  String get reviewDetailRevisitNo => '아니오';
+
+  @override
+  String get reviewDetailRevisitUnsure => '모르겠음';
+
+  @override
+  String reviewDetailWaterTempChip(String temp) {
+    return '$temp°C';
+  }
+
+  @override
+  String get reviewInvalidDetails => '세부 항목 값이 올바르지 않아요';
+
+  @override
+  String get reviewInvalidWaterTemp => '수온은 -2°C부터 40°C까지 입력할 수 있어요';
+
+  @override
   String homeDiveStarSubtitle(String rating, int count) {
     return '오퍼레이션 평균 $rating · 리뷰 $count건';
   }

@@ -1314,6 +1314,252 @@ abstract class AppLocalizations {
   /// **'후기는 2,000자까지 작성할 수 있어요'**
   String get reviewCommentTooLong;
 
+  /// 후기 세부 선택 접이식 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 자세히 알려주기'**
+  String get reviewDetailsExpand;
+
+  /// No description provided for @reviewDetailLevel.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 레벨'**
+  String get reviewDetailLevel;
+
+  /// No description provided for @reviewDetailDives.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 다이빙 횟수'**
+  String get reviewDetailDives;
+
+  /// No description provided for @reviewDetailVisibility.
+  ///
+  /// In ko, this message translates to:
+  /// **'시야'**
+  String get reviewDetailVisibility;
+
+  /// No description provided for @reviewDetailCurrent.
+  ///
+  /// In ko, this message translates to:
+  /// **'조류'**
+  String get reviewDetailCurrent;
+
+  /// No description provided for @reviewDetailWaterTemp.
+  ///
+  /// In ko, this message translates to:
+  /// **'수온 (°C)'**
+  String get reviewDetailWaterTemp;
+
+  /// No description provided for @reviewDetailCrowd.
+  ///
+  /// In ko, this message translates to:
+  /// **'가이드 대비 다이버 수'**
+  String get reviewDetailCrowd;
+
+  /// No description provided for @reviewDetailAudience.
+  ///
+  /// In ko, this message translates to:
+  /// **'추천 대상'**
+  String get reviewDetailAudience;
+
+  /// No description provided for @reviewDetailRevisit.
+  ///
+  /// In ko, this message translates to:
+  /// **'재방문 의사'**
+  String get reviewDetailRevisit;
+
+  /// No description provided for @reviewDetailOptionalHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 선택 사항입니다'**
+  String get reviewDetailOptionalHint;
+
+  /// No description provided for @reviewDetailOpenWater.
+  ///
+  /// In ko, this message translates to:
+  /// **'오픈워터'**
+  String get reviewDetailOpenWater;
+
+  /// No description provided for @reviewDetailAdvanced.
+  ///
+  /// In ko, this message translates to:
+  /// **'어드밴스드'**
+  String get reviewDetailAdvanced;
+
+  /// No description provided for @reviewDetailRescuePlus.
+  ///
+  /// In ko, this message translates to:
+  /// **'레스큐 이상'**
+  String get reviewDetailRescuePlus;
+
+  /// No description provided for @reviewDetailInstructor.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사'**
+  String get reviewDetailInstructor;
+
+  /// No description provided for @reviewDetailFreediver.
+  ///
+  /// In ko, this message translates to:
+  /// **'프리다이버'**
+  String get reviewDetailFreediver;
+
+  /// No description provided for @reviewDetailDivesUnder50.
+  ///
+  /// In ko, this message translates to:
+  /// **'~50'**
+  String get reviewDetailDivesUnder50;
+
+  /// No description provided for @reviewDetailDives50to200.
+  ///
+  /// In ko, this message translates to:
+  /// **'50~200'**
+  String get reviewDetailDives50to200;
+
+  /// No description provided for @reviewDetailDives200Plus.
+  ///
+  /// In ko, this message translates to:
+  /// **'200 이상'**
+  String get reviewDetailDives200Plus;
+
+  /// No description provided for @reviewDetailVisPoor.
+  ///
+  /// In ko, this message translates to:
+  /// **'나쁨'**
+  String get reviewDetailVisPoor;
+
+  /// No description provided for @reviewDetailVisOk.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get reviewDetailVisOk;
+
+  /// No description provided for @reviewDetailVisGood.
+  ///
+  /// In ko, this message translates to:
+  /// **'좋음'**
+  String get reviewDetailVisGood;
+
+  /// No description provided for @reviewDetailVisExcellent.
+  ///
+  /// In ko, this message translates to:
+  /// **'아주 좋음'**
+  String get reviewDetailVisExcellent;
+
+  /// No description provided for @reviewDetailCurrentMild.
+  ///
+  /// In ko, this message translates to:
+  /// **'약함'**
+  String get reviewDetailCurrentMild;
+
+  /// No description provided for @reviewDetailCurrentOk.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get reviewDetailCurrentOk;
+
+  /// No description provided for @reviewDetailCurrentStrong.
+  ///
+  /// In ko, this message translates to:
+  /// **'강함'**
+  String get reviewDetailCurrentStrong;
+
+  /// No description provided for @reviewDetailCrowdRelaxed.
+  ///
+  /// In ko, this message translates to:
+  /// **'여유로움'**
+  String get reviewDetailCrowdRelaxed;
+
+  /// No description provided for @reviewDetailCrowdOk.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get reviewDetailCrowdOk;
+
+  /// No description provided for @reviewDetailCrowdBusy.
+  ///
+  /// In ko, this message translates to:
+  /// **'붐빔'**
+  String get reviewDetailCrowdBusy;
+
+  /// No description provided for @reviewDetailAudienceBeginner.
+  ///
+  /// In ko, this message translates to:
+  /// **'초보'**
+  String get reviewDetailAudienceBeginner;
+
+  /// No description provided for @reviewDetailAudienceExperienced.
+  ///
+  /// In ko, this message translates to:
+  /// **'숙련'**
+  String get reviewDetailAudienceExperienced;
+
+  /// No description provided for @reviewDetailAudienceCouple.
+  ///
+  /// In ko, this message translates to:
+  /// **'커플'**
+  String get reviewDetailAudienceCouple;
+
+  /// No description provided for @reviewDetailAudienceFamily.
+  ///
+  /// In ko, this message translates to:
+  /// **'가족'**
+  String get reviewDetailAudienceFamily;
+
+  /// No description provided for @reviewDetailAudiencePhoto.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 다이버'**
+  String get reviewDetailAudiencePhoto;
+
+  /// No description provided for @reviewDetailAudienceFreediver.
+  ///
+  /// In ko, this message translates to:
+  /// **'프리다이버'**
+  String get reviewDetailAudienceFreediver;
+
+  /// No description provided for @reviewDetailAudienceTech.
+  ///
+  /// In ko, this message translates to:
+  /// **'테크니컬'**
+  String get reviewDetailAudienceTech;
+
+  /// No description provided for @reviewDetailRevisitYes.
+  ///
+  /// In ko, this message translates to:
+  /// **'예'**
+  String get reviewDetailRevisitYes;
+
+  /// No description provided for @reviewDetailRevisitNo.
+  ///
+  /// In ko, this message translates to:
+  /// **'아니오'**
+  String get reviewDetailRevisitNo;
+
+  /// No description provided for @reviewDetailRevisitUnsure.
+  ///
+  /// In ko, this message translates to:
+  /// **'모르겠음'**
+  String get reviewDetailRevisitUnsure;
+
+  /// No description provided for @reviewDetailWaterTempChip.
+  ///
+  /// In ko, this message translates to:
+  /// **'{temp}°C'**
+  String reviewDetailWaterTempChip(String temp);
+
+  /// No description provided for @reviewInvalidDetails.
+  ///
+  /// In ko, this message translates to:
+  /// **'세부 항목 값이 올바르지 않아요'**
+  String get reviewInvalidDetails;
+
+  /// No description provided for @reviewInvalidWaterTemp.
+  ///
+  /// In ko, this message translates to:
+  /// **'수온은 -2°C부터 40°C까지 입력할 수 있어요'**
+  String get reviewInvalidWaterTemp;
+
   /// 홈 추천 리조트 서브타이틀입니다.
   ///
   /// In ko, this message translates to:
