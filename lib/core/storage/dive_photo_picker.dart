@@ -145,11 +145,9 @@ class DivePhotoPicker {
     final longest =
         decoded.width > decoded.height ? decoded.width : decoded.height;
     final withinEdge = longest <= GalleryLimits.maxEdgePx;
-    final smallJpeg = raw.lengthInBytes < 400 * 1024 &&
-        raw.length >= 2 &&
-        raw[0] == 0xFF &&
-        raw[1] == 0xD8;
-    if (withinEdge && smallJpeg) {
+    final isJpeg = raw.length >= 2 && raw[0] == 0xFF && raw[1] == 0xD8;
+    // Keep already-sharp JPEGs that fit the edge so we don't re-encode twice.
+    if (withinEdge && isJpeg && raw.lengthInBytes <= 1.5 * 1024 * 1024) {
       return null;
     }
     final sized = withinEdge
@@ -162,7 +160,7 @@ class DivePhotoPicker {
             height: decoded.height > decoded.width
                 ? GalleryLimits.maxEdgePx
                 : null,
-            interpolation: img.Interpolation.average,
+            interpolation: img.Interpolation.cubic,
           );
     return Uint8List.fromList(
       img.encodeJpg(sized, quality: GalleryLimits.jpegQuality),
