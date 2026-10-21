@@ -16,13 +16,14 @@ import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_moni
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _AdminHub { overview, members, shops, ops }
 
 enum _MembersSub { divers, instructors, partners }
 
-enum _ShopsSub { monitor, products, sameBoat, pricing }
+enum _ShopsSub { monitor, products, seatsApply, sameBoat, pricing }
 
 enum _OpsSub { posts, bookings, weather, homeCuration }
 
@@ -149,27 +150,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labels: [
                       l10n.adminShopsTitle,
                       l10n.adminProductsTab,
+                      l10n.adminSameBoatApplyTab,
                       l10n.adminSameBoatTab,
                       l10n.adminPricingTitle,
                     ],
                     keys: const [
                       Key('admin-sub-shops'),
                       Key('admin-sub-products'),
+                      Key('admin-sub-seats-apply'),
                       Key('admin-sub-same-boat'),
                       Key('admin-menu-pricing'),
                     ],
                     selected: switch (_shopsSub) {
                       _ShopsSub.monitor => 0,
                       _ShopsSub.products => 1,
-                      _ShopsSub.sameBoat => 2,
-                      _ShopsSub.pricing => 3,
+                      _ShopsSub.seatsApply => 2,
+                      _ShopsSub.sameBoat => 3,
+                      _ShopsSub.pricing => 4,
                     },
                     onSelect: (i) => _go(
                       _AdminHub.shops,
                       sub: switch (i) {
                         1 => _ShopsSub.products,
-                        2 => _ShopsSub.sameBoat,
-                        3 => _ShopsSub.pricing,
+                        2 => _ShopsSub.seatsApply,
+                        3 => _ShopsSub.sameBoat,
+                        4 => _ShopsSub.pricing,
                         _ => _ShopsSub.monitor,
                       },
                     ),
@@ -288,6 +293,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             filterShopId: _productsShopFilter,
             onClearShopFilter: () =>
                 setState(() => _productsShopFilter = null),
+          ),
+          _ShopsSub.seatsApply => const SameBoatSeatsHubScreen(
+            embedded: true,
+            adminBypassApproval: true,
+            showSourceFilter: true,
           ),
           _ShopsSub.sameBoat => const AdminSameBoatMonitorScreen(
             embedded: true,
@@ -837,6 +847,13 @@ class _OverviewPane extends StatelessWidget {
           title: l10n.adminHomeCurationTab,
           subtitle: l10n.adminHomeCurationSubtitle,
           onTap: () => onJump(_AdminHub.ops, sub: _OpsSub.homeCuration),
+        ),
+        const SizedBox(height: 8),
+        _QuickAction(
+          icon: Icons.event_seat_outlined,
+          title: l10n.adminSameBoatApplyTab,
+          subtitle: l10n.adminSameBoatApplyHint,
+          onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.seatsApply),
         ),
         const SizedBox(height: 8),
         _QuickAction(

@@ -1353,14 +1353,30 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sameBoatSeatsTitle => '빈자리 열기';
 
   @override
+  String get sameBoatApplyTitle => '같은배 신청';
+
+  @override
+  String get sameBoatAskCreateSeats => '이 상품에 빈자리를 만들겠습니까?';
+
+  @override
+  String get sameBoatAskCreateSeatsYes => '만들기';
+
+  @override
+  String get sameBoatAskCreateSeatsNo => '취소';
+
+  @override
+  String get sameBoatHubSearchHint => '상품 이름 검색';
+
+  @override
   String get sameBoatSeatsHint =>
       '기본 상품과 개별 상품에 빈자리를 열고, 출발일·깃발 마감을 넣은 뒤 관리자 승인을 요청합니다.';
 
   @override
-  String get sameBoatSeatsHubHint => '상품을 고른 뒤 빈자리 수와 마감을 신청합니다.';
+  String get sameBoatSeatsHubHint => '상품을 고른 뒤 빈자리 수·출발일·깃발 마감을 정해 같은배에 신청합니다.';
 
   @override
-  String get sameBoatSeatsNoProducts => '공개된 상품이 없습니다. 먼저 상품을 등록·승인하세요.';
+  String get sameBoatSeatsNoProducts =>
+      '조건에 맞는 공개 상품이 없습니다. 상품을 등록·승인했는지 확인하세요.';
 
   @override
   String get sameBoatSeatsSubmit => '승인 요청';
@@ -1376,6 +1392,24 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sameBoatSeatsEdit => '빈자리 수정';
+
+  @override
+  String get adminSameBoatApplyTab => '빈자리 신청';
+
+  @override
+  String get adminSameBoatApplyHint => '공개 상품을 골라 빈자리를 열고 같은배에 바로 게시합니다.';
+
+  @override
+  String get partnerSectionShopProducts => '샵 · 상품';
+
+  @override
+  String get partnerSectionSameBoat => '같은배 신청';
+
+  @override
+  String get partnerSectionOps => '예약 · 정산';
+
+  @override
+  String get partnerSameBoatApplyHint => '자기 상품 중 빈자리를 채울 상품을 고르고 신청합니다.';
 
   @override
   String get sameBoatIndividualSeats => '개별 상품 빈자리';

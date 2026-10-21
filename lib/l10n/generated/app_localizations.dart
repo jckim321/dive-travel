@@ -2568,6 +2568,36 @@ abstract class AppLocalizations {
   /// **'빈자리 열기'**
   String get sameBoatSeatsTitle;
 
+  /// No description provided for @sameBoatApplyTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 신청'**
+  String get sameBoatApplyTitle;
+
+  /// No description provided for @sameBoatAskCreateSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 상품에 빈자리를 만들겠습니까?'**
+  String get sameBoatAskCreateSeats;
+
+  /// No description provided for @sameBoatAskCreateSeatsYes.
+  ///
+  /// In ko, this message translates to:
+  /// **'만들기'**
+  String get sameBoatAskCreateSeatsYes;
+
+  /// No description provided for @sameBoatAskCreateSeatsNo.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get sameBoatAskCreateSeatsNo;
+
+  /// No description provided for @sameBoatHubSearchHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 이름 검색'**
+  String get sameBoatHubSearchHint;
+
   /// No description provided for @sameBoatSeatsHint.
   ///
   /// In ko, this message translates to:
@@ -2577,13 +2607,13 @@ abstract class AppLocalizations {
   /// No description provided for @sameBoatSeatsHubHint.
   ///
   /// In ko, this message translates to:
-  /// **'상품을 고른 뒤 빈자리 수와 마감을 신청합니다.'**
+  /// **'상품을 고른 뒤 빈자리 수·출발일·깃발 마감을 정해 같은배에 신청합니다.'**
   String get sameBoatSeatsHubHint;
 
   /// No description provided for @sameBoatSeatsNoProducts.
   ///
   /// In ko, this message translates to:
-  /// **'공개된 상품이 없습니다. 먼저 상품을 등록·승인하세요.'**
+  /// **'조건에 맞는 공개 상품이 없습니다. 상품을 등록·승인했는지 확인하세요.'**
   String get sameBoatSeatsNoProducts;
 
   /// No description provided for @sameBoatSeatsSubmit.
@@ -2615,6 +2645,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'빈자리 수정'**
   String get sameBoatSeatsEdit;
+
+  /// No description provided for @adminSameBoatApplyTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 신청'**
+  String get adminSameBoatApplyTab;
+
+  /// No description provided for @adminSameBoatApplyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개 상품을 골라 빈자리를 열고 같은배에 바로 게시합니다.'**
+  String get adminSameBoatApplyHint;
+
+  /// No description provided for @partnerSectionShopProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 · 상품'**
+  String get partnerSectionShopProducts;
+
+  /// No description provided for @partnerSectionSameBoat.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 신청'**
+  String get partnerSectionSameBoat;
+
+  /// No description provided for @partnerSectionOps.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 · 정산'**
+  String get partnerSectionOps;
+
+  /// No description provided for @partnerSameBoatApplyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'자기 상품 중 빈자리를 채울 상품을 고르고 신청합니다.'**
+  String get partnerSameBoatApplyHint;
 
   /// No description provided for @sameBoatIndividualSeats.
   ///

@@ -1380,16 +1380,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatSeatsTitle => 'Open leftover seats';
 
   @override
+  String get sameBoatApplyTitle => 'Apply to Same-boat';
+
+  @override
+  String get sameBoatAskCreateSeats => 'Create leftover seats on this trip?';
+
+  @override
+  String get sameBoatAskCreateSeatsYes => 'Create';
+
+  @override
+  String get sameBoatAskCreateSeatsNo => 'Cancel';
+
+  @override
+  String get sameBoatHubSearchHint => 'Search product name';
+
+  @override
   String get sameBoatSeatsHint =>
       'Open seats on the base package and individual SKUs, set departure and flag deadline, then request admin approval.';
 
   @override
   String get sameBoatSeatsHubHint =>
-      'Pick a product, then set seat count and deadlines.';
+      'Pick a product, set seat count, departure, and flag deadline, then apply to Same-boat.';
 
   @override
   String get sameBoatSeatsNoProducts =>
-      'No public products yet. Register and approve a product first.';
+      'No matching public products. Register and approve a product first.';
 
   @override
   String get sameBoatSeatsSubmit => 'Request approval';
@@ -1405,6 +1420,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameBoatSeatsEdit => 'Edit seats';
+
+  @override
+  String get adminSameBoatApplyTab => 'Open seats';
+
+  @override
+  String get adminSameBoatApplyHint =>
+      'Pick a public product, open leftover seats, and publish straight to Same-boat.';
+
+  @override
+  String get partnerSectionShopProducts => 'Shop · products';
+
+  @override
+  String get partnerSectionSameBoat => 'Same-boat apply';
+
+  @override
+  String get partnerSectionOps => 'Bookings · settlement';
+
+  @override
+  String get partnerSameBoatApplyHint =>
+      'Filter your products, set seats and dates, then apply to Same-boat.';
 
   @override
   String get sameBoatIndividualSeats => 'Individual SKU seats';

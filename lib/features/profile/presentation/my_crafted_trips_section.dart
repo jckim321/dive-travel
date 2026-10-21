@@ -24,6 +24,37 @@ class MyCraftedTripsSection extends StatelessWidget {
     );
   }
 
+  Future<void> _askOpenSeats(BuildContext context, ShopProduct product) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: const Key('same-boat-ask-create-seats'),
+          content: Text(l10n.sameBoatAskCreateSeats),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.sameBoatAskCreateSeatsNo),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.sameBoatAskCreateSeatsYes),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !context.mounted) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => SameBoatSeatsScreen(product: product),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -49,14 +80,7 @@ class MyCraftedTripsSection extends StatelessWidget {
                   product: product,
                   onTap: () => _openCraft(context, existing: product),
                   onOpenSeats: product.isListedPublicly
-                      ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  SameBoatSeatsScreen(product: product),
-                            ),
-                          );
-                        }
+                      ? () => _askOpenSeats(context, product)
                       : null,
                 ),
               ],

@@ -40,7 +40,14 @@ class PartnerDashboardScreen extends StatelessWidget {
                 avatar: const Icon(Icons.storefront, size: 18),
                 label: Text(live?.name ?? shop?.name ?? shopId),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              Text(
+                l10n.partnerSectionShopProducts,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.edit_note),
@@ -70,13 +77,20 @@ class PartnerDashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.partnerSectionSameBoat,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
               Card(
                 child: ListTile(
                   key: const Key('partner-same-boat-seats'),
                   leading: const Icon(Icons.directions_boat_outlined),
-                  title: Text(l10n.sameBoatSeatsTitle),
-                  subtitle: Text(l10n.sameBoatSeatsHubHint),
+                  title: Text(l10n.sameBoatApplyTitle),
+                  subtitle: Text(l10n.partnerSameBoatApplyHint),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -87,10 +101,17 @@ class PartnerDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                l10n.partnerSettlementTitle,
-                style: theme.textTheme.titleMedium,
+                l10n.partnerSectionOps,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
+              Text(
+                l10n.partnerSettlementTitle,
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 4),
               Text(
                 l10n.partnerCommissionRange,
                 style: theme.textTheme.bodySmall,
@@ -125,10 +146,10 @@ class PartnerDashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               Text(
                 l10n.partnerBookingsTitle,
-                style: theme.textTheme.titleMedium,
+                style: theme.textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
               if (store.shopBookings.isEmpty)
