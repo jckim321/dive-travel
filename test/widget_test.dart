@@ -267,33 +267,54 @@ void main() {
     expect(find.text('보홀'), findsNothing);
   });
 
-  testWidgets('홈 나를 위한 다음 바다는 아틀라스와 여권 peek를 보인다', (WidgetTester tester) async {
+  testWidgets('홈 나를 위한 다음 바다는 신규에선 숨기고 로그 후엔 짧은 카드로 보인다', (
+    WidgetTester tester,
+  ) async {
     await pumpSignedInApp(tester);
     final l10n = await loadKo();
 
-    // Nested horizontal rails make scrollUntilVisible ambiguous — drag home list.
-    final peek = find.byKey(const Key('for-you-passport-peek'));
-    for (var i = 0; i < 16 && tester.getRect(peek).center.dy > 400; i++) {
+    expect(find.byKey(const Key('for-you-panel')), findsNothing);
+    expect(find.text(l10n.homeForYouTitle), findsNothing);
+
+    await tester.tap(find.text(l10n.navLogbook));
+    await tester.pump();
+    await tester.tap(find.text(l10n.logbookAdd));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(find.byType(TextField).first, '보홀');
+    await tester.tap(find.byKey(const Key('logbook-save-appbar')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    await tester.tap(find.text(l10n.navHome));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (var i = 0; i < 16 && find.byKey(const Key('for-you-panel')).evaluate().isEmpty; i++) {
       await tester.drag(
         find.byKey(const Key('home-scroll')),
         const Offset(0, -420),
       );
       await tester.pump();
     }
+    // Panel may already be off-screen; drag until title is visible.
+    for (var i = 0;
+        i < 20 &&
+            tester.any(find.text(l10n.homeForYouTitle)) == false;
+        i++) {
+      await tester.drag(
+        find.byKey(const Key('home-scroll')),
+        const Offset(0, -420),
+      );
+      await tester.pump();
+    }
+
     expect(find.byKey(const Key('for-you-panel')), findsOneWidget);
     expect(find.text(l10n.homeForYouTitle), findsOneWidget);
-    expect(find.byKey(const Key('for-you-stamps')), findsOneWidget);
-    expect(find.byKey(const Key('for-you-badge')), findsOneWidget);
-    expect(find.byKey(const Key('for-you-checklist')), findsOneWidget);
-    expect(peek, findsOneWidget);
-    expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
-
-    // Atlas breathe/pulse anims never settle — use fixed pumps after peek tap.
-    await tester.tap(peek);
-    await tester.pump(); // dialog route
-    await tester.pump(); // initiallyOpen post-frame forward
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(find.byKey(const Key('passport-spread')), findsOneWidget);
+    expect(find.text(l10n.homeNextOceanTitle), findsOneWidget);
+    expect(find.byKey(const Key('for-you-passport-peek')), findsNothing);
+    expect(find.byKey(const Key('for-you-stamps')), findsNothing);
+    expect(find.byKey(const Key('for-you-badge')), findsNothing);
   });
 
   testWidgets('마이페이지에 강사 C-Card 인증 폼이 있다', (WidgetTester tester) async {

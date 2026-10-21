@@ -9,7 +9,6 @@ import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/for_you_section.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
-import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -128,11 +127,7 @@ class HomeScreen extends StatelessWidget {
                   emptyText: l10n.homeShelfEmpty,
                   onOpen: (shop) => _openShop(context, shop),
                 ),
-                const SizedBox(height: 32),
-                ForYouSection(
-                  onOpenShop: (shop) => _openShop(context, shop),
-                  onOpenProfile: () => MainShell.goToTab(context, 4),
-                ),
+                const ForYouSection(),
               ],
             ),
           ),
