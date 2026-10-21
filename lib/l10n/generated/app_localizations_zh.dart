@@ -2083,7 +2083,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bookingEntryBasePackage => '기본 패키지';
 
   @override
-  String get bookingEntryDiverPrice => '다이버 1인 가격';
+  String get bookingEntryDiverPrice => '패키지 1인 가격(다이버)';
 
   @override
   String get bookingEntryHasNondivers => '비다이버가 있나요?';
@@ -2099,6 +2099,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bookingEntryPreviewSnack => '미리보기입니다. 손님은 공개된 상품에서 결제합니다.';
+
+  @override
+  String get bookingEntryStayLength => '여행 기간';
+
+  @override
+  String bookingEntryNights(int nights) {
+    return '$nights박';
+  }
+
+  @override
+  String bookingEntryDays(int days) {
+    return '$days일';
+  }
+
+  @override
+  String get bookingEntryCheckIn => '체크인';
+
+  @override
+  String get bookingEntryCheckOut => '체크아웃';
+
+  @override
+  String get bookingEntryChangeDates => '날짜 변경';
+
+  @override
+  String get bookingEntryPickDate => '날짜 선택';
+
+  @override
+  String bookingEntryStayRange(String checkIn, String checkOut) {
+    return '$checkIn – $checkOut';
+  }
 
   @override
   String get briefSectionPrice => '가격';

@@ -4005,7 +4005,7 @@ abstract class AppLocalizations {
   /// No description provided for @bookingEntryDiverPrice.
   ///
   /// In ko, this message translates to:
-  /// **'다이버 1인 가격'**
+  /// **'패키지 1인 가격(다이버)'**
   String get bookingEntryDiverPrice;
 
   /// No description provided for @bookingEntryHasNondivers.
@@ -4037,6 +4037,54 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'미리보기입니다. 손님은 공개된 상품에서 결제합니다.'**
   String get bookingEntryPreviewSnack;
+
+  /// No description provided for @bookingEntryStayLength.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행 기간'**
+  String get bookingEntryStayLength;
+
+  /// No description provided for @bookingEntryNights.
+  ///
+  /// In ko, this message translates to:
+  /// **'{nights}박'**
+  String bookingEntryNights(int nights);
+
+  /// No description provided for @bookingEntryDays.
+  ///
+  /// In ko, this message translates to:
+  /// **'{days}일'**
+  String bookingEntryDays(int days);
+
+  /// No description provided for @bookingEntryCheckIn.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크인'**
+  String get bookingEntryCheckIn;
+
+  /// No description provided for @bookingEntryCheckOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크아웃'**
+  String get bookingEntryCheckOut;
+
+  /// No description provided for @bookingEntryChangeDates.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜 변경'**
+  String get bookingEntryChangeDates;
+
+  /// No description provided for @bookingEntryPickDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜 선택'**
+  String get bookingEntryPickDate;
+
+  /// No description provided for @bookingEntryStayRange.
+  ///
+  /// In ko, this message translates to:
+  /// **'{checkIn} – {checkOut}'**
+  String bookingEntryStayRange(String checkIn, String checkOut);
 
   /// No description provided for @briefSectionPrice.
   ///

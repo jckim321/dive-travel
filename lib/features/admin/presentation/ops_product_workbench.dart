@@ -123,6 +123,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _capacity;
   DateTime? _departureStart;
   DateTime? _flagClosesAt;
+  var _packageNights = 0;
+  var _datesManual = false;
 
   @override
   void initState() {
@@ -176,11 +178,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
     _departureStart = existing?.departureStart;
     _flagClosesAt = existing?.flagClosesAt;
+    _packageNights = _parsePackageNights(existing?.durationLabel);
     if (_seatOptionId.isNotEmpty) {
       for (final option in existing?.options ?? const <ShopProductOption>[]) {
         if (option.id == _seatOptionId) {
           _capacity.text = option.capacity > 0 ? '${option.capacity}' : '';
-          _departureStart = option.departureStart;
+          _departureStart = option.departureStart ?? _departureStart;
           _flagClosesAt = option.flagClosesAt;
         }
       }
@@ -482,19 +485,105 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   bool get _seatsOnProduct => _openEmptySeats && _resolvedSeatOptionId.isEmpty;
 
   String get _nightsLabel {
-    final matches = RegExp(
-      r'^###\s+\d+',
-      multiLine: true,
-    ).allMatches(_detailBody.text);
-    final n = matches.length;
-    if (n <= 1) {
-      final kept = widget.existing?.durationLabel.trim() ?? '';
-      if (kept.isNotEmpty && n == 0) {
-        return kept;
-      }
+    if (_packageNights <= 0) {
       return '1일';
     }
-    return '${n - 1}박 $n일';
+    return '$_packageNights박 ${_packageNights + 1}일';
+  }
+
+  DateTime? get _checkOut {
+    final start = _departureStart;
+    if (start == null) {
+      return null;
+    }
+    return DateTime(
+      start.year,
+      start.month,
+      start.day,
+    ).add(Duration(days: _packageNights));
+  }
+
+  static int _parsePackageNights(String? label) {
+    final raw = (label ?? '').trim();
+    if (raw.isEmpty) {
+      return 0;
+    }
+    final nightsMatch = RegExp(r'(\d+)\s*박').firstMatch(raw);
+    if (nightsMatch != null) {
+      return int.tryParse(nightsMatch.group(1)!) ?? 0;
+    }
+    final daysMatch = RegExp(r'(\d+)\s*일').firstMatch(raw);
+    if (daysMatch != null) {
+      final days = int.tryParse(daysMatch.group(1)!) ?? 1;
+      return days <= 1 ? 0 : days - 1;
+    }
+    return 0;
+  }
+
+  void _setPackageNights(int nights) {
+    setState(() {
+      _packageNights = nights < 0 ? 0 : nights;
+      _datesManual = false;
+    });
+  }
+
+  void _setCheckIn(DateTime day) {
+    setState(() {
+      _departureStart = DateTime(day.year, day.month, day.day);
+      _datesManual = false;
+    });
+  }
+
+  void _setCheckOut(DateTime day) {
+    final start = _departureStart;
+    if (start == null) {
+      setState(() {
+        _departureStart = DateTime(day.year, day.month, day.day);
+        _packageNights = 0;
+        _datesManual = true;
+      });
+      return;
+    }
+    final checkIn = DateTime(start.year, start.month, start.day);
+    final checkOut = DateTime(day.year, day.month, day.day);
+    var nights = checkOut.difference(checkIn).inDays;
+    if (nights < 0) {
+      nights = 0;
+    }
+    setState(() {
+      _packageNights = nights;
+      _datesManual = true;
+    });
+  }
+
+  Future<void> _pickStayDate({required bool checkout}) async {
+    final initial = checkout
+        ? (_checkOut ?? _departureStart ?? DateTime.now())
+        : (_departureStart ?? DateTime.now());
+    final first = checkout && _departureStart != null
+        ? _departureStart!
+        : DateTime.now().subtract(const Duration(days: 1));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (picked == null) {
+      return;
+    }
+    if (checkout) {
+      _setCheckOut(picked);
+    } else {
+      _setCheckIn(picked);
+    }
+  }
+
+  String _fmtDay(DateTime? day) {
+    if (day == null) {
+      return '—';
+    }
+    return DateFormat('yyyy.MM.dd').format(day);
   }
 
   String _continentLabel(AppLocalizations l10n, String id) {
@@ -672,7 +761,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           capacity: _seatsOnProduct ? (int.tryParse(_capacity.text) ?? 0) : 0,
           bookedSeats: existing?.bookedSeats ?? 0,
           flagHolds: existing?.flagHolds ?? const [],
-          departureStart: _seatsOnProduct ? _departureStart : null,
+          departureStart: _departureStart,
           flagClosesAt: _seatsOnProduct
               ? (_flagClosesAt ?? _departureStart)
               : null,
@@ -1286,6 +1375,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Widget _bookingEntryBlock(AppLocalizations l10n) {
     final packageName = _name.text.trim().isEmpty ? '—' : _name.text.trim();
     final quote = _previewQuote;
+    final days = _packageNights + 1;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1298,7 +1388,85 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           packageName,
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.bookingEntryStayLength,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _stayStepper(
+                label: l10n.bookingEntryNights(_packageNights),
+                value: _packageNights,
+                min: 0,
+                onChanged: _setPackageNights,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.bookingEntryDays(days),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Text(
+          _nightsLabel,
+          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+        ),
         const SizedBox(height: 12),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.bookingEntryCheckIn),
+          subtitle: Text(
+            _departureStart == null
+                ? l10n.bookingEntryPickDate
+                : _fmtDay(_departureStart),
+          ),
+          trailing: const Icon(Icons.calendar_today_outlined),
+          onTap: () => _pickStayDate(checkout: false),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          enabled: _departureStart != null,
+          title: Text(l10n.bookingEntryCheckOut),
+          subtitle: Text(
+            _checkOut == null
+                ? l10n.bookingEntryPickDate
+                : _fmtDay(_checkOut),
+          ),
+          trailing: Icon(
+            _datesManual ? Icons.edit_calendar_outlined : Icons.event_available_outlined,
+          ),
+          onTap: _departureStart == null
+              ? null
+              : () => _pickStayDate(checkout: true),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: () {
+              setState(() {
+                _datesManual = !_datesManual;
+                if (!_datesManual && _departureStart != null) {
+                  // snap checkout back to nights rule (already derived)
+                }
+              });
+            },
+            child: Text(
+              _datesManual
+                  ? '$_nightsLabel · ${l10n.bookingEntryChangeDates}'
+                  : l10n.bookingEntryChangeDates,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _rateConsumer[GuestRole.diver],
           keyboardType: TextInputType.number,
@@ -1418,6 +1586,35 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             hint: l10n.productFormCancelHint,
             lines: 2,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stayStepper({
+    required String label,
+    required int value,
+    required int min,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+        IconButton(
+          onPressed: value <= min ? null : () => onChanged(value - 1),
+          icon: const Icon(Icons.remove_circle_outline, size: 22),
+        ),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          onPressed: () => onChanged(value + 1),
+          icon: const Icon(Icons.add_circle_outline, size: 22),
         ),
       ],
     );
@@ -1841,6 +2038,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
             Text(_nightsLabel),
+            if (_departureStart != null)
+              Text(
+                l10n.bookingEntryStayRange(
+                  _fmtDay(_departureStart),
+                  _fmtDay(_checkOut),
+                ),
+                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+              ),
             if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
             const SizedBox(height: 8),
             Text(

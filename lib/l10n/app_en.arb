@@ -747,12 +747,36 @@
   "detailComposerEdit": "Edit",
   "briefSectionTerms": "Start booking",
   "bookingEntryBasePackage": "Base package",
-  "bookingEntryDiverPrice": "Diver price (1 person)",
+  "bookingEntryDiverPrice": "Package price (1 diver)",
   "bookingEntryHasNondivers": "Any non-divers joining?",
   "bookingEntryAdultNondiver": "Adult non-diver",
   "bookingEntryChildInfant": "Child / infant",
   "bookingEntryUnitPrice": "Price per person",
   "bookingEntryPreviewSnack": "Preview only — guests will pay from the live listing.",
+  "bookingEntryStayLength": "Trip length",
+  "bookingEntryNights": "{nights} nights",
+  "@bookingEntryNights": {
+    "placeholders": {
+      "nights": { "type": "int" }
+    }
+  },
+  "bookingEntryDays": "{days} days",
+  "@bookingEntryDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "bookingEntryCheckIn": "Check-in",
+  "bookingEntryCheckOut": "Check-out",
+  "bookingEntryChangeDates": "Change dates",
+  "bookingEntryPickDate": "Pick a date",
+  "bookingEntryStayRange": "{checkIn} – {checkOut}",
+  "@bookingEntryStayRange": {
+    "placeholders": {
+      "checkIn": { "type": "String" },
+      "checkOut": { "type": "String" }
+    }
+  },
   "briefSectionPrice": "Price",
   "briefSectionSeats": "Open seats",
   "briefSourceCatalog": "Resort from the list",

@@ -1313,12 +1313,36 @@
   "detailComposerEdit": "편집",
   "briefSectionTerms": "상품 예약 들어가기",
   "bookingEntryBasePackage": "기본 패키지",
-  "bookingEntryDiverPrice": "다이버 1인 가격",
+  "bookingEntryDiverPrice": "패키지 1인 가격(다이버)",
   "bookingEntryHasNondivers": "비다이버가 있나요?",
   "bookingEntryAdultNondiver": "성인 비다이버",
   "bookingEntryChildInfant": "소아 · 유아",
   "bookingEntryUnitPrice": "1인 가격",
   "bookingEntryPreviewSnack": "미리보기입니다. 손님은 공개된 상품에서 결제합니다.",
+  "bookingEntryStayLength": "여행 기간",
+  "bookingEntryNights": "{nights}박",
+  "@bookingEntryNights": {
+    "placeholders": {
+      "nights": { "type": "int" }
+    }
+  },
+  "bookingEntryDays": "{days}일",
+  "@bookingEntryDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "bookingEntryCheckIn": "체크인",
+  "bookingEntryCheckOut": "체크아웃",
+  "bookingEntryChangeDates": "날짜 변경",
+  "bookingEntryPickDate": "날짜 선택",
+  "bookingEntryStayRange": "{checkIn} – {checkOut}",
+  "@bookingEntryStayRange": {
+    "placeholders": {
+      "checkIn": { "type": "String" },
+      "checkOut": { "type": "String" }
+    }
+  },
   "briefSectionPrice": "가격",
   "briefSectionSeats": "빈자리",
   "briefSourceCatalog": "목록의 리조트",

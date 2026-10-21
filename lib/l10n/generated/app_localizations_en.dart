@@ -2157,7 +2157,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingEntryBasePackage => 'Base package';
 
   @override
-  String get bookingEntryDiverPrice => 'Diver price (1 person)';
+  String get bookingEntryDiverPrice => 'Package price (1 diver)';
 
   @override
   String get bookingEntryHasNondivers => 'Any non-divers joining?';
@@ -2174,6 +2174,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get bookingEntryPreviewSnack =>
       'Preview only — guests will pay from the live listing.';
+
+  @override
+  String get bookingEntryStayLength => 'Trip length';
+
+  @override
+  String bookingEntryNights(int nights) {
+    return '$nights nights';
+  }
+
+  @override
+  String bookingEntryDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get bookingEntryCheckIn => 'Check-in';
+
+  @override
+  String get bookingEntryCheckOut => 'Check-out';
+
+  @override
+  String get bookingEntryChangeDates => 'Change dates';
+
+  @override
+  String get bookingEntryPickDate => 'Pick a date';
+
+  @override
+  String bookingEntryStayRange(String checkIn, String checkOut) {
+    return '$checkIn – $checkOut';
+  }
 
   @override
   String get briefSectionPrice => 'Price';
