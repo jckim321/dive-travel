@@ -1021,6 +1021,21 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setInternalScore({
+    required String shopId,
+    required int score,
+  }) {
+    final clamped = score.clamp(0, 100);
+    final shop = DiveShopCatalog.byId(shopId);
+    return _shops.doc(shopId).set({
+      'name': shop?.name ?? shopId,
+      'location': shop?.location,
+      'internal_score': clamped,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
   Future<void> setPostHidden({required String postId, required bool hidden}) {
     return _posts.doc(postId).set({
       'hidden': hidden,

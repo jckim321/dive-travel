@@ -1016,7 +1016,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTabCertify => 'Certify';
 
   @override
-  String get adminTabShops => 'Shops';
+  String get adminTabShops => 'Partners';
 
   @override
   String get adminTabOps => 'Ops';
@@ -1159,7 +1159,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminNoPending => 'No pending certificate requests.';
 
   @override
-  String get adminShopsTitle => 'Dive Star · partner shops';
+  String get adminShopsTitle => 'Partners';
+
+  @override
+  String get adminPartnersGradeHint =>
+      'Dive Star partners are graded by reviews and internal review scores.';
 
   @override
   String get adminShopsSubtitle =>
@@ -1174,6 +1178,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminProductsTab => 'Products';
+
+  @override
+  String get adminSameBoatTab => 'Same-boat monitor';
+
+  @override
+  String get adminSameBoatTitle => 'Same-boat · open seats';
+
+  @override
+  String get adminSameBoatHint =>
+      'Only seats opened by product registrants. Flag planting is not done here.';
+
+  @override
+  String get adminSameBoatEmpty => 'No products with open leftover seats.';
+
+  @override
+  String get adminProductSourceAll => 'All';
+
+  @override
+  String get adminProductSourcePartner => 'Partners';
+
+  @override
+  String get adminProductSourceDiy => 'DIY trips';
+
+  @override
+  String get adminProductSourceSpecial => 'Curated specials';
+
+  @override
+  String get adminProductSourceUnknown => 'Unclassified';
+
+  @override
+  String adminProductFilterShop(String name) {
+    return 'Shop filter · $name';
+  }
+
+  @override
+  String get adminProductClearShopFilter => 'Clear filter';
+
+  @override
+  String get adminOpenSeatsBadge => 'Open seats';
+
+  @override
+  String get adminInternalScore => 'Internal score';
+
+  @override
+  String get adminInternalScoreHint => '0–100';
+
+  @override
+  String get adminInternalScoreEdit => 'Edit internal score';
+
+  @override
+  String get adminInternalScoreSaved => 'Internal score saved.';
+
+  @override
+  String get adminViewShopProducts => 'View products';
+
+  @override
+  String adminSameBoatRemaining(int count) {
+    return '$count left';
+  }
+
+  @override
+  String adminSameBoatFlagged(int count) {
+    return '$count flagged';
+  }
 
   @override
   String get adminHomeCurationTab => 'Home curation';
@@ -1463,10 +1531,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPlaqueMarkShipped => 'Mark shipped';
 
   @override
-  String get adminShopMonitor => 'Worldwide partner shop monitor';
+  String get adminShopMonitor => 'Affiliate partner monitor';
 
   @override
-  String get adminPricingTitle => 'Instructor discount';
+  String get adminPricingTitle => 'Settlement & discounts';
 
   @override
   String get adminPricingSubtitle =>

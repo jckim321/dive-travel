@@ -106,6 +106,11 @@ abstract class DiverRepository {
     required PlaqueStatus status,
   });
 
+  Future<void> setInternalScore({
+    required String shopId,
+    required int score,
+  });
+
   Future<void> setPostHidden({required String postId, required bool hidden});
 
   Future<void> deletePost(String postId);

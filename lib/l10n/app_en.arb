@@ -313,7 +313,7 @@
   "adminTabOverview": "Overview",
   "adminTabMembers": "Members",
   "adminTabCertify": "Certify",
-  "adminTabShops": "Shops",
+  "adminTabShops": "Partners",
   "adminTabOps": "Ops",
   "adminMetricMembers": "Members",
   "adminMetricPendingCert": "Pending certs",
@@ -395,11 +395,46 @@
   "adminApprove": "Approve",
   "adminReject": "Reject",
   "adminNoPending": "No pending certificate requests.",
-  "adminShopsTitle": "Dive Star · partner shops",
+  "adminShopsTitle": "Partners",
   "adminShopsSubtitle": "Monitor operation ratings, star grades, and plaque shipping.",
+  "adminPartnersGradeHint": "Dive Star partners are graded by reviews and internal review scores.",
   "adminProductsTitle": "Travel product registration",
   "adminProductsSubtitle": "New products appear on Explore by newest first. Home placement is chosen in Home curation.",
   "adminProductsTab": "Products",
+  "adminSameBoatTab": "Same-boat monitor",
+  "adminSameBoatTitle": "Same-boat · open seats",
+  "adminSameBoatHint": "Only seats opened by product registrants. Flag planting is not done here.",
+  "adminSameBoatEmpty": "No products with open leftover seats.",
+  "adminProductSourceAll": "All",
+  "adminProductSourcePartner": "Partners",
+  "adminProductSourceDiy": "DIY trips",
+  "adminProductSourceSpecial": "Curated specials",
+  "adminProductSourceUnknown": "Unclassified",
+  "adminProductFilterShop": "Shop filter · {name}",
+  "@adminProductFilterShop": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "adminProductClearShopFilter": "Clear filter",
+  "adminOpenSeatsBadge": "Open seats",
+  "adminInternalScore": "Internal score",
+  "adminInternalScoreHint": "0–100",
+  "adminInternalScoreEdit": "Edit internal score",
+  "adminInternalScoreSaved": "Internal score saved.",
+  "adminViewShopProducts": "View products",
+  "adminSameBoatRemaining": "{count} left",
+  "@adminSameBoatRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminSameBoatFlagged": "{count} flagged",
+  "@adminSameBoatFlagged": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "adminHomeCurationTab": "Home curation",
   "adminHomeCurationTitle": "Home shelf curation",
   "adminHomeCurationSubtitle": "Pick approved products for each home shelf — up to 10 each.",
@@ -496,8 +531,8 @@
   "adminPlaqueShipped": "Shipped",
   "adminPlaqueNone": "Plaque pending",
   "adminPlaqueMarkShipped": "Mark shipped",
-  "adminShopMonitor": "Worldwide partner shop monitor",
-  "adminPricingTitle": "Instructor discount",
+  "adminShopMonitor": "Affiliate partner monitor",
+  "adminPricingTitle": "Settlement & discounts",
   "adminPricingSubtitle": "Guests see the listed price. Instructors get the percent or amount you set here.",
   "adminPricingPercent": "Percent off",
   "adminPricingAmount": "Amount off",

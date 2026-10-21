@@ -845,7 +845,7 @@
   "adminTabOverview": "현황",
   "adminTabMembers": "회원",
   "adminTabCertify": "인증",
-  "adminTabShops": "샵",
+  "adminTabShops": "제휴파트너",
   "adminTabOps": "운영",
   "adminMetricMembers": "전체 회원",
   "adminMetricPendingCert": "인증 대기",
@@ -933,11 +933,46 @@
   "adminApprove": "승인",
   "adminReject": "거절",
   "adminNoPending": "대기 중인 자격증 신청이 없습니다.",
-  "adminShopsTitle": "다이브 스타 · 제휴 샵",
+  "adminShopsTitle": "파트너",
+  "adminPartnersGradeHint": "다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.",
   "adminShopsSubtitle": "오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.",
   "adminProductsTitle": "여행상품 등록",
   "adminProductsSubtitle": "등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.",
-  "adminProductsTab": "상품 등록",
+  "adminProductsTab": "상품",
+  "adminSameBoatTab": "같은배 모니터",
+  "adminSameBoatTitle": "같은배 · 빈자리 모니터",
+  "adminSameBoatHint": "등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.",
+  "adminSameBoatEmpty": "열린 빈자리 상품이 없습니다.",
+  "adminProductSourceAll": "전체",
+  "adminProductSourcePartner": "제휴파트너",
+  "adminProductSourceDiy": "내가짠여행",
+  "adminProductSourceSpecial": "기획스페셜",
+  "adminProductSourceUnknown": "미분류",
+  "adminProductFilterShop": "샵 필터 · {name}",
+  "@adminProductFilterShop": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "adminProductClearShopFilter": "필터 해제",
+  "adminOpenSeatsBadge": "빈자리",
+  "adminInternalScore": "내부심사",
+  "adminInternalScoreHint": "0–100",
+  "adminInternalScoreEdit": "내부점수 수정",
+  "adminInternalScoreSaved": "내부심사 점수를 저장했습니다.",
+  "adminViewShopProducts": "상품 보기",
+  "adminSameBoatRemaining": "잔여 {count}",
+  "@adminSameBoatRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminSameBoatFlagged": "깃발 {count}",
+  "@adminSameBoatFlagged": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "adminHomeCurationTab": "홈 큐레이션",
   "adminHomeCurationTitle": "홈 화면 큐레이션",
   "adminHomeCurationSubtitle": "승인된 상품을 골라 홈 분류별로 최대 10개까지 내보냅니다.",
@@ -1034,8 +1069,8 @@
   "adminPlaqueShipped": "발송 완료",
   "adminPlaqueNone": "현판 대기",
   "adminPlaqueMarkShipped": "발송 완료 처리",
-  "adminShopMonitor": "전 세계 제휴 샵 모니터링",
-  "adminPricingTitle": "강사 할인가",
+  "adminShopMonitor": "제휴 파트너 모니터",
+  "adminPricingTitle": "정산·할인",
   "adminPricingSubtitle": "일반 다이버는 소비자가, 강사는 여기서 정한 할인율 또는 정액이 적용됩니다.",
   "adminPricingPercent": "할인율",
   "adminPricingAmount": "할인 금액",

@@ -713,6 +713,30 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setInternalScore({
+    required String shopId,
+    required int score,
+  }) async {
+    final clamped = score.clamp(0, 100);
+    final current = _shopStats[shopId];
+    if (current == null) {
+      _shopStats[shopId] = ShopLiveStats(
+        shopId: shopId,
+        reviewCount: 0,
+        avgSafety: 0,
+        avgGuide: 0,
+        avgBoat: 0,
+        avgOverall: 0,
+        diveStar: 0,
+        internalScore: clamped,
+      );
+    } else {
+      _shopStats[shopId] = current.copyWith(internalScore: clamped);
+    }
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
   Future<void> setPostHidden({
     required String postId,
     required bool hidden,

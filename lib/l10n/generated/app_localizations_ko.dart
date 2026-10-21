@@ -990,7 +990,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminTabCertify => '인증';
 
   @override
-  String get adminTabShops => '샵';
+  String get adminTabShops => '제휴파트너';
 
   @override
   String get adminTabOps => '운영';
@@ -1132,7 +1132,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminNoPending => '대기 중인 자격증 신청이 없습니다.';
 
   @override
-  String get adminShopsTitle => '다이브 스타 · 제휴 샵';
+  String get adminShopsTitle => '파트너';
+
+  @override
+  String get adminPartnersGradeHint => '다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.';
 
   @override
   String get adminShopsSubtitle => '오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.';
@@ -1145,7 +1148,70 @@ class AppLocalizationsKo extends AppLocalizations {
       '등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.';
 
   @override
-  String get adminProductsTab => '상품 등록';
+  String get adminProductsTab => '상품';
+
+  @override
+  String get adminSameBoatTab => '같은배 모니터';
+
+  @override
+  String get adminSameBoatTitle => '같은배 · 빈자리 모니터';
+
+  @override
+  String get adminSameBoatHint => '등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.';
+
+  @override
+  String get adminSameBoatEmpty => '열린 빈자리 상품이 없습니다.';
+
+  @override
+  String get adminProductSourceAll => '전체';
+
+  @override
+  String get adminProductSourcePartner => '제휴파트너';
+
+  @override
+  String get adminProductSourceDiy => '내가짠여행';
+
+  @override
+  String get adminProductSourceSpecial => '기획스페셜';
+
+  @override
+  String get adminProductSourceUnknown => '미분류';
+
+  @override
+  String adminProductFilterShop(String name) {
+    return '샵 필터 · $name';
+  }
+
+  @override
+  String get adminProductClearShopFilter => '필터 해제';
+
+  @override
+  String get adminOpenSeatsBadge => '빈자리';
+
+  @override
+  String get adminInternalScore => '내부심사';
+
+  @override
+  String get adminInternalScoreHint => '0–100';
+
+  @override
+  String get adminInternalScoreEdit => '내부점수 수정';
+
+  @override
+  String get adminInternalScoreSaved => '내부심사 점수를 저장했습니다.';
+
+  @override
+  String get adminViewShopProducts => '상품 보기';
+
+  @override
+  String adminSameBoatRemaining(int count) {
+    return '잔여 $count';
+  }
+
+  @override
+  String adminSameBoatFlagged(int count) {
+    return '깃발 $count';
+  }
 
   @override
   String get adminHomeCurationTab => '홈 큐레이션';
@@ -1424,10 +1490,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminPlaqueMarkShipped => '발송 완료 처리';
 
   @override
-  String get adminShopMonitor => '전 세계 제휴 샵 모니터링';
+  String get adminShopMonitor => '제휴 파트너 모니터';
 
   @override
-  String get adminPricingTitle => '강사 할인가';
+  String get adminPricingTitle => '정산·할인';
 
   @override
   String get adminPricingSubtitle =>

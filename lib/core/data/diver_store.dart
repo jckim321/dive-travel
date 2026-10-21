@@ -728,6 +728,13 @@ class DiverStore extends ChangeNotifier {
     return _repository.setPlaqueStatus(shopId: shopId, status: status);
   }
 
+  Future<void> setInternalScore({
+    required String shopId,
+    required int score,
+  }) {
+    return _repository.setInternalScore(shopId: shopId, score: score);
+  }
+
   Future<void> setPostHidden({required String postId, required bool hidden}) {
     return _repository.setPostHidden(postId: postId, hidden: hidden);
   }

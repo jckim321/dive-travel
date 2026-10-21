@@ -11,6 +11,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.d
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
@@ -18,9 +19,9 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _AdminHub { overview, members, certify, shops, ops }
 
-enum _ShopsSub { monitor, products, homeCuration, pricing }
+enum _ShopsSub { monitor, products, sameBoat, pricing }
 
-enum _OpsSub { posts, bookings, weather }
+enum _OpsSub { posts, bookings, weather, homeCuration }
 
 /// Dive Travel HQ 관리자 콘솔.
 /// 상단 1차 탭 + 필요 시 2차 탭, 현황 탭에 KPI·대기 작업·등급 분포.
@@ -35,17 +36,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _AdminHub _hub = _AdminHub.overview;
   _ShopsSub _shopsSub = _ShopsSub.monitor;
   _OpsSub _opsSub = _OpsSub.posts;
+  String? _productsShopFilter;
 
-  void _go(_AdminHub hub, {Object? sub}) {
+  void _go(_AdminHub hub, {Object? sub, String? shopFilter}) {
     setState(() {
       _hub = hub;
       if (hub == _AdminHub.shops && sub is _ShopsSub) {
         _shopsSub = sub;
+        if (sub == _ShopsSub.products) {
+          _productsShopFilter = shopFilter;
+        }
       }
       if (hub == _AdminHub.ops && sub is _OpsSub) {
         _opsSub = sub;
       }
     });
+  }
+
+  void _openShopProducts(String shopId) {
+    _go(_AdminHub.shops, sub: _ShopsSub.products, shopFilter: shopId);
   }
 
   @override
@@ -106,26 +115,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labels: [
                       l10n.adminShopsTitle,
                       l10n.adminProductsTab,
-                      l10n.adminHomeCurationTab,
+                      l10n.adminSameBoatTab,
                       l10n.adminPricingTitle,
                     ],
                     keys: const [
                       Key('admin-sub-shops'),
                       Key('admin-sub-products'),
-                      Key('admin-sub-home-curation'),
+                      Key('admin-sub-same-boat'),
                       Key('admin-menu-pricing'),
                     ],
                     selected: switch (_shopsSub) {
                       _ShopsSub.monitor => 0,
                       _ShopsSub.products => 1,
-                      _ShopsSub.homeCuration => 2,
+                      _ShopsSub.sameBoat => 2,
                       _ShopsSub.pricing => 3,
                     },
                     onSelect: (i) => _go(
                       _AdminHub.shops,
                       sub: switch (i) {
                         1 => _ShopsSub.products,
-                        2 => _ShopsSub.homeCuration,
+                        2 => _ShopsSub.sameBoat,
                         3 => _ShopsSub.pricing,
                         _ => _ShopsSub.monitor,
                       },
@@ -137,22 +146,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       l10n.adminPostsTitle,
                       l10n.adminBookingsTitle,
                       l10n.weatherAdminTitle,
+                      l10n.adminHomeCurationTab,
                     ],
                     keys: const [
                       Key('admin-sub-posts'),
                       Key('admin-sub-bookings'),
                       Key('admin-menu-weather'),
+                      Key('admin-sub-home-curation'),
                     ],
                     selected: switch (_opsSub) {
                       _OpsSub.posts => 0,
                       _OpsSub.bookings => 1,
                       _OpsSub.weather => 2,
+                      _OpsSub.homeCuration => 3,
                     },
                     onSelect: (i) => _go(
                       _AdminHub.ops,
                       sub: switch (i) {
                         1 => _OpsSub.bookings,
                         2 => _OpsSub.weather,
+                        3 => _OpsSub.homeCuration,
                         _ => _OpsSub.posts,
                       },
                     ),
@@ -211,10 +224,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return const AdminInstructorsScreen(embedded: true);
       case _AdminHub.shops:
         return switch (_shopsSub) {
-          _ShopsSub.monitor => const AdminShopsScreen(embedded: true),
-          _ShopsSub.products => const AdminProductsScreen(embedded: true),
-          _ShopsSub.homeCuration =>
-            const AdminHomeCurationScreen(embedded: true),
+          _ShopsSub.monitor => AdminShopsScreen(
+            embedded: true,
+            onOpenProducts: _openShopProducts,
+          ),
+          _ShopsSub.products => AdminProductsScreen(
+            embedded: true,
+            filterShopId: _productsShopFilter,
+            onClearShopFilter: () =>
+                setState(() => _productsShopFilter = null),
+          ),
+          _ShopsSub.sameBoat => const AdminSameBoatMonitorScreen(
+            embedded: true,
+          ),
           _ShopsSub.pricing => const AdminPricingScreen(embedded: true),
         };
       case _AdminHub.ops:
@@ -222,6 +244,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _OpsSub.posts => const AdminPostsScreen(embedded: true),
           _OpsSub.bookings => const AdminBookingsScreen(embedded: true),
           _OpsSub.weather => const AdminWeatherScreen(embedded: true),
+          _OpsSub.homeCuration =>
+            const AdminHomeCurationScreen(embedded: true),
         };
     }
   }
@@ -238,7 +262,8 @@ class _PrimaryTabStrip extends StatelessWidget {
   final _AdminHub hub;
   final int pendingCertify;
   final int pendingProducts;
-  final void Function(_AdminHub hub, {Object? sub}) onSelect;
+  final void Function(_AdminHub hub, {Object? sub, String? shopFilter})
+  onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -252,9 +277,9 @@ class _PrimaryTabStrip extends StatelessWidget {
         l10n.adminTabCertify,
         pendingCertify,
       ),
-      (
+        (
         _AdminHub.shops,
-        Icons.storefront_outlined,
+        Icons.handshake_outlined,
         l10n.adminTabShops,
         pendingProducts,
       ),
@@ -458,7 +483,7 @@ class _OverviewPane extends StatelessWidget {
     required this.salesByKind,
   });
 
-  final void Function(_AdminHub hub, {Object? sub}) onJump;
+  final void Function(_AdminHub hub, {Object? sub, String? shopFilter}) onJump;
   final int memberCount;
   final int pendingCertify;
   final int plaqueCount;
@@ -621,10 +646,24 @@ class _OverviewPane extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _QuickAction(
-          icon: Icons.storefront_outlined,
+          icon: Icons.handshake_outlined,
           title: l10n.adminShopsTitle,
           subtitle: l10n.adminMetricShops(shopCount),
           onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.monitor),
+        ),
+        const SizedBox(height: 8),
+        _QuickAction(
+          icon: Icons.home_outlined,
+          title: l10n.adminHomeCurationTab,
+          subtitle: l10n.adminHomeCurationSubtitle,
+          onTap: () => onJump(_AdminHub.ops, sub: _OpsSub.homeCuration),
+        ),
+        const SizedBox(height: 8),
+        _QuickAction(
+          icon: Icons.directions_boat_outlined,
+          title: l10n.adminSameBoatTab,
+          subtitle: l10n.adminSameBoatHint,
+          onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.sameBoat),
         ),
       ],
     );

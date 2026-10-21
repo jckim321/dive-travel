@@ -1051,11 +1051,45 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ? ProductSaveIntent.publish
         : ProductSaveIntent.submitForReview;
     final busy = _savingIntent != null;
+    final pending = canPublish &&
+        (widget.existing?.publishStatus == ProductPublishStatus.pending);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: !_editing
-            ? FilledButton(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (pending) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      key: Key('approve-product-${widget.existing!.id}'),
+                      onPressed: busy ? null : () => _approveExisting(l10n),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        backgroundColor: AppTheme.navy,
+                      ),
+                      child: Text(l10n.adminApprove),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      key: Key('reject-product-${widget.existing!.id}'),
+                      onPressed: busy ? null : () => _rejectExisting(l10n),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                      child: Text(l10n.adminReject),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (!_editing)
+              FilledButton(
                 key: const Key('brief-edit'),
                 onPressed: () => setState(() => _editing = true),
                 style: FilledButton.styleFrom(
@@ -1064,7 +1098,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 ),
                 child: Text(l10n.briefEdit),
               )
-            : FilledButton(
+            else
+              FilledButton(
                 key: canPublish
                     ? const Key('admin-product-submit')
                     : const Key('partner-product-save'),
@@ -1075,8 +1110,82 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 ),
                 child: Text(busy ? l10n.exploreSaving : l10n.briefSave),
               ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _approveExisting(AppLocalizations l10n) async {
+    final existing = widget.existing;
+    if (existing == null) {
+      return;
+    }
+    setState(() => _savingIntent = ProductSaveIntent.publish);
+    try {
+      await DiverStoreScope.of(context).approveShopProduct(
+        shopId: existing.shopId,
+        productId: existing.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproved)),
+      );
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _savingIntent = null);
+      }
+    }
+  }
+
+  Future<void> _rejectExisting(AppLocalizations l10n) async {
+    final existing = widget.existing;
+    if (existing == null) {
+      return;
+    }
+    final note = await showDialog<String>(
+      context: context,
+      builder: (context) => _WorkbenchRejectDialog(),
+    );
+    if (note == null || !mounted) {
+      return;
+    }
+    setState(() => _savingIntent = ProductSaveIntent.takeDown);
+    try {
+      await DiverStoreScope.of(context).rejectShopProduct(
+        shopId: existing.shopId,
+        productId: existing.id,
+        reviewNote: note,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductRejected)),
+      );
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _savingIntent = null);
+      }
+    }
   }
 
   Widget _brief(AppLocalizations l10n, List<DiveShop> shops, bool shopLocked) {
@@ -3013,6 +3122,47 @@ class _CategoryPick extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WorkbenchRejectDialog extends StatefulWidget {
+  @override
+  State<_WorkbenchRejectDialog> createState() => _WorkbenchRejectDialogState();
+}
+
+class _WorkbenchRejectDialogState extends State<_WorkbenchRejectDialog> {
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final note = _note.text.trim();
+    return AlertDialog(
+      title: Text(l10n.adminProductRejectNote),
+      content: TextField(
+        controller: _note,
+        autofocus: true,
+        maxLines: 3,
+        decoration: InputDecoration(hintText: l10n.adminProductRejectNoteHint),
+        onChanged: (_) => setState(() {}),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.adminHqClose),
+        ),
+        FilledButton(
+          onPressed: note.isEmpty ? null : () => Navigator.pop(context, note),
+          child: Text(l10n.adminReject),
+        ),
+      ],
     );
   }
 }

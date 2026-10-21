@@ -1917,7 +1917,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminTabShops.
   ///
   /// In ko, this message translates to:
-  /// **'샵'**
+  /// **'제휴파트너'**
   String get adminTabShops;
 
   /// No description provided for @adminTabOps.
@@ -2163,8 +2163,14 @@ abstract class AppLocalizations {
   /// No description provided for @adminShopsTitle.
   ///
   /// In ko, this message translates to:
-  /// **'다이브 스타 · 제휴 샵'**
+  /// **'파트너'**
   String get adminShopsTitle;
+
+  /// No description provided for @adminPartnersGradeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.'**
+  String get adminPartnersGradeHint;
 
   /// No description provided for @adminShopsSubtitle.
   ///
@@ -2187,8 +2193,122 @@ abstract class AppLocalizations {
   /// No description provided for @adminProductsTab.
   ///
   /// In ko, this message translates to:
-  /// **'상품 등록'**
+  /// **'상품'**
   String get adminProductsTab;
+
+  /// No description provided for @adminSameBoatTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 모니터'**
+  String get adminSameBoatTab;
+
+  /// No description provided for @adminSameBoatTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 · 빈자리 모니터'**
+  String get adminSameBoatTitle;
+
+  /// No description provided for @adminSameBoatHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.'**
+  String get adminSameBoatHint;
+
+  /// No description provided for @adminSameBoatEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'열린 빈자리 상품이 없습니다.'**
+  String get adminSameBoatEmpty;
+
+  /// No description provided for @adminProductSourceAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get adminProductSourceAll;
+
+  /// No description provided for @adminProductSourcePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴파트너'**
+  String get adminProductSourcePartner;
+
+  /// No description provided for @adminProductSourceDiy.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가짠여행'**
+  String get adminProductSourceDiy;
+
+  /// No description provided for @adminProductSourceSpecial.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획스페셜'**
+  String get adminProductSourceSpecial;
+
+  /// No description provided for @adminProductSourceUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'미분류'**
+  String get adminProductSourceUnknown;
+
+  /// No description provided for @adminProductFilterShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 필터 · {name}'**
+  String adminProductFilterShop(String name);
+
+  /// No description provided for @adminProductClearShopFilter.
+  ///
+  /// In ko, this message translates to:
+  /// **'필터 해제'**
+  String get adminProductClearShopFilter;
+
+  /// No description provided for @adminOpenSeatsBadge.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리'**
+  String get adminOpenSeatsBadge;
+
+  /// No description provided for @adminInternalScore.
+  ///
+  /// In ko, this message translates to:
+  /// **'내부심사'**
+  String get adminInternalScore;
+
+  /// No description provided for @adminInternalScoreHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'0–100'**
+  String get adminInternalScoreHint;
+
+  /// No description provided for @adminInternalScoreEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'내부점수 수정'**
+  String get adminInternalScoreEdit;
+
+  /// No description provided for @adminInternalScoreSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'내부심사 점수를 저장했습니다.'**
+  String get adminInternalScoreSaved;
+
+  /// No description provided for @adminViewShopProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 보기'**
+  String get adminViewShopProducts;
+
+  /// No description provided for @adminSameBoatRemaining.
+  ///
+  /// In ko, this message translates to:
+  /// **'잔여 {count}'**
+  String adminSameBoatRemaining(int count);
+
+  /// No description provided for @adminSameBoatFlagged.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발 {count}'**
+  String adminSameBoatFlagged(int count);
 
   /// No description provided for @adminHomeCurationTab.
   ///
@@ -2733,13 +2853,13 @@ abstract class AppLocalizations {
   /// No description provided for @adminShopMonitor.
   ///
   /// In ko, this message translates to:
-  /// **'전 세계 제휴 샵 모니터링'**
+  /// **'제휴 파트너 모니터'**
   String get adminShopMonitor;
 
   /// No description provided for @adminPricingTitle.
   ///
   /// In ko, this message translates to:
-  /// **'강사 할인가'**
+  /// **'정산·할인'**
   String get adminPricingTitle;
 
   /// No description provided for @adminPricingSubtitle.

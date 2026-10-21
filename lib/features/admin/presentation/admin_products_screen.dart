@@ -10,16 +10,32 @@ import 'package:dive_travel_app/features/admin/presentation/travel_product_form.
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+enum _ProductSourceFilter { all, partner, diy, special }
+
+enum _ProductStatusFilter { all, pending, approved, rejected, draft }
+
 /// Admin/partner travel-product registration + owner approval queue.
-class AdminProductsScreen extends StatelessWidget {
+class AdminProductsScreen extends StatefulWidget {
   const AdminProductsScreen({
     super.key,
     this.embedded = false,
     this.partnerMode = false,
+    this.filterShopId,
+    this.onClearShopFilter,
   });
 
   final bool embedded;
   final bool partnerMode;
+  final String? filterShopId;
+  final VoidCallback? onClearShopFilter;
+
+  @override
+  State<AdminProductsScreen> createState() => _AdminProductsScreenState();
+}
+
+class _AdminProductsScreenState extends State<AdminProductsScreen> {
+  _ProductSourceFilter _source = _ProductSourceFilter.all;
+  _ProductStatusFilter _status = _ProductStatusFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -31,24 +47,34 @@ class AdminProductsScreen extends StatelessWidget {
       builder: (context, _) {
         final owned =
             store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
-        final pending = partnerMode
+        final pending = widget.partnerMode
             ? [
                 for (final product in store.pendingProductApprovals)
                   if (product.shopId == owned) product,
               ]
             : store.pendingProductApprovals;
+        final shopFilter = widget.filterShopId;
+        final all = [
+          for (final product in store.allShopProducts)
+            if (shopFilter == null || product.shopId == shopFilter) product,
+        ];
+        final filtered = [
+          for (final product in all)
+            if (_matchesSource(product) && _matchesStatus(product)) product,
+        ];
+
         final body = ListView(
           key: const Key('admin-products'),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
             Text(
-              partnerMode
+              widget.partnerMode
                   ? l10n.partnerProductPendingHint
                   : l10n.adminProductsSubtitle,
               style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: embedded ? AdminConsoleTheme.muted : null),
+                  ?.copyWith(color: widget.embedded ? AdminConsoleTheme.muted : null),
             ),
-            if (partnerMode) ...[
+            if (widget.partnerMode) ...[
               const SizedBox(height: 8),
               Text(
                 l10n.partnerOwnProductsOnly,
@@ -61,15 +87,15 @@ class AdminProductsScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => TravelProductRegistrationScreen(
-                    lockedShopId: partnerMode ? owned : null,
-                    partnerMode: partnerMode,
+                    lockedShopId: widget.partnerMode ? owned : null,
+                    partnerMode: widget.partnerMode,
                   ),
                 ),
               ),
               icon: const Icon(Icons.add_box_outlined),
               label: Text(l10n.adminProductsTitle),
             ),
-            if (!partnerMode) ...[
+            if (!widget.partnerMode) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () => Navigator.of(context).push(
@@ -87,17 +113,17 @@ class AdminProductsScreen extends StatelessWidget {
             Text(
               l10n.adminProductPendingQueue,
               style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(color: embedded ? Colors.white : null),
+                  ?.copyWith(color: widget.embedded ? Colors.white : null),
             ),
             const SizedBox(height: 8),
             if (pending.isEmpty)
               Card(
-                color: embedded ? AdminConsoleTheme.surfaceHigh : null,
+                color: widget.embedded ? AdminConsoleTheme.surfaceHigh : null,
                 child: ListTile(
                   title: Text(
                     l10n.adminProductPendingEmpty,
                     style: TextStyle(
-                      color: embedded ? AdminConsoleTheme.muted : null,
+                      color: widget.embedded ? AdminConsoleTheme.muted : null,
                     ),
                   ),
                 ),
@@ -106,27 +132,109 @@ class AdminProductsScreen extends StatelessWidget {
               for (final product in pending) ...[
                 _PendingProductTile(
                   product: product,
-                  canApprove: !partnerMode && store.stats.isAdmin,
+                  canApprove: !widget.partnerMode && store.stats.isAdmin,
                 ),
                 const SizedBox(height: 8),
               ],
-            if (!partnerMode) ...[
+            if (!widget.partnerMode) ...[
               const SizedBox(height: 24),
               Text(
                 l10n.adminAllProducts,
                 style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: embedded ? Colors.white : null),
+                    ?.copyWith(color: widget.embedded ? Colors.white : null),
+              ),
+              if (shopFilter != null) ...[
+                const SizedBox(height: 8),
+                InputChip(
+                  label: Text(
+                    l10n.adminProductFilterShop(
+                      DiveShopCatalog.byId(shopFilter)?.name ?? shopFilter,
+                    ),
+                  ),
+                  onDeleted: widget.onClearShopFilter,
+                  deleteIcon: const Icon(Icons.close, size: 16),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final entry in <(_ProductSourceFilter, String)>[
+                    (_ProductSourceFilter.all, l10n.adminProductSourceAll),
+                    (
+                      _ProductSourceFilter.partner,
+                      l10n.adminProductSourcePartner,
+                    ),
+                    (_ProductSourceFilter.diy, l10n.adminProductSourceDiy),
+                    (
+                      _ProductSourceFilter.special,
+                      l10n.adminProductSourceSpecial,
+                    ),
+                  ])
+                    ChoiceChip(
+                      key: Key('admin-product-source-${entry.$1.name}'),
+                      label: Text(entry.$2),
+                      selected: _source == entry.$1,
+                      onSelected: (_) => setState(() => _source = entry.$1),
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
-              for (final product in store.allShopProducts) ...[
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final entry in <(_ProductStatusFilter, String)>[
+                    (_ProductStatusFilter.all, l10n.adminProductSourceAll),
+                    (
+                      _ProductStatusFilter.pending,
+                      l10n.productStatusPending,
+                    ),
+                    (
+                      _ProductStatusFilter.approved,
+                      l10n.productStatusApproved,
+                    ),
+                    (
+                      _ProductStatusFilter.rejected,
+                      l10n.productStatusRejected,
+                    ),
+                    (_ProductStatusFilter.draft, l10n.productStatusDraft),
+                  ])
+                    FilterChip(
+                      key: Key('admin-product-status-${entry.$1.name}'),
+                      label: Text(entry.$2),
+                      selected: _status == entry.$1,
+                      onSelected: (_) => setState(() => _status = entry.$1),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              for (final product in filtered) ...[
                 Card(
-                  color: embedded ? AdminConsoleTheme.surfaceHigh : null,
+                  color: widget.embedded ? AdminConsoleTheme.surfaceHigh : null,
                   child: ListTile(
-                    title: Text(product.name),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text(product.name)),
+                        if (_hasOpenSeats(product))
+                          Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: Text(
+                              l10n.adminOpenSeatsBadge,
+                              style: const TextStyle(
+                                color: AdminConsoleTheme.aqua,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                     subtitle: _productLines(
                       l10n,
                       product,
-                      color: embedded ? AdminConsoleTheme.muted : null,
+                      color: widget.embedded ? AdminConsoleTheme.muted : null,
                     ),
                     trailing: IconButton(
                       key: Key('delete-product-${product.id}'),
@@ -134,7 +242,7 @@ class AdminProductsScreen extends StatelessWidget {
                       onPressed: () => _confirmDeleteProduct(context, product),
                       icon: Icon(
                         Icons.delete_outline,
-                        color: embedded ? AdminConsoleTheme.muted : null,
+                        color: widget.embedded ? AdminConsoleTheme.muted : null,
                       ),
                     ),
                     onTap: () => Navigator.of(context).push(
@@ -148,7 +256,7 @@ class AdminProductsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
               ],
             ],
-            if (partnerMode) ...[
+            if (widget.partnerMode) ...[
               const SizedBox(height: 24),
               Text(
                 l10n.partnerProductForm,
@@ -184,13 +292,72 @@ class AdminProductsScreen extends StatelessWidget {
         );
 
         return adminScreenShell(
-          embedded: embedded,
+          embedded: widget.embedded,
           title: l10n.adminProductsTitle,
           body: body,
         );
       },
     );
   }
+
+  bool _matchesSource(ShopProduct product) {
+    final source = classifyAdminProductSource(product);
+    return switch (_source) {
+      _ProductSourceFilter.all => true,
+      _ProductSourceFilter.partner => source == AdminProductSource.partner,
+      _ProductSourceFilter.diy => source == AdminProductSource.diverDiy,
+      _ProductSourceFilter.special =>
+        source == AdminProductSource.curatedSpecial,
+    };
+  }
+
+  bool _matchesStatus(ShopProduct product) {
+    return switch (_status) {
+      _ProductStatusFilter.all => true,
+      _ProductStatusFilter.pending =>
+        product.publishStatus == ProductPublishStatus.pending,
+      _ProductStatusFilter.approved =>
+        product.publishStatus == ProductPublishStatus.approved,
+      _ProductStatusFilter.rejected =>
+        product.publishStatus == ProductPublishStatus.rejected,
+      _ProductStatusFilter.draft =>
+        product.publishStatus == ProductPublishStatus.draft,
+    };
+  }
+}
+
+enum AdminProductSource { partner, diverDiy, curatedSpecial, unknown }
+
+AdminProductSource classifyAdminProductSource(ShopProduct product) {
+  if (product.listingKind == ProductListingKind.diverPlanned) {
+    return AdminProductSource.diverDiy;
+  }
+  if (product.listingKind == ProductListingKind.curated ||
+      product.shopId.startsWith('curated-')) {
+    return AdminProductSource.curatedSpecial;
+  }
+  return AdminProductSource.partner;
+}
+
+String _sourceLabel(AppLocalizations l10n, AdminProductSource source) {
+  return switch (source) {
+    AdminProductSource.partner => l10n.adminProductSourcePartner,
+    AdminProductSource.diverDiy => l10n.adminProductSourceDiy,
+    AdminProductSource.curatedSpecial => l10n.adminProductSourceSpecial,
+    AdminProductSource.unknown => l10n.adminProductSourceUnknown,
+  };
+}
+
+bool _hasOpenSeats(ShopProduct product) {
+  if (product.openEmptySeats) {
+    return true;
+  }
+  for (final option in product.options) {
+    if (option.openEmptySeats) {
+      return true;
+    }
+  }
+  return false;
 }
 
 class _PendingProductTile extends StatelessWidget {
@@ -208,99 +375,108 @@ class _PendingProductTile extends StatelessWidget {
 
     return Card(
       color: AdminConsoleTheme.surfaceHigh,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) =>
+                TravelProductRegistrationScreen(existing: product),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                product.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$shopName · ${_kindLabel(l10n, product.listingKind)}',
-              style: const TextStyle(color: AdminConsoleTheme.muted),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${l10n.exploreConsumerPrice} ${product.consumerPrice} · '
-              '${l10n.exploreProPrice} ${product.professionalPrice}',
-              style: const TextStyle(
-                color: AdminConsoleTheme.muted,
-                fontSize: 12,
-              ),
-            ),
-            if (product.reviewNote.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                product.reviewNote,
+                '$shopName · ${_sourceLabel(l10n, classifyAdminProductSource(product))} · '
+                '${_kindLabel(l10n, product.listingKind)}',
+                style: const TextStyle(color: AdminConsoleTheme.muted),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${l10n.exploreConsumerPrice} ${product.consumerPrice} · '
+                '${l10n.exploreProPrice} ${product.professionalPrice}',
                 style: const TextStyle(
                   color: AdminConsoleTheme.muted,
                   fontSize: 12,
                 ),
               ),
-            ],
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                if (canApprove) ...[
-                  FilledButton(
-                    key: Key('approve-product-${product.id}'),
-                    onPressed: () async {
-                      await store.approveShopProduct(
-                        shopId: product.shopId,
-                        productId: product.id,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.adminProductApproved)),
-                        );
-                      }
-                    },
-                    child: Text(l10n.adminApprove),
-                  ),
-                  const SizedBox(width: 8),
-                  OutlinedButton(
-                    key: Key('reject-product-${product.id}'),
-                    onPressed: () async {
-                      final note = await showDialog<String>(
-                        context: context,
-                        builder: (_) => const _RejectNoteDialog(),
-                      );
-                      if (note == null || !context.mounted) {
-                        return;
-                      }
-                      await store.rejectShopProduct(
-                        shopId: product.shopId,
-                        productId: product.id,
-                        reviewNote: note,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.adminProductRejected)),
-                        );
-                      }
-                    },
-                    child: Text(l10n.adminReject),
-                  ),
-                ],
-                const Spacer(),
-                IconButton(
-                  key: Key('delete-pending-product-${product.id}'),
-                  tooltip: l10n.adminProductDelete,
-                  onPressed: () => _confirmDeleteProduct(context, product),
-                  icon: const Icon(
-                    Icons.delete_outline,
+              if (product.reviewNote.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  product.reviewNote,
+                  style: const TextStyle(
                     color: AdminConsoleTheme.muted,
+                    fontSize: 12,
                   ),
                 ),
               ],
-            ),
-          ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  if (canApprove) ...[
+                    FilledButton(
+                      key: Key('approve-product-${product.id}'),
+                      onPressed: () async {
+                        await store.approveShopProduct(
+                          shopId: product.shopId,
+                          productId: product.id,
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(l10n.adminProductApproved)),
+                          );
+                        }
+                      },
+                      child: Text(l10n.adminApprove),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      key: Key('reject-product-${product.id}'),
+                      onPressed: () async {
+                        final note = await showDialog<String>(
+                          context: context,
+                          builder: (_) => const _RejectNoteDialog(),
+                        );
+                        if (note == null || !context.mounted) {
+                          return;
+                        }
+                        await store.rejectShopProduct(
+                          shopId: product.shopId,
+                          productId: product.id,
+                          reviewNote: note,
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(l10n.adminProductRejected)),
+                          );
+                        }
+                      },
+                      child: Text(l10n.adminReject),
+                    ),
+                  ],
+                  const Spacer(),
+                  IconButton(
+                    key: Key('delete-pending-product-${product.id}'),
+                    tooltip: l10n.adminProductDelete,
+                    onPressed: () => _confirmDeleteProduct(context, product),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: AdminConsoleTheme.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -343,13 +519,19 @@ Widget _productLines(
   Color? color,
 }) {
   final style = TextStyle(color: color);
+  final shopName =
+      DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
+        '$shopName · ${_sourceLabel(l10n, classifyAdminProductSource(product))}',
+        style: style,
+      ),
+      Text(
         '${_kindLabel(l10n, product.listingKind)} · '
         '${_statusLabel(l10n, product.publishStatus)}',
-        style: style,
+        style: style.copyWith(fontSize: 12),
       ),
       if (product.reviewNote.isNotEmpty)
         Text(product.reviewNote, style: style.copyWith(fontSize: 12)),

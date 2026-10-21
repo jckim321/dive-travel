@@ -62,6 +62,7 @@ class ShopLiveStats {
     this.consumerPrice,
     this.professionalPrice,
     this.commissionRate = 0.12,
+    this.internalScore = 0,
     this.products = const [],
     this.intro,
     this.address,
@@ -104,6 +105,7 @@ class ShopLiveStats {
       professionalPrice: (data['professional_price'] as num?)?.toInt(),
       commissionRate:
           (data['commission_rate'] as num?)?.toDouble() ?? 0.12,
+      internalScore: (data['internal_score'] as num?)?.toInt() ?? 0,
       products: ShopProduct.listFrom(id, data['products']),
       intro: data['intro'] as String?,
       address: data['address'] as String?,
@@ -136,6 +138,9 @@ class ShopLiveStats {
   final int? consumerPrice;
   final int? professionalPrice;
   final double commissionRate;
+
+  /// Admin-only partner quality score (0–100), separate from Dive Star reviews.
+  final int internalScore;
   final List<ShopProduct> products;
   final String? intro;
   final String? address;
@@ -168,6 +173,7 @@ class ShopLiveStats {
     int? consumerPrice,
     int? professionalPrice,
     double? commissionRate,
+    int? internalScore,
     List<ShopProduct>? products,
     String? intro,
     String? address,
@@ -193,6 +199,7 @@ class ShopLiveStats {
       consumerPrice: consumerPrice ?? this.consumerPrice,
       professionalPrice: professionalPrice ?? this.professionalPrice,
       commissionRate: commissionRate ?? this.commissionRate,
+      internalScore: internalScore ?? this.internalScore,
       products: products ?? this.products,
       intro: intro ?? this.intro,
       address: address ?? this.address,
