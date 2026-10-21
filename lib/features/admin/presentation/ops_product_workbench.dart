@@ -980,6 +980,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         const SizedBox(height: 12),
         _photoBlock(l10n),
+        const SizedBox(height: 20),
         TextField(
           key: Key(
             widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
