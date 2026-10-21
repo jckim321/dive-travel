@@ -989,6 +989,53 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminTabMembers => 'สมาชิก';
 
   @override
+  String get adminMembersSubDivers => '다이버';
+
+  @override
+  String get adminMembersSubInstructors => '강사인증';
+
+  @override
+  String get adminMembersSubPartners => '제휴파트너';
+
+  @override
+  String get adminMembersGradeAll => '전체';
+
+  @override
+  String get adminMembersNeedsAction => '조치 필요';
+
+  @override
+  String adminMembersNeedsActionHint(int count) {
+    return '강사 승인 대기 $count건 — 강사인증 탭에서 처리하세요.';
+  }
+
+  @override
+  String get adminMembersBadgeInstructor => '강사';
+
+  @override
+  String get adminMembersBadgePartner => '제휴';
+
+  @override
+  String get adminPartnerTierAll => '전체';
+
+  @override
+  String get adminPartnerTierReviewPending => '리뷰전';
+
+  @override
+  String get adminPartnerTierStar1 => 'Dive Star 1';
+
+  @override
+  String get adminPartnerTierStar2 => 'Dive Star 2';
+
+  @override
+  String get adminPartnerTierStar3 => 'Dive Star 3';
+
+  @override
+  String get adminPartnerTierEmpty => '이 티어에 해당하는 제휴 파트너가 없습니다.';
+
+  @override
+  String get adminPartnerOpenInstructors => '강사인증으로';
+
+  @override
   String get adminTabCertify => 'รับรอง';
 
   @override

@@ -967,6 +967,12 @@ class FirestoreDiverRepository implements DiverRepository {
   ) {
     final data = doc.data();
     final instructor = data['is_instructor'] == true;
+    final owned = (data['owned_shop_id'] as String?)?.trim() ??
+        (data['ownedShopId'] as String?)?.trim() ??
+        '';
+    final business = data['is_business'] == true ||
+        data['isBusiness'] == true ||
+        owned.isNotEmpty;
     return MemberAccount(
       uid: doc.id,
       email: data['email'] as String? ?? '',
@@ -982,6 +988,8 @@ class FirestoreDiverRepository implements DiverRepository {
       uniqueRegionsCount: (data['unique_regions_count'] as num?)?.toInt() ?? 0,
       isAdmin: data['is_admin'] == true,
       isInstructor: instructor,
+      isBusiness: business,
+      ownedShopId: owned,
     );
   }
 

@@ -1908,6 +1908,96 @@ abstract class AppLocalizations {
   /// **'회원'**
   String get adminTabMembers;
 
+  /// No description provided for @adminMembersSubDivers.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버'**
+  String get adminMembersSubDivers;
+
+  /// No description provided for @adminMembersSubInstructors.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사인증'**
+  String get adminMembersSubInstructors;
+
+  /// No description provided for @adminMembersSubPartners.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴파트너'**
+  String get adminMembersSubPartners;
+
+  /// No description provided for @adminMembersGradeAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get adminMembersGradeAll;
+
+  /// No description provided for @adminMembersNeedsAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'조치 필요'**
+  String get adminMembersNeedsAction;
+
+  /// No description provided for @adminMembersNeedsActionHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 승인 대기 {count}건 — 강사인증 탭에서 처리하세요.'**
+  String adminMembersNeedsActionHint(int count);
+
+  /// No description provided for @adminMembersBadgeInstructor.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사'**
+  String get adminMembersBadgeInstructor;
+
+  /// No description provided for @adminMembersBadgePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴'**
+  String get adminMembersBadgePartner;
+
+  /// No description provided for @adminPartnerTierAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get adminPartnerTierAll;
+
+  /// No description provided for @adminPartnerTierReviewPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'리뷰전'**
+  String get adminPartnerTierReviewPending;
+
+  /// No description provided for @adminPartnerTierStar1.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star 1'**
+  String get adminPartnerTierStar1;
+
+  /// No description provided for @adminPartnerTierStar2.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star 2'**
+  String get adminPartnerTierStar2;
+
+  /// No description provided for @adminPartnerTierStar3.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star 3'**
+  String get adminPartnerTierStar3;
+
+  /// No description provided for @adminPartnerTierEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 티어에 해당하는 제휴 파트너가 없습니다.'**
+  String get adminPartnerTierEmpty;
+
+  /// No description provided for @adminPartnerOpenInstructors.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사인증으로'**
+  String get adminPartnerOpenInstructors;
+
   /// No description provided for @adminTabCertify.
   ///
   /// In ko, this message translates to:

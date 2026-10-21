@@ -1013,6 +1013,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTabMembers => 'Members';
 
   @override
+  String get adminMembersSubDivers => 'Divers';
+
+  @override
+  String get adminMembersSubInstructors => 'Instructor review';
+
+  @override
+  String get adminMembersSubPartners => 'Partners';
+
+  @override
+  String get adminMembersGradeAll => 'All';
+
+  @override
+  String get adminMembersNeedsAction => 'Needs action';
+
+  @override
+  String adminMembersNeedsActionHint(int count) {
+    return '$count instructor approvals waiting — open Instructor review.';
+  }
+
+  @override
+  String get adminMembersBadgeInstructor => 'Instructor';
+
+  @override
+  String get adminMembersBadgePartner => 'Partner';
+
+  @override
+  String get adminPartnerTierAll => 'All';
+
+  @override
+  String get adminPartnerTierReviewPending => 'Pre-review';
+
+  @override
+  String get adminPartnerTierStar1 => 'Dive Star 1';
+
+  @override
+  String get adminPartnerTierStar2 => 'Dive Star 2';
+
+  @override
+  String get adminPartnerTierStar3 => 'Dive Star 3';
+
+  @override
+  String get adminPartnerTierEmpty => 'No partners in this tier.';
+
+  @override
+  String get adminPartnerOpenInstructors => 'Open instructor review';
+
+  @override
   String get adminTabCertify => 'Certify';
 
   @override

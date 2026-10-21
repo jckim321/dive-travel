@@ -174,6 +174,8 @@ class MemberAccount {
     this.uniqueRegionsCount = 0,
     this.isAdmin = false,
     this.isInstructor = false,
+    this.isBusiness = false,
+    this.ownedShopId = '',
   });
 
   final String uid;
@@ -184,6 +186,8 @@ class MemberAccount {
   final int uniqueRegionsCount;
   final bool isAdmin;
   final bool isInstructor;
+  final bool isBusiness;
+  final String ownedShopId;
 
   MemberGrade get suggestedGrade => MemberGrade.suggested(
         totalLogCount: totalLogCount,
@@ -191,7 +195,11 @@ class MemberAccount {
         isInstructor: isInstructor,
       );
 
-  MemberAccount copyWith({MemberGrade? grade}) {
+  MemberAccount copyWith({
+    MemberGrade? grade,
+    bool? isBusiness,
+    String? ownedShopId,
+  }) {
     return MemberAccount(
       uid: uid,
       email: email,
@@ -201,6 +209,8 @@ class MemberAccount {
       uniqueRegionsCount: uniqueRegionsCount,
       isAdmin: isAdmin,
       isInstructor: isInstructor,
+      isBusiness: isBusiness ?? this.isBusiness,
+      ownedShopId: ownedShopId ?? this.ownedShopId,
     );
   }
 }

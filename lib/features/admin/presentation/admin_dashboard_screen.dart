@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
@@ -17,7 +18,9 @@ import 'package:dive_travel_app/features/admin/presentation/admin_bookings_scree
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-enum _AdminHub { overview, members, certify, shops, ops }
+enum _AdminHub { overview, members, shops, ops }
+
+enum _MembersSub { divers, instructors, partners }
 
 enum _ShopsSub { monitor, products, sameBoat, pricing }
 
@@ -34,6 +37,7 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _AdminHub _hub = _AdminHub.overview;
+  _MembersSub _membersSub = _MembersSub.divers;
   _ShopsSub _shopsSub = _ShopsSub.monitor;
   _OpsSub _opsSub = _OpsSub.posts;
   String? _productsShopFilter;
@@ -41,6 +45,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _go(_AdminHub hub, {Object? sub, String? shopFilter}) {
     setState(() {
       _hub = hub;
+      if (hub == _AdminHub.members && sub is _MembersSub) {
+        _membersSub = sub;
+      }
       if (hub == _AdminHub.shops && sub is _ShopsSub) {
         _shopsSub = sub;
         if (sub == _ShopsSub.products) {
@@ -110,6 +117,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   pendingProducts: pendingProducts,
                   onSelect: _go,
                 ),
+                if (_hub == _AdminHub.members)
+                  _SubTabStrip(
+                    labels: [
+                      l10n.adminMembersSubDivers,
+                      l10n.adminMembersSubInstructors,
+                      l10n.adminMembersSubPartners,
+                    ],
+                    keys: const [
+                      Key('admin-sub-divers'),
+                      Key('admin-menu-instructors'),
+                      Key('admin-sub-partners'),
+                    ],
+                    badges: [0, pending, plaque],
+                    selected: switch (_membersSub) {
+                      _MembersSub.divers => 0,
+                      _MembersSub.instructors => 1,
+                      _MembersSub.partners => 2,
+                    },
+                    onSelect: (i) => _go(
+                      _AdminHub.members,
+                      sub: switch (i) {
+                        1 => _MembersSub.instructors,
+                        2 => _MembersSub.partners,
+                        _ => _MembersSub.divers,
+                      },
+                    ),
+                  ),
                 if (_hub == _AdminHub.shops)
                   _SubTabStrip(
                     labels: [
@@ -176,7 +210,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     child: KeyedSubtree(
-                      key: ValueKey('${_hub.name}-$_shopsSub-$_opsSub'),
+                      key: ValueKey(
+                        '${_hub.name}-$_membersSub-$_shopsSub-$_opsSub',
+                      ),
                       child: _bodyFor(
                         l10n: l10n,
                         store: store,
@@ -219,9 +255,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           salesByKind: store.salesThisMonthByKind(),
         );
       case _AdminHub.members:
-        return const AdminMembersScreen(embedded: true);
-      case _AdminHub.certify:
-        return const AdminInstructorsScreen(embedded: true);
+        return switch (_membersSub) {
+          _MembersSub.divers => AdminMembersScreen(
+            embedded: true,
+            onOpenInstructors: () =>
+                _go(_AdminHub.members, sub: _MembersSub.instructors),
+          ),
+          _MembersSub.instructors =>
+            const AdminInstructorsScreen(embedded: true),
+          _MembersSub.partners => AdminPartnersRosterScreen(
+            embedded: true,
+            onOpenProducts: _openShopProducts,
+          ),
+        };
       case _AdminHub.shops:
         return switch (_shopsSub) {
           _ShopsSub.monitor => AdminShopsScreen(
@@ -270,14 +316,13 @@ class _PrimaryTabStrip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final tabs = <(_AdminHub, IconData, String, int)>[
       (_AdminHub.overview, Icons.dashboard_outlined, l10n.adminTabOverview, 0),
-      (_AdminHub.members, Icons.groups_outlined, l10n.adminTabMembers, 0),
       (
-        _AdminHub.certify,
-        Icons.verified_user_outlined,
-        l10n.adminTabCertify,
+        _AdminHub.members,
+        Icons.groups_outlined,
+        l10n.adminTabMembers,
         pendingCertify,
       ),
-        (
+      (
         _AdminHub.shops,
         Icons.handshake_outlined,
         l10n.adminTabShops,
@@ -299,7 +344,6 @@ class _PrimaryTabStrip extends StatelessWidget {
           return _PrimaryTabChip(
             key: switch (id) {
               _AdminHub.members => const Key('admin-menu-members'),
-              _AdminHub.certify => const Key('admin-menu-instructors'),
               _AdminHub.shops => const Key('admin-menu-shops'),
               _AdminHub.ops => const Key('admin-menu-posts'),
               _AdminHub.overview => const Key('admin-tab-overview'),
@@ -418,12 +462,14 @@ class _SubTabStrip extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     this.keys = const [],
+    this.badges = const [],
   });
 
   final List<String> labels;
   final int selected;
   final ValueChanged<int> onSelect;
   final List<Key> keys;
+  final List<int> badges;
 
   @override
   Widget build(BuildContext context) {
@@ -445,18 +491,50 @@ class _SubTabStrip extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Text(
-                      labels[i],
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: selected == i
-                            ? AdminConsoleTheme.bg
-                            : AdminConsoleTheme.muted,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            labels[i],
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: selected == i
+                                  ? AdminConsoleTheme.bg
+                                  : AdminConsoleTheme.muted,
+                            ),
+                          ),
+                        ),
+                        if (i < badges.length && badges[i] > 0) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected == i
+                                  ? AdminConsoleTheme.bg
+                                  : AdminConsoleTheme.danger,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              badges[i] > 9 ? '9+' : '${badges[i]}',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: selected == i
+                                    ? AdminConsoleTheme.aqua
+                                    : Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
@@ -526,7 +604,7 @@ class _OverviewPane extends StatelessWidget {
               label: l10n.adminMetricMembers,
               value: '$memberCount',
               accent: AdminConsoleTheme.aqua,
-              onTap: () => onJump(_AdminHub.members),
+              onTap: () => onJump(_AdminHub.members, sub: _MembersSub.divers),
             ),
             _MetricCard(
               label: l10n.adminMetricPendingCert,
@@ -534,13 +612,15 @@ class _OverviewPane extends StatelessWidget {
               accent: pendingCertify > 0
                   ? AdminConsoleTheme.danger
                   : AdminConsoleTheme.ice,
-              onTap: () => onJump(_AdminHub.certify),
+              onTap: () =>
+                  onJump(_AdminHub.members, sub: _MembersSub.instructors),
             ),
             _MetricCard(
               label: l10n.adminMetricPlaques,
               value: '$plaqueCount',
               accent: AdminConsoleTheme.amber,
-              onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.monitor),
+              onTap: () =>
+                  onJump(_AdminHub.members, sub: _MembersSub.partners),
             ),
             _MetricCard(
               label: l10n.adminProductsTab,
@@ -580,7 +660,8 @@ class _OverviewPane extends StatelessWidget {
               icon: Icons.verified_user_outlined,
               title: l10n.adminAttentionCertify(pendingCertify),
               color: AdminConsoleTheme.danger,
-              onTap: () => onJump(_AdminHub.certify),
+              onTap: () =>
+                  onJump(_AdminHub.members, sub: _MembersSub.instructors),
             ),
           if (pendingProducts > 0) ...[
             const SizedBox(height: 8),
@@ -597,7 +678,8 @@ class _OverviewPane extends StatelessWidget {
               icon: Icons.workspace_premium_outlined,
               title: l10n.adminAttentionPlaque(plaqueCount),
               color: AdminConsoleTheme.amber,
-              onTap: () => onJump(_AdminHub.shops, sub: _ShopsSub.monitor),
+              onTap: () =>
+                  onJump(_AdminHub.members, sub: _MembersSub.partners),
             ),
           ],
           if (hiddenCount > 0) ...[

@@ -105,10 +105,15 @@ void main() {
 
     expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);
-    expect(find.byKey(const Key('admin-menu-instructors')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-shops')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-posts')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('admin-menu-members')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('admin-sub-divers')), findsOneWidget);
+    expect(find.byKey(const Key('admin-menu-instructors')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-partners')), findsOneWidget);
 
     await tester.tap(find.text(l10n.adminHqClose));
     await tester.pumpAndSettle();
