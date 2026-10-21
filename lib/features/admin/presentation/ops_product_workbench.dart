@@ -23,11 +23,15 @@ class OpsProductWorkbench extends StatefulWidget {
     super.key,
     this.lockedShopId,
     this.partnerMode = false,
+    this.creatorMode = false,
     this.existing,
   });
 
   final String? lockedShopId;
   final bool partnerMode;
+
+  /// Diver "craft a trip" — always submits for review as diverPlanned.
+  final bool creatorMode;
   final ShopProduct? existing;
 
   @override
@@ -804,6 +808,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (current != null && current != ProductListingKind.exploreOnly) {
       return current;
     }
+    if (widget.creatorMode) {
+      return ProductListingKind.diverPlanned;
+    }
     if (_namedResort) {
       return ProductListingKind.curated;
     }
@@ -953,9 +960,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         gallery: _gallerySlots,
         useAsResortCover: existing == null || _galleryTouched,
-        creatorSubmission: false,
+        creatorSubmission: widget.creatorMode,
         submitterUid: sessionUid,
-        intent: intent,
+        intent: widget.creatorMode
+            ? ProductSaveIntent.submitForReview
+            : intent,
       );
       if (!mounted) {
         return;
@@ -986,11 +995,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         : _shopsForContinent;
     final hull = DiveShopCatalog.byId(_shopId);
     final store = DiverStoreScope.of(context);
-    final canPublish = store.stats.isAdmin && !widget.partnerMode;
+    final canPublish = store.stats.isAdmin &&
+        !widget.partnerMode &&
+        !widget.creatorMode;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
-        title: Text(l10n.briefTitle),
+        title: Text(
+          widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
+        ),
         backgroundColor: AppTheme.canvas,
       ),
       body: LayoutBuilder(
@@ -1047,9 +1060,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _saveBar(AppLocalizations l10n, {required bool canPublish}) {
-    final intent = canPublish
-        ? ProductSaveIntent.publish
-        : ProductSaveIntent.submitForReview;
+    final intent = widget.creatorMode
+        ? ProductSaveIntent.submitForReview
+        : (canPublish
+            ? ProductSaveIntent.publish
+            : ProductSaveIntent.submitForReview);
     final busy = _savingIntent != null;
     final pending = canPublish &&
         (widget.existing?.publishStatus == ProductPublishStatus.pending);
