@@ -208,3 +208,29 @@ class ReviewValidationException implements Exception {
   @override
   String toString() => 'ReviewValidationException($code)';
 }
+
+/// How guest-card averages were updated after a review save.
+enum ReviewProductLinkStatus {
+  /// `products[]` (and option if any) guest_* updated.
+  linked,
+
+  /// Booking had no product_id — shop averages only.
+  missingProductId,
+
+  /// product_id set but no matching products[] row.
+  productNotFound,
+}
+
+class OperationReviewOutcome {
+  const OperationReviewOutcome({
+    required this.productLink,
+    this.productId = '',
+  });
+
+  final ReviewProductLinkStatus productLink;
+  final String productId;
+
+  bool get needsProductLinkNotice =>
+      productLink == ReviewProductLinkStatus.missingProductId ||
+      productLink == ReviewProductLinkStatus.productNotFound;
+}

@@ -719,7 +719,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> submitOperationReview({
+  Future<OperationReviewOutcome> submitOperationReview({
     required String uid,
     required String shopId,
     required int safety,
@@ -728,6 +728,7 @@ class FirestoreDiverRepository implements DiverRepository {
     String? bookingId,
     String? logId,
     String? productId,
+    String? optionId,
     String? comment,
     String? authorDisplayName,
     ReviewDetails? details,
@@ -748,9 +749,11 @@ class FirestoreDiverRepository implements DiverRepository {
     final reviewRef = shopRef.collection('reviews').doc();
     final userReviewRef = _userDoc(uid).collection('reviews').doc(reviewRef.id);
     final bookingRef = _bookings(uid).doc(resolvedBookingId);
-    final resolvedProductId = productId?.trim();
+    final passedProductId = productId?.trim() ?? '';
+    final passedOptionId = optionId?.trim() ?? '';
     final publicName = authorDisplayName?.trim();
 
+    late OperationReviewOutcome outcome;
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(shopRef);
       final bookingSnap = await transaction.get(bookingRef);
@@ -785,21 +788,41 @@ class FirestoreDiverRepository implements DiverRepository {
       );
       final guestStars =
           ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
-      final productKey = (resolvedProductId != null &&
-              resolvedProductId.isNotEmpty)
-          ? resolvedProductId
-          : (booking.productId.isNotEmpty ? booking.productId : null);
+      final productKey = passedProductId.isNotEmpty
+          ? passedProductId
+          : (booking.productId.isNotEmpty ? booking.productId : '');
+      final optionKey = passedOptionId.isNotEmpty
+          ? passedOptionId
+          : booking.optionId.trim();
+
       List<Map<String, dynamic>>? nextProducts;
-      if (productKey != null) {
+      var link = ReviewProductLinkStatus.missingProductId;
+      if (productKey.isEmpty) {
+        link = ReviewProductLinkStatus.missingProductId;
+      } else {
         final products = ShopProduct.listFrom(shopId, data['products']);
+        var found = false;
         nextProducts = [
           for (final item in products)
             if (item.id == productKey)
-              item.withGuestStarReview(guestStars).toMap()
+              () {
+                found = true;
+                return item
+                    .withGuestStarReview(guestStars, optionId: optionKey)
+                    .toMap();
+              }()
             else
               item.toMap(),
         ];
+        link = found
+            ? ReviewProductLinkStatus.linked
+            : ReviewProductLinkStatus.productNotFound;
       }
+      outcome = OperationReviewOutcome(
+        productLink: link,
+        productId: productKey,
+      );
+
       final review = <String, dynamic>{
         'uid': uid,
         'shop_id': shopId,
@@ -810,7 +833,8 @@ class FirestoreDiverRepository implements DiverRepository {
         'comment': ?safeComment,
         'booking_id': resolvedBookingId,
         'log_id': ?logId,
-        'product_id': ?productKey,
+        if (productKey.isNotEmpty) 'product_id': productKey,
+        if (optionKey.isNotEmpty) 'option_id': optionKey,
         if (publicName != null && publicName.isNotEmpty)
           'author_display_name': publicName,
         ...safeDetails.toFirestoreFields(),
@@ -840,6 +864,7 @@ class FirestoreDiverRepository implements DiverRepository {
       }, SetOptions(merge: true));
     });
     await _bumpActivityAndMaybeUpgrade(uid: uid, reviewDelta: 1);
+    return outcome;
   }
 
   @override

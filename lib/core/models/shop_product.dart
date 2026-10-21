@@ -370,6 +370,8 @@ class ShopProductOption {
     this.flagClosesAt,
     this.parentOptionId = '',
     this.sameBoatStatus = SameBoatStatus.closed,
+    this.guestRating = 0,
+    this.guestReviewCount = 0,
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
@@ -394,6 +396,8 @@ class ShopProductOption {
         data['same_boat_status'],
         openEmptySeats: open,
       ),
+      guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
+      guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -415,6 +419,10 @@ class ShopProductOption {
   /// When set, this addon belongs to an individual SKU (not the base package).
   final String parentOptionId;
   final SameBoatStatus sameBoatStatus;
+
+  /// Denormalized guest averages (cards still use parent [ShopProduct]).
+  final double guestRating;
+  final int guestReviewCount;
 
   bool get listsOnSameBoat {
     return openEmptySeats &&
@@ -444,7 +452,16 @@ class ShopProductOption {
       if (flagClosesAt != null)
         'flag_closes_at': flagClosesAt!.toIso8601String(),
       if (parentOptionId.isNotEmpty) 'parent_option_id': parentOptionId,
+      if (guestReviewCount > 0) 'guest_rating': guestRating,
+      if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
     };
+  }
+
+  ShopProductOption withGuestStarReview(int stars) {
+    final score = stars.clamp(1, 5).toDouble();
+    final nextCount = guestReviewCount + 1;
+    final nextAvg = ((guestRating * guestReviewCount) + score) / nextCount;
+    return copyWith(guestRating: nextAvg, guestReviewCount: nextCount);
   }
 
   ShopProductOption copyWith({
@@ -463,6 +480,8 @@ class ShopProductOption {
     DateTime? flagClosesAt,
     String? parentOptionId,
     SameBoatStatus? sameBoatStatus,
+    double? guestRating,
+    int? guestReviewCount,
     bool clearDates = false,
   }) {
     return ShopProductOption(
@@ -484,6 +503,8 @@ class ShopProductOption {
       flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
       parentOptionId: parentOptionId ?? this.parentOptionId,
       sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
+      guestRating: guestRating ?? this.guestRating,
+      guestReviewCount: guestReviewCount ?? this.guestReviewCount,
     );
   }
 
@@ -1161,11 +1182,25 @@ class ShopProduct {
   }
 
   /// Fold one guest star score (1–5) into product averages.
-  ShopProduct withGuestStarReview(int stars) {
+  /// When [optionId] matches an option, that option's guest_* is updated too.
+  ShopProduct withGuestStarReview(int stars, {String optionId = ''}) {
     final score = stars.clamp(1, 5).toDouble();
     final nextCount = guestReviewCount + 1;
     final nextAvg = ((guestRating * guestReviewCount) + score) / nextCount;
-    return copyWith(guestRating: nextAvg, guestReviewCount: nextCount);
+    final nextOptions = optionId.trim().isEmpty
+        ? options
+        : [
+            for (final option in options)
+              if (option.id == optionId)
+                option.withGuestStarReview(stars)
+              else
+                option,
+          ];
+    return copyWith(
+      guestRating: nextAvg,
+      guestReviewCount: nextCount,
+      options: nextOptions,
+    );
   }
 
   Map<String, dynamic> toMap() {

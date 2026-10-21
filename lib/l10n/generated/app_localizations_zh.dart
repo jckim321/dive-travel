@@ -648,6 +648,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reviewSaved => '후기가 저장되었습니다.';
 
   @override
+  String get reviewSavedProductIdMissing =>
+      '이 예약에 상품 정보가 없어 상품 카드 별점은 올라가지 않았습니다.';
+
+  @override
+  String get reviewSavedProductNotFound =>
+      '샵에서 해당 상품을 찾지 못해 상품 카드 별점은 올라가지 않았습니다.';
+
+  @override
   String get reviewSaveFailed => '후기 저장에 실패했습니다.';
 
   @override

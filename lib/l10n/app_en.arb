@@ -215,6 +215,8 @@
   "reviewWrite": "Write review",
   "reviewDone": "Reviewed",
   "reviewSaved": "Review saved.",
+  "reviewSavedProductIdMissing": "This booking has no product id, so the product card rating was not updated.",
+  "reviewSavedProductNotFound": "Could not find that product on the shop, so the product card rating was not updated.",
   "reviewSaveFailed": "Could not save the review.",
   "reviewAlreadySubmitted": "You already left a review for this trip.",
   "reviewBookingRequired": "You can leave a review only for a completed booking.",

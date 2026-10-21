@@ -518,7 +518,7 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> submitOperationReview({
+  Future<OperationReviewOutcome> submitOperationReview({
     required String uid,
     required String shopId,
     required int safety,
@@ -527,6 +527,7 @@ class MemoryDiverRepository implements DiverRepository {
     String? bookingId,
     String? logId,
     String? productId,
+    String? optionId,
     String? comment,
     String? authorDisplayName,
     ReviewDetails? details,
@@ -558,16 +559,34 @@ class MemoryDiverRepository implements DiverRepository {
         ((current?.avgBoat ?? 0) * (count - 1) + safeBoat) / count;
     final guestStars =
         ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
-    final resolvedProductId = (productId?.trim().isNotEmpty ?? false)
+    final productKey = (productId?.trim().isNotEmpty ?? false)
         ? productId!.trim()
-        : (booking.productId.isNotEmpty ? booking.productId : null);
-    final products = [
-      for (final item in current?.products ?? const <ShopProduct>[])
-        if (resolvedProductId != null && item.id == resolvedProductId)
-          item.withGuestStarReview(guestStars)
-        else
-          item,
-    ];
+        : booking.productId.trim();
+    final optionKey = (optionId?.trim().isNotEmpty ?? false)
+        ? optionId!.trim()
+        : booking.optionId.trim();
+
+    var link = ReviewProductLinkStatus.missingProductId;
+    final products = <ShopProduct>[];
+    if (productKey.isEmpty) {
+      products.addAll(current?.products ?? const []);
+      link = ReviewProductLinkStatus.missingProductId;
+    } else {
+      var found = false;
+      for (final item in current?.products ?? const <ShopProduct>[]) {
+        if (item.id == productKey) {
+          found = true;
+          products.add(
+            item.withGuestStarReview(guestStars, optionId: optionKey),
+          );
+        } else {
+          products.add(item);
+        }
+      }
+      link = found
+          ? ReviewProductLinkStatus.linked
+          : ReviewProductLinkStatus.productNotFound;
+    }
     _reviewSequence += 1;
     final review = GuestReview(
       id: 'review-$_reviewSequence',
@@ -576,7 +595,7 @@ class MemoryDiverRepository implements DiverRepository {
       comment: safeComment ?? '',
       createdAt: DateTime.now().toUtc(),
       authorDisplayName: authorDisplayName?.trim() ?? '',
-      productId: resolvedProductId ?? '',
+      productId: productKey,
       details: safeDetails,
     );
     final existing = _shopReviews[shopId] ?? <GuestReview>[];
@@ -622,6 +641,10 @@ class MemoryDiverRepository implements DiverRepository {
     }
     _shopController.add(_shopStats.values.toList());
     _bumpActivityLocal(uid: uid, reviewDelta: 1);
+    return OperationReviewOutcome(
+      productLink: link,
+      productId: productKey,
+    );
   }
 
   /// Test helper: insert a booking into the in-memory list.

@@ -168,17 +168,26 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
     );
   }
 
-  String? _resolveProductId(DiverStore store, String bookingId) {
+  ({String? productId, String? optionId}) _resolveProductLink(
+    DiverStore store,
+    String bookingId,
+  ) {
     final passed = widget.productId?.trim();
-    if (passed != null && passed.isNotEmpty) {
-      return passed;
-    }
     for (final booking in store.bookings) {
-      if (booking.id == bookingId && booking.productId.isNotEmpty) {
-        return booking.productId;
+      if (booking.id != bookingId) {
+        continue;
       }
+      final productId = (passed != null && passed.isNotEmpty)
+          ? passed
+          : (booking.productId.isNotEmpty ? booking.productId : null);
+      final optionId =
+          booking.optionId.isNotEmpty ? booking.optionId : null;
+      return (productId: productId, optionId: optionId);
     }
-    return null;
+    if (passed != null && passed.isNotEmpty) {
+      return (productId: passed, optionId: null);
+    }
+    return (productId: null, optionId: null);
   }
 
   Future<void> _submit() async {
@@ -206,22 +215,37 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
       final stars = OperationReviewPolicy.clampStars(_stars);
       final comment = OperationReviewPolicy.normalizeComment(_comment.text);
       final details = OperationReviewPolicy.normalizeDetails(_collectDetails());
-      await store.submitOperationReview(
+      final link = _resolveProductLink(store, bookingId);
+      final outcome = await store.submitOperationReview(
         shopId: _shopId,
         safety: stars,
         guide: stars,
         boat: stars,
         bookingId: bookingId,
         logId: widget.logId,
-        productId: _resolveProductId(store, bookingId),
+        productId: link.productId,
+        optionId: link.optionId,
         comment: comment,
         details: details,
       );
       if (!mounted) {
         return;
       }
+      final notice = switch (outcome.productLink) {
+        ReviewProductLinkStatus.missingProductId =>
+          l10n.reviewSavedProductIdMissing,
+        ReviewProductLinkStatus.productNotFound =>
+          l10n.reviewSavedProductNotFound,
+        ReviewProductLinkStatus.linked => null,
+      };
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.reviewSaved)),
+        SnackBar(
+          content: Text(
+            notice == null
+                ? l10n.reviewSaved
+                : '${l10n.reviewSaved} $notice',
+          ),
+        ),
       );
       Navigator.of(context).pop();
     } on ReviewValidationException catch (error) {

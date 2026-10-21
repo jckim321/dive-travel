@@ -1290,6 +1290,18 @@ abstract class AppLocalizations {
   /// **'후기가 저장되었습니다.'**
   String get reviewSaved;
 
+  /// 후기는 저장됐지만 예약에 product_id가 없을 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 예약에 상품 정보가 없어 상품 카드 별점은 올라가지 않았습니다.'**
+  String get reviewSavedProductIdMissing;
+
+  /// 후기의 product_id가 products 배열에 없을 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵에서 해당 상품을 찾지 못해 상품 카드 별점은 올라가지 않았습니다.'**
+  String get reviewSavedProductNotFound;
+
   /// No description provided for @reviewSaveFailed.
   ///
   /// In ko, this message translates to:

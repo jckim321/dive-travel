@@ -671,6 +671,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewSaved => 'Review saved.';
 
   @override
+  String get reviewSavedProductIdMissing =>
+      'This booking has no product id, so the product card rating was not updated.';
+
+  @override
+  String get reviewSavedProductNotFound =>
+      'Could not find that product on the shop, so the product card rating was not updated.';
+
+  @override
   String get reviewSaveFailed => 'Could not save the review.';
 
   @override

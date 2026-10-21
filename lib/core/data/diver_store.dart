@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
@@ -755,7 +756,7 @@ class DiverStore extends ChangeNotifier {
     return SeatFlagPlant.planted;
   }
 
-  Future<void> submitOperationReview({
+  Future<OperationReviewOutcome> submitOperationReview({
     required String shopId,
     required int safety,
     required int guide,
@@ -763,15 +764,18 @@ class DiverStore extends ChangeNotifier {
     String? bookingId,
     String? logId,
     String? productId,
+    String? optionId,
     String? comment,
     ReviewDetails? details,
   }) async {
     final uid = _uid;
     if (uid == null) {
-      return;
+      return const OperationReviewOutcome(
+        productLink: ReviewProductLinkStatus.missingProductId,
+      );
     }
     final name = _stats.displayName.trim();
-    await _repository.submitOperationReview(
+    return _repository.submitOperationReview(
       uid: uid,
       shopId: shopId,
       safety: safety,
@@ -780,6 +784,7 @@ class DiverStore extends ChangeNotifier {
       bookingId: bookingId,
       logId: logId,
       productId: productId,
+      optionId: optionId,
       comment: comment,
       authorDisplayName: name.isEmpty ? null : name,
       details: details,

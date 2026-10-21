@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
@@ -67,7 +68,7 @@ abstract class DiverRepository {
 
   Stream<List<TourBooking>> watchBookings(String uid);
 
-  Future<void> submitOperationReview({
+  Future<OperationReviewOutcome> submitOperationReview({
     required String uid,
     required String shopId,
     required int safety,
@@ -76,6 +77,7 @@ abstract class DiverRepository {
     String? bookingId,
     String? logId,
     String? productId,
+    String? optionId,
     String? comment,
     String? authorDisplayName,
     ReviewDetails? details,
