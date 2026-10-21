@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -14,8 +14,11 @@ import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
+import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
@@ -47,10 +50,6 @@ class ProfileScreen extends StatelessWidget {
           final paidBookings = [
             for (final booking in activeBookings)
               if (booking.isPaid) booking,
-          ];
-          final requestedBookings = [
-            for (final booking in activeBookings)
-              if (!booking.isPaid) booking,
           ];
           final flags = store.myLiveFlags(now: now);
           final insight = TravelStyleAnalyzer.analyze(
@@ -95,20 +94,27 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _OceanSectionTitle(title: l10n.profileBookingStatus),
+                      _OceanSectionTitle(title: l10n.profileTripScheduleTitle),
                       const SizedBox(height: 12),
-                      _BookingBoards(
-                        requested: requestedBookings,
-                        paid: paidBookings,
-                        flags: flags,
-                        now: now,
-                        onOpenBookings: store.bookings.isEmpty
+                      _TripScheduleBox(
+                        bookings: paidBookings,
+                        onOpenVoucher: (booking) =>
+                            openBookingVoucher(context, booking),
+                        onSeeAll: store.bookings.isEmpty
                             ? null
                             : () => _openBookings(context),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(title: l10n.profileFlaggedSeatsTitle),
+                      const SizedBox(height: 12),
+                      _FlaggedSeatsBox(
+                        flags: flags,
+                        now: now,
+                        onPay: (offer) => _payFlag(context, store, offer),
+                      ),
+                      const SizedBox(height: 28),
                       _OceanSectionTitle(
-                        title: l10n.profileSavedOceansTitle,
+                        title: l10n.profileWishlistTitle,
                         count: favorites.length,
                       ),
                       const SizedBox(height: 12),
@@ -119,24 +125,7 @@ class ProfileScreen extends StatelessWidget {
                             openResortDetail(context, shop.hullId),
                         onRemove: store.removeFavoriteShop,
                       ),
-                      const SizedBox(height: 30),
-                      _OceanSectionTitle(title: l10n.profileNextTripSuggest),
-                      const SizedBox(height: 12),
-                      _HintOrList(
-                        plate: 3,
-                        empty: l10n.profileNoUpcomingTrip,
-                        onTap: suggested == null
-                            ? null
-                            : () => openResortDetail(context, suggested.hullId),
-                        children: [
-                          if (suggested != null)
-                            _Line(
-                              title: suggested.name,
-                              detail: suggested.location,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.profileCraftedTripsTitle),
                       const SizedBox(height: 12),
                       if (crafted.isEmpty)
@@ -173,23 +162,27 @@ class ProfileScreen extends StatelessWidget {
                           plate: 0,
                           child: MyCraftedTripsSection(products: crafted),
                         ),
-                      const SizedBox(height: 30),
-                      _OceanSectionTitle(title: l10n.profileOceanRecordTitle),
-                      const SizedBox(height: 12),
-                      _OceanRecordCard(
-                        plate: 1,
-                        totalLogs: stats.totalLogCount,
-                        regions: stats.uniqueRegionsCount,
-                        progress: stats.centuryProgress,
-                        logsToNext: stats.logsToNextCentury,
-                        target: stats.currentCenturyTarget,
-                        stamped: {
-                          for (final region in store.regions)
-                            RegionCatalog.countryOf(region),
-                        },
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(
+                        title: l10n.profileReviewRecommendTitle,
                       ),
-                      const SizedBox(height: 30),
-                      _OceanSectionTitle(title: l10n.profileAfterTripTitle),
+                      const SizedBox(height: 12),
+                      _HintOrList(
+                        plate: 3,
+                        empty: l10n.profileNoUpcomingTrip,
+                        onTap: suggested == null
+                            ? null
+                            : () => openResortDetail(context, suggested.hullId),
+                        children: [
+                          if (suggested != null)
+                            _Line(
+                              title: suggested.name,
+                              detail: suggested.location,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(title: l10n.profileWriteReviewTitle),
                       const SizedBox(height: 12),
                       _HintOrList(
                         plate: 2,
@@ -207,6 +200,17 @@ class ProfileScreen extends StatelessWidget {
                             ),
                         ],
                       ),
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(title: l10n.profileCharmsTitle),
+                      const SizedBox(height: 10),
+                      _OceanCharmsAccessory(
+                        totalLogs: stats.totalLogCount,
+                        progress: stats.centuryProgress,
+                        stamped: {
+                          for (final region in store.regions)
+                            RegionCatalog.countryOf(region),
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -215,15 +219,6 @@ class ProfileScreen extends StatelessWidget {
         },
       ),
     );
-  }
-
-  DiveShop? _shopFor(DiverStore store, String shopId) {
-    for (final shop in store.resortHulls) {
-      if (shop.hullId == shopId.split('--').first) {
-        return shop;
-      }
-    }
-    return null;
   }
 
   Future<void> _openSettings(BuildContext context) {
@@ -247,6 +242,364 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 36),
           child: const MyBookingsSection(),
         ),
+      ),
+    );
+  }
+
+  Future<void> _payFlag(
+    BuildContext context,
+    DiverStore store,
+    SameBoatOffer offer,
+  ) async {
+    final product = offer.product;
+    final shop = _shopForProduct(store, product);
+    if (shop == null) {
+      return;
+    }
+    final uid = store.uid ?? '';
+    final now = DateTime.now();
+    final holds = offer.option?.flagHolds ?? product.flagHolds;
+    var party = 1;
+    DateTime? payBy;
+    for (final hold in holds) {
+      if (hold.uid == uid && hold.expiresAt.isAfter(now)) {
+        party = hold.seats;
+        payBy = hold.expiresAt;
+        break;
+      }
+    }
+    await showTourCheckoutSheet(
+      context: context,
+      shop: shop,
+      quote: store.quoteFor(shop),
+      product: product,
+      lockedOptionId: offer.optionId,
+      fromFlag: true,
+      lockedPartySize: party,
+      flagPayBy: payBy,
+    );
+  }
+
+  DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
+    final hullId = product.shopId.split('--').first;
+    final listings = store.listingsOnHull(hullId);
+    DiveShop? hull;
+    for (final shop in listings) {
+      if (shop.listingProductId == product.id) {
+        return store.listingCardForProduct(shop, product);
+      }
+      hull ??= shop;
+    }
+    if (hull == null) {
+      for (final shop in store.shops) {
+        if (shop.hullId == hullId) {
+          hull = shop;
+          break;
+        }
+      }
+    }
+    if (hull == null) {
+      return null;
+    }
+    return store.listingCardForProduct(hull, product);
+  }
+}
+
+class _TripScheduleBox extends StatelessWidget {
+  const _TripScheduleBox({
+    required this.bookings,
+    required this.onOpenVoucher,
+    this.onSeeAll,
+  });
+
+  final List<TourBooking> bookings;
+  final void Function(TourBooking booking) onOpenVoucher;
+  final VoidCallback? onSeeAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _LightPanel(
+      plate: 0,
+      child: bookings.isEmpty
+          ? Text(
+              l10n.profileTripScheduleEmpty,
+              style: Theme.of(context).textTheme.bodyMedium,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final booking in bookings) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          booking.productLabel,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.navy,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        key: Key('profile-voucher-${booking.id}'),
+                        onPressed: () => onOpenVoucher(booking),
+                        style: FilledButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: Text(l10n.bookingVoucherOpen),
+                      ),
+                    ],
+                  ),
+                  if (booking != bookings.last) const SizedBox(height: 12),
+                ],
+                if (onSeeAll != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: onSeeAll,
+                      child: Text(l10n.exploreMyBookings),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+}
+
+class _FlaggedSeatsBox extends StatelessWidget {
+  const _FlaggedSeatsBox({
+    required this.flags,
+    required this.now,
+    required this.onPay,
+  });
+
+  final List<SameBoatOffer> flags;
+  final DateTime now;
+  final void Function(SameBoatOffer offer) onPay;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _LightPanel(
+      plate: 1,
+      child: flags.isEmpty
+          ? Text(
+              l10n.profileFlaggedSeatsEmpty,
+              style: Theme.of(context).textTheme.bodyMedium,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final offer in flags) ...[
+                  _BlinkingFlagPayButton(
+                    label: offer.optionName.isEmpty
+                        ? offer.product.name
+                        : '${offer.product.name} 쨌 ${offer.optionName}',
+                    deadline: _holdUntil(offer),
+                    onPay: () => onPay(offer),
+                  ),
+                  if (offer != flags.last) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+    );
+  }
+
+  DateTime? _holdUntil(SameBoatOffer offer) {
+    final holds = offer.option?.flagHolds ?? offer.product.flagHolds;
+    DateTime? soonest;
+    for (final hold in holds) {
+      if (!hold.expiresAt.isAfter(now)) continue;
+      if (soonest == null || hold.expiresAt.isBefore(soonest)) {
+        soonest = hold.expiresAt;
+      }
+    }
+    return soonest ?? offer.flagClosesAt;
+  }
+}
+
+class _BlinkingFlagPayButton extends StatefulWidget {
+  const _BlinkingFlagPayButton({
+    required this.label,
+    required this.onPay,
+    this.deadline,
+  });
+
+  final String label;
+  final DateTime? deadline;
+  final VoidCallback onPay;
+
+  @override
+  State<_BlinkingFlagPayButton> createState() => _BlinkingFlagPayButtonState();
+}
+
+class _BlinkingFlagPayButtonState extends State<_BlinkingFlagPayButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final deadline = widget.deadline == null
+        ? null
+        : DateFormat('MM.dd HH:mm').format(widget.deadline!);
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.55, end: 1).animate(
+        CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+      ),
+      child: Material(
+        color: const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          key: const Key('profile-flag-pay'),
+          onTap: widget.onPay,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.navy,
+                        ),
+                      ),
+                      if (deadline != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.communityFlagPayBy(deadline),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFB45309),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: widget.onPay,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE67E22),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: Text(l10n.profileFlagPayCta),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cute accessory strip — stamps + tank as charm badges, not a heavy record block.
+class _OceanCharmsAccessory extends StatelessWidget {
+  const _OceanCharmsAccessory({
+    required this.totalLogs,
+    required this.progress,
+    required this.stamped,
+  });
+
+  final int totalLogs;
+  final double progress;
+  final Set<String> stamped;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFFBF5), Color(0xFFF0F7FA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE8D9C8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14C4A484),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Transform.scale(
+            scale: 0.72,
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 78,
+              child: PassportStamps(stamped: stamped, compact: true),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              '$totalLogs',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppTheme.navy,
+              ),
+            ),
+          ),
+          Transform.scale(
+            scale: 0.55,
+            alignment: Alignment.centerRight,
+            child: TankGauge(
+              key: const Key('profile-tank-gauge'),
+              progress: progress,
+              isComplete: progress >= 1 && totalLogs > 0,
+              label: '$totalLogs',
+              width: 52,
+              bodyHeight: 96,
+              neckWidth: 20,
+              neckHeight: 10,
+              borderWidth: 2.5,
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              fillColor: CenturyTankColors.ofLogs(totalLogs),
+              borderColor: CenturyTankColors.ofLogs(totalLogs),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -316,200 +669,6 @@ class _Line extends StatelessWidget {
   }
 }
 
-class _BookingProgressLine extends StatelessWidget {
-  const _BookingProgressLine({
-    required this.productName,
-    required this.optionName,
-    required this.statusLabel,
-    this.onDetail,
-  });
-
-  final String productName;
-  final String optionName;
-  final String statusLabel;
-  final VoidCallback? onDetail;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  productName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                if (optionName.trim().isNotEmpty)
-                  Text(
-                    optionName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8EEF2),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.navy,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: onDetail,
-                child: Text(l10n.bookingDetailCta),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum _BookingFilter { all, requested, paid, holding }
-
-class _BookingBoards extends StatefulWidget {
-  const _BookingBoards({
-    required this.requested,
-    required this.paid,
-    required this.flags,
-    required this.now,
-    required this.onOpenBookings,
-  });
-
-  final List<TourBooking> requested;
-  final List<TourBooking> paid;
-  final List<SameBoatOffer> flags;
-  final DateTime now;
-  final VoidCallback? onOpenBookings;
-
-  @override
-  State<_BookingBoards> createState() => _BookingBoardsState();
-}
-
-class _BookingBoardsState extends State<_BookingBoards> {
-  _BookingFilter _filter = _BookingFilter.all;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final showRequested =
-        _filter == _BookingFilter.all || _filter == _BookingFilter.requested;
-    final showPaid =
-        _filter == _BookingFilter.all || _filter == _BookingFilter.paid;
-    final showFlags =
-        _filter == _BookingFilter.all || _filter == _BookingFilter.holding;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final filter in _BookingFilter.values)
-              ChoiceChip(
-                label: Text(_filterLabel(l10n, filter)),
-                selected: _filter == filter,
-                onSelected: (_) => setState(() => _filter = filter),
-              ),
-          ],
-        ),
-        if (showRequested) ...[
-          const SizedBox(height: 12),
-          _OceanSectionTitle(title: l10n.profileBookingFilterRequested),
-          const SizedBox(height: 8),
-          _HintOrList(
-            plate: 0,
-            empty: l10n.profileRequestedBookingsEmpty,
-            onTap: widget.onOpenBookings,
-            children: [
-              for (final booking in widget.requested)
-                _BookingProgressLine(
-                  productName: booking.productLabel,
-                  optionName: booking.optionLabel,
-                  statusLabel: l10n.bookingRequested,
-                  onDetail: () => openBookingDetail(context, booking),
-                ),
-            ],
-          ),
-        ],
-        if (showPaid) ...[
-          const SizedBox(height: 12),
-          _OceanSectionTitle(title: l10n.profileBookingFilterPaid),
-          const SizedBox(height: 8),
-          _HintOrList(
-            plate: 0,
-            empty: l10n.profilePaidBookingsEmpty,
-            onTap: widget.onOpenBookings,
-            children: [
-              for (final booking in widget.paid)
-                _BookingProgressLine(
-                  productName: booking.productLabel,
-                  optionName: booking.optionLabel,
-                  statusLabel: l10n.bookingPaymentCaptured,
-                  onDetail: () => openBookingDetail(context, booking),
-                ),
-            ],
-          ),
-        ],
-        if (showFlags) ...[
-          const SizedBox(height: 12),
-          _OceanSectionTitle(title: l10n.profileBookingFilterHolding),
-          const SizedBox(height: 8),
-          _HintOrList(
-            plate: 1,
-            empty: l10n.profileLiveFlagsEmpty,
-            onTap: widget.onOpenBookings,
-            children: [
-              for (final offer in widget.flags)
-                _BookingProgressLine(
-                  productName: offer.product.name,
-                  optionName: offer.optionName,
-                  statusLabel: l10n.profileBookingFilterHolding,
-                  onDetail: widget.onOpenBookings,
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  String _filterLabel(AppLocalizations l10n, _BookingFilter filter) {
-    return switch (filter) {
-      _BookingFilter.all => l10n.profileBookingFilterAll,
-      _BookingFilter.requested => l10n.profileBookingFilterRequested,
-      _BookingFilter.holding => l10n.profileBookingFilterHolding,
-      _BookingFilter.paid => l10n.profileBookingFilterPaid,
-    };
-  }
-}
 
 class _OceanSectionTitle extends StatelessWidget {
   const _OceanSectionTitle({required this.title, this.count});
@@ -535,89 +694,6 @@ class _OceanSectionTitle extends StatelessWidget {
                 ?.copyWith(color: AppTheme.muted),
           ),
       ],
-    );
-  }
-}
-
-class _NextOceanCard extends StatelessWidget {
-  const _NextOceanCard({
-    required this.plate,
-    required this.booking,
-    required this.shop,
-    required this.onTap,
-  });
-
-  final int plate;
-  final TourBooking? booking;
-  final DiveShop? shop;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final days = booking == null
-        ? null
-        : TravelStyleAnalyzer.daysUntil(booking!.scheduledFor);
-
-    return _MetalPlate(
-      plate: plate,
-      child: InkWell(
-        key: const Key('profile-next-ocean'),
-        onTap: onTap,
-        child: SizedBox(
-          height: 188,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (shop != null)
-                ListingCoverPhoto(shop: shop!)
-              else
-                const ColoredBox(color: Color(0xFF123F57)),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x22000000), Color(0xE6051D30)],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (days != null)
-                      _Pill(label: days == 0 ? 'D-DAY' : 'D-$days'),
-                    const Spacer(),
-                    Text(
-                      booking?.shopName ?? l10n.profileNoUpcomingTrip,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      booking == null
-                          ? l10n.profileNoUpcomingTripHint
-                          : '${booking!.productName} · '
-                                '${l10n.profileUpcomingConfirmed(DateFormat('yyyy.MM.dd').format(booking!.scheduledFor))}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.82),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -729,230 +805,21 @@ class _SavedOceansRail extends StatelessWidget {
   }
 }
 
-class _OceanRecordCard extends StatelessWidget {
-  const _OceanRecordCard({
-    required this.plate,
-    required this.totalLogs,
-    required this.regions,
-    required this.progress,
-    required this.logsToNext,
-    required this.target,
-    required this.stamped,
-  });
-
-  final int plate;
-  final int totalLogs;
-  final int regions;
-  final double progress;
-  final int logsToNext;
-  final int target;
-  final Set<String> stamped;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _LightPanel(
-      plate: plate,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 92,
-            child: PassportStamps(stamped: stamped, compact: true),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Stat(
-                        value: '$totalLogs',
-                        label: l10n.profileTotalDives,
-                      ),
-                    ),
-                    Expanded(
-                      child: _Stat(
-                        value: '$regions',
-                        label: l10n.profileExploredSeas,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  l10n.profileLogsProgress(totalLogs, target),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppTheme.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  l10n.profileNextMilestone(logsToNext),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          TankGauge(
-            key: const Key('profile-tank-gauge'),
-            progress: progress,
-            isComplete: progress >= 1 && totalLogs > 0,
-            label: '$totalLogs',
-            width: 64,
-            bodyHeight: 126,
-            neckWidth: 26,
-            neckHeight: 12,
-            borderWidth: 3,
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
-            fillColor: CenturyTankColors.ofLogs(totalLogs),
-            borderColor: CenturyTankColors.ofLogs(totalLogs),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineSmall
-              ?.copyWith(color: AppTheme.navy, fontWeight: FontWeight.w900),
-        ),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
-    );
-  }
-}
-
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
-    required this.plate,
-    required this.bookingsCount,
-    required this.craftedCount,
-    required this.proStatus,
-    required this.onBookings,
-    required this.onSettings,
-    required this.onCraft,
-  });
-
-  final int plate;
-  final int bookingsCount;
-  final int craftedCount;
-  final ProVerificationStatus proStatus;
-  final VoidCallback? onBookings;
-  final VoidCallback onSettings;
-  final VoidCallback onCraft;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _LightPanel(
-      plate: plate,
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          _ActivityRow(
-            key: const Key('profile-booking-history'),
-            icon: Icons.airplane_ticket_outlined,
-            title: l10n.profileBookingHistory,
-            value: l10n.profileBookingCount(bookingsCount),
-            onTap: onBookings,
-          ),
-          const Divider(height: 1),
-          _ActivityRow(
-            key: const Key('profile-crafted-trips-link'),
-            icon: Icons.route_outlined,
-            title: l10n.profileCraftedTripsTitle,
-            value: craftedCount > 0
-                ? l10n.profileCraftedCount(craftedCount)
-                : l10n.profileCraftNewTrip,
-            onTap: onCraft,
-          ),
-          const Divider(height: 1),
-          _ActivityRow(
-            key: const Key('profile-credentials-link'),
-            icon: Icons.badge_outlined,
-            title: l10n.profileCredentialsTitle,
-            value: proStatus == ProVerificationStatus.approved
-                ? l10n.profileProBadge
-                : l10n.proStatusNone,
-            onTap: onSettings,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivityRow extends StatelessWidget {
-  const _ActivityRow({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String value;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEAF2F5),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(icon, color: AppTheme.ocean, size: 19),
-      ),
-      title: Text(title),
-      subtitle: Text(value),
-      trailing: onTap == null
-          ? null
-          : const Icon(Icons.chevron_right_rounded, color: AppTheme.muted),
-    );
-  }
-}
 
 class _LightPanel extends StatelessWidget {
   const _LightPanel({
     required this.plate,
     required this.child,
-    this.padding = const EdgeInsets.all(18),
   });
 
   final int plate;
   final Widget child;
-  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     return _MetalPlate(
       plate: plate,
-      child: Padding(padding: padding, child: child),
+      child: Padding(padding: const EdgeInsets.all(18), child: child),
     );
   }
 }
@@ -1001,34 +868,7 @@ class _MetalPlate extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.gold,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.navy,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 승급 시 축포 + 감사 인사. 한 번만 띄우고 [onDismiss]로 pending 클리어.
+/// Grade celebration overlay + confetti. Show once then [onDismiss] clears pending.
 class _GradeCelebrationHost extends StatefulWidget {
   const _GradeCelebrationHost({
     required this.grade,

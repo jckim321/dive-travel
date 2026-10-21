@@ -668,7 +668,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileDepartureDeskKicker => '출항 데스크';
 
   @override
-  String get profileCraftedTripsTitle => '내가 짠 여행';
+  String get profileCraftedTripsTitle => '내가 직접 짠 여행';
 
   @override
   String get profileCraftedTripsHint => '리조트를 골라 일정을 짜면 관리자 승인 후 여행상품에 올라갑니다.';
@@ -757,6 +757,51 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileBookingHistory => '예약 내역';
+
+  @override
+  String get profileTripScheduleTitle => '나의 이번 여행 스케줄';
+
+  @override
+  String get profileTripScheduleEmpty => '확정된 여행이 아직 없습니다.';
+
+  @override
+  String get profileFlaggedSeatsTitle => '깃발꽂은 빈자리';
+
+  @override
+  String get profileFlaggedSeatsEmpty => '잠가 둔 빈자리가 없습니다.';
+
+  @override
+  String get profileFlagPayCta => '결제 바로가기';
+
+  @override
+  String get profileWishlistTitle => '내가 가고 싶은 곳들';
+
+  @override
+  String get profileReviewRecommendTitle => '리뷰가 추천하는 곳';
+
+  @override
+  String get profileWriteReviewTitle => '내가 다녀온 여행 리뷰쓰기';
+
+  @override
+  String get profileCharmsTitle => '나의 바다 뱃지';
+
+  @override
+  String get bookingVoucherOpen => '여행 바우처';
+
+  @override
+  String get bookingVoucherTitle => '여행 바우처';
+
+  @override
+  String get bookingVoucherSave => '폰에 저장·보관';
+
+  @override
+  String get bookingVoucherSaved => '바우처를 저장할 수 있는 공유 화면을 열었습니다.';
+
+  @override
+  String get bookingVoucherId => '예약번호';
+
+  @override
+  String get bookingVoucherShop => '샵';
 
   @override
   String get profileBookingStatus => '나의 예약';

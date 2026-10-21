@@ -1335,7 +1335,7 @@ abstract class AppLocalizations {
   /// 다이버가 제안한 DIY 여행 상품 섹션 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'내가 짠 여행'**
+  /// **'내가 직접 짠 여행'**
   String get profileCraftedTripsTitle;
 
   /// DIY 여행 상품 섹션 안내 문구입니다.
@@ -1505,6 +1505,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'예약 내역'**
   String get profileBookingHistory;
+
+  /// No description provided for @profileTripScheduleTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 이번 여행 스케줄'**
+  String get profileTripScheduleTitle;
+
+  /// No description provided for @profileTripScheduleEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정된 여행이 아직 없습니다.'**
+  String get profileTripScheduleEmpty;
+
+  /// No description provided for @profileFlaggedSeatsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발꽂은 빈자리'**
+  String get profileFlaggedSeatsTitle;
+
+  /// No description provided for @profileFlaggedSeatsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'잠가 둔 빈자리가 없습니다.'**
+  String get profileFlaggedSeatsEmpty;
+
+  /// No description provided for @profileFlagPayCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 바로가기'**
+  String get profileFlagPayCta;
+
+  /// No description provided for @profileWishlistTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 가고 싶은 곳들'**
+  String get profileWishlistTitle;
+
+  /// No description provided for @profileReviewRecommendTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'리뷰가 추천하는 곳'**
+  String get profileReviewRecommendTitle;
+
+  /// No description provided for @profileWriteReviewTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 다녀온 여행 리뷰쓰기'**
+  String get profileWriteReviewTitle;
+
+  /// No description provided for @profileCharmsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 바다 뱃지'**
+  String get profileCharmsTitle;
+
+  /// No description provided for @bookingVoucherOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행 바우처'**
+  String get bookingVoucherOpen;
+
+  /// No description provided for @bookingVoucherTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행 바우처'**
+  String get bookingVoucherTitle;
+
+  /// No description provided for @bookingVoucherSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'폰에 저장·보관'**
+  String get bookingVoucherSave;
+
+  /// No description provided for @bookingVoucherSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'바우처를 저장할 수 있는 공유 화면을 열었습니다.'**
+  String get bookingVoucherSaved;
+
+  /// No description provided for @bookingVoucherId.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약번호'**
+  String get bookingVoucherId;
+
+  /// No description provided for @bookingVoucherShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵'**
+  String get bookingVoucherShop;
 
   /// No description provided for @profileBookingStatus.
   ///

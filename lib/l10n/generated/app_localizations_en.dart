@@ -693,7 +693,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileDepartureDeskKicker => 'Departure desk';
 
   @override
-  String get profileCraftedTripsTitle => 'Trips I crafted';
+  String get profileCraftedTripsTitle => 'Trips I planned myself';
 
   @override
   String get profileCraftedTripsHint =>
@@ -786,6 +786,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileBookingHistory => 'Booking history';
+
+  @override
+  String get profileTripScheduleTitle => 'My trip schedule';
+
+  @override
+  String get profileTripScheduleEmpty => 'No confirmed trips yet.';
+
+  @override
+  String get profileFlaggedSeatsTitle => 'Flagged leftover seats';
+
+  @override
+  String get profileFlaggedSeatsEmpty => 'No seats on hold.';
+
+  @override
+  String get profileFlagPayCta => 'Pay now';
+
+  @override
+  String get profileWishlistTitle => 'Places I want to go';
+
+  @override
+  String get profileReviewRecommendTitle => 'Recommended by reviews';
+
+  @override
+  String get profileWriteReviewTitle => 'Write a review of a trip I took';
+
+  @override
+  String get profileCharmsTitle => 'My ocean charms';
+
+  @override
+  String get bookingVoucherOpen => 'Travel voucher';
+
+  @override
+  String get bookingVoucherTitle => 'Travel voucher';
+
+  @override
+  String get bookingVoucherSave => 'Save to phone';
+
+  @override
+  String get bookingVoucherSaved =>
+      'Opened the share sheet so you can save the voucher.';
+
+  @override
+  String get bookingVoucherId => 'Booking ID';
+
+  @override
+  String get bookingVoucherShop => 'Shop';
 
   @override
   String get profileBookingStatus => 'My bookings';

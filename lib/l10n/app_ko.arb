@@ -577,7 +577,7 @@
   "@profileDepartureDeskKicker": {
     "description": "마이페이지 출항 데스크 히어로 키커입니다."
   },
-  "profileCraftedTripsTitle": "내가 짠 여행",
+  "profileCraftedTripsTitle": "내가 직접 짠 여행",
   "@profileCraftedTripsTitle": {
     "description": "다이버가 제안한 DIY 여행 상품 섹션 제목입니다."
   },
@@ -641,6 +641,21 @@
   },
   "profileActivityTitle": "내 활동",
   "profileBookingHistory": "예약 내역",
+  "profileTripScheduleTitle": "나의 이번 여행 스케줄",
+  "profileTripScheduleEmpty": "확정된 여행이 아직 없습니다.",
+  "profileFlaggedSeatsTitle": "깃발꽂은 빈자리",
+  "profileFlaggedSeatsEmpty": "잠가 둔 빈자리가 없습니다.",
+  "profileFlagPayCta": "결제 바로가기",
+  "profileWishlistTitle": "내가 가고 싶은 곳들",
+  "profileReviewRecommendTitle": "리뷰가 추천하는 곳",
+  "profileWriteReviewTitle": "내가 다녀온 여행 리뷰쓰기",
+  "profileCharmsTitle": "나의 바다 뱃지",
+  "bookingVoucherOpen": "여행 바우처",
+  "bookingVoucherTitle": "여행 바우처",
+  "bookingVoucherSave": "폰에 저장·보관",
+  "bookingVoucherSaved": "바우처를 저장할 수 있는 공유 화면을 열었습니다.",
+  "bookingVoucherId": "예약번호",
+  "bookingVoucherShop": "샵",
   "profileBookingStatus": "나의 예약",
   "profilePaidBookingsEmpty": "결제 완료된 예약이 없습니다.",
   "profileRequestedBookingsEmpty": "요청 중인 예약이 없습니다.",
