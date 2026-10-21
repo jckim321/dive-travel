@@ -2101,6 +2101,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bookingEntryPreviewSnack => '미리보기입니다. 손님은 공개된 상품에서 결제합니다.';
 
   @override
+  String get bookingEntryAddons => '추가 구성 옵션';
+
+  @override
+  String get bookingEntryAddOption => '옵션 추가';
+
+  @override
+  String get bookingEntryOptionName => '옵션명';
+
+  @override
+  String get bookingEntryOptionPrice => '1인 가격';
+
+  @override
   String get bookingEntryStayLength => '여행 기간';
 
   @override

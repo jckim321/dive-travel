@@ -116,6 +116,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewNondiver = 0;
   var _previewChild = 0;
   var _hasNondivers = false;
+  final _addonQty = <String, int>{};
   var _openEmptySeats = false;
   var _seatOptionId = '';
   var _namedResort = false;
@@ -243,6 +244,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final line in [..._addons, ..._individuals]) {
       _watchLine(line);
     }
+    for (final line in _addons) {
+      _listen(line.consumer);
+      _addonQty.putIfAbsent(line.id, () => 0);
+    }
     _listen(_name);
     _listen(_blurb);
     _listen(_detailBody);
@@ -285,6 +290,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   void _dropLine(_LineEditors line) {
     line.name.removeListener(_onDraftChanged);
     _draftListeners.remove(line.name);
+    line.consumer.removeListener(_onDraftChanged);
+    _draftListeners.remove(line.consumer);
     line.dispose();
   }
 
@@ -1346,6 +1353,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  Set<String> get _previewAddonIds {
+    return {
+      for (final draft in _addons)
+        if (draft.name.text.trim().isNotEmpty &&
+            (_addonQty[draft.id] ?? 0) > 0)
+          draft.id,
+    };
+  }
+
   BookingQuote get _previewQuote {
     return BookingQuote.compute(
       product: _draftProduct,
@@ -1355,7 +1371,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       children: _hasNondivers ? _previewChild : 0,
       infants: 0,
       bookPackage: true,
-      selectedOptionIds: const {},
+      selectedOptionIds: _previewAddonIds,
+      optionQuantities: {
+        for (final draft in _addons)
+          if (draft.name.text.trim().isNotEmpty) draft.id: _addonQty[draft.id] ?? 0,
+      },
     );
   }
 
@@ -1558,6 +1578,29 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         const SizedBox(height: 16),
         Text(
+          l10n.bookingEntryAddons,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < _addons.length; i++) ...[
+          _bookingAddonRow(l10n, i),
+          const SizedBox(height: 8),
+        ],
+        OutlinedButton.icon(
+          onPressed: () {
+            final line = _LineEditors(kind: ProductOptionKind.addon);
+            _watchLine(line);
+            _listen(line.consumer);
+            setState(() {
+              _addons.add(line);
+              _addonQty[line.id] = 0;
+            });
+          },
+          icon: const Icon(Icons.add),
+          label: Text(l10n.bookingEntryAddOption),
+        ),
+        const SizedBox(height: 16),
+        Text(
           l10n.checkoutTotal('${quote.total}'),
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
@@ -1588,6 +1631,96 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _bookingAddonRow(AppLocalizations l10n, int index) {
+    final draft = _addons[index];
+    final qty = _addonQty[draft.id] ?? 0;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+        border: Border.all(color: const Color(0xFFE2E8EE)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: draft.name,
+                    decoration: InputDecoration(
+                      labelText: l10n.bookingEntryOptionName,
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: draft.consumer,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.bookingEntryOptionPrice,
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.productFormRemoveOption,
+                  onPressed: _addons.length == 1
+                      ? null
+                      : () {
+                          setState(() {
+                            _addonQty.remove(draft.id);
+                            _dropLine(draft);
+                            _addons.removeAt(index);
+                          });
+                        },
+                  icon: const Icon(Icons.close, size: 20),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                const Spacer(),
+                IconButton(
+                  onPressed: qty <= 0
+                      ? null
+                      : () => setState(() => _addonQty[draft.id] = qty - 1),
+                  icon: const Icon(Icons.remove_circle_outline, size: 22),
+                ),
+                SizedBox(
+                  width: 28,
+                  child: Text(
+                    '$qty',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () =>
+                      setState(() => _addonQty[draft.id] = qty + 1),
+                  icon: const Icon(Icons.add_circle_outline, size: 22),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1792,20 +1925,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
         const SizedBox(height: 16),
         Text(
-          l10n.workbenchAddons,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        for (var i = 0; i < _addons.length; i++) _lineCard(l10n, _addons, i),
-        OutlinedButton(
-          onPressed: () {
-            final line = _LineEditors(kind: ProductOptionKind.addon);
-            _watchLine(line);
-            setState(() => _addons.add(line));
-          },
-          child: Text(l10n.productFormAddOption),
-        ),
-        const SizedBox(height: 16),
-        Text(
           l10n.workbenchIndividuals,
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
@@ -1990,6 +2109,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
             professional: int.tryParse(_ratePro[role]!.text) ?? 0,
           ),
+      ],
+      options: [
+        for (final draft in _addons)
+          if (draft.name.text.trim().isNotEmpty)
+            draft.toOption().copyWith(kind: ProductOptionKind.addon),
       ],
       focPayCount: int.tryParse(_focPay.text) ?? 0,
       focFreeCount: int.tryParse(_focFree.text) ?? 0,

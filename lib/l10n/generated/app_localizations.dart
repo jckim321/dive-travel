@@ -4038,6 +4038,30 @@ abstract class AppLocalizations {
   /// **'미리보기입니다. 손님은 공개된 상품에서 결제합니다.'**
   String get bookingEntryPreviewSnack;
 
+  /// No description provided for @bookingEntryAddons.
+  ///
+  /// In ko, this message translates to:
+  /// **'추가 구성 옵션'**
+  String get bookingEntryAddons;
+
+  /// No description provided for @bookingEntryAddOption.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 추가'**
+  String get bookingEntryAddOption;
+
+  /// No description provided for @bookingEntryOptionName.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션명'**
+  String get bookingEntryOptionName;
+
+  /// No description provided for @bookingEntryOptionPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 가격'**
+  String get bookingEntryOptionPrice;
+
   /// No description provided for @bookingEntryStayLength.
   ///
   /// In ko, this message translates to:

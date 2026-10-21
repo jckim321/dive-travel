@@ -1319,6 +1319,10 @@
   "bookingEntryChildInfant": "소아 · 유아",
   "bookingEntryUnitPrice": "1인 가격",
   "bookingEntryPreviewSnack": "미리보기입니다. 손님은 공개된 상품에서 결제합니다.",
+  "bookingEntryAddons": "추가 구성 옵션",
+  "bookingEntryAddOption": "옵션 추가",
+  "bookingEntryOptionName": "옵션명",
+  "bookingEntryOptionPrice": "1인 가격",
   "bookingEntryStayLength": "여행 기간",
   "bookingEntryNights": "{nights}박",
   "@bookingEntryNights": {

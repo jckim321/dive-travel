@@ -115,6 +115,7 @@ class BookingQuote {
     required int infants,
     required bool bookPackage,
     required Set<String> selectedOptionIds,
+    Map<String, int>? optionQuantities,
   }) {
     final lines = <BookingLine>[];
     var total = 0;
@@ -143,6 +144,19 @@ class BookingQuote {
       );
     }
 
+    int quantityFor(ShopProductOption option) {
+      if (optionQuantities != null) {
+        return optionQuantities[option.id] ?? 0;
+      }
+      return guestsForRole(
+        role: option.guestRole,
+        divers: divers,
+        nondivers: nondivers,
+        children: children,
+        infants: infants,
+      );
+    }
+
     if (bookPackage) {
       final packageAmount = billed(GuestRole.diver, divers) +
           billed(GuestRole.nondiver, nondivers) +
@@ -156,14 +170,12 @@ class BookingQuote {
             !selectedOptionIds.contains(option.id)) {
           continue;
         }
-        final qty = guestsForRole(
-          role: option.guestRole,
-          divers: divers,
-          nondivers: nondivers,
-          children: children,
-          infants: infants,
-        );
-        final amount = qty * optionUnit(option: option, professional: professional);
+        final qty = quantityFor(option);
+        if (qty <= 0) {
+          continue;
+        }
+        final amount =
+            qty * optionUnit(option: option, professional: professional);
         lines.add(BookingLine(label: option.name, amount: amount));
         total += amount;
       }
@@ -174,14 +186,12 @@ class BookingQuote {
             !selectedOptionIds.contains(option.id)) {
           continue;
         }
-        final qty = guestsForRole(
-          role: option.guestRole,
-          divers: divers,
-          nondivers: nondivers,
-          children: children,
-          infants: infants,
-        );
-        final amount = qty * optionUnit(option: option, professional: professional);
+        final qty = quantityFor(option);
+        if (qty <= 0) {
+          continue;
+        }
+        final amount =
+            qty * optionUnit(option: option, professional: professional);
         lines.add(BookingLine(label: option.name, amount: amount));
         total += amount;
       }

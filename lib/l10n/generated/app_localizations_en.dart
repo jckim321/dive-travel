@@ -2176,6 +2176,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Preview only — guests will pay from the live listing.';
 
   @override
+  String get bookingEntryAddons => 'Add-on options';
+
+  @override
+  String get bookingEntryAddOption => 'Add option';
+
+  @override
+  String get bookingEntryOptionName => 'Option name';
+
+  @override
+  String get bookingEntryOptionPrice => 'Unit price';
+
+  @override
   String get bookingEntryStayLength => 'Trip length';
 
   @override

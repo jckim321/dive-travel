@@ -753,6 +753,10 @@
   "bookingEntryChildInfant": "Child / infant",
   "bookingEntryUnitPrice": "Price per person",
   "bookingEntryPreviewSnack": "Preview only — guests will pay from the live listing.",
+  "bookingEntryAddons": "Add-on options",
+  "bookingEntryAddOption": "Add option",
+  "bookingEntryOptionName": "Option name",
+  "bookingEntryOptionPrice": "Unit price",
   "bookingEntryStayLength": "Trip length",
   "bookingEntryNights": "{nights} nights",
   "@bookingEntryNights": {
