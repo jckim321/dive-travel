@@ -24,22 +24,17 @@ Future<void> showTourCheckoutSheet({
   bool fromFlag = false,
   int lockedPartySize = 0,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (context) => TourCheckoutSheet(
-      shop: shop,
-      quote: quote,
-      product: product,
-      lockedOptionId: lockedOptionId,
-      presetOptionId: presetOptionId,
-      fromFlag: fromFlag,
-      lockedPartySize: lockedPartySize,
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (context) => TourCheckoutSheet(
+        shop: shop,
+        quote: quote,
+        product: product,
+        lockedOptionId: lockedOptionId,
+        presetOptionId: presetOptionId,
+        fromFlag: fromFlag,
+        lockedPartySize: lockedPartySize,
+      ),
     ),
   );
 }
@@ -380,13 +375,19 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         : l10n.exploreConsumerPrice;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final cancelNote = product?.cancellationNote.trim() ?? '';
+    final reviewing = _workbench && _bookStep > 0;
 
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.94,
-      child: Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          reviewing ? l10n.checkoutStepReview : l10n.exploreCheckoutTitle,
+        ),
+      ),
+      body: Column(
         children: [
           Expanded(
-            child: _workbench && _bookStep > 0
+            child: reviewing
                 ? _reviewPage(l10n, theme, refund)
                 : CustomScrollView(
                     slivers: [
@@ -718,35 +719,21 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         child: Text(l10n.checkoutReviewCta),
       );
     }
-    if (_bookStep == 1) {
-      return Row(
-        children: [
-          TextButton(
-            onPressed: () => setState(() => _bookStep = 0),
-            child: Text(l10n.checkoutBack),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
+    return Row(
+      children: [
+        OutlinedButton(
+          key: const Key('checkout-edit-booking'),
+          onPressed: () => setState(() => _bookStep = 0),
+          child: Text(l10n.checkoutEditBooking),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: FilledButton(
             key: const Key('checkout-confirm'),
-            onPressed: () => setState(() => _bookStep = 2),
+            onPressed: _pay,
             style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
             child: Text(l10n.checkoutConfirm),
           ),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        TextButton(
-          onPressed: () => setState(() => _bookStep = 1),
-          child: Text(l10n.checkoutBack),
-        ),
-        const SizedBox(width: 8),
-        FilledButton(
-          key: const Key('explore-checkout-pay'),
-          onPressed: _pay,
-          style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-          child: Text(l10n.explorePay),
         ),
       ],
     );
@@ -757,17 +744,19 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     ThemeData theme,
     RefundQuote refund,
   ) {
-    final title = _bookStep == 2
-        ? l10n.checkoutStepPay
-        : l10n.checkoutStepReview;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
         Text(
-          title,
+          l10n.checkoutStepReview,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.checkoutReviewDetailHint,
+          style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.muted),
         ),
         const SizedBox(height: 16),
         _summaryCard(l10n, theme, refund),

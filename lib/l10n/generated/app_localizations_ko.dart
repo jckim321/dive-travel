@@ -2586,7 +2586,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get checkoutReviewCta => '예약 내역 보기';
 
   @override
+  String get checkoutReviewDetailHint => '아래 내용을 확인한 뒤 수정하거나 예약을 확정하세요.';
+
+  @override
   String get checkoutBack => '이전으로';
+
+  @override
+  String get checkoutEditBooking => '예약수정(변경)하기';
 
   @override
   String get checkoutConfirm => '예약 확정';

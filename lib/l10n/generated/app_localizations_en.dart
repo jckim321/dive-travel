@@ -2651,7 +2651,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutReviewCta => 'Review booking';
 
   @override
+  String get checkoutReviewDetailHint =>
+      'Review the details below, then edit or confirm your booking.';
+
+  @override
   String get checkoutBack => 'Back';
+
+  @override
+  String get checkoutEditBooking => 'Edit booking';
 
   @override
   String get checkoutConfirm => 'Confirm booking';

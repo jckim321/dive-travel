@@ -4908,11 +4908,23 @@ abstract class AppLocalizations {
   /// **'예약 내역 보기'**
   String get checkoutReviewCta;
 
+  /// No description provided for @checkoutReviewDetailHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래 내용을 확인한 뒤 수정하거나 예약을 확정하세요.'**
+  String get checkoutReviewDetailHint;
+
   /// No description provided for @checkoutBack.
   ///
   /// In ko, this message translates to:
   /// **'이전으로'**
   String get checkoutBack;
+
+  /// No description provided for @checkoutEditBooking.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약수정(변경)하기'**
+  String get checkoutEditBooking;
 
   /// No description provided for @checkoutConfirm.
   ///
