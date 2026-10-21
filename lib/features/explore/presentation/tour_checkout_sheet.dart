@@ -376,6 +376,18 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final bottom = MediaQuery.paddingOf(context).bottom;
     final cancelNote = product?.cancellationNote.trim() ?? '';
     final reviewing = _workbench && _bookStep > 0;
+    final diveStarLine = () {
+      if (!shop.showsDiveStarBadge) {
+        return '';
+      }
+      if (shop.isDiveStarExpired) {
+        return '· ${l10n.exploreDiveStarRenewalNeeded}';
+      }
+      final marks = diveStarGradeMarks(shop.stars);
+      return marks.isEmpty
+          ? '· ${l10n.exploreDiveStarCertified}'
+          : '· ${l10n.exploreDiveStarCertified} $marks';
+    }();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -404,6 +416,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               certified: shop.isDiveStarCertified,
                               showBadge: shop.showsDiveStarBadge,
                               badgeFaded: shop.isDiveStarExpired,
+                              badgeGrade: shop.isDiveStarExpired
+                                  ? 0
+                                  : shop.stars,
                               onClose: () => Navigator.of(context).pop(),
                               onFavorite: () =>
                                   store.toggleFavoriteShop(widget.shop.id),
@@ -486,13 +501,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     fontSize: 13,
                                   ),
                                 ),
-                                if (shop.showsDiveStarBadge)
+                                if (diveStarLine.isNotEmpty)
                                   Opacity(
                                     opacity: shop.isDiveStarExpired ? 0.45 : 1,
                                     child: Text(
-                                      shop.isDiveStarExpired
-                                          ? '· ${l10n.exploreDiveStarRenewalNeeded}'
-                                          : '· ${l10n.exploreDiveStar(shop.stars)}',
+                                      diveStarLine,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
@@ -1199,6 +1212,7 @@ class _PhotoMosaic extends StatelessWidget {
     required this.certified,
     this.showBadge = true,
     this.badgeFaded = false,
+    this.badgeGrade = 0,
     required this.onClose,
     required this.onFavorite,
   });
@@ -1209,6 +1223,7 @@ class _PhotoMosaic extends StatelessWidget {
   final bool certified;
   final bool showBadge;
   final bool badgeFaded;
+  final int badgeGrade;
   final VoidCallback onClose;
   final VoidCallback onFavorite;
 
@@ -1247,6 +1262,7 @@ class _PhotoMosaic extends StatelessWidget {
                     label: badgeLabel,
                     certified: certified,
                     faded: badgeFaded,
+                    grade: badgeGrade,
                   ),
                 ],
               ],

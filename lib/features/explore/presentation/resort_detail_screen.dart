@@ -627,7 +627,8 @@ class _StarBadge extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final label = expired
         ? l10n.exploreDiveStarRenewalNeeded
-        : l10n.exploreDiveStar(stars);
+        : l10n.exploreDiveStarCertified;
+    final filled = expired ? 0 : stars.clamp(0, 3);
     final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -639,13 +640,15 @@ class _StarBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < 3; i++)
-            Icon(
-              i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-              size: 16,
-              color: AppTheme.gold,
-            ),
-          const SizedBox(width: 6),
+          if (filled > 0) ...[
+            for (var i = 0; i < filled; i++)
+              const Icon(
+                Icons.star_rounded,
+                size: 16,
+                color: AppTheme.gold,
+              ),
+            const SizedBox(width: 6),
+          ],
           Text(
             label,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),

@@ -67,6 +67,7 @@ class HomeStayCard extends StatelessWidget {
                         label: badgeLabel,
                         certified: certified,
                         faded: expired,
+                        grade: expired ? 0 : shop.stars,
                       ),
                     ),
                   Positioned(

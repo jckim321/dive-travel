@@ -29,12 +29,22 @@ class CCardProductFrame extends StatelessWidget {
   }
 }
 
+/// Small ⭐ marks for admin Dive Star grade 1–3 (not guest ★ averages).
+String diveStarGradeMarks(int grade) {
+  final n = grade.clamp(0, 3);
+  if (n <= 0) {
+    return '';
+  }
+  return List.filled(n, '⭐').join();
+}
+
 class ListingCertBadge extends StatelessWidget {
   const ListingCertBadge({
     super.key,
     required this.label,
     required this.certified,
     this.faded = false,
+    this.grade = 0,
   });
 
   final String label;
@@ -43,8 +53,18 @@ class ListingCertBadge extends StatelessWidget {
   /// Expired Dive Star — keep visible but muted.
   final bool faded;
 
+  /// Admin grade 1–3; stars shown only when certified and not faded.
+  final int grade;
+
   @override
   Widget build(BuildContext context) {
+    final marks = (!faded && certified) ? diveStarGradeMarks(grade) : '';
+    final textStyle = TextStyle(
+      color: certified ? AppTheme.navy : AppTheme.gold,
+      fontSize: 9,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0.2,
+    );
     final badge = DecoratedBox(
       decoration: BoxDecoration(
         color: certified ? AppTheme.gold : const Color(0xE60B1F33),
@@ -56,14 +76,15 @@ class ListingCertBadge extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: certified ? AppTheme.navy : AppTheme.gold,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: textStyle),
+            if (marks.isNotEmpty) ...[
+              const SizedBox(width: 4),
+              Text(marks, style: textStyle.copyWith(letterSpacing: 0)),
+            ],
+          ],
         ),
       ),
     );
