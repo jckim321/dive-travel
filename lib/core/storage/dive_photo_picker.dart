@@ -45,54 +45,70 @@ class DivePhotoPicker {
   Future<List<PickedPhoto>> pickMultiple({
     int max = GalleryLimits.maxProductPhotos,
   }) async {
-    if (!kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS)) {
-      final files = await ImagePicker().pickMultiImage(
-        imageQuality: GalleryLimits.jpegQuality,
-        maxWidth: GalleryLimits.maxEdgePx.toDouble(),
-        limit: max,
-      );
+    // Web + mobile: ImagePicker. FilePicker on web often returns empty
+    // because cancelUploadOnWindowBlur races the file-dialog focus cycle.
+    final useImagePicker = kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+    if (useImagePicker) {
+      try {
+        final files = await ImagePicker().pickMultiImage(
+          imageQuality: GalleryLimits.jpegQuality,
+          maxWidth: GalleryLimits.maxEdgePx.toDouble(),
+          limit: max,
+        );
+        if (files.isEmpty) {
+          return const [];
+        }
+        final out = <PickedPhoto>[];
+        for (final file in files.take(max)) {
+          final bytes = await file.readAsBytes();
+          if (bytes.isEmpty) {
+            continue;
+          }
+          out.add(
+            await _compressIfNeeded(
+              PickedPhoto(
+                bytes: bytes,
+                fileName: file.name,
+                contentType: _contentType(file.name, file.mimeType),
+              ),
+            ),
+          );
+        }
+        return out;
+      } catch (error, stack) {
+        debugPrint('DivePhotoPicker ImagePicker failed: $error\n$stack');
+        rethrow;
+      }
+    }
+
+    try {
+      final files = await FilePicker.pickFiles(type: FileType.image);
       if (files.isEmpty) {
         return const [];
       }
       final out = <PickedPhoto>[];
       for (final file in files.take(max)) {
         final bytes = await file.readAsBytes();
+        if (bytes.isEmpty) {
+          continue;
+        }
         out.add(
           await _compressIfNeeded(
             PickedPhoto(
               bytes: bytes,
               fileName: file.name,
-              contentType: _contentType(file.name, file.mimeType),
+              contentType: _contentType(file.name, file.extension),
             ),
           ),
         );
       }
       return out;
+    } catch (error, stack) {
+      debugPrint('DivePhotoPicker FilePicker failed: $error\n$stack');
+      rethrow;
     }
-
-    final files = await FilePicker.pickFiles(type: FileType.image);
-    if (files.isEmpty) {
-      return const [];
-    }
-    final out = <PickedPhoto>[];
-    for (final file in files.take(max)) {
-      final bytes = await file.readAsBytes();
-      if (bytes.isEmpty) {
-        continue;
-      }
-      out.add(
-        await _compressIfNeeded(
-          PickedPhoto(
-            bytes: bytes,
-            fileName: file.name,
-            contentType: _contentType(file.name, file.extension),
-          ),
-        ),
-      );
-    }
-    return out;
   }
 
   /// Downscale long edge and re-encode as JPEG so large galleries fit in memory.

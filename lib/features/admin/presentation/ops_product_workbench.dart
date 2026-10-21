@@ -433,19 +433,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (remaining <= 0) {
       return;
     }
-    final photos = await _photoPicker.pickMultiple(max: remaining);
-    if (photos.isEmpty || !mounted) {
-      return;
-    }
-    setState(() {
-      _galleryTouched = true;
-      for (final photo in photos) {
-        if (_gallery.length >= _maxGallery) {
-          break;
-        }
-        _gallery.add(BookingGalleryItem.local(photo));
+    try {
+      final photos = await _photoPicker.pickMultiple(max: remaining);
+      if (photos.isEmpty || !mounted) {
+        return;
       }
-    });
+      setState(() {
+        _galleryTouched = true;
+        for (final photo in photos) {
+          if (_gallery.length >= _maxGallery) {
+            break;
+          }
+          _gallery.add(BookingGalleryItem.local(photo));
+        }
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('사진 선택 실패: $error')),
+      );
+    }
   }
 
   void _removePhoto(int index) {
