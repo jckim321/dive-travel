@@ -1127,7 +1127,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminMembersSubtitle =>
-      'ค้นหาสมาชิกและปรับระดับ สมาชิก / พิเศษ / VIP / อินสตรักเตอร์';
+      'ค้นหาสมาชิกและปรับระดับ ซิลเวอร์ / โกลด์ / ไดมอนด์ / แพลทินัม';
 
   @override
   String get adminMembersSearch => 'ค้นหาชื่อหรืออีเมล';
@@ -1149,16 +1149,16 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => 'สมาชิก';
+  String get memberGradeSilver => 'สมาชิกซิลเวอร์';
 
   @override
-  String get memberGradeSpecial => 'สมาชิกพิเศษ';
+  String get memberGradeGold => 'สมาชิกโกลด์';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => 'สมาชิกไดมอนด์';
 
   @override
-  String get memberGradeInstructor => 'อินสตรักเตอร์';
+  String get memberGradePlatinum => 'สมาชิกแพลทินัม';
 
   @override
   String get adminInstructorsTitle => 'อนุมัติใบรับรอง';

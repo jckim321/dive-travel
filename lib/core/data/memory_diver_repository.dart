@@ -48,9 +48,7 @@ class MemoryDiverRepository implements DiverRepository {
     repo._proStatus = isInstructor
         ? ProVerificationStatus.approved
         : ProVerificationStatus.none;
-    repo._memberGrade = isInstructor
-        ? MemberGrade.instructor
-        : MemberGrade.member;
+    repo._memberGrade = MemberGrade.silver;
     repo._seedAdminInbox();
     repo._snapshot = DiverSnapshot.empty(
       displayName: '테스트 다이버',
@@ -73,7 +71,7 @@ class MemoryDiverRepository implements DiverRepository {
   bool _isBusiness = false;
   String? _ownedShopId;
   ProVerificationStatus _proStatus = ProVerificationStatus.none;
-  MemberGrade _memberGrade = MemberGrade.member;
+  MemberGrade _memberGrade = MemberGrade.silver;
   final _shopStats = <String, ShopLiveStats>{};
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
@@ -137,7 +135,7 @@ class MemoryDiverRepository implements DiverRepository {
           uid: 'pending-instructor',
           email: 'instructor@dive.local',
           displayName: '대기 강사',
-          grade: MemberGrade.member,
+          grade: MemberGrade.silver,
           totalLogCount: 12,
         ),
       );
@@ -622,7 +620,6 @@ class MemoryDiverRepository implements DiverRepository {
         stats: _snapshot.stats.copyWith(
           isInstructor: true,
           proStatus: ProVerificationStatus.approved,
-          memberGrade: MemberGrade.instructor,
         ),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
@@ -675,12 +672,7 @@ class MemoryDiverRepository implements DiverRepository {
     if (_user?.uid == uid) {
       _memberGrade = grade;
       _snapshot = DiverSnapshot(
-        stats: _snapshot.stats.copyWith(
-          memberGrade: grade,
-          isInstructor: grade == MemberGrade.instructor
-              ? true
-              : _snapshot.stats.isInstructor,
-        ),
+        stats: _snapshot.stats.copyWith(memberGrade: grade),
         regions: _snapshot.regions,
         logs: _snapshot.logs,
         favoriteShopIds: _snapshot.favoriteShopIds,

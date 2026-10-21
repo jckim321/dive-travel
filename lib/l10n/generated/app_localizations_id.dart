@@ -1134,7 +1134,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminMembersSubtitle =>
-      'Cari anggota dan atur tingkat: anggota, khusus, VIP, atau instruktur.';
+      'Cari anggota dan atur tingkat: Silver, Gold, Diamond, atau Platinum.';
 
   @override
   String get adminMembersSearch => 'Cari nama atau email';
@@ -1156,16 +1156,16 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => 'Anggota';
+  String get memberGradeSilver => 'Anggota Silver';
 
   @override
-  String get memberGradeSpecial => 'Khusus';
+  String get memberGradeGold => 'Anggota Gold';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => 'Anggota Diamond';
 
   @override
-  String get memberGradeInstructor => 'Instruktur';
+  String get memberGradePlatinum => 'Anggota Platinum';
 
   @override
   String get adminInstructorsTitle => 'Persetujuan sertifikat';

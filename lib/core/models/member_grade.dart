@@ -1,42 +1,39 @@
-/// 신규 가입 기본값은 [member]. 승급은 관리자가 활동 기준으로 조정합니다.
+/// 신규 가입 기본값은 [silver]. 승급은 관리자가 활동 기준으로 조정합니다.
 enum MemberGrade {
-  member,
-  special,
-  vip,
-  instructor;
+  silver,
+  gold,
+  diamond,
+  platinum;
 
   static const valuesInOrder = [
-    MemberGrade.member,
-    MemberGrade.special,
-    MemberGrade.vip,
-    MemberGrade.instructor,
+    MemberGrade.silver,
+    MemberGrade.gold,
+    MemberGrade.diamond,
+    MemberGrade.platinum,
   ];
 
   static MemberGrade parse(dynamic value, {bool isInstructor = false}) {
-    switch (value) {
-      case 'special':
-        return MemberGrade.special;
-      case 'vip':
-        return MemberGrade.vip;
-      case 'instructor':
-        return MemberGrade.instructor;
-      case 'member':
-        return MemberGrade.member;
-      default:
-        return isInstructor ? MemberGrade.instructor : MemberGrade.member;
-    }
+    final parsed = switch (value) {
+      'silver' || 'member' => MemberGrade.silver,
+      'gold' || 'special' => MemberGrade.gold,
+      'diamond' || 'vip' => MemberGrade.diamond,
+      'platinum' || 'instructor' => MemberGrade.platinum,
+      _ => MemberGrade.silver,
+    };
+    // Legacy docs sometimes omit grade; instructor role alone does not change tier.
+    return isInstructor && value == null ? MemberGrade.silver : parsed;
   }
 
   String get firestoreValue {
     switch (this) {
-      case MemberGrade.member:
-        return 'member';
-      case MemberGrade.special:
-        return 'special';
-      case MemberGrade.vip:
-        return 'vip';
-      case MemberGrade.instructor:
-        return 'instructor';
+      case MemberGrade.silver:
+        return 'silver';
+      case MemberGrade.gold:
+        return 'gold';
+      case MemberGrade.diamond:
+        return 'diamond';
+      case MemberGrade.platinum:
+        return 'platinum';
     }
   }
 
@@ -46,16 +43,17 @@ enum MemberGrade {
     required int uniqueRegionsCount,
     required bool isInstructor,
   }) {
-    if (isInstructor) {
-      return MemberGrade.instructor;
-    }
+    // Role (instructor) is separate from membership tier.
     if (totalLogCount >= 50 || uniqueRegionsCount >= 5) {
-      return MemberGrade.vip;
+      return MemberGrade.platinum;
+    }
+    if (totalLogCount >= 25 || uniqueRegionsCount >= 3) {
+      return MemberGrade.diamond;
     }
     if (totalLogCount >= 10) {
-      return MemberGrade.special;
+      return MemberGrade.gold;
     }
-    return MemberGrade.member;
+    return MemberGrade.silver;
   }
 }
 

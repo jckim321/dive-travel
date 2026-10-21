@@ -162,7 +162,7 @@ class FirestoreDiverRepository implements DiverRepository {
     if (!snapshot.exists) {
       payload.addAll({
         if (!grantAdmin) 'user_role': 'diver',
-        'member_grade': MemberGrade.member.firestoreValue,
+        'member_grade': MemberGrade.silver.firestoreValue,
         'is_instructor': false,
         'is_verified_pro': false,
         'c_card_agency': '',
@@ -175,10 +175,7 @@ class FirestoreDiverRepository implements DiverRepository {
       });
     } else if (snapshot.data()?['member_grade'] == null &&
         snapshot.data()?['memberGrade'] == null) {
-      final instructor = snapshot.data()?['is_instructor'] == true;
-      payload['member_grade'] = instructor
-          ? MemberGrade.instructor.firestoreValue
-          : MemberGrade.member.firestoreValue;
+      payload['member_grade'] = MemberGrade.silver.firestoreValue;
     }
     await ref.set(payload, SetOptions(merge: true));
   }
@@ -946,7 +943,6 @@ class FirestoreDiverRepository implements DiverRepository {
     return _userDoc(uid).set({
       'is_instructor': true,
       'is_verified_pro': ProVerificationStatus.approved.firestoreValue,
-      'member_grade': MemberGrade.instructor.firestoreValue,
       'pro_approved_at': FieldValue.serverTimestamp(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -1009,7 +1005,6 @@ class FirestoreDiverRepository implements DiverRepository {
   }) {
     return _userDoc(uid).set({
       'member_grade': grade.firestoreValue,
-      if (grade == MemberGrade.instructor) 'is_instructor': true,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

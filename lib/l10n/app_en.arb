@@ -388,7 +388,7 @@
   "adminGradeMixTitle": "Member grade mix",
   "adminQuickActions": "Quick actions",
   "adminMembersTitle": "Members",
-  "adminMembersSubtitle": "Look up members and set Member, Special, VIP, or Instructor grade.",
+  "adminMembersSubtitle": "Look up members and set Silver, Gold, Diamond, or Platinum grade.",
   "adminMembersSearch": "Search name or email",
   "adminMembersEmpty": "No members match.",
   "adminMembersGrade": "Member grade",
@@ -405,10 +405,10 @@
       "grade": { "type": "String" }
     }
   },
-  "memberGradeMember": "Member",
-  "memberGradeSpecial": "Special",
-  "memberGradeVip": "VIP",
-  "memberGradeInstructor": "Instructor",
+  "memberGradeSilver": "Silver member",
+  "memberGradeGold": "Gold member",
+  "memberGradeDiamond": "Diamond member",
+  "memberGradePlatinum": "Platinum member",
   "adminInstructorsTitle": "Instructor certificate review",
   "adminInstructorsSubtitle": "Review C-Cards on R2. Approval unlocks pro pricing.",
   "adminInstructorAgency": "Agency · {agency}",

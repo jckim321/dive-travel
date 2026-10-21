@@ -701,10 +701,10 @@ class _OverviewPane extends StatelessWidget {
         _GradeMixCard(
           counts: gradeCounts,
           labels: {
-            MemberGrade.member: l10n.memberGradeMember,
-            MemberGrade.special: l10n.memberGradeSpecial,
-            MemberGrade.vip: l10n.memberGradeVip,
-            MemberGrade.instructor: l10n.memberGradeInstructor,
+            MemberGrade.silver: l10n.memberGradeSilver,
+            MemberGrade.gold: l10n.memberGradeGold,
+            MemberGrade.diamond: l10n.memberGradeDiamond,
+            MemberGrade.platinum: l10n.memberGradePlatinum,
           },
         ),
         const SizedBox(height: 20),
@@ -1001,10 +1001,10 @@ class _GradeMixCard extends StatelessWidget {
     final total = counts.values.fold<int>(0, (a, b) => a + b);
     final max = counts.values.fold<int>(1, (a, b) => a > b ? a : b);
     const colors = {
-      MemberGrade.member: AdminConsoleTheme.muted,
-      MemberGrade.special: AdminConsoleTheme.ice,
-      MemberGrade.vip: AdminConsoleTheme.amber,
-      MemberGrade.instructor: AdminConsoleTheme.aqua,
+      MemberGrade.silver: AdminConsoleTheme.muted,
+      MemberGrade.gold: AdminConsoleTheme.ice,
+      MemberGrade.diamond: AdminConsoleTheme.amber,
+      MemberGrade.platinum: AdminConsoleTheme.aqua,
     };
 
     return Container(

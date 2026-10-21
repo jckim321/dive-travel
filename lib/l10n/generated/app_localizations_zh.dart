@@ -1111,7 +1111,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminMembersTitle => '会员管理';
 
   @override
-  String get adminMembersSubtitle => '查询会员并调整等级：会员、特别会员、VIP、教练会员。';
+  String get adminMembersSubtitle => '查询会员并调整等级：银、金、钻石、白金。';
 
   @override
   String get adminMembersSearch => '搜索姓名或邮箱';
@@ -1133,16 +1133,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => '会员';
+  String get memberGradeSilver => '银会员';
 
   @override
-  String get memberGradeSpecial => '特别会员';
+  String get memberGradeGold => '金会员';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => '钻石会员';
 
   @override
-  String get memberGradeInstructor => '教练会员';
+  String get memberGradePlatinum => '白金会员';
 
   @override
   String get adminInstructorsTitle => '教练证书审批';

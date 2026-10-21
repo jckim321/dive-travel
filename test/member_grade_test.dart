@@ -8,15 +8,19 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
-  test('신규 회원 기본 등급은 회원이다', () {
-    expect(MemberGrade.parse(null), MemberGrade.member);
+  test('신규 회원 기본 등급은 실버회원이다', () {
+    expect(MemberGrade.parse(null), MemberGrade.silver);
+    expect(MemberGrade.parse('member'), MemberGrade.silver);
+    expect(MemberGrade.parse('special'), MemberGrade.gold);
+    expect(MemberGrade.parse('vip'), MemberGrade.diamond);
+    expect(MemberGrade.parse('instructor'), MemberGrade.platinum);
     expect(
       MemberGrade.suggested(
         totalLogCount: 0,
         uniqueRegionsCount: 0,
         isInstructor: false,
       ),
-      MemberGrade.member,
+      MemberGrade.silver,
     );
     expect(
       MemberGrade.suggested(
@@ -24,7 +28,7 @@ void main() {
         uniqueRegionsCount: 1,
         isInstructor: false,
       ),
-      MemberGrade.special,
+      MemberGrade.gold,
     );
   });
 
@@ -35,12 +39,12 @@ void main() {
 
     await repo.setMemberGrade(
       uid: 'pending-instructor',
-      grade: MemberGrade.vip,
+      grade: MemberGrade.diamond,
     );
     final after = await repo.watchMembers().first;
     expect(
       after.firstWhere((item) => item.uid == 'pending-instructor').grade,
-      MemberGrade.vip,
+      MemberGrade.diamond,
     );
   });
 

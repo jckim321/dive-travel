@@ -11,7 +11,7 @@ class DiverStats {
     this.isAdmin = false,
     this.isBusiness = false,
     this.ownedShopId,
-    this.memberGrade = MemberGrade.member,
+    this.memberGrade = MemberGrade.silver,
   });
 
   final String displayName;

@@ -2157,7 +2157,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminMembersSubtitle.
   ///
   /// In ko, this message translates to:
-  /// **'회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.'**
+  /// **'회원을 조회하고 실버·골드·다이아몬드·플래티넘 등급을 조정합니다.'**
   String get adminMembersSubtitle;
 
   /// No description provided for @adminMembersSearch.
@@ -2190,29 +2190,29 @@ abstract class AppLocalizations {
   /// **'활동 참고 등급 · {grade}'**
   String adminMembersSuggested(String grade);
 
-  /// No description provided for @memberGradeMember.
+  /// No description provided for @memberGradeSilver.
   ///
   /// In ko, this message translates to:
-  /// **'회원'**
-  String get memberGradeMember;
+  /// **'실버회원'**
+  String get memberGradeSilver;
 
-  /// No description provided for @memberGradeSpecial.
+  /// No description provided for @memberGradeGold.
   ///
   /// In ko, this message translates to:
-  /// **'특별회원'**
-  String get memberGradeSpecial;
+  /// **'골드회원'**
+  String get memberGradeGold;
 
-  /// No description provided for @memberGradeVip.
+  /// No description provided for @memberGradeDiamond.
   ///
   /// In ko, this message translates to:
-  /// **'VIP'**
-  String get memberGradeVip;
+  /// **'다이아몬드회원'**
+  String get memberGradeDiamond;
 
-  /// No description provided for @memberGradeInstructor.
+  /// No description provided for @memberGradePlatinum.
   ///
   /// In ko, this message translates to:
-  /// **'강사회원'**
-  String get memberGradeInstructor;
+  /// **'플래티넘회원'**
+  String get memberGradePlatinum;
 
   /// No description provided for @adminInstructorsTitle.
   ///

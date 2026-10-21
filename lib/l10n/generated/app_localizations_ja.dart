@@ -1111,7 +1111,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminMembersTitle => '会員管理';
 
   @override
-  String get adminMembersSubtitle => '会員を検索し、会員・特別会員・VIP・インストラクター会員の等級を調整します。';
+  String get adminMembersSubtitle => '会員を検索し、シルバー・ゴールド・ダイヤモンド・プラチナ等級を調整します。';
 
   @override
   String get adminMembersSearch => '名前またはメールで検索';
@@ -1133,16 +1133,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => '会員';
+  String get memberGradeSilver => 'シルバー会員';
 
   @override
-  String get memberGradeSpecial => '特別会員';
+  String get memberGradeGold => 'ゴールド会員';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => 'ダイヤモンド会員';
 
   @override
-  String get memberGradeInstructor => 'インストラクター会員';
+  String get memberGradePlatinum => 'プラチナ会員';
 
   @override
   String get adminInstructorsTitle => 'インストラクター資格の承認';

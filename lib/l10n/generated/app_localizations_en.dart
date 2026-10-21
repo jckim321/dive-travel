@@ -1151,7 +1151,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminMembersSubtitle =>
-      'Look up members and set Member, Special, VIP, or Instructor grade.';
+      'Look up members and set Silver, Gold, Diamond, or Platinum grade.';
 
   @override
   String get adminMembersSearch => 'Search name or email';
@@ -1173,16 +1173,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => 'Member';
+  String get memberGradeSilver => 'Silver member';
 
   @override
-  String get memberGradeSpecial => 'Special';
+  String get memberGradeGold => 'Gold member';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => 'Diamond member';
 
   @override
-  String get memberGradeInstructor => 'Instructor';
+  String get memberGradePlatinum => 'Platinum member';
 
   @override
   String get adminInstructorsTitle => 'Instructor certificate review';

@@ -1124,7 +1124,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminMembersTitle => '회원 관리';
 
   @override
-  String get adminMembersSubtitle => '회원을 조회하고 회원·특별회원·VIP·강사회원 등급을 조정합니다.';
+  String get adminMembersSubtitle => '회원을 조회하고 실버·골드·다이아몬드·플래티넘 등급을 조정합니다.';
 
   @override
   String get adminMembersSearch => '이름 또는 이메일 검색';
@@ -1146,16 +1146,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get memberGradeMember => '회원';
+  String get memberGradeSilver => '실버회원';
 
   @override
-  String get memberGradeSpecial => '특별회원';
+  String get memberGradeGold => '골드회원';
 
   @override
-  String get memberGradeVip => 'VIP';
+  String get memberGradeDiamond => '다이아몬드회원';
 
   @override
-  String get memberGradeInstructor => '강사회원';
+  String get memberGradePlatinum => '플래티넘회원';
 
   @override
   String get adminInstructorsTitle => '강사 자격증 승인';

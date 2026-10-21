@@ -21,7 +21,7 @@ class DiverSnapshot {
     bool isAdmin = false,
     bool isBusiness = false,
     String? ownedShopId,
-    MemberGrade memberGrade = MemberGrade.member,
+    MemberGrade memberGrade = MemberGrade.silver,
   }) {
     return DiverSnapshot(
       stats: DiverStats(
@@ -107,7 +107,7 @@ class DiverSnapshot {
     bool isAdmin = false,
     bool isBusiness = false,
     String? ownedShopId,
-    MemberGrade memberGrade = MemberGrade.member,
+    MemberGrade memberGrade = MemberGrade.silver,
     Set<String> favoriteShopIds = const {},
   }) {
     final grouped = <String, DiveRegion>{};

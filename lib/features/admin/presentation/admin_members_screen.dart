@@ -10,10 +10,10 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 enum _MemberGradeFilter {
   all,
   needsAction,
-  member,
-  special,
-  vip,
-  instructor,
+  silver,
+  gold,
+  diamond,
+  platinum,
 }
 
 class AdminMembersScreen extends StatefulWidget {
@@ -46,14 +46,14 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         return true;
       case _MemberGradeFilter.needsAction:
         return pendingUids.contains(member.uid) || member.isBusiness;
-      case _MemberGradeFilter.member:
-        return member.grade == MemberGrade.member;
-      case _MemberGradeFilter.special:
-        return member.grade == MemberGrade.special;
-      case _MemberGradeFilter.vip:
-        return member.grade == MemberGrade.vip;
-      case _MemberGradeFilter.instructor:
-        return member.grade == MemberGrade.instructor || member.isInstructor;
+      case _MemberGradeFilter.silver:
+        return member.grade == MemberGrade.silver;
+      case _MemberGradeFilter.gold:
+        return member.grade == MemberGrade.gold;
+      case _MemberGradeFilter.diamond:
+        return member.grade == MemberGrade.diamond;
+      case _MemberGradeFilter.platinum:
+        return member.grade == MemberGrade.platinum;
     }
   }
 
@@ -161,20 +161,20 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       l10n.adminMembersNeedsAction,
                     ),
                     (
-                      _MemberGradeFilter.member,
-                      memberGradeLabel(l10n, MemberGrade.member),
+                      _MemberGradeFilter.silver,
+                      memberGradeLabel(l10n, MemberGrade.silver),
                     ),
                     (
-                      _MemberGradeFilter.special,
-                      memberGradeLabel(l10n, MemberGrade.special),
+                      _MemberGradeFilter.gold,
+                      memberGradeLabel(l10n, MemberGrade.gold),
                     ),
                     (
-                      _MemberGradeFilter.vip,
-                      memberGradeLabel(l10n, MemberGrade.vip),
+                      _MemberGradeFilter.diamond,
+                      memberGradeLabel(l10n, MemberGrade.diamond),
                     ),
                     (
-                      _MemberGradeFilter.instructor,
-                      memberGradeLabel(l10n, MemberGrade.instructor),
+                      _MemberGradeFilter.platinum,
+                      memberGradeLabel(l10n, MemberGrade.platinum),
                     ),
                   ]) ...[
                     Padding(
@@ -236,8 +236,7 @@ class _MemberCard extends StatelessWidget {
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
-                if (member.isInstructor ||
-                    member.grade == MemberGrade.instructor)
+                if (member.isInstructor)
                   Padding(
                     padding: const EdgeInsets.only(left: 6),
                     child: _RoleBadge(
@@ -334,13 +333,13 @@ class _RoleBadge extends StatelessWidget {
 
 String memberGradeLabel(AppLocalizations l10n, MemberGrade grade) {
   switch (grade) {
-    case MemberGrade.member:
-      return l10n.memberGradeMember;
-    case MemberGrade.special:
-      return l10n.memberGradeSpecial;
-    case MemberGrade.vip:
-      return l10n.memberGradeVip;
-    case MemberGrade.instructor:
-      return l10n.memberGradeInstructor;
+    case MemberGrade.silver:
+      return l10n.memberGradeSilver;
+    case MemberGrade.gold:
+      return l10n.memberGradeGold;
+    case MemberGrade.diamond:
+      return l10n.memberGradeDiamond;
+    case MemberGrade.platinum:
+      return l10n.memberGradePlatinum;
   }
 }
