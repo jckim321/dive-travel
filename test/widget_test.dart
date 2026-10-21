@@ -231,6 +231,15 @@ void main() {
     expect(find.text(l10n.reviewTitle), findsOneWidget);
     expect(find.byKey(const Key('review-gate-message')), findsOneWidget);
     expect(find.text(l10n.reviewBookingRequired), findsOneWidget);
+    expect(find.byKey(const Key('review-details-expand')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('review-submit')),
+      120,
+      scrollable: find.descendant(
+        of: find.byType(ListView).first,
+        matching: find.byType(Scrollable),
+      ),
+    );
     expect(find.byKey(const Key('review-submit')), findsOneWidget);
   });
 

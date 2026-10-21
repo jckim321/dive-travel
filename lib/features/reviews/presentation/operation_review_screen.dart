@@ -43,6 +43,7 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   String? _guideCrowd;
   String? _revisitIntent;
   final _audiences = <String>{};
+  var _detailsOpen = false;
 
   @override
   void initState() {
@@ -341,93 +342,118 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          ExpansionTile(
-            key: const Key('review-details-expand'),
-            initiallyExpanded: false,
-            title: Text(l10n.reviewDetailsExpand),
-            subtitle: Text(l10n.reviewDetailOptionalHint),
-            childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-            children: [
-              _ChoiceSection(
-                label: l10n.reviewDetailLevel,
-                values: ReviewDetailOptions.diverLevels,
-                selected: _diverLevel,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _diverLevel = value),
-              ),
-              _ChoiceSection(
-                label: l10n.reviewDetailDives,
-                values: ReviewDetailOptions.diveCountBands,
-                selected: _diveCountBand,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _diveCountBand = value),
-              ),
-              _ChoiceSection(
-                label: l10n.reviewDetailVisibility,
-                values: ReviewDetailOptions.visibility,
-                selected: _visibility,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _visibility = value),
-              ),
-              _ChoiceSection(
-                label: l10n.reviewDetailCurrent,
-                values: ReviewDetailOptions.currents,
-                selected: _current,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _current = value),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(
-                  controller: _waterTemp,
-                  enabled: !blocked,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
+          Material(
+            color: const Color(0xFFF7F9FB),
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              children: [
+                ListTile(
+                  key: const Key('review-details-expand'),
+                  title: Text(l10n.reviewDetailsExpand),
+                  subtitle: Text(l10n.reviewDetailOptionalHint),
+                  trailing: Icon(
+                    _detailsOpen ? Icons.expand_less : Icons.expand_more,
                   ),
-                  decoration: InputDecoration(
-                    labelText: l10n.reviewDetailWaterTemp,
-                    border: const OutlineInputBorder(),
-                  ),
+                  onTap: blocked
+                      ? null
+                      : () => setState(() => _detailsOpen = !_detailsOpen),
                 ),
-              ),
-              _ChoiceSection(
-                label: l10n.reviewDetailCrowd,
-                values: ReviewDetailOptions.guideCrowds,
-                selected: _guideCrowd,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _guideCrowd = value),
-              ),
-              _MultiChoiceSection(
-                label: l10n.reviewDetailAudience,
-                values: ReviewDetailOptions.audiences,
-                selected: _audiences,
-                enabled: !blocked,
-                l10n: l10n,
-                onToggle: (value) {
-                  setState(() {
-                    if (_audiences.contains(value)) {
-                      _audiences.remove(value);
-                    } else {
-                      _audiences.add(value);
-                    }
-                  });
-                },
-              ),
-              _ChoiceSection(
-                label: l10n.reviewDetailRevisit,
-                values: ReviewDetailOptions.revisitIntents,
-                selected: _revisitIntent,
-                enabled: !blocked,
-                l10n: l10n,
-                onSelected: (value) => setState(() => _revisitIntent = value),
-              ),
-            ],
+                if (_detailsOpen)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ChoiceSection(
+                          label: l10n.reviewDetailLevel,
+                          values: ReviewDetailOptions.diverLevels,
+                          selected: _diverLevel,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _diverLevel = value),
+                        ),
+                        _ChoiceSection(
+                          label: l10n.reviewDetailDives,
+                          values: ReviewDetailOptions.diveCountBands,
+                          selected: _diveCountBand,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _diveCountBand = value),
+                        ),
+                        _ChoiceSection(
+                          label: l10n.reviewDetailVisibility,
+                          values: ReviewDetailOptions.visibility,
+                          selected: _visibility,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _visibility = value),
+                        ),
+                        _ChoiceSection(
+                          label: l10n.reviewDetailCurrent,
+                          values: ReviewDetailOptions.currents,
+                          selected: _current,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _current = value),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: TextField(
+                            controller: _waterTemp,
+                            enabled: !blocked,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: l10n.reviewDetailWaterTemp,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        _ChoiceSection(
+                          label: l10n.reviewDetailCrowd,
+                          values: ReviewDetailOptions.guideCrowds,
+                          selected: _guideCrowd,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _guideCrowd = value),
+                        ),
+                        _MultiChoiceSection(
+                          label: l10n.reviewDetailAudience,
+                          values: ReviewDetailOptions.audiences,
+                          selected: _audiences,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onToggle: (value) {
+                            setState(() {
+                              if (_audiences.contains(value)) {
+                                _audiences.remove(value);
+                              } else {
+                                _audiences.add(value);
+                              }
+                            });
+                          },
+                        ),
+                        _ChoiceSection(
+                          label: l10n.reviewDetailRevisit,
+                          values: ReviewDetailOptions.revisitIntents,
+                          selected: _revisitIntent,
+                          enabled: !blocked,
+                          l10n: l10n,
+                          onSelected: (value) =>
+                              setState(() => _revisitIntent = value),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           FilledButton(
