@@ -125,7 +125,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   DateTime? _departureStart;
   DateTime? _flagClosesAt;
   var _packageNights = 0;
-  var _datesManual = false;
 
   @override
   void initState() {
@@ -530,14 +529,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   void _setPackageNights(int nights) {
     setState(() {
       _packageNights = nights < 0 ? 0 : nights;
-      _datesManual = false;
     });
   }
 
   void _setCheckIn(DateTime day) {
     setState(() {
       _departureStart = DateTime(day.year, day.month, day.day);
-      _datesManual = false;
     });
   }
 
@@ -547,7 +544,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       setState(() {
         _departureStart = DateTime(day.year, day.month, day.day);
         _packageNights = 0;
-        _datesManual = true;
       });
       return;
     }
@@ -559,7 +555,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     setState(() {
       _packageNights = nights;
-      _datesManual = true;
     });
   }
 
@@ -1392,245 +1387,467 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
+  InputDecoration _bookingDense(String label, {String? hint, int lines = 1}) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(_kBoxRadius),
+      borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+    );
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      isDense: true,
+      alignLabelWithHint: lines > 1,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+        borderSide: const BorderSide(color: AppTheme.navy, width: 1.4),
+      ),
+    );
+  }
+
   Widget _bookingEntryBlock(AppLocalizations l10n) {
-    final packageName = _name.text.trim().isEmpty ? '—' : _name.text.trim();
+    final emptyName = _name.text.trim().isEmpty;
+    final packageName = emptyName ? l10n.partnerDefaultProduct : _name.text.trim();
     final quote = _previewQuote;
-    final days = _packageNights + 1;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.bookingEntryBasePackage,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          packageName,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.bookingEntryStayLength,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _stayStepper(
-                label: l10n.bookingEntryNights(_packageNights),
-                value: _packageNights,
-                min: 0,
-                onChanged: _setPackageNights,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+        border: Border.all(color: const Color(0xFFE2E8EE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppTheme.oceanDeep,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(_kBoxRadius),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                l10n.bookingEntryDays(days),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ],
-        ),
-        Text(
-          _nightsLabel,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.bookingEntryCheckIn),
-          subtitle: Text(
-            _departureStart == null
-                ? l10n.bookingEntryPickDate
-                : _fmtDay(_departureStart),
-          ),
-          trailing: const Icon(Icons.calendar_today_outlined),
-          onTap: () => _pickStayDate(checkout: false),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          enabled: _departureStart != null,
-          title: Text(l10n.bookingEntryCheckOut),
-          subtitle: Text(
-            _checkOut == null
-                ? l10n.bookingEntryPickDate
-                : _fmtDay(_checkOut),
-          ),
-          trailing: Icon(
-            _datesManual ? Icons.edit_calendar_outlined : Icons.event_available_outlined,
-          ),
-          onTap: _departureStart == null
-              ? null
-              : () => _pickStayDate(checkout: true),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            onPressed: () {
-              setState(() {
-                _datesManual = !_datesManual;
-                if (!_datesManual && _departureStart != null) {
-                  // snap checkout back to nights rule (already derived)
-                }
-              });
-            },
-            child: Text(
-              _datesManual
-                  ? '$_nightsLabel · ${l10n.bookingEntryChangeDates}'
-                  : l10n.bookingEntryChangeDates,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _rateConsumer[GuestRole.diver],
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: _field(l10n.bookingEntryDiverPrice),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _includes,
-          minLines: 3,
-          maxLines: 6,
-          decoration: _field(
-            l10n.productFormIncludes,
-            hint: l10n.productFormIncludesHint,
-            lines: 3,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _excludes,
-          minLines: 3,
-          maxLines: 6,
-          decoration: _field(
-            l10n.productFormExcludes,
-            hint: l10n.productFormExcludesHint,
-            lines: 3,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.checkoutGuests,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        _guestStepperRow(
-          label: l10n.workbenchGuestDiver,
-          value: _previewDiver,
-          onChanged: (v) => setState(() => _previewDiver = v < 1 ? 1 : v),
-          priceLabel: l10n.bookingEntryUnitPrice,
-          priceText:
-              _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
-              ? '—'
-              : _rateConsumer[GuestRole.diver]!.text.trim(),
-        ),
-        const SizedBox(height: 10),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(_kBoxRadius),
-            border: Border.all(color: const Color(0xFFE2E8EE)),
-          ),
-          child: Column(
-            children: [
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                title: Text(l10n.bookingEntryHasNondivers),
-                value: _hasNondivers,
-                onChanged: _setHasNondivers,
-              ),
-              if (_hasNondivers) ...[
-                const Divider(height: 1),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  child: Column(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.bookingEntryBasePackage,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    packageName,
+                    style: TextStyle(
+                      color: emptyName
+                          ? Colors.white.withValues(alpha: 0.45)
+                          : Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
                     children: [
-                      _guestStepperRow(
-                        label: l10n.bookingEntryAdultNondiver,
-                        value: _previewNondiver,
-                        onChanged: (v) =>
-                            setState(() => _previewNondiver = v),
-                        priceField: _rateConsumer[GuestRole.nondiver],
-                        priceLabel: l10n.bookingEntryUnitPrice,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.goldSoft,
+                          borderRadius: BorderRadius.circular(_kBoxRadius),
+                        ),
+                        child: Text(
+                          _nightsLabel,
+                          style: const TextStyle(
+                            color: AppTheme.navy,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      _guestStepperRow(
-                        label: l10n.bookingEntryChildInfant,
-                        value: _previewChild,
-                        onChanged: (v) => setState(() => _previewChild = v),
-                        priceField: _rateConsumer[GuestRole.child],
-                        priceLabel: l10n.bookingEntryUnitPrice,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _rateConsumer[GuestRole.diver],
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                          cursorColor: AppTheme.gold,
+                          decoration: InputDecoration(
+                            labelText: l10n.bookingEntryDiverPrice,
+                            labelStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 12,
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_kBoxRadius),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_kBoxRadius),
+                              borderSide: const BorderSide(
+                                color: AppTheme.gold,
+                                width: 1.4,
+                              ),
+                            ),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _stayDateStrip(l10n),
+                const SizedBox(height: 8),
+                Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: const EdgeInsets.only(bottom: 4),
+                    dense: true,
+                    visualDensity: VisualDensity.compact,
+                    title: Text(
+                      l10n.bookingEntryTermsToggle,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    children: [
+                      TextField(
+                        controller: _includes,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: _bookingDense(
+                          l10n.productFormIncludes,
+                          hint: l10n.productFormIncludesHint,
+                          lines: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: _excludes,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: _bookingDense(
+                          l10n.productFormExcludes,
+                          hint: l10n.productFormExcludesHint,
+                          lines: 2,
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.checkoutGuests,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _guestStepperRow(
+                  label: l10n.workbenchGuestDiver,
+                  value: _previewDiver,
+                  onChanged: (v) =>
+                      setState(() => _previewDiver = v < 1 ? 1 : v),
+                  priceLabel: l10n.bookingEntryUnitPrice,
+                  priceText: _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
+                      ? '—'
+                      : _rateConsumer[GuestRole.diver]!.text.trim(),
+                ),
+                const SizedBox(height: 4),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F8FA),
+                    borderRadius: BorderRadius.circular(_kBoxRadius),
+                    border: Border.all(color: const Color(0xFFE2E8EE)),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(
+                          l10n.bookingEntryHasNondivers,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        value: _hasNondivers,
+                        onChanged: _setHasNondivers,
+                      ),
+                      if (_hasNondivers) ...[
+                        const Divider(height: 1),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                          child: Column(
+                            children: [
+                              _guestStepperRow(
+                                label: l10n.bookingEntryAdultNondiver,
+                                value: _previewNondiver,
+                                onChanged: (v) =>
+                                    setState(() => _previewNondiver = v),
+                                priceField: _rateConsumer[GuestRole.nondiver],
+                                priceLabel: l10n.bookingEntryUnitPrice,
+                              ),
+                              const SizedBox(height: 4),
+                              _guestStepperRow(
+                                label: l10n.bookingEntryChildInfant,
+                                value: _previewChild,
+                                onChanged: (v) =>
+                                    setState(() => _previewChild = v),
+                                priceField: _rateConsumer[GuestRole.child],
+                                priceLabel: l10n.bookingEntryUnitPrice,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.bookingEntryAddons,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                for (var i = 0; i < _addons.length; i++) ...[
+                  _bookingAddonRow(l10n, i),
+                  const SizedBox(height: 4),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      final line = _LineEditors(kind: ProductOptionKind.addon);
+                      _watchLine(line);
+                      _listen(line.consumer);
+                      setState(() {
+                        _addons.add(line);
+                        _addonQty[line.id] = 0;
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.bookingEntryAddOption),
+                  ),
+                ),
               ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.bookingEntryAddons,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < _addons.length; i++) ...[
-          _bookingAddonRow(l10n, i),
-          const SizedBox(height: 8),
-        ],
-        OutlinedButton.icon(
-          onPressed: () {
-            final line = _LineEditors(kind: ProductOptionKind.addon);
-            _watchLine(line);
-            _listen(line.consumer);
-            setState(() {
-              _addons.add(line);
-              _addonQty[line.id] = 0;
-            });
-          },
-          icon: const Icon(Icons.add),
-          label: Text(l10n.bookingEntryAddOption),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.checkoutTotal('${quote.total}'),
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.bookingEntryPreviewSnack)),
-              );
-            },
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              backgroundColor: AppTheme.navy,
             ),
-            child: Text(l10n.exploreBook),
           ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _cancel,
-          maxLines: 2,
-          decoration: _field(
-            l10n.productFormCancelNote,
-            hint: l10n.productFormCancelHint,
-            lines: 2,
+          DecoratedBox(
+            decoration: const BoxDecoration(
+              color: AppTheme.navy,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(_kBoxRadius),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.checkoutTotal('${quote.total}'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.bookingEntryPreviewSnack)),
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.gold,
+                      foregroundColor: AppTheme.navy,
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    child: Text(l10n.exploreBook),
+                  ),
+                ],
+              ),
+            ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            child: TextField(
+              controller: _cancel,
+              maxLines: 1,
+              decoration: _bookingDense(
+                l10n.productFormCancelNote,
+                hint: l10n.productFormCancelHint,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stayDateStrip(AppLocalizations l10n) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+        border: Border.all(color: const Color(0xFFE2E8EE)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              child: _dateCell(
+                label: l10n.bookingEntryCheckIn,
+                value: _departureStart == null
+                    ? l10n.bookingEntryPickDate
+                    : _fmtDay(_departureStart),
+                onTap: () => _pickStayDate(checkout: false),
+              ),
+            ),
+            Container(width: 1, color: const Color(0xFFE2E8EE)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        onPressed: _packageNights <= 0
+                            ? null
+                            : () => _setPackageNights(_packageNights - 1),
+                        icon: const Icon(Icons.remove, size: 16),
+                      ),
+                      Text(
+                        _nightsLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          color: AppTheme.navy,
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        onPressed: () =>
+                            _setPackageNights(_packageNights + 1),
+                        icon: const Icon(Icons.add, size: 16),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Container(width: 1, color: const Color(0xFFE2E8EE)),
+            Expanded(
+              child: _dateCell(
+                label: l10n.bookingEntryCheckOut,
+                value: _checkOut == null
+                    ? l10n.bookingEntryPickDate
+                    : _fmtDay(_checkOut),
+                onTap: _departureStart == null
+                    ? null
+                    : () => _pickStayDate(checkout: true),
+                muted: _departureStart == null,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _dateCell({
+    required String label,
+    required String value,
+    VoidCallback? onTap,
+    bool muted = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: muted ? AppTheme.muted : const Color(0xFF667085),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: muted ? AppTheme.muted : AppTheme.navy,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1639,117 +1856,66 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final qty = _addonQty[draft.id] ?? 0;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF7F8FA),
         borderRadius: BorderRadius.circular(_kBoxRadius),
         border: Border.all(color: const Color(0xFFE2E8EE)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
-        child: Column(
+        padding: const EdgeInsets.fromLTRB(6, 4, 0, 4),
+        child: Row(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: draft.name,
-                    decoration: InputDecoration(
-                      labelText: l10n.bookingEntryOptionName,
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: draft.consumer,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: l10n.bookingEntryOptionPrice,
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-                IconButton(
-                  tooltip: l10n.productFormRemoveOption,
-                  onPressed: _addons.length == 1
-                      ? null
-                      : () {
-                          setState(() {
-                            _addonQty.remove(draft.id);
-                            _dropLine(draft);
-                            _addons.removeAt(index);
-                          });
-                        },
-                  icon: const Icon(Icons.close, size: 20),
-                ),
-              ],
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: draft.name,
+                decoration: _bookingDense(l10n.bookingEntryOptionName),
+                onChanged: (_) => setState(() {}),
+              ),
             ),
-            Row(
-              children: [
-                const Spacer(),
-                IconButton(
-                  onPressed: qty <= 0
-                      ? null
-                      : () => setState(() => _addonQty[draft.id] = qty - 1),
-                  icon: const Icon(Icons.remove_circle_outline, size: 22),
-                ),
-                SizedBox(
-                  width: 28,
-                  child: Text(
-                    '$qty',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () =>
-                      setState(() => _addonQty[draft.id] = qty + 1),
-                  icon: const Icon(Icons.add_circle_outline, size: 22),
-                ),
-              ],
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 72,
+              child: TextField(
+                controller: draft.consumer,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: _bookingDense(l10n.bookingEntryOptionPrice),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: qty <= 0
+                  ? null
+                  : () => setState(() => _addonQty[draft.id] = qty - 1),
+              icon: const Icon(Icons.remove_circle_outline, size: 18),
+            ),
+            Text(
+              '$qty',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: () => setState(() => _addonQty[draft.id] = qty + 1),
+              icon: const Icon(Icons.add_circle_outline, size: 18),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: l10n.productFormRemoveOption,
+              onPressed: _addons.length == 1
+                  ? null
+                  : () {
+                      setState(() {
+                        _addonQty.remove(draft.id);
+                        _dropLine(draft);
+                        _addons.removeAt(index);
+                      });
+                    },
+              icon: const Icon(Icons.close, size: 18),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _stayStepper({
-    required String label,
-    required int value,
-    required int min,
-    required ValueChanged<int> onChanged,
-  }) {
-    return Row(
-      children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
-        IconButton(
-          onPressed: value <= min ? null : () => onChanged(value - 1),
-          icon: const Icon(Icons.remove_circle_outline, size: 22),
-        ),
-        SizedBox(
-          width: 28,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        IconButton(
-          onPressed: () => onChanged(value + 1),
-          icon: const Icon(Icons.add_circle_outline, size: 22),
-        ),
-      ],
     );
   }
 
@@ -1766,38 +1932,35 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       children: [
         Expanded(
           flex: 3,
-          child: Text(label, style: const TextStyle(fontSize: 14)),
+          child: Text(label, style: const TextStyle(fontSize: 13)),
         ),
         IconButton(
+          visualDensity: VisualDensity.compact,
           onPressed: value <= 0 ? null : () => onChanged(value - 1),
-          icon: const Icon(Icons.remove_circle_outline, size: 22),
+          icon: const Icon(Icons.remove_circle_outline, size: 18),
         ),
         SizedBox(
-          width: 28,
+          width: 22,
           child: Text(
             '$value',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
         ),
         IconButton(
+          visualDensity: VisualDensity.compact,
           onPressed: () => onChanged(value + 1),
-          icon: const Icon(Icons.add_circle_outline, size: 22),
+          icon: const Icon(Icons.add_circle_outline, size: 18),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Expanded(
-          flex: 3,
+          flex: 2,
           child: priceField != null
               ? TextField(
                   controller: priceField,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: priceLabel,
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
+                  decoration: _bookingDense(priceLabel ?? ''),
                   onChanged: (_) => setState(() {}),
                 )
               : Text(
@@ -1806,6 +1969,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.muted,
+                    fontSize: 12,
                   ),
                 ),
         ),

@@ -4062,6 +4062,12 @@ abstract class AppLocalizations {
   /// **'1인 가격'**
   String get bookingEntryOptionPrice;
 
+  /// No description provided for @bookingEntryTermsToggle.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함 · 불포함'**
+  String get bookingEntryTermsToggle;
+
   /// No description provided for @bookingEntryStayLength.
   ///
   /// In ko, this message translates to:

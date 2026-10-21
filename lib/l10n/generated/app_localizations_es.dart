@@ -2148,6 +2148,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bookingEntryOptionPrice => '1인 가격';
 
   @override
+  String get bookingEntryTermsToggle => '포함 · 불포함';
+
+  @override
   String get bookingEntryStayLength => '여행 기간';
 
   @override

@@ -1323,6 +1323,7 @@
   "bookingEntryAddOption": "옵션 추가",
   "bookingEntryOptionName": "옵션명",
   "bookingEntryOptionPrice": "1인 가격",
+  "bookingEntryTermsToggle": "포함 · 불포함",
   "bookingEntryStayLength": "여행 기간",
   "bookingEntryNights": "{nights}박",
   "@bookingEntryNights": {

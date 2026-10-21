@@ -757,6 +757,7 @@
   "bookingEntryAddOption": "Add option",
   "bookingEntryOptionName": "Option name",
   "bookingEntryOptionPrice": "Unit price",
+  "bookingEntryTermsToggle": "Includes & excludes",
   "bookingEntryStayLength": "Trip length",
   "bookingEntryNights": "{nights} nights",
   "@bookingEntryNights": {

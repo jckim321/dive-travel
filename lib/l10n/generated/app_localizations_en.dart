@@ -2188,6 +2188,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingEntryOptionPrice => 'Unit price';
 
   @override
+  String get bookingEntryTermsToggle => 'Includes & excludes';
+
+  @override
   String get bookingEntryStayLength => 'Trip length';
 
   @override
