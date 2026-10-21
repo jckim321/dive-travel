@@ -228,9 +228,10 @@ void main() {
     await tester.tap(find.byKey(const Key('log-review')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text(l10n.reviewSafety), findsOneWidget);
-    expect(find.text(l10n.reviewGuide), findsOneWidget);
-    expect(find.text(l10n.reviewBoat), findsOneWidget);
+    expect(find.text(l10n.reviewTitle), findsOneWidget);
+    expect(find.text(l10n.reviewStarsLabel), findsOneWidget);
+    expect(find.byKey(const Key('review-star-5')), findsOneWidget);
+    expect(find.byKey(const Key('review-submit')), findsOneWidget);
   });
 
   testWidgets('기록된 로그를 수정하면 장소가 바뀐다', (WidgetTester tester) async {

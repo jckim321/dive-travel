@@ -15,8 +15,8 @@ abstract final class ListingCover {
 
   static double cardExtent(BuildContext context, {double horizontal = 52}) {
     final cellW = (MediaQuery.sizeOf(context).width - horizontal) / 2;
-    // Image + shop name.
-    return cellW / aspectRatio + 36;
+    // Image + shop name + guest rating line.
+    return cellW / aspectRatio + 54;
   }
 }
 

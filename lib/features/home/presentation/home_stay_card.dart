@@ -145,7 +145,8 @@ class HomeDiscoverySection extends StatelessWidget {
     const coverAspect = 4 / 3;
     final screenW = MediaQuery.sizeOf(context).width;
     final cardWidth = (screenW * 0.55).clamp(168.0, 220.0);
-    final cardHeight = cardWidth / coverAspect + 32;
+    // Cover + title + guest rating line under the name.
+    final cardHeight = cardWidth / coverAspect + 50;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
