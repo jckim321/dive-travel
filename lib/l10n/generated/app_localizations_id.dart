@@ -1265,7 +1265,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get productFormContinentHint => '먼저 대륙을 고르면 해당 지역 샵만 보입니다.';
 
   @override
-  String get productFormShopHint => '등록할 리조트(샵)를 선택하세요.';
+  String get productFormShopHint => '제휴리조트';
+
+  @override
+  String get productFormDirectSelect => '직접선택';
 
   @override
   String get productFormSubtitle => '한 줄 소개';
@@ -2070,7 +2073,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get briefSectionCover => '표지';
 
   @override
-  String get briefSectionPlace => '가는 곳';
+  String get briefSectionPlace => '가는 목적지 소개';
 
   @override
   String get briefSectionDays => '일정';

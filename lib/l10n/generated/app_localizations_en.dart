@@ -1286,7 +1286,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pick a continent first to filter shops.';
 
   @override
-  String get productFormShopHint => 'Choose the resort or dive shop.';
+  String get productFormShopHint => 'Partner resort';
+
+  @override
+  String get productFormDirectSelect => 'Enter manually';
 
   @override
   String get productFormSubtitle => 'One-line pitch';
@@ -2111,7 +2114,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefSectionCover => 'Cover';
 
   @override
-  String get briefSectionPlace => 'Where';
+  String get briefSectionPlace => 'Destination';
 
   @override
   String get briefSectionDays => 'Itinerary';

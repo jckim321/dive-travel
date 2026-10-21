@@ -2397,8 +2397,14 @@ abstract class AppLocalizations {
   /// No description provided for @productFormShopHint.
   ///
   /// In ko, this message translates to:
-  /// **'등록할 리조트(샵)를 선택하세요.'**
+  /// **'제휴리조트'**
   String get productFormShopHint;
+
+  /// No description provided for @productFormDirectSelect.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접선택'**
+  String get productFormDirectSelect;
 
   /// No description provided for @productFormSubtitle.
   ///
@@ -3915,7 +3921,7 @@ abstract class AppLocalizations {
   /// No description provided for @briefSectionPlace.
   ///
   /// In ko, this message translates to:
-  /// **'가는 곳'**
+  /// **'가는 목적지 소개'**
   String get briefSectionPlace;
 
   /// No description provided for @briefSectionDays.

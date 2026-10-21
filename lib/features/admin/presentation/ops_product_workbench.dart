@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
@@ -124,6 +125,7 @@ class _TextLines {
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _sectionCount = 6;
   static const _kBoxRadius = 2.0;
+  static const _kDirectShop = '__direct__';
 
   late final TextEditingController _name;
   late final TextEditingController _resortName;
@@ -192,7 +194,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _resortCountry = TextEditingController(text: shop?.country ?? '');
     _resortRegion = TextEditingController(text: shop?.location ?? '');
     _blurb = TextEditingController(text: existing?.blurb ?? '');
-    _meeting = TextEditingController(text: existing?.meetingPoint ?? '');
+    final meetingSeed = (existing?.meetingPoint ?? '').trim();
+    final addressSeed = (shop?.address ?? '').trim();
+    _meeting = TextEditingController(
+      text: meetingSeed.isNotEmpty ? meetingSeed : addressSeed,
+    );
     _schedule = TextEditingController(text: existing?.schedule ?? '');
     _difficulty = TextEditingController(text: existing?.difficulty ?? '');
     _minGuests = TextEditingController(
@@ -655,6 +661,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           professionalPrice: diverRate.professional,
           continent: _continent,
           country: _resortCountry.text.trim(),
+          address: _meeting.text.trim(),
           curated: true,
           intro: _blurb.text.trim(),
         );
@@ -768,7 +775,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         : _shopsForContinent;
     final hull = DiveShopCatalog.byId(_shopId);
     final store = DiverStoreScope.of(context);
-    final live = store.liveStatsFor(_shopId);
     final canPublish = store.stats.isAdmin && !widget.partnerMode;
     return Scaffold(
       backgroundColor: AppTheme.canvas,
@@ -779,7 +785,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          final brief = _brief(l10n, shops, shopLocked, hull, live);
+          final brief = _brief(l10n, shops, shopLocked);
           return Column(
             children: [
               Expanded(
@@ -890,15 +896,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     AppLocalizations l10n,
     List<DiveShop> shops,
     bool shopLocked,
-    DiveShop? hull,
-    ShopLiveStats? live,
   ) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
         _block(1, l10n.briefSectionPlace, [
-          _placeBlock(l10n, shops, shopLocked, hull, live),
+          _placeBlock(l10n, shops, shopLocked),
         ]),
         _block(2, l10n.briefSectionDays, [_daysBlock(l10n)]),
         _block(3, l10n.briefSectionTerms, [_termsBlock(l10n)]),
@@ -980,22 +984,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         const SizedBox(height: 12),
         _photoBlock(l10n),
-        const SizedBox(height: 20),
-        TextField(
-          key: Key(
-            widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
-          ),
-          controller: _name,
-          decoration: _field(l10n.partnerDefaultProduct),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _blurb,
-          decoration: _field(
-            l10n.productFormSubtitle,
-            hint: l10n.productFormSubtitleHint,
-          ),
-        ),
       ],
     );
   }
@@ -1030,67 +1018,166 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  void _applyCatalogShop(String shopId, {required DiverStore store}) {
+    final next = DiveShopCatalog.byId(shopId);
+    final live = store.liveStatsFor(shopId);
+    _shopId = shopId;
+    _namedResort = false;
+    if (next != null) {
+      _continent = next.continent;
+      if (_resortName.text.trim().isEmpty) {
+        _resortName.text = next.name;
+      }
+      if (_resortCountry.text.trim().isEmpty) {
+        _resortCountry.text = next.country;
+      }
+      if (_resortRegion.text.trim().isEmpty) {
+        _resortRegion.text = next.location;
+      }
+    }
+    final address = (live?.address ?? next?.address ?? '').trim();
+    if (address.isNotEmpty) {
+      _meeting.text = address;
+    }
+  }
+
+  Future<void> _openDestinationMap(AppLocalizations l10n) async {
+    final query = _meeting.text.trim();
+    if (query.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.exploreResortAddress)),
+      );
+      return;
+    }
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeQueryComponent(query)}',
+    );
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchOpenMap)),
+      );
+    }
+  }
+
+  Widget _destinationMapCard(AppLocalizations l10n) {
+    final address = _meeting.text.trim();
+    final location = [
+      if (_resortRegion.text.trim().isNotEmpty) _resortRegion.text.trim(),
+      if (_resortCountry.text.trim().isNotEmpty) _resortCountry.text.trim(),
+    ].join(', ');
+    final label = address.isNotEmpty
+        ? address
+        : (location.isNotEmpty ? location : l10n.exploreResortAddress);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.oceanDeep,
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.place_outlined, color: AppTheme.gold, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: address.isEmpty
+                    ? null
+                    : () => _openDestinationMap(l10n),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFF4EBD3),
+                  disabledForegroundColor: Colors.white38,
+                ),
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: Text(l10n.workbenchOpenMap),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _placeBlock(
     AppLocalizations l10n,
     List<DiveShop> shops,
     bool shopLocked,
-    DiveShop? hull,
-    ShopLiveStats? live,
   ) {
-    final address = (live?.address ?? hull?.address ?? '').trim();
+    final store = DiverStoreScope.of(context);
+    final shopValue = shopLocked
+        ? _shopId
+        : (_namedResort
+              ? _kDirectShop
+              : (shops.any((shop) => shop.id == _shopId)
+                    ? _shopId
+                    : (shops.isNotEmpty ? shops.first.id : _kDirectShop)));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!shopLocked) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                label: Text(l10n.briefSourceCatalog),
-                selected: !_namedResort,
-                onSelected: (selected) {
-                  if (!selected) {
-                    return;
-                  }
-                  setState(() {
-                    _namedResort = false;
-                    final filtered = _shopsForContinent;
-                    final stillListed = filtered.any(
-                      (shop) => shop.id == _shopId,
-                    );
-                    if (!stillListed && filtered.isNotEmpty) {
-                      _shopId = filtered.first.id;
-                    }
-                  });
-                },
-              ),
-              ChoiceChip(
-                label: Text(l10n.briefSourceNamed),
-                selected: _namedResort,
-                onSelected: (selected) {
-                  if (!selected) {
-                    return;
-                  }
-                  final current = DiveShopCatalog.byId(_shopId);
-                  setState(() {
-                    _namedResort = true;
-                    if (_resortName.text.trim().isEmpty) {
-                      _resortName.text = current?.name ?? '';
-                    }
-                    if (_resortCountry.text.trim().isEmpty) {
-                      _resortCountry.text = current?.country ?? '';
-                    }
-                    if (_resortRegion.text.trim().isEmpty) {
-                      _resortRegion.text = current?.location ?? '';
-                    }
-                  });
-                },
-              ),
-            ],
+        DropdownButtonFormField<String>(
+          key: ValueKey(
+            shopLocked
+                ? 'shop-locked-$_shopId'
+                : 'shop-$_continent-$_namedResort-$_shopId',
           ),
-          const SizedBox(height: 12),
-        ],
+          initialValue: shopValue,
+          decoration: _field(l10n.productFormShopHint),
+          items: [
+            if (!shopLocked)
+              DropdownMenuItem(
+                value: _kDirectShop,
+                child: Text(l10n.productFormDirectSelect),
+              ),
+            for (final shop in shops)
+              DropdownMenuItem(value: shop.id, child: Text(shop.name)),
+          ],
+          onChanged: shopLocked
+              ? null
+              : (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    if (value == _kDirectShop) {
+                      final current = DiveShopCatalog.byId(_shopId);
+                      _namedResort = true;
+                      if (_resortName.text.trim().isEmpty) {
+                        _resortName.text = current?.name ?? '';
+                      }
+                      if (_resortCountry.text.trim().isEmpty) {
+                        _resortCountry.text = current?.country ?? '';
+                      }
+                      if (_resortRegion.text.trim().isEmpty) {
+                        _resortRegion.text = current?.location ?? '';
+                      }
+                      return;
+                    }
+                    _applyCatalogShop(value, store: store);
+                  });
+                },
+        ),
+        const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           initialValue: _continent,
           decoration: _field(l10n.productFormContinent),
@@ -1115,13 +1202,29 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     final filtered = _shopsForContinent;
                     if (filtered.isNotEmpty &&
                         !filtered.any((shop) => shop.id == _shopId)) {
-                      _shopId = filtered.first.id;
+                      _applyCatalogShop(filtered.first.id, store: store);
                     }
                   });
                 },
         ),
         const SizedBox(height: 12),
+        TextField(
+          key: Key(
+            widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
+          ),
+          controller: _name,
+          decoration: _field(l10n.partnerDefaultProduct),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _blurb,
+          decoration: _field(
+            l10n.productFormSubtitle,
+            hint: l10n.productFormSubtitleHint,
+          ),
+        ),
         if (_namedResort) ...[
+          const SizedBox(height: 12),
           TextField(
             key: const Key('product-curated-resort'),
             controller: _resortName,
@@ -1146,58 +1249,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               hint: l10n.productFormCuratedLocationHint,
             ),
           ),
-        ] else ...[
-          DropdownButtonFormField<String>(
-            key: ValueKey('shop-$_continent-$_shopId'),
-            initialValue: shops.any((shop) => shop.id == _shopId)
-                ? _shopId
-                : null,
-            decoration: _field(l10n.productFormShopHint),
-            items: [
-              for (final shop in shops)
-                DropdownMenuItem(value: shop.id, child: Text(shop.name)),
-            ],
-            onChanged: shopLocked
-                ? null
-                : (value) {
-                    if (value != null) {
-                      setState(() => _shopId = value);
-                    }
-                  },
-          ),
-          const SizedBox(height: 12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(_kBoxRadius),
-              border: Border.all(color: const Color(0xFFE2E8EE)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    hull?.name ?? live?.name ?? _shopId,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    '${hull?.country ?? ''} · ${hull?.location ?? live?.location ?? ''}',
-                  ),
-                  if (address.isNotEmpty) Text(address),
-                ],
-              ),
-            ),
-          ),
         ],
         const SizedBox(height: 12),
         TextField(
           controller: _meeting,
+          onChanged: (_) => setState(() {}),
           decoration: _field(
-            l10n.productFormMeetingPoint,
+            l10n.exploreResortAddress,
             hint: l10n.productFormMeetingHint,
           ),
         ),
+        const SizedBox(height: 12),
+        _destinationMapCard(l10n),
       ],
     );
   }
