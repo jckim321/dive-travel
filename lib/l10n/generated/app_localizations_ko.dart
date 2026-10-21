@@ -437,7 +437,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get optionBookIndividual => '이 구성만 예약';
 
   @override
-  String get explorePay => '자리 요청';
+  String get explorePay => '결제하기';
 
   @override
   String get simPayTitle => '예약 요청 확인';
@@ -528,8 +528,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String exploreCheckoutDone(String label, String price) {
-    return '$label $price원 자리 요청을 샵에 전달했습니다.';
+    return '$label $price원 예약을 샵에 전달했습니다.';
   }
+
+  @override
+  String get sameBoatSeatConfirmed => '가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.';
 
   @override
   String get exploreConsumerPayHint => '샵이 등록한 정상 소비자가입니다.';

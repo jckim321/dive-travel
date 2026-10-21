@@ -524,6 +524,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get sameBoatSeatConfirmed => '가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.';
+
+  @override
   String get exploreConsumerPayHint => '店铺登记的消费者价。';
 
   @override

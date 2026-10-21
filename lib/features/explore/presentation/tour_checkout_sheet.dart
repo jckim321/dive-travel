@@ -11,7 +11,6 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
-import 'package:dive_travel_app/features/community/presentation/open_tide_room.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> showTourCheckoutSheet({
@@ -343,19 +342,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.exploreCheckoutDone(label, formatted))),
+      SnackBar(
+        content: Text(
+          widget.fromFlag
+              ? l10n.sameBoatSeatConfirmed
+              : l10n.exploreCheckoutDone(label, formatted),
+        ),
+      ),
     );
-    if (!mounted) {
-      return;
-    }
-    // Same-boat flag flow already reserved inventory; skip legacy CommunityPost “깃발”.
-    if (!widget.fromFlag) {
-      await offerOpenTideRoom(
-        context: context,
-        shop: widget.shop,
-        tourDate: _tourDate,
-      );
-    }
   }
 
   @override

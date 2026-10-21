@@ -912,10 +912,10 @@ abstract class AppLocalizations {
   /// **'이 구성만 예약'**
   String get optionBookIndividual;
 
-  /// 체크아웃 시트의 자리 요청 버튼입니다. 결제는 샵 확정 후입니다.
+  /// 체크아웃의 결제(예약 요청) 버튼입니다.
   ///
   /// In ko, this message translates to:
-  /// **'자리 요청'**
+  /// **'결제하기'**
   String get explorePay;
 
   /// No description provided for @simPayTitle.
@@ -1071,8 +1071,14 @@ abstract class AppLocalizations {
   /// 결제 버튼을 눌렀을 때 안내입니다.
   ///
   /// In ko, this message translates to:
-  /// **'{label} {price}원 자리 요청을 샵에 전달했습니다.'**
+  /// **'{label} {price}원 예약을 샵에 전달했습니다.'**
   String exploreCheckoutDone(String label, String price);
+
+  /// No description provided for @sameBoatSeatConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.'**
+  String get sameBoatSeatConfirmed;
 
   /// 일반 다이버 결제 시트 보조 문구입니다.
   ///

@@ -448,7 +448,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionBookIndividual => 'Book this only';
 
   @override
-  String get explorePay => 'Request a seat';
+  String get explorePay => 'Pay';
 
   @override
   String get simPayTitle => 'Confirm booking request';
@@ -542,8 +542,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String exploreCheckoutDone(String label, String price) {
-    return 'Seat request sent for $label $price.';
+    return 'Booking sent for $label $price.';
   }
+
+  @override
+  String get sameBoatSeatConfirmed => 'Your provisional seats are confirmed.';
 
   @override
   String get exploreConsumerPayHint =>
