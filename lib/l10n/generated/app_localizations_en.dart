@@ -588,6 +588,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreDiveStarCertified => 'Dive Star certified';
 
   @override
+  String get exploreDiveStarRenewalNeeded => 'Renewal needed';
+
+  @override
   String get exploreViewListing => 'View resort';
 
   @override
@@ -1716,6 +1719,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminInternalScoreSaved => 'Internal score saved.';
+
+  @override
+  String get adminDiveStarGrade => 'Dive Star grade';
+
+  @override
+  String get adminDiveStarGradeHint => '0–3 (0 = none)';
+
+  @override
+  String get adminDiveStarReviewedAt => 'Review date';
+
+  @override
+  String get adminDiveStarExpiresAt => 'Expires';
+
+  @override
+  String get adminDiveStarGradeEdit => 'Edit Dive Star grade';
+
+  @override
+  String get adminDiveStarGradeSaved => 'Dive Star grade saved.';
 
   @override
   String get adminViewShopProducts => 'View products';

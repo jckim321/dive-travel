@@ -26,6 +26,7 @@ class DiveShop {
     this.durationLabel = '',
     this.coverUrl = '',
     this.galleryUrls = const [],
+    this.diveStarExpiresAt,
   });
 
   final String id;
@@ -35,9 +36,12 @@ class DiveShop {
   final String continent;
   final List<String> sites;
   final String productName;
+
+  /// Admin-assigned Dive Star grade 0–3 (`dive_star_grade`), not guest ★ average.
   final int stars;
   final double rating;
   final int reviewCount;
+  final DateTime? diveStarExpiresAt;
   final List<String> amenities;
 
   /// 샵이 등록한 정상 소비자가. 일반 다이버 세션에 그대로 노출됩니다.
@@ -98,6 +102,8 @@ class DiveShop {
     String? coverUrl,
     List<String>? galleryUrls,
     List<String>? amenities,
+    DateTime? diveStarExpiresAt,
+    bool clearDiveStarExpiresAt = false,
   }) {
     return DiveShop(
       id: id ?? this.id,
@@ -121,25 +127,28 @@ class DiveShop {
       durationLabel: durationLabel ?? this.durationLabel,
       coverUrl: coverUrl ?? this.coverUrl,
       galleryUrls: galleryUrls ?? this.galleryUrls,
+      diveStarExpiresAt: clearDiveStarExpiresAt
+          ? null
+          : (diveStarExpiresAt ?? this.diveStarExpiresAt),
     );
   }
 
   DiveShop overlay(ShopLiveStats? live) {
-    var next = this;
-    if (live != null && live.reviewCount > 0) {
-      next = next.copyWith(
-        stars: live.diveStar,
-        rating: live.avgOverall,
-        reviewCount: live.reviewCount,
-      );
-    } else {
-      next = next.copyWith(stars: 0, rating: 0, reviewCount: 0);
-    }
     if (live == null) {
-      return next;
+      return copyWith(
+        stars: 0,
+        rating: 0,
+        reviewCount: 0,
+        clearDiveStarExpiresAt: true,
+      );
     }
     final liveCover = live.coverUrl;
-    return next.copyWith(
+    return copyWith(
+      stars: live.diveStar,
+      diveStarExpiresAt: live.diveStarExpiresAt,
+      clearDiveStarExpiresAt: live.diveStarExpiresAt == null,
+      rating: live.reviewCount > 0 ? live.avgOverall : 0,
+      reviewCount: live.reviewCount,
       name: live.name,
       location: live.location,
       productName: live.productName,
@@ -179,8 +188,23 @@ class DiveShop {
     ].join(' ').toLowerCase();
   }
 
-  /// 스타가 있으면 인증, 리뷰가 없으면 신규, 리뷰만 있으면 평가 전입니다.
-  bool get isDiveStarCertified => stars > 0;
+  /// Active admin Dive Star (grade 1–3 and not past [diveStarExpiresAt]).
+  bool get isDiveStarCertified => stars > 0 && !isDiveStarExpired;
+
+  /// Grade assigned but past expiry — show faded badge + renewal needed.
+  bool get isDiveStarExpired {
+    if (stars <= 0) {
+      return false;
+    }
+    final expires = diveStarExpiresAt;
+    if (expires == null) {
+      return false;
+    }
+    return !expires.isAfter(DateTime.now().toUtc());
+  }
+
+  /// Show a Dive Star badge (valid or expired); hide when grade is 0.
+  bool get showsDiveStarBadge => stars > 0;
 
   bool get isNewListing => reviewCount <= 0 && stars <= 0;
 }

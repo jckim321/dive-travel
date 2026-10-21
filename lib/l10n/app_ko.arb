@@ -498,6 +498,10 @@
   "@exploreDiveStarCertified": {
     "description": "Dive Star를 받은 상품 이미지 표식입니다."
   },
+  "exploreDiveStarRenewalNeeded": "갱신 필요",
+  "@exploreDiveStarRenewalNeeded": {
+    "description": "다이브스타 유효기간이 지났을 때 배지 문구입니다."
+  },
   "exploreViewListing": "리조트 보기",
   "@exploreViewListing": {
     "description": "리조트 카드에서 상세로 들어가는 버튼입니다."
@@ -1199,6 +1203,12 @@
   "adminInternalScoreHint": "0–100",
   "adminInternalScoreEdit": "내부점수 수정",
   "adminInternalScoreSaved": "내부심사 점수를 저장했습니다.",
+  "adminDiveStarGrade": "다이브스타 등급",
+  "adminDiveStarGradeHint": "0–3 (0 = 없음)",
+  "adminDiveStarReviewedAt": "심사일",
+  "adminDiveStarExpiresAt": "만료일",
+  "adminDiveStarGradeEdit": "다이브스타 등급 수정",
+  "adminDiveStarGradeSaved": "다이브스타 등급을 저장했습니다.",
   "adminViewShopProducts": "상품 보기",
   "adminSameBoatRemaining": "잔여 {count}",
   "@adminSameBoatRemaining": {

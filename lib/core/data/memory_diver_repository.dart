@@ -592,12 +592,10 @@ class MemoryDiverRepository implements DiverRepository {
         guide: avgGuide,
         boat: avgBoat,
       ),
-      diveStar: DiveStar.fromAverages(
-        safety: avgSafety,
-        guide: avgGuide,
-        boat: avgBoat,
-        reviewCount: count,
-      ),
+      // Keep admin-assigned grade; reviews must not recompute it.
+      diveStar: current?.diveStar ?? 0,
+      diveStarReviewedAt: current?.diveStarReviewedAt,
+      diveStarExpiresAt: current?.diveStarExpiresAt,
       plaqueStatus: current?.plaqueStatus ?? PlaqueStatus.none,
       name: current?.name,
       location: current?.location,
@@ -938,6 +936,37 @@ class MemoryDiverRepository implements DiverRepository {
       );
     } else {
       _shopStats[shopId] = current.copyWith(internalScore: clamped);
+    }
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<void> setDiveStarGrade({
+    required String shopId,
+    required int grade,
+    required DateTime reviewedAt,
+    required DateTime expiresAt,
+  }) async {
+    final clamped = DiveStar.clampGrade(grade);
+    final current = _shopStats[shopId];
+    if (current == null) {
+      _shopStats[shopId] = ShopLiveStats(
+        shopId: shopId,
+        reviewCount: 0,
+        avgSafety: 0,
+        avgGuide: 0,
+        avgBoat: 0,
+        avgOverall: 0,
+        diveStar: clamped,
+        diveStarReviewedAt: reviewedAt.toUtc(),
+        diveStarExpiresAt: expiresAt.toUtc(),
+      );
+    } else {
+      _shopStats[shopId] = current.copyWith(
+        diveStar: clamped,
+        diveStarReviewedAt: reviewedAt.toUtc(),
+        diveStarExpiresAt: expiresAt.toUtc(),
+      );
     }
     _shopController.add(_shopStats.values.toList());
   }

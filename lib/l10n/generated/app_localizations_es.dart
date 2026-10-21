@@ -583,6 +583,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exploreDiveStarCertified => '다이브스타 인증';
 
   @override
+  String get exploreDiveStarRenewalNeeded => '갱신 필요';
+
+  @override
   String get exploreViewListing => '리조트 보기';
 
   @override
@@ -1693,6 +1696,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adminInternalScoreSaved => '내부심사 점수를 저장했습니다.';
+
+  @override
+  String get adminDiveStarGrade => '다이브스타 등급';
+
+  @override
+  String get adminDiveStarGradeHint => '0–3 (0 = 없음)';
+
+  @override
+  String get adminDiveStarReviewedAt => '심사일';
+
+  @override
+  String get adminDiveStarExpiresAt => '만료일';
+
+  @override
+  String get adminDiveStarGradeEdit => '다이브스타 등급 수정';
+
+  @override
+  String get adminDiveStarGradeSaved => '다이브스타 등급을 저장했습니다.';
 
   @override
   String get adminViewShopProducts => '상품 보기';

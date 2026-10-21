@@ -2,6 +2,9 @@
 enum ProductListingKind {
   /// Registered / approved but not pushed to any home shelf.
   exploreOnly,
+
+  /// Home shelf tag only (`listing_kind: dive_star`).
+  /// Not the admin-reviewed Dive Star grade (`dive_star_grade` 0–3).
   diveStar,
   diverPlanned,
   hotSpot,

@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
-/// 오퍼레이션 3대 항목 평균으로 Dive Star 등급을 계산합니다.
+/// Legacy helper: once used to auto-grade shops from operation-review averages.
+/// Shop Dive Star grade is now admin-assigned (`dive_star_grade`); do not use
+/// [fromAverages] to overwrite that field.
 abstract final class DiveStar {
   static const double star1Threshold = 4.5;
   static const double star2Threshold = 4.8;
@@ -18,7 +20,7 @@ abstract final class DiveStar {
     return (safety + guide + boat) / 3;
   }
 
-  /// 4.5 이상 1스타, 4.8 이상 2스타, 최고 점수 + 안전 기준 통과 시 3스타.
+  /// Historical auto-grade thresholds (tests / reference only).
   static int fromAverages({
     required double safety,
     required double guide,
@@ -41,6 +43,28 @@ abstract final class DiveStar {
     }
     return 0;
   }
+
+  /// Parses Firestore Timestamp / DateTime / ISO string; otherwise null.
+  static DateTime? parseDate(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return value.toUtc();
+    }
+    if (value is String) {
+      return DateTime.tryParse(value)?.toUtc();
+    }
+    try {
+      final date = (value as dynamic).toDate();
+      if (date is DateTime) {
+        return date.toUtc();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static int clampGrade(int raw) => raw.clamp(0, 3);
 }
 
 class ShopLiveStats {
@@ -52,6 +76,8 @@ class ShopLiveStats {
     required this.avgBoat,
     required this.avgOverall,
     required this.diveStar,
+    this.diveStarReviewedAt,
+    this.diveStarExpiresAt,
     this.plaqueStatus = PlaqueStatus.none,
     this.name,
     this.location,
@@ -78,7 +104,10 @@ class ShopLiveStats {
     final boat = (data['avg_boat'] as num?)?.toDouble() ?? 0;
     final overall = (data['avg_overall'] as num?)?.toDouble() ??
         DiveStar.overall(safety: safety, guide: guide, boat: boat);
-    final storedStar = (data['dive_star'] as num?)?.toInt();
+    // Admin-assigned grade only. Ignore legacy auto field `dive_star`.
+    final grade = DiveStar.clampGrade(
+      (data['dive_star_grade'] as num?)?.toInt() ?? 0,
+    );
     return ShopLiveStats(
       shopId: id,
       reviewCount: count,
@@ -86,14 +115,9 @@ class ShopLiveStats {
       avgGuide: guide,
       avgBoat: boat,
       avgOverall: overall,
-      diveStar:
-          storedStar ??
-          DiveStar.fromAverages(
-            safety: safety,
-            guide: guide,
-            boat: boat,
-            reviewCount: count,
-          ),
+      diveStar: grade,
+      diveStarReviewedAt: DiveStar.parseDate(data['dive_star_reviewed_at']),
+      diveStarExpiresAt: DiveStar.parseDate(data['dive_star_expires_at']),
       plaqueStatus: PlaqueStatus.parse(data['plaque_status']),
       name: data['name'] as String?,
       location: data['location'] as String?,
@@ -127,7 +151,11 @@ class ShopLiveStats {
   final double avgGuide;
   final double avgBoat;
   final double avgOverall;
+
+  /// Admin-assigned Dive Star grade 0–3 (`dive_star_grade`).
   final int diveStar;
+  final DateTime? diveStarReviewedAt;
+  final DateTime? diveStarExpiresAt;
   final PlaqueStatus plaqueStatus;
   final String? name;
   final String? location;
@@ -160,9 +188,24 @@ class ShopLiveStats {
     return const [];
   }
 
+  bool get isDiveStarExpired {
+    if (diveStar <= 0) {
+      return false;
+    }
+    final expires = diveStarExpiresAt;
+    if (expires == null) {
+      return false;
+    }
+    return !expires.isAfter(DateTime.now().toUtc());
+  }
+
   bool get qualifiesForPlaque => diveStar >= 1 && reviewCount > 0;
 
   ShopLiveStats copyWith({
+    int? diveStar,
+    DateTime? diveStarReviewedAt,
+    DateTime? diveStarExpiresAt,
+    bool clearDiveStarDates = false,
     PlaqueStatus? plaqueStatus,
     String? name,
     String? location,
@@ -188,7 +231,13 @@ class ShopLiveStats {
       avgGuide: avgGuide,
       avgBoat: avgBoat,
       avgOverall: avgOverall,
-      diveStar: diveStar,
+      diveStar: diveStar ?? this.diveStar,
+      diveStarReviewedAt: clearDiveStarDates
+          ? null
+          : (diveStarReviewedAt ?? this.diveStarReviewedAt),
+      diveStarExpiresAt: clearDiveStarDates
+          ? null
+          : (diveStarExpiresAt ?? this.diveStarExpiresAt),
       plaqueStatus: plaqueStatus ?? this.plaqueStatus,
       name: name ?? this.name,
       location: location ?? this.location,

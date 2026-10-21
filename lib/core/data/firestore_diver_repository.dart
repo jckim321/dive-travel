@@ -783,12 +783,6 @@ class FirestoreDiverRepository implements DiverRepository {
         guide: avgGuide,
         boat: avgBoat,
       );
-      final diveStar = DiveStar.fromAverages(
-        safety: avgSafety,
-        guide: avgGuide,
-        boat: avgBoat,
-        reviewCount: nextCount,
-      );
       final guestStars =
           ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
       final productKey = (resolvedProductId != null &&
@@ -835,7 +829,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'avg_guide': avgGuide,
         'avg_boat': avgBoat,
         'avg_overall': avgOverall,
-        'dive_star': diveStar,
+        // Do not write dive_star / dive_star_grade here — admin assigns grade.
         'safety_pass': avgSafety >= DiveStar.safetyPassThreshold,
         'products': ?nextProducts,
         'updated_at': FieldValue.serverTimestamp(),
@@ -1204,6 +1198,25 @@ class FirestoreDiverRepository implements DiverRepository {
       'name': shop?.name ?? shopId,
       'location': shop?.location,
       'internal_score': clamped,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setDiveStarGrade({
+    required String shopId,
+    required int grade,
+    required DateTime reviewedAt,
+    required DateTime expiresAt,
+  }) {
+    final clamped = DiveStar.clampGrade(grade);
+    final shop = DiveShopCatalog.byId(shopId);
+    return _shops.doc(shopId).set({
+      'name': shop?.name ?? shopId,
+      'location': shop?.location,
+      'dive_star_grade': clamped,
+      'dive_star_reviewed_at': Timestamp.fromDate(reviewedAt.toUtc()),
+      'dive_star_expires_at': Timestamp.fromDate(expiresAt.toUtc()),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

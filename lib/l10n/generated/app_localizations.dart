@@ -1140,6 +1140,12 @@ abstract class AppLocalizations {
   /// **'다이브스타 인증'**
   String get exploreDiveStarCertified;
 
+  /// 다이브스타 유효기간이 지났을 때 배지 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'갱신 필요'**
+  String get exploreDiveStarRenewalNeeded;
+
   /// 리조트 카드에서 상세로 들어가는 버튼입니다.
   ///
   /// In ko, this message translates to:
@@ -3203,6 +3209,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내부심사 점수를 저장했습니다.'**
   String get adminInternalScoreSaved;
+
+  /// No description provided for @adminDiveStarGrade.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 등급'**
+  String get adminDiveStarGrade;
+
+  /// No description provided for @adminDiveStarGradeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'0–3 (0 = 없음)'**
+  String get adminDiveStarGradeHint;
+
+  /// No description provided for @adminDiveStarReviewedAt.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사일'**
+  String get adminDiveStarReviewedAt;
+
+  /// No description provided for @adminDiveStarExpiresAt.
+  ///
+  /// In ko, this message translates to:
+  /// **'만료일'**
+  String get adminDiveStarExpiresAt;
+
+  /// No description provided for @adminDiveStarGradeEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 등급 수정'**
+  String get adminDiveStarGradeEdit;
+
+  /// No description provided for @adminDiveStarGradeSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 등급을 저장했습니다.'**
+  String get adminDiveStarGradeSaved;
 
   /// No description provided for @adminViewShopProducts.
   ///

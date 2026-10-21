@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -73,10 +75,8 @@ class AdminShopsScreen extends StatelessWidget {
               for (final shop in shops) ...[
                 _ShopMonitorTile(
                   shop: shop,
-                  internalScore:
-                      store.liveStatsFor(shop.hullId)?.internalScore ??
-                      store.liveStatsFor(shop.id)?.internalScore ??
-                      0,
+                  live: store.liveStatsFor(shop.hullId) ??
+                      store.liveStatsFor(shop.id),
                   onOpenProducts: onOpenProducts,
                 ),
                 const SizedBox(height: 8),
@@ -154,27 +154,47 @@ class _PlaqueTile extends StatelessWidget {
 class _ShopMonitorTile extends StatelessWidget {
   const _ShopMonitorTile({
     required this.shop,
-    required this.internalScore,
+    required this.live,
     this.onOpenProducts,
   });
 
   final DiveShop shop;
-  final int internalScore;
+  final ShopLiveStats? live;
   final ValueChanged<String>? onOpenProducts;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final internalScore = live?.internalScore ?? 0;
+    final reviewed = live?.diveStarReviewedAt;
+    final expires = live?.diveStarExpiresAt;
+    final dateFmt = DateFormat.yMMMd();
+    final gradeLine = shop.stars > 0
+        ? l10n.exploreDiveStar(shop.stars)
+        : l10n.exploreStarPending;
+    final datesLine = [
+      if (reviewed != null)
+        '${l10n.adminDiveStarReviewedAt} ${dateFmt.format(reviewed.toLocal())}',
+      if (expires != null)
+        '${l10n.adminDiveStarExpiresAt} ${dateFmt.format(expires.toLocal())}',
+      if (shop.isDiveStarExpired) l10n.exploreDiveStarRenewalNeeded,
+    ].join(' · ');
+
     return Card(
       child: ListTile(
         title: Text(shop.name),
         subtitle: Text(
-          shop.reviewCount > 0
-              ? '${shop.location} · ${l10n.exploreDiveStar(shop.stars)} · '
-                    '${l10n.homeDiveStarSubtitle(shop.rating.toStringAsFixed(1), shop.reviewCount)} · '
-                    '${l10n.adminInternalScore} $internalScore'
-              : '${shop.location} · ${l10n.exploreStarPending} · '
-                    '${l10n.adminInternalScore} $internalScore',
+          [
+            shop.location,
+            gradeLine,
+            if (shop.reviewCount > 0)
+              l10n.homeDiveStarSubtitle(
+                shop.rating.toStringAsFixed(1),
+                shop.reviewCount,
+              ),
+            '${l10n.adminInternalScore} $internalScore',
+            if (datesLine.isNotEmpty) datesLine,
+          ].join(' · '),
         ),
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
@@ -193,12 +213,26 @@ class _ShopMonitorTile extends StatelessWidget {
             }
             if (value == 'score') {
               await _editInternalScore(context, shop.hullId, internalScore);
+              return;
+            }
+            if (value == 'dive_star') {
+              await _editDiveStarGrade(
+                context,
+                shopId: shop.hullId,
+                currentGrade: shop.stars,
+                reviewedAt: reviewed,
+                expiresAt: expires,
+              );
             }
           },
           itemBuilder: (context) => [
             PopupMenuItem(
               value: 'products',
               child: Text(l10n.adminViewShopProducts),
+            ),
+            PopupMenuItem(
+              value: 'dive_star',
+              child: Text(l10n.adminDiveStarGradeEdit),
             ),
             PopupMenuItem(
               value: 'score',
@@ -269,6 +303,119 @@ Future<void> _editInternalScore(
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l10n.adminInternalScoreSaved)),
+    );
+  }
+}
+
+Future<void> _editDiveStarGrade(
+  BuildContext context, {
+  required String shopId,
+  required int currentGrade,
+  DateTime? reviewedAt,
+  DateTime? expiresAt,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final store = DiverStoreScope.of(context);
+  var grade = currentGrade.clamp(0, 3);
+  var reviewed = reviewedAt ?? DateTime.now();
+  var expires =
+      expiresAt ?? DateTime.now().add(const Duration(days: 365));
+
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final dateFmt = DateFormat.yMMMd();
+          return AlertDialog(
+            title: Text(l10n.adminDiveStarGradeEdit),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<int>(
+                    initialValue: grade,
+                    decoration: InputDecoration(
+                      labelText: l10n.adminDiveStarGrade,
+                      helperText: l10n.adminDiveStarGradeHint,
+                    ),
+                    items: [
+                      for (var i = 0; i <= 3; i++)
+                        DropdownMenuItem(value: i, child: Text('$i')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setState(() => grade = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.adminDiveStarReviewedAt),
+                    subtitle: Text(dateFmt.format(reviewed.toLocal())),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: reviewed.toLocal(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setState(() => reviewed = picked);
+                      }
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.adminDiveStarExpiresAt),
+                    subtitle: Text(dateFmt.format(expires.toLocal())),
+                    trailing: const Icon(Icons.event_outlined),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: expires.toLocal(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                      );
+                      if (picked != null) {
+                        setState(() => expires = picked);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.adminHqClose),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.briefSave),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+  if (saved != true || !context.mounted) {
+    return;
+  }
+  await store.setDiveStarGrade(
+    shopId: shopId,
+    grade: grade,
+    reviewedAt: reviewed,
+    expiresAt: expires,
+  );
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.adminDiveStarGradeSaved)),
     );
   }
 }

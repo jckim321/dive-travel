@@ -34,14 +34,18 @@ class ListingCertBadge extends StatelessWidget {
     super.key,
     required this.label,
     required this.certified,
+    this.faded = false,
   });
 
   final String label;
   final bool certified;
 
+  /// Expired Dive Star — keep visible but muted.
+  final bool faded;
+
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    final badge = DecoratedBox(
       decoration: BoxDecoration(
         color: certified ? AppTheme.gold : const Color(0xE60B1F33),
         borderRadius: BorderRadius.circular(4),
@@ -63,5 +67,9 @@ class ListingCertBadge extends StatelessWidget {
         ),
       ),
     );
+    if (!faded) {
+      return badge;
+    }
+    return Opacity(opacity: 0.45, child: badge);
   }
 }

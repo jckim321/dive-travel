@@ -106,10 +106,12 @@ class ResortDetailScreen extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _StarBadge(
-                      stars: hull.stars,
-                      certified: hull.isDiveStarCertified,
-                    ),
+                    if (hull.showsDiveStarBadge)
+                      _StarBadge(
+                        stars: hull.stars,
+                        certified: hull.isDiveStarCertified,
+                        expired: hull.isDiveStarExpired,
+                      ),
                     Chip(
                       visualDensity: VisualDensity.compact,
                       label: Text(
@@ -610,18 +612,28 @@ class _GalleryLightboxState extends State<_GalleryLightbox> {
 }
 
 class _StarBadge extends StatelessWidget {
-  const _StarBadge({required this.stars, required this.certified});
+  const _StarBadge({
+    required this.stars,
+    required this.certified,
+    this.expired = false,
+  });
 
   final int stars;
   final bool certified;
+  final bool expired;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Container(
+    final label = expired
+        ? l10n.exploreDiveStarRenewalNeeded
+        : l10n.exploreDiveStar(stars);
+    final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: certified ? AppTheme.goldSoft : const Color(0xFFE8EEF2),
+        color: certified || expired
+            ? AppTheme.goldSoft
+            : const Color(0xFFE8EEF2),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -635,12 +647,16 @@ class _StarBadge extends StatelessWidget {
             ),
           const SizedBox(width: 6),
           Text(
-            certified ? l10n.exploreDiveStar(stars) : l10n.exploreStarPending,
+            label,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
           ),
         ],
       ),
     );
+    if (!expired) {
+      return badge;
+    }
+    return Opacity(opacity: 0.45, child: badge);
   }
 }
 

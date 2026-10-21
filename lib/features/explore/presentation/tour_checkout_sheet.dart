@@ -398,12 +398,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                             child: _PhotoMosaic(
                               shop: shop,
                               saved: saved,
-                              badgeLabel: shop.isDiveStarCertified
-                                  ? l10n.exploreDiveStarCertified
-                                  : shop.isNewListing
-                                  ? l10n.exploreListingNew
-                                  : l10n.exploreListingPendingReview,
+                              badgeLabel: shop.isDiveStarExpired
+                                  ? l10n.exploreDiveStarRenewalNeeded
+                                  : l10n.exploreDiveStarCertified,
                               certified: shop.isDiveStarCertified,
+                              showBadge: shop.showsDiveStarBadge,
+                              badgeFaded: shop.isDiveStarExpired,
                               onClose: () => Navigator.of(context).pop(),
                               onFavorite: () =>
                                   store.toggleFavoriteShop(widget.shop.id),
@@ -486,12 +486,17 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     fontSize: 13,
                                   ),
                                 ),
-                                if (shop.stars > 0)
-                                  Text(
-                                    '· ${l10n.exploreDiveStar(shop.stars)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
+                                if (shop.showsDiveStarBadge)
+                                  Opacity(
+                                    opacity: shop.isDiveStarExpired ? 0.45 : 1,
+                                    child: Text(
+                                      shop.isDiveStarExpired
+                                          ? '· ${l10n.exploreDiveStarRenewalNeeded}'
+                                          : '· ${l10n.exploreDiveStar(shop.stars)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                               ],
@@ -500,7 +505,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                             const Divider(),
                             const SizedBox(height: 14),
                             _HostRow(shop: shop, l10n: l10n),
-                            if (shop.stars > 0) ...[
+                            if (shop.isDiveStarCertified) ...[
                               const SizedBox(height: 16),
                               _HighlightCard(
                                 icon: Icons.workspace_premium_outlined,
@@ -1192,6 +1197,8 @@ class _PhotoMosaic extends StatelessWidget {
     required this.saved,
     required this.badgeLabel,
     required this.certified,
+    this.showBadge = true,
+    this.badgeFaded = false,
     required this.onClose,
     required this.onFavorite,
   });
@@ -1200,6 +1207,8 @@ class _PhotoMosaic extends StatelessWidget {
   final bool saved;
   final String badgeLabel;
   final bool certified;
+  final bool showBadge;
+  final bool badgeFaded;
   final VoidCallback onClose;
   final VoidCallback onFavorite;
 
@@ -1232,8 +1241,14 @@ class _PhotoMosaic extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _RoundIcon(icon: Icons.close, onPressed: onClose),
-                const SizedBox(height: 8),
-                ListingCertBadge(label: badgeLabel, certified: certified),
+                if (showBadge) ...[
+                  const SizedBox(height: 8),
+                  ListingCertBadge(
+                    label: badgeLabel,
+                    certified: certified,
+                    faded: badgeFaded,
+                  ),
+                ],
               ],
             ),
           ),

@@ -142,9 +142,42 @@ service cloud.firestore {
       }
     }
 
+    function diveStarGradeKeys() {
+      return ['dive_star_grade', 'dive_star_reviewed_at', 'dive_star_expires_at'];
+    }
+
+    function diveStarGradeFieldsAbsent() {
+      return !('dive_star_grade' in request.resource.data)
+        && !('dive_star_reviewed_at' in request.resource.data)
+        && !('dive_star_expires_at' in request.resource.data);
+    }
+
+    function diveStarGradeFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data)
+        .affectedKeys().hasAny(diveStarGradeKeys());
+    }
+
+    function diveStarGradeFieldsValid() {
+      return (!('dive_star_grade' in request.resource.data)
+          || (request.resource.data.dive_star_grade is int
+              && request.resource.data.dive_star_grade >= 0
+              && request.resource.data.dive_star_grade <= 3))
+        && (!('dive_star_reviewed_at' in request.resource.data)
+            || request.resource.data.dive_star_reviewed_at is timestamp)
+        && (!('dive_star_expires_at' in request.resource.data)
+            || request.resource.data.dive_star_expires_at is timestamp);
+    }
+
     match /shops/{shopId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn();
+      // Grade fields: admin only. Other shop fields (avg_*, products, plaque…):
+      // signed-in users may update when grade keys are unchanged (review path).
+      allow create: if isSignedIn()
+        && diveStarGradeFieldsValid()
+        && (isAdmin() || diveStarGradeFieldsAbsent());
+      allow update: if isSignedIn()
+        && diveStarGradeFieldsValid()
+        && (isAdmin() || diveStarGradeFieldsUnchanged());
 
       match /reviews/{reviewId} {
         allow read: if isSignedIn();

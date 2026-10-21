@@ -117,10 +117,11 @@ void main() {
     expect(find.text('180,000원'), findsNothing);
     expect(find.text('126,000원'), findsNothing);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    // Memory seed assigns Dive Star grade 2 to bohol-hideout (admin grade).
     expect(find.text(l10n.exploreDiveStarCertified), findsWidgets);
     expect(find.text(l10n.exploreViewListing), findsNothing);
     expect(find.text(l10n.exploreBuyNow), findsNothing);
-    expect(find.text(l10n.exploreListingNew), findsWidgets);
+    // Grade 0 shops no longer show "new / pending" cert badges.
 
     await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
     await tester.pumpAndSettle();

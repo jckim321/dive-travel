@@ -866,6 +866,20 @@ class DiverStore extends ChangeNotifier {
     return _repository.setInternalScore(shopId: shopId, score: score);
   }
 
+  Future<void> setDiveStarGrade({
+    required String shopId,
+    required int grade,
+    required DateTime reviewedAt,
+    required DateTime expiresAt,
+  }) {
+    return _repository.setDiveStarGrade(
+      shopId: shopId,
+      grade: grade,
+      reviewedAt: reviewedAt,
+      expiresAt: expiresAt,
+    );
+  }
+
   Future<void> setPostHidden({required String postId, required bool hidden}) {
     return _repository.setPostHidden(postId: postId, hidden: hidden);
   }

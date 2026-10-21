@@ -129,6 +129,14 @@ abstract class DiverRepository {
     required int score,
   });
 
+  /// Admin-only Dive Star grade (0–3) with review and expiry dates.
+  Future<void> setDiveStarGrade({
+    required String shopId,
+    required int grade,
+    required DateTime reviewedAt,
+    required DateTime expiresAt,
+  });
+
   Future<void> setPostHidden({required String postId, required bool hidden});
 
   Future<void> deletePost(String postId);

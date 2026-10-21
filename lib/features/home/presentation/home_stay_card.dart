@@ -25,12 +25,12 @@ class HomeStayCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final saved = store.isFavoriteShop(shop.id);
+    final showBadge = shop.showsDiveStarBadge;
+    final expired = shop.isDiveStarExpired;
     final certified = shop.isDiveStarCertified;
-    final badgeLabel = certified
-        ? l10n.exploreDiveStarCertified
-        : shop.isNewListing
-            ? l10n.exploreListingNew
-            : l10n.exploreListingPendingReview;
+    final badgeLabel = expired
+        ? l10n.exploreDiveStarRenewalNeeded
+        : l10n.exploreDiveStarCertified;
 
     return GestureDetector(
       onTap: onDetails,
@@ -59,14 +59,16 @@ class HomeStayCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: ListingCertBadge(
-                      label: badgeLabel,
-                      certified: certified,
+                  if (showBadge)
+                    Positioned(
+                      left: 8,
+                      top: 8,
+                      child: ListingCertBadge(
+                        label: badgeLabel,
+                        certified: certified,
+                        faded: expired,
+                      ),
                     ),
-                  ),
                   Positioned(
                     top: 2,
                     right: 2,
