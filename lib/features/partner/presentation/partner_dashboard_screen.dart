@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerDashboardScreen extends StatelessWidget {
@@ -65,6 +66,21 @@ class PartnerDashboardScreen extends StatelessWidget {
                     MaterialPageRoute<void>(
                       builder: (_) =>
                           const AdminProductsScreen(partnerMode: true),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: ListTile(
+                  key: const Key('partner-same-boat-seats'),
+                  leading: const Icon(Icons.directions_boat_outlined),
+                  title: Text(l10n.sameBoatSeatsTitle),
+                  subtitle: Text(l10n.sameBoatSeatsHubHint),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SameBoatSeatsHubScreen(shopId: shopId),
                     ),
                   ),
                 ),

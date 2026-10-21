@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Horizontal rail of trips this diver submitted + CTA to craft a new one.
@@ -47,6 +48,16 @@ class MyCraftedTripsSection extends StatelessWidget {
                 _CraftedTripCard(
                   product: product,
                   onTap: () => _openCraft(context, existing: product),
+                  onOpenSeats: product.isListedPublicly
+                      ? () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  SameBoatSeatsScreen(product: product),
+                            ),
+                          );
+                        }
+                      : null,
                 ),
               ],
             ],
@@ -101,10 +112,15 @@ class _NewTripCard extends StatelessWidget {
 }
 
 class _CraftedTripCard extends StatelessWidget {
-  const _CraftedTripCard({required this.product, required this.onTap});
+  const _CraftedTripCard({
+    required this.product,
+    required this.onTap,
+    this.onOpenSeats,
+  });
 
   final ShopProduct product;
   final VoidCallback onTap;
+  final VoidCallback? onOpenSeats;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +142,7 @@ class _CraftedTripCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onOpenSeats,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 168,
@@ -161,13 +178,27 @@ class _CraftedTripCard extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
-              Text(
-                '${product.consumerPrice}원',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppTheme.muted,
-                  fontWeight: FontWeight.w600,
+              if (onOpenSeats != null)
+                TextButton(
+                  onPressed: onOpenSeats,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    l10n.sameBoatSeatsTitle,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
+                )
+              else
+                Text(
+                  '${product.consumerPrice}원',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

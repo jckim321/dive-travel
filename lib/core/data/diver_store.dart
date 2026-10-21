@@ -1092,7 +1092,50 @@ class DiverStore extends ChangeNotifier {
         );
       case ProductSaveIntent.takeDown:
         return product.copyWith(active: false);
+      case ProductSaveIntent.preserveListing:
+        return product;
     }
+  }
+
+  Future<void> setSameBoatStatus({
+    required String shopId,
+    required String productId,
+    required SameBoatStatus status,
+  }) async {
+    ShopProduct? current;
+    for (final item in allShopProducts) {
+      if (item.shopId == shopId && item.id == productId) {
+        current = item;
+        break;
+      }
+    }
+    if (current == null) {
+      throw StateError('Product not found');
+    }
+    final next = current.copyWith(
+      sameBoatStatus: status,
+      openEmptySeats: status == SameBoatStatus.closed
+          ? false
+          : current.openEmptySeats,
+      options: [
+        for (final option in current.options)
+          if (option.sameBoatStatus.isPendingReview ||
+              option.openEmptySeats ||
+              option.sameBoatStatus.isBoardLive)
+            option.copyWith(
+              sameBoatStatus: status,
+              openEmptySeats:
+                  status == SameBoatStatus.closed ? false : option.openEmptySeats,
+            )
+          else
+            option,
+      ],
+    );
+    await saveShopProduct(
+      shopId: shopId,
+      product: next,
+      intent: ProductSaveIntent.preserveListing,
+    );
   }
 
   Future<void> deleteShopProduct({

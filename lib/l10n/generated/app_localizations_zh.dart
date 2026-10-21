@@ -1299,7 +1299,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminSameBoatHint => '등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.';
 
   @override
+  String get adminSameBoatApproveHint =>
+      '빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.';
+
+  @override
+  String get adminSameBoatPendingQueue => '빈자리 승인 대기';
+
+  @override
+  String get adminSameBoatPendingEmpty => '대기 중인 빈자리 신청이 없습니다.';
+
+  @override
+  String get adminSameBoatLiveTitle => '같은배에 열린 빈자리';
+
+  @override
+  String get adminSameBoatApprove => '승인 · 같은배 게시';
+
+  @override
+  String get adminSameBoatReject => '반려';
+
+  @override
+  String get adminSameBoatPendingBadge => '승인 대기';
+
+  @override
+  String get adminSameBoatLiveBadge => '같은배 게시중';
+
+  @override
+  String get adminSameBoatRejectedBadge => '반려됨';
+
+  @override
+  String get adminSameBoatClosedBadge => '닫힘';
+
+  @override
   String get adminSameBoatEmpty => '열린 빈자리 상품이 없습니다.';
+
+  @override
+  String get sameBoatSeatsTitle => '빈자리 열기';
+
+  @override
+  String get sameBoatSeatsHint =>
+      '기본 상품과 개별 상품에 빈자리를 열고, 출발일·깃발 마감을 넣은 뒤 관리자 승인을 요청합니다.';
+
+  @override
+  String get sameBoatSeatsHubHint => '상품을 고른 뒤 빈자리 수와 마감을 신청합니다.';
+
+  @override
+  String get sameBoatSeatsNoProducts => '공개된 상품이 없습니다. 먼저 상품을 등록·승인하세요.';
+
+  @override
+  String get sameBoatSeatsSubmit => '승인 요청';
+
+  @override
+  String get sameBoatSeatsPublish => '같은배에 바로 게시';
+
+  @override
+  String get sameBoatSeatsSubmitted => '빈자리 승인 요청을 보냈습니다.';
+
+  @override
+  String get sameBoatSeatsPublished => '같은배에 빈자리를 게시했습니다.';
+
+  @override
+  String get sameBoatSeatsEdit => '빈자리 수정';
+
+  @override
+  String get sameBoatIndividualSeats => '개별 상품 빈자리';
+
+  @override
+  String get sameBoatHoldPriorityHint =>
+      '다이버가 깃발을 꽂으면 결제 시한(최대 24시간 또는 깃발 마감)까지 좌석이 잠겨 선예약자에게 우선권이 갑니다.';
 
   @override
   String get adminProductSourceAll => '전체';
@@ -1811,7 +1877,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get communityPlantFlag => '깃발 꽂기';
 
   @override
-  String get communityFlagOneSeat => '깃발은 1자리입니다. 동행은 결제에서 고릅니다.';
+  String get communityFlagOneSeat =>
+      '깃발을 꽂을 인원만큼 결제시한까지 좌석이 잠깁니다. 결제 화면에서 인원은 바꿀 수 없습니다.';
+
+  @override
+  String communityFlagPartyAsk(int open) {
+    return '몇 자리를 잠글까요? (빈자리 $open)';
+  }
+
+  @override
+  String communityFlagPartyLocked(int count) {
+    return '깃발로 잠근 $count자리 — 결제시한까지 우선권';
+  }
 
   @override
   String get communityPlantFlagAsk => '이 예약을 같은배에 올려 지인이나 동호회가 조인하게 할까요?';
@@ -1946,7 +2023,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String communityFlagHoldAsk(String deadline) {
-    return '이 자리는 $deadline까지 가확정입니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.';
+    return '선택한 인원만큼 $deadline까지 좌석이 잠겨 선예약 우선권이 생깁니다(가확정·주황). 그 안에 결제하면 확정(검정)되고, 마감이 지나면 자리가 다시 열립니다.';
   }
 
   @override

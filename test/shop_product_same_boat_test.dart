@@ -13,6 +13,7 @@ void main() {
       consumerPrice: 100,
       professionalPrice: 80,
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 4,
       departureStart: departure,
     );
@@ -25,6 +26,10 @@ void main() {
       isFalse,
     );
     expect(product.copyWith(active: false).listsOnSameBoat, isFalse);
+    expect(
+      product.copyWith(sameBoatStatus: SameBoatStatus.pending).listsOnSameBoat,
+      isFalse,
+    );
   });
 
   test('fromMap round-trips leftover seat fields', () {
@@ -37,6 +42,7 @@ void main() {
       consumerPrice: 1,
       professionalPrice: 1,
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 6,
       departureStart: departure,
       flagClosesAt: flag,
@@ -46,6 +52,7 @@ void main() {
     expect(loaded.capacity, 6);
     expect(loaded.departureStart, departure);
     expect(loaded.flagClosesAt, flag);
+    expect(loaded.sameBoatStatus, SameBoatStatus.approved);
     expect(loaded.listsOnSameBoat, isTrue);
   });
 
@@ -58,6 +65,7 @@ void main() {
       consumerPrice: 1,
       professionalPrice: 1,
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 4,
       departureStart: DateTime(2026, 11, 1),
       flagClosesAt: DateTime(2026, 10, 21),
@@ -90,6 +98,7 @@ void main() {
       consumerPrice: 1,
       professionalPrice: 1,
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 4,
       departureStart: DateTime(2026, 12, 1),
     ).plantFlag(partySize: 1, now: planted);
@@ -109,6 +118,7 @@ void main() {
       name: 'Deluxe',
       description: 'Upper deck',
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 3,
       departureStart: DateTime(2026, 11, 1),
     );

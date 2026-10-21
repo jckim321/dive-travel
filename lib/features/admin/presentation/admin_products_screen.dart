@@ -8,6 +8,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _ProductSourceFilter { all, partner, diy, special }
@@ -268,11 +269,47 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                   child: ListTile(
                     title: Text(product.name),
                     subtitle: _productLines(l10n, product),
-                    trailing: IconButton(
-                      key: Key('delete-product-${product.id}'),
-                      tooltip: l10n.adminProductDelete,
-                      onPressed: () => _confirmDeleteProduct(context, product),
-                      icon: const Icon(Icons.delete_outline),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => TravelProductRegistrationScreen(
+                                lockedShopId: owned,
+                                partnerMode: true,
+                                existing: product,
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        if (value == 'seats') {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  SameBoatSeatsScreen(product: product),
+                            ),
+                          );
+                          return;
+                        }
+                        if (value == 'delete') {
+                          await _confirmDeleteProduct(context, product);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(l10n.exploreEditResort),
+                        ),
+                        PopupMenuItem(
+                          value: 'seats',
+                          child: Text(l10n.sameBoatSeatsTitle),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(l10n.adminProductDelete),
+                        ),
+                      ],
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(

@@ -1022,7 +1022,28 @@
   "adminSameBoatTab": "같은배 모니터",
   "adminSameBoatTitle": "같은배 · 빈자리 모니터",
   "adminSameBoatHint": "등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.",
+  "adminSameBoatApproveHint": "빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.",
+  "adminSameBoatPendingQueue": "빈자리 승인 대기",
+  "adminSameBoatPendingEmpty": "대기 중인 빈자리 신청이 없습니다.",
+  "adminSameBoatLiveTitle": "같은배에 열린 빈자리",
+  "adminSameBoatApprove": "승인 · 같은배 게시",
+  "adminSameBoatReject": "반려",
+  "adminSameBoatPendingBadge": "승인 대기",
+  "adminSameBoatLiveBadge": "같은배 게시중",
+  "adminSameBoatRejectedBadge": "반려됨",
+  "adminSameBoatClosedBadge": "닫힘",
   "adminSameBoatEmpty": "열린 빈자리 상품이 없습니다.",
+  "sameBoatSeatsTitle": "빈자리 열기",
+  "sameBoatSeatsHint": "기본 상품과 개별 상품에 빈자리를 열고, 출발일·깃발 마감을 넣은 뒤 관리자 승인을 요청합니다.",
+  "sameBoatSeatsHubHint": "상품을 고른 뒤 빈자리 수와 마감을 신청합니다.",
+  "sameBoatSeatsNoProducts": "공개된 상품이 없습니다. 먼저 상품을 등록·승인하세요.",
+  "sameBoatSeatsSubmit": "승인 요청",
+  "sameBoatSeatsPublish": "같은배에 바로 게시",
+  "sameBoatSeatsSubmitted": "빈자리 승인 요청을 보냈습니다.",
+  "sameBoatSeatsPublished": "같은배에 빈자리를 게시했습니다.",
+  "sameBoatSeatsEdit": "빈자리 수정",
+  "sameBoatIndividualSeats": "개별 상품 빈자리",
+  "sameBoatHoldPriorityHint": "다이버가 깃발을 꽂으면 결제 시한(최대 24시간 또는 깃발 마감)까지 좌석이 잠겨 선예약자에게 우선권이 갑니다.",
   "adminProductSourceAll": "전체",
   "adminProductSourcePartner": "제휴파트너",
   "adminProductSourceDiy": "내가짠여행",
@@ -1221,7 +1242,19 @@
   "communityViewSeats": "자리 보기",
   "communityWindowOpen": "일정 미정",
   "communityPlantFlag": "깃발 꽂기",
-  "communityFlagOneSeat": "깃발은 1자리입니다. 동행은 결제에서 고릅니다.",
+  "communityFlagOneSeat": "깃발을 꽂을 인원만큼 결제시한까지 좌석이 잠깁니다. 결제 화면에서 인원은 바꿀 수 없습니다.",
+  "communityFlagPartyAsk": "몇 자리를 잠글까요? (빈자리 {open})",
+  "@communityFlagPartyAsk": {
+    "placeholders": {
+      "open": { "type": "int" }
+    }
+  },
+  "communityFlagPartyLocked": "깃발로 잠근 {count}자리 — 결제시한까지 우선권",
+  "@communityFlagPartyLocked": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "communityPlantFlagAsk": "이 예약을 같은배에 올려 지인이나 동호회가 조인하게 할까요?",
   "communityPlantFlagLater": "나중에",
   "communityNeedBooking": "깃발은 예약한 뒤에 꽂습니다. 여행상품에서 리조트를 먼저 고르세요.",
@@ -1278,7 +1311,7 @@
   "communityFilterShop": "샵",
   "communityFilterDeparting": "출발",
   "communityTakeSeat": "자리 잡기",
-  "communityFlagHoldAsk": "이 자리는 {deadline}까지 가확정입니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.",
+  "communityFlagHoldAsk": "선택한 인원만큼 {deadline}까지 좌석이 잠겨 선예약 우선권이 생깁니다(가확정·주황). 그 안에 결제하면 확정(검정)되고, 마감이 지나면 자리가 다시 열립니다.",
   "@communityFlagHoldAsk": {
     "placeholders": {
       "deadline": {"type": "String"}

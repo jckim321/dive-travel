@@ -484,7 +484,28 @@
   "adminSameBoatTab": "Same-boat monitor",
   "adminSameBoatTitle": "Same-boat · open seats",
   "adminSameBoatHint": "Only seats opened by product registrants. Flag planting is not done here.",
+  "adminSameBoatApproveHint": "Approving a leftover-seat request publishes it to Same-boat. A planted flag locks the seat until the pay deadline.",
+  "adminSameBoatPendingQueue": "Pending leftover seats",
+  "adminSameBoatPendingEmpty": "No leftover-seat requests waiting.",
+  "adminSameBoatLiveTitle": "Live on Same-boat",
+  "adminSameBoatApprove": "Approve · publish",
+  "adminSameBoatReject": "Reject",
+  "adminSameBoatPendingBadge": "Pending",
+  "adminSameBoatLiveBadge": "Live on board",
+  "adminSameBoatRejectedBadge": "Rejected",
+  "adminSameBoatClosedBadge": "Closed",
   "adminSameBoatEmpty": "No products with open leftover seats.",
+  "sameBoatSeatsTitle": "Open leftover seats",
+  "sameBoatSeatsHint": "Open seats on the base package and individual SKUs, set departure and flag deadline, then request admin approval.",
+  "sameBoatSeatsHubHint": "Pick a product, then set seat count and deadlines.",
+  "sameBoatSeatsNoProducts": "No public products yet. Register and approve a product first.",
+  "sameBoatSeatsSubmit": "Request approval",
+  "sameBoatSeatsPublish": "Publish to Same-boat",
+  "sameBoatSeatsSubmitted": "Leftover-seat request sent.",
+  "sameBoatSeatsPublished": "Leftover seats published to Same-boat.",
+  "sameBoatSeatsEdit": "Edit seats",
+  "sameBoatIndividualSeats": "Individual SKU seats",
+  "sameBoatHoldPriorityHint": "A planted flag locks seats until the pay deadline (24h or boat flag close, whichever is sooner), giving the first holder priority.",
   "adminProductSourceAll": "All",
   "adminProductSourcePartner": "Partners",
   "adminProductSourceDiy": "DIY trips",
@@ -674,7 +695,19 @@
   "communityViewSeats": "View seats",
   "communityWindowOpen": "Dates TBD",
   "communityPlantFlag": "Plant a flag",
-  "communityFlagOneSeat": "A flag holds one seat. Companions are chosen at payment.",
+  "communityFlagOneSeat": "A flag locks as many seats as you choose until the pay deadline. Party size is fixed at checkout.",
+  "communityFlagPartyAsk": "How many seats should we lock? ({open} open)",
+  "@communityFlagPartyAsk": {
+    "placeholders": {
+      "open": { "type": "int" }
+    }
+  },
+  "communityFlagPartyLocked": "{count} seats locked by your flag — priority until the pay deadline",
+  "@communityFlagPartyLocked": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "communityPlantFlagAsk": "Put this booking on Same Tide so friends or a club can join?",
   "communityPlantFlagLater": "Later",
   "communityNeedBooking": "Plant a flag after you book. Pick a resort in Travel first.",
@@ -726,7 +759,7 @@
   "communityFilterShop": "Shop",
   "communityFilterDeparting": "Departing",
   "communityTakeSeat": "Take a seat",
-  "communityFlagHoldAsk": "This seat stays provisional until {deadline}. If you do not pay by then, it opens again.",
+  "communityFlagHoldAsk": "Planting a flag locks your chosen seats until {deadline} (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.",
   "@communityFlagHoldAsk": {
     "placeholders": {
       "deadline": {"type": "String"}

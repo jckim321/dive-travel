@@ -22,6 +22,7 @@ Future<void> showTourCheckoutSheet({
   String lockedOptionId = '',
   String presetOptionId = '',
   bool fromFlag = false,
+  int lockedPartySize = 0,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -38,6 +39,7 @@ Future<void> showTourCheckoutSheet({
       lockedOptionId: lockedOptionId,
       presetOptionId: presetOptionId,
       fromFlag: fromFlag,
+      lockedPartySize: lockedPartySize,
     ),
   );
 }
@@ -51,6 +53,7 @@ class TourCheckoutSheet extends StatefulWidget {
     this.lockedOptionId = '',
     this.presetOptionId = '',
     this.fromFlag = false,
+    this.lockedPartySize = 0,
   });
 
   final DiveShop shop;
@@ -59,6 +62,9 @@ class TourCheckoutSheet extends StatefulWidget {
   final String lockedOptionId;
   final String presetOptionId;
   final bool fromFlag;
+
+  /// When > 0 (flag hold), guest total is fixed to this count until pay.
+  final int lockedPartySize;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -120,7 +126,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (departure != null) {
       _tourDate = departure;
     }
+    if (widget.lockedPartySize > 0) {
+      _qtyDiver = widget.lockedPartySize;
+      _qtyNondiver = 0;
+      _qtyChild = 0;
+      _qtyInfant = 0;
+    }
   }
+
+  bool get _partyLocked =>
+      widget.fromFlag && widget.lockedPartySize > 0;
 
   void _applyOption(String id) {
     final product = widget.product;
@@ -338,11 +353,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (!mounted) {
       return;
     }
-    await offerOpenTideRoom(
-      context: context,
-      shop: widget.shop,
-      tourDate: _tourDate,
-    );
+    // Same-boat flag flow already reserved inventory; skip legacy CommunityPost “깃발”.
+    if (!widget.fromFlag) {
+      await offerOpenTideRoom(
+        context: context,
+        shop: widget.shop,
+        tourDate: _tourDate,
+      );
+    }
   }
 
   @override
@@ -1083,6 +1101,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
+        if (_partyLocked) ...[
+          const SizedBox(height: 6),
+          Text(
+            l10n.communityFlagPartyLocked(widget.lockedPartySize),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppTheme.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
         for (final rate in product.resolvedGuestRates)
           if (rate.enabled) _qtyRow(l10n, rate.role),
         const SizedBox(height: 8),
@@ -1107,18 +1135,21 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       GuestRole.child => _qtyChild,
       GuestRole.infant => _qtyInfant,
     };
+    final locked = _partyLocked;
     return Row(
       children: [
         Expanded(child: Text(label)),
         IconButton(
-          onPressed: value == 0
+          onPressed: locked || value == 0
               ? null
               : () => setState(() => _setQty(role, value - 1)),
           icon: const Icon(Icons.remove),
         ),
         Text('$value'),
         IconButton(
-          onPressed: () => setState(() => _setQty(role, value + 1)),
+          onPressed: locked
+              ? null
+              : () => setState(() => _setQty(role, value + 1)),
           icon: const Icon(Icons.add),
         ),
       ],
@@ -1126,6 +1157,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   void _setQty(GuestRole role, int value) {
+    if (_partyLocked) {
+      return;
+    }
     switch (role) {
       case GuestRole.diver:
         _qtyDiver = value;

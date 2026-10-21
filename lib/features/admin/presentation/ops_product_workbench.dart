@@ -583,6 +583,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return option.copyWith(
       guestRole: previous.guestRole,
       openEmptySeats: previous.openEmptySeats,
+      sameBoatStatus: previous.sameBoatStatus,
       capacity: previous.capacity,
       bookedSeats: previous.bookedSeats,
       flagHolds: previous.flagHolds,
@@ -946,6 +947,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           flagHolds: existing?.flagHolds ?? const [],
           departureStart: _departureStart,
           flagClosesAt: existing?.flagClosesAt,
+          sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
           options: [for (final option in options) _withSeatOption(option)],
           listingKind: _shelfKindForSave(existing),
           featuredAt: _featuredAtForSave(existing),
@@ -1056,6 +1058,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ProductSaveIntent.submitForReview => l10n.adminProductSubmitted,
       ProductSaveIntent.publish => l10n.adminProductApproved,
       ProductSaveIntent.takeDown => l10n.briefTakenDown,
+      ProductSaveIntent.preserveListing => l10n.adminProductApproved,
     };
   }
 

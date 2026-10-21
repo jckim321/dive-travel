@@ -16,6 +16,7 @@ ShopProduct _trip({
     consumerPrice: 1,
     professionalPrice: 1,
     openEmptySeats: open,
+    sameBoatStatus: open ? SameBoatStatus.approved : SameBoatStatus.closed,
     capacity: open ? 3 : 0,
     departureStart: departure,
     flagClosesAt: flag,

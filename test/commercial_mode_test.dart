@@ -57,6 +57,7 @@ void main() {
       consumerPrice: 180000,
       professionalPrice: 126000,
       openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       capacity: 1,
       listingKind: ProductListingKind.diverPlanned,
       publishStatus: ProductPublishStatus.approved,

@@ -100,6 +100,48 @@ enum ProductPublishStatus {
   bool get isPublic => this == ProductPublishStatus.approved;
 }
 
+/// Leftover-seat listing for the same-boat board (separate from Explore publish).
+enum SameBoatStatus {
+  closed,
+  pending,
+  approved,
+  rejected;
+
+  static SameBoatStatus parse(dynamic value, {bool openEmptySeats = false}) {
+    switch (value) {
+      case 'pending':
+        return SameBoatStatus.pending;
+      case 'approved':
+        return SameBoatStatus.approved;
+      case 'rejected':
+        return SameBoatStatus.rejected;
+      case 'closed':
+        return SameBoatStatus.closed;
+      default:
+        // Legacy docs with open seats and no status stay live on the board.
+        return openEmptySeats
+            ? SameBoatStatus.approved
+            : SameBoatStatus.closed;
+    }
+  }
+
+  String get firestoreValue {
+    switch (this) {
+      case SameBoatStatus.closed:
+        return 'closed';
+      case SameBoatStatus.pending:
+        return 'pending';
+      case SameBoatStatus.approved:
+        return 'approved';
+      case SameBoatStatus.rejected:
+        return 'rejected';
+    }
+  }
+
+  bool get isBoardLive => this == SameBoatStatus.approved;
+  bool get isPendingReview => this == SameBoatStatus.pending;
+}
+
 /// Where a saved product should sit after the writer finishes the brief.
 enum ProductSaveIntent {
   /// Keep the words, leave it off the guest list.
@@ -113,6 +155,9 @@ enum ProductSaveIntent {
 
   /// Leave the words and the approval, hide it from guests.
   takeDown,
+
+  /// Keep Explore publish/active as-is (same-boat seat patches only).
+  preserveListing,
 }
 
 enum ProductCategory {
@@ -321,9 +366,11 @@ class ShopProductOption {
     this.departureStart,
     this.flagClosesAt,
     this.parentOptionId = '',
+    this.sameBoatStatus = SameBoatStatus.closed,
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
+    final open = data['open_empty_seats'] == true;
     return ShopProductOption(
       id: data['id'] as String? ?? '',
       name: data['name'] as String? ?? '',
@@ -333,13 +380,17 @@ class ShopProductOption {
       kind: ProductOptionKind.parse(data['kind']),
       bookable: data['bookable'] != false,
       guestRole: GuestRole.parse(data['guest_role']),
-      openEmptySeats: data['open_empty_seats'] == true,
+      openEmptySeats: open,
       capacity: (data['capacity'] as num?)?.toInt() ?? 0,
       bookedSeats: (data['booked_seats'] as num?)?.toInt() ?? 0,
       flagHolds: _optionHolds(data['flag_holds']),
       departureStart: _optionTime(data['departure_start']),
       flagClosesAt: _optionTime(data['flag_closes_at']),
       parentOptionId: data['parent_option_id'] as String? ?? '',
+      sameBoatStatus: SameBoatStatus.parse(
+        data['same_boat_status'],
+        openEmptySeats: open,
+      ),
     );
   }
 
@@ -360,9 +411,13 @@ class ShopProductOption {
 
   /// When set, this addon belongs to an individual SKU (not the base package).
   final String parentOptionId;
+  final SameBoatStatus sameBoatStatus;
 
   bool get listsOnSameBoat {
-    return openEmptySeats && capacity > 0 && departureStart != null;
+    return openEmptySeats &&
+        capacity > 0 &&
+        departureStart != null &&
+        sameBoatStatus.isBoardLive;
   }
 
   Map<String, dynamic> toMap() {
@@ -376,6 +431,7 @@ class ShopProductOption {
       'bookable': bookable,
       'guest_role': guestRole.firestoreValue,
       'open_empty_seats': openEmptySeats,
+      'same_boat_status': sameBoatStatus.firestoreValue,
       if (capacity > 0) 'capacity': capacity,
       if (bookedSeats > 0) 'booked_seats': bookedSeats,
       if (flagHolds.isNotEmpty)
@@ -403,6 +459,7 @@ class ShopProductOption {
     DateTime? departureStart,
     DateTime? flagClosesAt,
     String? parentOptionId,
+    SameBoatStatus? sameBoatStatus,
     bool clearDates = false,
   }) {
     return ShopProductOption(
@@ -423,6 +480,7 @@ class ShopProductOption {
           : (departureStart ?? this.departureStart),
       flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
       parentOptionId: parentOptionId ?? this.parentOptionId,
+      sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
     );
   }
 
@@ -490,6 +548,7 @@ class ShopProduct {
     this.flagHolds = const [],
     this.departureStart,
     this.flagClosesAt,
+    this.sameBoatStatus = SameBoatStatus.closed,
     this.listingKind = ProductListingKind.exploreOnly,
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
@@ -549,6 +608,10 @@ class ShopProduct {
       flagHolds: _holds(data['flag_holds']),
       departureStart: _readTime(data['departure_start']),
       flagClosesAt: _readTime(data['flag_closes_at']),
+      sameBoatStatus: SameBoatStatus.parse(
+        data['same_boat_status'],
+        openEmptySeats: data['open_empty_seats'] == true,
+      ),
       listingKind: ProductListingKind.parse(data['listing_kind']),
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
@@ -592,6 +655,7 @@ class ShopProduct {
   final List<SeatHold> flagHolds;
   final DateTime? departureStart;
   final DateTime? flagClosesAt;
+  final SameBoatStatus sameBoatStatus;
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
@@ -613,7 +677,33 @@ class ShopProduct {
     return isListedPublicly &&
         openEmptySeats &&
         capacity > 0 &&
-        departureStart != null;
+        departureStart != null &&
+        sameBoatStatus.isBoardLive;
+  }
+
+  bool get hasPendingSameBoat {
+    if (sameBoatStatus.isPendingReview) {
+      return true;
+    }
+    for (final option in options) {
+      if (option.sameBoatStatus.isPendingReview) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool get hasAnySameBoatOpen {
+    if (openEmptySeats || sameBoatStatus != SameBoatStatus.closed) {
+      return true;
+    }
+    for (final option in options) {
+      if (option.openEmptySeats ||
+          option.sameBoatStatus != SameBoatStatus.closed) {
+        return true;
+      }
+    }
+    return false;
   }
 
   int get flaggedSeats => flaggedSeatsAt(DateTime.now());
@@ -712,7 +802,7 @@ class ShopProduct {
     if (optionId.isNotEmpty) {
       return _mapOption(optionId, (option) {
         final planted = _plantHolds(
-          open: option.openEmptySeats,
+          open: option.openEmptySeats && option.sameBoatStatus.isBoardLive,
           capacity: option.capacity,
           booked: option.bookedSeats,
           holds: option.flagHolds,
@@ -726,7 +816,7 @@ class ShopProduct {
     }
     return copyWith(
       flagHolds: _plantHolds(
-        open: openEmptySeats,
+        open: openEmptySeats && sameBoatStatus.isBoardLive,
         capacity: capacity,
         booked: bookedSeats,
         holds: flagHolds,
@@ -747,7 +837,7 @@ class ShopProduct {
     if (optionId.isNotEmpty) {
       return _mapOption(optionId, (option) {
         if (!_canCapture(
-          open: option.openEmptySeats,
+          open: option.openEmptySeats && option.sameBoatStatus.isBoardLive,
           capacity: option.capacity,
           booked: option.bookedSeats,
           holds: option.flagHolds,
@@ -765,7 +855,7 @@ class ShopProduct {
       });
     }
     if (!_canCapture(
-      open: openEmptySeats,
+      open: openEmptySeats && sameBoatStatus.isBoardLive,
       capacity: capacity,
       booked: bookedSeats,
       holds: flagHolds,
@@ -995,6 +1085,7 @@ class ShopProduct {
     List<SeatHold>? flagHolds,
     Object? departureStart = _unset,
     Object? flagClosesAt = _unset,
+    SameBoatStatus? sameBoatStatus,
     ProductListingKind? listingKind,
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
@@ -1041,6 +1132,7 @@ class ShopProduct {
       flagClosesAt: identical(flagClosesAt, _unset)
           ? this.flagClosesAt
           : flagClosesAt as DateTime?,
+      sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
       listingKind: listingKind ?? this.listingKind,
       publishStatus: publishStatus ?? this.publishStatus,
       submittedAt: submittedAt ?? this.submittedAt,
@@ -1085,6 +1177,7 @@ class ShopProduct {
       if (focFreeCount > 0) 'foc_free_count': focFreeCount,
       if (focPayCount > 0) 'foc_applies_to': focAppliesTo.firestoreValue,
       'open_empty_seats': openEmptySeats,
+      'same_boat_status': sameBoatStatus.firestoreValue,
       if (capacity > 0) 'capacity': capacity,
       if (bookedSeats > 0) 'booked_seats': bookedSeats,
       if (flagHolds.isNotEmpty)

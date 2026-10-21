@@ -1343,7 +1343,75 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only seats opened by product registrants. Flag planting is not done here.';
 
   @override
+  String get adminSameBoatApproveHint =>
+      'Approving a leftover-seat request publishes it to Same-boat. A planted flag locks the seat until the pay deadline.';
+
+  @override
+  String get adminSameBoatPendingQueue => 'Pending leftover seats';
+
+  @override
+  String get adminSameBoatPendingEmpty => 'No leftover-seat requests waiting.';
+
+  @override
+  String get adminSameBoatLiveTitle => 'Live on Same-boat';
+
+  @override
+  String get adminSameBoatApprove => 'Approve · publish';
+
+  @override
+  String get adminSameBoatReject => 'Reject';
+
+  @override
+  String get adminSameBoatPendingBadge => 'Pending';
+
+  @override
+  String get adminSameBoatLiveBadge => 'Live on board';
+
+  @override
+  String get adminSameBoatRejectedBadge => 'Rejected';
+
+  @override
+  String get adminSameBoatClosedBadge => 'Closed';
+
+  @override
   String get adminSameBoatEmpty => 'No products with open leftover seats.';
+
+  @override
+  String get sameBoatSeatsTitle => 'Open leftover seats';
+
+  @override
+  String get sameBoatSeatsHint =>
+      'Open seats on the base package and individual SKUs, set departure and flag deadline, then request admin approval.';
+
+  @override
+  String get sameBoatSeatsHubHint =>
+      'Pick a product, then set seat count and deadlines.';
+
+  @override
+  String get sameBoatSeatsNoProducts =>
+      'No public products yet. Register and approve a product first.';
+
+  @override
+  String get sameBoatSeatsSubmit => 'Request approval';
+
+  @override
+  String get sameBoatSeatsPublish => 'Publish to Same-boat';
+
+  @override
+  String get sameBoatSeatsSubmitted => 'Leftover-seat request sent.';
+
+  @override
+  String get sameBoatSeatsPublished => 'Leftover seats published to Same-boat.';
+
+  @override
+  String get sameBoatSeatsEdit => 'Edit seats';
+
+  @override
+  String get sameBoatIndividualSeats => 'Individual SKU seats';
+
+  @override
+  String get sameBoatHoldPriorityHint =>
+      'A planted flag locks seats until the pay deadline (24h or boat flag close, whichever is sooner), giving the first holder priority.';
 
   @override
   String get adminProductSourceAll => 'All';
@@ -1872,7 +1940,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityFlagOneSeat =>
-      'A flag holds one seat. Companions are chosen at payment.';
+      'A flag locks as many seats as you choose until the pay deadline. Party size is fixed at checkout.';
+
+  @override
+  String communityFlagPartyAsk(int open) {
+    return 'How many seats should we lock? ($open open)';
+  }
+
+  @override
+  String communityFlagPartyLocked(int count) {
+    return '$count seats locked by your flag — priority until the pay deadline';
+  }
 
   @override
   String get communityPlantFlagAsk =>
@@ -2014,7 +2092,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String communityFlagHoldAsk(String deadline) {
-    return 'This seat stays provisional until $deadline. If you do not pay by then, it opens again.';
+    return 'Planting a flag locks your chosen seats until $deadline (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.';
   }
 
   @override

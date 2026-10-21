@@ -247,36 +247,78 @@ class _CommunityScreenState extends State<CommunityScreen> {
       );
       return;
     }
-    final until = ShopProduct.personalFlagUntil(
-      DateTime.now(),
-      offer.flagClosesAt,
-    );
+    final now = DateTime.now();
+    final open = offer.remainingSeatsAt(now);
+    if (open <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communitySeatsShort)),
+      );
+      return;
+    }
+    final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
     final deadline = DateFormat('M.d HH:mm').format(until);
-    final plant = await showDialog<bool>(
+    final partySize = await showDialog<int>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          content: Text(l10n.communityFlagHoldAsk(deadline)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.communityPlantFlagLater),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.communityPlantFlag),
-            ),
-          ],
+        var seats = 1;
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.communityFlagHoldAsk(deadline)),
+                  const SizedBox(height: 16),
+                  Text(l10n.communityFlagPartyAsk(open)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: seats <= 1
+                            ? null
+                            : () => setLocal(() => seats -= 1),
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Text(
+                        '$seats',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: seats >= open
+                            ? null
+                            : () => setLocal(() => seats += 1),
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(l10n.communityPlantFlagLater),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, seats),
+                  child: Text(l10n.communityPlantFlag),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-    if (plant != true || !context.mounted) {
+    if (partySize == null || partySize <= 0 || !context.mounted) {
       return;
     }
     final planted = await store.plantSeatFlag(
       shopId: product.shopId,
       productId: product.id,
-      partySize: 1,
+      partySize: partySize,
       optionId: offer.optionId,
     );
     if (!context.mounted) {
@@ -288,6 +330,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
       );
     }
     if (planted == SeatFlagPlant.unavailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communitySeatsShort)),
+      );
       return;
     }
     if (!context.mounted) {
@@ -304,6 +349,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       product: product,
       lockedOptionId: offer.optionId,
       fromFlag: true,
+      lockedPartySize: partySize,
     );
   }
 }
