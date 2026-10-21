@@ -347,10 +347,7 @@ void main() {
 
     expect(find.byKey(const Key('departure-desk-header')), findsOneWidget);
     expect(find.byKey(const Key('my-crafted-trips')), findsNothing);
-    await tester.drag(
-      find.byKey(const Key('profile-departure-desk')),
-      const Offset(0, -680),
-    );
+    await tester.ensureVisible(find.byKey(const Key('profile-crafted-trips-link')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('profile-crafted-trips-link')));
     await tester.pumpAndSettle();
@@ -393,10 +390,7 @@ void main() {
 
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const Key('profile-departure-desk')),
-      const Offset(0, -360),
-    );
+    await tester.ensureVisible(find.byKey(const Key('profile-tank-gauge')));
     await tester.pump(const Duration(milliseconds: 1000));
 
     expect(find.byKey(const Key('passport-cover-compact')), findsOneWidget);
