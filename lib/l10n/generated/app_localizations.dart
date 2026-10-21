@@ -3711,13 +3711,13 @@ abstract class AppLocalizations {
   /// No description provided for @workbenchCatResort.
   ///
   /// In ko, this message translates to:
-  /// **'리조트 패키지'**
+  /// **'리조트'**
   String get workbenchCatResort;
 
   /// No description provided for @workbenchCatLiveaboard.
   ///
   /// In ko, this message translates to:
-  /// **'라이브어보드'**
+  /// **'리브어보드'**
   String get workbenchCatLiveaboard;
 
   /// No description provided for @workbenchCatFun.
@@ -3903,7 +3903,7 @@ abstract class AppLocalizations {
   /// No description provided for @briefTitle.
   ///
   /// In ko, this message translates to:
-  /// **'출항 브리프'**
+  /// **'상품등록'**
   String get briefTitle;
 
   /// No description provided for @briefSectionCover.

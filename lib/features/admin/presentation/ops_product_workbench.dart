@@ -123,6 +123,7 @@ class _TextLines {
 
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _sectionCount = 6;
+  static const _kBoxRadius = 2.0;
 
   late final TextEditingController _name;
   late final TextEditingController _resortName;
@@ -152,13 +153,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _sectionCount,
     (_) => GlobalKey(),
   );
-  final _briefKey = GlobalKey();
   final _draftListeners = <TextEditingController>[];
   static const _maxGallery = GalleryLimits.maxProductPhotos;
   late String _shopId;
   late String _continent;
   late ProductCategory _category;
-  var _section = 0;
   ProductSaveIntent? _savingIntent;
   var _previewDiver = 1;
   var _previewNondiver = 0;
@@ -183,7 +182,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
-    _category = existing?.category ?? ProductCategory.resortPackage;
+    final rawCategory = existing?.category ?? ProductCategory.resortPackage;
+    _category = rawCategory == ProductCategory.liveaboard
+        ? ProductCategory.liveaboard
+        : ProductCategory.resortPackage;
     _namedResort = _shopId.startsWith('curated-');
     _name = TextEditingController(text: existing?.name ?? '');
     _resortName = TextEditingController(text: shop?.name ?? '');
@@ -527,52 +529,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   void _reveal(int index) {
     final target = _sectionKeys[index].currentContext;
-    if (target != null) {
-      Scrollable.ensureVisible(
-        target,
-        duration: const Duration(milliseconds: 280),
-        alignment: 0.04,
-      );
+    if (target == null) {
+      return;
     }
-    setState(() => _section = index);
-  }
-
-  bool _onBriefScroll(ScrollNotification notification) {
-    if (notification.metrics.axis != Axis.vertical) {
-      return false;
-    }
-    final briefContext = _briefKey.currentContext;
-    if (briefContext == null) {
-      return false;
-    }
-    final briefBox = briefContext.findRenderObject() as RenderBox?;
-    if (briefBox == null || !briefBox.hasSize) {
-      return false;
-    }
-    final top = briefBox.localToGlobal(Offset.zero).dy;
-    var current = 0;
-    for (var i = 0; i < _sectionKeys.length; i++) {
-      final ctx = _sectionKeys[i].currentContext;
-      if (ctx == null) {
-        continue;
-      }
-      final box = ctx.findRenderObject() as RenderBox?;
-      if (box == null || !box.hasSize) {
-        continue;
-      }
-      if (box.localToGlobal(Offset.zero).dy - top <= 72) {
-        current = i;
-      }
-    }
-    if (current != _section) {
-      final next = current;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && next != _section) {
-          setState(() => _section = next);
-        }
-      });
-    }
-    return false;
+    Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 280),
+      alignment: 0.04,
+    );
   }
 
   ProductListingKind _shelfKindForSave(ShopProduct? existing) {
@@ -797,8 +761,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final store = DiverStoreScope.of(context);
     final live = store.liveStatsFor(_shopId);
     final canPublish = store.stats.isAdmin && !widget.partnerMode;
-    final labels = _sectionLabels(l10n);
-
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
@@ -811,13 +773,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           final brief = _brief(l10n, shops, shopLocked, hull, live);
           return Column(
             children: [
-              if (!wide) _sectionChips(labels),
               Expanded(
                 child: wide
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SizedBox(width: 168, child: _sectionRail(labels)),
                           Expanded(child: brief),
                           SizedBox(
                             width: 280,
@@ -834,58 +794,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ],
           );
         },
-      ),
-    );
-  }
-
-  List<String> _sectionLabels(AppLocalizations l10n) {
-    return [
-      l10n.briefSectionCover,
-      l10n.briefSectionPlace,
-      l10n.briefSectionDays,
-      l10n.briefSectionTerms,
-      l10n.briefSectionPrice,
-      l10n.briefSectionSeats,
-    ];
-  }
-
-  Widget _sectionRail(List<String> labels) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
-      children: [
-        for (var i = 0; i < labels.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: FilledButton.tonal(
-              onPressed: () => _reveal(i),
-              style: FilledButton.styleFrom(
-                backgroundColor: _section == i
-                    ? AppTheme.navy
-                    : AppTheme.seaMist,
-                foregroundColor: _section == i ? Colors.white : AppTheme.navy,
-              ),
-              child: Text(labels[i]),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _sectionChips(List<String> labels) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-      child: Row(
-        children: [
-          for (var i = 0; i < labels.length; i++) ...[
-            ChoiceChip(
-              label: Text(labels[i]),
-              selected: _section == i,
-              onSelected: (_) => _reveal(i),
-            ),
-            const SizedBox(width: 6),
-          ],
-        ],
       ),
     );
   }
@@ -976,22 +884,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     DiveShop? hull,
     ShopLiveStats? live,
   ) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onBriefScroll,
-      child: ListView(
-        key: _briefKey,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
-          _block(1, l10n.briefSectionPlace, [
-            _placeBlock(l10n, shops, shopLocked, hull, live),
-          ]),
-          _block(2, l10n.briefSectionDays, [_daysBlock(l10n)]),
-          _block(3, l10n.briefSectionTerms, [_termsBlock(l10n)]),
-          _block(4, l10n.briefSectionPrice, [_priceBlock(l10n)]),
-          _block(5, l10n.briefSectionSeats, [_seatsBlock(l10n)]),
-        ],
-      ),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: [
+        _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
+        _block(1, l10n.briefSectionPlace, [
+          _placeBlock(l10n, shops, shopLocked, hull, live),
+        ]),
+        _block(2, l10n.briefSectionDays, [_daysBlock(l10n)]),
+        _block(3, l10n.briefSectionTerms, [_termsBlock(l10n)]),
+        _block(4, l10n.briefSectionPrice, [_priceBlock(l10n)]),
+        _block(5, l10n.briefSectionSeats, [_seatsBlock(l10n)]),
+      ],
     );
   }
 
@@ -1003,6 +907,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         child: BookingFormSection(
           step: '${index + 1}',
           title: title,
+          borderRadius: _kBoxRadius,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: children,
@@ -1014,7 +919,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   InputDecoration _field(String label, {String? hint, int? lines}) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(_kBoxRadius),
       borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
     );
     return InputDecoration(
@@ -1027,35 +932,41 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       border: border,
       enabledBorder: border,
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(_kBoxRadius),
         borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
       ),
     );
   }
 
   Widget _coverBlock(AppLocalizations l10n) {
-    final cats = <ProductCategory, String>{
-      ProductCategory.resortPackage: l10n.workbenchCatResort,
-      ProductCategory.liveaboard: l10n.workbenchCatLiveaboard,
-      ProductCategory.funDive: l10n.workbenchCatFun,
-      ProductCategory.course: l10n.workbenchCatCourse,
-      ProductCategory.dayTrip: l10n.workbenchCatDay,
-    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(l10n.workbenchCategory),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        const SizedBox(height: 10),
+        Row(
           children: [
-            for (final entry in cats.entries)
-              ChoiceChip(
-                label: Text(entry.value),
-                selected: _category == entry.key,
-                onSelected: (_) => setState(() => _category = entry.key),
+            Expanded(
+              child: _CategoryPick(
+                label: l10n.workbenchCatResort,
+                icon: Icons.apartment_outlined,
+                selected: _category == ProductCategory.resortPackage,
+                onTap: () => setState(
+                  () => _category = ProductCategory.resortPackage,
+                ),
               ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _CategoryPick(
+                label: l10n.workbenchCatLiveaboard,
+                icon: Icons.directions_boat_outlined,
+                selected: _category == ProductCategory.liveaboard,
+                onTap: () => setState(
+                  () => _category = ProductCategory.liveaboard,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -1102,6 +1013,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           onRemove: _removePhoto,
           onMakeCover: _makeCover,
           maxItems: _maxGallery,
+          cornerRadius: _kBoxRadius,
           attachKey: const Key('brief-gallery-add'),
         ),
       ],
@@ -1247,7 +1159,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           DecoratedBox(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(_kBoxRadius),
               border: Border.all(color: const Color(0xFFE2E8EE)),
             ),
             child: Padding(
@@ -1457,7 +1369,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(_kBoxRadius),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -1597,7 +1509,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(_kBoxRadius),
+          border: Border.all(color: const Color(0xFFE7E7E7)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -1778,7 +1691,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(_kBoxRadius),
         border: Border.all(color: const Color(0xFFE2E8EE)),
       ),
       child: SingleChildScrollView(
@@ -1793,7 +1706,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             const SizedBox(height: 8),
             if (cover != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(_kBoxRadius),
                 child: SizedBox(
                   height: 96,
                   width: double.infinity,
@@ -1857,6 +1770,74 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           icon: const Icon(Icons.add, size: 18),
         ),
       ],
+    );
+  }
+}
+
+class _CategoryPick extends StatelessWidget {
+  const _CategoryPick({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final border = selected
+        ? const BorderSide(color: AppTheme.navy, width: 1.8)
+        : const BorderSide(color: Color(0xFFD0D5DD));
+    final bg = selected ? const Color(0xFFEEF2F7) : Colors.white;
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(
+        _OpsProductWorkbenchState._kBoxRadius,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(
+          _OpsProductWorkbenchState._kBoxRadius,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(
+              _OpsProductWorkbenchState._kBoxRadius,
+            ),
+            border: Border.fromBorderSide(border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 28,
+                color: selected ? AppTheme.navy : AppTheme.muted,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: selected ? AppTheme.navy : const Color(0xFF344054),
+                ),
+              ),
+              if (selected) ...[
+                const SizedBox(height: 6),
+                const Icon(Icons.check_circle, size: 16, color: AppTheme.navy),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

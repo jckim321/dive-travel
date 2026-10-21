@@ -1968,10 +1968,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workbenchCategory => '분류';
 
   @override
-  String get workbenchCatResort => '리조트 패키지';
+  String get workbenchCatResort => '리조트';
 
   @override
-  String get workbenchCatLiveaboard => '라이브어보드';
+  String get workbenchCatLiveaboard => '리브어보드';
 
   @override
   String get workbenchCatFun => '펀다이빙';
@@ -2067,7 +2067,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workbenchGuestPreview => '손님 예약';
 
   @override
-  String get briefTitle => '출항 브리프';
+  String get briefTitle => '상품등록';
 
   @override
   String get briefSectionCover => '표지';

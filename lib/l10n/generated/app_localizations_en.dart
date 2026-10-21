@@ -2004,7 +2004,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchCategory => 'Category';
 
   @override
-  String get workbenchCatResort => 'Resort package';
+  String get workbenchCatResort => 'Resort';
 
   @override
   String get workbenchCatLiveaboard => 'Liveaboard';
@@ -2105,7 +2105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchGuestPreview => 'Guest booking';
 
   @override
-  String get briefTitle => 'Departure brief';
+  String get briefTitle => 'Product registration';
 
   @override
   String get briefSectionCover => 'Cover';

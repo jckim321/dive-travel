@@ -34,6 +34,7 @@ class BookingGalleryEditor extends StatelessWidget {
     required this.onMakeCover,
     this.onTest,
     this.maxItems = GalleryLimits.maxProductPhotos,
+    this.cornerRadius = 12,
     this.fieldKey,
     this.attachKey,
     this.testKey,
@@ -45,6 +46,7 @@ class BookingGalleryEditor extends StatelessWidget {
   final ValueChanged<int> onMakeCover;
   final VoidCallback? onTest;
   final int maxItems;
+  final double cornerRadius;
   final Key? fieldKey;
   final Key? attachKey;
   final Key? testKey;
@@ -70,13 +72,14 @@ class BookingGalleryEditor extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (items.isEmpty)
-          _EmptyDrop(onAdd: onAdd)
+          _EmptyDrop(onAdd: onAdd, cornerRadius: cornerRadius)
         else
           _BookingMosaic(
             items: items,
             onRemove: onRemove,
             onMakeCover: onMakeCover,
             onAdd: canAdd ? onAdd : null,
+            cornerRadius: cornerRadius,
           ),
         const SizedBox(height: 12),
         Wrap(
@@ -123,20 +126,22 @@ class BookingGalleryEditor extends StatelessWidget {
 }
 
 class _EmptyDrop extends StatelessWidget {
-  const _EmptyDrop({required this.onAdd});
+  const _EmptyDrop({required this.onAdd, this.cornerRadius = 12});
 
   final VoidCallback onAdd;
+  final double cornerRadius;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final radius = BorderRadius.circular(cornerRadius);
     return Material(
       color: const Color(0xFF0B1F33),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: radius,
       child: InkWell(
         onTap: onAdd,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: radius,
         child: AspectRatio(
           aspectRatio: ListingCover.aspectRatio,
           child: Center(
@@ -182,12 +187,14 @@ class _BookingMosaic extends StatelessWidget {
     required this.onRemove,
     required this.onMakeCover,
     this.onAdd,
+    this.cornerRadius = 12,
   });
 
   final List<BookingGalleryItem> items;
   final ValueChanged<int> onRemove;
   final ValueChanged<int> onMakeCover;
   final VoidCallback? onAdd;
+  final double cornerRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +207,7 @@ class _BookingMosaic extends StatelessWidget {
     final cover = _GalleryTile(
       item: items.first,
       isCover: true,
+      cornerRadius: cornerRadius,
       label: l10n.exploreCoverPhoto,
       badge: items.length > 1 ? l10n.exploreGalleryViewAll : null,
       onRemove: () => onRemove(0),
@@ -211,6 +219,7 @@ class _BookingMosaic extends StatelessWidget {
       onAdd: onAdd,
       onRemove: onRemove,
       onMakeCover: onMakeCover,
+      cornerRadius: cornerRadius,
     );
 
     if (narrow) {
@@ -243,6 +252,7 @@ class _SecondaryGrid extends StatelessWidget {
     required this.onRemove,
     required this.onMakeCover,
     this.onAdd,
+    this.cornerRadius = 12,
   });
 
   final List<BookingGalleryItem> showTiles;
@@ -250,14 +260,17 @@ class _SecondaryGrid extends StatelessWidget {
   final ValueChanged<int> onRemove;
   final ValueChanged<int> onMakeCover;
   final VoidCallback? onAdd;
+  final double cornerRadius;
 
   @override
   Widget build(BuildContext context) {
+    final tileRadius = cornerRadius > 2 ? cornerRadius * 0.67 : cornerRadius;
     Widget cell(int slotIndex) {
       final tileIndex = slotIndex - 1;
       if (tileIndex < showTiles.length) {
         final tile = _GalleryTile(
           item: showTiles[tileIndex],
+          cornerRadius: tileRadius,
           onRemove: () => onRemove(slotIndex),
           onMakeCover: () => onMakeCover(slotIndex),
         );
@@ -270,7 +283,7 @@ class _SecondaryGrid extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(tileRadius),
                   ),
                   child: Center(
                     child: Text(
@@ -292,12 +305,13 @@ class _SecondaryGrid extends StatelessWidget {
       if (onAdd == null) {
         return const SizedBox.shrink();
       }
+      final radius = BorderRadius.circular(tileRadius);
       return Material(
         color: const Color(0xFF16324A),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: radius,
         child: InkWell(
           onTap: onAdd,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: radius,
           child: const Center(
             child: Icon(Icons.add, color: Colors.white70, size: 28),
           ),
@@ -337,6 +351,7 @@ class _GalleryTile extends StatelessWidget {
     required this.onRemove,
     this.onMakeCover,
     this.isCover = false,
+    this.cornerRadius = 8,
     this.label,
     this.badge,
   });
@@ -345,13 +360,16 @@ class _GalleryTile extends StatelessWidget {
   final VoidCallback onRemove;
   final VoidCallback? onMakeCover;
   final bool isCover;
+  final double cornerRadius;
   final String? label;
   final String? badge;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final radius = BorderRadius.circular(isCover ? 12 : 8);
+    final radius = BorderRadius.circular(cornerRadius);
+    final chipRadius =
+        cornerRadius > 2 ? (isCover ? 6.0 : 4.0) : cornerRadius;
     return ClipRRect(
       borderRadius: radius,
       child: Stack(
@@ -380,7 +398,7 @@ class _GalleryTile extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(chipRadius),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -405,7 +423,7 @@ class _GalleryTile extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.94),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(chipRadius),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -498,6 +516,7 @@ class BookingFormSection extends StatelessWidget {
     required this.child,
     this.subtitle,
     this.trailing,
+    this.borderRadius = 12,
   });
 
   final String step;
@@ -505,13 +524,15 @@ class BookingFormSection extends StatelessWidget {
   final String? subtitle;
   final Widget child;
   final Widget? trailing;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final stepRadius = borderRadius > 2 ? 6.0 : borderRadius;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: const Color(0xFFE7E7E7)),
         boxShadow: const [
           BoxShadow(
@@ -540,7 +561,7 @@ class BookingFormSection extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: AppTheme.navy,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(stepRadius),
                   ),
                   child: Text(
                     step,
