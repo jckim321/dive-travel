@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -76,21 +77,6 @@ class _LineEditors {
   }
 }
 
-class _DayEditors {
-  _DayEditors({required this.day, String title = '', String body = ''})
-    : title = TextEditingController(text: title),
-      body = TextEditingController(text: body);
-
-  int day;
-  final TextEditingController title;
-  final TextEditingController body;
-
-  void dispose() {
-    title.dispose();
-    body.dispose();
-  }
-}
-
 class _TextLines {
   _TextLines(String raw) {
     final parts = [
@@ -133,7 +119,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _resortRegion;
   late final TextEditingController _blurb;
   late final TextEditingController _meeting;
-  late final TextEditingController _schedule;
+  late final TextEditingController _detailBody;
   late final TextEditingController _difficulty;
   late final TextEditingController _minGuests;
   late final TextEditingController _maxGuests;
@@ -147,7 +133,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _ratePro = <GuestRole, TextEditingController>{};
   final _addons = <_LineEditors>[];
   final _individuals = <_LineEditors>[];
-  final _days = <_DayEditors>[];
   final _photoPicker = const DivePhotoPicker();
   final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
@@ -199,7 +184,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _meeting = TextEditingController(
       text: meetingSeed.isNotEmpty ? meetingSeed : addressSeed,
     );
-    _schedule = TextEditingController(text: existing?.schedule ?? '');
+    _detailBody = TextEditingController(text: _seedDetailBody(existing));
     _difficulty = TextEditingController(text: existing?.difficulty ?? '');
     _minGuests = TextEditingController(
       text: (existing?.minGuests ?? 0) > 0 ? '${existing!.minGuests}' : '',
@@ -265,14 +250,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   : ''),
       );
     }
-    final days = existing?.itineraryDays ?? const <ItineraryDay>[];
-    if (days.isEmpty) {
-      _days.add(_DayEditors(day: 1));
-    } else {
-      for (final day in days) {
-        _days.add(_DayEditors(day: day.day, title: day.title, body: day.body));
-      }
-    }
     for (final option in existing?.options ?? const <ShopProductOption>[]) {
       final line = _LineEditors(
         id: option.id,
@@ -302,6 +279,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     _listen(_name);
     _listen(_blurb);
+    _listen(_detailBody);
     _listen(_resortName);
     _listen(_rateConsumer[GuestRole.diver]!);
     _seedGallery(existing);
@@ -357,7 +335,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _resortRegion.dispose();
     _blurb.dispose();
     _meeting.dispose();
-    _schedule.dispose();
+    _detailBody.dispose();
     _difficulty.dispose();
     _minGuests.dispose();
     _maxGuests.dispose();
@@ -379,10 +357,36 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final item in _individuals) {
       item.dispose();
     }
-    for (final day in _days) {
-      day.dispose();
-    }
     super.dispose();
+  }
+
+  static String _seedDetailBody(ShopProduct? existing) {
+    final schedule = (existing?.schedule ?? '').trim();
+    final days = existing?.itineraryDays ?? const <ItineraryDay>[];
+    if (days.isEmpty) {
+      return schedule;
+    }
+    final buf = StringBuffer();
+    if (schedule.isNotEmpty) {
+      buf.writeln(schedule);
+      buf.writeln();
+    }
+    for (final day in days) {
+      final title = day.title.trim();
+      final body = day.body.trim();
+      if (title.isEmpty && body.isEmpty) {
+        continue;
+      }
+      final heading = title.isEmpty
+          ? '### ${day.day}일차'
+          : '### ${day.day}일차 — $title';
+      buf.writeln(heading);
+      if (body.isNotEmpty) {
+        buf.writeln(body);
+      }
+      buf.writeln();
+    }
+    return buf.toString().trimRight();
   }
 
   ShopProductOption _withSeatOption(ShopProductOption option) {
@@ -514,8 +518,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   bool get _seatsOnProduct => _openEmptySeats && _resolvedSeatOptionId.isEmpty;
 
   String get _nightsLabel {
-    final n = _days.length;
+    final matches = RegExp(
+      r'^###\s+\d+',
+      multiLine: true,
+    ).allMatches(_detailBody.text);
+    final n = matches.length;
     if (n <= 1) {
+      final kept = widget.existing?.durationLabel.trim() ?? '';
+      if (kept.isNotEmpty && n == 0) {
+        return kept;
+      }
       return '1일';
     }
     return '${n - 1}박 $n일';
@@ -619,16 +631,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             professional: int.tryParse(_ratePro[role]!.text) ?? 0,
           ),
       ];
-      final itinerary = <ItineraryDay>[];
-      for (var i = 0; i < _days.length; i++) {
-        final day = _days[i];
-        final title = day.title.text.trim();
-        final body = day.body.text.trim();
-        if (title.isEmpty && body.isEmpty) {
-          continue;
-        }
-        itinerary.add(ItineraryDay(day: i + 1, title: title, body: body));
-      }
       final options = <ShopProductOption>[
         ShopProductOption(
           id: _baseOptionId,
@@ -680,7 +682,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           coverUrl: _galleryCoverUrl,
           continent: _continent,
           meetingPoint: _meeting.text.trim(),
-          schedule: _schedule.text.trim(),
+          schedule: _detailBody.text.trim(),
           includes: _includes.join(),
           excludes: _excludes.join(),
           difficulty: _difficulty.text.trim(),
@@ -693,7 +695,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             for (final item in _gallery)
               if (item.url != null && item.url!.isNotEmpty) item.url!,
           ],
-          itineraryDays: itinerary,
+          itineraryDays: const [],
           guestRates: guestRates,
           focPayCount: int.tryParse(_focPay.text) ?? 0,
           focFreeCount: int.tryParse(_focFree.text) ?? 0,
@@ -904,7 +906,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         _block(1, l10n.briefSectionPlace, [
           _placeBlock(l10n, shops, shopLocked),
         ]),
-        _block(2, l10n.briefSectionDays, [_daysBlock(l10n)]),
+        _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
         _block(3, l10n.briefSectionTerms, [_termsBlock(l10n)]),
         _block(4, l10n.briefSectionPrice, [_priceBlock(l10n)]),
         _block(5, l10n.briefSectionSeats, [_seatsBlock(l10n)]),
@@ -1265,7 +1267,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _daysBlock(AppLocalizations l10n) {
+  Widget _detailBlock(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1274,50 +1276,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           style: const TextStyle(color: AppTheme.muted, fontSize: 12),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _schedule,
-          maxLines: 3,
+        _ProductDetailComposer(
+          controller: _detailBody,
           decoration: _field(
-            l10n.productFormSchedule,
-            hint: l10n.productFormScheduleHint,
-            lines: 3,
+            l10n.briefSectionDays,
+            hint: l10n.detailComposerHint,
+            lines: 10,
           ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.workbenchItinerary,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < _days.length; i++) ...[
-          TextField(
-            controller: _days[i].title,
-            decoration: _field(l10n.workbenchDayTitle(i + 1)),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _days[i].body,
-            maxLines: 3,
-            decoration: _field(l10n.workbenchDayBody, lines: 3),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: _days.length == 1
-                  ? null
-                  : () {
-                      setState(() => _days.removeAt(i).dispose());
-                    },
-              child: Text(l10n.productFormRemoveOption),
-            ),
-          ),
-        ],
-        OutlinedButton.icon(
-          onPressed: () {
-            setState(() => _days.add(_DayEditors(day: _days.length + 1)));
-          },
-          icon: const Icon(Icons.add),
-          label: Text(l10n.workbenchAddDay),
+          onChanged: () => setState(() {}),
         ),
       ],
     );
@@ -1842,6 +1808,260 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           onPressed: () => onChanged(value + 1),
           icon: const Icon(Icons.add, size: 18),
         ),
+      ],
+    );
+  }
+}
+
+class _ProductDetailComposer extends StatefulWidget {
+  const _ProductDetailComposer({
+    required this.controller,
+    required this.decoration,
+    this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final InputDecoration decoration;
+  final VoidCallback? onChanged;
+
+  @override
+  State<_ProductDetailComposer> createState() => _ProductDetailComposerState();
+}
+
+class _ProductDetailComposerState extends State<_ProductDetailComposer> {
+  final _focus = FocusNode();
+  var _preview = false;
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _notify() {
+    widget.onChanged?.call();
+    setState(() {});
+  }
+
+  void _insert(String snippet, {int? cursorOffset}) {
+    final value = widget.controller.value;
+    final text = value.text;
+    final selection = value.selection;
+    final start = selection.isValid ? selection.start : text.length;
+    final end = selection.isValid ? selection.end : text.length;
+    final next = text.replaceRange(start, end, snippet);
+    final caret = start + (cursorOffset ?? snippet.length);
+    widget.controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: caret.clamp(0, next.length)),
+    );
+    _focus.requestFocus();
+    _notify();
+  }
+
+  void _wrapSelection(String left, String right) {
+    final value = widget.controller.value;
+    final selection = value.selection;
+    if (!selection.isValid) {
+      _insert('$left$right', cursorOffset: left.length);
+      return;
+    }
+    final selected = selection.textInside(value.text);
+    if (selected.isEmpty) {
+      _insert('$left$right', cursorOffset: left.length);
+      return;
+    }
+    final wrapped = '$left$selected$right';
+    final start = selection.start;
+    final next = value.text.replaceRange(selection.start, selection.end, wrapped);
+    widget.controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection(
+        baseOffset: start,
+        extentOffset: start + wrapped.length,
+      ),
+    );
+    _focus.requestFocus();
+    _notify();
+  }
+
+  void _prefixLine(String prefix) {
+    final value = widget.controller.value;
+    final text = value.text;
+    final selection = value.selection;
+    final offset = selection.isValid ? selection.start : text.length;
+    final lineStart = text.lastIndexOf('\n', offset <= 0 ? 0 : offset - 1) + 1;
+    final next = text.replaceRange(lineStart, lineStart, prefix);
+    final caret = offset + prefix.length;
+    widget.controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: caret.clamp(0, next.length)),
+    );
+    _focus.requestFocus();
+    _notify();
+  }
+
+  int _nextDayNumber() {
+    var maxDay = 0;
+    for (final match in RegExp(
+      r'^###\s+(\d+)',
+      multiLine: true,
+    ).allMatches(widget.controller.text)) {
+      final n = int.tryParse(match.group(1) ?? '') ?? 0;
+      if (n > maxDay) {
+        maxDay = n;
+      }
+    }
+    return maxDay + 1;
+  }
+
+  static const _tableSchedule = '| 시간 | 내용 |\n| --- | --- |\n|  |  |\n|  |  |\n';
+  static const _tableInclude =
+      '| 포함 | 불포함 |\n| --- | --- |\n|  |  |\n|  |  |\n';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F8FA),
+            borderRadius: BorderRadius.circular(
+              _OpsProductWorkbenchState._kBoxRadius,
+            ),
+            border: Border.all(color: const Color(0xFFE2E8EE)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Wrap(
+              spacing: 2,
+              runSpacing: 2,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: l10n.detailComposerBold,
+                  onPressed: _preview
+                      ? null
+                      : () => _wrapSelection('**', '**'),
+                  icon: const Icon(Icons.format_bold, size: 20),
+                ),
+                IconButton(
+                  tooltip: l10n.detailComposerHeading,
+                  onPressed: _preview ? null : () => _prefixLine('### '),
+                  icon: const Icon(Icons.title, size: 20),
+                ),
+                IconButton(
+                  tooltip: l10n.detailComposerList,
+                  onPressed: _preview ? null : () => _prefixLine('- '),
+                  icon: const Icon(Icons.format_list_bulleted, size: 20),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: l10n.detailComposerTable,
+                  enabled: !_preview,
+                  onSelected: (value) {
+                    if (value == 'schedule') {
+                      _insert('\n$_tableSchedule\n');
+                    } else {
+                      _insert('\n$_tableInclude\n');
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'schedule',
+                      child: Text(l10n.detailComposerTableSchedule),
+                    ),
+                    PopupMenuItem(
+                      value: 'include',
+                      child: Text(l10n.detailComposerTableInclude),
+                    ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.table_chart_outlined,
+                          size: 20,
+                          color: _preview ? Colors.black26 : null,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.detailComposerTable,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _preview ? Colors.black26 : AppTheme.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _preview
+                      ? null
+                      : () {
+                          final day = _nextDayNumber();
+                          final block = widget.controller.text.trim().isEmpty
+                              ? '### $day일차 — \n'
+                              : '\n### $day일차 — \n';
+                          _insert(block, cursorOffset: block.length);
+                        },
+                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
+                  label: Text(l10n.detailComposerDay),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _preview = !_preview),
+                  child: Text(
+                    _preview
+                        ? l10n.detailComposerEdit
+                        : l10n.detailComposerPreview,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_preview)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(
+                _OpsProductWorkbenchState._kBoxRadius,
+              ),
+              border: Border.all(color: const Color(0xFFE2E8EE)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: MarkdownBody(
+                data: widget.controller.text.trim().isEmpty
+                    ? l10n.detailComposerHint
+                    : widget.controller.text,
+                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
+                    .copyWith(
+                      p: const TextStyle(
+                        color: Color(0xFF344054),
+                        height: 1.45,
+                        fontSize: 14,
+                      ),
+                    ),
+              ),
+            ),
+          )
+        else
+          TextField(
+            controller: widget.controller,
+            focusNode: _focus,
+            minLines: 10,
+            maxLines: 24,
+            onChanged: (_) => _notify(),
+            decoration: widget.decoration.copyWith(
+              alignLabelWithHint: true,
+            ),
+          ),
       ],
     );
   }

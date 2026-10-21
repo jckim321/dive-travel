@@ -2063,7 +2063,37 @@ class AppLocalizationsTh extends AppLocalizations {
   String get briefSectionPlace => '가는 목적지 소개';
 
   @override
-  String get briefSectionDays => '일정';
+  String get briefSectionDays => '상품 상세 내역';
+
+  @override
+  String get detailComposerHint => '상품 이야기·일정·표를 한곳에서 작성하세요.';
+
+  @override
+  String get detailComposerBold => '굵게';
+
+  @override
+  String get detailComposerHeading => '제목';
+
+  @override
+  String get detailComposerList => '목록';
+
+  @override
+  String get detailComposerTable => '표 삽입';
+
+  @override
+  String get detailComposerTableSchedule => '시간 · 내용';
+
+  @override
+  String get detailComposerTableInclude => '포함 · 불포함';
+
+  @override
+  String get detailComposerDay => '일차 템플릿';
+
+  @override
+  String get detailComposerPreview => '미리보기';
+
+  @override
+  String get detailComposerEdit => '편집';
 
   @override
   String get briefSectionTerms => '조건';

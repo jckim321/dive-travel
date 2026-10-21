@@ -2117,7 +2117,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefSectionPlace => 'Destination';
 
   @override
-  String get briefSectionDays => 'Itinerary';
+  String get briefSectionDays => 'Product details';
+
+  @override
+  String get detailComposerHint =>
+      'Write the trip story, daily plan, and tables in one place.';
+
+  @override
+  String get detailComposerBold => 'Bold';
+
+  @override
+  String get detailComposerHeading => 'Heading';
+
+  @override
+  String get detailComposerList => 'List';
+
+  @override
+  String get detailComposerTable => 'Insert table';
+
+  @override
+  String get detailComposerTableSchedule => 'Time · activity';
+
+  @override
+  String get detailComposerTableInclude => 'Includes · excludes';
+
+  @override
+  String get detailComposerDay => 'Day template';
+
+  @override
+  String get detailComposerPreview => 'Preview';
+
+  @override
+  String get detailComposerEdit => 'Edit';
 
   @override
   String get briefSectionTerms => 'Terms';

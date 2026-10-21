@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -931,11 +932,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       l10n.productFormMeetingPoint,
       product.meetingPoint,
     );
-    addCard(
-      Icons.route_outlined,
-      l10n.productFormSchedule,
-      product.schedule,
-    );
+    if (product.schedule.trim().isNotEmpty) {
+      cards.add(const SizedBox(height: 16));
+      cards.add(
+        _MarkdownDetailCard(
+          icon: Icons.route_outlined,
+          title: l10n.briefSectionDays,
+          markdown: product.schedule.trim(),
+        ),
+      );
+    }
     addCard(
       Icons.check_circle_outline,
       l10n.productFormIncludes,
@@ -1298,6 +1304,71 @@ class _HighlightCard extends StatelessWidget {
                   color: AppTheme.muted,
                   height: 1.4,
                   fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MarkdownDetailCard extends StatelessWidget {
+  const _MarkdownDetailCard({
+    required this.icon,
+    required this.title,
+    required this.markdown,
+  });
+
+  final IconData icon;
+  final String title;
+  final String markdown;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppTheme.navy),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 4),
+              MarkdownBody(
+                data: markdown,
+                shrinkWrap: true,
+                styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                  p: const TextStyle(
+                    color: AppTheme.muted,
+                    height: 1.4,
+                    fontSize: 13,
+                  ),
+                  h3: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: Color(0xFF344054),
+                  ),
+                  tableBody: const TextStyle(
+                    color: AppTheme.muted,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                  tableHead: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: Color(0xFF344054),
+                  ),
                 ),
               ),
             ],

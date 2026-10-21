@@ -3927,8 +3927,68 @@ abstract class AppLocalizations {
   /// No description provided for @briefSectionDays.
   ///
   /// In ko, this message translates to:
-  /// **'일정'**
+  /// **'상품 상세 내역'**
   String get briefSectionDays;
+
+  /// No description provided for @detailComposerHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 이야기·일정·표를 한곳에서 작성하세요.'**
+  String get detailComposerHint;
+
+  /// No description provided for @detailComposerBold.
+  ///
+  /// In ko, this message translates to:
+  /// **'굵게'**
+  String get detailComposerBold;
+
+  /// No description provided for @detailComposerHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get detailComposerHeading;
+
+  /// No description provided for @detailComposerList.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록'**
+  String get detailComposerList;
+
+  /// No description provided for @detailComposerTable.
+  ///
+  /// In ko, this message translates to:
+  /// **'표 삽입'**
+  String get detailComposerTable;
+
+  /// No description provided for @detailComposerTableSchedule.
+  ///
+  /// In ko, this message translates to:
+  /// **'시간 · 내용'**
+  String get detailComposerTableSchedule;
+
+  /// No description provided for @detailComposerTableInclude.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함 · 불포함'**
+  String get detailComposerTableInclude;
+
+  /// No description provided for @detailComposerDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'일차 템플릿'**
+  String get detailComposerDay;
+
+  /// No description provided for @detailComposerPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기'**
+  String get detailComposerPreview;
+
+  /// No description provided for @detailComposerEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집'**
+  String get detailComposerEdit;
 
   /// No description provided for @briefSectionTerms.
   ///
