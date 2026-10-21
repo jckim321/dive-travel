@@ -600,13 +600,24 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get reviewTitle => '오퍼레이션 리뷰';
+  String get reviewTitle => '여행 후기';
 
   @override
-  String get reviewIntro => '다녀온 샵의 안전·가이드·보트를 평가하면 Dive Star가 다시 계산됩니다.';
+  String get reviewIntro => '별점을 고르고 짧은 후기를 남겨 주세요.';
 
   @override
   String get reviewShopLabel => '리조트 / 다이브샵';
+
+  @override
+  String get reviewStarsLabel => '별점';
+
+  @override
+  String get reviewNoReviewsYet => '아직 후기 없음';
+
+  @override
+  String reviewCountLabel(String rating, int count) {
+    return '★ $rating (후기 $count개)';
+  }
 
   @override
   String get reviewSafety => '① 안전 및 장비 관리';
@@ -618,10 +629,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get reviewBoat => '③ 보트 및 편의시설';
 
   @override
-  String get reviewComment => '한 줄 후기 (선택)';
+  String get reviewComment => '후기 (선택)';
 
   @override
-  String get reviewSubmit => '리뷰 등록';
+  String get reviewSubmit => '저장';
 
   @override
   String get reviewWrite => '리뷰 작성';
@@ -630,10 +641,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get reviewDone => '리뷰 완료';
 
   @override
-  String get reviewSaved => '리뷰가 반영되었습니다. Dive Star가 갱신됩니다.';
+  String get reviewSaved => '후기가 저장되었습니다.';
 
   @override
-  String get reviewSaveFailed => '리뷰 저장에 실패했습니다.';
+  String get reviewSaveFailed => '후기 저장에 실패했습니다.';
 
   @override
   String homeDiveStarSubtitle(String rating, int count) {

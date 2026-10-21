@@ -73,6 +73,7 @@ abstract class DiverRepository {
     required int boat,
     String? bookingId,
     String? logId,
+    String? productId,
     String? comment,
   });
 

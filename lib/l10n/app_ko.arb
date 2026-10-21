@@ -525,21 +525,37 @@
       "shop": {"type": "String"}
     }
   },
-  "reviewTitle": "오퍼레이션 리뷰",
+  "reviewTitle": "여행 후기",
   "@reviewTitle": {
-    "description": "3대 항목 별점 화면 제목입니다."
+    "description": "다녀온 여행 별점·후기 화면 제목입니다."
   },
-  "reviewIntro": "다녀온 샵의 안전·가이드·보트를 평가하면 Dive Star가 다시 계산됩니다.",
+  "reviewIntro": "별점을 고르고 짧은 후기를 남겨 주세요.",
   "reviewShopLabel": "리조트 / 다이브샵",
+  "reviewStarsLabel": "별점",
+  "@reviewStarsLabel": {
+    "description": "후기 화면의 별점(1~5) 라벨입니다."
+  },
+  "reviewNoReviewsYet": "아직 후기 없음",
+  "@reviewNoReviewsYet": {
+    "description": "상품·목록에 후기가 없을 때 표시합니다."
+  },
+  "reviewCountLabel": "★ {rating} (후기 {count}개)",
+  "@reviewCountLabel": {
+    "description": "평균 별점과 후기 개수입니다.",
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
   "reviewSafety": "① 안전 및 장비 관리",
   "reviewGuide": "② 가이드 전문성",
   "reviewBoat": "③ 보트 및 편의시설",
-  "reviewComment": "한 줄 후기 (선택)",
-  "reviewSubmit": "리뷰 등록",
+  "reviewComment": "후기 (선택)",
+  "reviewSubmit": "저장",
   "reviewWrite": "리뷰 작성",
   "reviewDone": "리뷰 완료",
-  "reviewSaved": "리뷰가 반영되었습니다. Dive Star가 갱신됩니다.",
-  "reviewSaveFailed": "리뷰 저장에 실패했습니다.",
+  "reviewSaved": "후기가 저장되었습니다.",
+  "reviewSaveFailed": "후기 저장에 실패했습니다.",
   "homeDiveStarSubtitle": "오퍼레이션 평균 {rating} · 리뷰 {count}건",
   "@homeDiveStarSubtitle": {
     "description": "홈 추천 리조트 서브타이틀입니다.",

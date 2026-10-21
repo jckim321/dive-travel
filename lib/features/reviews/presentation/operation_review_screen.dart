@@ -11,11 +11,13 @@ class OperationReviewScreen extends StatefulWidget {
     this.shopId,
     this.bookingId,
     this.logId,
+    this.productId,
   });
 
   final String? shopId;
   final String? bookingId;
   final String? logId;
+  final String? productId;
 
   @override
   State<OperationReviewScreen> createState() => _OperationReviewScreenState();
@@ -23,9 +25,7 @@ class OperationReviewScreen extends StatefulWidget {
 
 class _OperationReviewScreenState extends State<OperationReviewScreen> {
   late String _shopId;
-  int _safety = 5;
-  int _guide = 5;
-  int _boat = 5;
+  int _stars = 5;
   final _comment = TextEditingController();
   bool _saving = false;
 
@@ -41,20 +41,40 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
     super.dispose();
   }
 
+  String? _resolveProductId(DiverStore store) {
+    final passed = widget.productId?.trim();
+    if (passed != null && passed.isNotEmpty) {
+      return passed;
+    }
+    final bookingId = widget.bookingId;
+    if (bookingId == null || bookingId.isEmpty) {
+      return null;
+    }
+    for (final booking in store.bookings) {
+      if (booking.id == bookingId && booking.productId.isNotEmpty) {
+        return booking.productId;
+      }
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     if (_saving) {
       return;
     }
     setState(() => _saving = true);
     final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
     try {
-      await DiverStoreScope.of(context).submitOperationReview(
+      // Same score on all Dive Star axes so shop aggregates stay consistent.
+      await store.submitOperationReview(
         shopId: _shopId,
-        safety: _safety,
-        guide: _guide,
-        boat: _boat,
+        safety: _stars,
+        guide: _stars,
+        boat: _stars,
         bookingId: widget.bookingId,
         logId: widget.logId,
+        productId: _resolveProductId(store),
         comment: _comment.text.trim().isEmpty ? null : _comment.text.trim(),
       );
       if (!mounted) {
@@ -111,25 +131,26 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
                 : null,
           ),
           const SizedBox(height: 24),
-          _ScoreRow(
-            label: l10n.reviewSafety,
-            value: _safety,
-            onChanged: (value) => setState(() => _safety = value),
-          ),
-          _ScoreRow(
-            label: l10n.reviewGuide,
-            value: _guide,
-            onChanged: (value) => setState(() => _guide = value),
-          ),
-          _ScoreRow(
-            label: l10n.reviewBoat,
-            value: _boat,
-            onChanged: (value) => setState(() => _boat = value),
+          Text(l10n.reviewStarsLabel, style: theme.textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              for (var i = 1; i <= 5; i++)
+                IconButton(
+                  key: Key('review-star-$i'),
+                  onPressed: () => setState(() => _stars = i),
+                  iconSize: 36,
+                  icon: Icon(
+                    i <= _stars ? Icons.star : Icons.star_border,
+                    color: const Color(0xFFC4A35A),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _comment,
-            maxLines: 3,
+            maxLines: 4,
             decoration: InputDecoration(
               labelText: l10n.reviewComment,
               border: const OutlineInputBorder(),
@@ -147,49 +168,12 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   }
 }
 
-class _ScoreRow extends StatelessWidget {
-  const _ScoreRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final int value;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              for (var i = 1; i <= 5; i++)
-                IconButton(
-                  onPressed: () => onChanged(i),
-                  icon: Icon(
-                    i <= value ? Icons.star : Icons.star_border,
-                    color: const Color(0xFFC4A35A),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 void openOperationReview(
   BuildContext context, {
   String? shopId,
   String? bookingId,
   String? logId,
+  String? productId,
 }) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(
@@ -197,12 +181,16 @@ void openOperationReview(
         shopId: shopId,
         bookingId: bookingId,
         logId: logId,
+        productId: productId,
       ),
     ),
   );
 }
 
 DiveShop? shopForSite(String siteName) {
-  final hits = DiveShopCatalog.search(query: siteName, continent: ContinentFilter.all);
+  final hits = DiveShopCatalog.search(
+    query: siteName,
+    continent: ContinentFilter.all,
+  );
   return hits.isEmpty ? null : hits.first;
 }

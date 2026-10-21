@@ -556,6 +556,8 @@ class ShopProduct {
     this.reviewedAt,
     this.reviewNote = '',
     this.submittedByUid = '',
+    this.guestRating = 0,
+    this.guestReviewCount = 0,
   });
 
   static const Object _unset = Object();
@@ -619,6 +621,8 @@ class ShopProduct {
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
       submittedByUid: data['submitted_by_uid'] as String? ?? '',
+      guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
+      guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -667,6 +671,10 @@ class ShopProduct {
 
   /// Diver/partner who submitted this trip for approval.
   final String submittedByUid;
+
+  /// Guest trip review average (1–5) and count on this product.
+  final double guestRating;
+  final int guestReviewCount;
 
   bool get isPendingApproval => publishStatus == ProductPublishStatus.pending;
 
@@ -1093,6 +1101,8 @@ class ShopProduct {
     DateTime? reviewedAt,
     String? reviewNote,
     String? submittedByUid,
+    double? guestRating,
+    int? guestReviewCount,
   }) {
     return ShopProduct(
       id: id,
@@ -1142,7 +1152,17 @@ class ShopProduct {
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
       submittedByUid: submittedByUid ?? this.submittedByUid,
+      guestRating: guestRating ?? this.guestRating,
+      guestReviewCount: guestReviewCount ?? this.guestReviewCount,
     );
+  }
+
+  /// Fold one guest star score (1–5) into product averages.
+  ShopProduct withGuestStarReview(int stars) {
+    final score = stars.clamp(1, 5).toDouble();
+    final nextCount = guestReviewCount + 1;
+    final nextAvg = ((guestRating * guestReviewCount) + score) / nextCount;
+    return copyWith(guestRating: nextAvg, guestReviewCount: nextCount);
   }
 
   Map<String, dynamic> toMap() {
@@ -1193,6 +1213,8 @@ class ShopProduct {
       if (reviewedAt != null) 'reviewed_at': reviewedAt!.toIso8601String(),
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
+      if (guestReviewCount > 0) 'guest_rating': guestRating,
+      if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
     };
   }
 

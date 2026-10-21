@@ -724,6 +724,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required int boat,
     String? bookingId,
     String? logId,
+    String? productId,
     String? comment,
   }) async {
     final shop = DiveShopCatalog.byId(shopId);
@@ -733,6 +734,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final bookingRef = bookingId == null || bookingId.isEmpty
         ? null
         : _bookings(uid).doc(bookingId);
+    final resolvedProductId = productId?.trim();
 
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(shopRef);
@@ -760,6 +762,18 @@ class FirestoreDiverRepository implements DiverRepository {
         boat: avgBoat,
         reviewCount: nextCount,
       );
+      final guestStars = ((safety + guide + boat) / 3).round().clamp(1, 5);
+      List<Map<String, dynamic>>? nextProducts;
+      if (resolvedProductId != null && resolvedProductId.isNotEmpty) {
+        final products = ShopProduct.listFrom(shopId, data['products']);
+        nextProducts = [
+          for (final item in products)
+            if (item.id == resolvedProductId)
+              item.withGuestStarReview(guestStars).toMap()
+            else
+              item.toMap(),
+        ];
+      }
       final review = <String, dynamic>{
         'uid': uid,
         'shop_id': shopId,
@@ -770,6 +784,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'comment': ?comment,
         'booking_id': ?bookingId,
         'log_id': ?logId,
+        'product_id': ?resolvedProductId,
         'created_at': FieldValue.serverTimestamp(),
       };
       transaction.set(reviewRef, review);
@@ -787,6 +802,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'avg_overall': avgOverall,
         'dive_star': diveStar,
         'safety_pass': avgSafety >= DiveStar.safetyPassThreshold,
+        'products': ?nextProducts,
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       if (bookingRef != null) {

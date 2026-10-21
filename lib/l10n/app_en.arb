@@ -183,17 +183,26 @@
       "shop": {"type": "String"}
     }
   },
-  "reviewTitle": "Operations review",
-  "reviewIntro": "Rate safety, the guide, and the boat so Dive Star can update.",
+  "reviewTitle": "Trip review",
+  "reviewIntro": "Pick a star rating and leave a short note.",
   "reviewShopLabel": "Resort / dive shop",
+  "reviewStarsLabel": "Rating",
+  "reviewNoReviewsYet": "No reviews yet",
+  "reviewCountLabel": "★ {rating} ({count} reviews)",
+  "@reviewCountLabel": {
+    "placeholders": {
+      "rating": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
   "reviewSafety": "1. Safety and gear",
   "reviewGuide": "2. Guide professionalism",
   "reviewBoat": "3. Boat and facilities",
-  "reviewComment": "Optional note",
-  "reviewSubmit": "Submit review",
+  "reviewComment": "Review (optional)",
+  "reviewSubmit": "Save",
   "reviewWrite": "Write review",
   "reviewDone": "Reviewed",
-  "reviewSaved": "Review saved. Dive Star will refresh.",
+  "reviewSaved": "Review saved.",
   "reviewSaveFailed": "Could not save the review.",
   "homeDiveStarSubtitle": "Ops average {rating} · {count} reviews",
   "proTitle": "Instructor C-Card verification",

@@ -521,6 +521,7 @@ class MemoryDiverRepository implements DiverRepository {
     required int boat,
     String? bookingId,
     String? logId,
+    String? productId,
     String? comment,
   }) async {
     final current = _shopStats[shopId];
@@ -529,6 +530,17 @@ class MemoryDiverRepository implements DiverRepository {
         ((current?.avgSafety ?? 0) * (count - 1) + safety) / count;
     final avgGuide = ((current?.avgGuide ?? 0) * (count - 1) + guide) / count;
     final avgBoat = ((current?.avgBoat ?? 0) * (count - 1) + boat) / count;
+    final guestStars = ((safety + guide + boat) / 3).round().clamp(1, 5);
+    final resolvedProductId = productId?.trim();
+    final products = [
+      for (final item in current?.products ?? const <ShopProduct>[])
+        if (resolvedProductId != null &&
+            resolvedProductId.isNotEmpty &&
+            item.id == resolvedProductId)
+          item.withGuestStarReview(guestStars)
+        else
+          item,
+    ];
     _shopStats[shopId] = ShopLiveStats(
       shopId: shopId,
       reviewCount: count,
@@ -547,6 +559,22 @@ class MemoryDiverRepository implements DiverRepository {
         reviewCount: count,
       ),
       plaqueStatus: current?.plaqueStatus ?? PlaqueStatus.none,
+      name: current?.name,
+      location: current?.location,
+      country: current?.country,
+      continent: current?.continent,
+      curated: current?.curated ?? false,
+      productName: current?.productName,
+      consumerPrice: current?.consumerPrice,
+      professionalPrice: current?.professionalPrice,
+      commissionRate: current?.commissionRate ?? 0.12,
+      internalScore: current?.internalScore ?? 0,
+      products: products,
+      intro: current?.intro,
+      address: current?.address,
+      coverUrl: current?.coverUrl,
+      galleryUrls: current?.galleryUrls ?? const [],
+      amenities: current?.amenities ?? const [],
     );
     if (bookingId != null) {
       final index = _bookings.indexWhere((item) => item.id == bookingId);

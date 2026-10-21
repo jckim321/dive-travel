@@ -196,6 +196,7 @@ class ProfileScreen extends StatelessWidget {
                                 context,
                                 shopId: booking.shopId,
                                 bookingId: booking.id,
+                                productId: booking.productId,
                               ),
                             ),
                         ],

@@ -607,14 +607,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reviewTitle => 'Operations review';
+  String get reviewTitle => 'Trip review';
 
   @override
-  String get reviewIntro =>
-      'Rate safety, the guide, and the boat so Dive Star can update.';
+  String get reviewIntro => 'Pick a star rating and leave a short note.';
 
   @override
   String get reviewShopLabel => 'Resort / dive shop';
+
+  @override
+  String get reviewStarsLabel => 'Rating';
+
+  @override
+  String get reviewNoReviewsYet => 'No reviews yet';
+
+  @override
+  String reviewCountLabel(String rating, int count) {
+    return '★ $rating ($count reviews)';
+  }
 
   @override
   String get reviewSafety => '1. Safety and gear';
@@ -626,10 +636,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewBoat => '3. Boat and facilities';
 
   @override
-  String get reviewComment => 'Optional note';
+  String get reviewComment => 'Review (optional)';
 
   @override
-  String get reviewSubmit => 'Submit review';
+  String get reviewSubmit => 'Save';
 
   @override
   String get reviewWrite => 'Write review';
@@ -638,7 +648,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewDone => 'Reviewed';
 
   @override
-  String get reviewSaved => 'Review saved. Dive Star will refresh.';
+  String get reviewSaved => 'Review saved.';
 
   @override
   String get reviewSaveFailed => 'Could not save the review.';

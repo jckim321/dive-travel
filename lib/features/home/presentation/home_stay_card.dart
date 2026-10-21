@@ -99,6 +99,20 @@ class HomeStayCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: 2),
+          Text(
+            shop.reviewCount > 0
+                ? l10n.reviewCountLabel(
+                    shop.rating.toStringAsFixed(1),
+                    shop.reviewCount,
+                  )
+                : l10n.reviewNoReviewsYet,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF6B7280),
+            ),
+          ),
         ],
       ),
     );

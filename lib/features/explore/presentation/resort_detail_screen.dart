@@ -57,6 +57,13 @@ class ResortDetailScreen extends StatelessWidget {
         final products =
             store.liveStatsFor(hull.hullId)?.products ?? const <ShopProduct>[];
         final rooms = SameBoatBoard.offers(products).length;
+        final hero = _heroProduct(products);
+        final ratingValue = hero != null && hero.guestReviewCount > 0
+            ? hero.guestRating
+            : hull.rating;
+        final ratingCount = hero != null && hero.guestReviewCount > 0
+            ? hero.guestReviewCount
+            : hull.reviewCount;
 
         return Scaffold(
           appBar: AppBar(
@@ -105,12 +112,12 @@ class ResortDetailScreen extends StatelessWidget {
                     Chip(
                       visualDensity: VisualDensity.compact,
                       label: Text(
-                        hull.reviewCount > 0
-                            ? l10n.exploreRating(
-                                hull.rating.toStringAsFixed(2),
-                                hull.reviewCount,
+                        ratingCount > 0
+                            ? l10n.reviewCountLabel(
+                                ratingValue.toStringAsFixed(1),
+                                ratingCount,
                               )
-                            : l10n.exploreListingPendingReview,
+                            : l10n.reviewNoReviewsYet,
                       ),
                     ),
                     Chip(
@@ -821,6 +828,18 @@ class _ProductBox extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(shop.productName, style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              product.guestReviewCount > 0
+                  ? l10n.reviewCountLabel(
+                      product.guestRating.toStringAsFixed(1),
+                      product.guestReviewCount,
+                    )
+                  : l10n.reviewNoReviewsYet,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF6B7280),
+              ),
+            ),
             if (shop.blurb.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(shop.blurb, style: theme.textTheme.bodySmall),

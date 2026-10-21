@@ -1170,16 +1170,16 @@ abstract class AppLocalizations {
   /// **'출국 D-{days} · {shop}'**
   String exploreDepartureBanner(int days, String shop);
 
-  /// 3대 항목 별점 화면 제목입니다.
+  /// 다녀온 여행 별점·후기 화면 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'오퍼레이션 리뷰'**
+  /// **'여행 후기'**
   String get reviewTitle;
 
   /// No description provided for @reviewIntro.
   ///
   /// In ko, this message translates to:
-  /// **'다녀온 샵의 안전·가이드·보트를 평가하면 Dive Star가 다시 계산됩니다.'**
+  /// **'별점을 고르고 짧은 후기를 남겨 주세요.'**
   String get reviewIntro;
 
   /// No description provided for @reviewShopLabel.
@@ -1187,6 +1187,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'리조트 / 다이브샵'**
   String get reviewShopLabel;
+
+  /// 후기 화면의 별점(1~5) 라벨입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'별점'**
+  String get reviewStarsLabel;
+
+  /// 상품·목록에 후기가 없을 때 표시합니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 후기 없음'**
+  String get reviewNoReviewsYet;
+
+  /// 평균 별점과 후기 개수입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'★ {rating} (후기 {count}개)'**
+  String reviewCountLabel(String rating, int count);
 
   /// No description provided for @reviewSafety.
   ///
@@ -1209,13 +1227,13 @@ abstract class AppLocalizations {
   /// No description provided for @reviewComment.
   ///
   /// In ko, this message translates to:
-  /// **'한 줄 후기 (선택)'**
+  /// **'후기 (선택)'**
   String get reviewComment;
 
   /// No description provided for @reviewSubmit.
   ///
   /// In ko, this message translates to:
-  /// **'리뷰 등록'**
+  /// **'저장'**
   String get reviewSubmit;
 
   /// No description provided for @reviewWrite.
@@ -1233,13 +1251,13 @@ abstract class AppLocalizations {
   /// No description provided for @reviewSaved.
   ///
   /// In ko, this message translates to:
-  /// **'리뷰가 반영되었습니다. Dive Star가 갱신됩니다.'**
+  /// **'후기가 저장되었습니다.'**
   String get reviewSaved;
 
   /// No description provided for @reviewSaveFailed.
   ///
   /// In ko, this message translates to:
-  /// **'리뷰 저장에 실패했습니다.'**
+  /// **'후기 저장에 실패했습니다.'**
   String get reviewSaveFailed;
 
   /// 홈 추천 리조트 서브타이틀입니다.

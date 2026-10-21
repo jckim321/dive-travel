@@ -398,6 +398,7 @@ class _BookingDetailSheet extends StatelessWidget {
                       context,
                       shopId: booking.shopId,
                       bookingId: booking.id,
+                      productId: booking.productId,
                     );
                   },
                   style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),

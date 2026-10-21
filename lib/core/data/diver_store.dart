@@ -464,6 +464,8 @@ class DiverStore extends ChangeNotifier {
           : hull.durationLabel,
       coverUrl: cover,
       galleryUrls: gallery.isNotEmpty ? gallery : hull.galleryUrls,
+      rating: product.guestReviewCount > 0 ? product.guestRating : 0,
+      reviewCount: product.guestReviewCount,
     );
   }
 
@@ -758,6 +760,7 @@ class DiverStore extends ChangeNotifier {
     required int boat,
     String? bookingId,
     String? logId,
+    String? productId,
     String? comment,
   }) async {
     final uid = _uid;
@@ -772,6 +775,7 @@ class DiverStore extends ChangeNotifier {
       boat: boat,
       bookingId: bookingId,
       logId: logId,
+      productId: productId,
       comment: comment,
     );
   }
