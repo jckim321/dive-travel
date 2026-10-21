@@ -2191,6 +2191,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingEntryTermsToggle => 'Includes & excludes';
 
   @override
+  String get bookingEntryIndividuals => 'A la carte';
+
+  @override
+  String get bookingEntryIndividualsHint =>
+      'Courses, day dives, and other items sold separately from the package.';
+
+  @override
+  String get bookingEntryAddIndividual => 'Add a la carte item';
+
+  @override
+  String get bookingEntryIndividualName => 'Item name';
+
+  @override
   String get bookingEntryStayLength => 'Trip length';
 
   @override

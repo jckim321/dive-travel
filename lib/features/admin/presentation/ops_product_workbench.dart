@@ -77,6 +77,106 @@ class _LineEditors {
   }
 }
 
+class _IndividualTicket {
+  _IndividualTicket({
+    String? id,
+    String name = '',
+    String consumer = '',
+    String includes = '',
+    String excludes = '',
+  }) : id = id ?? 'ind-${DateTime.now().microsecondsSinceEpoch}',
+       name = TextEditingController(text: name),
+       consumer = TextEditingController(text: consumer),
+       includes = TextEditingController(text: includes),
+       excludes = TextEditingController(text: excludes);
+
+  factory _IndividualTicket.fromOption(ShopProductOption option) {
+    final raw = option.description.trim();
+    var includes = '';
+    var excludes = '';
+    final includeMatch = RegExp(r'포함\s*[:：]?\s*([\s\S]*?)(?=불포함\s*[:：]|$)')
+        .firstMatch(raw);
+    final excludeMatch = RegExp(r'불포함\s*[:：]?\s*([\s\S]*)$').firstMatch(raw);
+    if (includeMatch != null || excludeMatch != null) {
+      includes = includeMatch?.group(1)?.trim() ?? '';
+      excludes = excludeMatch?.group(1)?.trim() ?? '';
+    } else {
+      includes = raw;
+    }
+    return _IndividualTicket(
+      id: option.id,
+      name: option.name,
+      consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
+      includes: includes,
+      excludes: excludes,
+    );
+  }
+
+  final String id;
+  final TextEditingController name;
+  final TextEditingController consumer;
+  final TextEditingController includes;
+  final TextEditingController excludes;
+  int nights = 0;
+  DateTime? checkIn;
+  int guests = 1;
+  bool hasNondivers = false;
+  int nondivers = 0;
+  int children = 0;
+
+  String get nightsLabel {
+    if (nights <= 0) {
+      return '1일';
+    }
+    return '$nights박 ${nights + 1}일';
+  }
+
+  DateTime? get checkOut {
+    final start = checkIn;
+    if (start == null) {
+      return null;
+    }
+    return DateTime(
+      start.year,
+      start.month,
+      start.day,
+    ).add(Duration(days: nights));
+  }
+
+  int get previewHeads {
+    final extra = hasNondivers ? (nondivers + children) : 0;
+    return guests + extra;
+  }
+
+  String get descriptionText {
+    final inc = includes.text.trim();
+    final exc = excludes.text.trim();
+    return [
+      if (inc.isNotEmpty) '포함:\n$inc',
+      if (exc.isNotEmpty) '불포함:\n$exc',
+    ].join('\n\n');
+  }
+
+  ShopProductOption toOption() {
+    return ShopProductOption(
+      id: id,
+      name: name.text.trim(),
+      description: descriptionText,
+      consumerPrice: int.tryParse(consumer.text) ?? 0,
+      professionalPrice: int.tryParse(consumer.text) ?? 0,
+      kind: ProductOptionKind.individual,
+      bookable: true,
+    );
+  }
+
+  void dispose() {
+    name.dispose();
+    consumer.dispose();
+    includes.dispose();
+    excludes.dispose();
+  }
+}
+
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _sectionCount = 6;
   static const _kBoxRadius = 2.0;
@@ -98,7 +198,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _rateConsumer = <GuestRole, TextEditingController>{};
   final _ratePro = <GuestRole, TextEditingController>{};
   final _addons = <_LineEditors>[];
-  final _individuals = <_LineEditors>[];
+  final _individuals = <_IndividualTicket>[];
   final _photoPicker = const DivePhotoPicker();
   final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
@@ -217,35 +317,40 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         (_rateEnabled[GuestRole.nondiver] ?? false) ||
         (_rateEnabled[GuestRole.child] ?? false);
     for (final option in existing?.options ?? const <ShopProductOption>[]) {
-      final line = _LineEditors(
-        id: option.id,
-        name: option.name,
-        description: option.description,
-        consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
-        professional: option.professionalPrice > 0
-            ? '${option.professionalPrice}'
-            : '',
-        kind: option.kind,
-        bookable: option.bookable,
-      );
       if (option.kind == ProductOptionKind.individual) {
-        _individuals.add(line);
-      } else if (option.kind != ProductOptionKind.basePackage) {
-        _addons.add(line);
+        _individuals.add(_IndividualTicket.fromOption(option));
+        continue;
       }
+      if (option.kind == ProductOptionKind.basePackage) {
+        continue;
+      }
+      _addons.add(
+        _LineEditors(
+          id: option.id,
+          name: option.name,
+          description: option.description,
+          consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
+          professional: option.professionalPrice > 0
+              ? '${option.professionalPrice}'
+              : '',
+          kind: option.kind,
+          bookable: option.bookable,
+        ),
+      );
     }
     if (_addons.isEmpty) {
       _addons.add(_LineEditors(kind: ProductOptionKind.addon));
     }
-    if (_individuals.isEmpty) {
-      _individuals.add(_LineEditors(kind: ProductOptionKind.individual));
-    }
-    for (final line in [..._addons, ..._individuals]) {
-      _watchLine(line);
-    }
     for (final line in _addons) {
+      _watchLine(line);
       _listen(line.consumer);
       _addonQty.putIfAbsent(line.id, () => 0);
+    }
+    for (final ticket in _individuals) {
+      _listen(ticket.name);
+      _listen(ticket.consumer);
+      _listen(ticket.includes);
+      _listen(ticket.excludes);
     }
     _listen(_name);
     _listen(_blurb);
@@ -331,6 +436,91 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       item.dispose();
     }
     super.dispose();
+  }
+
+  void _dropIndividual(_IndividualTicket ticket) {
+    ticket.name.removeListener(_onDraftChanged);
+    ticket.consumer.removeListener(_onDraftChanged);
+    ticket.includes.removeListener(_onDraftChanged);
+    ticket.excludes.removeListener(_onDraftChanged);
+    _draftListeners.remove(ticket.name);
+    _draftListeners.remove(ticket.consumer);
+    _draftListeners.remove(ticket.includes);
+    _draftListeners.remove(ticket.excludes);
+    ticket.dispose();
+  }
+
+  void _addIndividualTicket() {
+    final ticket = _IndividualTicket();
+    _listen(ticket.name);
+    _listen(ticket.consumer);
+    _listen(ticket.includes);
+    _listen(ticket.excludes);
+    setState(() => _individuals.add(ticket));
+  }
+
+  BookingQuote _individualQuote(_IndividualTicket ticket) {
+    final option = ticket.toOption();
+    final heads = ticket.previewHeads < 1 ? 1 : ticket.previewHeads;
+    final price = option.consumerPrice;
+    return BookingQuote.compute(
+      product: ShopProduct(
+        id: 'draft-ind',
+        shopId: _shopId,
+        name: option.name.isEmpty ? '—' : option.name,
+        consumerPrice: price,
+        professionalPrice: price,
+        options: [option],
+      ),
+      professional: false,
+      divers: 0,
+      nondivers: 0,
+      children: 0,
+      infants: 0,
+      bookPackage: false,
+      selectedOptionIds: {option.id},
+      optionQuantities: {option.id: heads},
+    );
+  }
+
+  Future<void> _pickIndividualDate(
+    _IndividualTicket ticket, {
+    required bool checkout,
+  }) async {
+    final initial = checkout
+        ? (ticket.checkOut ?? ticket.checkIn ?? DateTime.now())
+        : (ticket.checkIn ?? DateTime.now());
+    final first = checkout && ticket.checkIn != null
+        ? ticket.checkIn!
+        : DateTime.now().subtract(const Duration(days: 1));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(first) ? first : initial,
+      firstDate: first,
+      lastDate: DateTime.now().add(const Duration(days: 730)),
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() {
+      if (checkout) {
+        final start = ticket.checkIn;
+        if (start == null) {
+          ticket.checkIn = DateTime(picked.year, picked.month, picked.day);
+          ticket.nights = 0;
+        } else {
+          final checkIn = DateTime(start.year, start.month, start.day);
+          final checkOut = DateTime(picked.year, picked.month, picked.day);
+          var nights = checkOut.difference(checkIn).inDays;
+          if (nights < 0) {
+            nights = 0;
+          }
+          ticket.nights = nights;
+        }
+      } else {
+        ticket.checkIn = DateTime(picked.year, picked.month, picked.day);
+      }
+    });
   }
 
   static String _seedDetailBody(ShopProduct? existing) {
@@ -434,9 +624,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('사진 선택 실패: $error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('사진 선택 실패: $error')));
     }
   }
 
@@ -480,9 +669,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (_seatOptionId.isEmpty) {
       return '';
     }
-    for (final draft in [..._addons, ..._individuals]) {
+    for (final draft in _addons) {
       if (draft.id == _seatOptionId && draft.name.text.trim().isNotEmpty) {
         return draft.id;
+      }
+    }
+    for (final ticket in _individuals) {
+      if (ticket.id == _seatOptionId && ticket.name.text.trim().isNotEmpty) {
+        return ticket.id;
       }
     }
     return '';
@@ -702,9 +896,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         for (final draft in _addons)
           if (draft.name.text.trim().isNotEmpty)
             draft.toOption().copyWith(kind: ProductOptionKind.addon),
-        for (final draft in _individuals)
-          if (draft.name.text.trim().isNotEmpty)
-            draft.toOption().copyWith(kind: ProductOptionKind.individual),
+        for (final ticket in _individuals)
+          if (ticket.name.text.trim().isNotEmpty) ticket.toOption(),
       ];
       var shopId = _shopId;
       if (_namedResort) {
@@ -953,11 +1146,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _brief(
-    AppLocalizations l10n,
-    List<DiveShop> shops,
-    bool shopLocked,
-  ) {
+  Widget _brief(AppLocalizations l10n, List<DiveShop> shops, bool shopLocked) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
@@ -1025,9 +1214,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 label: l10n.workbenchCatResort,
                 icon: Icons.apartment_outlined,
                 selected: _category == ProductCategory.resortPackage,
-                onTap: () => setState(
-                  () => _category = ProductCategory.resortPackage,
-                ),
+                onTap: () =>
+                    setState(() => _category = ProductCategory.resortPackage),
               ),
             ),
             const SizedBox(width: 10),
@@ -1036,9 +1224,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 label: l10n.workbenchCatLiveaboard,
                 icon: Icons.directions_boat_outlined,
                 selected: _category == ProductCategory.liveaboard,
-                onTap: () => setState(
-                  () => _category = ProductCategory.liveaboard,
-                ),
+                onTap: () =>
+                    setState(() => _category = ProductCategory.liveaboard),
               ),
             ),
           ],
@@ -1108,9 +1295,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exploreResortAddress)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.exploreResortAddress)));
       return;
     }
     final uri = Uri.parse(
@@ -1118,9 +1304,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workbenchOpenMap)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.workbenchOpenMap)));
     }
   }
 
@@ -1145,7 +1330,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           children: [
             Row(
               children: [
-                const Icon(Icons.place_outlined, color: AppTheme.gold, size: 20),
+                const Icon(
+                  Icons.place_outlined,
+                  color: AppTheme.gold,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1351,8 +1540,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Set<String> get _previewAddonIds {
     return {
       for (final draft in _addons)
-        if (draft.name.text.trim().isNotEmpty &&
-            (_addonQty[draft.id] ?? 0) > 0)
+        if (draft.name.text.trim().isNotEmpty && (_addonQty[draft.id] ?? 0) > 0)
           draft.id,
     };
   }
@@ -1369,7 +1557,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       selectedOptionIds: _previewAddonIds,
       optionQuantities: {
         for (final draft in _addons)
-          if (draft.name.text.trim().isNotEmpty) draft.id: _addonQty[draft.id] ?? 0,
+          if (draft.name.text.trim().isNotEmpty)
+            draft.id: _addonQty[draft.id] ?? 0,
       },
     );
   }
@@ -1411,8 +1600,373 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _bookingEntryBlock(AppLocalizations l10n) {
     final emptyName = _name.text.trim().isEmpty;
-    final packageName = emptyName ? l10n.partnerDefaultProduct : _name.text.trim();
+    final packageName = emptyName
+        ? l10n.partnerDefaultProduct
+        : _name.text.trim();
     final quote = _previewQuote;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(_kBoxRadius),
+            border: Border.all(color: const Color(0xFFE2E8EE)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppTheme.oceanDeep,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(_kBoxRadius),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.bookingEntryBasePackage,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        packageName,
+                        style: TextStyle(
+                          color: emptyName
+                              ? Colors.white.withValues(alpha: 0.45)
+                              : Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.goldSoft,
+                              borderRadius: BorderRadius.circular(_kBoxRadius),
+                            ),
+                            child: Text(
+                              _nightsLabel,
+                              style: const TextStyle(
+                                color: AppTheme.navy,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _rateConsumer[GuestRole.diver],
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                              cursorColor: AppTheme.gold,
+                              decoration: InputDecoration(
+                                labelText: l10n.bookingEntryDiverPrice,
+                                labelStyle: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.75),
+                                  fontSize: 12,
+                                ),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    _kBoxRadius,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    _kBoxRadius,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.gold,
+                                    width: 1.4,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _stayDateStrip(l10n),
+                    const SizedBox(height: 8),
+                    Theme(
+                      data: Theme.of(context)
+                          .copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: const EdgeInsets.only(bottom: 4),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(
+                          l10n.bookingEntryTermsToggle,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        children: [
+                          TextField(
+                            controller: _includes,
+                            minLines: 2,
+                            maxLines: 4,
+                            decoration: _bookingDense(
+                              l10n.productFormIncludes,
+                              hint: l10n.productFormIncludesHint,
+                              lines: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _excludes,
+                            minLines: 2,
+                            maxLines: 4,
+                            decoration: _bookingDense(
+                              l10n.productFormExcludes,
+                              hint: l10n.productFormExcludesHint,
+                              lines: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.checkoutGuests,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _guestStepperRow(
+                      label: l10n.workbenchGuestDiver,
+                      value: _previewDiver,
+                      onChanged: (v) =>
+                          setState(() => _previewDiver = v < 1 ? 1 : v),
+                      priceLabel: l10n.bookingEntryUnitPrice,
+                      priceText:
+                          _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
+                          ? '—'
+                          : _rateConsumer[GuestRole.diver]!.text.trim(),
+                    ),
+                    const SizedBox(height: 4),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F8FA),
+                        borderRadius: BorderRadius.circular(_kBoxRadius),
+                        border: Border.all(color: const Color(0xFFE2E8EE)),
+                      ),
+                      child: Column(
+                        children: [
+                          SwitchListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                            ),
+                            dense: true,
+                            visualDensity: VisualDensity.compact,
+                            title: Text(
+                              l10n.bookingEntryHasNondivers,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            value: _hasNondivers,
+                            onChanged: _setHasNondivers,
+                          ),
+                          if (_hasNondivers) ...[
+                            const Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                              child: Column(
+                                children: [
+                                  _guestStepperRow(
+                                    label: l10n.bookingEntryAdultNondiver,
+                                    value: _previewNondiver,
+                                    onChanged: (v) =>
+                                        setState(() => _previewNondiver = v),
+                                    priceField:
+                                        _rateConsumer[GuestRole.nondiver],
+                                    priceLabel: l10n.bookingEntryUnitPrice,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _guestStepperRow(
+                                    label: l10n.bookingEntryChildInfant,
+                                    value: _previewChild,
+                                    onChanged: (v) =>
+                                        setState(() => _previewChild = v),
+                                    priceField: _rateConsumer[GuestRole.child],
+                                    priceLabel: l10n.bookingEntryUnitPrice,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.bookingEntryAddons,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    for (var i = 0; i < _addons.length; i++) ...[
+                      _bookingAddonRow(l10n, i),
+                      const SizedBox(height: 4),
+                    ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          final line = _LineEditors(
+                            kind: ProductOptionKind.addon,
+                          );
+                          _watchLine(line);
+                          _listen(line.consumer);
+                          setState(() {
+                            _addons.add(line);
+                            _addonQty[line.id] = 0;
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(l10n.bookingEntryAddOption),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: AppTheme.navy,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(_kBoxRadius),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.checkoutTotal('${quote.total}'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.bookingEntryPreviewSnack),
+                            ),
+                          );
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.gold,
+                          foregroundColor: AppTheme.navy,
+                          minimumSize: const Size(0, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        child: Text(l10n.exploreBook),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                child: TextField(
+                  controller: _cancel,
+                  maxLines: 1,
+                  decoration: _bookingDense(
+                    l10n.productFormCancelNote,
+                    hint: l10n.productFormCancelHint,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.bookingEntryIndividuals,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.bookingEntryIndividualsHint,
+          style: const TextStyle(
+            color: AppTheme.muted,
+            fontSize: 12,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 10),
+        for (var i = 0; i < _individuals.length; i++) ...[
+          _individualTicketCard(l10n, i),
+          const SizedBox(height: 10),
+        ],
+        OutlinedButton.icon(
+          onPressed: _addIndividualTicket,
+          icon: const Icon(Icons.add),
+          label: Text(l10n.bookingEntryAddIndividual),
+        ),
+      ],
+    );
+  }
+
+  Widget _individualTicketCard(AppLocalizations l10n, int index) {
+    final ticket = _individuals[index];
+    final emptyName = ticket.name.text.trim().isEmpty;
+    final quote = _individualQuote(ticket);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1423,39 +1977,64 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppTheme.oceanDeep,
-              borderRadius: const BorderRadius.vertical(
+            decoration: const BoxDecoration(
+              color: AppTheme.navyMid,
+              borderRadius: BorderRadius.vertical(
                 top: Radius.circular(_kBoxRadius),
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l10n.bookingEntryBasePackage,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.bookingEntryIndividuals,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        color: Colors.white70,
+                        onPressed: () {
+                          setState(() {
+                            _dropIndividual(ticket);
+                            _individuals.removeAt(index);
+                          });
+                        },
+                        icon: const Icon(Icons.close, size: 18),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    packageName,
+                  TextField(
+                    controller: ticket.name,
                     style: TextStyle(
                       color: emptyName
                           ? Colors.white.withValues(alpha: 0.45)
                           : Colors.white,
                       fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      height: 1.2,
+                      fontSize: 16,
                     ),
+                    cursorColor: AppTheme.gold,
+                    decoration: InputDecoration(
+                      hintText: l10n.bookingEntryIndividualName,
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
+                      isDense: true,
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (_) => setState(() {}),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Container(
@@ -1468,7 +2047,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           borderRadius: BorderRadius.circular(_kBoxRadius),
                         ),
                         child: Text(
-                          _nightsLabel,
+                          ticket.nightsLabel,
                           style: const TextStyle(
                             color: AppTheme.navy,
                             fontWeight: FontWeight.w800,
@@ -1476,10 +2055,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
-                          controller: _rateConsumer[GuestRole.diver],
+                          controller: ticket.consumer,
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
@@ -1525,14 +2104,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _stayDateStrip(l10n),
-                const SizedBox(height: 8),
+                _individualDateStrip(l10n, ticket),
+                const SizedBox(height: 6),
                 Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  data: Theme.of(context)
+                      .copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     tilePadding: EdgeInsets.zero,
                     childrenPadding: const EdgeInsets.only(bottom: 4),
@@ -1547,7 +2127,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ),
                     children: [
                       TextField(
-                        controller: _includes,
+                        controller: ticket.includes,
                         minLines: 2,
                         maxLines: 4,
                         decoration: _bookingDense(
@@ -1558,7 +2138,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       ),
                       const SizedBox(height: 6),
                       TextField(
-                        controller: _excludes,
+                        controller: ticket.excludes,
                         minLines: 2,
                         maxLines: 4,
                         decoration: _bookingDense(
@@ -1570,7 +2150,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
                   l10n.checkoutGuests,
                   style: const TextStyle(
@@ -1581,13 +2160,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 const SizedBox(height: 4),
                 _guestStepperRow(
                   label: l10n.workbenchGuestDiver,
-                  value: _previewDiver,
+                  value: ticket.guests,
                   onChanged: (v) =>
-                      setState(() => _previewDiver = v < 1 ? 1 : v),
-                  priceLabel: l10n.bookingEntryUnitPrice,
-                  priceText: _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
+                      setState(() => ticket.guests = v < 1 ? 1 : v),
+                  priceText: ticket.consumer.text.trim().isEmpty
                       ? '—'
-                      : _rateConsumer[GuestRole.diver]!.text.trim(),
+                      : ticket.consumer.text.trim(),
                 ),
                 const SizedBox(height: 4),
                 DecoratedBox(
@@ -1608,10 +2186,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           l10n.bookingEntryHasNondivers,
                           style: const TextStyle(fontSize: 13),
                         ),
-                        value: _hasNondivers,
-                        onChanged: _setHasNondivers,
+                        value: ticket.hasNondivers,
+                        onChanged: (value) {
+                          setState(() {
+                            ticket.hasNondivers = value;
+                            if (!value) {
+                              ticket.nondivers = 0;
+                              ticket.children = 0;
+                            }
+                          });
+                        },
                       ),
-                      if (_hasNondivers) ...[
+                      if (ticket.hasNondivers) ...[
                         const Divider(height: 1),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
@@ -1619,59 +2205,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             children: [
                               _guestStepperRow(
                                 label: l10n.bookingEntryAdultNondiver,
-                                value: _previewNondiver,
+                                value: ticket.nondivers,
                                 onChanged: (v) =>
-                                    setState(() => _previewNondiver = v),
-                                priceField: _rateConsumer[GuestRole.nondiver],
-                                priceLabel: l10n.bookingEntryUnitPrice,
+                                    setState(() => ticket.nondivers = v),
+                                priceText: ticket.consumer.text.trim().isEmpty
+                                    ? '—'
+                                    : ticket.consumer.text.trim(),
                               ),
                               const SizedBox(height: 4),
                               _guestStepperRow(
                                 label: l10n.bookingEntryChildInfant,
-                                value: _previewChild,
+                                value: ticket.children,
                                 onChanged: (v) =>
-                                    setState(() => _previewChild = v),
-                                priceField: _rateConsumer[GuestRole.child],
-                                priceLabel: l10n.bookingEntryUnitPrice,
+                                    setState(() => ticket.children = v),
+                                priceText: ticket.consumer.text.trim().isEmpty
+                                    ? '—'
+                                    : ticket.consumer.text.trim(),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.bookingEntryAddons,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                for (var i = 0; i < _addons.length; i++) ...[
-                  _bookingAddonRow(l10n, i),
-                  const SizedBox(height: 4),
-                ],
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      final line = _LineEditors(kind: ProductOptionKind.addon);
-                      _watchLine(line);
-                      _listen(line.consumer);
-                      setState(() {
-                        _addons.add(line);
-                        _addonQty[line.id] = 0;
-                      });
-                    },
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(l10n.bookingEntryAddOption),
                   ),
                 ),
               ],
@@ -1716,18 +2271,84 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-            child: TextField(
-              controller: _cancel,
-              maxLines: 1,
-              decoration: _bookingDense(
-                l10n.productFormCancelNote,
-                hint: l10n.productFormCancelHint,
+        ],
+      ),
+    );
+  }
+
+  Widget _individualDateStrip(AppLocalizations l10n, _IndividualTicket ticket) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(_kBoxRadius),
+        border: Border.all(color: const Color(0xFFE2E8EE)),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            Expanded(
+              child: _dateCell(
+                label: l10n.bookingEntryCheckIn,
+                value: ticket.checkIn == null
+                    ? l10n.bookingEntryPickDate
+                    : _fmtDay(ticket.checkIn),
+                onTap: () => _pickIndividualDate(ticket, checkout: false),
               ),
             ),
-          ),
-        ],
+            Container(width: 1, color: const Color(0xFFE2E8EE)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                    onPressed: ticket.nights <= 0
+                        ? null
+                        : () => setState(() => ticket.nights -= 1),
+                    icon: const Icon(Icons.remove, size: 16),
+                  ),
+                  Text(
+                    ticket.nightsLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                      color: AppTheme.navy,
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                    onPressed: () => setState(() => ticket.nights += 1),
+                    icon: const Icon(Icons.add, size: 16),
+                  ),
+                ],
+              ),
+            ),
+            Container(width: 1, color: const Color(0xFFE2E8EE)),
+            Expanded(
+              child: _dateCell(
+                label: l10n.bookingEntryCheckOut,
+                value: ticket.checkOut == null
+                    ? l10n.bookingEntryPickDate
+                    : _fmtDay(ticket.checkOut),
+                onTap: ticket.checkIn == null
+                    ? null
+                    : () => _pickIndividualDate(ticket, checkout: true),
+                muted: ticket.checkIn == null,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1787,8 +2408,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           minWidth: 28,
                           minHeight: 28,
                         ),
-                        onPressed: () =>
-                            _setPackageNights(_packageNights + 1),
+                        onPressed: () => _setPackageNights(_packageNights + 1),
                         icon: const Icon(Icons.add, size: 16),
                       ),
                     ],
@@ -2087,106 +2707,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         const SizedBox(height: 4),
         Text(l10n.workbenchBasePackageHint),
         Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
-        const SizedBox(height: 16),
-        Text(
-          l10n.workbenchIndividuals,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        for (var i = 0; i < _individuals.length; i++)
-          _lineCard(l10n, _individuals, i),
-        OutlinedButton(
-          onPressed: () {
-            final line = _LineEditors(kind: ProductOptionKind.individual);
-            _watchLine(line);
-            setState(() => _individuals.add(line));
-          },
-          child: Text(l10n.productFormAddOption),
-        ),
       ],
     );
   }
 
-  Widget _lineCard(AppLocalizations l10n, List<_LineEditors> list, int index) {
-    final editors = list[index];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(_kBoxRadius),
-          border: Border.all(color: const Color(0xFFE7E7E7)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              TextField(
-                controller: editors.name,
-                decoration: InputDecoration(
-                  labelText: l10n.productFormOptionName,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: editors.description,
-                decoration: InputDecoration(
-                  labelText: l10n.productFormOptionDesc,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: editors.consumer,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        labelText: l10n.productFormOptionConsumer,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: editors.professional,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        labelText: l10n.productFormOptionPro,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.workbenchBookable),
-                value: editors.bookable,
-                onChanged: (value) => setState(() => editors.bookable = value),
-              ),
-              if (list.length > 1)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      final line = list.removeAt(index);
-                      setState(() => _dropLine(line));
-                    },
-                    child: Text(l10n.productFormRemoveOption),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _seatsBlock(AppLocalizations l10n) {
-    final named = [
-      for (final draft in [..._addons, ..._individuals])
-        if (draft.name.text.trim().isNotEmpty) draft,
+    final named = <MapEntry<String, String>>[
+      for (final draft in _addons)
+        if (draft.name.text.trim().isNotEmpty)
+          MapEntry(draft.id, draft.name.text.trim()),
+      for (final ticket in _individuals)
+        if (ticket.name.text.trim().isNotEmpty)
+          MapEntry(ticket.id, ticket.name.text.trim()),
     ];
     final seatValue = _resolvedSeatOptionId;
     return Column(
@@ -2203,17 +2735,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         if (_openEmptySeats) ...[
           DropdownButtonFormField<String>(
             key: ValueKey(
-              'seat-$seatValue-${named.map((d) => d.id).join(',')}',
+              'seat-$seatValue-${named.map((d) => d.key).join(',')}',
             ),
             initialValue: seatValue,
             decoration: _field(l10n.workbenchSeatOption),
             items: [
               DropdownMenuItem(value: '', child: Text(l10n.workbenchSeatBase)),
-              for (final draft in named)
-                DropdownMenuItem(
-                  value: draft.id,
-                  child: Text(draft.name.text.trim()),
-                ),
+              for (final entry in named)
+                DropdownMenuItem(value: entry.key, child: Text(entry.value)),
             ],
             onChanged: (value) => setState(() => _seatOptionId = value ?? ''),
           ),
@@ -2424,7 +2953,11 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
     }
     final wrapped = '$left$selected$right';
     final start = selection.start;
-    final next = value.text.replaceRange(selection.start, selection.end, wrapped);
+    final next = value.text.replaceRange(
+      selection.start,
+      selection.end,
+      wrapped,
+    );
     widget.controller.value = TextEditingValue(
       text: next,
       selection: TextSelection(
@@ -2466,7 +2999,8 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
     return maxDay + 1;
   }
 
-  static const _tableSchedule = '| 시간 | 내용 |\n| --- | --- |\n|  |  |\n|  |  |\n';
+  static const _tableSchedule =
+      '| 시간 | 내용 |\n| --- | --- |\n|  |  |\n|  |  |\n';
   static const _tableInclude =
       '| 포함 | 불포함 |\n| --- | --- |\n|  |  |\n|  |  |\n';
 
@@ -2493,9 +3027,7 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
               children: [
                 IconButton(
                   tooltip: l10n.detailComposerBold,
-                  onPressed: _preview
-                      ? null
-                      : () => _wrapSelection('**', '**'),
+                  onPressed: _preview ? null : () => _wrapSelection('**', '**'),
                   icon: const Icon(Icons.format_bold, size: 20),
                 ),
                 IconButton(
@@ -2609,9 +3141,7 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
             minLines: 10,
             maxLines: 24,
             onChanged: (_) => _notify(),
-            decoration: widget.decoration.copyWith(
-              alignLabelWithHint: true,
-            ),
+            decoration: widget.decoration.copyWith(alignLabelWithHint: true),
           ),
       ],
     );
@@ -2685,4 +3215,3 @@ class _CategoryPick extends StatelessWidget {
     );
   }
 }
-

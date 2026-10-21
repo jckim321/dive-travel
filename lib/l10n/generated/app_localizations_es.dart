@@ -2151,6 +2151,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get bookingEntryTermsToggle => '포함 · 불포함';
 
   @override
+  String get bookingEntryIndividuals => '개별 상품';
+
+  @override
+  String get bookingEntryIndividualsHint => '패키지 없이 교육·원데이 다이빙처럼 따로 파는 상품입니다.';
+
+  @override
+  String get bookingEntryAddIndividual => '개별 상품 추가';
+
+  @override
+  String get bookingEntryIndividualName => '개별 상품명';
+
+  @override
   String get bookingEntryStayLength => '여행 기간';
 
   @override

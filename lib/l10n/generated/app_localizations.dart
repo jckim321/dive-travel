@@ -4068,6 +4068,30 @@ abstract class AppLocalizations {
   /// **'포함 · 불포함'**
   String get bookingEntryTermsToggle;
 
+  /// No description provided for @bookingEntryIndividuals.
+  ///
+  /// In ko, this message translates to:
+  /// **'개별 상품'**
+  String get bookingEntryIndividuals;
+
+  /// No description provided for @bookingEntryIndividualsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'패키지 없이 교육·원데이 다이빙처럼 따로 파는 상품입니다.'**
+  String get bookingEntryIndividualsHint;
+
+  /// No description provided for @bookingEntryAddIndividual.
+  ///
+  /// In ko, this message translates to:
+  /// **'개별 상품 추가'**
+  String get bookingEntryAddIndividual;
+
+  /// No description provided for @bookingEntryIndividualName.
+  ///
+  /// In ko, this message translates to:
+  /// **'개별 상품명'**
+  String get bookingEntryIndividualName;
+
   /// No description provided for @bookingEntryStayLength.
   ///
   /// In ko, this message translates to:

@@ -758,6 +758,10 @@
   "bookingEntryOptionName": "Option name",
   "bookingEntryOptionPrice": "Unit price",
   "bookingEntryTermsToggle": "Includes & excludes",
+  "bookingEntryIndividuals": "A la carte",
+  "bookingEntryIndividualsHint": "Courses, day dives, and other items sold separately from the package.",
+  "bookingEntryAddIndividual": "Add a la carte item",
+  "bookingEntryIndividualName": "Item name",
   "bookingEntryStayLength": "Trip length",
   "bookingEntryNights": "{nights} nights",
   "@bookingEntryNights": {

@@ -1324,6 +1324,10 @@
   "bookingEntryOptionName": "옵션명",
   "bookingEntryOptionPrice": "1인 가격",
   "bookingEntryTermsToggle": "포함 · 불포함",
+  "bookingEntryIndividuals": "개별 상품",
+  "bookingEntryIndividualsHint": "패키지 없이 교육·원데이 다이빙처럼 따로 파는 상품입니다.",
+  "bookingEntryAddIndividual": "개별 상품 추가",
+  "bookingEntryIndividualName": "개별 상품명",
   "bookingEntryStayLength": "여행 기간",
   "bookingEntryNights": "{nights}박",
   "@bookingEntryNights": {
