@@ -85,7 +85,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  l10n.adminMembersSubDivers,
+                  l10n.adminMembersTitle,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
