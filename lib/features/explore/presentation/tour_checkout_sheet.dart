@@ -900,15 +900,27 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (_bookPackage) {
       return [
         for (final id in _selected)
-          if (_findOption(id)?.kind == ProductOptionKind.addon)
+          if (_findOption(id)?.kind == ProductOptionKind.addon &&
+              (_findOption(id)?.parentOptionId.isEmpty ?? true))
             _findOption(id)!.name,
       ].join(' · ');
     }
     return [
       for (final id in _selected)
-        if (_findOption(id)?.kind == ProductOptionKind.individual)
+        if (_findOption(id)?.kind == ProductOptionKind.individual ||
+            _findOption(id)?.kind == ProductOptionKind.addon)
           _findOption(id)!.name,
     ].join(' · ');
+  }
+
+  String? get _selectedIndividualId {
+    for (final id in _selected) {
+      final option = _findOption(id);
+      if (option != null && option.kind == ProductOptionKind.individual) {
+        return option.id;
+      }
+    }
+    return null;
   }
 
   List<Widget> _productDetailCards(
@@ -973,6 +985,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   Widget _bookingPanel(AppLocalizations l10n, ThemeData theme) {
     final product = widget.product!;
     if (!_bookPackage) {
+      final parentId = _selectedIndividualId ?? '';
+      final addons = [
+        for (final option in product.options)
+          if (option.kind == ProductOptionKind.addon &&
+              option.bookable &&
+              parentId.isNotEmpty &&
+              option.parentOptionId == parentId)
+            option,
+      ];
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -982,6 +1003,27 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
               fontWeight: FontWeight.w800,
             ),
           ),
+          for (final option in addons)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _selected.contains(option.id),
+              title: Text(option.name),
+              subtitle: option.description.trim().isEmpty
+                  ? null
+                  : Text(option.description.trim()),
+              enabled: widget.lockedOptionId != option.id,
+              onChanged: widget.lockedOptionId == option.id
+                  ? null
+                  : (value) {
+                      setState(() {
+                        if (value ?? false) {
+                          _selected.add(option.id);
+                        } else {
+                          _selected.remove(option.id);
+                        }
+                      });
+                    },
+            ),
           const SizedBox(height: 8),
           Text(
             l10n.checkoutTotal(_priceFormat.format(_booking.total)),
@@ -992,7 +1034,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
     final addons = [
       for (final option in product.options)
-        if (option.kind == ProductOptionKind.addon && option.bookable) option,
+        if (option.kind == ProductOptionKind.addon &&
+            option.bookable &&
+            option.parentOptionId.isEmpty)
+          option,
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

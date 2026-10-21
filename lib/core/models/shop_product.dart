@@ -320,6 +320,7 @@ class ShopProductOption {
     this.flagHolds = const [],
     this.departureStart,
     this.flagClosesAt,
+    this.parentOptionId = '',
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
@@ -338,6 +339,7 @@ class ShopProductOption {
       flagHolds: _optionHolds(data['flag_holds']),
       departureStart: _optionTime(data['departure_start']),
       flagClosesAt: _optionTime(data['flag_closes_at']),
+      parentOptionId: data['parent_option_id'] as String? ?? '',
     );
   }
 
@@ -355,6 +357,9 @@ class ShopProductOption {
   final List<SeatHold> flagHolds;
   final DateTime? departureStart;
   final DateTime? flagClosesAt;
+
+  /// When set, this addon belongs to an individual SKU (not the base package).
+  final String parentOptionId;
 
   bool get listsOnSameBoat {
     return openEmptySeats && capacity > 0 && departureStart != null;
@@ -379,6 +384,7 @@ class ShopProductOption {
         'departure_start': departureStart!.toIso8601String(),
       if (flagClosesAt != null)
         'flag_closes_at': flagClosesAt!.toIso8601String(),
+      if (parentOptionId.isNotEmpty) 'parent_option_id': parentOptionId,
     };
   }
 
@@ -396,6 +402,7 @@ class ShopProductOption {
     List<SeatHold>? flagHolds,
     DateTime? departureStart,
     DateTime? flagClosesAt,
+    String? parentOptionId,
     bool clearDates = false,
   }) {
     return ShopProductOption(
@@ -415,6 +422,7 @@ class ShopProductOption {
           ? null
           : (departureStart ?? this.departureStart),
       flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
+      parentOptionId: parentOptionId ?? this.parentOptionId,
     );
   }
 

@@ -117,6 +117,8 @@ class _IndividualTicket {
   final TextEditingController consumer;
   final TextEditingController includes;
   final TextEditingController excludes;
+  final addons = <_LineEditors>[];
+  final addonQty = <String, int>{};
   int nights = 0;
   DateTime? checkIn;
   int guests = 1;
@@ -169,11 +171,25 @@ class _IndividualTicket {
     );
   }
 
+  List<ShopProductOption> addonOptions() {
+    return [
+      for (final draft in addons)
+        if (draft.name.text.trim().isNotEmpty)
+          draft.toOption().copyWith(
+            kind: ProductOptionKind.addon,
+            parentOptionId: id,
+          ),
+    ];
+  }
+
   void dispose() {
     name.dispose();
     consumer.dispose();
     includes.dispose();
     excludes.dispose();
+    for (final draft in addons) {
+      draft.dispose();
+    }
   }
 }
 
@@ -316,12 +332,22 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _hasNondivers =
         (_rateEnabled[GuestRole.nondiver] ?? false) ||
         (_rateEnabled[GuestRole.child] ?? false);
-    for (final option in existing?.options ?? const <ShopProductOption>[]) {
+    final existingOptions =
+        existing?.options ?? const <ShopProductOption>[];
+    final childAddons = <String, List<ShopProductOption>>{};
+    for (final option in existingOptions) {
       if (option.kind == ProductOptionKind.individual) {
         _individuals.add(_IndividualTicket.fromOption(option));
         continue;
       }
       if (option.kind == ProductOptionKind.basePackage) {
+        continue;
+      }
+      if (option.kind == ProductOptionKind.addon &&
+          option.parentOptionId.isNotEmpty) {
+        childAddons
+            .putIfAbsent(option.parentOptionId, () => <ShopProductOption>[])
+            .add(option);
         continue;
       }
       _addons.add(
@@ -351,6 +377,23 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _listen(ticket.consumer);
       _listen(ticket.includes);
       _listen(ticket.excludes);
+      for (final option in childAddons[ticket.id] ?? const <ShopProductOption>[]) {
+        final line = _LineEditors(
+          id: option.id,
+          name: option.name,
+          description: option.description,
+          consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
+          professional: option.professionalPrice > 0
+              ? '${option.professionalPrice}'
+              : '',
+          kind: ProductOptionKind.addon,
+          bookable: option.bookable,
+        );
+        _watchLine(line);
+        _listen(line.consumer);
+        ticket.addons.add(line);
+        ticket.addonQty[line.id] = 0;
+      }
     }
     _listen(_name);
     _listen(_blurb);
@@ -447,6 +490,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _draftListeners.remove(ticket.consumer);
     _draftListeners.remove(ticket.includes);
     _draftListeners.remove(ticket.excludes);
+    for (final line in ticket.addons) {
+      line.name.removeListener(_onDraftChanged);
+      line.consumer.removeListener(_onDraftChanged);
+      _draftListeners.remove(line.name);
+      _draftListeners.remove(line.consumer);
+    }
     ticket.dispose();
   }
 
@@ -461,8 +510,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   BookingQuote _individualQuote(_IndividualTicket ticket) {
     final option = ticket.toOption();
+    final addonOpts = ticket.addonOptions();
     final heads = ticket.previewHeads < 1 ? 1 : ticket.previewHeads;
     final price = option.consumerPrice;
+    final selected = <String>{
+      option.id,
+      for (final addon in addonOpts)
+        if ((ticket.addonQty[addon.id] ?? 0) > 0) addon.id,
+    };
     return BookingQuote.compute(
       product: ShopProduct(
         id: 'draft-ind',
@@ -470,7 +525,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         name: option.name.isEmpty ? '—' : option.name,
         consumerPrice: price,
         professionalPrice: price,
-        options: [option],
+        options: [option, ...addonOpts],
       ),
       professional: false,
       divers: 0,
@@ -478,8 +533,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       children: 0,
       infants: 0,
       bookPackage: false,
-      selectedOptionIds: {option.id},
-      optionQuantities: {option.id: heads},
+      selectedOptionIds: selected,
+      optionQuantities: {
+        option.id: heads,
+        for (final addon in addonOpts)
+          addon.id: ticket.addonQty[addon.id] ?? 0,
+      },
     );
   }
 
@@ -677,6 +736,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final ticket in _individuals) {
       if (ticket.id == _seatOptionId && ticket.name.text.trim().isNotEmpty) {
         return ticket.id;
+      }
+      for (final draft in ticket.addons) {
+        if (draft.id == _seatOptionId && draft.name.text.trim().isNotEmpty) {
+          return draft.id;
+        }
       }
     }
     return '';
@@ -897,7 +961,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           if (draft.name.text.trim().isNotEmpty)
             draft.toOption().copyWith(kind: ProductOptionKind.addon),
         for (final ticket in _individuals)
-          if (ticket.name.text.trim().isNotEmpty) ticket.toOption(),
+          if (ticket.name.text.trim().isNotEmpty) ...[
+            ticket.toOption(),
+            ...ticket.addonOptions(),
+          ],
       ];
       var shopId = _shopId;
       if (_namedResort) {
@@ -1852,7 +1919,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ),
                     const SizedBox(height: 4),
                     for (var i = 0; i < _addons.length; i++) ...[
-                      _bookingAddonRow(l10n, i),
+                      _bookingAddonRow(
+                        l10n,
+                        list: _addons,
+                        qtyMap: _addonQty,
+                        index: i,
+                      ),
                       const SizedBox(height: 4),
                     ],
                     Align(
@@ -2229,6 +2301,45 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.bookingEntryAddons,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                for (var i = 0; i < ticket.addons.length; i++) ...[
+                  _bookingAddonRow(
+                    l10n,
+                    list: ticket.addons,
+                    qtyMap: ticket.addonQty,
+                    index: i,
+                    allowRemoveLast: true,
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      final line = _LineEditors(kind: ProductOptionKind.addon);
+                      _watchLine(line);
+                      _listen(line.consumer);
+                      setState(() {
+                        ticket.addons.add(line);
+                        ticket.addonQty[line.id] = 0;
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.bookingEntryAddOption),
+                  ),
+                ),
               ],
             ),
           ),
@@ -2471,9 +2582,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _bookingAddonRow(AppLocalizations l10n, int index) {
-    final draft = _addons[index];
-    final qty = _addonQty[draft.id] ?? 0;
+  Widget _bookingAddonRow(
+    AppLocalizations l10n, {
+    required List<_LineEditors> list,
+    required Map<String, int> qtyMap,
+    required int index,
+    bool allowRemoveLast = false,
+  }) {
+    final draft = list[index];
+    final qty = qtyMap[draft.id] ?? 0;
+    final canRemove = allowRemoveLast || list.length > 1;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8FA),
@@ -2507,7 +2625,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               visualDensity: VisualDensity.compact,
               onPressed: qty <= 0
                   ? null
-                  : () => setState(() => _addonQty[draft.id] = qty - 1),
+                  : () => setState(() => qtyMap[draft.id] = qty - 1),
               icon: const Icon(Icons.remove_circle_outline, size: 18),
             ),
             Text(
@@ -2516,19 +2634,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
             IconButton(
               visualDensity: VisualDensity.compact,
-              onPressed: () => setState(() => _addonQty[draft.id] = qty + 1),
+              onPressed: () => setState(() => qtyMap[draft.id] = qty + 1),
               icon: const Icon(Icons.add_circle_outline, size: 18),
             ),
             IconButton(
               visualDensity: VisualDensity.compact,
               tooltip: l10n.productFormRemoveOption,
-              onPressed: _addons.length == 1
+              onPressed: !canRemove
                   ? null
                   : () {
                       setState(() {
-                        _addonQty.remove(draft.id);
+                        qtyMap.remove(draft.id);
                         _dropLine(draft);
-                        _addons.removeAt(index);
+                        list.removeAt(index);
                       });
                     },
               icon: const Icon(Icons.close, size: 18),
@@ -2716,9 +2834,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       for (final draft in _addons)
         if (draft.name.text.trim().isNotEmpty)
           MapEntry(draft.id, draft.name.text.trim()),
-      for (final ticket in _individuals)
+      for (final ticket in _individuals) ...[
         if (ticket.name.text.trim().isNotEmpty)
           MapEntry(ticket.id, ticket.name.text.trim()),
+        for (final draft in ticket.addons)
+          if (draft.name.text.trim().isNotEmpty)
+            MapEntry(draft.id, draft.name.text.trim()),
+      ],
     ];
     final seatValue = _resolvedSeatOptionId;
     return Column(

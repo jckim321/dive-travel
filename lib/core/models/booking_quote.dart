@@ -167,6 +167,7 @@ class BookingQuote {
       for (final option in product.options) {
         if (!option.bookable ||
             option.kind != ProductOptionKind.addon ||
+            option.parentOptionId.isNotEmpty ||
             !selectedOptionIds.contains(option.id)) {
           continue;
         }
@@ -181,9 +182,11 @@ class BookingQuote {
       }
     } else {
       for (final option in product.options) {
-        if (!option.bookable ||
-            option.kind != ProductOptionKind.individual ||
-            !selectedOptionIds.contains(option.id)) {
+        if (!option.bookable || !selectedOptionIds.contains(option.id)) {
+          continue;
+        }
+        if (option.kind != ProductOptionKind.individual &&
+            option.kind != ProductOptionKind.addon) {
           continue;
         }
         final qty = quantityFor(option);
