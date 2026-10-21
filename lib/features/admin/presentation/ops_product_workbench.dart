@@ -77,37 +77,6 @@ class _LineEditors {
   }
 }
 
-class _TextLines {
-  _TextLines(String raw) {
-    final parts = [
-      for (final line in raw.split('\n'))
-        if (line.trim().isNotEmpty) line.trim(),
-    ];
-    if (parts.isEmpty) {
-      items.add(TextEditingController());
-    } else {
-      for (final part in parts) {
-        items.add(TextEditingController(text: part));
-      }
-    }
-  }
-
-  final items = <TextEditingController>[];
-
-  String join() {
-    return [
-      for (final item in items)
-        if (item.text.trim().isNotEmpty) item.text.trim(),
-    ].join('\n');
-  }
-
-  void dispose() {
-    for (final item in items) {
-      item.dispose();
-    }
-  }
-}
-
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _sectionCount = 6;
   static const _kBoxRadius = 2.0;
@@ -120,14 +89,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _blurb;
   late final TextEditingController _meeting;
   late final TextEditingController _detailBody;
-  late final TextEditingController _difficulty;
-  late final TextEditingController _minGuests;
-  late final TextEditingController _maxGuests;
+  late final TextEditingController _includes;
+  late final TextEditingController _excludes;
   late final TextEditingController _cancel;
   late final TextEditingController _focPay;
   late final TextEditingController _focFree;
-  late final _TextLines _includes;
-  late final _TextLines _excludes;
   final _rateEnabled = <GuestRole, bool>{};
   final _rateConsumer = <GuestRole, TextEditingController>{};
   final _ratePro = <GuestRole, TextEditingController>{};
@@ -149,6 +115,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewDiver = 1;
   var _previewNondiver = 0;
   var _previewChild = 0;
+  var _hasNondivers = false;
   var _openEmptySeats = false;
   var _seatOptionId = '';
   var _namedResort = false;
@@ -185,16 +152,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       text: meetingSeed.isNotEmpty ? meetingSeed : addressSeed,
     );
     _detailBody = TextEditingController(text: _seedDetailBody(existing));
-    _difficulty = TextEditingController(text: existing?.difficulty ?? '');
-    _minGuests = TextEditingController(
-      text: (existing?.minGuests ?? 0) > 0 ? '${existing!.minGuests}' : '',
-    );
-    _maxGuests = TextEditingController(
-      text: (existing?.maxGuests ?? 0) > 0 ? '${existing!.maxGuests}' : '',
-    );
     _cancel = TextEditingController(text: existing?.cancellationNote ?? '');
-    _includes = _TextLines(existing?.includes ?? '');
-    _excludes = _TextLines(existing?.excludes ?? '');
+    _includes = TextEditingController(text: existing?.includes ?? '');
+    _excludes = TextEditingController(text: existing?.excludes ?? '');
     _focAppliesTo = existing?.focAppliesTo ?? GuestRole.diver;
     _focPay = TextEditingController(
       text: (existing?.focPayCount ?? 0) > 0 ? '${existing!.focPayCount}' : '',
@@ -250,6 +210,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   : ''),
       );
     }
+    _hasNondivers =
+        (_rateEnabled[GuestRole.nondiver] ?? false) ||
+        (_rateEnabled[GuestRole.child] ?? false);
     for (final option in existing?.options ?? const <ShopProductOption>[]) {
       final line = _LineEditors(
         id: option.id,
@@ -280,8 +243,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(_name);
     _listen(_blurb);
     _listen(_detailBody);
+    _listen(_includes);
+    _listen(_excludes);
     _listen(_resortName);
     _listen(_rateConsumer[GuestRole.diver]!);
+    _listen(_rateConsumer[GuestRole.nondiver]!);
+    _listen(_rateConsumer[GuestRole.child]!);
     _seedGallery(existing);
   }
 
@@ -336,15 +303,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _blurb.dispose();
     _meeting.dispose();
     _detailBody.dispose();
-    _difficulty.dispose();
-    _minGuests.dispose();
-    _maxGuests.dispose();
+    _includes.dispose();
+    _excludes.dispose();
     _cancel.dispose();
     _focPay.dispose();
     _focFree.dispose();
     _capacity.dispose();
-    _includes.dispose();
-    _excludes.dispose();
     for (final controller in _rateConsumer.values) {
       controller.dispose();
     }
@@ -626,7 +590,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         for (final role in GuestRole.values)
           GuestRate(
             role: role,
-            enabled: _rateEnabled[role] ?? role == GuestRole.diver,
+            enabled: switch (role) {
+              GuestRole.diver => true,
+              GuestRole.nondiver || GuestRole.child => _hasNondivers,
+              GuestRole.infant => false,
+            },
             consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
             professional: int.tryParse(_ratePro[role]!.text) ?? 0,
           ),
@@ -683,11 +651,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           continent: _continent,
           meetingPoint: _meeting.text.trim(),
           schedule: _detailBody.text.trim(),
-          includes: _includes.join(),
-          excludes: _excludes.join(),
-          difficulty: _difficulty.text.trim(),
-          minGuests: int.tryParse(_minGuests.text) ?? 0,
-          maxGuests: int.tryParse(_maxGuests.text) ?? 0,
+          includes: _includes.text.trim(),
+          excludes: _excludes.text.trim(),
+          difficulty: '',
+          minGuests: 0,
+          maxGuests: 0,
           cancellationNote: _cancel.text.trim(),
           category: _category,
           detail: existing?.detail ?? '',
@@ -907,7 +875,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           _placeBlock(l10n, shops, shopLocked),
         ]),
         _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
-        _block(3, l10n.briefSectionTerms, [_termsBlock(l10n)]),
+        _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
         _block(4, l10n.briefSectionPrice, [_priceBlock(l10n)]),
         _block(5, l10n.briefSectionSeats, [_seatsBlock(l10n)]),
       ],
@@ -1289,110 +1257,227 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _termsBlock(AppLocalizations l10n) {
+  BookingQuote get _previewQuote {
+    return BookingQuote.compute(
+      product: _draftProduct,
+      professional: false,
+      divers: _previewDiver,
+      nondivers: _hasNondivers ? _previewNondiver : 0,
+      children: _hasNondivers ? _previewChild : 0,
+      infants: 0,
+      bookPackage: true,
+      selectedOptionIds: const {},
+    );
+  }
+
+  void _setHasNondivers(bool value) {
+    setState(() {
+      _hasNondivers = value;
+      _rateEnabled[GuestRole.nondiver] = value;
+      _rateEnabled[GuestRole.child] = value;
+      _rateEnabled[GuestRole.infant] = false;
+      if (!value) {
+        _previewNondiver = 0;
+        _previewChild = 0;
+      }
+    });
+  }
+
+  Widget _bookingEntryBlock(AppLocalizations l10n) {
+    final packageName = _name.text.trim().isEmpty ? '—' : _name.text.trim();
+    final quote = _previewQuote;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _linesEditor(
-          l10n,
-          l10n.productFormIncludes,
-          l10n.productFormIncludesHint,
-          _includes,
+        Text(
+          l10n.bookingEntryBasePackage,
+          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
         ),
-        const SizedBox(height: 16),
-        _linesEditor(
-          l10n,
-          l10n.productFormExcludes,
-          l10n.productFormExcludesHint,
-          _excludes,
+        const SizedBox(height: 4),
+        Text(
+          packageName,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _rateConsumer[GuestRole.diver],
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: _field(l10n.bookingEntryDiverPrice),
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),
         TextField(
-          controller: _difficulty,
+          controller: _includes,
+          minLines: 3,
+          maxLines: 6,
           decoration: _field(
-            l10n.productFormDifficulty,
-            hint: l10n.productFormDifficultyHint,
+            l10n.productFormIncludes,
+            hint: l10n.productFormIncludesHint,
+            lines: 3,
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _minGuests,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _field(l10n.productFormMinGuests),
+        TextField(
+          controller: _excludes,
+          minLines: 3,
+          maxLines: 6,
+          decoration: _field(
+            l10n.productFormExcludes,
+            hint: l10n.productFormExcludesHint,
+            lines: 3,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.checkoutGuests,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        _guestStepperRow(
+          label: l10n.workbenchGuestDiver,
+          value: _previewDiver,
+          onChanged: (v) => setState(() => _previewDiver = v < 1 ? 1 : v),
+          priceLabel: l10n.bookingEntryUnitPrice,
+          priceText:
+              _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
+              ? '—'
+              : _rateConsumer[GuestRole.diver]!.text.trim(),
+        ),
+        const SizedBox(height: 10),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(_kBoxRadius),
+            border: Border.all(color: const Color(0xFFE2E8EE)),
+          ),
+          child: Column(
+            children: [
+              SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                title: Text(l10n.bookingEntryHasNondivers),
+                value: _hasNondivers,
+                onChanged: _setHasNondivers,
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _maxGuests,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _field(l10n.productFormMaxGuests),
-              ),
-            ),
-          ],
+              if (_hasNondivers) ...[
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Column(
+                    children: [
+                      _guestStepperRow(
+                        label: l10n.bookingEntryAdultNondiver,
+                        value: _previewNondiver,
+                        onChanged: (v) =>
+                            setState(() => _previewNondiver = v),
+                        priceField: _rateConsumer[GuestRole.nondiver],
+                        priceLabel: l10n.bookingEntryUnitPrice,
+                      ),
+                      const SizedBox(height: 10),
+                      _guestStepperRow(
+                        label: l10n.bookingEntryChildInfant,
+                        value: _previewChild,
+                        onChanged: (v) => setState(() => _previewChild = v),
+                        priceField: _rateConsumer[GuestRole.child],
+                        priceLabel: l10n.bookingEntryUnitPrice,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.checkoutTotal('${quote.total}'),
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.bookingEntryPreviewSnack)),
+              );
+            },
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              backgroundColor: AppTheme.navy,
+            ),
+            child: Text(l10n.exploreBook),
+          ),
+        ),
+        const SizedBox(height: 16),
         TextField(
           controller: _cancel,
-          maxLines: 3,
+          maxLines: 2,
           decoration: _field(
             l10n.productFormCancelNote,
             hint: l10n.productFormCancelHint,
-            lines: 3,
+            lines: 2,
           ),
         ),
       ],
     );
   }
 
-  Widget _linesEditor(
-    AppLocalizations l10n,
-    String label,
-    String hint,
-    _TextLines lines,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _guestStepperRow({
+    required String label,
+    required int value,
+    required ValueChanged<int> onChanged,
+    String? priceLabel,
+    String? priceText,
+    TextEditingController? priceField,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        for (var i = 0; i < lines.items.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: lines.items[i],
-                    decoration: InputDecoration(
-                      hintText: hint,
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
+        Expanded(
+          flex: 3,
+          child: Text(label, style: const TextStyle(fontSize: 14)),
+        ),
+        IconButton(
+          onPressed: value <= 0 ? null : () => onChanged(value - 1),
+          icon: const Icon(Icons.remove_circle_outline, size: 22),
+        ),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          onPressed: () => onChanged(value + 1),
+          icon: const Icon(Icons.add_circle_outline, size: 22),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 3,
+          child: priceField != null
+              ? TextField(
+                  controller: priceField,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: priceLabel,
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                )
+              : Text(
+                  priceText ?? '',
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.muted,
                   ),
                 ),
-                IconButton(
-                  tooltip: l10n.briefRemoveLine,
-                  onPressed: () {
-                    setState(() => lines.items.removeAt(i).dispose());
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-        OutlinedButton.icon(
-          onPressed: () {
-            setState(() => lines.items.add(TextEditingController()));
-          },
-          icon: const Icon(Icons.add),
-          label: Text(l10n.briefAddLine),
         ),
       ],
     );
@@ -1700,7 +1785,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         for (final role in GuestRole.values)
           GuestRate(
             role: role,
-            enabled: _rateEnabled[role] ?? role != GuestRole.infant,
+            enabled: switch (role) {
+              GuestRole.diver => true,
+              GuestRole.nondiver || GuestRole.child => _hasNondivers,
+              GuestRole.infant => false,
+            },
             consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
             professional: int.tryParse(_ratePro[role]!.text) ?? 0,
           ),
@@ -1712,16 +1801,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _guestCard(AppLocalizations l10n, DiveShop? hull) {
-    final quote = BookingQuote.compute(
-      product: _draftProduct,
-      professional: false,
-      divers: _previewDiver,
-      nondivers: _previewNondiver,
-      children: _previewChild,
-      infants: 0,
-      bookPackage: true,
-      selectedOptionIds: const {},
-    );
+    final quote = _previewQuote;
     final resort = _namedResort
         ? (_resortName.text.trim().isEmpty ? '—' : _resortName.text.trim())
         : (hull?.name ?? '');
@@ -1761,54 +1841,32 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
             Text(_nightsLabel),
-            Text(_blurb.text.trim()),
+            if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
             const SizedBox(height: 8),
             Text(
               '${l10n.briefStartPrice} $start',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 10),
-            Text(l10n.checkoutGuests),
-            _previewQty(
-              l10n.workbenchGuestDiver,
-              _previewDiver,
-              (value) => setState(() => _previewDiver = value),
-            ),
-            _previewQty(
-              l10n.workbenchGuestNondiver,
-              _previewNondiver,
-              (value) => setState(() => _previewNondiver = value),
-            ),
-            _previewQty(
-              l10n.workbenchGuestChild,
-              _previewChild,
-              (value) => setState(() => _previewChild = value),
+            const SizedBox(height: 8),
+            Text(
+              '${l10n.workbenchGuestDiver} $_previewDiver'
+              '${_hasNondivers && _previewNondiver > 0 ? ' · ${l10n.workbenchGuestNondiver} $_previewNondiver' : ''}'
+              '${_hasNondivers && _previewChild > 0 ? ' · ${l10n.bookingEntryChildInfant} $_previewChild' : ''}',
+              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
             ),
             const SizedBox(height: 8),
             Text(
               l10n.checkoutTotal('${quote.total}'),
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.briefSectionTerms,
+              style: const TextStyle(color: AppTheme.muted, fontSize: 11),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _previewQty(String label, int value, ValueChanged<int> onChanged) {
-    return Row(
-      children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-        IconButton(
-          onPressed: value == 0 ? null : () => onChanged(value - 1),
-          icon: const Icon(Icons.remove, size: 18),
-        ),
-        Text('$value'),
-        IconButton(
-          onPressed: () => onChanged(value + 1),
-          icon: const Icon(Icons.add, size: 18),
-        ),
-      ],
     );
   }
 }

@@ -2151,7 +2151,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailComposerEdit => 'Edit';
 
   @override
-  String get briefSectionTerms => 'Terms';
+  String get briefSectionTerms => 'Start booking';
+
+  @override
+  String get bookingEntryBasePackage => 'Base package';
+
+  @override
+  String get bookingEntryDiverPrice => 'Diver price (1 person)';
+
+  @override
+  String get bookingEntryHasNondivers => 'Any non-divers joining?';
+
+  @override
+  String get bookingEntryAdultNondiver => 'Adult non-diver';
+
+  @override
+  String get bookingEntryChildInfant => 'Child / infant';
+
+  @override
+  String get bookingEntryUnitPrice => 'Price per person';
+
+  @override
+  String get bookingEntryPreviewSnack =>
+      'Preview only — guests will pay from the live listing.';
 
   @override
   String get briefSectionPrice => 'Price';

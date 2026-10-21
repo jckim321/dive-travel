@@ -3993,8 +3993,50 @@ abstract class AppLocalizations {
   /// No description provided for @briefSectionTerms.
   ///
   /// In ko, this message translates to:
-  /// **'조건'**
+  /// **'상품 예약 들어가기'**
   String get briefSectionTerms;
+
+  /// No description provided for @bookingEntryBasePackage.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 패키지'**
+  String get bookingEntryBasePackage;
+
+  /// No description provided for @bookingEntryDiverPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 1인 가격'**
+  String get bookingEntryDiverPrice;
+
+  /// No description provided for @bookingEntryHasNondivers.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버가 있나요?'**
+  String get bookingEntryHasNondivers;
+
+  /// No description provided for @bookingEntryAdultNondiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'성인 비다이버'**
+  String get bookingEntryAdultNondiver;
+
+  /// No description provided for @bookingEntryChildInfant.
+  ///
+  /// In ko, this message translates to:
+  /// **'소아 · 유아'**
+  String get bookingEntryChildInfant;
+
+  /// No description provided for @bookingEntryUnitPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 가격'**
+  String get bookingEntryUnitPrice;
+
+  /// No description provided for @bookingEntryPreviewSnack.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기입니다. 손님은 공개된 상품에서 결제합니다.'**
+  String get bookingEntryPreviewSnack;
 
   /// No description provided for @briefSectionPrice.
   ///

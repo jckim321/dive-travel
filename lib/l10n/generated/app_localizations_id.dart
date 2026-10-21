@@ -2109,7 +2109,28 @@ class AppLocalizationsId extends AppLocalizations {
   String get detailComposerEdit => '편집';
 
   @override
-  String get briefSectionTerms => '조건';
+  String get briefSectionTerms => '상품 예약 들어가기';
+
+  @override
+  String get bookingEntryBasePackage => '기본 패키지';
+
+  @override
+  String get bookingEntryDiverPrice => '다이버 1인 가격';
+
+  @override
+  String get bookingEntryHasNondivers => '비다이버가 있나요?';
+
+  @override
+  String get bookingEntryAdultNondiver => '성인 비다이버';
+
+  @override
+  String get bookingEntryChildInfant => '소아 · 유아';
+
+  @override
+  String get bookingEntryUnitPrice => '1인 가격';
+
+  @override
+  String get bookingEntryPreviewSnack => '미리보기입니다. 손님은 공개된 상품에서 결제합니다.';
 
   @override
   String get briefSectionPrice => '가격';
