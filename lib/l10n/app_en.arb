@@ -517,7 +517,16 @@
   "partnerSectionOps": "Bookings · settlement",
   "partnerSameBoatApplyHint": "Filter your products, set seats and dates, then apply to Same-boat.",
   "sameBoatIndividualSeats": "Individual SKU seats",
-  "sameBoatHoldPriorityHint": "A planted flag locks seats until the pay deadline (24h or boat flag close, whichever is sooner), giving the first holder priority.",
+  "sameBoatHoldPriorityHint": "A diver’s flag locks seats until the sooner of this flag deadline and 24 hours after planting. Unpaid holds reopen when that time passes.",
+  "workbenchFlagDeadlineRequired": "Set a flag deadline.",
+  "communityFlagPayBy": "Pay by: {deadline}",
+  "@communityFlagPayBy": {
+    "placeholders": {
+      "deadline": { "type": "String" }
+    }
+  },
+  "communityFlagPayByShortened": "Shorter because the boat flag deadline is sooner.",
+  "checkoutFlagPayBy": "Pay by",
   "adminProductSourceAll": "All",
   "adminProductSourcePartner": "Partners",
   "adminProductSourceDiy": "DIY trips",
@@ -871,7 +880,7 @@
   "workbenchSeatCount": "Seat count",
   "workbenchDepartureDate": "Departure date",
   "workbenchFlagDeadline": "Flag deadline",
-  "workbenchOpenSeatsNeedFields": "Seat count and departure date are required to open leftover seats.",
+  "workbenchOpenSeatsNeedFields": "Seat count, departure date, and flag deadline are required to open leftover seats.",
   "workbenchDetail": "Full description",
   "workbenchItinerary": "Standard itinerary",
   "workbenchAddDay": "Add day",

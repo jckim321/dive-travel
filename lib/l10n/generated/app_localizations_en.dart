@@ -1449,7 +1449,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameBoatHoldPriorityHint =>
-      'A planted flag locks seats until the pay deadline (24h or boat flag close, whichever is sooner), giving the first holder priority.';
+      'A diver’s flag locks seats until the sooner of this flag deadline and 24 hours after planting. Unpaid holds reopen when that time passes.';
+
+  @override
+  String get workbenchFlagDeadlineRequired => 'Set a flag deadline.';
+
+  @override
+  String communityFlagPayBy(String deadline) {
+    return 'Pay by: $deadline';
+  }
+
+  @override
+  String get communityFlagPayByShortened =>
+      'Shorter because the boat flag deadline is sooner.';
+
+  @override
+  String get checkoutFlagPayBy => 'Pay by';
 
   @override
   String get adminProductSourceAll => 'All';
@@ -2382,7 +2397,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workbenchOpenSeatsNeedFields =>
-      'Seat count and departure date are required to open leftover seats.';
+      'Seat count, departure date, and flag deadline are required to open leftover seats.';
 
   @override
   String get workbenchDetail => 'Full description';

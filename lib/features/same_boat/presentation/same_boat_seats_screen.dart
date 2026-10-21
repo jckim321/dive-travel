@@ -107,6 +107,12 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         );
         return;
       }
+      if (_flagClose == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.workbenchFlagDeadlineRequired)),
+        );
+        return;
+      }
     }
     for (final draft in _options.values) {
       if (!draft.open) continue;
@@ -114,6 +120,12 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       if (cap <= 0 || draft.departure == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.workbenchOpenSeatsNeedFields)),
+        );
+        return;
+      }
+      if (draft.flagClose == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.workbenchFlagDeadlineRequired)),
         );
         return;
       }
@@ -209,7 +221,9 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.workbenchFlagDeadline),
               subtitle: Text(
-                _flagClose == null ? '—' : dayFmt.format(_flagClose!),
+                _flagClose == null
+                    ? l10n.workbenchFlagDeadlineRequired
+                    : dayFmt.format(_flagClose!),
               ),
               trailing: const Icon(Icons.flag_outlined),
               onTap: () => _pickDate(
@@ -359,11 +373,15 @@ class _OptionSeatCard extends StatelessWidget {
                 title: Text(l10n.workbenchFlagDeadline),
                 subtitle: Text(
                   draft.flagClose == null
-                      ? '—'
+                      ? l10n.workbenchFlagDeadlineRequired
                       : dayFmt.format(draft.flagClose!),
                 ),
                 trailing: const Icon(Icons.flag_outlined),
                 onTap: onPickFlag,
+              ),
+              Text(
+                l10n.sameBoatHoldPriorityHint,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ],

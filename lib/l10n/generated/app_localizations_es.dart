@@ -1430,7 +1430,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sameBoatHoldPriorityHint =>
-      '다이버가 깃발을 꽂으면 결제 시한(최대 24시간 또는 깃발 마감)까지 좌석이 잠겨 선예약자에게 우선권이 갑니다.';
+      '다이버 깃발은 이 깃발 마감과 심은 뒤 24시간 중 더 빠른 시각까지 잠깁니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.';
+
+  @override
+  String get workbenchFlagDeadlineRequired => '깃발 마감일을 정해 주세요.';
+
+  @override
+  String communityFlagPayBy(String deadline) {
+    return '결제 기한: $deadline';
+  }
+
+  @override
+  String get communityFlagPayByShortened => '배 깃발 마감이 더 빨라서 이 시각까지입니다.';
+
+  @override
+  String get checkoutFlagPayBy => '결제 기한';
 
   @override
   String get adminProductSourceAll => '전체';
@@ -2341,7 +2355,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workbenchFlagDeadline => '깃발 마감일';
 
   @override
-  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 자리 수와 출발일을 넣으세요.';
+  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 자리 수·출발일·깃발 마감을 넣으세요.';
 
   @override
   String get workbenchDetail => '상세 설명';

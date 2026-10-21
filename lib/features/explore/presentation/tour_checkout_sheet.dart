@@ -22,6 +22,7 @@ Future<void> showTourCheckoutSheet({
   String presetOptionId = '',
   bool fromFlag = false,
   int lockedPartySize = 0,
+  DateTime? flagPayBy,
 }) {
   return Navigator.of(context).push<void>(
     MaterialPageRoute<void>(
@@ -33,6 +34,7 @@ Future<void> showTourCheckoutSheet({
         presetOptionId: presetOptionId,
         fromFlag: fromFlag,
         lockedPartySize: lockedPartySize,
+        flagPayBy: flagPayBy,
       ),
     ),
   );
@@ -48,6 +50,7 @@ class TourCheckoutSheet extends StatefulWidget {
     this.presetOptionId = '',
     this.fromFlag = false,
     this.lockedPartySize = 0,
+    this.flagPayBy,
   });
 
   final DiveShop shop;
@@ -59,6 +62,9 @@ class TourCheckoutSheet extends StatefulWidget {
 
   /// When > 0 (flag hold), guest total is fixed to this count until pay.
   final int lockedPartySize;
+
+  /// Absolute personal flag pay deadline shown at plant time.
+  final DateTime? flagPayBy;
 
   @override
   State<TourCheckoutSheet> createState() => _TourCheckoutSheetState();
@@ -793,6 +799,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             if (departure != null)
               _summaryLine(l10n.workbenchDepartureDate, departure),
             if (flag != null) _summaryLine(l10n.workbenchFlagDeadline, flag),
+            if (_flagPayByLabel() != null)
+              _summaryLine(l10n.checkoutFlagPayBy, _flagPayByLabel()!),
             _summaryLine(
               l10n.checkoutGuests,
               l10n.bookingPartySummary(
@@ -875,6 +883,19 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       return null;
     }
     return DateFormat('yyyy.MM.dd').format(flag);
+  }
+
+  String? _flagPayByLabel() {
+    if (!widget.fromFlag) {
+      return null;
+    }
+    final payBy = widget.flagPayBy ??
+        ShopProduct.personalFlagUntil(
+          DateTime.now(),
+          _findOption(_seatOptionId)?.flagClosesAt ??
+              widget.product?.flagClosesAt,
+        );
+    return DateFormat('yyyy.MM.dd HH:mm').format(payBy);
   }
 
   String _chosenLabels() {
@@ -1093,6 +1114,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (_flagPayByLabel() != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.communityFlagPayBy(_flagPayByLabel()!),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
         ],
         for (final rate in product.resolvedGuestRates)
           if (rate.enabled) _qtyRow(l10n, rate.role),

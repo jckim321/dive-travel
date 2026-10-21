@@ -256,7 +256,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
     final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
-    final deadline = DateFormat('M.d HH:mm').format(until);
+    final deadline = DateFormat('yyyy.MM.dd HH:mm').format(until);
+    final shortened = offer.flagClosesAt != null &&
+        offer.flagClosesAt!.isBefore(now.add(const Duration(hours: 24)));
     final partySize = await showDialog<int>(
       context: context,
       builder: (dialogContext) {
@@ -268,6 +270,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    l10n.communityFlagPayBy(deadline),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (shortened) ...[
+                    const SizedBox(height: 6),
+                    Text(l10n.communityFlagPayByShortened),
+                  ],
+                  const SizedBox(height: 12),
                   Text(l10n.communityFlagHoldAsk(deadline)),
                   const SizedBox(height: 16),
                   Text(l10n.communityFlagPartyAsk(open)),
@@ -350,6 +364,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       lockedOptionId: offer.optionId,
       fromFlag: true,
       lockedPartySize: partySize,
+      flagPayBy: until,
     );
   }
 }
