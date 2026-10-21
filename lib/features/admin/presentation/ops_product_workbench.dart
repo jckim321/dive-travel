@@ -194,7 +194,7 @@ class _IndividualTicket {
 }
 
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
-  static const _sectionCount = 6;
+  static const _sectionCount = 4;
   static const _kBoxRadius = 2.0;
   static const _kDirectShop = '__direct__';
 
@@ -208,11 +208,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _includes;
   late final TextEditingController _excludes;
   late final TextEditingController _cancel;
-  late final TextEditingController _focPay;
-  late final TextEditingController _focFree;
   final _rateEnabled = <GuestRole, bool>{};
   final _rateConsumer = <GuestRole, TextEditingController>{};
-  final _ratePro = <GuestRole, TextEditingController>{};
   final _addons = <_LineEditors>[];
   final _individuals = <_IndividualTicket>[];
   final _photoPicker = const DivePhotoPicker();
@@ -233,14 +230,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _previewChild = 0;
   var _hasNondivers = false;
   final _addonQty = <String, int>{};
-  var _openEmptySeats = false;
-  var _seatOptionId = '';
   var _namedResort = false;
-  var _focAppliesTo = GuestRole.diver;
-  late final TextEditingController _capacity;
   DateTime? _departureStart;
-  DateTime? _flagClosesAt;
   var _packageNights = 0;
+  late bool _editing;
 
   @override
   void initState() {
@@ -273,37 +266,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _cancel = TextEditingController(text: existing?.cancellationNote ?? '');
     _includes = TextEditingController(text: existing?.includes ?? '');
     _excludes = TextEditingController(text: existing?.excludes ?? '');
-    _focAppliesTo = existing?.focAppliesTo ?? GuestRole.diver;
-    _focPay = TextEditingController(
-      text: (existing?.focPayCount ?? 0) > 0 ? '${existing!.focPayCount}' : '',
-    );
-    _focFree = TextEditingController(
-      text: (existing?.focFreeCount ?? 0) > 0
-          ? '${existing!.focFreeCount}'
-          : '',
-    );
-    _openEmptySeats = existing?.openEmptySeats ?? false;
-    for (final option in existing?.options ?? const <ShopProductOption>[]) {
-      if (option.openEmptySeats) {
-        _openEmptySeats = true;
-        _seatOptionId = option.id;
-      }
-    }
-    _capacity = TextEditingController(
-      text: (existing?.capacity ?? 0) > 0 ? '${existing!.capacity}' : '',
-    );
     _departureStart = existing?.departureStart;
-    _flagClosesAt = existing?.flagClosesAt;
     _packageNights = _parsePackageNights(existing?.durationLabel);
-    if (_seatOptionId.isNotEmpty) {
-      for (final option in existing?.options ?? const <ShopProductOption>[]) {
-        if (option.id == _seatOptionId) {
-          _capacity.text = option.capacity > 0 ? '${option.capacity}' : '';
-          _departureStart = option.departureStart ?? _departureStart;
-          _flagClosesAt = option.flagClosesAt;
-        }
-      }
-    }
+    _editing = existing == null;
     for (final role in GuestRole.values) {
       GuestRate? found;
       for (final rate in existing?.guestRates ?? const <GuestRate>[]) {
@@ -319,13 +284,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ? '${found.consumer}'
             : (fallbackDiver && existing != null
                   ? '${existing.consumerPrice}'
-                  : ''),
-      );
-      _ratePro[role] = TextEditingController(
-        text: found != null
-            ? '${found.professional}'
-            : (fallbackDiver && existing != null
-                  ? '${existing.professionalPrice}'
                   : ''),
       );
     }
@@ -463,13 +421,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _includes.dispose();
     _excludes.dispose();
     _cancel.dispose();
-    _focPay.dispose();
-    _focFree.dispose();
-    _capacity.dispose();
     for (final controller in _rateConsumer.values) {
-      controller.dispose();
-    }
-    for (final controller in _ratePro.values) {
       controller.dispose();
     }
     for (final item in _addons) {
@@ -611,26 +563,27 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return buf.toString().trimRight();
   }
 
+  /// Keep same-boat / flag fields from the existing option (set outside this form).
   ShopProductOption _withSeatOption(ShopProductOption option) {
     ShopProductOption? previous;
     for (final item
         in widget.existing?.options ?? const <ShopProductOption>[]) {
       if (item.id == option.id) {
         previous = item;
+        break;
       }
     }
-    final chosen = _openEmptySeats && option.id == _resolvedSeatOptionId;
-    final carried = previous == null
-        ? option
-        : option.copyWith(guestRole: previous.guestRole);
-    return carried.copyWith(
-      openEmptySeats: chosen,
-      capacity: chosen ? (int.tryParse(_capacity.text) ?? 0) : 0,
-      bookedSeats: previous?.bookedSeats ?? 0,
-      flagHolds: previous?.flagHolds ?? const [],
-      departureStart: chosen ? _departureStart : null,
-      flagClosesAt: chosen ? (_flagClosesAt ?? _departureStart) : null,
-      clearDates: !chosen,
+    if (previous == null) {
+      return option;
+    }
+    return option.copyWith(
+      guestRole: previous.guestRole,
+      openEmptySeats: previous.openEmptySeats,
+      capacity: previous.capacity,
+      bookedSeats: previous.bookedSeats,
+      flagHolds: previous.flagHolds,
+      departureStart: previous.departureStart,
+      flagClosesAt: previous.flagClosesAt,
     );
   }
 
@@ -723,30 +676,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     return 'base';
   }
-
-  String get _resolvedSeatOptionId {
-    if (_seatOptionId.isEmpty) {
-      return '';
-    }
-    for (final draft in _addons) {
-      if (draft.id == _seatOptionId && draft.name.text.trim().isNotEmpty) {
-        return draft.id;
-      }
-    }
-    for (final ticket in _individuals) {
-      if (ticket.id == _seatOptionId && ticket.name.text.trim().isNotEmpty) {
-        return ticket.id;
-      }
-      for (final draft in ticket.addons) {
-        if (draft.id == _seatOptionId && draft.name.text.trim().isNotEmpty) {
-          return draft.id;
-        }
-      }
-    }
-    return '';
-  }
-
-  bool get _seatsOnProduct => _openEmptySeats && _resolvedSeatOptionId.isEmpty;
 
   String get _nightsLabel {
     if (_packageNights <= 0) {
@@ -858,15 +787,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     };
   }
 
-  String _roleLabel(AppLocalizations l10n, GuestRole role) {
-    return switch (role) {
-      GuestRole.diver => l10n.workbenchGuestDiver,
-      GuestRole.nondiver => l10n.workbenchGuestNondiver,
-      GuestRole.child => l10n.workbenchGuestChild,
-      GuestRole.infant => l10n.workbenchGuestInfant,
-    };
-  }
-
   void _reveal(int index) {
     final target = _sectionKeys[index].currentContext;
     if (target == null) {
@@ -916,24 +836,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
       return;
     }
-    if (_openEmptySeats &&
-        ((int.tryParse(_capacity.text) ?? 0) <= 0 || _departureStart == null)) {
-      _reveal(5);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workbenchOpenSeatsNeedFields)),
-      );
-      return;
-    }
     setState(() => _savingIntent = intent);
     try {
       final store = DiverStoreScope.of(context);
       final sessionUid = store.uid ?? '';
       final existing = widget.existing;
+      final diverConsumer =
+          int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
       final diverRate = GuestRate(
         role: GuestRole.diver,
         enabled: _rateEnabled[GuestRole.diver] ?? true,
-        consumer: int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0,
-        professional: int.tryParse(_ratePro[GuestRole.diver]!.text) ?? 0,
+        consumer: diverConsumer,
+        professional: diverConsumer,
       );
       final guestRates = [
         for (final role in GuestRole.values)
@@ -945,7 +859,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               GuestRole.infant => false,
             },
             consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
-            professional: int.tryParse(_ratePro[role]!.text) ?? 0,
+            professional: int.tryParse(_rateConsumer[role]!.text) ?? 0,
           ),
       ];
       final options = <ShopProductOption>[
@@ -1016,17 +930,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ],
           itineraryDays: const [],
           guestRates: guestRates,
-          focPayCount: int.tryParse(_focPay.text) ?? 0,
-          focFreeCount: int.tryParse(_focFree.text) ?? 0,
-          focAppliesTo: _focAppliesTo,
-          openEmptySeats: _seatsOnProduct,
-          capacity: _seatsOnProduct ? (int.tryParse(_capacity.text) ?? 0) : 0,
+          focPayCount: existing?.focPayCount ?? 0,
+          focFreeCount: existing?.focFreeCount ?? 0,
+          focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
+          openEmptySeats: existing?.openEmptySeats ?? false,
+          capacity: existing?.capacity ?? 0,
           bookedSeats: existing?.bookedSeats ?? 0,
           flagHolds: existing?.flagHolds ?? const [],
           departureStart: _departureStart,
-          flagClosesAt: _seatsOnProduct
-              ? (_flagClosesAt ?? _departureStart)
-              : null,
+          flagClosesAt: existing?.flagClosesAt,
           options: [for (final option in options) _withSeatOption(option)],
           listingKind: _shelfKindForSave(existing),
           featuredAt: _featuredAtForSave(existing),
@@ -1065,28 +977,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
-  Future<void> _pickDay({required bool isFlag}) async {
-    final initial = isFlag
-        ? (_flagClosesAt ?? _departureStart ?? DateTime.now())
-        : (_departureStart ?? DateTime.now());
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-    );
-    if (picked == null) {
-      return;
-    }
-    setState(() {
-      if (isFlag) {
-        _flagClosesAt = picked;
-      } else {
-        _departureStart = picked;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -1106,7 +996,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          final brief = _brief(l10n, shops, shopLocked);
+          final brief = AbsorbPointer(
+            absorbing: !_editing,
+            child: Opacity(
+              opacity: _editing ? 1 : 0.92,
+              child: _brief(l10n, shops, shopLocked),
+            ),
+          );
+          final guest = AbsorbPointer(
+            absorbing: !_editing,
+            child: Opacity(
+              opacity: _editing ? 1 : 0.92,
+              child: _guestCard(l10n, hull),
+            ),
+          );
           return Column(
             children: [
               Expanded(
@@ -1119,7 +1022,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             width: 280,
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
-                              child: _guestCard(l10n, hull),
+                              child: guest,
                             ),
                           ),
                         ],
@@ -1143,73 +1046,36 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     };
   }
 
-  String _intentLabel(AppLocalizations l10n, ProductSaveIntent intent) {
-    return switch (intent) {
-      ProductSaveIntent.keepEditing => l10n.briefKeepEditing,
-      ProductSaveIntent.submitForReview => l10n.briefSubmitReview,
-      ProductSaveIntent.publish => l10n.briefPublishNow,
-      ProductSaveIntent.takeDown => l10n.briefTakeDown,
-    };
-  }
-
   Widget _saveBar(AppLocalizations l10n, {required bool canPublish}) {
-    final intents = <ProductSaveIntent>[
-      ProductSaveIntent.keepEditing,
-      ProductSaveIntent.submitForReview,
-      if (canPublish) ProductSaveIntent.publish,
-      if (widget.existing != null) ProductSaveIntent.takeDown,
-    ];
-    final primary = canPublish
+    final intent = canPublish
         ? ProductSaveIntent.publish
         : ProductSaveIntent.submitForReview;
+    final busy = _savingIntent != null;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final intent in intents) ...[
-              _intentButton(l10n, intent, filled: intent == primary),
-              if (intent != intents.last) const SizedBox(height: 8),
-            ],
-          ],
-        ),
+        child: !_editing
+            ? FilledButton(
+                key: const Key('brief-edit'),
+                onPressed: () => setState(() => _editing = true),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: AppTheme.navy,
+                ),
+                child: Text(l10n.briefEdit),
+              )
+            : FilledButton(
+                key: canPublish
+                    ? const Key('admin-product-submit')
+                    : const Key('partner-product-save'),
+                onPressed: busy ? null : () => _save(intent),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: AppTheme.navy,
+                ),
+                child: Text(busy ? l10n.exploreSaving : l10n.briefSave),
+              ),
       ),
-    );
-  }
-
-  Widget _intentButton(
-    AppLocalizations l10n,
-    ProductSaveIntent intent, {
-    required bool filled,
-  }) {
-    final busy = _savingIntent != null;
-    final label = _savingIntent == intent
-        ? l10n.exploreSaving
-        : _intentLabel(l10n, intent);
-    final onPressed = busy ? null : () => _save(intent);
-    final key = switch (intent) {
-      ProductSaveIntent.publish => const Key('admin-product-submit'),
-      ProductSaveIntent.submitForReview => const Key('partner-product-save'),
-      ProductSaveIntent.keepEditing => const Key('brief-keep-editing'),
-      ProductSaveIntent.takeDown => const Key('brief-take-down'),
-    };
-    if (filled) {
-      return FilledButton(
-        key: key,
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-          backgroundColor: AppTheme.navy,
-        ),
-        child: Text(label),
-      );
-    }
-    return OutlinedButton(
-      key: key,
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-      child: Text(label),
     );
   }
 
@@ -1223,8 +1089,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ]),
         _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
         _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
-        _block(4, l10n.briefSectionPrice, [_priceBlock(l10n)]),
-        _block(5, l10n.briefSectionSeats, [_seatsBlock(l10n)]),
       ],
     );
   }
@@ -2715,201 +2579,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _priceBlock(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final role in GuestRole.values)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(_kBoxRadius),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(_roleLabel(l10n, role)),
-                      subtitle: Text(l10n.workbenchGuestEnabled),
-                      value: _rateEnabled[role] ?? false,
-                      onChanged: (value) =>
-                          setState(() => _rateEnabled[role] = value),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _rateConsumer[role],
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              labelText: l10n.exploreConsumerPrice,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _ratePro[role],
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              labelText: l10n.exploreProPrice,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        Text(
-          l10n.workbenchFoc,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _focPay,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _field(l10n.workbenchFocPay),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: _focFree,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _field(l10n.workbenchFocFree),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<GuestRole>(
-          key: ValueKey('foc-$_focAppliesTo'),
-          initialValue: _focAppliesTo,
-          decoration: _field(l10n.briefFocApplies),
-          items: [
-            for (final role in GuestRole.values)
-              DropdownMenuItem(
-                value: role,
-                child: Text(_roleLabel(l10n, role)),
-              ),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _focAppliesTo = value);
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.workbenchBasePackage,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 4),
-        Text(l10n.workbenchBasePackageHint),
-        Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
-      ],
-    );
-  }
-
-  Widget _seatsBlock(AppLocalizations l10n) {
-    final named = <MapEntry<String, String>>[
-      for (final draft in _addons)
-        if (draft.name.text.trim().isNotEmpty)
-          MapEntry(draft.id, draft.name.text.trim()),
-      for (final ticket in _individuals) ...[
-        if (ticket.name.text.trim().isNotEmpty)
-          MapEntry(ticket.id, ticket.name.text.trim()),
-        for (final draft in ticket.addons)
-          if (draft.name.text.trim().isNotEmpty)
-            MapEntry(draft.id, draft.name.text.trim()),
-      ],
-    ];
-    final seatValue = _resolvedSeatOptionId;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SwitchListTile(
-          key: const Key('product-open-empty-seats'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.briefOpenSeats),
-          subtitle: Text(l10n.workbenchOpenSeatsHint),
-          value: _openEmptySeats,
-          onChanged: (value) => setState(() => _openEmptySeats = value),
-        ),
-        if (_openEmptySeats) ...[
-          DropdownButtonFormField<String>(
-            key: ValueKey(
-              'seat-$seatValue-${named.map((d) => d.key).join(',')}',
-            ),
-            initialValue: seatValue,
-            decoration: _field(l10n.workbenchSeatOption),
-            items: [
-              DropdownMenuItem(value: '', child: Text(l10n.workbenchSeatBase)),
-              for (final entry in named)
-                DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-            ],
-            onChanged: (value) => setState(() => _seatOptionId = value ?? ''),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _capacity,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: _field(l10n.workbenchSeatCount),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.workbenchDepartureDate),
-            subtitle: Text(
-              _departureStart == null
-                  ? '—'
-                  : DateFormat('yyyy.MM.dd').format(_departureStart!),
-            ),
-            trailing: const Icon(Icons.calendar_today_outlined),
-            onTap: () => _pickDay(isFlag: false),
-          ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.workbenchFlagDeadline),
-            subtitle: Text(
-              _flagClosesAt == null
-                  ? '—'
-                  : DateFormat('yyyy.MM.dd').format(_flagClosesAt!),
-            ),
-            trailing: const Icon(Icons.flag_outlined),
-            onTap: () => _pickDay(isFlag: true),
-          ),
-        ],
-      ],
-    );
-  }
-
   ShopProduct get _draftProduct {
+    final existing = widget.existing;
+    final diverPrice =
+        int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
     return ShopProduct(
       id: 'draft',
       shopId: _shopId,
       name: _name.text.trim().isEmpty ? '—' : _name.text.trim(),
-      consumerPrice: int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0,
-      professionalPrice: int.tryParse(_ratePro[GuestRole.diver]!.text) ?? 0,
+      consumerPrice: diverPrice,
+      professionalPrice: diverPrice,
       blurb: _blurb.text.trim(),
       durationLabel: _nightsLabel,
       guestRates: [
@@ -2922,7 +2601,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               GuestRole.infant => false,
             },
             consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
-            professional: int.tryParse(_ratePro[role]!.text) ?? 0,
+            professional: int.tryParse(_rateConsumer[role]!.text) ?? 0,
           ),
       ],
       options: [
@@ -2930,9 +2609,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           if (draft.name.text.trim().isNotEmpty)
             draft.toOption().copyWith(kind: ProductOptionKind.addon),
       ],
-      focPayCount: int.tryParse(_focPay.text) ?? 0,
-      focFreeCount: int.tryParse(_focFree.text) ?? 0,
-      focAppliesTo: _focAppliesTo,
+      focPayCount: existing?.focPayCount ?? 0,
+      focFreeCount: existing?.focFreeCount ?? 0,
+      focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
     );
   }
 

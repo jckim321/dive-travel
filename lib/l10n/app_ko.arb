@@ -1368,6 +1368,8 @@
   "briefTakeDown": "내려두기",
   "briefKept": "이어서 쓸 수 있게 저장했습니다.",
   "briefTakenDown": "상품을 손님 화면에서 내려 두었습니다.",
+  "briefSave": "저장",
+  "briefEdit": "수정",
   "adminProductDelete": "삭제",
   "adminProductDeleteBody": "「{name}」을 삭제하면 상품 목록에서 빠집니다.",
   "@adminProductDeleteBody": {

@@ -2206,6 +2206,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get briefTakenDown => '상품을 손님 화면에서 내려 두었습니다.';
 
   @override
+  String get briefSave => '저장';
+
+  @override
+  String get briefEdit => '수정';
+
+  @override
   String get adminProductDelete => '삭제';
 
   @override

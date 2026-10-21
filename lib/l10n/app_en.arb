@@ -802,6 +802,8 @@
   "briefTakeDown": "Take down",
   "briefKept": "Saved so you can keep writing.",
   "briefTakenDown": "The trip is hidden from guests.",
+  "briefSave": "Save",
+  "briefEdit": "Edit",
   "adminProductDelete": "Delete",
   "adminProductDeleteBody": "Delete \"{name}\" from the product list.",
   "@adminProductDeleteBody": {

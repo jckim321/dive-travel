@@ -2282,6 +2282,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefTakenDown => 'The trip is hidden from guests.';
 
   @override
+  String get briefSave => 'Save';
+
+  @override
+  String get briefEdit => 'Edit';
+
+  @override
   String get adminProductDelete => 'Delete';
 
   @override

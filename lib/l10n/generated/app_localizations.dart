@@ -4236,6 +4236,18 @@ abstract class AppLocalizations {
   /// **'상품을 손님 화면에서 내려 두었습니다.'**
   String get briefTakenDown;
 
+  /// No description provided for @briefSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get briefSave;
+
+  /// No description provided for @briefEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정'**
+  String get briefEdit;
+
   /// No description provided for @adminProductDelete.
   ///
   /// In ko, this message translates to:
