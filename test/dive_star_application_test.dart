@@ -1,9 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 
 void main() {
+  test('partner doc landing URLs point at Pages partner-docs', () {
+    expect(
+      AppConstants.partnerDocLandingUrl('dive-star-guide-ko'),
+      endsWith('/partner-docs/dive-star-guide-ko.html'),
+    );
+    expect(
+      AppConstants.partnerDocLandingUrl('dive-star-loi-ko'),
+      endsWith('/partner-docs/dive-star-loi-ko.html'),
+    );
+  });
+
   test('pipeline advances guide_sent → result_notified', () {
     var status = DiveStarPipelineStatus.guideSent;
     final seen = <DiveStarPipelineStatus>[status];
@@ -46,8 +58,10 @@ void main() {
     final advanced = await repo.updateDiveStarApplicationPipeline(
       applicationId: app.id,
       status: DiveStarPipelineStatus.docsSubmitted,
+      reminderDueAt: DateTime.now().toUtc().add(const Duration(days: 14)),
     );
     expect(advanced.pipelineStatus, DiveStarPipelineStatus.docsSubmitted);
+    expect(advanced.reminderDueAt, isNotNull);
 
     final mail = await repo.queuePartnerEmail(
       toEmail: 'kim@example.com',

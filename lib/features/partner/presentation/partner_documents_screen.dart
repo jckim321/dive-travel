@@ -147,24 +147,75 @@ class _PartnerDocumentsScreenState extends State<PartnerDocumentsScreen> {
                     else
                       for (final app in _apps) ...[
                         Card(
-                          child: ListTile(
-                            title: Text(app.companyName),
-                            subtitle: Text(
-                              [
-                                DateFormat.yMMMd()
-                                    .format(app.submittedAt.toLocal()),
-                                _statusLabel(l10n, app.pipelineStatus),
-                              ].join(' · '),
-                            ),
-                            trailing: IconButton(
-                              tooltip: l10n.adminDocActionPrint,
-                              icon: const Icon(Icons.print_outlined),
-                              onPressed: () async {
-                                final bytes = await buildDiveStarLoiPdf(app);
-                                await Printing.layoutPdf(
-                                  onLayout: (_) async => bytes,
-                                );
-                              },
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(app.companyName),
+                                  subtitle: Text(
+                                    [
+                                      DateFormat.yMMMd()
+                                          .format(app.submittedAt.toLocal()),
+                                      _statusLabel(l10n, app.pipelineStatus),
+                                    ].join(' · '),
+                                  ),
+                                  trailing: IconButton(
+                                    tooltip: l10n.adminDocActionPrint,
+                                    icon: const Icon(Icons.print_outlined),
+                                    onPressed: () async {
+                                      final bytes =
+                                          await buildDiveStarLoiPdf(app);
+                                      await Printing.layoutPdf(
+                                        onLayout: (_) async => bytes,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                if (app.pipelineStatus ==
+                                    DiveStarPipelineStatus.loiReceived) ...[
+                                  Text(
+                                    l10n.partnerLoiDocsSubmitHint,
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FilledButton.tonal(
+                                      onPressed: () async {
+                                        final store =
+                                            DiverStoreScope.of(context);
+                                        final messenger =
+                                            ScaffoldMessenger.of(context);
+                                        await store
+                                            .updateDiveStarApplicationPipeline(
+                                          applicationId: app.id,
+                                          status: DiveStarPipelineStatus
+                                              .docsSubmitted,
+                                          reminderDueAt: DateTime.now()
+                                              .toUtc()
+                                              .add(const Duration(days: 14)),
+                                        );
+                                        if (!mounted) {
+                                          return;
+                                        }
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              l10n.partnerLoiDocsSubmitted,
+                                            ),
+                                          ),
+                                        );
+                                        await _reload();
+                                      },
+                                      child: Text(l10n.partnerLoiDocsSubmit),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),

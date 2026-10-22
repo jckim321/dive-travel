@@ -816,6 +816,22 @@
   "adminAppsOutboxSection": "Email outbox",
   "adminAppsOutboxEmpty": "Outbox is empty.",
   "adminAppsOpenList": "Applications & pipeline",
+  "adminAppsQueueAllReminders": "Queue all due reminders",
+  "adminAppsRemindersQueued": "Queued {count} reminder(s) in the outbox.",
+  "@adminAppsRemindersQueued": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "adminAppsReminderDue": "Due {date}",
+  "@adminAppsReminderDue": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "partnerLoiDocsSubmit": "Mark documents submitted",
+  "partnerLoiDocsSubmitHint": "After you send remaining files by email or chat, tap here so Dive Travel can start review.",
+  "partnerLoiDocsSubmitted": "Marked as documents submitted.",
   "adminViewShopProducts": "View products",
   "adminSameBoatRemaining": "{count} left",
   "@adminSameBoatRemaining": {

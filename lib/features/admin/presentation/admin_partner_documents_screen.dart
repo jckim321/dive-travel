@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
@@ -346,7 +347,11 @@ class _PartnerDocumentDetailPageState extends State<_PartnerDocumentDetailPage> 
     if (doc.url.isNotEmpty) {
       return doc.url;
     }
-    // Public asset path hint for partners (web build may expose assets).
+    // Prefer public landing pages (OG / Kakao preview) over raw asset paths.
+    final landing = AppConstants.partnerDocLandingUrl(doc.id);
+    if (landing.endsWith('.html')) {
+      return landing;
+    }
     return doc.assetPath;
   }
 

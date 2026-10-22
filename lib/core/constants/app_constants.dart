@@ -13,6 +13,21 @@ abstract final class AppConstants {
   /// 테스트 동안 로그인 세션을 파트너(Business)로 연다. 실서비스 배포 전 false로 되돌리세요.
   static const bool grantBusinessToCurrentSession = true;
   static const String defaultPartnerShopId = 'bohol-hideout';
+
+  /// GitHub Pages site root (Flutter web `--base-href /dive-travel/`).
+  static const String publicSiteBaseUrl =
+      'https://jckim321.github.io/dive-travel';
+
+  /// Public partner-doc landing pages (OG / Kakao link previews).
+  static String partnerDocLandingUrl(String documentId) {
+    return switch (documentId.trim()) {
+      'dive-star-guide-ko' =>
+        '$publicSiteBaseUrl/partner-docs/dive-star-guide-ko.html',
+      'dive-star-loi-ko' =>
+        '$publicSiteBaseUrl/partner-docs/dive-star-loi-ko.html',
+      _ => '$publicSiteBaseUrl/partner-docs/',
+    };
+  }
 }
 
 /// 앱 소유자 계정. 회원가입 화면에 미리 채우고 Firestore 프로필 이름으로 씁니다.

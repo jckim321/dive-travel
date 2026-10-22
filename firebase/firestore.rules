@@ -242,7 +242,16 @@ service cloud.firestore {
         && request.resource.data.signature_png_base64 is string
         && request.resource.data.signature_png_base64.size() > 0
         && request.resource.data.signature_png_base64.size() < 400000;
-      allow update: if isAdmin();
+      // Partners may only advance loi_received → docs_submitted on their own app.
+      allow update: if isAdmin()
+        || (isBusiness()
+          && resource.data.partner_uid == request.auth.uid
+          && request.resource.data.partner_uid == resource.data.partner_uid
+          && request.resource.data.shop_id == resource.data.shop_id
+          && resource.data.pipeline_status == 'loi_received'
+          && request.resource.data.pipeline_status == 'docs_submitted'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['pipeline_status', 'updated_at', 'reminder_due_at']));
       allow delete: if isAdmin();
     }
 

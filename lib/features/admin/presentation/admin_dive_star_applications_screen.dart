@@ -85,9 +85,15 @@ class _AdminDiveStarApplicationsScreenState
     await _reload();
   }
 
-  Future<void> _queueReminder(DiveStarApplication app) async {
+  Future<void> _queueReminder(
+    DiveStarApplication app, {
+    bool openMailto = true,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    if (app.contactEmail.trim().isEmpty) {
+      return;
+    }
     final subject = l10n.pipelineReminderSubject(app.shopName);
     final body = l10n.pipelineReminderBody(app.shopName, app.contactName);
     final item = await store.queuePartnerEmail(
@@ -105,18 +111,42 @@ class _AdminDiveStarApplicationsScreenState
     if (!mounted) {
       return;
     }
-    final uri = Uri.parse(
-      'mailto:${Uri.encodeComponent(app.contactEmail)}'
-      '?subject=${Uri.encodeComponent(subject)}'
-      '&body=${Uri.encodeComponent(body)}',
-    );
-    await launchUrl(uri);
-    await store.markPartnerEmailOutboxSent(item.id);
+    if (openMailto) {
+      final uri = Uri.parse(
+        'mailto:${Uri.encodeComponent(app.contactEmail)}'
+        '?subject=${Uri.encodeComponent(subject)}'
+        '&body=${Uri.encodeComponent(body)}',
+      );
+      await launchUrl(uri);
+      await store.markPartnerEmailOutboxSent(item.id);
+    }
+    if (!mounted) {
+      return;
+    }
+    if (openMailto) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.pipelineReminderQueued)),
+      );
+      await _reload();
+    }
+  }
+
+  Future<void> _queueAllDueReminders() async {
+    final l10n = AppLocalizations.of(context);
+    final due = _apps
+        .where((a) => a.reminderDue && a.contactEmail.trim().isNotEmpty)
+        .toList();
+    if (due.isEmpty) {
+      return;
+    }
+    for (final app in due) {
+      await _queueReminder(app, openMailto: false);
+    }
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.pipelineReminderQueued)),
+      SnackBar(content: Text(l10n.adminAppsRemindersQueued(due.length))),
     );
     await _reload();
   }
@@ -150,6 +180,14 @@ class _AdminDiveStarApplicationsScreenState
                     const SizedBox(height: 4),
                     Text(l10n.adminAppsEmailServerNote),
                     const SizedBox(height: 8),
+                    if (due.isNotEmpty)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.tonal(
+                          onPressed: _queueAllDueReminders,
+                          child: Text(l10n.adminAppsQueueAllReminders),
+                        ),
+                      ),
                     if (due.isEmpty)
                       Text(l10n.adminAppsReminderEmpty)
                     else
@@ -157,7 +195,17 @@ class _AdminDiveStarApplicationsScreenState
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(app.shopName),
-                          subtitle: Text(app.contactEmail),
+                          subtitle: Text(
+                            [
+                              app.contactEmail,
+                              if (app.reminderDueAt != null)
+                                l10n.adminAppsReminderDue(
+                                  DateFormat.yMMMd().format(
+                                    app.reminderDueAt!.toLocal(),
+                                  ),
+                                ),
+                            ].join(' · '),
+                          ),
                           trailing: TextButton(
                             onPressed: () => _queueReminder(app),
                             child: Text(l10n.adminAppsSendReminder),
@@ -189,6 +237,12 @@ class _AdminDiveStarApplicationsScreenState
                                         .format(app.submittedAt.toLocal()),
                                     app.contactName,
                                     _statusLabel(l10n, app.pipelineStatus),
+                                    if (app.reminderDueAt != null)
+                                      l10n.adminAppsReminderDue(
+                                        DateFormat.yMMMd().format(
+                                          app.reminderDueAt!.toLocal(),
+                                        ),
+                                      ),
                                   ].join(' · '),
                                 ),
                                 const SizedBox(height: 8),
