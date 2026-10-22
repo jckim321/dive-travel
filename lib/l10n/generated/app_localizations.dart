@@ -3666,6 +3666,18 @@ abstract class AppLocalizations {
   /// **'이 기록을 복사해서 새 심사 만들기'**
   String get adminDiveStarCopyAsNew;
 
+  /// No description provided for @adminDiveStarCopySameDateTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사일 확인'**
+  String get adminDiveStarCopySameDateTitle;
+
+  /// No description provided for @adminDiveStarCopySameDateBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'재심사 날짜가 원본과 같습니다. 이대로 저장할까요?'**
+  String get adminDiveStarCopySameDateBody;
+
   /// No description provided for @adminDiveStarDeleteDraft.
   ///
   /// In ko, this message translates to:

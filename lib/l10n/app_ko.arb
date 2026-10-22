@@ -1333,6 +1333,8 @@
   "adminDiveStarModeReadonly": "확정됨 · 읽기 전용",
   "adminDiveStarStartNew": "새 심사 시작",
   "adminDiveStarCopyAsNew": "이 기록을 복사해서 새 심사 만들기",
+  "adminDiveStarCopySameDateTitle": "심사일 확인",
+  "adminDiveStarCopySameDateBody": "재심사 날짜가 원본과 같습니다. 이대로 저장할까요?",
   "adminDiveStarDeleteDraft": "미확정 심사 삭제",
   "adminDiveStarDeleteConfirmTitle": "심사를 삭제할까요?",
   "adminDiveStarDeleteConfirmBody": "이 미확정 기록을 삭제합니다. 되돌릴 수 없습니다.",

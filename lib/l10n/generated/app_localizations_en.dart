@@ -1977,6 +1977,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarCopyAsNew => 'Copy this record into a new audit';
 
   @override
+  String get adminDiveStarCopySameDateTitle => 'Review date';
+
+  @override
+  String get adminDiveStarCopySameDateBody =>
+      'The re-audit date matches the original. Save anyway?';
+
+  @override
   String get adminDiveStarDeleteDraft => 'Delete draft';
 
   @override

@@ -400,6 +400,21 @@ class DiveStarForm {
   }
 }
 
+/// Calendar day in local time (used when copying an audit into a new draft).
+DateTime diveStarCopyDefaultReviewedAt({DateTime? now}) {
+  final local = (now ?? DateTime.now()).toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
+
+/// True when both instants fall on the same local calendar day.
+bool sameDiveStarReviewDay(DateTime a, DateTime b) {
+  final left = a.toLocal();
+  final right = b.toLocal();
+  return left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
+}
+
 enum DiveStarAssessmentType {
   onsite,
   mystery,

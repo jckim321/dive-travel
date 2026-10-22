@@ -1921,6 +1921,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminDiveStarCopyAsNew => '이 기록을 복사해서 새 심사 만들기';
 
   @override
+  String get adminDiveStarCopySameDateTitle => '심사일 확인';
+
+  @override
+  String get adminDiveStarCopySameDateBody => '재심사 날짜가 원본과 같습니다. 이대로 저장할까요?';
+
+  @override
   String get adminDiveStarDeleteDraft => '미확정 심사 삭제';
 
   @override

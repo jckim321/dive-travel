@@ -754,6 +754,8 @@
   "adminDiveStarModeReadonly": "Confirmed · read-only",
   "adminDiveStarStartNew": "Start new audit",
   "adminDiveStarCopyAsNew": "Copy this record into a new audit",
+  "adminDiveStarCopySameDateTitle": "Review date",
+  "adminDiveStarCopySameDateBody": "The re-audit date matches the original. Save anyway?",
   "adminDiveStarDeleteDraft": "Delete draft",
   "adminDiveStarDeleteConfirmTitle": "Delete this audit?",
   "adminDiveStarDeleteConfirmBody": "This draft will be deleted. This cannot be undone.",

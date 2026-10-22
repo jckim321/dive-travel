@@ -78,6 +78,9 @@ class _AdminDiveStarAssessmentScreenState
   DiveStarAssessment? _loadedRecord;
   DiveStarScoreResult? _preview;
 
+  /// Set when opening via「복사해서 새 심사」; used to warn if save date matches.
+  DateTime? _copiedFromReviewedAt;
+
   bool get _v2Ui {
     final form = _form;
     return form != null && form.items.isNotEmpty;
@@ -337,8 +340,9 @@ class _AdminDiveStarAssessmentScreenState
         _editingId = null;
         _openedConfirmed = false;
         _loadedRecord = null;
+        _copiedFromReviewedAt = null;
         _type = DiveStarAssessmentType.onsite;
-        _reviewedAt = DateTime.now();
+        _reviewedAt = diveStarCopyDefaultReviewedAt();
         _mysteryVisitsController.text = '0';
         _auditor1Controller.clear();
         _auditor2Controller.clear();
@@ -379,13 +383,16 @@ class _AdminDiveStarAssessmentScreenState
         _editingId = null;
         _openedConfirmed = false;
         _loadedRecord = null;
+        _copiedFromReviewedAt = item.reviewedAt;
+        _reviewedAt = diveStarCopyDefaultReviewedAt();
       } else {
         _editingId = item.id;
         _openedConfirmed = item.confirmed;
         _loadedRecord = item;
+        _copiedFromReviewedAt = null;
+        _reviewedAt = item.reviewedAt;
       }
       _type = item.type;
-      _reviewedAt = item.reviewedAt;
       for (final gate in form.gates) {
         _gates[gate.id] = item.gates[gate.id] == true;
       }
@@ -426,6 +433,31 @@ class _AdminDiveStarAssessmentScreenState
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final editingId = _editingId;
+    final copiedFrom = _copiedFromReviewedAt;
+    if (editingId == null &&
+        copiedFrom != null &&
+        sameDiveStarReviewDay(_reviewedAt, copiedFrom)) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.adminDiveStarCopySameDateTitle),
+          content: Text(l10n.adminDiveStarCopySameDateBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.adminHqClose),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.adminDiveStarAssessmentSave),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true || !mounted) {
+        return;
+      }
+    }
     setState(() => _saving = true);
     try {
       final saved = await store.saveDiveStarAssessment(
@@ -454,6 +486,7 @@ class _AdminDiveStarAssessmentScreenState
         _editingId = saved.id;
         _openedConfirmed = false;
         _loadedRecord = saved;
+        _copiedFromReviewedAt = null;
         _history = history;
         _saving = false;
         _recomputePreview();

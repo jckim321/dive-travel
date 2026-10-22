@@ -10,6 +10,23 @@ void main() {
     form = DiveStarForm.v1();
   });
 
+  test('복사 기본 심사일은 오늘(로컬)로 시작한다', () {
+    final now = DateTime(2026, 10, 22, 18, 30);
+    final reviewed = diveStarCopyDefaultReviewedAt(now: now);
+    expect(reviewed.year, 2026);
+    expect(reviewed.month, 10);
+    expect(reviewed.day, 22);
+    expect(reviewed.hour, 0);
+  });
+
+  test('같은 로컬 날짜면 sameDiveStarReviewDay가 true', () {
+    final morning = DateTime(2026, 3, 1, 9);
+    final evening = DateTime(2026, 3, 1, 23);
+    final nextDay = DateTime(2026, 3, 2);
+    expect(sameDiveStarReviewDay(morning, evening), isTrue);
+    expect(sameDiveStarReviewDay(morning, nextDay), isFalse);
+  });
+
   Map<String, bool> allGatesPass() => {
         for (final gate in form.gates) gate.id: true,
       };
