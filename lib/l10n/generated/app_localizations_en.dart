@@ -3125,7 +3125,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityFlagAlready => 'You already hold this seat.';
 
   @override
+  String get communityFlagContinuePayAsk =>
+      'You already have a flag. Continue to payment?';
+
+  @override
+  String get communityFlagContinuePay => 'Continue to pay';
+
+  @override
+  String get communityFlagTaken => 'Someone just took that seat.';
+
+  @override
+  String get communityFlagTooLate =>
+      'Too close to the flag deadline to plant a new one.';
+
+  @override
+  String get communityFlagLimitReached =>
+      'You can hold at most 3 flags at once.';
+
+  @override
   String get communitySeatsShort => 'Not enough seats left on this option.';
+
+  @override
+  String get profileFlagCancelCta => 'Cancel';
+
+  @override
+  String get profileFlagCancelConfirm =>
+      'Canceling this flag frees the seats immediately. Cancel it?';
 
   @override
   String get communityOfferDetail => 'This berth';

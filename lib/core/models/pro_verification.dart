@@ -63,6 +63,8 @@ class TourBooking {
     this.children = 0,
     this.infants = 0,
     this.quoteLines = const [],
+    this.seatsHeld = 0,
+    this.seatOptionId = '',
   });
 
   final String id;
@@ -92,6 +94,10 @@ class TourBooking {
   final int children;
   final int infants;
   final List<BookingLine> quoteLines;
+  /// Seats charged to `booked_seats` at create time; restore only when > 0.
+  final int seatsHeld;
+  /// Option used for seat inventory (may differ from display [optionId]).
+  final String seatOptionId;
 
   DateTime get scheduledFor => tourDate ?? createdAt;
 
@@ -166,6 +172,8 @@ class TourBooking {
     bool? refundNoticeSeen,
     PaymentStatus? paymentStatus,
     DateTime? tourDate,
+    int? seatsHeld,
+    String? seatOptionId,
   }) {
     return TourBooking(
       id: id,
@@ -194,8 +202,14 @@ class TourBooking {
       children: children,
       infants: infants,
       quoteLines: quoteLines,
+      seatsHeld: seatsHeld ?? this.seatsHeld,
+      seatOptionId: seatOptionId ?? this.seatOptionId,
     );
   }
+
+  /// Inventory option id used when restoring seats.
+  String get seatsOptionKey =>
+      seatOptionId.isNotEmpty ? seatOptionId : optionId;
 }
 
 /// Guest lifecycle for a tour booking.

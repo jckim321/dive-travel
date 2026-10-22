@@ -5730,11 +5730,53 @@ abstract class AppLocalizations {
   /// **'이미 이 자리를 가확정했습니다.'**
   String get communityFlagAlready;
 
+  /// No description provided for @communityFlagContinuePayAsk.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 깃발이 있어요. 결제를 이어갈까요?'**
+  String get communityFlagContinuePayAsk;
+
+  /// No description provided for @communityFlagContinuePay.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 이어가기'**
+  String get communityFlagContinuePay;
+
+  /// No description provided for @communityFlagTaken.
+  ///
+  /// In ko, this message translates to:
+  /// **'방금 다른 분이 먼저 잡았어요'**
+  String get communityFlagTaken;
+
+  /// No description provided for @communityFlagTooLate.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발 마감이 임박해 새로 꽂을 수 없습니다.'**
+  String get communityFlagTooLate;
+
+  /// No description provided for @communityFlagLimitReached.
+  ///
+  /// In ko, this message translates to:
+  /// **'동시에 가질 수 있는 깃발은 최대 3개입니다.'**
+  String get communityFlagLimitReached;
+
   /// No description provided for @communitySeatsShort.
   ///
   /// In ko, this message translates to:
   /// **'이 옵션의 남은 자리가 부족합니다.'**
   String get communitySeatsShort;
+
+  /// No description provided for @profileFlagCancelCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get profileFlagCancelCta;
+
+  /// No description provided for @profileFlagCancelConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 깃발을 취소하면 자리가 바로 풀립니다. 취소할까요?'**
+  String get profileFlagCancelConfirm;
 
   /// No description provided for @communityOfferDetail.
   ///

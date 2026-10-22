@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -102,8 +103,33 @@ class MemoryDiverRepository implements DiverRepository {
   late List<CommunityPost> _posts;
   final _shopBookings = <String, List<TourBooking>>{};
   final _comments = <String, List<CommunityComment>>{};
+  final _activeSeatFlags = <String, List<ActiveSeatFlag>>{};
   int _postSequence = 0;
   int _commentSequence = 0;
+  Future<void> _txnTail = Future<void>.value();
+
+  /// Serializes seat mutations so concurrent plant/createBooking races are testable.
+  Future<T> _runTxn<T>(Future<T> Function() body) {
+    final done = Completer<T>();
+    _txnTail = _txnTail.then((_) async {
+      try {
+        done.complete(await body());
+      } catch (error, stack) {
+        done.completeError(error, stack);
+      }
+    });
+    return done.future;
+  }
+
+  List<ActiveSeatFlag> _flagsFor(String uid) =>
+      List<ActiveSeatFlag>.from(_activeSeatFlags[uid] ?? const []);
+
+  /// Test helper: seed expired / live flag index rows without planting on a shop.
+  void seedActiveSeatFlags(String uid, List<ActiveSeatFlag> flags) {
+    _activeSeatFlags[uid] = List<ActiveSeatFlag>.from(flags);
+  }
+
+  List<ActiveSeatFlag> readActiveSeatFlags(String uid) => _flagsFor(uid);
 
   final _authController = StreamController<AppUser?>.broadcast();
   final _diverController = StreamController<DiverSnapshot>.broadcast();
@@ -452,132 +478,239 @@ class MemoryDiverRepository implements DiverRepository {
     List<BookingLine> quoteLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
-  }) async {
-    final hullId = shopId.split('--').first;
-    final held = _holdOpenSeats(
-      hullId,
-      productId,
-      partySize,
-      optionId: seatOptionId,
-      uid: uid,
-    );
-    if (!held) {
-      return false;
-    }
-    _bookingSequence += 1;
-    final booking = TourBooking(
-      id: 'booking-$_bookingSequence',
-      uid: uid,
-      shopId: hullId,
-      shopName: shopName,
-      productName: productName,
-      productId: productId ?? '',
-      optionId: optionId,
-      optionName: optionName,
-      listingKind: listingKind,
-      fromFlag: fromFlag,
-      price: price,
-      createdAt: DateTime.now(),
-      tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
-      status: status,
-      paymentStatus: paymentStatus,
-      partySize: partySize,
-      divers: divers,
-      nondivers: nondivers,
-      children: children,
-      infants: infants,
-      quoteLines: quoteLines,
-    );
-    _bookings.insert(0, booking);
-    _shopBookings.putIfAbsent(booking.shopId, () => []).insert(0, booking);
-    _bookingController.add(List<TourBooking>.from(_bookings));
-    _shopBookingController.add(
-      List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
-    );
-    return true;
-  }
-
-  bool _holdOpenSeats(
-    String shopId,
-    String? productId,
-    int partySize, {
-    String optionId = '',
-    String uid = '',
   }) {
-    if (productId == null || productId.isEmpty || partySize <= 0) {
-      return true;
-    }
-    final current = _shopStats[shopId];
-    if (current == null) {
-      return false;
-    }
-    ShopProduct? target;
-    for (final item in current.products) {
-      if (item.id == productId) {
-        target = item;
-        break;
-      }
-    }
-    if (target == null) {
-      return false;
-    }
-    var opens = target.openEmptySeats;
-    if (optionId.isNotEmpty) {
-      opens = false;
-      for (final option in target.options) {
-        if (option.id == optionId) {
-          opens = option.openEmptySeats;
-          break;
+    return _runTxn(() async {
+      final hullId = shopId.split('--').first;
+      final now = DateTime.now();
+      final seatKey = seatOptionId;
+      var seatsHeld = 0;
+
+      if (productId != null && productId.isNotEmpty && partySize > 0) {
+        final current = _shopStats[hullId];
+        if (current == null) {
+          return false;
+        }
+        ShopProduct? target;
+        for (final item in current.products) {
+          if (item.id == productId) {
+            target = item;
+            break;
+          }
+        }
+        if (target == null) {
+          return false;
+        }
+        final opens = target.opensEmptySeatsFor(seatKey);
+        if (opens) {
+          final before = target.bookedSeatsFor(seatKey);
+          final captured = target.capturePayment(
+            partySize,
+            now,
+            uid: uid,
+            optionId: seatKey,
+          );
+          if (captured.bookedSeatsFor(seatKey) <= before) {
+            return false;
+          }
+          seatsHeld = partySize;
+          _shopStats[hullId] = current.copyWith(
+            products: [
+              for (final item in current.products)
+                if (item.id == productId) captured else item,
+            ],
+          );
+          _shopController.add(_shopStats.values.toList());
+          final live = ActiveSeatFlag.liveOnly(_flagsFor(uid), now);
+          _activeSeatFlags[uid] = ActiveSeatFlag.withoutProduct(
+            live,
+            hullId,
+            productId,
+          );
         }
       }
-    }
-    if (!opens) {
+
+      _bookingSequence += 1;
+      final booking = TourBooking(
+        id: 'booking-$_bookingSequence',
+        uid: uid,
+        shopId: hullId,
+        shopName: shopName,
+        productName: productName,
+        productId: productId ?? '',
+        optionId: optionId,
+        optionName: optionName,
+        listingKind: listingKind,
+        fromFlag: fromFlag,
+        price: price,
+        createdAt: now,
+        tourDate: tourDate ?? now.add(const Duration(days: 7)),
+        status: status,
+        paymentStatus: paymentStatus,
+        partySize: partySize,
+        divers: divers,
+        nondivers: nondivers,
+        children: children,
+        infants: infants,
+        quoteLines: quoteLines,
+        seatsHeld: seatsHeld,
+        seatOptionId: seatKey,
+      );
+      _bookings.insert(0, booking);
+      _shopBookings.putIfAbsent(booking.shopId, () => []).insert(0, booking);
+      _bookingController.add(List<TourBooking>.from(_bookings));
+      _shopBookingController.add(
+        List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
+      );
       return true;
-    }
-    final before = target.bookedSeatsFor(optionId);
-    final captured = target.capturePayment(
-      partySize,
-      DateTime.now(),
-      uid: uid,
-      optionId: optionId,
-    );
-    if (captured.bookedSeatsFor(optionId) <= before) {
-      return false;
-    }
-    _shopStats[shopId] = current.copyWith(
-      products: [
-        for (final item in current.products)
-          if (item.id == productId) captured else item,
-      ],
-    );
-    _shopController.add(_shopStats.values.toList());
-    return true;
+    });
   }
 
   @override
-  Future<void> plantSeatFlag({
+  Future<SeatFlagPlant> plantSeatFlag({
     required String shopId,
     required String productId,
     required int partySize,
     required DateTime now,
     String optionId = '',
     String uid = '',
-  }) async {
-    final hull = shopId.split('--').first;
-    final current = _shopStats[hull];
+  }) {
+    return _runTxn(() async {
+      if (uid.isEmpty || partySize <= 0) {
+        return SeatFlagPlant.unavailable;
+      }
+      final hull = shopId.split('--').first;
+      final current = _shopStats[hull];
+      if (current == null) {
+        return SeatFlagPlant.unavailable;
+      }
+      ShopProduct? target;
+      for (final item in current.products) {
+        if (item.id == productId) {
+          target = item.pruneExpiredHolds(now);
+          break;
+        }
+      }
+      if (target == null) {
+        return SeatFlagPlant.unavailable;
+      }
+      if (!target.opensEmptySeatsFor(optionId) ||
+          !target.isBoardLiveFor(optionId)) {
+        return SeatFlagPlant.unavailable;
+      }
+      final closeAt = target.flagClosesAtFor(optionId);
+      if (ShopProduct.isTooLateToPlant(now, closeAt)) {
+        return SeatFlagPlant.tooLate;
+      }
+      if (target.memberHasLiveFlagOnProduct(uid, now)) {
+        return SeatFlagPlant.alreadyHeld;
+      }
+
+      var liveFlags = ActiveSeatFlag.liveOnly(_flagsFor(uid), now);
+      _activeSeatFlags[uid] = liveFlags;
+      if (liveFlags.length >= ActiveSeatFlag.maxLivePerUser) {
+        return SeatFlagPlant.limitReached;
+      }
+      if (target.bookableSeatsFor(uid, now, optionId: optionId) < partySize) {
+        return SeatFlagPlant.taken;
+      }
+
+      final planted = target.plantFlag(
+        partySize: partySize,
+        now: now,
+        optionId: optionId,
+        uid: uid,
+      );
+      if (!planted.memberHasLiveFlag(uid, now, optionId: optionId)) {
+        return SeatFlagPlant.taken;
+      }
+      final hold = planted.liveFlagFor(uid, now, optionId: optionId)!;
+      liveFlags = [
+        ...liveFlags,
+        ActiveSeatFlag(
+          shopId: hull,
+          productId: productId,
+          optionId: optionId,
+          expiresAt: hold.expiresAt,
+        ),
+      ];
+      _activeSeatFlags[uid] = liveFlags;
+      _shopStats[hull] = current.copyWith(
+        products: [
+          for (final item in current.products)
+            if (item.id == productId) planted else item.pruneExpiredHolds(now),
+        ],
+      );
+      _shopController.add(_shopStats.values.toList());
+      return SeatFlagPlant.planted;
+    });
+  }
+
+  @override
+  Future<bool> cancelSeatFlag({
+    required String uid,
+    required String shopId,
+    required String productId,
+    required DateTime now,
+    String optionId = '',
+  }) {
+    return _runTxn(() async {
+      if (uid.isEmpty) {
+        return false;
+      }
+      final hull = shopId.split('--').first;
+      final current = _shopStats[hull];
+      if (current == null) {
+        return false;
+      }
+      ShopProduct? target;
+      for (final item in current.products) {
+        if (item.id == productId) {
+          target = item;
+          break;
+        }
+      }
+      if (target == null || !target.memberHasLiveFlagOnProduct(uid, now)) {
+        return false;
+      }
+      final resolvedOption = optionId.isNotEmpty
+          ? optionId
+          : target.liveFlagOptionIdFor(uid, now);
+      final next = target.removeMemberFlag(
+        uid,
+        now,
+        optionId: resolvedOption,
+      );
+      _shopStats[hull] = current.copyWith(
+        products: [
+          for (final item in current.products)
+            if (item.id == productId) next else item,
+        ],
+      );
+      final live = ActiveSeatFlag.liveOnly(_flagsFor(uid), now);
+      _activeSeatFlags[uid] = ActiveSeatFlag.withoutProduct(
+        live,
+        hull,
+        productId,
+      );
+      _shopController.add(_shopStats.values.toList());
+      return true;
+    });
+  }
+
+  void _restoreSeatsIfNeeded(TourBooking booking) {
+    if (booking.seatsHeld <= 0 || booking.productId.isEmpty) {
+      return;
+    }
+    final current = _shopStats[booking.shopId];
     if (current == null) {
       return;
     }
-    _shopStats[hull] = current.copyWith(
+    final seatKey = booking.seatsOptionKey;
+    _shopStats[booking.shopId] = current.copyWith(
       products: [
         for (final item in current.products)
-          if (item.id == productId)
-            item.plantFlag(
-              partySize: partySize,
-              now: now,
-              optionId: optionId,
-              uid: uid,
-            )
+          if (item.id == booking.productId)
+            item.releaseBookedSeats(booking.seatsHeld, optionId: seatKey)
           else
             item,
       ],
@@ -2050,30 +2183,36 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> cancelBookingAsGuest({
     required String uid,
     required String bookingId,
-  }) async {
-    final index = _bookings.indexWhere((item) => item.id == bookingId);
-    if (index < 0) {
-      return;
-    }
-    final booking = _bookings[index];
-    if (!booking.isActive) {
-      return;
-    }
-    final quote = RefundPolicy.forUserCancel(tourDate: booking.scheduledFor);
-    final updated = booking.copyWith(
-      status: BookingStatus.cancelled,
-      refundPercent: quote.percent,
-      refundAmount: quote.amountFor(booking.price),
-      paymentStatus: booking.isPaid
-          ? (quote.percent > 0 ? PaymentStatus.refunded : PaymentStatus.captured)
-          : PaymentStatus.unpaid,
-    );
-    _bookings[index] = updated;
-    _replaceShopBooking(updated);
-    _bookingController.add(List<TourBooking>.from(_bookings));
-    _shopBookingController.add(
-      List<TourBooking>.from(_shopBookings[updated.shopId] ?? const []),
-    );
+  }) {
+    return _runTxn(() async {
+      final index = _bookings.indexWhere((item) => item.id == bookingId);
+      if (index < 0) {
+        return;
+      }
+      final booking = _bookings[index];
+      if (!booking.isActive) {
+        return;
+      }
+      final quote = RefundPolicy.forUserCancel(tourDate: booking.scheduledFor);
+      final updated = booking.copyWith(
+        status: BookingStatus.cancelled,
+        refundPercent: quote.percent,
+        refundAmount: quote.amountFor(booking.price),
+        paymentStatus: booking.isPaid
+            ? (quote.percent > 0
+                ? PaymentStatus.refunded
+                : PaymentStatus.captured)
+            : PaymentStatus.unpaid,
+        seatsHeld: 0,
+      );
+      _restoreSeatsIfNeeded(booking);
+      _bookings[index] = updated;
+      _replaceShopBooking(updated);
+      _bookingController.add(List<TourBooking>.from(_bookings));
+      _shopBookingController.add(
+        List<TourBooking>.from(_shopBookings[updated.shopId] ?? const []),
+      );
+    });
   }
 
   @override
@@ -2116,32 +2255,36 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> cancelBookingsForWeather({
     required String shopId,
     required DateTime tourDate,
-  }) async {
-    final day = RefundPolicy.dateOnly(tourDate);
-    final quote = RefundPolicy.weatherCancel();
-    for (var i = 0; i < _bookings.length; i++) {
-      final booking = _bookings[i];
-      if (booking.shopId != shopId || !booking.isActive) {
-        continue;
+  }) {
+    return _runTxn(() async {
+      final day = RefundPolicy.dateOnly(tourDate);
+      final quote = RefundPolicy.weatherCancel();
+      for (var i = 0; i < _bookings.length; i++) {
+        final booking = _bookings[i];
+        if (booking.shopId != shopId || !booking.isActive) {
+          continue;
+        }
+        if (RefundPolicy.dateOnly(booking.scheduledFor) != day) {
+          continue;
+        }
+        _restoreSeatsIfNeeded(booking);
+        _bookings[i] = booking.copyWith(
+          status: BookingStatus.weatherCancelled,
+          refundPercent: 100,
+          refundAmount: quote.amountFor(booking.price),
+          refundNoticeSeen: false,
+          paymentStatus: booking.isPaid
+              ? PaymentStatus.refunded
+              : PaymentStatus.unpaid,
+          seatsHeld: 0,
+        );
+        _replaceShopBooking(_bookings[i]);
       }
-      if (RefundPolicy.dateOnly(booking.scheduledFor) != day) {
-        continue;
-      }
-      _bookings[i] = booking.copyWith(
-        status: BookingStatus.weatherCancelled,
-        refundPercent: 100,
-        refundAmount: quote.amountFor(booking.price),
-        refundNoticeSeen: false,
-        paymentStatus: booking.isPaid
-            ? PaymentStatus.refunded
-            : PaymentStatus.unpaid,
+      _bookingController.add(List<TourBooking>.from(_bookings));
+      _shopBookingController.add(
+        List<TourBooking>.from(_shopBookings[shopId] ?? const []),
       );
-      _replaceShopBooking(_bookings[i]);
-    }
-    _bookingController.add(List<TourBooking>.from(_bookings));
-    _shopBookingController.add(
-      List<TourBooking>.from(_shopBookings[shopId] ?? const []),
-    );
+    });
   }
 
   @override

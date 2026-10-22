@@ -362,10 +362,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (!context.mounted) {
       return;
     }
-    if (planted == SeatFlagPlant.alreadyHeld) {
+    if (planted == SeatFlagPlant.taken) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.communityFlagAlready)),
+        SnackBar(content: Text(l10n.communityFlagTaken)),
       );
+      return;
+    }
+    if (planted == SeatFlagPlant.tooLate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communityFlagTooLate)),
+      );
+      return;
+    }
+    if (planted == SeatFlagPlant.limitReached) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communityFlagLimitReached)),
+      );
+      return;
     }
     if (planted == SeatFlagPlant.unavailable) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -373,12 +386,73 @@ class _CommunityScreenState extends State<CommunityScreen> {
       );
       return;
     }
-    if (!context.mounted) {
+    if (planted == SeatFlagPlant.alreadyHeld) {
+      final continuePay = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            content: Text(l10n.communityFlagContinuePayAsk),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(l10n.communityPlantFlagLater),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(l10n.communityFlagContinuePay),
+              ),
+            ],
+          );
+        },
+      );
+      if (continuePay != true || !context.mounted) {
+        return;
+      }
+      await _openFlagCheckout(
+        context,
+        store,
+        offer,
+        useExistingHold: true,
+      );
       return;
     }
+    if (planted != SeatFlagPlant.planted || !context.mounted) {
+      return;
+    }
+    await _openFlagCheckout(
+      context,
+      store,
+      offer,
+      lockedPartySize: partySize,
+      flagPayBy: until,
+    );
+  }
+
+  Future<void> _openFlagCheckout(
+    BuildContext context,
+    DiverStore store,
+    SameBoatOffer offer, {
+    bool useExistingHold = false,
+    int? lockedPartySize,
+    DateTime? flagPayBy,
+  }) async {
+    final product = offer.product;
     final shop = _shopForProduct(store, product);
     if (shop == null) {
       return;
+    }
+    var party = lockedPartySize ?? 1;
+    var payBy = flagPayBy;
+    if (useExistingHold) {
+      final uid = store.uid ?? '';
+      final now = DateTime.now();
+      final optionId = offer.optionId;
+      final hold = product.liveFlagFor(uid, now, optionId: optionId) ??
+          product.liveFlagFor(uid, now);
+      if (hold != null) {
+        party = hold.seats;
+        payBy = hold.expiresAt;
+      }
     }
     await showTourCheckoutSheet(
       context: context,
@@ -387,8 +461,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
       product: product,
       lockedOptionId: offer.optionId,
       fromFlag: true,
-      lockedPartySize: partySize,
-      flagPayBy: until,
+      lockedPartySize: party,
+      flagPayBy: payBy,
     );
   }
 }

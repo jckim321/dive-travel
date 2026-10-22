@@ -112,6 +112,8 @@ class ProfileScreen extends StatelessWidget {
                         flags: flags,
                         now: now,
                         onPay: (offer) => _payFlag(context, store, offer),
+                        onCancel: (offer) =>
+                            _cancelFlag(context, store, offer),
                       ),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(
@@ -296,6 +298,40 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _cancelFlag(
+    BuildContext context,
+    DiverStore store,
+    SameBoatOffer offer,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: Text(l10n.profileFlagCancelConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.communityPlantFlagLater),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.profileFlagCancelCta),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+    await store.cancelSeatFlag(
+      shopId: offer.product.shopId,
+      productId: offer.product.id,
+      optionId: offer.optionId,
+    );
+  }
+
   DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
     final hullId = product.shopId.split('--').first;
     final listings = store.listingsOnHull(hullId);
@@ -395,11 +431,13 @@ class _FlaggedSeatsBox extends StatelessWidget {
     required this.flags,
     required this.now,
     required this.onPay,
+    required this.onCancel,
   });
 
   final List<SameBoatOffer> flags;
   final DateTime now;
   final void Function(SameBoatOffer offer) onPay;
+  final void Function(SameBoatOffer offer) onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -418,9 +456,10 @@ class _FlaggedSeatsBox extends StatelessWidget {
                   _BlinkingFlagPayButton(
                     label: offer.optionName.isEmpty
                         ? offer.product.name
-                        : '${offer.product.name} 쨌 ${offer.optionName}',
+                        : '${offer.product.name} · ${offer.optionName}',
                     deadline: _holdUntil(offer),
                     onPay: () => onPay(offer),
+                    onCancel: () => onCancel(offer),
                   ),
                   if (offer != flags.last) const SizedBox(height: 10),
                 ],
@@ -446,12 +485,14 @@ class _BlinkingFlagPayButton extends StatefulWidget {
   const _BlinkingFlagPayButton({
     required this.label,
     required this.onPay,
+    required this.onCancel,
     this.deadline,
   });
 
   final String label;
   final DateTime? deadline;
   final VoidCallback onPay;
+  final VoidCallback onCancel;
 
   @override
   State<_BlinkingFlagPayButton> createState() => _BlinkingFlagPayButtonState();
@@ -525,6 +566,15 @@ class _BlinkingFlagPayButtonState extends State<_BlinkingFlagPayButton>
                   ),
                 ),
                 const SizedBox(width: 8),
+                TextButton(
+                  key: const Key('profile-flag-cancel'),
+                  onPressed: widget.onCancel,
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  child: Text(l10n.profileFlagCancelCta),
+                ),
+                const SizedBox(width: 4),
                 FilledButton(
                   onPressed: widget.onPay,
                   style: FilledButton.styleFrom(

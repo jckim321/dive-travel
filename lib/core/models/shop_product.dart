@@ -349,7 +349,14 @@ class SeatHold {
   }
 }
 
-enum SeatFlagPlant { planted, alreadyHeld, unavailable }
+enum SeatFlagPlant {
+  planted,
+  alreadyHeld,
+  unavailable,
+  taken,
+  tooLate,
+  limitReached,
+}
 
 /// Add-on / package line item (room type, tank count, gear, transfer, …).
 class ShopProductOption {
@@ -800,6 +807,16 @@ class ShopProduct {
     return day;
   }
 
+  /// New flags are blocked from [flagClosesAt] minus this window onward.
+  static const Duration plantCutoffBeforeClose = Duration(hours: 2);
+
+  static bool isTooLateToPlant(DateTime now, DateTime? flagClosesAt) {
+    if (flagClosesAt == null) {
+      return false;
+    }
+    return !now.isBefore(flagClosesAt.subtract(plantCutoffBeforeClose));
+  }
+
   /// Board order: the earlier of departure and flag close.
   DateTime? get sameBoatSortAt {
     final start = departureStart;
@@ -824,6 +841,45 @@ class ShopProduct {
       }
     }
     return false;
+  }
+
+  /// True if [uid] has any live hold on this product (any option).
+  bool memberHasLiveFlagOnProduct(String uid, DateTime now) {
+    if (memberHasLiveFlag(uid, now)) {
+      return true;
+    }
+    for (final option in options) {
+      if (memberHasLiveFlag(uid, now, optionId: option.id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  SeatHold? liveFlagFor(String uid, DateTime now, {String optionId = ''}) {
+    if (uid.isEmpty) {
+      return null;
+    }
+    for (final hold in _holdsFor(optionId)) {
+      if (hold.uid == uid && hold.expiresAt.isAfter(now)) {
+        return hold;
+      }
+    }
+    return null;
+  }
+
+  /// Option id that currently holds a live flag for [uid], or empty for product-level.
+  String liveFlagOptionIdFor(String uid, DateTime now) {
+    final productHold = liveFlagFor(uid, now);
+    if (productHold != null) {
+      return '';
+    }
+    for (final option in options) {
+      if (liveFlagFor(uid, now, optionId: option.id) != null) {
+        return option.id;
+      }
+    }
+    return '';
   }
 
   int bookedSeatsFor(String optionId) {
@@ -981,18 +1037,117 @@ class ShopProduct {
       return live;
     }
     final openSeats = capacity - booked - _countHolds(live);
-    if (openSeats <= 0) {
+    if (openSeats < partySize) {
       return live;
     }
-    final take = partySize > openSeats ? openSeats : partySize;
     return [
       ...live,
       SeatHold(
-        seats: take,
+        seats: partySize,
         expiresAt: personalFlagUntil(now, flagClosesAt),
         uid: uid,
       ),
     ];
+  }
+
+  /// Drop expired holds on product and options (persist-ready).
+  ShopProduct pruneExpiredHolds(DateTime now) {
+    return copyWith(
+      flagHolds: _liveHolds(now),
+      options: [
+        for (final option in options)
+          option.copyWith(
+            flagHolds: [
+              for (final hold in option.flagHolds)
+                if (hold.expiresAt.isAfter(now)) hold,
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// Remove this member's live hold(s) on the product or a specific option.
+  ShopProduct removeMemberFlag(
+    String uid,
+    DateTime now, {
+    String optionId = '',
+  }) {
+    if (uid.isEmpty) {
+      return pruneExpiredHolds(now);
+    }
+    if (optionId.isNotEmpty) {
+      return _mapOption(optionId, (option) {
+        return option.copyWith(
+          flagHolds: [
+            for (final hold in option.flagHolds)
+              if (hold.expiresAt.isAfter(now) && hold.uid != uid) hold,
+          ],
+        );
+      }).pruneExpiredHolds(now);
+    }
+    return copyWith(
+      flagHolds: [
+        for (final hold in flagHolds)
+          if (hold.expiresAt.isAfter(now) && hold.uid != uid) hold,
+      ],
+      options: [
+        for (final option in options)
+          option.copyWith(
+            flagHolds: [
+              for (final hold in option.flagHolds)
+                if (hold.expiresAt.isAfter(now) && hold.uid != uid) hold,
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// Restore booked seats after cancel; clamps to `[0, capacity]`.
+  ShopProduct releaseBookedSeats(int count, {String optionId = ''}) {
+    if (count <= 0) {
+      return this;
+    }
+    int clampBooked(int booked, int capacity) {
+      final next = booked - count;
+      if (next < 0) {
+        return 0;
+      }
+      if (next > capacity) {
+        return capacity;
+      }
+      return next;
+    }
+
+    if (optionId.isNotEmpty) {
+      return _mapOption(optionId, (option) {
+        return option.copyWith(
+          bookedSeats: clampBooked(option.bookedSeats, option.capacity),
+        );
+      });
+    }
+    return copyWith(bookedSeats: clampBooked(bookedSeats, capacity));
+  }
+
+  DateTime? flagClosesAtFor(String optionId) {
+    if (optionId.isEmpty) {
+      return flagClosesAt;
+    }
+    return _option(optionId)?.flagClosesAt ?? flagClosesAt;
+  }
+
+  bool opensEmptySeatsFor(String optionId) {
+    if (optionId.isEmpty) {
+      return openEmptySeats;
+    }
+    return _option(optionId)?.openEmptySeats ?? false;
+  }
+
+  bool isBoardLiveFor(String optionId) {
+    if (optionId.isEmpty) {
+      return sameBoatStatus.isBoardLive;
+    }
+    return _option(optionId)?.sameBoatStatus.isBoardLive ??
+        sameBoatStatus.isBoardLive;
   }
 
   bool _canCapture({

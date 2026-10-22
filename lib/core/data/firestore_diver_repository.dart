@@ -23,6 +23,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
+import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -543,6 +544,8 @@ class FirestoreDiverRepository implements DiverRepository {
       children: (data['children'] as num?)?.toInt() ?? 0,
       infants: (data['infants'] as num?)?.toInt() ?? 0,
       quoteLines: BookingLine.listFrom(data['quote_lines']),
+      seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
+      seatOptionId: data['seat_option_id'] as String? ?? '',
     );
   }
 
@@ -570,6 +573,8 @@ class FirestoreDiverRepository implements DiverRepository {
       'nondivers': booking.nondivers,
       'children': booking.children,
       'infants': booking.infants,
+      'seats_held': booking.seatsHeld,
+      'seat_option_id': booking.seatOptionId,
       if (booking.quoteLines.isNotEmpty)
         'quote_lines': [
           for (final line in booking.quoteLines) line.toMap(),
@@ -615,105 +620,128 @@ class FirestoreDiverRepository implements DiverRepository {
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
   }) async {
     final hullId = shopId.split('--').first;
-    final held = await _holdOpenSeats(
-      hullId,
-      productId,
-      partySize,
-      optionId: seatOptionId,
-      uid: uid,
-    );
-    if (!held) {
-      return false;
-    }
+    final now = DateTime.now();
     final id = _bookings(uid).doc().id;
-    final booking = TourBooking(
-      id: id,
-      uid: uid,
-      shopId: hullId,
-      shopName: shopName,
-      productName: productName,
-      productId: productId ?? '',
-      optionId: optionId,
-      optionName: optionName,
-      listingKind: listingKind,
-      fromFlag: fromFlag,
-      price: price,
-      createdAt: DateTime.now(),
-      tourDate: tourDate ?? DateTime.now().add(const Duration(days: 7)),
-      status: status,
-      paymentStatus: paymentStatus,
-      commissionRate: RefundPolicy.defaultCommissionRate,
-      partySize: partySize,
-      divers: divers,
-      nondivers: nondivers,
-      children: children,
-      infants: infants,
-      quoteLines: quoteLines,
-    );
-    final payload = _bookingPayload(booking);
-    payload['created_at'] = FieldValue.serverTimestamp();
-    await _bookings(uid).doc(id).set(payload);
-    await _shopBookings(booking.shopId).doc(id).set(payload);
-    return true;
-  }
+    final userBookingRef = _bookings(uid).doc(id);
+    final shopBookingRef = _shopBookings(hullId).doc(id);
+    final shopRef = _shops.doc(hullId);
+    final userRef = _userDoc(uid);
+    final seatKey = seatOptionId;
 
-  Future<bool> _holdOpenSeats(
-    String shopId,
-    String? productId,
-    int partySize, {
-    String optionId = '',
-    String uid = '',
-  }) async {
-    if (productId == null || productId.isEmpty || partySize <= 0) {
-      return true;
-    }
-    final ref = _shops.doc(shopId);
-    final snap = await ref.get();
-    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
-    ShopProduct? target;
-    for (final item in current) {
-      if (item.id == productId) {
-        target = item;
-        break;
-      }
-    }
-    if (target == null) {
-      return false;
-    }
-    var opens = target.openEmptySeats;
-    if (optionId.isNotEmpty) {
-      opens = false;
-      for (final option in target.options) {
-        if (option.id == optionId) {
-          opens = option.openEmptySeats;
-          break;
+    try {
+      return await _db.runTransaction((transaction) async {
+        var seatsHeld = 0;
+        List<ShopProduct>? currentProducts;
+        ShopProduct? capturedProduct;
+        List<ActiveSeatFlag>? nextFlags;
+
+        final needsSeats =
+            productId != null && productId.isNotEmpty && partySize > 0;
+        if (needsSeats) {
+          final shopSnap = await transaction.get(shopRef);
+          final userSnap = await transaction.get(userRef);
+          currentProducts =
+              ShopProduct.listFrom(hullId, shopSnap.data()?['products']);
+          ShopProduct? target;
+          for (final item in currentProducts) {
+            if (item.id == productId) {
+              target = item;
+              break;
+            }
+          }
+          if (target == null) {
+            return false;
+          }
+          if (target.opensEmptySeatsFor(seatKey)) {
+            final before = target.bookedSeatsFor(seatKey);
+            final captured = target.capturePayment(
+              partySize,
+              now,
+              uid: uid,
+              optionId: seatKey,
+            );
+            if (captured.bookedSeatsFor(seatKey) <= before) {
+              return false;
+            }
+            seatsHeld = partySize;
+            capturedProduct = captured;
+            final live = ActiveSeatFlag.liveOnly(
+              ActiveSeatFlag.listFrom(
+                userSnap.data()?[ActiveSeatFlag.fieldKey],
+              ),
+              now,
+            );
+            nextFlags = ActiveSeatFlag.withoutProduct(live, hullId, productId);
+          }
         }
+
+        if (capturedProduct != null && currentProducts != null) {
+          transaction.set(
+            shopRef,
+            {
+              'products': [
+                for (final item in currentProducts)
+                  if (item.id == productId)
+                    capturedProduct.toMap()
+                    else
+                      item.toMap(),
+              ],
+            },
+            SetOptions(merge: true),
+          );
+          if (nextFlags != null) {
+            transaction.set(
+              userRef,
+              {ActiveSeatFlag.fieldKey: ActiveSeatFlag.toMaps(nextFlags)},
+              SetOptions(merge: true),
+            );
+          }
+        }
+
+        final booking = TourBooking(
+          id: id,
+          uid: uid,
+          shopId: hullId,
+          shopName: shopName,
+          productName: productName,
+          productId: productId ?? '',
+          optionId: optionId,
+          optionName: optionName,
+          listingKind: listingKind,
+          fromFlag: fromFlag,
+          price: price,
+          createdAt: now,
+          tourDate: tourDate ?? now.add(const Duration(days: 7)),
+          status: status,
+          paymentStatus: paymentStatus,
+          commissionRate: RefundPolicy.defaultCommissionRate,
+          partySize: partySize,
+          divers: divers,
+          nondivers: nondivers,
+          children: children,
+          infants: infants,
+          quoteLines: quoteLines,
+          seatsHeld: seatsHeld,
+          seatOptionId: seatKey,
+        );
+        final payload = _bookingPayload(booking);
+        payload['created_at'] = FieldValue.serverTimestamp();
+        transaction.set(userBookingRef, payload);
+        transaction.set(shopBookingRef, payload);
+        return true;
+      });
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        throw StateError(
+          'Firestore rules rejected users/{uid}.active_seat_flags write during createBooking. Stopped without changing firestore.rules.',
+        );
       }
+      rethrow;
     }
-    if (!opens) {
-      return true;
-    }
-    final before = target.bookedSeatsFor(optionId);
-    final captured = target.capturePayment(
-      partySize,
-      DateTime.now(),
-      uid: uid,
-      optionId: optionId,
-    );
-    if (captured.bookedSeatsFor(optionId) <= before) {
-      return false;
-    }
-    await ref.set({
-      'products': [
-        for (final item in current)
-          if (item.id == productId) captured.toMap() else item.toMap(),
-      ],
-    }, SetOptions(merge: true));
-    return true;
   }
 
   @override
-  Future<void> plantSeatFlag({
+  Future<SeatFlagPlant> plantSeatFlag({
     required String shopId,
     required String productId,
     required int partySize,
@@ -721,25 +749,217 @@ class FirestoreDiverRepository implements DiverRepository {
     String optionId = '',
     String uid = '',
   }) async {
+    if (uid.isEmpty || partySize <= 0) {
+      return SeatFlagPlant.unavailable;
+    }
     final hull = shopId.split('--').first;
-    final ref = _shops.doc(hull);
-    final snap = await ref.get();
-    final current = ShopProduct.listFrom(hull, snap.data()?['products']);
-    final next = [
-      for (final item in current)
-        if (item.id == productId)
-          item.plantFlag(
-            partySize: partySize,
-            now: now,
+    final shopRef = _shops.doc(hull);
+    final userRef = _userDoc(uid);
+
+    try {
+      return await _db.runTransaction((transaction) async {
+        final shopSnap = await transaction.get(shopRef);
+        final userSnap = await transaction.get(userRef);
+        final current =
+            ShopProduct.listFrom(hull, shopSnap.data()?['products']);
+        ShopProduct? target;
+        for (final item in current) {
+          if (item.id == productId) {
+            target = item.pruneExpiredHolds(now);
+            break;
+          }
+        }
+        final liveFlags = ActiveSeatFlag.liveOnly(
+          ActiveSeatFlag.listFrom(userSnap.data()?[ActiveSeatFlag.fieldKey]),
+          now,
+        );
+        void writePrunedFlags([List<ActiveSeatFlag>? next]) {
+          transaction.set(
+            userRef,
+            {
+              ActiveSeatFlag.fieldKey:
+                  ActiveSeatFlag.toMaps(next ?? liveFlags),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
+        if (target == null) {
+          writePrunedFlags();
+          return SeatFlagPlant.unavailable;
+        }
+        if (!target.opensEmptySeatsFor(optionId) ||
+            !target.isBoardLiveFor(optionId)) {
+          writePrunedFlags();
+          return SeatFlagPlant.unavailable;
+        }
+        final closeAt = target.flagClosesAtFor(optionId);
+        if (ShopProduct.isTooLateToPlant(now, closeAt)) {
+          writePrunedFlags();
+          return SeatFlagPlant.tooLate;
+        }
+        if (target.memberHasLiveFlagOnProduct(uid, now)) {
+          writePrunedFlags();
+          return SeatFlagPlant.alreadyHeld;
+        }
+
+        if (liveFlags.length >= ActiveSeatFlag.maxLivePerUser) {
+          writePrunedFlags();
+          return SeatFlagPlant.limitReached;
+        }
+        if (target.bookableSeatsFor(uid, now, optionId: optionId) <
+            partySize) {
+          writePrunedFlags();
+          return SeatFlagPlant.taken;
+        }
+
+        final planted = target.plantFlag(
+          partySize: partySize,
+          now: now,
+          optionId: optionId,
+          uid: uid,
+        );
+        if (!planted.memberHasLiveFlag(uid, now, optionId: optionId)) {
+          writePrunedFlags();
+          return SeatFlagPlant.taken;
+        }
+        final hold = planted.liveFlagFor(uid, now, optionId: optionId)!;
+        final nextFlags = [
+          ...liveFlags,
+          ActiveSeatFlag(
+            shopId: hull,
+            productId: productId,
             optionId: optionId,
-            uid: uid,
-          )
-        else
-          item,
-    ];
-    await ref.set({
-      'products': [for (final item in next) item.toMap()],
-    }, SetOptions(merge: true));
+            expiresAt: hold.expiresAt,
+          ),
+        ];
+        transaction.set(
+          shopRef,
+          {
+            'products': [
+              for (final item in current)
+                if (item.id == productId)
+                  planted.toMap()
+                else
+                  item.pruneExpiredHolds(now).toMap(),
+            ],
+          },
+          SetOptions(merge: true),
+        );
+        writePrunedFlags(nextFlags);
+        return SeatFlagPlant.planted;
+      });
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        throw StateError(
+          'Firestore rules rejected users/{uid}.active_seat_flags write during plantSeatFlag. Stopped without changing firestore.rules.',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> cancelSeatFlag({
+    required String uid,
+    required String shopId,
+    required String productId,
+    required DateTime now,
+    String optionId = '',
+  }) async {
+    if (uid.isEmpty) {
+      return false;
+    }
+    final hull = shopId.split('--').first;
+    final shopRef = _shops.doc(hull);
+    final userRef = _userDoc(uid);
+
+    try {
+      return await _db.runTransaction((transaction) async {
+        final shopSnap = await transaction.get(shopRef);
+        final userSnap = await transaction.get(userRef);
+        final current =
+            ShopProduct.listFrom(hull, shopSnap.data()?['products']);
+        ShopProduct? target;
+        for (final item in current) {
+          if (item.id == productId) {
+            target = item;
+            break;
+          }
+        }
+        if (target == null || !target.memberHasLiveFlagOnProduct(uid, now)) {
+          return false;
+        }
+        final resolvedOption = optionId.isNotEmpty
+            ? optionId
+            : target.liveFlagOptionIdFor(uid, now);
+        final next = target.removeMemberFlag(
+          uid,
+          now,
+          optionId: resolvedOption,
+        );
+        final live = ActiveSeatFlag.liveOnly(
+          ActiveSeatFlag.listFrom(userSnap.data()?[ActiveSeatFlag.fieldKey]),
+          now,
+        );
+        transaction.set(
+          shopRef,
+          {
+            'products': [
+              for (final item in current)
+                if (item.id == productId) next.toMap() else item.toMap(),
+            ],
+          },
+          SetOptions(merge: true),
+        );
+        transaction.set(
+          userRef,
+          {
+            ActiveSeatFlag.fieldKey: ActiveSeatFlag.toMaps(
+              ActiveSeatFlag.withoutProduct(live, hull, productId),
+            ),
+          },
+          SetOptions(merge: true),
+        );
+        return true;
+      });
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        throw StateError(
+          'Firestore rules rejected users/{uid}.active_seat_flags write during cancelSeatFlag. Stopped without changing firestore.rules.',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _restoreSeatsInTxn(
+    Transaction transaction,
+    TourBooking booking,
+  ) async {
+    if (booking.seatsHeld <= 0 || booking.productId.isEmpty) {
+      return;
+    }
+    final shopRef = _shops.doc(booking.shopId);
+    final shopSnap = await transaction.get(shopRef);
+    final current =
+        ShopProduct.listFrom(booking.shopId, shopSnap.data()?['products']);
+    final seatKey = booking.seatsOptionKey;
+    transaction.set(
+      shopRef,
+      {
+        'products': [
+          for (final item in current)
+            if (item.id == booking.productId)
+              item
+                  .releaseBookedSeats(booking.seatsHeld, optionId: seatKey)
+                  .toMap()
+            else
+              item.toMap(),
+        ],
+      },
+      SetOptions(merge: true),
+    );
   }
 
   @override
@@ -2385,31 +2605,41 @@ class FirestoreDiverRepository implements DiverRepository {
     required String uid,
     required String bookingId,
   }) async {
-    final userRef = _bookings(uid).doc(bookingId);
-    final snap = await userRef.get();
-    if (!snap.exists) {
-      return;
-    }
-    final booking = _toBooking(snap.id, snap.data() ?? {});
-    if (!booking.isActive) {
-      return;
-    }
-    final quote = RefundPolicy.forUserCancel(tourDate: booking.scheduledFor);
-    final nextPayment = !booking.isPaid
-        ? PaymentStatus.unpaid
-        : (quote.percent > 0 ? PaymentStatus.refunded : PaymentStatus.captured);
-    final patch = {
-      'status': BookingStatus.cancelled.firestoreValue,
-      'refund_percent': quote.percent,
-      'refund_amount': quote.amountFor(booking.price),
-      'payment_status': nextPayment.firestoreValue,
-      'cancelled_at': FieldValue.serverTimestamp(),
-      'updated_at': FieldValue.serverTimestamp(),
-    };
-    await userRef.set(patch, SetOptions(merge: true));
-    await _shopBookings(booking.shopId)
-        .doc(bookingId)
-        .set(patch, SetOptions(merge: true));
+    final userBookingRef = _bookings(uid).doc(bookingId);
+    await _db.runTransaction((transaction) async {
+      final snap = await transaction.get(userBookingRef);
+      if (!snap.exists) {
+        return;
+      }
+      final booking = _toBooking(snap.id, snap.data() ?? {});
+      if (!booking.isActive) {
+        return;
+      }
+      if (booking.seatsHeld > 0 && booking.productId.isNotEmpty) {
+        await _restoreSeatsInTxn(transaction, booking);
+      }
+      final quote = RefundPolicy.forUserCancel(tourDate: booking.scheduledFor);
+      final nextPayment = !booking.isPaid
+          ? PaymentStatus.unpaid
+          : (quote.percent > 0
+              ? PaymentStatus.refunded
+              : PaymentStatus.captured);
+      final patch = {
+        'status': BookingStatus.cancelled.firestoreValue,
+        'refund_percent': quote.percent,
+        'refund_amount': quote.amountFor(booking.price),
+        'payment_status': nextPayment.firestoreValue,
+        'seats_held': 0,
+        'cancelled_at': FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+      transaction.set(userBookingRef, patch, SetOptions(merge: true));
+      transaction.set(
+        _shopBookings(booking.shopId).doc(bookingId),
+        patch,
+        SetOptions(merge: true),
+      );
+    });
   }
 
   @override
@@ -2461,23 +2691,39 @@ class FirestoreDiverRepository implements DiverRepository {
       if (RefundPolicy.dateOnly(booking.scheduledFor) != day) {
         continue;
       }
-      final patch = {
-        'status': BookingStatus.weatherCancelled.firestoreValue,
-        'refund_percent': 100,
-        'refund_amount': quote.amountFor(booking.price),
-        'payment_status': booking.isPaid
-            ? PaymentStatus.refunded.firestoreValue
-            : PaymentStatus.unpaid.firestoreValue,
-        'refund_notice_seen': false,
-        'cancelled_at': FieldValue.serverTimestamp(),
-        'updated_at': FieldValue.serverTimestamp(),
-      };
-      await doc.reference.set(patch, SetOptions(merge: true));
-      if (booking.uid.isNotEmpty) {
-        await _bookings(booking.uid)
-            .doc(booking.id)
-            .set(patch, SetOptions(merge: true));
-      }
+      await _db.runTransaction((transaction) async {
+        final freshShop = await transaction.get(doc.reference);
+        if (!freshShop.exists) {
+          return;
+        }
+        final fresh = _toBooking(freshShop.id, freshShop.data() ?? {});
+        if (!fresh.isActive) {
+          return;
+        }
+        if (fresh.seatsHeld > 0 && fresh.productId.isNotEmpty) {
+          await _restoreSeatsInTxn(transaction, fresh);
+        }
+        final patch = {
+          'status': BookingStatus.weatherCancelled.firestoreValue,
+          'refund_percent': 100,
+          'refund_amount': quote.amountFor(fresh.price),
+          'payment_status': fresh.isPaid
+              ? PaymentStatus.refunded.firestoreValue
+              : PaymentStatus.unpaid.firestoreValue,
+          'refund_notice_seen': false,
+          'seats_held': 0,
+          'cancelled_at': FieldValue.serverTimestamp(),
+          'updated_at': FieldValue.serverTimestamp(),
+        };
+        transaction.set(doc.reference, patch, SetOptions(merge: true));
+        if (fresh.uid.isNotEmpty) {
+          transaction.set(
+            _bookings(fresh.uid).doc(fresh.id),
+            patch,
+            SetOptions(merge: true),
+          );
+        }
+      });
     }
   }
 

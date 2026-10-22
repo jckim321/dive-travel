@@ -389,13 +389,21 @@ abstract class DiverRepository {
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
   });
 
-  Future<void> plantSeatFlag({
+  Future<SeatFlagPlant> plantSeatFlag({
     required String shopId,
     required String productId,
     required int partySize,
     required DateTime now,
     String optionId = '',
     String uid = '',
+  });
+
+  Future<bool> cancelSeatFlag({
+    required String uid,
+    required String shopId,
+    required String productId,
+    required DateTime now,
+    String optionId = '',
   });
 
   Future<void> cancelBookingAsGuest({

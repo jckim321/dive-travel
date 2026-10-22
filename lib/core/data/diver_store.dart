@@ -724,7 +724,8 @@ class DiverStore extends ChangeNotifier {
     if (uid == null) {
       return false;
     }
-    return _repository.createBooking(
+    final hull = shop.id.split('--').first;
+    final saved = await _repository.createBooking(
       uid: uid,
       shopId: shop.id,
       shopName: shop.name,
@@ -746,6 +747,8 @@ class DiverStore extends ChangeNotifier {
       status: status,
       paymentStatus: paymentStatus,
     );
+    unawaited(refreshShopStat(hull));
+    return saved;
   }
 
   Future<SeatFlagPlant> plantSeatFlag({
@@ -759,29 +762,40 @@ class DiverStore extends ChangeNotifier {
       return SeatFlagPlant.unavailable;
     }
     final now = DateTime.now();
-    ShopProduct? current;
-    for (final stats in _shopStats) {
-      for (final item in stats.products) {
-        if (item.id == productId) {
-          current = item;
-        }
-      }
-    }
-    if (current == null) {
-      return SeatFlagPlant.unavailable;
-    }
-    if (current.memberHasLiveFlag(uid, now, optionId: optionId)) {
-      return SeatFlagPlant.alreadyHeld;
-    }
-    await _repository.plantSeatFlag(
-      shopId: shopId.split('--').first,
+    final hull = shopId.split('--').first;
+    final result = await _repository.plantSeatFlag(
+      shopId: hull,
       productId: productId,
       partySize: partySize,
       now: now,
       optionId: optionId,
       uid: uid,
     );
-    return SeatFlagPlant.planted;
+    unawaited(refreshShopStat(hull));
+    return result;
+  }
+
+  Future<bool> cancelSeatFlag({
+    required String shopId,
+    required String productId,
+    String optionId = '',
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return false;
+    }
+    final hull = shopId.split('--').first;
+    final ok = await _repository.cancelSeatFlag(
+      uid: uid,
+      shopId: hull,
+      productId: productId,
+      now: DateTime.now(),
+      optionId: optionId,
+    );
+    if (ok) {
+      unawaited(refreshShopStat(hull));
+    }
+    return ok;
   }
 
   Future<OperationReviewOutcome> submitOperationReview({

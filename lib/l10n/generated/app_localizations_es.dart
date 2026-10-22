@@ -3062,7 +3062,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get communityFlagAlready => '이미 이 자리를 가확정했습니다.';
 
   @override
+  String get communityFlagContinuePayAsk => '이미 깃발이 있어요. 결제를 이어갈까요?';
+
+  @override
+  String get communityFlagContinuePay => '결제 이어가기';
+
+  @override
+  String get communityFlagTaken => '방금 다른 분이 먼저 잡았어요';
+
+  @override
+  String get communityFlagTooLate => '깃발 마감이 임박해 새로 꽂을 수 없습니다.';
+
+  @override
+  String get communityFlagLimitReached => '동시에 가질 수 있는 깃발은 최대 3개입니다.';
+
+  @override
   String get communitySeatsShort => '이 옵션의 남은 자리가 부족합니다.';
+
+  @override
+  String get profileFlagCancelCta => '취소';
+
+  @override
+  String get profileFlagCancelConfirm => '이 깃발을 취소하면 자리가 바로 풀립니다. 취소할까요?';
 
   @override
   String get communityOfferDetail => '이 자리 내용';
