@@ -85,10 +85,7 @@ class _AdminDiveStarApplicationsScreenState
     await _reload();
   }
 
-  Future<void> _queueReminder(
-    DiveStarApplication app, {
-    bool openMailto = true,
-  }) async {
+  Future<void> _queueReminder(DiveStarApplication app) async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     if (app.contactEmail.trim().isEmpty) {
@@ -111,42 +108,18 @@ class _AdminDiveStarApplicationsScreenState
     if (!mounted) {
       return;
     }
-    if (openMailto) {
-      final uri = Uri.parse(
-        'mailto:${Uri.encodeComponent(app.contactEmail)}'
-        '?subject=${Uri.encodeComponent(subject)}'
-        '&body=${Uri.encodeComponent(body)}',
-      );
-      await launchUrl(uri);
-      await store.markPartnerEmailOutboxSent(item.id);
-    }
-    if (!mounted) {
-      return;
-    }
-    if (openMailto) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.pipelineReminderQueued)),
-      );
-      await _reload();
-    }
-  }
-
-  Future<void> _queueAllDueReminders() async {
-    final l10n = AppLocalizations.of(context);
-    final due = _apps
-        .where((a) => a.reminderDue && a.contactEmail.trim().isNotEmpty)
-        .toList();
-    if (due.isEmpty) {
-      return;
-    }
-    for (final app in due) {
-      await _queueReminder(app, openMailto: false);
-    }
+    final uri = Uri.parse(
+      'mailto:${Uri.encodeComponent(app.contactEmail)}'
+      '?subject=${Uri.encodeComponent(subject)}'
+      '&body=${Uri.encodeComponent(body)}',
+    );
+    await launchUrl(uri);
+    await store.markPartnerEmailOutboxSent(item.id);
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.adminAppsRemindersQueued(due.length))),
+      SnackBar(content: Text(l10n.pipelineReminderQueued)),
     );
     await _reload();
   }
@@ -180,14 +153,6 @@ class _AdminDiveStarApplicationsScreenState
                     const SizedBox(height: 4),
                     Text(l10n.adminAppsEmailServerNote),
                     const SizedBox(height: 8),
-                    if (due.isNotEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: FilledButton.tonal(
-                          onPressed: _queueAllDueReminders,
-                          child: Text(l10n.adminAppsQueueAllReminders),
-                        ),
-                      ),
                     if (due.isEmpty)
                       Text(l10n.adminAppsReminderEmpty)
                     else

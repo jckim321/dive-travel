@@ -2120,27 +2120,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminAppsOpenList => '신청·진행 상태';
 
   @override
-  String get adminAppsQueueAllReminders => '기한 지난 리마인더 전부 큐에 넣기';
-
-  @override
-  String adminAppsRemindersQueued(int count) {
-    return '리마인더 $count건을 발송 큐에 넣었습니다.';
-  }
-
-  @override
   String adminAppsReminderDue(String date) {
     return '기한 $date';
   }
-
-  @override
-  String get partnerLoiDocsSubmit => '서류 제출 완료로 표시';
-
-  @override
-  String get partnerLoiDocsSubmitHint =>
-      '남은 서류를 이메일·톡으로 보낸 뒤 눌러 주세요. 다이브트래블이 심사 단계로 이어갑니다.';
-
-  @override
-  String get partnerLoiDocsSubmitted => '서류 제출 완료로 표시했습니다.';
 
   @override
   String get adminViewShopProducts => '상품 보기';

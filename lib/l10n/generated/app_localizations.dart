@@ -4056,41 +4056,11 @@ abstract class AppLocalizations {
   /// **'신청·진행 상태'**
   String get adminAppsOpenList;
 
-  /// No description provided for @adminAppsQueueAllReminders.
-  ///
-  /// In ko, this message translates to:
-  /// **'기한 지난 리마인더 전부 큐에 넣기'**
-  String get adminAppsQueueAllReminders;
-
-  /// No description provided for @adminAppsRemindersQueued.
-  ///
-  /// In ko, this message translates to:
-  /// **'리마인더 {count}건을 발송 큐에 넣었습니다.'**
-  String adminAppsRemindersQueued(int count);
-
   /// No description provided for @adminAppsReminderDue.
   ///
   /// In ko, this message translates to:
   /// **'기한 {date}'**
   String adminAppsReminderDue(String date);
-
-  /// No description provided for @partnerLoiDocsSubmit.
-  ///
-  /// In ko, this message translates to:
-  /// **'서류 제출 완료로 표시'**
-  String get partnerLoiDocsSubmit;
-
-  /// No description provided for @partnerLoiDocsSubmitHint.
-  ///
-  /// In ko, this message translates to:
-  /// **'남은 서류를 이메일·톡으로 보낸 뒤 눌러 주세요. 다이브트래블이 심사 단계로 이어갑니다.'**
-  String get partnerLoiDocsSubmitHint;
-
-  /// No description provided for @partnerLoiDocsSubmitted.
-  ///
-  /// In ko, this message translates to:
-  /// **'서류 제출 완료로 표시했습니다.'**
-  String get partnerLoiDocsSubmitted;
 
   /// No description provided for @adminViewShopProducts.
   ///

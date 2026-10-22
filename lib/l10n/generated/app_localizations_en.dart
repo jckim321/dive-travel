@@ -2180,27 +2180,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminAppsOpenList => 'Applications & pipeline';
 
   @override
-  String get adminAppsQueueAllReminders => 'Queue all due reminders';
-
-  @override
-  String adminAppsRemindersQueued(int count) {
-    return 'Queued $count reminder(s) in the outbox.';
-  }
-
-  @override
   String adminAppsReminderDue(String date) {
     return 'Due $date';
   }
-
-  @override
-  String get partnerLoiDocsSubmit => 'Mark documents submitted';
-
-  @override
-  String get partnerLoiDocsSubmitHint =>
-      'After you send remaining files by email or chat, tap here so Dive Travel can start review.';
-
-  @override
-  String get partnerLoiDocsSubmitted => 'Marked as documents submitted.';
 
   @override
   String get adminViewShopProducts => 'View products';
