@@ -239,7 +239,6 @@ class _PartnerDocumentDetailPageState extends State<_PartnerDocumentDetailPage> 
   Future<void> _loadPdf() async {
     setState(() {
       _loadingPdf = true;
-      _pdfError = null;
     });
     try {
       if (doc.assetPath.isEmpty) {
