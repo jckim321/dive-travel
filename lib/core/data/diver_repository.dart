@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -137,6 +138,29 @@ abstract class DiverRepository {
     required int grade,
     required DateTime reviewedAt,
     required DateTime expiresAt,
+  });
+
+  /// Active audit form (seeds v1 once if missing).
+  Future<DiveStarForm> ensureActiveDiveStarForm();
+
+  Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId);
+
+  /// Saves a draft assessment; does **not** change shop `dive_star_grade`.
+  Future<DiveStarAssessment> saveDiveStarAssessment({
+    required String shopId,
+    String? assessmentId,
+    required DiveStarAssessmentType type,
+    required DateTime reviewedAt,
+    required Map<String, bool> gates,
+    required Map<String, int> scores,
+    required Map<String, String> comments,
+  });
+
+  /// Applies candidate grade to the shop via [setDiveStarGrade] and marks confirmed.
+  Future<DiveStarAssessment> confirmDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+    DateTime? expiresAt,
   });
 
   Future<void> setPostHidden({required String postId, required bool hidden});

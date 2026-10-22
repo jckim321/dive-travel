@@ -20,6 +20,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -1244,6 +1245,131 @@ class FirestoreDiverRepository implements DiverRepository {
       'dive_star_expires_at': Timestamp.fromDate(expiresAt.toUtc()),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  CollectionReference<Map<String, dynamic>> get _diveStarForms =>
+      _db.collection('dive_star_forms');
+
+  CollectionReference<Map<String, dynamic>> _diveStarAssessments(String shopId) =>
+      _shops.doc(shopId).collection('dive_star_assessments');
+
+  @override
+  Future<DiveStarForm> ensureActiveDiveStarForm() async {
+    final active = await _diveStarForms
+        .where('active', isEqualTo: true)
+        .limit(1)
+        .get();
+    if (active.docs.isNotEmpty) {
+      final doc = active.docs.first;
+      return DiveStarForm.fromDocument(doc.id, doc.data());
+    }
+    final v1Ref = _diveStarForms.doc('v1');
+    final existing = await v1Ref.get();
+    if (existing.exists && existing.data() != null) {
+      return DiveStarForm.fromDocument(existing.id, existing.data()!);
+    }
+    final seed = DiveStarForm.v1();
+    await v1Ref.set(seed.toMap());
+    return seed;
+  }
+
+  Map<String, int> _clampScores(DiveStarForm form, Map<String, int> scores) {
+    return {
+      for (final area in form.areas)
+        area.id: (scores[area.id] ?? 0).clamp(0, area.maxPoints),
+    };
+  }
+
+  @override
+  Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) async {
+    final snap = await _diveStarAssessments(shopId)
+        .orderBy('reviewed_at', descending: true)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        DiveStarAssessment.fromDocument(doc.id, shopId, doc.data()),
+    ];
+  }
+
+  @override
+  Future<DiveStarAssessment> saveDiveStarAssessment({
+    required String shopId,
+    String? assessmentId,
+    required DiveStarAssessmentType type,
+    required DateTime reviewedAt,
+    required Map<String, bool> gates,
+    required Map<String, int> scores,
+    required Map<String, String> comments,
+  }) async {
+    final form = await ensureActiveDiveStarForm();
+    final clampedScores = _clampScores(form, scores);
+    final gateMap = {
+      for (final gate in form.gates) gate.id: gates[gate.id] == true,
+    };
+    final result = DiveStarScoring.evaluate(
+      form: form,
+      gates: gateMap,
+      scores: clampedScores,
+    );
+    final ref = assessmentId == null || assessmentId.isEmpty
+        ? _diveStarAssessments(shopId).doc()
+        : _diveStarAssessments(shopId).doc(assessmentId);
+    final payload = <String, dynamic>{
+      'form_version': form.version,
+      'type': type.firestoreValue,
+      'reviewed_at': Timestamp.fromDate(reviewedAt.toUtc()),
+      'gates': gateMap,
+      'scores': clampedScores,
+      'comments': {
+        for (final entry in comments.entries)
+          if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
+      },
+      'total_score': result.totalScore,
+      'candidate_grade': result.candidateGrade,
+      'gates_passed': result.gatesPassed,
+      'confirmed': false,
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    if (assessmentId == null || assessmentId.isEmpty) {
+      payload['created_at'] = FieldValue.serverTimestamp();
+    }
+    await ref.set(payload, SetOptions(merge: true));
+    final saved = await ref.get();
+    return DiveStarAssessment.fromDocument(
+      ref.id,
+      shopId,
+      saved.data() ?? payload,
+    );
+  }
+
+  @override
+  Future<DiveStarAssessment> confirmDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+    DateTime? expiresAt,
+  }) async {
+    final ref = _diveStarAssessments(shopId).doc(assessmentId);
+    final snap = await ref.get();
+    final data = snap.data();
+    if (!snap.exists || data == null) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    final assessment = DiveStarAssessment.fromDocument(assessmentId, shopId, data);
+    final expires = expiresAt ??
+        assessment.reviewedAt.toUtc().add(const Duration(days: 365));
+    await setDiveStarGrade(
+      shopId: shopId,
+      grade: assessment.candidateGrade,
+      reviewedAt: assessment.reviewedAt,
+      expiresAt: expires,
+    );
+    final confirmedAt = DateTime.now().toUtc();
+    await ref.set({
+      'confirmed': true,
+      'confirmed_at': Timestamp.fromDate(confirmedAt),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    return assessment.copyWith(confirmed: true, confirmedAt: confirmedAt);
   }
 
   @override

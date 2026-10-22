@@ -195,6 +195,16 @@ service cloud.firestore {
         allow update: if isAdmin() || ownsShop(shopId) ||
           (isSignedIn() && resource.data.uid == request.auth.uid);
       }
+
+      // Internal Dive Star audits — admin only (guests must not read scores).
+      match /dive_star_assessments/{assessmentId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // Versioned audit forms (gates, areas, thresholds) — admin only.
+    match /dive_star_forms/{formId} {
+      allow read, write: if isAdmin();
     }
 
     match /posts/{postId} {

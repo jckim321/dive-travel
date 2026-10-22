@@ -1144,7 +1144,7 @@
   "adminReject": "거절",
   "adminNoPending": "대기 중인 자격증 신청이 없습니다.",
   "adminShopsTitle": "파트너",
-  "adminPartnersGradeHint": "다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.",
+  "adminPartnersGradeHint": "다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.",
   "adminShopsSubtitle": "오퍼레이션 평점과 스타 등급, 실물 현판 발송을 모니터링합니다.",
   "adminProductsTitle": "여행상품 등록",
   "adminProductsSubtitle": "등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.",
@@ -1217,6 +1217,53 @@
   "adminDiveStarExpiresAt": "만료일",
   "adminDiveStarGradeEdit": "다이브스타 등급 수정",
   "adminDiveStarGradeSaved": "다이브스타 등급을 저장했습니다.",
+  "adminDiveStarAssessmentMenu": "다이브스타 심사",
+  "adminDiveStarAssessmentTitle": "다이브스타 심사",
+  "adminDiveStarAssessmentHint": "저장하면 합계와 후보 등급만 계산됩니다. 손님 화면에 보이는 별은 「등급 확정」을 눌러야 바뀝니다.",
+  "adminDiveStarAssessmentFormSection": "새 심사 입력",
+  "adminDiveStarAssessmentType": "심사 유형",
+  "adminDiveStarTypeOnsite": "현장 심사",
+  "adminDiveStarTypeMystery": "미스터리 심사",
+  "adminDiveStarGatesSection": "필수 게이트 (하나라도 탈락이면 별 부여 불가)",
+  "adminDiveStarGatePass": "통과",
+  "adminDiveStarGateFail": "탈락",
+  "adminDiveStarAreasSection": "영역별 점수",
+  "adminDiveStarAreaComment": "코멘트 (선택)",
+  "adminDiveStarAssessmentSave": "심사 저장",
+  "adminDiveStarAssessmentSaved": "심사를 저장했습니다. 아직 샵 등급은 바뀌지 않았습니다.",
+  "adminDiveStarAssessmentRetry": "다시 시도",
+  "adminDiveStarPreview": "합계 {score}점 · 후보 {grade}스타",
+  "@adminDiveStarPreview": {
+    "placeholders": {
+      "score": { "type": "int" },
+      "grade": { "type": "int" }
+    }
+  },
+  "adminDiveStarGatesOk": "게이트 전부 통과",
+  "adminDiveStarGatesBlocked": "게이트 미통과 — 후보 등급 0",
+  "adminDiveStarConfirmTitle": "등급 확정",
+  "adminDiveStarConfirmBody": "후보 {grade}스타(합계 {score}점)를 이 샵에 반영할까요?",
+  "@adminDiveStarConfirmBody": {
+    "placeholders": {
+      "grade": { "type": "int" },
+      "score": { "type": "int" }
+    }
+  },
+  "adminDiveStarConfirmAction": "등급 확정",
+  "adminDiveStarConfirmed": "샵 다이브스타 등급을 확정했습니다.",
+  "adminDiveStarAlreadyConfirmed": "이미 확정됨",
+  "adminDiveStarHistorySection": "심사 이력",
+  "adminDiveStarHistoryEmpty": "아직 저장된 심사가 없습니다.",
+  "adminDiveStarHistoryLine": "{date} · {score}점 · 후보 {grade}스타",
+  "@adminDiveStarHistoryLine": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "score": { "type": "int" },
+      "grade": { "type": "int" }
+    }
+  },
+  "adminDiveStarStatusConfirmed": "확정",
+  "adminDiveStarStatusDraft": "미확정",
   "adminViewShopProducts": "상품 보기",
   "adminSameBoatRemaining": "잔여 {count}",
   "@adminSameBoatRemaining": {

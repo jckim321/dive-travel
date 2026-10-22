@@ -1522,7 +1522,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminShopsTitle => 'Dive Star · toko mitra';
 
   @override
-  String get adminPartnersGradeHint => '다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.';
+  String get adminPartnersGradeHint =>
+      '다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.';
 
   @override
   String get adminShopsSubtitle =>
@@ -1719,6 +1720,97 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get adminDiveStarGradeSaved => '다이브스타 등급을 저장했습니다.';
+
+  @override
+  String get adminDiveStarAssessmentMenu => '다이브스타 심사';
+
+  @override
+  String get adminDiveStarAssessmentTitle => '다이브스타 심사';
+
+  @override
+  String get adminDiveStarAssessmentHint =>
+      '저장하면 합계와 후보 등급만 계산됩니다. 손님 화면에 보이는 별은 「등급 확정」을 눌러야 바뀝니다.';
+
+  @override
+  String get adminDiveStarAssessmentFormSection => '새 심사 입력';
+
+  @override
+  String get adminDiveStarAssessmentType => '심사 유형';
+
+  @override
+  String get adminDiveStarTypeOnsite => '현장 심사';
+
+  @override
+  String get adminDiveStarTypeMystery => '미스터리 심사';
+
+  @override
+  String get adminDiveStarGatesSection => '필수 게이트 (하나라도 탈락이면 별 부여 불가)';
+
+  @override
+  String get adminDiveStarGatePass => '통과';
+
+  @override
+  String get adminDiveStarGateFail => '탈락';
+
+  @override
+  String get adminDiveStarAreasSection => '영역별 점수';
+
+  @override
+  String get adminDiveStarAreaComment => '코멘트 (선택)';
+
+  @override
+  String get adminDiveStarAssessmentSave => '심사 저장';
+
+  @override
+  String get adminDiveStarAssessmentSaved => '심사를 저장했습니다. 아직 샵 등급은 바뀌지 않았습니다.';
+
+  @override
+  String get adminDiveStarAssessmentRetry => '다시 시도';
+
+  @override
+  String adminDiveStarPreview(int score, int grade) {
+    return '합계 $score점 · 후보 $grade스타';
+  }
+
+  @override
+  String get adminDiveStarGatesOk => '게이트 전부 통과';
+
+  @override
+  String get adminDiveStarGatesBlocked => '게이트 미통과 — 후보 등급 0';
+
+  @override
+  String get adminDiveStarConfirmTitle => '등급 확정';
+
+  @override
+  String adminDiveStarConfirmBody(int grade, int score) {
+    return '후보 $grade스타(합계 $score점)를 이 샵에 반영할까요?';
+  }
+
+  @override
+  String get adminDiveStarConfirmAction => '등급 확정';
+
+  @override
+  String get adminDiveStarConfirmed => '샵 다이브스타 등급을 확정했습니다.';
+
+  @override
+  String get adminDiveStarAlreadyConfirmed => '이미 확정됨';
+
+  @override
+  String get adminDiveStarHistorySection => '심사 이력';
+
+  @override
+  String get adminDiveStarHistoryEmpty => '아직 저장된 심사가 없습니다.';
+
+  @override
+  String adminDiveStarHistoryLine(String date, int score, int grade) {
+    return '$date · $score점 · 후보 $grade스타';
+  }
+
+  @override
+  String get adminDiveStarStatusConfirmed => '확정';
+
+  @override
+  String get adminDiveStarStatusDraft => '미확정';
 
   @override
   String get adminViewShopProducts => '상품 보기';

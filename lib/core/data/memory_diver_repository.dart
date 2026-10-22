@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -78,6 +79,9 @@ class MemoryDiverRepository implements DiverRepository {
   final _shopStats = <String, ShopLiveStats>{};
   final _shopReviews = <String, List<GuestReview>>{};
   int _reviewSequence = 0;
+  int _assessmentSequence = 0;
+  DiveStarForm? _diveStarForm;
+  final _assessments = <String, List<DiveStarAssessment>>{};
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
   final _members = <MemberAccount>[];
@@ -992,6 +996,101 @@ class MemoryDiverRepository implements DiverRepository {
       );
     }
     _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<DiveStarForm> ensureActiveDiveStarForm() async {
+    return _diveStarForm ??= DiveStarForm.v1();
+  }
+
+  @override
+  Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) async {
+    final list = List<DiveStarAssessment>.from(_assessments[shopId] ?? const []);
+    list.sort((a, b) => b.reviewedAt.compareTo(a.reviewedAt));
+    return list;
+  }
+
+  @override
+  Future<DiveStarAssessment> saveDiveStarAssessment({
+    required String shopId,
+    String? assessmentId,
+    required DiveStarAssessmentType type,
+    required DateTime reviewedAt,
+    required Map<String, bool> gates,
+    required Map<String, int> scores,
+    required Map<String, String> comments,
+  }) async {
+    final form = await ensureActiveDiveStarForm();
+    final clampedScores = {
+      for (final area in form.areas)
+        area.id: (scores[area.id] ?? 0).clamp(0, area.maxPoints),
+    };
+    final gateMap = {
+      for (final gate in form.gates) gate.id: gates[gate.id] == true,
+    };
+    final result = DiveStarScoring.evaluate(
+      form: form,
+      gates: gateMap,
+      scores: clampedScores,
+    );
+    final list = _assessments.putIfAbsent(shopId, () => []);
+    final id = (assessmentId != null && assessmentId.isNotEmpty)
+        ? assessmentId
+        : 'assess-${++_assessmentSequence}';
+    final assessment = DiveStarAssessment(
+      id: id,
+      shopId: shopId,
+      formVersion: form.version,
+      type: type,
+      reviewedAt: reviewedAt.toUtc(),
+      gates: gateMap,
+      scores: clampedScores,
+      comments: {
+        for (final entry in comments.entries)
+          if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
+      },
+      totalScore: result.totalScore,
+      candidateGrade: result.candidateGrade,
+      gatesPassed: result.gatesPassed,
+    );
+    final index = list.indexWhere((item) => item.id == id);
+    if (index >= 0) {
+      list[index] = assessment;
+    } else {
+      list.insert(0, assessment);
+    }
+    return assessment;
+  }
+
+  @override
+  Future<DiveStarAssessment> confirmDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+    DateTime? expiresAt,
+  }) async {
+    final list = _assessments[shopId];
+    if (list == null) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    final index = list.indexWhere((item) => item.id == assessmentId);
+    if (index < 0) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    final assessment = list[index];
+    final expires = expiresAt ??
+        assessment.reviewedAt.toUtc().add(const Duration(days: 365));
+    await setDiveStarGrade(
+      shopId: shopId,
+      grade: assessment.candidateGrade,
+      reviewedAt: assessment.reviewedAt,
+      expiresAt: expires,
+    );
+    final confirmed = assessment.copyWith(
+      confirmed: true,
+      confirmedAt: DateTime.now().toUtc(),
+    );
+    list[index] = confirmed;
+    return confirmed;
   }
 
   @override

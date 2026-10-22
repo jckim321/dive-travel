@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_assessment_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -223,12 +224,27 @@ class _ShopMonitorTile extends StatelessWidget {
                 reviewedAt: reviewed,
                 expiresAt: expires,
               );
+              return;
+            }
+            if (value == 'dive_star_assess') {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => AdminDiveStarAssessmentScreen(
+                    shopId: shop.hullId,
+                    shopName: shop.name,
+                  ),
+                ),
+              );
             }
           },
           itemBuilder: (context) => [
             PopupMenuItem(
               value: 'products',
               child: Text(l10n.adminViewShopProducts),
+            ),
+            PopupMenuItem(
+              value: 'dive_star_assess',
+              child: Text(l10n.adminDiveStarAssessmentMenu),
             ),
             PopupMenuItem(
               value: 'dive_star',

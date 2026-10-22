@@ -1543,7 +1543,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminPartnersGradeHint =>
-      'Dive Star partners are graded by reviews and internal review scores.';
+      'Dive Star grades are set when an admin confirms an audit (form scores and gates). Manual grade edit is still available.';
 
   @override
   String get adminShopsSubtitle =>
@@ -1745,6 +1745,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminDiveStarGradeSaved => 'Dive Star grade saved.';
+
+  @override
+  String get adminDiveStarAssessmentMenu => 'Dive Star audit';
+
+  @override
+  String get adminDiveStarAssessmentTitle => 'Dive Star audit';
+
+  @override
+  String get adminDiveStarAssessmentHint =>
+      'Saving computes total and candidate grade only. The guest-facing stars change after you tap Confirm grade.';
+
+  @override
+  String get adminDiveStarAssessmentFormSection => 'New audit';
+
+  @override
+  String get adminDiveStarAssessmentType => 'Audit type';
+
+  @override
+  String get adminDiveStarTypeOnsite => 'On-site';
+
+  @override
+  String get adminDiveStarTypeMystery => 'Mystery';
+
+  @override
+  String get adminDiveStarGatesSection =>
+      'Required gates (any fail blocks stars)';
+
+  @override
+  String get adminDiveStarGatePass => 'Pass';
+
+  @override
+  String get adminDiveStarGateFail => 'Fail';
+
+  @override
+  String get adminDiveStarAreasSection => 'Area scores';
+
+  @override
+  String get adminDiveStarAreaComment => 'Comment (optional)';
+
+  @override
+  String get adminDiveStarAssessmentSave => 'Save audit';
+
+  @override
+  String get adminDiveStarAssessmentSaved =>
+      'Audit saved. Shop grade is unchanged until confirmed.';
+
+  @override
+  String get adminDiveStarAssessmentRetry => 'Retry';
+
+  @override
+  String adminDiveStarPreview(int score, int grade) {
+    return 'Total $score · candidate $grade★';
+  }
+
+  @override
+  String get adminDiveStarGatesOk => 'All gates passed';
+
+  @override
+  String get adminDiveStarGatesBlocked => 'Gate failed — candidate grade 0';
+
+  @override
+  String get adminDiveStarConfirmTitle => 'Confirm grade';
+
+  @override
+  String adminDiveStarConfirmBody(int grade, int score) {
+    return 'Apply candidate $grade★ (total $score) to this shop?';
+  }
+
+  @override
+  String get adminDiveStarConfirmAction => 'Confirm grade';
+
+  @override
+  String get adminDiveStarConfirmed => 'Dive Star grade confirmed on the shop.';
+
+  @override
+  String get adminDiveStarAlreadyConfirmed => 'Already confirmed';
+
+  @override
+  String get adminDiveStarHistorySection => 'Audit history';
+
+  @override
+  String get adminDiveStarHistoryEmpty => 'No audits saved yet.';
+
+  @override
+  String adminDiveStarHistoryLine(String date, int score, int grade) {
+    return '$date · $score pts · candidate $grade★';
+  }
+
+  @override
+  String get adminDiveStarStatusConfirmed => 'Confirmed';
+
+  @override
+  String get adminDiveStarStatusDraft => 'Draft';
 
   @override
   String get adminViewShopProducts => 'View products';

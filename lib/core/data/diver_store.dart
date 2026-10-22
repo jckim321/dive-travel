@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
@@ -881,6 +882,46 @@ class DiverStore extends ChangeNotifier {
       shopId: shopId,
       grade: grade,
       reviewedAt: reviewedAt,
+      expiresAt: expiresAt,
+    );
+  }
+
+  Future<DiveStarForm> ensureActiveDiveStarForm() {
+    return _repository.ensureActiveDiveStarForm();
+  }
+
+  Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) {
+    return _repository.listDiveStarAssessments(shopId);
+  }
+
+  Future<DiveStarAssessment> saveDiveStarAssessment({
+    required String shopId,
+    String? assessmentId,
+    required DiveStarAssessmentType type,
+    required DateTime reviewedAt,
+    required Map<String, bool> gates,
+    required Map<String, int> scores,
+    required Map<String, String> comments,
+  }) {
+    return _repository.saveDiveStarAssessment(
+      shopId: shopId,
+      assessmentId: assessmentId,
+      type: type,
+      reviewedAt: reviewedAt,
+      gates: gates,
+      scores: scores,
+      comments: comments,
+    );
+  }
+
+  Future<DiveStarAssessment> confirmDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+    DateTime? expiresAt,
+  }) {
+    return _repository.confirmDiveStarAssessment(
+      shopId: shopId,
+      assessmentId: assessmentId,
       expiresAt: expiresAt,
     );
   }

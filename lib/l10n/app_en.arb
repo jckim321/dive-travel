@@ -566,7 +566,7 @@
   "adminNoPending": "No pending certificate requests.",
   "adminShopsTitle": "Partners",
   "adminShopsSubtitle": "Monitor operation ratings, star grades, and plaque shipping.",
-  "adminPartnersGradeHint": "Dive Star partners are graded by reviews and internal review scores.",
+  "adminPartnersGradeHint": "Dive Star grades are set when an admin confirms an audit (form scores and gates). Manual grade edit is still available.",
   "adminProductsTitle": "Travel product registration",
   "adminProductsSubtitle": "New products appear on Explore by newest first. Home placement is chosen in Home curation.",
   "adminProductsTab": "Products",
@@ -638,6 +638,53 @@
   "adminDiveStarExpiresAt": "Expires",
   "adminDiveStarGradeEdit": "Edit Dive Star grade",
   "adminDiveStarGradeSaved": "Dive Star grade saved.",
+  "adminDiveStarAssessmentMenu": "Dive Star audit",
+  "adminDiveStarAssessmentTitle": "Dive Star audit",
+  "adminDiveStarAssessmentHint": "Saving computes total and candidate grade only. The guest-facing stars change after you tap Confirm grade.",
+  "adminDiveStarAssessmentFormSection": "New audit",
+  "adminDiveStarAssessmentType": "Audit type",
+  "adminDiveStarTypeOnsite": "On-site",
+  "adminDiveStarTypeMystery": "Mystery",
+  "adminDiveStarGatesSection": "Required gates (any fail blocks stars)",
+  "adminDiveStarGatePass": "Pass",
+  "adminDiveStarGateFail": "Fail",
+  "adminDiveStarAreasSection": "Area scores",
+  "adminDiveStarAreaComment": "Comment (optional)",
+  "adminDiveStarAssessmentSave": "Save audit",
+  "adminDiveStarAssessmentSaved": "Audit saved. Shop grade is unchanged until confirmed.",
+  "adminDiveStarAssessmentRetry": "Retry",
+  "adminDiveStarPreview": "Total {score} · candidate {grade}★",
+  "@adminDiveStarPreview": {
+    "placeholders": {
+      "score": { "type": "int" },
+      "grade": { "type": "int" }
+    }
+  },
+  "adminDiveStarGatesOk": "All gates passed",
+  "adminDiveStarGatesBlocked": "Gate failed — candidate grade 0",
+  "adminDiveStarConfirmTitle": "Confirm grade",
+  "adminDiveStarConfirmBody": "Apply candidate {grade}★ (total {score}) to this shop?",
+  "@adminDiveStarConfirmBody": {
+    "placeholders": {
+      "grade": { "type": "int" },
+      "score": { "type": "int" }
+    }
+  },
+  "adminDiveStarConfirmAction": "Confirm grade",
+  "adminDiveStarConfirmed": "Dive Star grade confirmed on the shop.",
+  "adminDiveStarAlreadyConfirmed": "Already confirmed",
+  "adminDiveStarHistorySection": "Audit history",
+  "adminDiveStarHistoryEmpty": "No audits saved yet.",
+  "adminDiveStarHistoryLine": "{date} · {score} pts · candidate {grade}★",
+  "@adminDiveStarHistoryLine": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "score": { "type": "int" },
+      "grade": { "type": "int" }
+    }
+  },
+  "adminDiveStarStatusConfirmed": "Confirmed",
+  "adminDiveStarStatusDraft": "Draft",
   "adminViewShopProducts": "View products",
   "adminSameBoatRemaining": "{count} left",
   "@adminSameBoatRemaining": {

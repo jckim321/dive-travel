@@ -2883,7 +2883,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminPartnersGradeHint.
   ///
   /// In ko, this message translates to:
-  /// **'다이브스타 제휴는 리뷰와 내부심사로 등급을 봅니다.'**
+  /// **'다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.'**
   String get adminPartnersGradeHint;
 
   /// No description provided for @adminShopsSubtitle.
@@ -3257,6 +3257,174 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'다이브스타 등급을 저장했습니다.'**
   String get adminDiveStarGradeSaved;
+
+  /// No description provided for @adminDiveStarAssessmentMenu.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 심사'**
+  String get adminDiveStarAssessmentMenu;
+
+  /// No description provided for @adminDiveStarAssessmentTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 심사'**
+  String get adminDiveStarAssessmentTitle;
+
+  /// No description provided for @adminDiveStarAssessmentHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하면 합계와 후보 등급만 계산됩니다. 손님 화면에 보이는 별은 「등급 확정」을 눌러야 바뀝니다.'**
+  String get adminDiveStarAssessmentHint;
+
+  /// No description provided for @adminDiveStarAssessmentFormSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 심사 입력'**
+  String get adminDiveStarAssessmentFormSection;
+
+  /// No description provided for @adminDiveStarAssessmentType.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 유형'**
+  String get adminDiveStarAssessmentType;
+
+  /// No description provided for @adminDiveStarTypeOnsite.
+  ///
+  /// In ko, this message translates to:
+  /// **'현장 심사'**
+  String get adminDiveStarTypeOnsite;
+
+  /// No description provided for @adminDiveStarTypeMystery.
+  ///
+  /// In ko, this message translates to:
+  /// **'미스터리 심사'**
+  String get adminDiveStarTypeMystery;
+
+  /// No description provided for @adminDiveStarGatesSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'필수 게이트 (하나라도 탈락이면 별 부여 불가)'**
+  String get adminDiveStarGatesSection;
+
+  /// No description provided for @adminDiveStarGatePass.
+  ///
+  /// In ko, this message translates to:
+  /// **'통과'**
+  String get adminDiveStarGatePass;
+
+  /// No description provided for @adminDiveStarGateFail.
+  ///
+  /// In ko, this message translates to:
+  /// **'탈락'**
+  String get adminDiveStarGateFail;
+
+  /// No description provided for @adminDiveStarAreasSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'영역별 점수'**
+  String get adminDiveStarAreasSection;
+
+  /// No description provided for @adminDiveStarAreaComment.
+  ///
+  /// In ko, this message translates to:
+  /// **'코멘트 (선택)'**
+  String get adminDiveStarAreaComment;
+
+  /// No description provided for @adminDiveStarAssessmentSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 저장'**
+  String get adminDiveStarAssessmentSave;
+
+  /// No description provided for @adminDiveStarAssessmentSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사를 저장했습니다. 아직 샵 등급은 바뀌지 않았습니다.'**
+  String get adminDiveStarAssessmentSaved;
+
+  /// No description provided for @adminDiveStarAssessmentRetry.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 시도'**
+  String get adminDiveStarAssessmentRetry;
+
+  /// No description provided for @adminDiveStarPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'합계 {score}점 · 후보 {grade}스타'**
+  String adminDiveStarPreview(int score, int grade);
+
+  /// No description provided for @adminDiveStarGatesOk.
+  ///
+  /// In ko, this message translates to:
+  /// **'게이트 전부 통과'**
+  String get adminDiveStarGatesOk;
+
+  /// No description provided for @adminDiveStarGatesBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'게이트 미통과 — 후보 등급 0'**
+  String get adminDiveStarGatesBlocked;
+
+  /// No description provided for @adminDiveStarConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'등급 확정'**
+  String get adminDiveStarConfirmTitle;
+
+  /// No description provided for @adminDiveStarConfirmBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'후보 {grade}스타(합계 {score}점)를 이 샵에 반영할까요?'**
+  String adminDiveStarConfirmBody(int grade, int score);
+
+  /// No description provided for @adminDiveStarConfirmAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'등급 확정'**
+  String get adminDiveStarConfirmAction;
+
+  /// No description provided for @adminDiveStarConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 다이브스타 등급을 확정했습니다.'**
+  String get adminDiveStarConfirmed;
+
+  /// No description provided for @adminDiveStarAlreadyConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 확정됨'**
+  String get adminDiveStarAlreadyConfirmed;
+
+  /// No description provided for @adminDiveStarHistorySection.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 이력'**
+  String get adminDiveStarHistorySection;
+
+  /// No description provided for @adminDiveStarHistoryEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 저장된 심사가 없습니다.'**
+  String get adminDiveStarHistoryEmpty;
+
+  /// No description provided for @adminDiveStarHistoryLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} · {score}점 · 후보 {grade}스타'**
+  String adminDiveStarHistoryLine(String date, int score, int grade);
+
+  /// No description provided for @adminDiveStarStatusConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정'**
+  String get adminDiveStarStatusConfirmed;
+
+  /// No description provided for @adminDiveStarStatusDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'미확정'**
+  String get adminDiveStarStatusDraft;
 
   /// No description provided for @adminViewShopProducts.
   ///
