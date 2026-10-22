@@ -86,6 +86,7 @@ class MemoryDiverRepository implements DiverRepository {
   int _applicationSequence = 0;
   int _emailOutboxSequence = 0;
   DiveStarForm? _diveStarForm;
+  final _formsByVersion = <String, DiveStarForm>{};
   final _assessments = <String, List<DiveStarAssessment>>{};
   List<PartnerDocument>? _partnerDocuments;
   PartnerDocConfig? _partnerDocConfig;
@@ -1010,7 +1011,57 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Future<DiveStarForm> ensureActiveDiveStarForm() async {
+    for (final form in _formsByVersion.values) {
+      if (form.active) {
+        return form;
+      }
+    }
     return _diveStarForm ??= DiveStarForm.v1();
+  }
+
+  @override
+  Future<DiveStarForm?> getDiveStarForm(String version) async {
+    final id = version.trim();
+    if (id.isEmpty) {
+      return null;
+    }
+    return _formsByVersion[id] ??
+        (_diveStarForm?.version == id ? _diveStarForm : null);
+  }
+
+  @override
+  Future<List<DiveStarForm>> listDiveStarForms() async {
+    final map = Map<String, DiveStarForm>.from(_formsByVersion);
+    final active = _diveStarForm;
+    if (active != null) {
+      map.putIfAbsent(active.version, () => active);
+    }
+    final list = map.values.toList()
+      ..sort((a, b) => a.version.compareTo(b.version));
+    return list;
+  }
+
+  @override
+  Future<DiveStarForm> importDiveStarFormDraft(DiveStarForm form) async {
+    final id = form.version.trim();
+    if (id.isEmpty) {
+      throw StateError('Form version is required');
+    }
+    if (_formsByVersion.containsKey(id) || _diveStarForm?.version == id) {
+      throw StateError('Form version already exists: $id');
+    }
+    final draft = DiveStarForm(
+      version: id,
+      active: false,
+      status: DiveStarFormStatus.draft,
+      rules: form.rules,
+      gates: form.gates,
+      areas: form.areas,
+      items: form.items,
+      thresholds: form.thresholds,
+    );
+    _formsByVersion[id] = draft;
+    return draft;
   }
 
   @override

@@ -1818,6 +1818,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminDiveStarAssessmentUpdated => '심사를 덮어써서 저장했습니다.';
 
   @override
+  String get adminDiveStarFormImportMenu => '심사 양식 가져오기';
+
+  @override
+  String get adminDiveStarFormImportTitle => '다이브스타 양식 가져오기';
+
+  @override
+  String get adminDiveStarFormImportHint =>
+      '양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 심사 화면이 v2를 지원할 때까지 사용 중 전환은 잠겨 있습니다.';
+
+  @override
+  String get adminDiveStarFormImportPasteLabel => '양식 JSON';
+
+  @override
+  String get adminDiveStarFormImportAction => '검사 후 초안 저장';
+
+  @override
+  String get adminDiveStarFormImportEmpty => 'JSON을 먼저 붙여넣어 주세요.';
+
+  @override
+  String get adminDiveStarFormImportInvalidJson => 'JSON을 읽을 수 없습니다.';
+
+  @override
+  String get adminDiveStarFormImportMissingVersion => 'version 필드가 필요합니다.';
+
+  @override
+  String get adminDiveStarFormImportAreaSum => '영역 배점 합계가 100이어야 합니다.';
+
+  @override
+  String get adminDiveStarFormImportItemSum => '항목 배점 합계가 각 영역 배점과 같아야 합니다.';
+
+  @override
+  String get adminDiveStarFormImportDuplicateId => '중복된 ID가 있습니다(영역·게이트·항목).';
+
+  @override
+  String adminDiveStarFormImportInvalid(String code) {
+    return '가져오기 실패: $code';
+  }
+
+  @override
+  String get adminDiveStarFormImportExists => '같은 버전이 이미 있습니다. 덮어쓰지 않습니다.';
+
+  @override
+  String adminDiveStarFormImportSaved(String version) {
+    return '$version을(를) 초안(비활성)으로 저장했습니다.';
+  }
+
+  @override
+  String get adminDiveStarFormListSection => '저장된 양식';
+
+  @override
+  String get adminDiveStarFormListEmpty =>
+      '아직 Firestore에 양식이 없습니다(심사를 열면 v1이 시드됩니다).';
+
+  @override
+  String get adminDiveStarFormStatusActive => '사용 중';
+
+  @override
+  String get adminDiveStarFormStatusDraft => '초안';
+
+  @override
+  String get adminDiveStarFormActivate => '이 양식을 사용 중으로 전환';
+
+  @override
+  String get adminDiveStarFormActivateLockedHint =>
+      '2단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.';
+
+  @override
   String get adminDocsTitle => '문서·양식';
 
   @override

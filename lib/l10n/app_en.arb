@@ -695,6 +695,36 @@
   "adminDiveStarDeleteConfirmBody": "This draft will be deleted. This cannot be undone.",
   "adminDiveStarDeleted": "Audit deleted.",
   "adminDiveStarAssessmentUpdated": "Draft overwritten and saved.",
+  "adminDiveStarFormImportMenu": "Import audit form",
+  "adminDiveStarFormImportTitle": "Import Dive Star form",
+  "adminDiveStarFormImportHint": "Paste form JSON to save as a draft (inactive). Activation is locked until the audit screen supports v2.",
+  "adminDiveStarFormImportPasteLabel": "Form JSON",
+  "adminDiveStarFormImportAction": "Validate and save draft",
+  "adminDiveStarFormImportEmpty": "Paste the JSON first.",
+  "adminDiveStarFormImportInvalidJson": "JSON could not be read.",
+  "adminDiveStarFormImportMissingVersion": "version field is required.",
+  "adminDiveStarFormImportAreaSum": "Area max points must add up to 100.",
+  "adminDiveStarFormImportItemSum": "Item max points must match each area max.",
+  "adminDiveStarFormImportDuplicateId": "Duplicate id found (area, gate, or item).",
+  "adminDiveStarFormImportInvalid": "Import failed: {code}",
+  "@adminDiveStarFormImportInvalid": {
+    "placeholders": {
+      "code": { "type": "String" }
+    }
+  },
+  "adminDiveStarFormImportExists": "That version already exists. Import is blocked.",
+  "adminDiveStarFormImportSaved": "Saved {version} as draft (not active).",
+  "@adminDiveStarFormImportSaved": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "adminDiveStarFormListSection": "Saved forms",
+  "adminDiveStarFormListEmpty": "No forms in Firestore yet (v1 is seeded when you open an audit).",
+  "adminDiveStarFormStatusActive": "In use",
+  "adminDiveStarFormStatusDraft": "Draft",
+  "adminDiveStarFormActivate": "Make this form active",
+  "adminDiveStarFormActivateLockedHint": "Available after phase 2. Active form stays v1 for now.",
   "adminDocsTitle": "Documents",
   "adminDocsHint": "Store public partner guides and forms for sharing. Do not put internal files here.",
   "adminDocsListSection": "Documents",

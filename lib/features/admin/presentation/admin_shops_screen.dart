@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_assessment_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_form_import_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -44,6 +45,19 @@ class AdminShopsScreen extends StatelessWidget {
                 l10n.adminPartnersGradeHint,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: embedded ? AdminConsoleTheme.muted : null,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.upload_file_outlined),
+                  title: Text(l10n.adminDiveStarFormImportMenu),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AdminDiveStarFormImportScreen(),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

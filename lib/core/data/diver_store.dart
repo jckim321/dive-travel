@@ -892,6 +892,18 @@ class DiverStore extends ChangeNotifier {
     return _repository.ensureActiveDiveStarForm();
   }
 
+  Future<DiveStarForm?> getDiveStarForm(String version) {
+    return _repository.getDiveStarForm(version);
+  }
+
+  Future<List<DiveStarForm>> listDiveStarForms() {
+    return _repository.listDiveStarForms();
+  }
+
+  Future<DiveStarForm> importDiveStarFormDraft(DiveStarForm form) {
+    return _repository.importDiveStarFormDraft(form);
+  }
+
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) {
     return _repository.listDiveStarAssessments(shopId);
   }

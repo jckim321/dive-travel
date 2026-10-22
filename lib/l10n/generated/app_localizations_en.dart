@@ -1871,6 +1871,78 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarAssessmentUpdated => 'Draft overwritten and saved.';
 
   @override
+  String get adminDiveStarFormImportMenu => 'Import audit form';
+
+  @override
+  String get adminDiveStarFormImportTitle => 'Import Dive Star form';
+
+  @override
+  String get adminDiveStarFormImportHint =>
+      'Paste form JSON to save as a draft (inactive). Activation is locked until the audit screen supports v2.';
+
+  @override
+  String get adminDiveStarFormImportPasteLabel => 'Form JSON';
+
+  @override
+  String get adminDiveStarFormImportAction => 'Validate and save draft';
+
+  @override
+  String get adminDiveStarFormImportEmpty => 'Paste the JSON first.';
+
+  @override
+  String get adminDiveStarFormImportInvalidJson => 'JSON could not be read.';
+
+  @override
+  String get adminDiveStarFormImportMissingVersion =>
+      'version field is required.';
+
+  @override
+  String get adminDiveStarFormImportAreaSum =>
+      'Area max points must add up to 100.';
+
+  @override
+  String get adminDiveStarFormImportItemSum =>
+      'Item max points must match each area max.';
+
+  @override
+  String get adminDiveStarFormImportDuplicateId =>
+      'Duplicate id found (area, gate, or item).';
+
+  @override
+  String adminDiveStarFormImportInvalid(String code) {
+    return 'Import failed: $code';
+  }
+
+  @override
+  String get adminDiveStarFormImportExists =>
+      'That version already exists. Import is blocked.';
+
+  @override
+  String adminDiveStarFormImportSaved(String version) {
+    return 'Saved $version as draft (not active).';
+  }
+
+  @override
+  String get adminDiveStarFormListSection => 'Saved forms';
+
+  @override
+  String get adminDiveStarFormListEmpty =>
+      'No forms in Firestore yet (v1 is seeded when you open an audit).';
+
+  @override
+  String get adminDiveStarFormStatusActive => 'In use';
+
+  @override
+  String get adminDiveStarFormStatusDraft => 'Draft';
+
+  @override
+  String get adminDiveStarFormActivate => 'Make this form active';
+
+  @override
+  String get adminDiveStarFormActivateLockedHint =>
+      'Available after phase 2. Active form stays v1 for now.';
+
+  @override
   String get adminDocsTitle => 'Documents';
 
   @override

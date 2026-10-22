@@ -1275,6 +1275,60 @@ class FirestoreDiverRepository implements DiverRepository {
     return seed;
   }
 
+  @override
+  Future<DiveStarForm?> getDiveStarForm(String version) async {
+    final id = version.trim();
+    if (id.isEmpty) {
+      return null;
+    }
+    final snap = await _diveStarForms.doc(id).get();
+    final data = snap.data();
+    if (!snap.exists || data == null) {
+      return null;
+    }
+    return DiveStarForm.fromDocument(snap.id, data);
+  }
+
+  @override
+  Future<List<DiveStarForm>> listDiveStarForms() async {
+    final snap = await _diveStarForms.get();
+    final list = [
+      for (final doc in snap.docs)
+        DiveStarForm.fromDocument(doc.id, doc.data()),
+    ];
+    list.sort((a, b) => a.version.compareTo(b.version));
+    return list;
+  }
+
+  @override
+  Future<DiveStarForm> importDiveStarFormDraft(DiveStarForm form) async {
+    final id = form.version.trim();
+    if (id.isEmpty) {
+      throw StateError('Form version is required');
+    }
+    final ref = _diveStarForms.doc(id);
+    final existing = await ref.get();
+    if (existing.exists) {
+      throw StateError('Form version already exists: $id');
+    }
+    final draft = DiveStarForm(
+      version: id,
+      active: false,
+      status: DiveStarFormStatus.draft,
+      rules: form.rules,
+      gates: form.gates,
+      areas: form.areas,
+      items: form.items,
+      thresholds: form.thresholds,
+    );
+    await ref.set({
+      ...draft.toMap(),
+      'updated_at': FieldValue.serverTimestamp(),
+      'created_at': FieldValue.serverTimestamp(),
+    });
+    return draft;
+  }
+
   Map<String, int> _clampScores(DiveStarForm form, Map<String, int> scores) {
     return {
       for (final area in form.areas)

@@ -3486,6 +3486,126 @@ abstract class AppLocalizations {
   /// **'심사를 덮어써서 저장했습니다.'**
   String get adminDiveStarAssessmentUpdated;
 
+  /// No description provided for @adminDiveStarFormImportMenu.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 양식 가져오기'**
+  String get adminDiveStarFormImportMenu;
+
+  /// No description provided for @adminDiveStarFormImportTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 양식 가져오기'**
+  String get adminDiveStarFormImportTitle;
+
+  /// No description provided for @adminDiveStarFormImportHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 심사 화면이 v2를 지원할 때까지 사용 중 전환은 잠겨 있습니다.'**
+  String get adminDiveStarFormImportHint;
+
+  /// No description provided for @adminDiveStarFormImportPasteLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'양식 JSON'**
+  String get adminDiveStarFormImportPasteLabel;
+
+  /// No description provided for @adminDiveStarFormImportAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'검사 후 초안 저장'**
+  String get adminDiveStarFormImportAction;
+
+  /// No description provided for @adminDiveStarFormImportEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'JSON을 먼저 붙여넣어 주세요.'**
+  String get adminDiveStarFormImportEmpty;
+
+  /// No description provided for @adminDiveStarFormImportInvalidJson.
+  ///
+  /// In ko, this message translates to:
+  /// **'JSON을 읽을 수 없습니다.'**
+  String get adminDiveStarFormImportInvalidJson;
+
+  /// No description provided for @adminDiveStarFormImportMissingVersion.
+  ///
+  /// In ko, this message translates to:
+  /// **'version 필드가 필요합니다.'**
+  String get adminDiveStarFormImportMissingVersion;
+
+  /// No description provided for @adminDiveStarFormImportAreaSum.
+  ///
+  /// In ko, this message translates to:
+  /// **'영역 배점 합계가 100이어야 합니다.'**
+  String get adminDiveStarFormImportAreaSum;
+
+  /// No description provided for @adminDiveStarFormImportItemSum.
+  ///
+  /// In ko, this message translates to:
+  /// **'항목 배점 합계가 각 영역 배점과 같아야 합니다.'**
+  String get adminDiveStarFormImportItemSum;
+
+  /// No description provided for @adminDiveStarFormImportDuplicateId.
+  ///
+  /// In ko, this message translates to:
+  /// **'중복된 ID가 있습니다(영역·게이트·항목).'**
+  String get adminDiveStarFormImportDuplicateId;
+
+  /// No description provided for @adminDiveStarFormImportInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'가져오기 실패: {code}'**
+  String adminDiveStarFormImportInvalid(String code);
+
+  /// No description provided for @adminDiveStarFormImportExists.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은 버전이 이미 있습니다. 덮어쓰지 않습니다.'**
+  String get adminDiveStarFormImportExists;
+
+  /// No description provided for @adminDiveStarFormImportSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'{version}을(를) 초안(비활성)으로 저장했습니다.'**
+  String adminDiveStarFormImportSaved(String version);
+
+  /// No description provided for @adminDiveStarFormListSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장된 양식'**
+  String get adminDiveStarFormListSection;
+
+  /// No description provided for @adminDiveStarFormListEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 Firestore에 양식이 없습니다(심사를 열면 v1이 시드됩니다).'**
+  String get adminDiveStarFormListEmpty;
+
+  /// No description provided for @adminDiveStarFormStatusActive.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용 중'**
+  String get adminDiveStarFormStatusActive;
+
+  /// No description provided for @adminDiveStarFormStatusDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안'**
+  String get adminDiveStarFormStatusDraft;
+
+  /// No description provided for @adminDiveStarFormActivate.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 양식을 사용 중으로 전환'**
+  String get adminDiveStarFormActivate;
+
+  /// No description provided for @adminDiveStarFormActivateLockedHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'2단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.'**
+  String get adminDiveStarFormActivateLockedHint;
+
   /// No description provided for @adminDocsTitle.
   ///
   /// In ko, this message translates to:

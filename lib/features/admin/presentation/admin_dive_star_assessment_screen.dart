@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_form_import_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Admin audit form: save draft scores, then confirm to write shop grade.
@@ -444,6 +445,17 @@ class _AdminDiveStarAssessmentScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.adminDiveStarAssessmentTitle),
+        actions: [
+          IconButton(
+            tooltip: l10n.adminDiveStarFormImportMenu,
+            icon: const Icon(Icons.upload_file_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AdminDiveStarFormImportScreen(),
+              ),
+            ),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -715,7 +727,7 @@ class _AdminDiveStarAssessmentScreenState
                                 item.confirmed
                                     ? l10n.adminDiveStarStatusConfirmed
                                     : l10n.adminDiveStarStatusDraft,
-                                'v${item.formVersion}',
+                                DiveStarForm.versionLabel(item.formVersion),
                               ].join(' · '),
                             ),
                             trailing: item.confirmed

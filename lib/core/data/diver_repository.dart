@@ -145,6 +145,13 @@ abstract class DiverRepository {
   /// Active audit form (seeds v1 once if missing).
   Future<DiveStarForm> ensureActiveDiveStarForm();
 
+  Future<DiveStarForm?> getDiveStarForm(String version);
+
+  Future<List<DiveStarForm>> listDiveStarForms();
+
+  /// Saves a draft form at `dive_star_forms/{version}`. Fails if version exists.
+  Future<DiveStarForm> importDiveStarFormDraft(DiveStarForm form);
+
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId);
 
   /// Saves a draft assessment; does **not** change shop `dive_star_grade`.
