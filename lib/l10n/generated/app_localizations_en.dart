@@ -1930,6 +1930,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'No forms in Firestore yet (v1 is seeded when you open an audit).';
 
   @override
+  String adminDiveStarFormListLoadError(String detail) {
+    return 'Could not load the form list. You can still paste JSON below. ($detail)';
+  }
+
+  @override
   String get adminDiveStarFormStatusActive => 'In use';
 
   @override

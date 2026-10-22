@@ -1292,10 +1292,14 @@ class FirestoreDiverRepository implements DiverRepository {
   @override
   Future<List<DiveStarForm>> listDiveStarForms() async {
     final snap = await _diveStarForms.get();
-    final list = [
-      for (final doc in snap.docs)
-        DiveStarForm.fromDocument(doc.id, doc.data()),
-    ];
+    final list = <DiveStarForm>[];
+    for (final doc in snap.docs) {
+      try {
+        list.add(DiveStarForm.fromDocument(doc.id, doc.data()));
+      } catch (_) {
+        // Skip corrupt docs so the import screen still opens.
+      }
+    }
     list.sort((a, b) => a.version.compareTo(b.version));
     return list;
   }

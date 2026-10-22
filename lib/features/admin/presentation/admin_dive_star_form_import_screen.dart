@@ -23,7 +23,7 @@ class _AdminDiveStarFormImportScreenState
   final _jsonController = TextEditingController();
   bool _loading = true;
   bool _importing = false;
-  Object? _error;
+  String? _listError;
   List<DiveStarForm> _forms = const [];
   String? _statusMessage;
 
@@ -40,10 +40,11 @@ class _AdminDiveStarFormImportScreenState
   }
 
   Future<void> _reload() async {
+    final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     setState(() {
       _loading = true;
-      _error = null;
+      _listError = null;
     });
     try {
       final forms = await store.listDiveStarForms();
@@ -59,8 +60,9 @@ class _AdminDiveStarFormImportScreenState
         return;
       }
       setState(() {
-        _error = error;
+        _forms = const [];
         _loading = false;
+        _listError = l10n.adminDiveStarFormListLoadError('$error');
       });
     }
   }
@@ -133,93 +135,106 @@ class _AdminDiveStarFormImportScreenState
     return adminScreenShell(
       embedded: widget.embedded,
       title: l10n.adminDiveStarFormImportTitle,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text('$_error'))
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          Text(
+            l10n.adminDiveStarFormImportHint,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AdminConsoleTheme.muted,
+                ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _jsonController,
+            maxLines: 12,
+            decoration: InputDecoration(
+              labelText: l10n.adminDiveStarFormImportPasteLabel,
+              alignLabelWithHint: true,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: _importing ? null : _import,
+            child: _importing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l10n.adminDiveStarFormImportAction),
+          ),
+          if (_statusMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(_statusMessage!),
+          ],
+          const SizedBox(height: 24),
+          Text(
+            l10n.adminDiveStarFormListSection,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_listError != null) ...[
+            Text(
+              _listError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                onPressed: _reload,
+                child: Text(l10n.adminDiveStarAssessmentRetry),
+              ),
+            ),
+          ] else if (_forms.isEmpty)
+            Text(l10n.adminDiveStarFormListEmpty)
+          else
+            for (final form in _forms) ...[
+              Card(
+                child: ListTile(
+                  title: Text(DiveStarForm.versionLabel(form.version)),
+                  subtitle: Text(
+                    [
+                      form.active
+                          ? l10n.adminDiveStarFormStatusActive
+                          : l10n.adminDiveStarFormStatusDraft,
+                      '${form.areas.length} areas',
+                      '${form.items.length} items',
+                      '${form.gates.length} gates',
+                    ].join(' · '),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    FilledButton.tonal(
+                      onPressed: null,
+                      child: Text(l10n.adminDiveStarFormActivate),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      l10n.adminDiveStarFormImportHint,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      l10n.adminDiveStarFormActivateLockedHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AdminConsoleTheme.muted,
                           ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _jsonController,
-                      maxLines: 12,
-                      decoration: InputDecoration(
-                        labelText: l10n.adminDiveStarFormImportPasteLabel,
-                        alignLabelWithHint: true,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: _importing ? null : _import,
-                      child: _importing
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.adminDiveStarFormImportAction),
-                    ),
-                    if (_statusMessage != null) ...[
-                      const SizedBox(height: 8),
-                      Text(_statusMessage!),
-                    ],
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.adminDiveStarFormListSection,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    if (_forms.isEmpty)
-                      Text(l10n.adminDiveStarFormListEmpty)
-                    else
-                      for (final form in _forms) ...[
-                        Card(
-                          child: ListTile(
-                            title: Text(DiveStarForm.versionLabel(form.version)),
-                            subtitle: Text(
-                              [
-                                form.active
-                                    ? l10n.adminDiveStarFormStatusActive
-                                    : l10n.adminDiveStarFormStatusDraft,
-                                '${form.areas.length} areas',
-                                '${form.items.length} items',
-                                '${form.gates.length} gates',
-                              ].join(' · '),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8, bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FilledButton.tonal(
-                                onPressed: null,
-                                child: Text(l10n.adminDiveStarFormActivate),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                l10n.adminDiveStarFormActivateLockedHint,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: AdminConsoleTheme.muted),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                   ],
                 ),
+              ),
+            ],
+        ],
+      ),
     );
   }
 }

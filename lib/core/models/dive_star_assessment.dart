@@ -1,5 +1,16 @@
 import 'package:dive_travel_app/core/data/dive_star.dart';
 
+/// Reads Firestore/JSON values that may be missing, null, or non-String.
+String _readString(dynamic value, [String fallback = '']) {
+  if (value == null) {
+    return fallback;
+  }
+  if (value is String) {
+    return value.trim();
+  }
+  return value.toString().trim();
+}
+
 /// One pass/fail gate on a Dive Star audit form.
 class DiveStarFormGate {
   const DiveStarFormGate({
@@ -12,17 +23,16 @@ class DiveStarFormGate {
   });
 
   factory DiveStarFormGate.fromMap(Map<String, dynamic> data) {
-    final title = (data['title'] as String? ?? data['name'] as String? ?? '')
-        .trim();
+    final title = _readString(data['title']);
+    final named = title.isNotEmpty ? title : _readString(data['name']);
+    final scope = _readString(data['scope'], 'common');
     return DiveStarFormGate(
-      id: (data['id'] as String? ?? '').trim(),
-      title: title,
-      criteria: (data['criteria'] as String? ?? '').trim(),
-      evidence: (data['evidence'] as String? ?? '').trim(),
-      basis: (data['basis'] as String? ?? '').trim(),
-      scope: (data['scope'] as String? ?? 'common').trim().isEmpty
-          ? 'common'
-          : (data['scope'] as String).trim(),
+      id: _readString(data['id']),
+      title: named,
+      criteria: _readString(data['criteria']),
+      evidence: _readString(data['evidence']),
+      basis: _readString(data['basis']),
+      scope: scope.isEmpty ? 'common' : scope,
     );
   }
 
@@ -53,13 +63,14 @@ class DiveStarFormArea {
   });
 
   factory DiveStarFormArea.fromMap(Map<String, dynamic> data) {
-    final id = (data['id'] as String? ?? data['code'] as String? ?? '').trim();
-    final title =
-        (data['title'] as String? ?? data['name'] as String? ?? '').trim();
+    final id = _readString(data['id']);
+    final code = id.isNotEmpty ? id : _readString(data['code']);
+    final title = _readString(data['title']);
+    final name = title.isNotEmpty ? title : _readString(data['name']);
     final max = (data['max_points'] as num?)?.toInt() ??
         (data['max'] as num?)?.toInt() ??
         0;
-    return DiveStarFormArea(id: id, title: title, maxPoints: max);
+    return DiveStarFormArea(id: code, title: name, maxPoints: max);
   }
 
   final String id;
@@ -89,17 +100,18 @@ class DiveStarFormItem {
   });
 
   factory DiveStarFormItem.fromMap(Map<String, dynamic> data) {
+    final area = _readString(data['area']);
+    final title = _readString(data['name']);
     return DiveStarFormItem(
-      id: (data['id'] as String? ?? '').trim(),
-      areaId: (data['area'] as String? ?? data['area_id'] as String? ?? '')
-          .trim(),
-      title: (data['name'] as String? ?? data['title'] as String? ?? '').trim(),
+      id: _readString(data['id']),
+      areaId: area.isNotEmpty ? area : _readString(data['area_id']),
+      title: title.isNotEmpty ? title : _readString(data['title']),
       maxPoints: (data['max'] as num?)?.toInt() ??
           (data['max_points'] as num?)?.toInt() ??
           0,
-      criteria: (data['criteria'] as String? ?? '').trim(),
-      evidence: (data['evidence'] as String? ?? '').trim(),
-      basis: (data['basis'] as String? ?? '').trim(),
+      criteria: _readString(data['criteria']),
+      evidence: _readString(data['evidence']),
+      basis: _readString(data['basis']),
     );
   }
 
@@ -134,8 +146,7 @@ class DiveStarFormRules {
     if (data == null) {
       return const DiveStarFormRules();
     }
-    final except =
-        (data['na_areas_allowed_except'] as String? ?? 'A').trim();
+    final except = _readString(data['na_areas_allowed_except'], 'A');
     return DiveStarFormRules(
       requiredAreaId: except.isEmpty ? 'A' : except,
       normalizeNa: data['normalize_na'] != false,
@@ -177,7 +188,7 @@ class DiveStarFormThresholds {
     }
     final pctSafety = (data['star2_safety_min_pct'] as num?)?.toDouble();
     final pctArea = (data['star3_all_areas_min_pct'] as num?)?.toDouble();
-    final safetyId = (data['safety_area_id'] as String?)?.trim();
+    final safetyId = _readString(data['safety_area_id']);
     return DiveStarFormThresholds(
       star1MinTotal: (data['star1_min_total'] as num?)?.toInt() ?? 70,
       star2MinTotal: (data['star2_min_total'] as num?)?.toInt() ?? 85,
@@ -190,7 +201,7 @@ class DiveStarFormThresholds {
           : (data['star3_area_min_ratio'] as num?)?.toDouble() ?? 0.8,
       star3MysteryVisitsMin:
           (data['star3_mystery_visits_min'] as num?)?.toInt() ?? 0,
-      safetyAreaId: (safetyId != null && safetyId.isNotEmpty)
+      safetyAreaId: safetyId.isNotEmpty
           ? safetyId
           : (fallbackSafetyAreaId ?? 'safety'),
     );
@@ -222,7 +233,7 @@ enum DiveStarFormStatus {
   active;
 
   static DiveStarFormStatus parse(dynamic raw, {required bool activeFlag}) {
-    final value = (raw as String?)?.trim().toLowerCase() ?? '';
+    final value = _readString(raw).toLowerCase();
     if (value == 'draft') {
       return DiveStarFormStatus.draft;
     }
@@ -249,20 +260,20 @@ class DiveStarForm {
   });
 
   factory DiveStarForm.fromDocument(String id, Map<String, dynamic> data) {
-    final gatesRaw = data['gates'] as List<dynamic>? ?? const [];
-    final areasRaw = data['areas'] as List<dynamic>? ?? const [];
-    final itemsRaw = data['items'] as List<dynamic>? ?? const [];
+    final gatesRaw = data['gates'] is List ? data['gates'] as List : const [];
+    final areasRaw = data['areas'] is List ? data['areas'] as List : const [];
+    final itemsRaw = data['items'] is List ? data['items'] as List : const [];
     final rulesMap = data['rules'] is Map
         ? Map<String, dynamic>.from(data['rules'] as Map)
         : null;
+    // v1 docs have no rules; keep safety area id as "safety".
     final rules = rulesMap == null
         ? const DiveStarFormRules(requiredAreaId: 'safety')
         : DiveStarFormRules.fromMap(rulesMap);
     final active = data['active'] != false;
+    final version = _readString(data['version']);
     return DiveStarForm(
-      version: (data['version'] as String?)?.trim().isNotEmpty == true
-          ? (data['version'] as String).trim()
-          : id,
+      version: version.isNotEmpty ? version : id,
       active: active,
       status: DiveStarFormStatus.parse(data['status'], activeFlag: active),
       rules: rules,

@@ -210,4 +210,69 @@ void main() {
       throwsA(isA<DiveStarFormImportException>()),
     );
   });
+
+  test('v1 shaped document without v2 fields parses', () {
+    final form = DiveStarForm.fromDocument('v1', {
+      'version': 'v1',
+      'active': true,
+      'gates': [
+        {'id': 'business_license', 'title': '사업자 등록·영업 허가'},
+        {'id': 'air_quality', 'title': '공기질'},
+      ],
+      'areas': [
+        {'id': 'safety', 'title': '안전', 'max_points': 25},
+        {'id': 'service', 'title': '서비스', 'max_points': 75},
+      ],
+      'thresholds': {
+        'star1_min_total': 70,
+        'star2_min_total': 85,
+        'star2_safety_min_ratio': 0.9,
+        'star3_min_total': 93,
+        'star3_area_min_ratio': 0.8,
+        'safety_area_id': 'safety',
+      },
+    });
+    expect(form.version, 'v1');
+    expect(form.active, isTrue);
+    expect(form.status, DiveStarFormStatus.active);
+    expect(form.items, isEmpty);
+    expect(form.gates, hasLength(2));
+    expect(form.gates.first.criteria, isEmpty);
+    expect(form.gates.first.scope, 'common');
+    expect(form.rules.requiredAreaId, 'safety');
+    expect(form.thresholds.safetyAreaId, 'safety');
+  });
+
+  test('null string fields on gates and status do not throw', () {
+    final form = DiveStarForm.fromDocument('v1', {
+      'version': null,
+      'status': null,
+      'active': true,
+      'rules': null,
+      'items': null,
+      'gates': [
+        {
+          'id': 'g1',
+          'title': 'Gate',
+          'criteria': null,
+          'evidence': null,
+          'basis': null,
+          'scope': null,
+          'name': null,
+        },
+      ],
+      'areas': [
+        {'id': 'safety', 'title': null, 'name': 'Safety', 'max_points': 100},
+      ],
+      'thresholds': {
+        'safety_area_id': null,
+        'star2_safety_min_pct': null,
+      },
+    });
+    expect(form.version, 'v1');
+    expect(form.gates.single.scope, 'common');
+    expect(form.gates.single.criteria, isEmpty);
+    expect(form.areas.single.title, 'Safety');
+    expect(form.thresholds.safetyAreaId, 'safety');
+  });
 }

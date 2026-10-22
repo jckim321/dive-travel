@@ -721,6 +721,12 @@
   },
   "adminDiveStarFormListSection": "Saved forms",
   "adminDiveStarFormListEmpty": "No forms in Firestore yet (v1 is seeded when you open an audit).",
+  "adminDiveStarFormListLoadError": "Could not load the form list. You can still paste JSON below. ({detail})",
+  "@adminDiveStarFormListLoadError": {
+    "placeholders": {
+      "detail": { "type": "String" }
+    }
+  },
   "adminDiveStarFormStatusActive": "In use",
   "adminDiveStarFormStatusDraft": "Draft",
   "adminDiveStarFormActivate": "Make this form active",

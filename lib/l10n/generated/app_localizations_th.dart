@@ -1889,6 +1889,11 @@ class AppLocalizationsTh extends AppLocalizations {
       '아직 Firestore에 양식이 없습니다(심사를 열면 v1이 시드됩니다).';
 
   @override
+  String adminDiveStarFormListLoadError(String detail) {
+    return '양식 목록을 불러오지 못했습니다. 아래 JSON 붙여넣기는 그대로 쓸 수 있습니다. ($detail)';
+  }
+
+  @override
   String get adminDiveStarFormStatusActive => '사용 중';
 
   @override
