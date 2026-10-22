@@ -210,6 +210,23 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Partner-facing documents (metadata). Internal = admin only.
+    match /partner_documents/{docId} {
+      allow write: if isAdmin();
+      allow read: if isAdmin()
+        || (isBusiness()
+            && resource.data.audience == 'public'
+            && resource.data.status == 'approved');
+    }
+
+    match /document_shares/{shareId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /partner_doc_config/{configId} {
+      allow read, write: if isAdmin();
+    }
+
     match /posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();

@@ -22,6 +22,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -1400,6 +1401,91 @@ class FirestoreDiverRepository implements DiverRepository {
       throw StateError('Confirmed assessments cannot be deleted');
     }
     await ref.delete();
+  }
+
+  CollectionReference<Map<String, dynamic>> get _partnerDocuments =>
+      _db.collection('partner_documents');
+
+  CollectionReference<Map<String, dynamic>> get _documentShares =>
+      _db.collection('document_shares');
+
+  DocumentReference<Map<String, dynamic>> get _partnerDocConfig =>
+      _db.collection('partner_doc_config').doc('default');
+
+  @override
+  Future<List<PartnerDocument>> ensurePartnerDocumentsSeeded() async {
+    final existing = await _partnerDocuments.limit(20).get();
+    if (existing.docs.isEmpty) {
+      final batch = _db.batch();
+      for (final seed in PartnerDocument.phase1Seeds()) {
+        batch.set(_partnerDocuments.doc(seed.id), {
+          ...seed.toMap(),
+          'updated_at': FieldValue.serverTimestamp(),
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    }
+    final snap = await _partnerDocuments.get();
+    final list = [
+      for (final doc in snap.docs)
+        PartnerDocument.fromDocument(doc.id, doc.data()),
+    ];
+    list.sort((a, b) => a.title.compareTo(b.title));
+    return list;
+  }
+
+  @override
+  Future<PartnerDocConfig> ensurePartnerDocConfig() async {
+    final snap = await _partnerDocConfig.get();
+    if (!snap.exists || snap.data() == null) {
+      final seed = PartnerDocConfig.defaultConfig;
+      await _partnerDocConfig.set({
+        ...seed.toMap(),
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      return seed;
+    }
+    return PartnerDocConfig.fromDocument(snap.data()!);
+  }
+
+  @override
+  Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50}) async {
+    final snap = await _documentShares
+        .orderBy('created_at', descending: true)
+        .limit(limit)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        DocumentShareRecord.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<DocumentShareRecord> recordDocumentShare({
+    required String documentId,
+    required String documentTitle,
+    required String shopId,
+    required String shopName,
+    required PartnerDocShareMethod method,
+    required String adminUid,
+  }) async {
+    final ref = _documentShares.doc();
+    final now = DateTime.now().toUtc();
+    final payload = <String, dynamic>{
+      'document_id': documentId,
+      'document_title': documentTitle,
+      'shop_id': shopId,
+      'shop_name': shopName,
+      'method': method.firestoreValue,
+      'admin_uid': adminUid,
+      'created_at': Timestamp.fromDate(now),
+    };
+    await ref.set(payload);
+    return DocumentShareRecord.fromDocument(ref.id, {
+      ...payload,
+      'created_at': now.toIso8601String(),
+    });
   }
 
   @override

@@ -18,6 +18,7 @@ import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
+import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -933,6 +934,36 @@ class DiverStore extends ChangeNotifier {
     return _repository.deleteDiveStarAssessment(
       shopId: shopId,
       assessmentId: assessmentId,
+    );
+  }
+
+  Future<List<PartnerDocument>> ensurePartnerDocumentsSeeded() {
+    return _repository.ensurePartnerDocumentsSeeded();
+  }
+
+  Future<PartnerDocConfig> ensurePartnerDocConfig() {
+    return _repository.ensurePartnerDocConfig();
+  }
+
+  Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50}) {
+    return _repository.listDocumentShares(limit: limit);
+  }
+
+  Future<DocumentShareRecord> recordDocumentShare({
+    required String documentId,
+    required String documentTitle,
+    required String shopId,
+    required String shopName,
+    required PartnerDocShareMethod method,
+    required String adminUid,
+  }) {
+    return _repository.recordDocumentShare(
+      documentId: documentId,
+      documentTitle: documentTitle,
+      shopId: shopId,
+      shopName: shopName,
+      method: method,
+      adminUid: adminUid,
     );
   }
 

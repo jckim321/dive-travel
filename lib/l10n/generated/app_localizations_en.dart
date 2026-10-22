@@ -1871,6 +1871,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarAssessmentUpdated => 'Draft overwritten and saved.';
 
   @override
+  String get adminDocsTitle => 'Documents';
+
+  @override
+  String get adminDocsHint =>
+      'Store public partner guides and forms for sharing. Do not put internal files here.';
+
+  @override
+  String get adminDocsListSection => 'Documents';
+
+  @override
+  String get adminDocsEmpty => 'No documents yet.';
+
+  @override
+  String get adminDocsShareHistory => 'Send history';
+
+  @override
+  String get adminDocsShareHistoryEmpty => 'No sends recorded yet.';
+
+  @override
+  String get adminDocFilterAll => 'All';
+
+  @override
+  String get adminDocCatCriteria => 'Criteria';
+
+  @override
+  String get adminDocCatPartnerGuide => 'Partner guide';
+
+  @override
+  String get adminDocCatApplication => 'Application';
+
+  @override
+  String get adminDocCatAuditor => 'Auditor';
+
+  @override
+  String get adminDocCatTraining => 'Training';
+
+  @override
+  String get adminDocCatContract => 'Contract';
+
+  @override
+  String get adminDocStatusDraft => 'Draft';
+
+  @override
+  String get adminDocStatusApproved => 'Approved';
+
+  @override
+  String get adminDocAudiencePublic => 'Public';
+
+  @override
+  String get adminDocAudienceInternal => 'Internal';
+
+  @override
+  String get adminDocActionPrint => 'Print';
+
+  @override
+  String get adminDocActionDownload => 'Download';
+
+  @override
+  String get adminDocActionShare => 'Share';
+
+  @override
+  String get adminDocActionEmail => 'Email';
+
+  @override
+  String get adminDocActionCopyLink => 'Copy link';
+
+  @override
+  String get adminDocActionQr => 'QR code';
+
+  @override
+  String get adminDocActionFaxPrint => 'Fax-ready print';
+
+  @override
+  String get adminDocSendToPartner => 'Send to partner';
+
+  @override
+  String get adminDocPickPartner => 'Choose partner (shop)';
+
+  @override
+  String adminDocRecommendedChannels(String channels) {
+    return 'Recommended: $channels';
+  }
+
+  @override
+  String get adminDocDraftWarnTitle => 'Draft document';
+
+  @override
+  String get adminDocDraftWarnBody =>
+      'This is a draft. Prefer the approved version. Send anyway?';
+
+  @override
+  String get adminDocDraftWarnContinue => 'Send anyway';
+
+  @override
+  String get adminDocShareRecorded => 'Send recorded.';
+
+  @override
+  String get adminDocShareFallbackCopy =>
+      'Share is limited here; copied text and link instead.';
+
+  @override
+  String get adminDocEmailAttachHint =>
+      '(To attach the PDF, use the Share button.)';
+
+  @override
+  String get adminDocLinkCopied => 'Link copied.';
+
+  @override
+  String get adminDocQrTitle => 'QR code';
+
+  @override
+  String get adminDocPdfMissing => 'PDF file is not available yet.';
+
+  @override
+  String adminDocPdfMissingDetail(String path) {
+    return 'Add $path to the project to enable preview.';
+  }
+
+  @override
+  String get adminDocFaxToBlank => '(recipient blank)';
+
+  @override
   String get adminViewShopProducts => 'View products';
 
   @override

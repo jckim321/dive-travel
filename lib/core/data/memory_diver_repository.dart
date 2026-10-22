@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
+import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -80,8 +81,12 @@ class MemoryDiverRepository implements DiverRepository {
   final _shopReviews = <String, List<GuestReview>>{};
   int _reviewSequence = 0;
   int _assessmentSequence = 0;
+  int _shareSequence = 0;
   DiveStarForm? _diveStarForm;
   final _assessments = <String, List<DiveStarAssessment>>{};
+  List<PartnerDocument>? _partnerDocuments;
+  PartnerDocConfig? _partnerDocConfig;
+  final _documentShares = <DocumentShareRecord>[];
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
   final _members = <MemberAccount>[];
@@ -1121,6 +1126,51 @@ class MemoryDiverRepository implements DiverRepository {
       throw StateError('Confirmed assessments cannot be deleted');
     }
     list.removeAt(index);
+  }
+
+  @override
+  Future<List<PartnerDocument>> ensurePartnerDocumentsSeeded() async {
+    return _partnerDocuments ??= List<PartnerDocument>.from(
+      PartnerDocument.phase1Seeds(),
+    );
+  }
+
+  @override
+  Future<PartnerDocConfig> ensurePartnerDocConfig() async {
+    return _partnerDocConfig ??= PartnerDocConfig.defaultConfig;
+  }
+
+  @override
+  Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50}) async {
+    final list = List<DocumentShareRecord>.from(_documentShares);
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (list.length > limit) {
+      return list.sublist(0, limit);
+    }
+    return list;
+  }
+
+  @override
+  Future<DocumentShareRecord> recordDocumentShare({
+    required String documentId,
+    required String documentTitle,
+    required String shopId,
+    required String shopName,
+    required PartnerDocShareMethod method,
+    required String adminUid,
+  }) async {
+    final record = DocumentShareRecord(
+      id: 'share-${++_shareSequence}',
+      documentId: documentId,
+      documentTitle: documentTitle,
+      shopId: shopId,
+      shopName: shopName,
+      method: method,
+      adminUid: adminUid,
+      createdAt: DateTime.now().toUtc(),
+    );
+    _documentShares.insert(0, record);
+    return record;
   }
 
   @override

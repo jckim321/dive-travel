@@ -1835,6 +1835,125 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarAssessmentUpdated => '심사를 덮어써서 저장했습니다.';
 
   @override
+  String get adminDocsTitle => '문서·양식';
+
+  @override
+  String get adminDocsHint =>
+      '파트너에게 보낼 공개 안내서·신청서를 보관하고 공유합니다. 내부용 파일은 여기에 넣지 마세요.';
+
+  @override
+  String get adminDocsListSection => '문서 목록';
+
+  @override
+  String get adminDocsEmpty => '등록된 문서가 없습니다.';
+
+  @override
+  String get adminDocsShareHistory => '발송 기록';
+
+  @override
+  String get adminDocsShareHistoryEmpty => '아직 발송 기록이 없습니다.';
+
+  @override
+  String get adminDocFilterAll => '전체';
+
+  @override
+  String get adminDocCatCriteria => '심사 기준';
+
+  @override
+  String get adminDocCatPartnerGuide => '파트너 안내';
+
+  @override
+  String get adminDocCatApplication => '신청 양식';
+
+  @override
+  String get adminDocCatAuditor => '심사관용';
+
+  @override
+  String get adminDocCatTraining => '교육 자료';
+
+  @override
+  String get adminDocCatContract => '계약·약관';
+
+  @override
+  String get adminDocStatusDraft => '초안';
+
+  @override
+  String get adminDocStatusApproved => '승인';
+
+  @override
+  String get adminDocAudiencePublic => '공개';
+
+  @override
+  String get adminDocAudienceInternal => '내부';
+
+  @override
+  String get adminDocActionPrint => '인쇄';
+
+  @override
+  String get adminDocActionDownload => '다운로드';
+
+  @override
+  String get adminDocActionShare => '공유';
+
+  @override
+  String get adminDocActionEmail => '이메일';
+
+  @override
+  String get adminDocActionCopyLink => '링크 복사';
+
+  @override
+  String get adminDocActionQr => 'QR 코드';
+
+  @override
+  String get adminDocActionFaxPrint => '팩스용 출력';
+
+  @override
+  String get adminDocSendToPartner => '파트너에게 보내기';
+
+  @override
+  String get adminDocPickPartner => '파트너(샵) 선택';
+
+  @override
+  String adminDocRecommendedChannels(String channels) {
+    return '추천 채널: $channels';
+  }
+
+  @override
+  String get adminDocDraftWarnTitle => '초안 문서입니다';
+
+  @override
+  String get adminDocDraftWarnBody => '초안입니다. 확정본을 쓰세요. 그래도 보낼까요?';
+
+  @override
+  String get adminDocDraftWarnContinue => '그래도 보내기';
+
+  @override
+  String get adminDocShareRecorded => '발송 기록을 남겼습니다.';
+
+  @override
+  String get adminDocShareFallbackCopy => '이 환경에서는 공유 대신 문구·링크를 복사했습니다.';
+
+  @override
+  String get adminDocEmailAttachHint => '(첨부가 필요하면 공유 버튼으로 PDF를 보내 주세요.)';
+
+  @override
+  String get adminDocLinkCopied => '링크를 복사했습니다.';
+
+  @override
+  String get adminDocQrTitle => 'QR 코드';
+
+  @override
+  String get adminDocPdfMissing => 'PDF 파일이 아직 없습니다.';
+
+  @override
+  String adminDocPdfMissingDetail(String path) {
+    return '미리보기를 보려면 프로젝트에 $path 파일을 넣어 주세요.';
+  }
+
+  @override
+  String get adminDocFaxToBlank => '(받는 곳 미지정)';
+
+  @override
   String get adminViewShopProducts => '상품 보기';
 
   @override

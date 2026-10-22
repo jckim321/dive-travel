@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -168,6 +169,22 @@ abstract class DiverRepository {
   Future<void> deleteDiveStarAssessment({
     required String shopId,
     required String assessmentId,
+  });
+
+  /// Seeds phase-1 public drafts + default config when missing.
+  Future<List<PartnerDocument>> ensurePartnerDocumentsSeeded();
+
+  Future<PartnerDocConfig> ensurePartnerDocConfig();
+
+  Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50});
+
+  Future<DocumentShareRecord> recordDocumentShare({
+    required String documentId,
+    required String documentTitle,
+    required String shopId,
+    required String shopName,
+    required PartnerDocShareMethod method,
+    required String adminUid,
   });
 
   Future<void> setPostHidden({required String postId, required bool hidden});

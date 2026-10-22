@@ -3486,6 +3486,234 @@ abstract class AppLocalizations {
   /// **'심사를 덮어써서 저장했습니다.'**
   String get adminDiveStarAssessmentUpdated;
 
+  /// No description provided for @adminDocsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'문서·양식'**
+  String get adminDocsTitle;
+
+  /// No description provided for @adminDocsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너에게 보낼 공개 안내서·신청서를 보관하고 공유합니다. 내부용 파일은 여기에 넣지 마세요.'**
+  String get adminDocsHint;
+
+  /// No description provided for @adminDocsListSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'문서 목록'**
+  String get adminDocsListSection;
+
+  /// No description provided for @adminDocsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 문서가 없습니다.'**
+  String get adminDocsEmpty;
+
+  /// No description provided for @adminDocsShareHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'발송 기록'**
+  String get adminDocsShareHistory;
+
+  /// No description provided for @adminDocsShareHistoryEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 발송 기록이 없습니다.'**
+  String get adminDocsShareHistoryEmpty;
+
+  /// No description provided for @adminDocFilterAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get adminDocFilterAll;
+
+  /// No description provided for @adminDocCatCriteria.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 기준'**
+  String get adminDocCatCriteria;
+
+  /// No description provided for @adminDocCatPartnerGuide.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 안내'**
+  String get adminDocCatPartnerGuide;
+
+  /// No description provided for @adminDocCatApplication.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청 양식'**
+  String get adminDocCatApplication;
+
+  /// No description provided for @adminDocCatAuditor.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사관용'**
+  String get adminDocCatAuditor;
+
+  /// No description provided for @adminDocCatTraining.
+  ///
+  /// In ko, this message translates to:
+  /// **'교육 자료'**
+  String get adminDocCatTraining;
+
+  /// No description provided for @adminDocCatContract.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약·약관'**
+  String get adminDocCatContract;
+
+  /// No description provided for @adminDocStatusDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안'**
+  String get adminDocStatusDraft;
+
+  /// No description provided for @adminDocStatusApproved.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인'**
+  String get adminDocStatusApproved;
+
+  /// No description provided for @adminDocAudiencePublic.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개'**
+  String get adminDocAudiencePublic;
+
+  /// No description provided for @adminDocAudienceInternal.
+  ///
+  /// In ko, this message translates to:
+  /// **'내부'**
+  String get adminDocAudienceInternal;
+
+  /// No description provided for @adminDocActionPrint.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄'**
+  String get adminDocActionPrint;
+
+  /// No description provided for @adminDocActionDownload.
+  ///
+  /// In ko, this message translates to:
+  /// **'다운로드'**
+  String get adminDocActionDownload;
+
+  /// No description provided for @adminDocActionShare.
+  ///
+  /// In ko, this message translates to:
+  /// **'공유'**
+  String get adminDocActionShare;
+
+  /// No description provided for @adminDocActionEmail.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일'**
+  String get adminDocActionEmail;
+
+  /// No description provided for @adminDocActionCopyLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크 복사'**
+  String get adminDocActionCopyLink;
+
+  /// No description provided for @adminDocActionQr.
+  ///
+  /// In ko, this message translates to:
+  /// **'QR 코드'**
+  String get adminDocActionQr;
+
+  /// No description provided for @adminDocActionFaxPrint.
+  ///
+  /// In ko, this message translates to:
+  /// **'팩스용 출력'**
+  String get adminDocActionFaxPrint;
+
+  /// No description provided for @adminDocSendToPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너에게 보내기'**
+  String get adminDocSendToPartner;
+
+  /// No description provided for @adminDocPickPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너(샵) 선택'**
+  String get adminDocPickPartner;
+
+  /// No description provided for @adminDocRecommendedChannels.
+  ///
+  /// In ko, this message translates to:
+  /// **'추천 채널: {channels}'**
+  String adminDocRecommendedChannels(String channels);
+
+  /// No description provided for @adminDocDraftWarnTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안 문서입니다'**
+  String get adminDocDraftWarnTitle;
+
+  /// No description provided for @adminDocDraftWarnBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안입니다. 확정본을 쓰세요. 그래도 보낼까요?'**
+  String get adminDocDraftWarnBody;
+
+  /// No description provided for @adminDocDraftWarnContinue.
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 보내기'**
+  String get adminDocDraftWarnContinue;
+
+  /// No description provided for @adminDocShareRecorded.
+  ///
+  /// In ko, this message translates to:
+  /// **'발송 기록을 남겼습니다.'**
+  String get adminDocShareRecorded;
+
+  /// No description provided for @adminDocShareFallbackCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 환경에서는 공유 대신 문구·링크를 복사했습니다.'**
+  String get adminDocShareFallbackCopy;
+
+  /// No description provided for @adminDocEmailAttachHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'(첨부가 필요하면 공유 버튼으로 PDF를 보내 주세요.)'**
+  String get adminDocEmailAttachHint;
+
+  /// No description provided for @adminDocLinkCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크를 복사했습니다.'**
+  String get adminDocLinkCopied;
+
+  /// No description provided for @adminDocQrTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'QR 코드'**
+  String get adminDocQrTitle;
+
+  /// No description provided for @adminDocPdfMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 파일이 아직 없습니다.'**
+  String get adminDocPdfMissing;
+
+  /// No description provided for @adminDocPdfMissingDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기를 보려면 프로젝트에 {path} 파일을 넣어 주세요.'**
+  String adminDocPdfMissingDetail(String path);
+
+  /// No description provided for @adminDocFaxToBlank.
+  ///
+  /// In ko, this message translates to:
+  /// **'(받는 곳 미지정)'**
+  String get adminDocFaxToBlank;
+
   /// No description provided for @adminViewShopProducts.
   ///
   /// In ko, this message translates to:

@@ -11,6 +11,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_partners_roste
 import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_documents_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
@@ -25,7 +26,7 @@ enum _MembersSub { divers, instructors, partners }
 
 enum _ShopsSub { monitor, products, seatsApply, sameBoat, pricing }
 
-enum _OpsSub { posts, bookings, weather, homeCuration }
+enum _OpsSub { posts, bookings, weather, homeCuration, documents }
 
 /// Dive Travel HQ 관리자 콘솔.
 /// 상단 1차 탭 + 필요 시 2차 탭, 현황 탭에 KPI·대기 작업·등급 분포.
@@ -186,18 +187,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       l10n.adminBookingsTitle,
                       l10n.weatherAdminTitle,
                       l10n.adminHomeCurationTab,
+                      l10n.adminDocsTitle,
                     ],
                     keys: const [
                       Key('admin-sub-posts'),
                       Key('admin-sub-bookings'),
                       Key('admin-menu-weather'),
                       Key('admin-sub-home-curation'),
+                      Key('admin-sub-documents'),
                     ],
                     selected: switch (_opsSub) {
                       _OpsSub.posts => 0,
                       _OpsSub.bookings => 1,
                       _OpsSub.weather => 2,
                       _OpsSub.homeCuration => 3,
+                      _OpsSub.documents => 4,
                     },
                     onSelect: (i) => _go(
                       _AdminHub.ops,
@@ -205,6 +209,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         1 => _OpsSub.bookings,
                         2 => _OpsSub.weather,
                         3 => _OpsSub.homeCuration,
+                        4 => _OpsSub.documents,
                         _ => _OpsSub.posts,
                       },
                     ),
@@ -311,6 +316,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _OpsSub.weather => const AdminWeatherScreen(embedded: true),
           _OpsSub.homeCuration =>
             const AdminHomeCurationScreen(embedded: true),
+          _OpsSub.documents =>
+            const AdminPartnerDocumentsScreen(embedded: true),
         };
     }
   }
