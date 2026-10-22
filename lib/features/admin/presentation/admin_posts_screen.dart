@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -5,30 +7,75 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-class AdminPostsScreen extends StatelessWidget {
+class AdminPostsScreen extends StatefulWidget {
   const AdminPostsScreen({super.key, this.embedded = false});
 
   final bool embedded;
 
   @override
+  State<AdminPostsScreen> createState() => _AdminPostsScreenState();
+}
+
+class _AdminPostsScreenState extends State<AdminPostsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureCommunityPostsLoaded());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    final posts = store.posts;
 
-    return adminScreenShell(
-      embedded: embedded,
-      title: l10n.adminPostsTitle,
-      body: posts.isEmpty
-          ? Center(child: Text(l10n.adminEmptyPosts))
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: posts.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                return _PostModerationTile(post: posts[index]);
-              },
-            ),
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+        final posts = store.posts;
+        return adminScreenShell(
+          embedded: widget.embedded,
+          title: l10n.adminPostsTitle,
+          body: RefreshIndicator(
+            onRefresh: () async {
+              await store.refreshCommunityPosts();
+              while (store.postsHasMore) {
+                await store.loadMoreCommunityPosts();
+              }
+            },
+            child: posts.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.4,
+                        child: Center(child: Text(l10n.adminEmptyPosts)),
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    itemCount: posts.length + (store.postsHasMore ? 1 : 0),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      if (index >= posts.length) {
+                        return TextButton(
+                          onPressed: () =>
+                              unawaited(store.loadMoreCommunityPosts()),
+                          child: const Text('Load more'),
+                        );
+                      }
+                      return _PostModerationTile(post: posts[index]);
+                    },
+                  ),
+          ),
+        );
+      },
     );
   }
 }

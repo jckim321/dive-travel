@@ -245,8 +245,44 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Stream<DiverSnapshot> watchDiver(String uid) async* {
-    yield _snapshot;
-    yield* _diverController.stream;
+    // Profile stream — strip logs so callers mirror Firestore on-demand logs.
+    yield DiverSnapshot(
+      stats: _snapshot.stats,
+      regions: _snapshot.regions,
+      logs: const [],
+      favoriteShopIds: _snapshot.favoriteShopIds,
+    );
+    yield* _diverController.stream.map(
+      (snap) => DiverSnapshot(
+        stats: snap.stats,
+        regions: snap.regions,
+        logs: const [],
+        favoriteShopIds: snap.favoriteShopIds,
+      ),
+    );
+  }
+
+  @override
+  Future<DiveLogsPage> fetchDiveLogs(
+    String uid, {
+    int limit = 50,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 50 : limit;
+    final all = [..._snapshot.logs]
+      ..sort((a, b) => b.divedAt.compareTo(a.divedAt));
+    var start = 0;
+    if (cursor is int) {
+      start = cursor.clamp(0, all.length);
+    }
+    final end = (start + pageSize).clamp(0, all.length);
+    final page = all.sublist(start, end);
+    final next = end < all.length ? end : null;
+    return DiveLogsPage(
+      logs: page,
+      nextCursor: next,
+      hasMore: next != null,
+    );
   }
 
   @override
@@ -362,6 +398,16 @@ class MemoryDiverRepository implements DiverRepository {
       favoriteShopIds: _snapshot.favoriteShopIds,
     );
     _diverController.add(_snapshot);
+  }
+
+  @override
+  Future<List<ShopLiveStats>> fetchShopStats() async {
+    return _shopStats.values.toList();
+  }
+
+  @override
+  Future<ShopLiveStats?> fetchShopStat(String shopId) async {
+    return _shopStats[shopId.trim()];
   }
 
   @override
@@ -960,9 +1006,35 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PendingInstructor>> fetchPendingInstructors() async {
+    return List<PendingInstructor>.from(_pending);
+  }
+
+  @override
   Stream<List<PendingInstructor>> watchPendingInstructors() async* {
     yield List<PendingInstructor>.from(_pending);
     yield* _pendingController.stream;
+  }
+
+  @override
+  Future<CommunityPostsPage> fetchCommunityPosts({
+    int limit = 20,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 20 : limit;
+    final all = [..._posts]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    var start = 0;
+    if (cursor is int) {
+      start = cursor.clamp(0, all.length);
+    }
+    final end = (start + pageSize).clamp(0, all.length);
+    final page = all.sublist(start, end);
+    final next = end < all.length ? end : null;
+    return CommunityPostsPage(
+      posts: page,
+      nextCursor: next,
+      hasMore: next != null,
+    );
   }
 
   @override
@@ -1020,6 +1092,13 @@ class MemoryDiverRepository implements DiverRepository {
       );
       _emitSnapshot();
     }
+  }
+
+  @override
+  Future<List<MemberAccount>> fetchMembers() async {
+    final members = List<MemberAccount>.from(_members);
+    members.sort((a, b) => a.displayName.compareTo(b.displayName));
+    return members;
   }
 
   @override
@@ -1950,6 +2029,11 @@ class MemoryDiverRepository implements DiverRepository {
     ];
     _shopStats[shopId] = current.copyWith(products: products);
     _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<List<TourBooking>> fetchShopBookings(String shopId) async {
+    return List<TourBooking>.from(_shopBookings[shopId] ?? const []);
   }
 
   @override

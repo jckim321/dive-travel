@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -43,6 +45,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _ShopsSub _shopsSub = _ShopsSub.monitor;
   _OpsSub _opsSub = _OpsSub.posts;
   String? _productsShopFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final store = DiverStoreScope.of(context);
+      unawaited(store.ensureAdminInboxLoaded());
+      unawaited(store.ensureCommunityPostsLoaded());
+      unawaited(store.ensureShopStatsLoaded());
+    });
+  }
 
   void _go(_AdminHub hub, {Object? sub, String? shopFilter}) {
     setState(() {

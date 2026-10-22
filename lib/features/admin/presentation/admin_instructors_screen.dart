@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -5,30 +7,63 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-class AdminInstructorsScreen extends StatelessWidget {
+class AdminInstructorsScreen extends StatefulWidget {
   const AdminInstructorsScreen({super.key, this.embedded = false});
 
   final bool embedded;
 
   @override
+  State<AdminInstructorsScreen> createState() => _AdminInstructorsScreenState();
+}
+
+class _AdminInstructorsScreenState extends State<AdminInstructorsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureAdminInboxLoaded());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    final pending = store.pendingInstructors;
 
-    return adminScreenShell(
-      embedded: embedded,
-      title: l10n.adminInstructorsTitle,
-      body: pending.isEmpty
-          ? Center(child: Text(l10n.adminNoPending))
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-              itemCount: pending.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _InstructorCard(instructor: pending[index]);
-              },
-            ),
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+        final pending = store.pendingInstructors;
+        return adminScreenShell(
+          embedded: widget.embedded,
+          title: l10n.adminInstructorsTitle,
+          body: RefreshIndicator(
+            onRefresh: store.refreshAdminInbox,
+            child: pending.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.4,
+                        child: Center(child: Text(l10n.adminNoPending)),
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    itemCount: pending.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _InstructorCard(instructor: pending[index]);
+                    },
+                  ),
+          ),
+        );
+      },
     );
   }
 }

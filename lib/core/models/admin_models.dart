@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 
 enum CommunityPostType { shopTour, buddy }
@@ -56,6 +57,30 @@ enum PlaqueStatus {
         return 'none';
     }
   }
+}
+
+class CommunityPostsPage {
+  const CommunityPostsPage({
+    required this.posts,
+    this.nextCursor,
+    this.hasMore = false,
+  });
+
+  final List<CommunityPost> posts;
+  final Object? nextCursor;
+  final bool hasMore;
+}
+
+class DiveLogsPage {
+  const DiveLogsPage({
+    required this.logs,
+    this.nextCursor,
+    this.hasMore = false,
+  });
+
+  final List<DiveLog> logs;
+  final Object? nextCursor;
+  final bool hasMore;
 }
 
 class CommunityPost {

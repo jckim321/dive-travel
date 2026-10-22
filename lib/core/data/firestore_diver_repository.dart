@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -188,49 +187,49 @@ class FirestoreDiverRepository implements DiverRepository {
 
   @override
   Stream<DiverSnapshot> watchDiver(String uid) {
-    return Stream<DiverSnapshot>.multi((controller) {
-      DocumentSnapshot<Map<String, dynamic>>? userSnap;
-      QuerySnapshot<Map<String, dynamic>>? logsSnap;
-      late final StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>
-      userSub;
-      late final StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
-      logsSub;
-
-      void emit() {
-        final user = userSnap;
-        if (user == null || controller.isClosed) {
-          return;
-        }
-        controller.add(_toSnapshot(user, logsSnap));
-      }
-
-      controller.onCancel = () async {
-        await userSub.cancel();
-        await logsSub.cancel();
-      };
-
-      userSub = _userDoc(uid).snapshots().listen((snapshot) {
-        userSnap = snapshot;
-        emit();
-      }, onError: controller.addError);
-      logsSub = _logs(uid)
-          .orderBy('dived_at', descending: true)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              logsSnap = snapshot;
-              emit();
-            },
-            onError: (Object error, StackTrace stackTrace) {
-              developer.log(
-                'logs snapshots 실패: $error',
-                name: 'FirestoreDiverRepository',
-                stackTrace: stackTrace,
-              );
-              emit();
-            },
-          );
+    // Profile only — logs are loaded on demand via [fetchDiveLogs].
+    return _userDoc(uid).snapshots().map((snapshot) {
+      return _toSnapshot(snapshot, null);
     });
+  }
+
+  @override
+  Future<DiveLogsPage> fetchDiveLogs(
+    String uid, {
+    int limit = 50,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 50 : limit;
+    Query<Map<String, dynamic>> query = _logs(
+      uid,
+    ).orderBy('dived_at', descending: true).limit(pageSize + 1);
+    if (cursor is DocumentSnapshot<Map<String, dynamic>>) {
+      query = query.startAfterDocument(cursor);
+    }
+    final snapshot = await query.get();
+    final docs = snapshot.docs;
+    final hasMore = docs.length > pageSize;
+    final pageDocs = hasMore ? docs.sublist(0, pageSize) : docs;
+    final logs = [
+      for (final doc in pageDocs)
+        DiveLog(
+          id: doc.id,
+          siteName: doc.data()['site_name'] as String? ?? '',
+          divedAt: _readDate(doc.data()['dived_at']),
+          memo: doc.data()['memo'] as String? ?? '',
+          regionId: doc.data()['region_id'] as String?,
+          photoUrl: doc.data()['photo_url'] as String?,
+          profile: DiveProfile.tryParse(doc.data()),
+          createdAt: doc.data()['created_at'] == null
+              ? null
+              : _readDate(doc.data()['created_at']),
+        ),
+    ];
+    return DiveLogsPage(
+      logs: logs,
+      nextCursor: pageDocs.isEmpty ? null : pageDocs.last,
+      hasMore: hasMore,
+    );
   }
 
   @override
@@ -476,6 +475,28 @@ class FirestoreDiverRepository implements DiverRepository {
 
   CollectionReference<Map<String, dynamic>> _bookings(String uid) =>
       _userDoc(uid).collection('bookings');
+
+  @override
+  Future<List<ShopLiveStats>> fetchShopStats() async {
+    final snapshot = await _shops.get();
+    return [
+      for (final doc in snapshot.docs)
+        ShopLiveStats.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<ShopLiveStats?> fetchShopStat(String shopId) async {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      return null;
+    }
+    final doc = await _shops.doc(id).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return ShopLiveStats.fromDocument(doc.id, doc.data() ?? {});
+  }
 
   @override
   Stream<List<ShopLiveStats>> watchShopStats() {
@@ -1213,6 +1234,15 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PendingInstructor>> fetchPendingInstructors() async {
+    final snapshot = await _users.get();
+    return [
+      for (final doc in snapshot.docs)
+        if (_toPendingInstructor(doc) case final pending?) pending,
+    ];
+  }
+
+  @override
   Stream<List<PendingInstructor>> watchPendingInstructors() {
     return _users.snapshots().map((snapshot) {
       return [
@@ -1220,6 +1250,29 @@ class FirestoreDiverRepository implements DiverRepository {
           if (_toPendingInstructor(doc) case final pending?) pending,
       ];
     });
+  }
+
+  @override
+  Future<CommunityPostsPage> fetchCommunityPosts({
+    int limit = 20,
+    Object? cursor,
+  }) async {
+    final pageSize = limit < 1 ? 20 : limit;
+    Query<Map<String, dynamic>> query = _posts
+        .orderBy('created_at', descending: true)
+        .limit(pageSize + 1);
+    if (cursor is DocumentSnapshot<Map<String, dynamic>>) {
+      query = query.startAfterDocument(cursor);
+    }
+    final snapshot = await query.get();
+    final docs = snapshot.docs;
+    final hasMore = docs.length > pageSize;
+    final pageDocs = hasMore ? docs.sublist(0, pageSize) : docs;
+    return CommunityPostsPage(
+      posts: [for (final doc in pageDocs) _toCommunityPost(doc)],
+      nextCursor: pageDocs.isEmpty ? null : pageDocs.last,
+      hasMore: hasMore,
+    );
   }
 
   @override
@@ -1353,6 +1406,14 @@ class FirestoreDiverRepository implements DiverRepository {
       }
       tx.set(ref, patch, SetOptions(merge: true));
     });
+  }
+
+  @override
+  Future<List<MemberAccount>> fetchMembers() async {
+    final snapshot = await _users.get();
+    final members = [for (final doc in snapshot.docs) _toMemberAccount(doc)];
+    members.sort((a, b) => a.displayName.compareTo(b.displayName));
+    return members;
   }
 
   @override
@@ -2296,6 +2357,16 @@ class FirestoreDiverRepository implements DiverRepository {
       'products': [for (final item in next) item.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<List<TourBooking>> fetchShopBookings(String shopId) async {
+    final snapshot = await _shopBookings(shopId).get();
+    final bookings = [
+      for (final doc in snapshot.docs) _toBooking(doc.id, doc.data()),
+    ];
+    bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bookings;
   }
 
   @override

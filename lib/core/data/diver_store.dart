@@ -54,15 +54,25 @@ class DiverStore extends ChangeNotifier {
   var _shopCoverHydrateGen = 0;
   StreamSubscription<AppUser?>? _authSubscription;
   StreamSubscription<DiverSnapshot>? _diverSubscription;
-  StreamSubscription<List<ShopLiveStats>>? _shopSubscription;
   StreamSubscription<List<TourBooking>>? _bookingSubscription;
-  StreamSubscription<List<PendingInstructor>>? _pendingSubscription;
-  StreamSubscription<List<MemberAccount>>? _membersSubscription;
-  StreamSubscription<List<CommunityPost>>? _postsSubscription;
   StreamSubscription<List<TourBooking>>? _shopBookingSubscription;
   StreamSubscription<InstructorDiscount>? _discountSubscription;
   Timer? _loadingTimeout;
   String? _uid;
+  var _shopStatsLoaded = false;
+  var _shopStatsLoading = false;
+  var _postsLoaded = false;
+  var _postsLoading = false;
+  var _postsHasMore = false;
+  Object? _postsCursor;
+  var _logsLoaded = false;
+  var _logsLoading = false;
+  var _logsHasMore = false;
+  Object? _logsCursor;
+  var _adminInboxLoaded = false;
+  var _adminInboxLoading = false;
+  var _salesLoaded = false;
+  var _salesLoading = false;
 
   DiverStats _stats = const DiverStats(
     displayName: '다이버',
@@ -80,8 +90,6 @@ class DiverStore extends ChangeNotifier {
   List<TourBooking> _shopBookings = const [];
   List<TourBooking> _salesBookings = const [];
   final _salesByShop = <String, List<TourBooking>>{};
-  final _salesSubscriptions =
-      <String, StreamSubscription<List<TourBooking>>>{};
   late List<GearItem> _gear;
   InstructorDiscount _instructorDiscount = InstructorDiscount.standard;
   bool _loading = true;
@@ -124,6 +132,9 @@ class DiverStore extends ChangeNotifier {
       List.unmodifiable(_pendingInstructors);
   List<MemberAccount> get members => List.unmodifiable(_members);
   List<CommunityPost> get posts => List.unmodifiable(_posts);
+  bool get postsHasMore => _postsHasMore;
+  bool get logsHasMore => _logsHasMore;
+  bool get shopStatsLoaded => _shopStatsLoaded;
   List<CommunityPost> get visiblePosts => [
     for (final post in _posts)
       if (!post.hidden) post,
@@ -646,6 +657,7 @@ class DiverStore extends ChangeNotifier {
       photoContentType: photoContentType,
       profile: profile,
     );
+    await refreshLogs();
   }
 
   Future<void> updateLog({
@@ -675,6 +687,7 @@ class DiverStore extends ChangeNotifier {
       profile: profile,
       removePhoto: removePhoto,
     );
+    await refreshLogs();
   }
 
   Future<bool> createBooking({
@@ -780,7 +793,7 @@ class DiverStore extends ChangeNotifier {
       );
     }
     final name = _stats.displayName.trim();
-    return _repository.submitOperationReview(
+    final outcome = await _repository.submitOperationReview(
       uid: uid,
       shopId: shopId,
       safety: safety,
@@ -794,6 +807,8 @@ class DiverStore extends ChangeNotifier {
       authorDisplayName: name.isEmpty ? null : name,
       details: details,
     );
+    await refreshShopStat(shopId);
+    return outcome;
   }
 
   Future<List<GuestReview>> listMyReviews() {
@@ -812,12 +827,12 @@ class DiverStore extends ChangeNotifier {
     required int boat,
     String? comment,
     ReviewDetails? details,
-  }) {
+  }) async {
     final uid = _uid;
     if (uid == null) {
       throw StateError('Sign in required');
     }
-    return _repository.updateOperationReview(
+    await _repository.updateOperationReview(
       uid: uid,
       shopId: shopId,
       reviewId: reviewId,
@@ -827,21 +842,23 @@ class DiverStore extends ChangeNotifier {
       comment: comment,
       details: details,
     );
+    await refreshShopStat(shopId);
   }
 
   Future<void> deleteOperationReview({
     required String shopId,
     required String reviewId,
-  }) {
+  }) async {
     final uid = _uid;
     if (uid == null) {
       throw StateError('Sign in required');
     }
-    return _repository.deleteOperationReview(
+    await _repository.deleteOperationReview(
       uid: uid,
       shopId: shopId,
       reviewId: reviewId,
     );
+    await refreshShopStat(shopId);
   }
 
   Future<GuestReviewsPage> fetchShopReviewsPage({
@@ -875,19 +892,22 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  Future<void> approveInstructor(String uid) {
-    return _repository.approveInstructor(uid);
+  Future<void> approveInstructor(String uid) async {
+    await _repository.approveInstructor(uid);
+    await refreshAdminInbox();
   }
 
   Future<void> setMemberGrade({
     required String uid,
     required MemberGrade grade,
-  }) {
-    return _repository.setMemberGrade(uid: uid, grade: grade);
+  }) async {
+    await _repository.setMemberGrade(uid: uid, grade: grade);
+    await refreshAdminInbox();
   }
 
-  Future<void> unlockMemberGrade(String uid) {
-    return _repository.unlockMemberGrade(uid);
+  Future<void> unlockMemberGrade(String uid) async {
+    await _repository.unlockMemberGrade(uid);
+    await refreshAdminInbox();
   }
 
   Future<void> touchLastSeen() {
@@ -906,22 +926,25 @@ class DiverStore extends ChangeNotifier {
     return _repository.clearGradeCelebration(uid);
   }
 
-  Future<void> rejectInstructor(String uid) {
-    return _repository.rejectInstructor(uid);
+  Future<void> rejectInstructor(String uid) async {
+    await _repository.rejectInstructor(uid);
+    await refreshAdminInbox();
   }
 
   Future<void> setPlaqueStatus({
     required String shopId,
     required PlaqueStatus status,
-  }) {
-    return _repository.setPlaqueStatus(shopId: shopId, status: status);
+  }) async {
+    await _repository.setPlaqueStatus(shopId: shopId, status: status);
+    await refreshShopStat(shopId);
   }
 
   Future<void> setInternalScore({
     required String shopId,
     required int score,
-  }) {
-    return _repository.setInternalScore(shopId: shopId, score: score);
+  }) async {
+    await _repository.setInternalScore(shopId: shopId, score: score);
+    await refreshShopStat(shopId);
   }
 
   Future<void> setDiveStarGrade({
@@ -929,13 +952,14 @@ class DiverStore extends ChangeNotifier {
     required int grade,
     required DateTime reviewedAt,
     required DateTime expiresAt,
-  }) {
-    return _repository.setDiveStarGrade(
+  }) async {
+    await _repository.setDiveStarGrade(
       shopId: shopId,
       grade: grade,
       reviewedAt: reviewedAt,
       expiresAt: expiresAt,
     );
+    await refreshShopStat(shopId);
   }
 
   Future<DiveStarForm> ensureActiveDiveStarForm() {
@@ -1144,12 +1168,14 @@ class DiverStore extends ChangeNotifier {
     return _repository.markPartnerEmailOutboxSent(outboxId);
   }
 
-  Future<void> setPostHidden({required String postId, required bool hidden}) {
-    return _repository.setPostHidden(postId: postId, hidden: hidden);
+  Future<void> setPostHidden({required String postId, required bool hidden}) async {
+    await _repository.setPostHidden(postId: postId, hidden: hidden);
+    await refreshCommunityPosts();
   }
 
-  Future<void> deletePost(String postId) {
-    return _repository.deletePost(postId);
+  Future<void> deletePost(String postId) async {
+    await _repository.deletePost(postId);
+    await refreshCommunityPosts();
   }
 
   Future<void> saveShopProfile({
@@ -1172,7 +1198,7 @@ class DiverStore extends ChangeNotifier {
     List<ShopGallerySlot>? gallery,
     bool creatorProposal = false,
     String? creatorUid,
-  }) {
+  }) async {
     final owned = _stats.ownedShopId;
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
@@ -1205,7 +1231,7 @@ class DiverStore extends ChangeNotifier {
       _galleryBytes.remove(shopId);
       notifyListeners();
     }
-    return _repository.saveShopProfile(
+    await _repository.saveShopProfile(
       shopId: shopId,
       name: name,
       location: location,
@@ -1224,6 +1250,7 @@ class DiverStore extends ChangeNotifier {
       removeCover: removeCover,
       gallery: gallery,
     );
+    await refreshShopStat(shopId);
   }
 
   /// Products this diver submitted from My (departure desk).
@@ -1335,6 +1362,7 @@ class DiverStore extends ChangeNotifier {
       }
       notifyListeners();
     }
+    await refreshShopStat(shopId);
   }
 
   ShopProduct _withSaveIntent({
@@ -1441,46 +1469,47 @@ class DiverStore extends ChangeNotifier {
   Future<void> deleteShopProduct({
     required String shopId,
     required String productId,
-  }) {
+  }) async {
     final owned = _stats.ownedShopId;
     final isOwnerPartner =
         _stats.isBusiness && owned != null && owned == shopId;
     if (!_stats.isAdmin && !isOwnerPartner) {
-      return Future.error(
-        StateError('Not allowed to delete this shop product'),
-      );
+      throw StateError('Not allowed to delete this shop product');
     }
-    return _repository.deleteShopProduct(shopId: shopId, productId: productId);
+    await _repository.deleteShopProduct(shopId: shopId, productId: productId);
+    await refreshShopStat(shopId);
   }
 
   Future<void> approveShopProduct({
     required String shopId,
     required String productId,
-  }) {
+  }) async {
     if (!_stats.isAdmin) {
-      return Future.error(StateError('Admin only'));
+      throw StateError('Admin only');
     }
-    return _repository.setShopProductPublishStatus(
+    await _repository.setShopProductPublishStatus(
       shopId: shopId,
       productId: productId,
       status: ProductPublishStatus.approved,
     );
+    await refreshShopStat(shopId);
   }
 
   Future<void> rejectShopProduct({
     required String shopId,
     required String productId,
     String reviewNote = '',
-  }) {
+  }) async {
     if (!_stats.isAdmin) {
-      return Future.error(StateError('Admin only'));
+      throw StateError('Admin only');
     }
-    return _repository.setShopProductPublishStatus(
+    await _repository.setShopProductPublishStatus(
       shopId: shopId,
       productId: productId,
       status: ProductPublishStatus.rejected,
       reviewNote: reviewNote,
     );
+    await refreshShopStat(shopId);
   }
 
   /// Admin-only: place a public product on a home shelf (or clear with exploreOnly).
@@ -1488,9 +1517,9 @@ class DiverStore extends ChangeNotifier {
     required String shopId,
     required String productId,
     required ProductListingKind listingKind,
-  }) {
+  }) async {
     if (!_stats.isAdmin) {
-      return Future.error(StateError('Admin only'));
+      throw StateError('Admin only');
     }
     ShopProduct? current;
     for (final product in productsForShop(shopId)) {
@@ -1500,18 +1529,19 @@ class DiverStore extends ChangeNotifier {
       }
     }
     if (current == null || !current.isListedPublicly) {
-      return Future.error(StateError('Product not public'));
+      throw StateError('Product not public');
     }
     if (listingKind.isHomeShelf &&
         current.listingKind != listingKind &&
         countOnHomeShelf(listingKind) >= ProductListingKind.homeShelfLimit) {
-      return Future.error(StateError('Home shelf full'));
+      throw StateError('Home shelf full');
     }
-    return _repository.setShopProductListingKind(
+    await _repository.setShopProductListingKind(
       shopId: shopId,
       productId: productId,
       listingKind: listingKind,
     );
+    await refreshShopStat(shopId);
   }
 
   Future<void> saveInstructorDiscount(InstructorDiscount discount) {
@@ -1567,12 +1597,12 @@ class DiverStore extends ChangeNotifier {
     int lookingSeats = 1,
     bool soloShare = false,
     TideKind kind = TideKind.soloShare,
-  }) {
+  }) async {
     final uid = _uid;
     if (uid == null) {
-      return Future.value();
+      return;
     }
-    return _repository.addCommunityPost(
+    await _repository.addCommunityPost(
       uid: uid,
       authorName: _stats.displayName,
       title: title,
@@ -1588,6 +1618,7 @@ class DiverStore extends ChangeNotifier {
       soloShare: soloShare,
       kind: kind,
     );
+    await refreshCommunityPosts();
   }
 
   Stream<List<CommunityComment>> watchComments(String postId) {
@@ -1624,7 +1655,11 @@ class DiverStore extends ChangeNotifier {
       if (gen != _shopCoverHydrateGen) {
         return;
       }
-      _shopStats = hydrated;
+      final byId = {for (final item in hydrated) item.shopId: item};
+      _shopStats = [
+        for (final item in _shopStats) byId.remove(item.shopId) ?? item,
+        ...byId.values,
+      ];
       notifyListeners();
     } catch (error) {
       debugPrint('R2 cover hydrate failed: $error');
@@ -1663,13 +1698,236 @@ class DiverStore extends ChangeNotifier {
     return null;
   }
 
+  Future<void> ensureShopStatsLoaded() async {
+    if (_shopStatsLoaded || _shopStatsLoading) {
+      return;
+    }
+    await refreshShopStats();
+  }
+
+  Future<void> refreshShopStats() async {
+    if (_shopStatsLoading) {
+      return;
+    }
+    _shopStatsLoading = true;
+    try {
+      final stats = await _repository.fetchShopStats();
+      _shopStats = stats;
+      _shopStatsLoaded = true;
+      notifyListeners();
+      unawaited(_hydrateShopCovers(stats));
+    } catch (error, stackTrace) {
+      debugPrint('샵 통계 로드 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _shopStatsLoading = false;
+    }
+  }
+
+  Future<void> refreshShopStat(String shopId) async {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      return;
+    }
+    try {
+      final updated = await _repository.fetchShopStat(id);
+      if (updated == null) {
+        return;
+      }
+      final next = [..._shopStats];
+      final index = next.indexWhere((item) => item.shopId == id);
+      if (index >= 0) {
+        next[index] = updated;
+      } else {
+        next.add(updated);
+      }
+      _shopStats = next;
+      _shopStatsLoaded = true;
+      notifyListeners();
+      unawaited(_hydrateShopCovers([updated]));
+    } catch (error, stackTrace) {
+      debugPrint('샵 통계 단건 갱신 실패: $error');
+      debugPrint('$stackTrace');
+    }
+  }
+
+  Future<void> ensureCommunityPostsLoaded() async {
+    if (_postsLoaded || _postsLoading) {
+      return;
+    }
+    await refreshCommunityPosts();
+  }
+
+  Future<void> refreshCommunityPosts() async {
+    if (_postsLoading) {
+      return;
+    }
+    _postsLoading = true;
+    try {
+      final page = await _repository.fetchCommunityPosts(limit: 20);
+      _posts = page.posts;
+      _postsCursor = page.nextCursor;
+      _postsHasMore = page.hasMore;
+      _postsLoaded = true;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('커뮤니티 게시글 로드 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _postsLoading = false;
+    }
+  }
+
+  Future<void> loadMoreCommunityPosts() async {
+    if (_postsLoading || !_postsHasMore) {
+      return;
+    }
+    _postsLoading = true;
+    try {
+      final page = await _repository.fetchCommunityPosts(
+        limit: 20,
+        cursor: _postsCursor,
+      );
+      _posts = [..._posts, ...page.posts];
+      _postsCursor = page.nextCursor;
+      _postsHasMore = page.hasMore;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('커뮤니티 게시글 더보기 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _postsLoading = false;
+    }
+  }
+
+  Future<void> ensureLogsLoaded() async {
+    if (_logsLoaded || _logsLoading) {
+      return;
+    }
+    await refreshLogs();
+  }
+
+  Future<void> refreshLogs() async {
+    final uid = _uid;
+    if (uid == null || _logsLoading) {
+      return;
+    }
+    _logsLoading = true;
+    try {
+      final page = await _repository.fetchDiveLogs(uid, limit: 50);
+      _logs = page.logs;
+      _logsCursor = page.nextCursor;
+      _logsHasMore = page.hasMore;
+      _logsLoaded = true;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('로그북 로드 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _logsLoading = false;
+    }
+  }
+
+  Future<void> loadMoreLogs() async {
+    final uid = _uid;
+    if (uid == null || _logsLoading || !_logsHasMore) {
+      return;
+    }
+    _logsLoading = true;
+    try {
+      final page = await _repository.fetchDiveLogs(
+        uid,
+        limit: 50,
+        cursor: _logsCursor,
+      );
+      _logs = [..._logs, ...page.logs];
+      _logsCursor = page.nextCursor;
+      _logsHasMore = page.hasMore;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('로그북 더보기 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _logsLoading = false;
+    }
+  }
+
+  Future<void> ensureAdminInboxLoaded() async {
+    if (!_stats.isAdmin) {
+      return;
+    }
+    if (_adminInboxLoaded || _adminInboxLoading) {
+      return;
+    }
+    await refreshAdminInbox();
+  }
+
+  Future<void> refreshAdminInbox() async {
+    if (!_stats.isAdmin || _adminInboxLoading) {
+      return;
+    }
+    _adminInboxLoading = true;
+    try {
+      final pending = await _repository.fetchPendingInstructors();
+      final members = await _repository.fetchMembers();
+      _pendingInstructors = pending;
+      _members = members;
+      _adminInboxLoaded = true;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('관리자 인박스 로드 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _adminInboxLoading = false;
+    }
+  }
+
+  Future<void> ensureSalesBookingsLoaded() async {
+    if (!_stats.isAdmin) {
+      return;
+    }
+    if (_salesLoaded || _salesLoading) {
+      return;
+    }
+    await refreshSalesBookings();
+  }
+
+  Future<void> refreshSalesBookings() async {
+    if (!_stats.isAdmin || _salesLoading) {
+      return;
+    }
+    _salesLoading = true;
+    try {
+      if (!_shopStatsLoaded) {
+        await refreshShopStats();
+      }
+      final ids = <String>{
+        for (final stats in _shopStats)
+          if (stats.shopId.isNotEmpty) stats.shopId,
+      };
+      final byShop = <String, List<TourBooking>>{};
+      for (final id in ids) {
+        byShop[id] = await _repository.fetchShopBookings(id);
+      }
+      _salesByShop
+        ..clear()
+        ..addAll(byShop);
+      _salesBookings = [
+        for (final list in _salesByShop.values) ...list,
+      ];
+      _salesLoaded = true;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('관리자 예약 로드 실패: $error');
+      debugPrint('$stackTrace');
+    } finally {
+      _salesLoading = false;
+    }
+  }
+
   void _bindDiver(AppUser? user) {
     _diverSubscription?.cancel();
-    _shopSubscription?.cancel();
     _bookingSubscription?.cancel();
-    _pendingSubscription?.cancel();
-    _membersSubscription?.cancel();
-    _postsSubscription?.cancel();
     _shopBookingSubscription?.cancel();
     if (user == null) {
       _adminConsoleUnlocked = false;
@@ -1688,7 +1946,17 @@ class DiverStore extends ChangeNotifier {
       _members = const [];
       _posts = const [];
       _shopBookings = const [];
-      _dropSalesWatchers();
+      _salesByShop.clear();
+      _salesBookings = const [];
+      _shopStatsLoaded = false;
+      _postsLoaded = false;
+      _postsHasMore = false;
+      _postsCursor = null;
+      _logsLoaded = false;
+      _logsHasMore = false;
+      _logsCursor = null;
+      _adminInboxLoaded = false;
+      _salesLoaded = false;
       _loadingTimeout?.cancel();
       _loading = false;
       notifyListeners();
@@ -1707,6 +1975,8 @@ class DiverStore extends ChangeNotifier {
     });
     unawaited(_repository.ensureSeedPosts());
     unawaited(_repository.touchLastSeen(user.uid));
+    // One-shot shop cache for Explore/home; pull-to-refresh thereafter.
+    unawaited(refreshShopStats());
     _diverSubscription = _repository
         .watchDiver(user.uid)
         .listen(
@@ -1714,7 +1984,7 @@ class DiverStore extends ChangeNotifier {
             _loadingTimeout?.cancel();
             _stats = snapshot.stats;
             _regions = snapshot.regions;
-            _logs = snapshot.logs;
+            // Logs stay on-demand via [refreshLogs]; do not clear local cache.
             _favoriteShopIds
               ..clear()
               ..addAll(snapshot.favoriteShopIds);
@@ -1734,19 +2004,7 @@ class DiverStore extends ChangeNotifier {
             notifyListeners();
           },
         );
-    _shopSubscription = _repository.watchShopStats().listen(
-      (stats) {
-        _shopStats = stats;
-        _syncSalesWatchers();
-        notifyListeners();
-        // Public r2.dev may 401 even when uploads succeed — swap covers to
-        // signed GETs so Home/Explore keep showing uploaded product photos.
-        unawaited(_hydrateShopCovers(stats));
-      },
-      onError: (Object error) {
-        debugPrint('Firestore 샵 통계 구독 실패: $error');
-      },
-    );
+    // Guest bookings stay realtime for status UX.
     _bookingSubscription = _repository
         .watchBookings(user.uid)
         .listen(
@@ -1758,47 +2016,19 @@ class DiverStore extends ChangeNotifier {
             debugPrint('Firestore 예약 구독 실패: $error');
           },
         );
-    _postsSubscription = _repository.watchCommunityPosts().listen(
-      (posts) {
-        _posts = posts;
-        notifyListeners();
-      },
-      onError: (Object error) {
-        debugPrint('Firestore 게시글 구독 실패: $error');
-      },
-    );
   }
 
   void _bindAdminInbox(bool isAdmin) {
     if (!isAdmin) {
-      _pendingSubscription?.cancel();
-      _pendingSubscription = null;
-      _membersSubscription?.cancel();
-      _membersSubscription = null;
       _pendingInstructors = const [];
       _members = const [];
-      _dropSalesWatchers();
+      _adminInboxLoaded = false;
+      _salesByShop.clear();
+      _salesBookings = const [];
+      _salesLoaded = false;
       return;
     }
-    _syncSalesWatchers();
-    _pendingSubscription ??= _repository.watchPendingInstructors().listen(
-      (pending) {
-        _pendingInstructors = pending;
-        notifyListeners();
-      },
-      onError: (Object error) {
-        debugPrint('관리자 강사 대기열 구독 실패: $error');
-      },
-    );
-    _membersSubscription ??= _repository.watchMembers().listen(
-      (members) {
-        _members = members;
-        notifyListeners();
-      },
-      onError: (Object error) {
-        debugPrint('관리자 회원 목록 구독 실패: $error');
-      },
-    );
+    // Admin lists load when the console screens open (ensure*/refresh*).
   }
 
   void _bindPartnerInbox(bool isBusiness, String? shopId) {
@@ -1811,6 +2041,7 @@ class DiverStore extends ChangeNotifier {
     if (_shopBookingSubscription != null) {
       return;
     }
+    // Partner bookings stay realtime (phase-2 will move to get+refresh).
     _shopBookingSubscription = _repository
         .watchShopBookings(shopId)
         .listen(
@@ -1824,77 +2055,12 @@ class DiverStore extends ChangeNotifier {
         );
   }
 
-  void _syncSalesWatchers() {
-    if (!_stats.isAdmin) {
-      return;
-    }
-    final ids = <String>{
-      for (final stats in _shopStats)
-        if (stats.shopId.isNotEmpty) stats.shopId,
-    };
-    final stale = [
-      for (final id in _salesSubscriptions.keys)
-        if (!ids.contains(id)) id,
-    ];
-    for (final id in stale) {
-      _salesSubscriptions.remove(id)?.cancel();
-      _salesByShop.remove(id);
-    }
-    var opened = false;
-    for (final id in ids) {
-      if (_salesSubscriptions.containsKey(id)) {
-        continue;
-      }
-      opened = true;
-      _salesSubscriptions[id] = _repository.watchShopBookings(id).listen(
-        (bookings) {
-          _salesByShop[id] = bookings;
-          _publishSales();
-        },
-        onError: (Object error) {
-          debugPrint('관리자 매출 구독 실패: $error');
-        },
-      );
-    }
-    if (stale.isNotEmpty || opened) {
-      _publishSales();
-    }
-  }
-
-  void _publishSales() {
-    _salesBookings = [
-      for (final list in _salesByShop.values) ...list,
-    ];
-    notifyListeners();
-  }
-
-  void _dropSalesWatchers() {
-    for (final sub in _salesSubscriptions.values) {
-      sub.cancel();
-    }
-    _salesSubscriptions.clear();
-    _salesByShop.clear();
-    if (_salesBookings.isEmpty) {
-      return;
-    }
-    _salesBookings = const [];
-    notifyListeners();
-  }
-
   @override
   void dispose() {
     _loadingTimeout?.cancel();
-    for (final sub in _salesSubscriptions.values) {
-      sub.cancel();
-    }
-    _salesSubscriptions.clear();
     _authSubscription?.cancel();
     _diverSubscription?.cancel();
-    _shopSubscription?.cancel();
     _bookingSubscription?.cancel();
-    _pendingSubscription?.cancel();
-    _membersSubscription?.cancel();
-    _postsSubscription?.cancel();
     _shopBookingSubscription?.cancel();
     _discountSubscription?.cancel();
     super.dispose();

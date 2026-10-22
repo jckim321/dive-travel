@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -22,6 +24,17 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _search = TextEditingController();
   String _continent = ContinentFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureShopStatsLoaded());
+    });
+  }
 
   @override
   void dispose() {
@@ -117,37 +130,51 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ),
                   ),
                 Expanded(
-                  child: shops.isEmpty
-                      ? Center(child: Text(l10n.exploreNoResults))
-                      : ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                          children: [
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: shops.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 18,
-                                    crossAxisSpacing: 8,
-                                    mainAxisExtent:
-                                        ListingCover.cardExtent(context),
-                                  ),
-                              itemBuilder: (context, index) {
-                                final shop = shops[index];
-                                return HomeStayCard(
-                                  key: Key('shop-card-${shop.id}'),
-                                  shop: shop,
-                                  onDetails: () => openResortDetail(
-                                    context,
-                                    shop.hullId,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                  child: RefreshIndicator(
+                    onRefresh: store.refreshShopStats,
+                    child: shops.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.sizeOf(context).height * 0.4,
+                                child: Center(
+                                  child: Text(l10n.exploreNoResults),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                            children: [
+                              GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: shops.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 18,
+                                      crossAxisSpacing: 8,
+                                      mainAxisExtent:
+                                          ListingCover.cardExtent(context),
+                                    ),
+                                itemBuilder: (context, index) {
+                                  final shop = shops[index];
+                                  return HomeStayCard(
+                                    key: Key('shop-card-${shop.id}'),
+                                    shop: shop,
+                                    onDetails: () => openResortDetail(
+                                      context,
+                                      shop.hullId,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
               ],
             ),

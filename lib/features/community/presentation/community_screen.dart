@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -123,6 +125,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
   _TideFilter _filter = _TideFilter.all;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final store = DiverStoreScope.of(context);
+      unawaited(store.ensureShopStatsLoaded());
+      unawaited(store.ensureCommunityPostsLoaded());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
@@ -151,8 +166,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
           backgroundColor: AppTheme.canvas,
           body: SafeArea(
             bottom: false,
-            child: ListView(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.wait([
+                  store.refreshShopStats(),
+                  store.refreshCommunityPosts(),
+                ]);
+              },
+              child: ListView(
               key: const Key('tide-board'),
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 108),
               children: [
                 _TideHeader(
@@ -227,6 +250,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
               ],
+            ),
             ),
           ),
         );

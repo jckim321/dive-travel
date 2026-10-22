@@ -35,7 +35,15 @@ abstract class DiverRepository {
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
   Future<void> ensureUserDocument(AppUser user);
 
+  /// Profile fields only (no logs subcollection). Prefer [fetchDiveLogs] for logs.
   Stream<DiverSnapshot> watchDiver(String uid);
+
+  /// Newest-first page of dive logs (`users/{uid}/logs`).
+  Future<DiveLogsPage> fetchDiveLogs(
+    String uid, {
+    int limit = 50,
+    Object? cursor,
+  });
 
   Future<void> setFavoriteShop({
     required String uid,
@@ -67,6 +75,12 @@ abstract class DiverRepository {
     bool removePhoto = false,
   });
 
+  /// One-shot shops list (prefer over [watchShopStats] for cost).
+  Future<List<ShopLiveStats>> fetchShopStats();
+
+  Future<ShopLiveStats?> fetchShopStat(String shopId);
+
+  /// Legacy realtime shops; prefer [fetchShopStats].
   Stream<List<ShopLiveStats>> watchShopStats();
 
   Stream<List<TourBooking>> watchBookings(String uid);
@@ -123,8 +137,18 @@ abstract class DiverRepository {
     required String photoContentType,
   });
 
+  Future<List<PendingInstructor>> fetchPendingInstructors();
+
+  /// Legacy realtime pending instructors; prefer [fetchPendingInstructors].
   Stream<List<PendingInstructor>> watchPendingInstructors();
 
+  /// Newest-first page of community posts.
+  Future<CommunityPostsPage> fetchCommunityPosts({
+    int limit = 20,
+    Object? cursor,
+  });
+
+  /// Legacy realtime posts; prefer [fetchCommunityPosts].
   Stream<List<CommunityPost>> watchCommunityPosts();
 
   Future<void> ensureSeedPosts();
@@ -133,6 +157,9 @@ abstract class DiverRepository {
 
   Future<void> rejectInstructor(String uid);
 
+  Future<List<MemberAccount>> fetchMembers();
+
+  /// Legacy realtime members; prefer [fetchMembers].
   Stream<List<MemberAccount>> watchMembers();
 
   Future<void> setMemberGrade({
@@ -334,6 +361,9 @@ abstract class DiverRepository {
 
   Future<void> saveInstructorDiscount(InstructorDiscount discount);
 
+  Future<List<TourBooking>> fetchShopBookings(String shopId);
+
+  /// Partner/admin realtime; prefer [fetchShopBookings] for admin sales.
   Stream<List<TourBooking>> watchShopBookings(String shopId);
 
   Future<bool> createBooking({

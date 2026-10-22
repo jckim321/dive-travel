@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -33,6 +35,17 @@ class AdminMembersScreen extends StatefulWidget {
 class _AdminMembersScreenState extends State<AdminMembersScreen> {
   final _query = TextEditingController();
   _MemberGradeFilter _gradeFilter = _MemberGradeFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureAdminInboxLoaded());
+    });
+  }
 
   @override
   void dispose() {
@@ -193,16 +206,28 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             ),
           ),
           Expanded(
-            child: members.isEmpty
-                ? Center(child: Text(l10n.adminMembersEmpty))
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                    itemCount: members.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return _MemberCard(member: members[index]);
-                    },
-                  ),
+            child: RefreshIndicator(
+              onRefresh: store.refreshAdminInbox,
+              child: members.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.sizeOf(context).height * 0.35,
+                          child: Center(child: Text(l10n.adminMembersEmpty)),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      itemCount: members.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        return _MemberCard(member: members[index]);
+                      },
+                    ),
+            ),
           ),
         ],
       ),

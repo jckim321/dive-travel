@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -7,10 +9,26 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-class AdminBookingsScreen extends StatelessWidget {
+class AdminBookingsScreen extends StatefulWidget {
   const AdminBookingsScreen({super.key, this.embedded = false});
 
   final bool embedded;
+
+  @override
+  State<AdminBookingsScreen> createState() => _AdminBookingsScreenState();
+}
+
+class _AdminBookingsScreenState extends State<AdminBookingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureSalesBookingsLoaded());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,25 +36,36 @@ class AdminBookingsScreen extends StatelessWidget {
     final store = DiverStoreScope.of(context);
 
     return adminScreenShell(
-      embedded: embedded,
+      embedded: widget.embedded,
       title: l10n.adminBookingsTitle,
       body: ListenableBuilder(
         listenable: store,
         builder: (context, _) {
           final bookings = [...store.salesBookings]
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          if (bookings.isEmpty) {
-            return Center(child: Text(l10n.adminBookingsEmpty));
-          }
           final money = NumberFormat('#,###', 'en_US');
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-            itemCount: bookings.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final booking = bookings[index];
-              return _AdminBookingTile(booking: booking, money: money);
-            },
+          return RefreshIndicator(
+            onRefresh: store.refreshSalesBookings,
+            child: bookings.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.sizeOf(context).height * 0.4,
+                        child: Center(child: Text(l10n.adminBookingsEmpty)),
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                    itemCount: bookings.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final booking = bookings[index];
+                      return _AdminBookingTile(booking: booking, money: money);
+                    },
+                  ),
           );
         },
       ),
