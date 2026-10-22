@@ -3711,7 +3711,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminDiveStarFormImportHint.
   ///
   /// In ko, this message translates to:
-  /// **'양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 심사 화면이 v2를 지원할 때까지 사용 중 전환은 잠겨 있습니다.'**
+  /// **'양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 준비가 되면 「사용 중으로 전환」으로 활성 양식을 바꿀 수 있습니다.'**
   String get adminDiveStarFormImportHint;
 
   /// No description provided for @adminDiveStarFormImportPasteLabel.
@@ -3821,6 +3821,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'3단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.'**
   String get adminDiveStarFormActivateLockedHint;
+
+  /// No description provided for @adminDiveStarFormActivated.
+  ///
+  /// In ko, this message translates to:
+  /// **'{version}을(를) 사용 중으로 전환했습니다.'**
+  String adminDiveStarFormActivated(String version);
+
+  /// No description provided for @adminDiveStarFormMissingForHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기록의 양식({version})을 찾지 못해 사용 중 양식으로 엽니다.'**
+  String adminDiveStarFormMissingForHistory(String version);
 
   /// No description provided for @adminDocsTitle.
   ///

@@ -761,7 +761,7 @@
   "adminDiveStarAssessmentUpdated": "Draft overwritten and saved.",
   "adminDiveStarFormImportMenu": "Import audit form",
   "adminDiveStarFormImportTitle": "Import Dive Star form",
-  "adminDiveStarFormImportHint": "Paste form JSON to save as a draft (inactive). Activation is locked until the audit screen supports v2.",
+  "adminDiveStarFormImportHint": "Paste form JSON to save as a draft (inactive). Use Activate when ready to switch the live form.",
   "adminDiveStarFormImportPasteLabel": "Form JSON",
   "adminDiveStarFormImportAction": "Validate and save draft",
   "adminDiveStarFormImportEmpty": "Paste the JSON first.",
@@ -795,6 +795,18 @@
   "adminDiveStarFormStatusDraft": "Draft",
   "adminDiveStarFormActivate": "Make this form active",
   "adminDiveStarFormActivateLockedHint": "Available after phase 3. Active form stays v1 for now.",
+  "adminDiveStarFormActivated": "{version} is now the active form.",
+  "@adminDiveStarFormActivated": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "adminDiveStarFormMissingForHistory": "Form {version} for this record was not found; opening with the active form.",
+  "@adminDiveStarFormMissingForHistory": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
   "adminDocsTitle": "Documents",
   "adminDocsHint": "Store public partner guides and forms for sharing. Do not put internal files here.",
   "adminDocsListSection": "Documents",

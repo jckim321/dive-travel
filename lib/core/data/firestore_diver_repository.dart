@@ -1333,11 +1333,73 @@ class FirestoreDiverRepository implements DiverRepository {
     return draft;
   }
 
+  @override
+  Future<DiveStarForm> activateDiveStarForm(String version) async {
+    final id = version.trim();
+    if (id.isEmpty) {
+      throw StateError('Form version is required');
+    }
+    final targetRef = _diveStarForms.doc(id);
+    final targetSnap = await targetRef.get();
+    final targetData = targetSnap.data();
+    if (!targetSnap.exists || targetData == null) {
+      throw StateError('Form not found: $id');
+    }
+    final all = await _diveStarForms.get();
+    final batch = _db.batch();
+    for (final doc in all.docs) {
+      final activate = doc.id == id;
+      batch.set(
+        doc.reference,
+        {
+          'active': activate,
+          'status': activate
+              ? DiveStarFormStatus.active.firestoreValue
+              : DiveStarFormStatus.draft.firestoreValue,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    }
+    await batch.commit();
+    final refreshed = await targetRef.get();
+    return DiveStarForm.fromDocument(
+      id,
+      refreshed.data() ?? {
+        ...targetData,
+        'active': true,
+        'status': DiveStarFormStatus.active.firestoreValue,
+      },
+    );
+  }
+
   Map<String, int> _clampScores(DiveStarForm form, Map<String, int> scores) {
     return {
       for (final area in form.areas)
         area.id: (scores[area.id] ?? 0).clamp(0, area.maxPoints),
     };
+  }
+
+  Map<String, int> _clampItemScores(
+    DiveStarForm form,
+    Map<String, int> itemScores,
+  ) {
+    return {
+      for (final item in form.items)
+        item.id: (itemScores[item.id] ?? 0).clamp(0, item.maxPoints),
+    };
+  }
+
+  Future<DiveStarForm> _formForSave(String? formVersion) async {
+    final version = formVersion?.trim() ?? '';
+    if (version.isNotEmpty) {
+      final form = await getDiveStarForm(version);
+      if (form != null) {
+        return form;
+      }
+      throw StateError('Form not found: $version');
+    }
+    return ensureActiveDiveStarForm();
   }
 
   @override
@@ -1355,22 +1417,59 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<DiveStarAssessment> saveDiveStarAssessment({
     required String shopId,
     String? assessmentId,
+    String? formVersion,
     required DiveStarAssessmentType type,
     required DateTime reviewedAt,
     required Map<String, bool> gates,
     required Map<String, int> scores,
     required Map<String, String> comments,
+    Map<String, int> itemScores = const {},
+    Map<String, String> itemComments = const {},
+    Map<String, bool> areaNa = const {},
+    List<DiveStarCountryGateAnswer> countryGates = const [],
+    int mysteryVisits = 0,
+    List<String> auditors = const [],
   }) async {
-    final form = await ensureActiveDiveStarForm();
+    final form = await _formForSave(formVersion);
     final clampedScores = _clampScores(form, scores);
+    final clampedItems = _clampItemScores(form, itemScores);
     final gateMap = {
       for (final gate in form.gates) gate.id: gates[gate.id] == true,
     };
+    final cleanedCountry = [
+      for (final gate in countryGates)
+        if (gate.title.trim().isNotEmpty)
+          DiveStarCountryGateAnswer(
+            title: gate.title.trim(),
+            criteria: gate.criteria.trim(),
+            passed: gate.passed,
+          ),
+    ];
+    final cleanedNa = {
+      for (final area in form.areas)
+        if (areaNa[area.id] == true &&
+            area.id != form.rules.requiredAreaId &&
+            area.id != form.thresholds.safetyAreaId)
+          area.id: true,
+    };
+    final visits = mysteryVisits.clamp(0, 20);
+    final cleanedAuditors = [
+      for (final name in auditors)
+        if (name.trim().isNotEmpty) name.trim(),
+    ].take(2).toList();
     final result = DiveStarScoring.evaluate(
       form: form,
       gates: gateMap,
       scores: clampedScores,
+      itemScores: clampedItems,
+      areaNotApplicable: cleanedNa,
+      countryGatesPassed: [for (final g in cleanedCountry) g.passed],
+      mysteryVisits: visits,
     );
+    final areaScoresForStore = {
+      for (final area in form.areas)
+        area.id: result.areaScores[area.id] ?? clampedScores[area.id] ?? 0,
+    };
     final updating = assessmentId != null && assessmentId.isNotEmpty;
     final ref = updating
         ? _diveStarAssessments(shopId).doc(assessmentId)
@@ -1387,13 +1486,23 @@ class FirestoreDiverRepository implements DiverRepository {
     final payload = <String, dynamic>{
       'form_version': form.version,
       'type': type.firestoreValue,
+      'assessment_type': type.firestoreValue,
       'reviewed_at': Timestamp.fromDate(reviewedAt.toUtc()),
       'gates': gateMap,
-      'scores': clampedScores,
+      'scores': areaScoresForStore,
       'comments': {
         for (final entry in comments.entries)
           if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
       },
+      'item_scores': clampedItems,
+      'item_comments': {
+        for (final entry in itemComments.entries)
+          if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
+      },
+      'area_na': cleanedNa,
+      'country_gates': [for (final g in cleanedCountry) g.toMap()],
+      'mystery_visits': visits,
+      'auditors': cleanedAuditors,
       'total_score': result.totalScore,
       'candidate_grade': result.candidateGrade,
       'gates_passed': result.gatesPassed,

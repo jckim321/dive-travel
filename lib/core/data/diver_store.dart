@@ -904,6 +904,10 @@ class DiverStore extends ChangeNotifier {
     return _repository.importDiveStarFormDraft(form);
   }
 
+  Future<DiveStarForm> activateDiveStarForm(String version) {
+    return _repository.activateDiveStarForm(version);
+  }
+
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) {
     return _repository.listDiveStarAssessments(shopId);
   }
@@ -911,20 +915,34 @@ class DiverStore extends ChangeNotifier {
   Future<DiveStarAssessment> saveDiveStarAssessment({
     required String shopId,
     String? assessmentId,
+    String? formVersion,
     required DiveStarAssessmentType type,
     required DateTime reviewedAt,
     required Map<String, bool> gates,
     required Map<String, int> scores,
     required Map<String, String> comments,
+    Map<String, int> itemScores = const {},
+    Map<String, String> itemComments = const {},
+    Map<String, bool> areaNa = const {},
+    List<DiveStarCountryGateAnswer> countryGates = const [],
+    int mysteryVisits = 0,
+    List<String> auditors = const [],
   }) {
     return _repository.saveDiveStarAssessment(
       shopId: shopId,
       assessmentId: assessmentId,
+      formVersion: formVersion,
       type: type,
       reviewedAt: reviewedAt,
       gates: gates,
       scores: scores,
       comments: comments,
+      itemScores: itemScores,
+      itemComments: itemComments,
+      areaNa: areaNa,
+      countryGates: countryGates,
+      mysteryVisits: mysteryVisits,
+      auditors: auditors,
     );
   }
 

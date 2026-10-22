@@ -152,18 +152,29 @@ abstract class DiverRepository {
   /// Saves a draft form at `dive_star_forms/{version}`. Fails if version exists.
   Future<DiveStarForm> importDiveStarFormDraft(DiveStarForm form);
 
+  /// Makes [version] the only active form; others become draft/inactive.
+  Future<DiveStarForm> activateDiveStarForm(String version);
+
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId);
 
   /// Saves a draft assessment; does **not** change shop `dive_star_grade`.
   /// When [assessmentId] is set, overwrites that draft. Confirmed records throw.
+  /// [formVersion] selects which form to score against (default: active form).
   Future<DiveStarAssessment> saveDiveStarAssessment({
     required String shopId,
     String? assessmentId,
+    String? formVersion,
     required DiveStarAssessmentType type,
     required DateTime reviewedAt,
     required Map<String, bool> gates,
     required Map<String, int> scores,
     required Map<String, String> comments,
+    Map<String, int> itemScores = const {},
+    Map<String, String> itemComments = const {},
+    Map<String, bool> areaNa = const {},
+    List<DiveStarCountryGateAnswer> countryGates = const [],
+    int mysteryVisits = 0,
+    List<String> auditors = const [],
   });
 
   /// Applies candidate grade to the shop via [setDiveStarGrade] and marks confirmed.

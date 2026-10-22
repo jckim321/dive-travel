@@ -9,22 +9,15 @@ import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_form
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Admin audit form: save draft scores, then confirm to write shop grade.
-///
-/// [trialV2] opens a draft v2 form for preview only (no save). Remove with
-/// phase-3 activate cleanup.
 class AdminDiveStarAssessmentScreen extends StatefulWidget {
   const AdminDiveStarAssessmentScreen({
     super.key,
     required this.shopId,
     required this.shopName,
-    this.trialV2 = false,
   });
 
   final String shopId;
   final String shopName;
-
-  /// Temporary: load inactive form with items; disable save until phase 3.
-  final bool trialV2;
 
   @override
   State<AdminDiveStarAssessmentScreen> createState() =>
@@ -87,7 +80,7 @@ class _AdminDiveStarAssessmentScreenState
 
   bool get _v2Ui {
     final form = _form;
-    return widget.trialV2 || (form != null && form.items.isNotEmpty);
+    return form != null && form.items.isNotEmpty;
   }
 
   _EditorMode get _mode {
@@ -102,10 +95,9 @@ class _AdminDiveStarAssessmentScreenState
 
   bool get _readOnly => _mode == _EditorMode.confirmedReadonly;
 
-  /// Trial mode allows editing for preview, but never persists.
-  bool get _canPersist => !widget.trialV2 && !_readOnly;
+  bool get _canPersist => !_readOnly;
 
-  bool get _inputsEnabled => widget.trialV2 || !_readOnly;
+  bool get _inputsEnabled => !_readOnly;
 
   @override
   void initState() {
@@ -119,22 +111,57 @@ class _AdminDiveStarAssessmentScreenState
     _mysteryVisitsController.dispose();
     _auditor1Controller.dispose();
     _auditor2Controller.dispose();
+    _disposeFormFieldControllers();
+    super.dispose();
+  }
+
+  void _disposeFormFieldControllers() {
+    _gates.clear();
     for (final c in _scoreControllers.values) {
       c.dispose();
     }
+    _scoreControllers.clear();
     for (final c in _commentControllers.values) {
       c.dispose();
     }
+    _commentControllers.clear();
     for (final c in _itemScoreControllers.values) {
       c.dispose();
     }
+    _itemScoreControllers.clear();
     for (final c in _itemCommentControllers.values) {
       c.dispose();
     }
+    _itemCommentControllers.clear();
     for (final g in _countryGates) {
       g.dispose();
     }
-    super.dispose();
+    _countryGates.clear();
+    _areaNa.clear();
+    _expandedAreas.clear();
+    _expandedGuidance.clear();
+  }
+
+  void _buildControllersForForm(DiveStarForm form) {
+    for (final gate in form.gates) {
+      _gates[gate.id] = false;
+    }
+    for (final area in form.areas) {
+      _scoreControllers[area.id] = TextEditingController(text: '0');
+      _commentControllers[area.id] = TextEditingController();
+      _areaNa[area.id] = false;
+      _expandedAreas.add(area.id);
+    }
+    for (final item in form.items) {
+      _itemScoreControllers[item.id] = TextEditingController();
+      _itemCommentControllers[item.id] = TextEditingController();
+    }
+  }
+
+  void _switchToForm(DiveStarForm form) {
+    _disposeFormFieldControllers();
+    _buildControllersForForm(form);
+    _form = form;
   }
 
   Future<void> _load() async {
@@ -144,28 +171,13 @@ class _AdminDiveStarAssessmentScreenState
       _loadError = null;
     });
     try {
-      final DiveStarForm form;
-      if (widget.trialV2) {
-        final forms = await store.listDiveStarForms();
-        final drafts = [
-          for (final f in forms)
-            if (f.items.isNotEmpty && !f.active) f,
-        ];
-        if (drafts.isEmpty) {
-          throw StateError('no_v2_draft');
-        }
-        drafts.sort((a, b) => b.version.compareTo(a.version));
-        form = drafts.first;
-      } else {
-        form = await store.ensureActiveDiveStarForm();
-      }
+      final form = await store.ensureActiveDiveStarForm();
       final history = await store.listDiveStarAssessments(widget.shopId);
       if (!mounted) {
         return;
       }
-      _applyForm(form);
       setState(() {
-        _form = form;
+        _switchToForm(form);
         _history = history;
         _loading = false;
         _recomputePreview();
@@ -178,34 +190,6 @@ class _AdminDiveStarAssessmentScreenState
         _loadError = error;
         _loading = false;
       });
-    }
-  }
-
-  void _applyForm(DiveStarForm form) {
-    for (final gate in form.gates) {
-      _gates.putIfAbsent(gate.id, () => false);
-    }
-    for (final area in form.areas) {
-      _scoreControllers.putIfAbsent(
-        area.id,
-        () => TextEditingController(text: '0'),
-      );
-      _commentControllers.putIfAbsent(
-        area.id,
-        () => TextEditingController(),
-      );
-      _areaNa.putIfAbsent(area.id, () => false);
-      _expandedAreas.add(area.id);
-    }
-    for (final item in form.items) {
-      _itemScoreControllers.putIfAbsent(
-        item.id,
-        () => TextEditingController(),
-      );
-      _itemCommentControllers.putIfAbsent(
-        item.id,
-        () => TextEditingController(),
-      );
     }
   }
 
@@ -241,6 +225,13 @@ class _AdminDiveStarAssessmentScreenState
     };
   }
 
+  Map<String, String> _readItemComments(DiveStarForm form) {
+    return {
+      for (final item in form.items)
+        item.id: _itemCommentControllers[item.id]?.text.trim() ?? '',
+    };
+  }
+
   Map<String, bool> _readAreaNa(DiveStarForm form) {
     return {
       for (final area in form.areas)
@@ -256,9 +247,30 @@ class _AdminDiveStarAssessmentScreenState
     ];
   }
 
+  List<DiveStarCountryGateAnswer> _readCountryGates() {
+    return [
+      for (final gate in _countryGates)
+        if (gate.hasContent)
+          DiveStarCountryGateAnswer(
+            title: gate.title.text.trim(),
+            criteria: gate.criteria.text.trim(),
+            passed: gate.passed,
+          ),
+    ];
+  }
+
   int _readMysteryVisits() {
     return (int.tryParse(_mysteryVisitsController.text.trim()) ?? 0)
         .clamp(0, 20);
+  }
+
+  List<String> _readAuditors() {
+    final a1 = _auditor1Controller.text.trim();
+    final a2 = _auditor2Controller.text.trim();
+    return [
+      if (a1.isNotEmpty) a1,
+      if (a2.isNotEmpty) a2,
+    ];
   }
 
   void _recomputePreview() {
@@ -300,80 +312,69 @@ class _AdminDiveStarAssessmentScreenState
     );
   }
 
-  void _resetBlankForm() {
-    final form = _form;
-    if (form == null) {
-      return;
-    }
-    setState(() {
-      _editingId = null;
-      _openedConfirmed = false;
-      _loadedRecord = null;
-      _type = DiveStarAssessmentType.onsite;
-      _reviewedAt = DateTime.now();
-      for (final gate in form.gates) {
-        _gates[gate.id] = false;
-      }
-      for (final area in form.areas) {
-        _scoreControllers[area.id]?.text = '0';
-        _commentControllers[area.id]?.text = '';
-        _areaNa[area.id] = false;
-      }
-      for (final item in form.items) {
-        _itemScoreControllers[item.id]?.text = '';
-        _itemCommentControllers[item.id]?.text = '';
-      }
-      for (final g in _countryGates) {
-        g.dispose();
-      }
-      _countryGates.clear();
-      _mysteryVisitsController.text = '0';
-      _auditor1Controller.clear();
-      _auditor2Controller.clear();
-      _recomputePreview();
-    });
-    _scrollToTop();
+  void _showFormFallbackSnack(String formVersion) {
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          l10n.adminDiveStarFormMissingForHistory(
+            DiveStarForm.versionLabel(formVersion),
+          ),
+        ),
+      ),
+    );
   }
 
-  void _fillMaxScores() {
-    final form = _form;
-    if (form == null || !widget.trialV2) {
-      return;
+  Future<void> _startNew() async {
+    final store = DiverStoreScope.of(context);
+    try {
+      final form = await store.ensureActiveDiveStarForm();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _switchToForm(form);
+        _editingId = null;
+        _openedConfirmed = false;
+        _loadedRecord = null;
+        _type = DiveStarAssessmentType.onsite;
+        _reviewedAt = DateTime.now();
+        _mysteryVisitsController.text = '0';
+        _auditor1Controller.clear();
+        _auditor2Controller.clear();
+        _recomputePreview();
+      });
+      _scrollToTop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
     }
-    setState(() {
-      for (final gate in form.gates) {
-        _gates[gate.id] = true;
-      }
-      for (final area in form.areas) {
-        _areaNa[area.id] = false;
-        _scoreControllers[area.id]?.text = '${area.maxPoints}';
-      }
-      for (final item in form.items) {
-        _itemScoreControllers[item.id]?.text = '${item.maxPoints}';
-      }
-      for (final g in _countryGates) {
-        if (g.hasContent) {
-          g.passed = true;
-        }
-      }
-      final need = form.thresholds.star3MysteryVisitsMin;
-      _mysteryVisitsController.text = '${need < 0 ? 0 : need.clamp(0, 20)}';
-      if (_mysteryVisitsController.text == '0' && need > 0) {
-        _mysteryVisitsController.text = '$need';
-      }
-      _recomputePreview();
-    });
   }
 
-  void _fillFromAssessment(DiveStarAssessment item, {required bool asCopy}) {
-    if (widget.trialV2) {
+  Future<void> _openHistoryAssessment(
+    DiveStarAssessment item, {
+    required bool asCopy,
+  }) async {
+    final store = DiverStoreScope.of(context);
+    final requestedVersion = item.formVersion.trim();
+    DiveStarForm? form;
+    if (requestedVersion.isNotEmpty) {
+      form = await store.getDiveStarForm(requestedVersion);
+    }
+    final usedFallback = form == null;
+    form ??= await store.ensureActiveDiveStarForm();
+    if (!mounted) {
       return;
     }
-    final form = _form;
-    if (form == null) {
-      return;
+    if (usedFallback && requestedVersion.isNotEmpty) {
+      _showFormFallbackSnack(requestedVersion);
     }
     setState(() {
+      _switchToForm(form!);
       if (asCopy) {
         _editingId = null;
         _openedConfirmed = false;
@@ -391,7 +392,27 @@ class _AdminDiveStarAssessmentScreenState
       for (final area in form.areas) {
         _scoreControllers[area.id]?.text = '${item.scores[area.id] ?? 0}';
         _commentControllers[area.id]?.text = item.comments[area.id] ?? '';
+        _areaNa[area.id] = item.areaNa[area.id] == true;
       }
+      for (final formItem in form.items) {
+        final score = item.itemScores[formItem.id];
+        _itemScoreControllers[formItem.id]?.text =
+            score != null ? '$score' : '';
+        _itemCommentControllers[formItem.id]?.text =
+            item.itemComments[formItem.id] ?? '';
+      }
+      for (final g in item.countryGates) {
+        final input = _CountryGateInput()
+          ..title.text = g.title
+          ..criteria.text = g.criteria
+          ..passed = g.passed;
+        _countryGates.add(input);
+      }
+      _mysteryVisitsController.text = '${item.mysteryVisits}';
+      _auditor1Controller.text =
+          item.auditors.isNotEmpty ? item.auditors.first : '';
+      _auditor2Controller.text =
+          item.auditors.length > 1 ? item.auditors[1] : '';
       _recomputePreview();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTop());
@@ -399,7 +420,7 @@ class _AdminDiveStarAssessmentScreenState
 
   Future<void> _save() async {
     final form = _form;
-    if (form == null || _saving || !_canPersist || _v2Ui) {
+    if (form == null || _saving || !_canPersist) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -410,6 +431,7 @@ class _AdminDiveStarAssessmentScreenState
       final saved = await store.saveDiveStarAssessment(
         shopId: widget.shopId,
         assessmentId: editingId,
+        formVersion: form.version,
         type: _type,
         reviewedAt: _reviewedAt,
         gates: {
@@ -417,6 +439,12 @@ class _AdminDiveStarAssessmentScreenState
         },
         scores: _readScores(form),
         comments: _readComments(form),
+        itemScores: _readItemScores(form),
+        itemComments: _readItemComments(form),
+        areaNa: _readAreaNa(form),
+        countryGates: _readCountryGates(),
+        mysteryVisits: _readMysteryVisits(),
+        auditors: _readAuditors(),
       );
       final history = await store.listDiveStarAssessments(widget.shopId);
       if (!mounted) {
@@ -453,7 +481,7 @@ class _AdminDiveStarAssessmentScreenState
   Future<void> _confirm(DiveStarAssessment assessment) async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    if (widget.trialV2 || _confirming || assessment.confirmed) {
+    if (_confirming || assessment.confirmed) {
       return;
     }
     final expiresDefault =
@@ -552,7 +580,7 @@ class _AdminDiveStarAssessmentScreenState
     final id = _editingId;
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    if (widget.trialV2 || id == null || _readOnly || _deleting) {
+    if (id == null || _readOnly || _deleting) {
       return;
     }
     final ok = await showDialog<bool>(
@@ -589,7 +617,10 @@ class _AdminDiveStarAssessmentScreenState
         _history = history;
         _deleting = false;
       });
-      _resetBlankForm();
+      await _startNew();
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.adminDiveStarDeleted)),
       );
@@ -605,9 +636,6 @@ class _AdminDiveStarAssessmentScreenState
   }
 
   String _modeLabel(AppLocalizations l10n) {
-    if (widget.trialV2) {
-      return l10n.adminDiveStarTrialTitle;
-    }
     return switch (_mode) {
       _EditorMode.newDraft => l10n.adminDiveStarModeNew,
       _EditorMode.editingDraft => l10n.adminDiveStarModeEditing,
@@ -673,11 +701,7 @@ class _AdminDiveStarAssessmentScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.trialV2
-              ? l10n.adminDiveStarTrialTitle
-              : l10n.adminDiveStarAssessmentTitle,
-        ),
+        title: Text(l10n.adminDiveStarAssessmentTitle),
         actions: [
           IconButton(
             tooltip: l10n.adminDiveStarFormImportMenu,
@@ -700,9 +724,7 @@ class _AdminDiveStarAssessmentScreenState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '$_loadError'.contains('no_v2_draft')
-                              ? l10n.adminDiveStarTrialNoDraft
-                              : '$_loadError',
+                          '$_loadError',
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
@@ -724,13 +746,11 @@ class _AdminDiveStarAssessmentScreenState
                     ),
                     const SizedBox(height: 8),
                     Material(
-                      color: widget.trialV2
-                          ? const Color(0xFFFFF3E0)
-                          : _readOnly
-                              ? const Color(0xFFE8F5E9)
-                              : _mode == _EditorMode.editingDraft
-                                  ? const Color(0xFFFFF8E1)
-                                  : const Color(0xFFE3F2FD),
+                      color: _readOnly
+                          ? const Color(0xFFE8F5E9)
+                          : _mode == _EditorMode.editingDraft
+                              ? const Color(0xFFFFF8E1)
+                              : const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -745,9 +765,7 @@ class _AdminDiveStarAssessmentScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.trialV2
-                          ? l10n.adminDiveStarTrialHint
-                          : l10n.adminDiveStarAssessmentHint,
+                      l10n.adminDiveStarAssessmentHint,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AdminConsoleTheme.muted,
                           ),
@@ -764,28 +782,20 @@ class _AdminDiveStarAssessmentScreenState
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        if (!widget.trialV2)
-                          OutlinedButton(
-                            onPressed: _resetBlankForm,
-                            child: Text(l10n.adminDiveStarStartNew),
-                          ),
-                        if (widget.trialV2)
-                          FilledButton.tonal(
-                            onPressed: _fillMaxScores,
-                            child: Text(l10n.adminDiveStarFillMaxScores),
-                          ),
-                        if (!widget.trialV2 &&
-                            _mode == _EditorMode.confirmedReadonly &&
+                        OutlinedButton(
+                          onPressed: _startNew,
+                          child: Text(l10n.adminDiveStarStartNew),
+                        ),
+                        if (_mode == _EditorMode.confirmedReadonly &&
                             _loadedRecord != null)
                           FilledButton.tonal(
-                            onPressed: () => _fillFromAssessment(
+                            onPressed: () => _openHistoryAssessment(
                               _loadedRecord!,
                               asCopy: true,
                             ),
                             child: Text(l10n.adminDiveStarCopyAsNew),
                           ),
-                        if (!widget.trialV2 &&
-                            _mode == _EditorMode.editingDraft)
+                        if (_mode == _EditorMode.editingDraft)
                           OutlinedButton(
                             onPressed: _deleting ? null : _deleteDraft,
                             child: Text(l10n.adminDiveStarDeleteDraft),
@@ -799,7 +809,7 @@ class _AdminDiveStarAssessmentScreenState
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<DiveStarAssessmentType>(
-                      key: ValueKey('type-$_type-$_editingId-${widget.trialV2}'),
+                      key: ValueKey('type-$_type-$_editingId'),
                       initialValue: _type,
                       decoration: InputDecoration(
                         labelText: l10n.adminDiveStarAssessmentType,
@@ -951,7 +961,8 @@ class _AdminDiveStarAssessmentScreenState
                         if (editable)
                           Align(
                             alignment: Alignment.centerLeft,
-                            child: TextButton(
+                            child: IconButton(
+                              icon: const Icon(Icons.delete_outline),
                               onPressed: () {
                                 setState(() {
                                   _countryGates[i].dispose();
@@ -959,7 +970,6 @@ class _AdminDiveStarAssessmentScreenState
                                   _recomputePreview();
                                 });
                               },
-                              child: Text(l10n.adminHqClose),
                             ),
                           ),
                       ],
@@ -1000,8 +1010,9 @@ class _AdminDiveStarAssessmentScreenState
                           decoration: InputDecoration(
                             labelText: '${area.title} (0–${area.maxPoints})',
                           ),
-                          onChanged:
-                              editable ? (_) => setState(_recomputePreview) : null,
+                          onChanged: editable
+                              ? (_) => setState(_recomputePreview)
+                              : null,
                         ),
                         const SizedBox(height: 4),
                         TextField(
@@ -1016,16 +1027,7 @@ class _AdminDiveStarAssessmentScreenState
                     ],
                     const SizedBox(height: 16),
                     if (_preview != null) _buildPreviewCard(context, l10n, form),
-                    if (widget.trialV2) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.adminDiveStarTrialSaveLocked,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AdminConsoleTheme.muted,
-                            ),
-                      ),
-                    ],
-                    if (_canPersist && !_v2Ui) ...[
+                    if (_canPersist) ...[
                       const SizedBox(height: 8),
                       FilledButton(
                         onPressed: _saving ? null : _save,
@@ -1040,8 +1042,7 @@ class _AdminDiveStarAssessmentScreenState
                             : Text(l10n.adminDiveStarAssessmentSave),
                       ),
                     ],
-                    if (!widget.trialV2 &&
-                        _loadedRecord != null &&
+                    if (_loadedRecord != null &&
                         !_loadedRecord!.confirmed &&
                         _editingId == _loadedRecord!.id) ...[
                       const SizedBox(height: 8),
@@ -1051,9 +1052,7 @@ class _AdminDiveStarAssessmentScreenState
                         child: Text(l10n.adminDiveStarConfirmAction),
                       ),
                     ],
-                    if (!widget.trialV2 &&
-                        _loadedRecord != null &&
-                        _loadedRecord!.confirmed) ...[
+                    if (_loadedRecord != null && _loadedRecord!.confirmed) ...[
                       const SizedBox(height: 8),
                       Text(
                         l10n.adminDiveStarAlreadyConfirmed,
@@ -1062,55 +1061,55 @@ class _AdminDiveStarAssessmentScreenState
                             ),
                       ),
                     ],
-                    if (!widget.trialV2) ...[
-                      const SizedBox(height: 24),
-                      Text(
-                        l10n.adminDiveStarHistorySection,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      if (_history.isEmpty)
-                        Text(l10n.adminDiveStarHistoryEmpty)
-                      else
-                        for (final item in _history)
-                          Card(
-                            color: item.id == _editingId
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .primaryContainer
-                                    .withValues(alpha: 0.35)
-                                : null,
-                            child: ListTile(
-                              title: Text(
-                                l10n.adminDiveStarHistoryLine(
-                                  dateFmt.format(item.reviewedAt.toLocal()),
-                                  item.totalScore,
-                                  item.candidateGrade,
-                                ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.adminDiveStarHistorySection,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    if (_history.isEmpty)
+                      Text(l10n.adminDiveStarHistoryEmpty)
+                    else
+                      for (final item in _history)
+                        Card(
+                          color: item.id == _editingId
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer
+                                  .withValues(alpha: 0.35)
+                              : null,
+                          child: ListTile(
+                            title: Text(
+                              l10n.adminDiveStarHistoryLine(
+                                dateFmt.format(item.reviewedAt.toLocal()),
+                                item.totalScore,
+                                item.candidateGrade,
                               ),
-                              subtitle: Text(
-                                [
-                                  _typeLabel(l10n, item.type),
-                                  item.confirmed
-                                      ? l10n.adminDiveStarStatusConfirmed
-                                      : l10n.adminDiveStarStatusDraft,
-                                  DiveStarForm.versionLabel(item.formVersion),
-                                ].join(' · '),
-                              ),
-                              trailing: item.confirmed
-                                  ? const Icon(Icons.lock_outline)
-                                  : IconButton(
-                                      tooltip: l10n.adminDiveStarConfirmAction,
-                                      icon: const Icon(Icons.verified_outlined),
-                                      onPressed: _confirming
-                                          ? null
-                                          : () => _confirm(item),
-                                    ),
-                              onTap: () =>
-                                  _fillFromAssessment(item, asCopy: false),
+                            ),
+                            subtitle: Text(
+                              [
+                                _typeLabel(l10n, item.type),
+                                item.confirmed
+                                    ? l10n.adminDiveStarStatusConfirmed
+                                    : l10n.adminDiveStarStatusDraft,
+                                DiveStarForm.versionLabel(item.formVersion),
+                              ].join(' · '),
+                            ),
+                            trailing: item.confirmed
+                                ? const Icon(Icons.lock_outline)
+                                : IconButton(
+                                    tooltip: l10n.adminDiveStarConfirmAction,
+                                    icon: const Icon(Icons.verified_outlined),
+                                    onPressed: _confirming
+                                        ? null
+                                        : () => _confirm(item),
+                                  ),
+                            onTap: () => _openHistoryAssessment(
+                              item,
+                              asCopy: false,
                             ),
                           ),
-                    ],
+                        ),
                   ],
                 ),
     );

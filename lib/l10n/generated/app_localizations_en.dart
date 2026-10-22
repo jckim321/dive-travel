@@ -2000,7 +2000,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminDiveStarFormImportHint =>
-      'Paste form JSON to save as a draft (inactive). Activation is locked until the audit screen supports v2.';
+      'Paste form JSON to save as a draft (inactive). Use Activate when ready to switch the live form.';
 
   @override
   String get adminDiveStarFormImportPasteLabel => 'Form JSON';
@@ -2068,6 +2068,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminDiveStarFormActivateLockedHint =>
       'Available after phase 3. Active form stays v1 for now.';
+
+  @override
+  String adminDiveStarFormActivated(String version) {
+    return '$version is now the active form.';
+  }
+
+  @override
+  String adminDiveStarFormMissingForHistory(String version) {
+    return 'Form $version for this record was not found; opening with the active form.';
+  }
 
   @override
   String get adminDocsTitle => 'Documents';

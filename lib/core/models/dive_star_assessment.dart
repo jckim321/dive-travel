@@ -597,6 +597,35 @@ abstract final class DiveStarScoring {
   }
 }
 
+/// One country-specific gate answer on a saved assessment.
+class DiveStarCountryGateAnswer {
+  const DiveStarCountryGateAnswer({
+    required this.title,
+    this.criteria = '',
+    this.passed = false,
+  });
+
+  factory DiveStarCountryGateAnswer.fromMap(Map<String, dynamic> data) {
+    return DiveStarCountryGateAnswer(
+      title: _readString(data['title']).isNotEmpty
+          ? _readString(data['title'])
+          : _readString(data['name']),
+      criteria: _readString(data['criteria']),
+      passed: data['passed'] == true || data['result'] == true,
+    );
+  }
+
+  final String title;
+  final String criteria;
+  final bool passed;
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        if (criteria.isNotEmpty) 'criteria': criteria,
+        'passed': passed,
+      };
+}
+
 /// One saved audit for a shop (`shops/{id}/dive_star_assessments/{id}`).
 class DiveStarAssessment {
   const DiveStarAssessment({
@@ -611,6 +640,12 @@ class DiveStarAssessment {
     required this.totalScore,
     required this.candidateGrade,
     required this.gatesPassed,
+    this.itemScores = const {},
+    this.itemComments = const {},
+    this.areaNa = const {},
+    this.countryGates = const [],
+    this.mysteryVisits = 0,
+    this.auditors = const [],
     this.confirmed = false,
     this.confirmedAt,
   });
@@ -620,16 +655,35 @@ class DiveStarAssessment {
     String shopId,
     Map<String, dynamic> data,
   ) {
+    final countryRaw =
+        data['country_gates'] is List ? data['country_gates'] as List : const [];
+    final auditorsRaw =
+        data['auditors'] is List ? data['auditors'] as List : const [];
     return DiveStarAssessment(
       id: id,
       shopId: shopId,
       formVersion: (data['form_version'] as String? ?? '').trim(),
-      type: DiveStarAssessmentType.parse(data['type']),
+      type: DiveStarAssessmentType.parse(
+        data['assessment_type'] ?? data['type'],
+      ),
       reviewedAt:
           DiveStar.parseDate(data['reviewed_at']) ?? DateTime.now().toUtc(),
       gates: _boolMap(data['gates']),
       scores: _intMap(data['scores']),
       comments: _stringMap(data['comments']),
+      itemScores: _intMap(data['item_scores']),
+      itemComments: _stringMap(data['item_comments']),
+      areaNa: _boolMap(data['area_na']),
+      countryGates: [
+        for (final item in countryRaw)
+          if (item is Map)
+            DiveStarCountryGateAnswer.fromMap(Map<String, dynamic>.from(item)),
+      ],
+      mysteryVisits: (data['mystery_visits'] as num?)?.toInt() ?? 0,
+      auditors: [
+        for (final item in auditorsRaw)
+          if (item is String && item.trim().isNotEmpty) item.trim(),
+      ],
       totalScore: (data['total_score'] as num?)?.toInt() ?? 0,
       candidateGrade: DiveStar.clampGrade(
         (data['candidate_grade'] as num?)?.toInt() ?? 0,
@@ -648,19 +702,35 @@ class DiveStarAssessment {
   final Map<String, bool> gates;
   final Map<String, int> scores;
   final Map<String, String> comments;
+  final Map<String, int> itemScores;
+  final Map<String, String> itemComments;
+  final Map<String, bool> areaNa;
+  final List<DiveStarCountryGateAnswer> countryGates;
+  final int mysteryVisits;
+  final List<String> auditors;
   final int totalScore;
   final int candidateGrade;
   final bool gatesPassed;
   final bool confirmed;
   final DateTime? confirmedAt;
 
+  bool get usesItemScores => itemScores.isNotEmpty;
+
   Map<String, dynamic> toMap() => {
         'form_version': formVersion,
         'type': type.firestoreValue,
+        'assessment_type': type.firestoreValue,
         'reviewed_at': reviewedAt.toUtc().toIso8601String(),
         'gates': gates,
         'scores': scores,
         'comments': comments,
+        if (itemScores.isNotEmpty) 'item_scores': itemScores,
+        if (itemComments.isNotEmpty) 'item_comments': itemComments,
+        if (areaNa.isNotEmpty) 'area_na': areaNa,
+        if (countryGates.isNotEmpty)
+          'country_gates': [for (final g in countryGates) g.toMap()],
+        'mystery_visits': mysteryVisits,
+        if (auditors.isNotEmpty) 'auditors': auditors,
         'total_score': totalScore,
         'candidate_grade': candidateGrade,
         'gates_passed': gatesPassed,
@@ -682,6 +752,12 @@ class DiveStarAssessment {
       gates: gates,
       scores: scores,
       comments: comments,
+      itemScores: itemScores,
+      itemComments: itemComments,
+      areaNa: areaNa,
+      countryGates: countryGates,
+      mysteryVisits: mysteryVisits,
+      auditors: auditors,
       totalScore: totalScore,
       candidateGrade: candidateGrade,
       gatesPassed: gatesPassed,

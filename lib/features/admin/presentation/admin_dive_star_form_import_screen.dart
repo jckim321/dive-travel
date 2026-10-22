@@ -89,6 +89,31 @@ class _AdminDiveStarFormImportScreenState
     return l10n.adminDiveStarFormImportInvalid(code);
   }
 
+  Future<void> _activate(DiveStarForm form) async {
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    if (form.active) {
+      return;
+    }
+    try {
+      final activated = await store.activateDiveStarForm(form.version);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusMessage = l10n.adminDiveStarFormActivated(
+          DiveStarForm.versionLabel(activated.version),
+        );
+      });
+      await _reload();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _statusMessage = '$error');
+    }
+  }
+
   Future<void> _import() async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
@@ -215,22 +240,17 @@ class _AdminDiveStarFormImportScreenState
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.only(left: 8, bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FilledButton.tonal(
-                      onPressed: null,
-                      child: Text(l10n.adminDiveStarFormActivate),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.adminDiveStarFormActivateLockedHint,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AdminConsoleTheme.muted,
-                          ),
-                    ),
-                  ],
-                ),
+                child: form.active
+                    ? Text(
+                        l10n.adminDiveStarFormStatusActive,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AdminConsoleTheme.muted,
+                            ),
+                      )
+                    : FilledButton.tonal(
+                        onPressed: () => _activate(form),
+                        child: Text(l10n.adminDiveStarFormActivate),
+                      ),
               ),
             ],
         ],

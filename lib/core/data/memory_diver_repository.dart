@@ -1013,10 +1013,18 @@ class MemoryDiverRepository implements DiverRepository {
   Future<DiveStarForm> ensureActiveDiveStarForm() async {
     for (final form in _formsByVersion.values) {
       if (form.active) {
+        _diveStarForm = form;
         return form;
       }
     }
-    return _diveStarForm ??= DiveStarForm.v1();
+    if (_diveStarForm != null && _diveStarForm!.active) {
+      _formsByVersion.putIfAbsent(_diveStarForm!.version, () => _diveStarForm!);
+      return _diveStarForm!;
+    }
+    final seed = DiveStarForm.v1();
+    _diveStarForm = seed;
+    _formsByVersion.putIfAbsent(seed.version, () => seed);
+    return seed;
   }
 
   @override
@@ -1065,6 +1073,41 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<DiveStarForm> activateDiveStarForm(String version) async {
+    final id = version.trim();
+    if (id.isEmpty) {
+      throw StateError('Form version is required');
+    }
+    if (_diveStarForm != null) {
+      _formsByVersion.putIfAbsent(
+        _diveStarForm!.version,
+        () => _diveStarForm!,
+      );
+    }
+    final existing = _formsByVersion[id];
+    if (existing == null) {
+      throw StateError('Form not found: $id');
+    }
+    for (final entry in _formsByVersion.entries.toList()) {
+      _formsByVersion[entry.key] = DiveStarForm(
+        version: entry.value.version,
+        active: entry.key == id,
+        status: entry.key == id
+            ? DiveStarFormStatus.active
+            : DiveStarFormStatus.draft,
+        rules: entry.value.rules,
+        gates: entry.value.gates,
+        areas: entry.value.areas,
+        items: entry.value.items,
+        thresholds: entry.value.thresholds,
+      );
+    }
+    final activated = _formsByVersion[id]!;
+    _diveStarForm = activated;
+    return activated;
+  }
+
+  @override
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId) async {
     final list = List<DiveStarAssessment>.from(_assessments[shopId] ?? const []);
     list.sort((a, b) => b.reviewedAt.compareTo(a.reviewedAt));
@@ -1075,25 +1118,75 @@ class MemoryDiverRepository implements DiverRepository {
   Future<DiveStarAssessment> saveDiveStarAssessment({
     required String shopId,
     String? assessmentId,
+    String? formVersion,
     required DiveStarAssessmentType type,
     required DateTime reviewedAt,
     required Map<String, bool> gates,
     required Map<String, int> scores,
     required Map<String, String> comments,
+    Map<String, int> itemScores = const {},
+    Map<String, String> itemComments = const {},
+    Map<String, bool> areaNa = const {},
+    List<DiveStarCountryGateAnswer> countryGates = const [],
+    int mysteryVisits = 0,
+    List<String> auditors = const [],
   }) async {
-    final form = await ensureActiveDiveStarForm();
+    DiveStarForm form;
+    final version = formVersion?.trim() ?? '';
+    if (version.isNotEmpty) {
+      final found = await getDiveStarForm(version);
+      if (found == null) {
+        throw StateError('Form not found: $version');
+      }
+      form = found;
+    } else {
+      form = await ensureActiveDiveStarForm();
+    }
     final clampedScores = {
       for (final area in form.areas)
         area.id: (scores[area.id] ?? 0).clamp(0, area.maxPoints),
     };
+    final clampedItems = {
+      for (final item in form.items)
+        item.id: (itemScores[item.id] ?? 0).clamp(0, item.maxPoints),
+    };
     final gateMap = {
       for (final gate in form.gates) gate.id: gates[gate.id] == true,
     };
+    final cleanedCountry = [
+      for (final gate in countryGates)
+        if (gate.title.trim().isNotEmpty)
+          DiveStarCountryGateAnswer(
+            title: gate.title.trim(),
+            criteria: gate.criteria.trim(),
+            passed: gate.passed,
+          ),
+    ];
+    final cleanedNa = {
+      for (final area in form.areas)
+        if (areaNa[area.id] == true &&
+            area.id != form.rules.requiredAreaId &&
+            area.id != form.thresholds.safetyAreaId)
+          area.id: true,
+    };
+    final visits = mysteryVisits.clamp(0, 20);
+    final cleanedAuditors = [
+      for (final name in auditors)
+        if (name.trim().isNotEmpty) name.trim(),
+    ].take(2).toList();
     final result = DiveStarScoring.evaluate(
       form: form,
       gates: gateMap,
       scores: clampedScores,
+      itemScores: clampedItems,
+      areaNotApplicable: cleanedNa,
+      countryGatesPassed: [for (final g in cleanedCountry) g.passed],
+      mysteryVisits: visits,
     );
+    final areaScoresForStore = {
+      for (final area in form.areas)
+        area.id: result.areaScores[area.id] ?? clampedScores[area.id] ?? 0,
+    };
     final list = _assessments.putIfAbsent(shopId, () => []);
     final updating = assessmentId != null && assessmentId.isNotEmpty;
     if (updating) {
@@ -1113,11 +1206,20 @@ class MemoryDiverRepository implements DiverRepository {
       type: type,
       reviewedAt: reviewedAt.toUtc(),
       gates: gateMap,
-      scores: clampedScores,
+      scores: areaScoresForStore,
       comments: {
         for (final entry in comments.entries)
           if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
       },
+      itemScores: clampedItems,
+      itemComments: {
+        for (final entry in itemComments.entries)
+          if (entry.value.trim().isNotEmpty) entry.key: entry.value.trim(),
+      },
+      areaNa: cleanedNa,
+      countryGates: cleanedCountry,
+      mysteryVisits: visits,
+      auditors: cleanedAuditors,
       totalScore: result.totalScore,
       candidateGrade: result.candidateGrade,
       gatesPassed: result.gatesPassed,

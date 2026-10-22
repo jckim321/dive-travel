@@ -249,18 +249,6 @@ class _ShopMonitorTile extends StatelessWidget {
                   ),
                 ),
               );
-              return;
-            }
-            if (value == 'dive_star_assess_v2_trial') {
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => AdminDiveStarAssessmentScreen(
-                    shopId: shop.hullId,
-                    shopName: shop.name,
-                    trialV2: true,
-                  ),
-                ),
-              );
             }
           },
           itemBuilder: (context) => [
@@ -271,10 +259,6 @@ class _ShopMonitorTile extends StatelessWidget {
             PopupMenuItem(
               value: 'dive_star_assess',
               child: Text(l10n.adminDiveStarAssessmentMenu),
-            ),
-            PopupMenuItem(
-              value: 'dive_star_assess_v2_trial',
-              child: Text(l10n.adminDiveStarTrialMenu),
             ),
             PopupMenuItem(
               value: 'dive_star',

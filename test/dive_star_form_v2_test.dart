@@ -355,6 +355,141 @@ void main() {
     expect(v1Onsite.type, DiveStarAssessmentType.onsite);
   });
 
+  test('v2 assessment save round-trips item scores, N/A, country gates', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final draft = await repo.importDiveStarFormDraft(_miniV2(mysteryMin: 0));
+    await repo.activateDiveStarForm(draft.version);
+
+    final saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-v2',
+      type: DiveStarAssessmentType.document,
+      reviewedAt: DateTime.utc(2026, 6, 1),
+      gates: {'G1': true},
+      scores: const {},
+      comments: const {},
+      itemScores: {'S1': 45, 'D1': 40},
+      itemComments: {'S1': 'ok'},
+      areaNa: const {},
+      countryGates: const [
+        DiveStarCountryGateAnswer(
+          title: 'Local permit',
+          criteria: 'valid',
+          passed: true,
+        ),
+      ],
+      mysteryVisits: 2,
+      auditors: const ['Alice', 'Bob'],
+    );
+    expect(saved.formVersion, 'v2');
+    expect(saved.type, DiveStarAssessmentType.document);
+    expect(saved.itemScores['S1'], 45);
+    expect(saved.itemScores['D1'], 40);
+    expect(saved.itemComments['S1'], 'ok');
+    expect(saved.countryGates, hasLength(1));
+    expect(saved.countryGates.single.title, 'Local permit');
+    expect(saved.mysteryVisits, 2);
+    expect(saved.auditors, ['Alice', 'Bob']);
+    expect(saved.totalScore, 85);
+    expect(saved.candidateGrade, 2);
+    expect(saved.confirmed, isFalse);
+
+    final listed = await repo.listDiveStarAssessments('shop-v2');
+    expect(listed.single.itemScores['S1'], 45);
+
+    await expectLater(
+      () => repo.saveDiveStarAssessment(
+        shopId: 'shop-v2',
+        assessmentId: saved.id,
+        type: DiveStarAssessmentType.document,
+        reviewedAt: DateTime.utc(2026, 6, 2),
+        gates: {'G1': true},
+        scores: const {},
+        comments: const {},
+        itemScores: {'S1': 50, 'D1': 50},
+      ),
+      returnsNormally,
+    );
+
+    final confirmed = await repo.confirmDiveStarAssessment(
+      shopId: 'shop-v2',
+      assessmentId: saved.id,
+    );
+    expect(confirmed.confirmed, isTrue);
+    await expectLater(
+      () => repo.saveDiveStarAssessment(
+        shopId: 'shop-v2',
+        assessmentId: saved.id,
+        type: DiveStarAssessmentType.document,
+        reviewedAt: DateTime.utc(2026, 6, 3),
+        gates: {'G1': true},
+        scores: const {},
+        comments: const {},
+        itemScores: {'S1': 50, 'D1': 50},
+      ),
+      throwsA(isA<StateError>()),
+    );
+    await expectLater(
+      () => repo.deleteDiveStarAssessment(
+        shopId: 'shop-v2',
+        assessmentId: saved.id,
+      ),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('activateDiveStarForm makes one active and others draft', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.ensureActiveDiveStarForm();
+    final draft = await repo.importDiveStarFormDraft(_miniV2());
+    expect(draft.active, isFalse);
+
+    final activated = await repo.activateDiveStarForm('v2');
+    expect(activated.active, isTrue);
+    expect(activated.status, DiveStarFormStatus.active);
+
+    final active = await repo.ensureActiveDiveStarForm();
+    expect(active.version, 'v2');
+
+    final forms = await repo.listDiveStarForms();
+    final v1 = forms.firstWhere((f) => f.version == 'v1');
+    expect(v1.active, isFalse);
+  });
+
+  test('history form_version loads matching form definition', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final v1 = await repo.ensureActiveDiveStarForm();
+    expect(v1.version, 'v1');
+    final v1Saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-hist',
+      type: DiveStarAssessmentType.onsite,
+      reviewedAt: DateTime.utc(2026, 1, 1),
+      gates: {for (final g in v1.gates) g.id: true},
+      scores: {for (final a in v1.areas) a.id: a.maxPoints},
+      comments: const {},
+    );
+    expect(v1Saved.formVersion, 'v1');
+
+    final draft = await repo.importDiveStarFormDraft(_miniV2(mysteryMin: 0));
+    await repo.activateDiveStarForm(draft.version);
+    final v2Saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-hist',
+      formVersion: 'v2',
+      type: DiveStarAssessmentType.mystery,
+      reviewedAt: DateTime.utc(2026, 2, 1),
+      gates: {'G1': true},
+      scores: const {},
+      comments: const {},
+      itemScores: {'S1': 50, 'D1': 50},
+      mysteryVisits: 0,
+    );
+    expect(v2Saved.formVersion, 'v2');
+
+    final loadedV1 = await repo.getDiveStarForm(v1Saved.formVersion);
+    final loadedV2 = await repo.getDiveStarForm(v2Saved.formVersion);
+    expect(loadedV1?.items, isEmpty);
+    expect(loadedV2?.items, isNotEmpty);
+  });
+
   test('null string fields on gates and status do not throw', () {
     final form = DiveStarForm.fromDocument('v1', {
       'version': null,
