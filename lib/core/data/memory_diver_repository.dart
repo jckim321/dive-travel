@@ -400,8 +400,12 @@ class MemoryDiverRepository implements DiverRepository {
     _diverController.add(_snapshot);
   }
 
+  /// Test counter for shop-stats get calls (cache TTL).
+  int fetchShopStatsCalls = 0;
+
   @override
   Future<List<ShopLiveStats>> fetchShopStats() async {
+    fetchShopStatsCalls += 1;
     return _shopStats.values.toList();
   }
 

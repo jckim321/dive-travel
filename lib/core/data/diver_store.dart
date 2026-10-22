@@ -32,6 +32,9 @@ import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
 class DiverStore extends ChangeNotifier {
+  /// Explore/홈 auto-refresh window for shop stats cache.
+  static const shopStatsCacheTtl = Duration(minutes: 5);
+
   DiverStore(this._repository) {
     _gear = List<GearItem>.from(_defaultGear);
     _authSubscription = _repository.authState().listen((user) {
@@ -61,6 +64,10 @@ class DiverStore extends ChangeNotifier {
   String? _uid;
   var _shopStatsLoaded = false;
   var _shopStatsLoading = false;
+  DateTime? _shopStatsFetchedAt;
+  List<GuestReview> _myReviews = const [];
+  var _myReviewsLoaded = false;
+  var _myReviewsLoading = false;
   var _postsLoaded = false;
   var _postsLoading = false;
   var _postsHasMore = false;
@@ -135,6 +142,9 @@ class DiverStore extends ChangeNotifier {
   bool get postsHasMore => _postsHasMore;
   bool get logsHasMore => _logsHasMore;
   bool get shopStatsLoaded => _shopStatsLoaded;
+  DateTime? get shopStatsFetchedAt => _shopStatsFetchedAt;
+  List<GuestReview> get myReviews => List.unmodifiable(_myReviews);
+  bool get myReviewsLoaded => _myReviewsLoaded;
   List<CommunityPost> get visiblePosts => [
     for (final post in _posts)
       if (!post.hidden) post,
@@ -808,15 +818,42 @@ class DiverStore extends ChangeNotifier {
       details: details,
     );
     await refreshShopStat(shopId);
+    await refreshMyReviews();
     return outcome;
   }
 
-  Future<List<GuestReview>> listMyReviews() {
+  Future<List<GuestReview>> listMyReviews() async {
+    await refreshMyReviews();
+    return myReviews;
+  }
+
+  Future<void> ensureMyReviewsLoaded() async {
+    if (_myReviewsLoaded || _myReviewsLoading) {
+      return;
+    }
+    await refreshMyReviews();
+  }
+
+  Future<void> refreshMyReviews() async {
     final uid = _uid;
     if (uid == null) {
-      return Future.value(const []);
+      _myReviews = const [];
+      _myReviewsLoaded = false;
+      notifyListeners();
+      return;
     }
-    return _repository.listMyReviews(uid);
+    _myReviewsLoading = true;
+    try {
+      _myReviews = await _repository.listMyReviews(uid);
+      _myReviewsLoaded = true;
+      notifyListeners();
+    } catch (error, stackTrace) {
+      debugPrint('내 후기 로드 실패: $error');
+      debugPrint('$stackTrace');
+      rethrow;
+    } finally {
+      _myReviewsLoading = false;
+    }
   }
 
   Future<void> updateOperationReview({
@@ -843,6 +880,7 @@ class DiverStore extends ChangeNotifier {
       details: details,
     );
     await refreshShopStat(shopId);
+    await refreshMyReviews();
   }
 
   Future<void> deleteOperationReview({
@@ -859,6 +897,7 @@ class DiverStore extends ChangeNotifier {
       reviewId: reviewId,
     );
     await refreshShopStat(shopId);
+    await refreshMyReviews();
   }
 
   Future<GuestReviewsPage> fetchShopReviewsPage({
@@ -1699,10 +1738,23 @@ class DiverStore extends ChangeNotifier {
   }
 
   Future<void> ensureShopStatsLoaded() async {
-    if (_shopStatsLoaded || _shopStatsLoading) {
+    if (_shopStatsLoading) {
+      return;
+    }
+    final fetchedAt = _shopStatsFetchedAt;
+    if (_shopStatsLoaded &&
+        fetchedAt != null &&
+        DateTime.now().difference(fetchedAt) < shopStatsCacheTtl) {
       return;
     }
     await refreshShopStats();
+  }
+
+  /// Test helper: pretend the last shop-stats fetch happened [ago] ago.
+  @visibleForTesting
+  void debugBackdateShopStatsFetch(Duration ago) {
+    _shopStatsFetchedAt = DateTime.now().subtract(ago);
+    _shopStatsLoaded = true;
   }
 
   Future<void> refreshShopStats() async {
@@ -1714,6 +1766,7 @@ class DiverStore extends ChangeNotifier {
       final stats = await _repository.fetchShopStats();
       _shopStats = stats;
       _shopStatsLoaded = true;
+      _shopStatsFetchedAt = DateTime.now();
       notifyListeners();
       unawaited(_hydrateShopCovers(stats));
     } catch (error, stackTrace) {
@@ -1949,6 +2002,9 @@ class DiverStore extends ChangeNotifier {
       _salesByShop.clear();
       _salesBookings = const [];
       _shopStatsLoaded = false;
+      _shopStatsFetchedAt = null;
+      _myReviews = const [];
+      _myReviewsLoaded = false;
       _postsLoaded = false;
       _postsHasMore = false;
       _postsCursor = null;

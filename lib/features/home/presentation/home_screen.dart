@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -11,8 +13,24 @@ import 'package:dive_travel_app/features/home/presentation/for_you_section.dart'
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureShopStatsLoaded());
+    });
+  }
 
   void _openShop(BuildContext context, DiveShop shop) {
     openResortDetail(context, shop.hullId);
