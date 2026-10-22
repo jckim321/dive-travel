@@ -926,6 +926,16 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  Future<void> deleteDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+  }) {
+    return _repository.deleteDiveStarAssessment(
+      shopId: shopId,
+      assessmentId: assessmentId,
+    );
+  }
+
   Future<void> setPostHidden({required String postId, required bool hidden}) {
     return _repository.setPostHidden(postId: postId, hidden: hidden);
   }

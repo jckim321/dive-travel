@@ -1034,9 +1034,17 @@ class MemoryDiverRepository implements DiverRepository {
       scores: clampedScores,
     );
     final list = _assessments.putIfAbsent(shopId, () => []);
-    final id = (assessmentId != null && assessmentId.isNotEmpty)
-        ? assessmentId
-        : 'assess-${++_assessmentSequence}';
+    final updating = assessmentId != null && assessmentId.isNotEmpty;
+    if (updating) {
+      final existingIndex = list.indexWhere((item) => item.id == assessmentId);
+      if (existingIndex < 0) {
+        throw StateError('Assessment not found: $assessmentId');
+      }
+      if (list[existingIndex].confirmed) {
+        throw StateError('Confirmed assessments cannot be edited');
+      }
+    }
+    final id = updating ? assessmentId! : 'assess-${++_assessmentSequence}';
     final assessment = DiveStarAssessment(
       id: id,
       shopId: shopId,
@@ -1077,6 +1085,9 @@ class MemoryDiverRepository implements DiverRepository {
       throw StateError('Assessment not found: $assessmentId');
     }
     final assessment = list[index];
+    if (assessment.confirmed) {
+      throw StateError('Assessment already confirmed');
+    }
     final expires = expiresAt ??
         assessment.reviewedAt.toUtc().add(const Duration(days: 365));
     await setDiveStarGrade(
@@ -1091,6 +1102,25 @@ class MemoryDiverRepository implements DiverRepository {
     );
     list[index] = confirmed;
     return confirmed;
+  }
+
+  @override
+  Future<void> deleteDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+  }) async {
+    final list = _assessments[shopId];
+    if (list == null) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    final index = list.indexWhere((item) => item.id == assessmentId);
+    if (index < 0) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    if (list[index].confirmed) {
+      throw StateError('Confirmed assessments cannot be deleted');
+    }
+    list.removeAt(index);
   }
 
   @override

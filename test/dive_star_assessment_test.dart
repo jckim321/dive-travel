@@ -157,4 +157,113 @@ void main() {
     expect(stats.diveStarReviewedAt, DateTime.utc(2026, 3, 1));
     expect(stats.diveStarExpiresAt, DateTime.utc(2027, 3, 1));
   });
+
+  test('미확정 기록은 같은 id로 덮어쓰고 점수를 다시 계산한다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final first = await repo.saveDiveStarAssessment(
+      shopId: 'shop-b',
+      type: DiveStarAssessmentType.onsite,
+      reviewedAt: DateTime.utc(2026, 4, 1),
+      gates: allGatesPass(),
+      scores: {
+        'safety': 25,
+        'service': 20,
+        'equipment': 15,
+        'hospitality': 10,
+        'environment': 0,
+        'experience': 0,
+        'reviews': 0,
+      },
+      comments: const {'safety': '초안'},
+    );
+    expect(first.totalScore, 70);
+    expect(first.candidateGrade, 1);
+
+    final updated = await repo.saveDiveStarAssessment(
+      shopId: 'shop-b',
+      assessmentId: first.id,
+      type: DiveStarAssessmentType.mystery,
+      reviewedAt: DateTime.utc(2026, 4, 2),
+      gates: allGatesPass(),
+      scores: {
+        'safety': 25,
+        'service': 20,
+        'equipment': 15,
+        'hospitality': 15,
+        'environment': 10,
+        'experience': 10,
+        'reviews': 5,
+      },
+      comments: const {'safety': '수정'},
+    );
+    expect(updated.id, first.id);
+    expect(updated.type, DiveStarAssessmentType.mystery);
+    expect(updated.totalScore, 100);
+    expect(updated.candidateGrade, 3);
+    expect(updated.comments['safety'], '수정');
+    final list = await repo.listDiveStarAssessments('shop-b');
+    expect(list, hasLength(1));
+  });
+
+  test('확정된 기록은 저장·삭제할 수 없다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-c',
+      type: DiveStarAssessmentType.onsite,
+      reviewedAt: DateTime.utc(2026, 5, 1),
+      gates: allGatesPass(),
+      scores: {
+        'safety': 25,
+        'service': 20,
+        'equipment': 15,
+        'hospitality': 15,
+        'environment': 10,
+        'experience': 10,
+        'reviews': 5,
+      },
+      comments: const {},
+    );
+    await repo.confirmDiveStarAssessment(
+      shopId: 'shop-c',
+      assessmentId: saved.id,
+    );
+
+    expect(
+      () => repo.saveDiveStarAssessment(
+        shopId: 'shop-c',
+        assessmentId: saved.id,
+        type: DiveStarAssessmentType.onsite,
+        reviewedAt: DateTime.utc(2026, 5, 2),
+        gates: allGatesPass(),
+        scores: {for (final a in form.areas) a.id: 0},
+        comments: const {},
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(
+      () => repo.deleteDiveStarAssessment(
+        shopId: 'shop-c',
+        assessmentId: saved.id,
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(await repo.listDiveStarAssessments('shop-c'), hasLength(1));
+  });
+
+  test('미확정 기록은 삭제할 수 있다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-d',
+      type: DiveStarAssessmentType.onsite,
+      reviewedAt: DateTime.utc(2026, 6, 1),
+      gates: allGatesPass(),
+      scores: {for (final a in form.areas) a.id: 0},
+      comments: const {},
+    );
+    await repo.deleteDiveStarAssessment(
+      shopId: 'shop-d',
+      assessmentId: saved.id,
+    );
+    expect(await repo.listDiveStarAssessments('shop-d'), isEmpty);
+  });
 }

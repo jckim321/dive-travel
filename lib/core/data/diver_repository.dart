@@ -146,6 +146,7 @@ abstract class DiverRepository {
   Future<List<DiveStarAssessment>> listDiveStarAssessments(String shopId);
 
   /// Saves a draft assessment; does **not** change shop `dive_star_grade`.
+  /// When [assessmentId] is set, overwrites that draft. Confirmed records throw.
   Future<DiveStarAssessment> saveDiveStarAssessment({
     required String shopId,
     String? assessmentId,
@@ -161,6 +162,12 @@ abstract class DiverRepository {
     required String shopId,
     required String assessmentId,
     DateTime? expiresAt,
+  });
+
+  /// Deletes a draft assessment. Confirmed records throw.
+  Future<void> deleteDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
   });
 
   Future<void> setPostHidden({required String postId, required bool hidden});

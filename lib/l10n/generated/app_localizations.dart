@@ -3426,6 +3426,66 @@ abstract class AppLocalizations {
   /// **'미확정'**
   String get adminDiveStarStatusDraft;
 
+  /// No description provided for @adminDiveStarModeNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 심사'**
+  String get adminDiveStarModeNew;
+
+  /// No description provided for @adminDiveStarModeEditing.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정 중 · 미확정'**
+  String get adminDiveStarModeEditing;
+
+  /// No description provided for @adminDiveStarModeReadonly.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정됨 · 읽기 전용'**
+  String get adminDiveStarModeReadonly;
+
+  /// No description provided for @adminDiveStarStartNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 심사 시작'**
+  String get adminDiveStarStartNew;
+
+  /// No description provided for @adminDiveStarCopyAsNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기록을 복사해서 새 심사 만들기'**
+  String get adminDiveStarCopyAsNew;
+
+  /// No description provided for @adminDiveStarDeleteDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'미확정 심사 삭제'**
+  String get adminDiveStarDeleteDraft;
+
+  /// No description provided for @adminDiveStarDeleteConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사를 삭제할까요?'**
+  String get adminDiveStarDeleteConfirmTitle;
+
+  /// No description provided for @adminDiveStarDeleteConfirmBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 미확정 기록을 삭제합니다. 되돌릴 수 없습니다.'**
+  String get adminDiveStarDeleteConfirmBody;
+
+  /// No description provided for @adminDiveStarDeleted.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사를 삭제했습니다.'**
+  String get adminDiveStarDeleted;
+
+  /// No description provided for @adminDiveStarAssessmentUpdated.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사를 덮어써서 저장했습니다.'**
+  String get adminDiveStarAssessmentUpdated;
+
   /// No description provided for @adminViewShopProducts.
   ///
   /// In ko, this message translates to:

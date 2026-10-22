@@ -196,9 +196,12 @@ service cloud.firestore {
           (isSignedIn() && resource.data.uid == request.auth.uid);
       }
 
-      // Internal Dive Star audits — admin only (guests must not read scores).
+      // Internal Dive Star audits — admin only; confirmed records are locked.
       match /dive_star_assessments/{assessmentId} {
-        allow read, write: if isAdmin();
+        allow read: if isAdmin();
+        allow create: if isAdmin();
+        allow update: if isAdmin() && resource.data.confirmed != true;
+        allow delete: if isAdmin() && resource.data.confirmed != true;
       }
     }
 

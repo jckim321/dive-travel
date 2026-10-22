@@ -1840,6 +1840,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarStatusDraft => 'Draft';
 
   @override
+  String get adminDiveStarModeNew => 'New audit';
+
+  @override
+  String get adminDiveStarModeEditing => 'Editing · draft';
+
+  @override
+  String get adminDiveStarModeReadonly => 'Confirmed · read-only';
+
+  @override
+  String get adminDiveStarStartNew => 'Start new audit';
+
+  @override
+  String get adminDiveStarCopyAsNew => 'Copy this record into a new audit';
+
+  @override
+  String get adminDiveStarDeleteDraft => 'Delete draft';
+
+  @override
+  String get adminDiveStarDeleteConfirmTitle => 'Delete this audit?';
+
+  @override
+  String get adminDiveStarDeleteConfirmBody =>
+      'This draft will be deleted. This cannot be undone.';
+
+  @override
+  String get adminDiveStarDeleted => 'Audit deleted.';
+
+  @override
+  String get adminDiveStarAssessmentUpdated => 'Draft overwritten and saved.';
+
+  @override
   String get adminViewShopProducts => 'View products';
 
   @override

@@ -1311,9 +1311,19 @@ class FirestoreDiverRepository implements DiverRepository {
       gates: gateMap,
       scores: clampedScores,
     );
-    final ref = assessmentId == null || assessmentId.isEmpty
-        ? _diveStarAssessments(shopId).doc()
-        : _diveStarAssessments(shopId).doc(assessmentId);
+    final updating = assessmentId != null && assessmentId.isNotEmpty;
+    final ref = updating
+        ? _diveStarAssessments(shopId).doc(assessmentId)
+        : _diveStarAssessments(shopId).doc();
+    if (updating) {
+      final existing = await ref.get();
+      if (!existing.exists || existing.data() == null) {
+        throw StateError('Assessment not found: $assessmentId');
+      }
+      if (existing.data()!['confirmed'] == true) {
+        throw StateError('Confirmed assessments cannot be edited');
+      }
+    }
     final payload = <String, dynamic>{
       'form_version': form.version,
       'type': type.firestoreValue,
@@ -1330,7 +1340,7 @@ class FirestoreDiverRepository implements DiverRepository {
       'confirmed': false,
       'updated_at': FieldValue.serverTimestamp(),
     };
-    if (assessmentId == null || assessmentId.isEmpty) {
+    if (!updating) {
       payload['created_at'] = FieldValue.serverTimestamp();
     }
     await ref.set(payload, SetOptions(merge: true));
@@ -1355,6 +1365,9 @@ class FirestoreDiverRepository implements DiverRepository {
       throw StateError('Assessment not found: $assessmentId');
     }
     final assessment = DiveStarAssessment.fromDocument(assessmentId, shopId, data);
+    if (assessment.confirmed) {
+      throw StateError('Assessment already confirmed');
+    }
     final expires = expiresAt ??
         assessment.reviewedAt.toUtc().add(const Duration(days: 365));
     await setDiveStarGrade(
@@ -1370,6 +1383,23 @@ class FirestoreDiverRepository implements DiverRepository {
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     return assessment.copyWith(confirmed: true, confirmedAt: confirmedAt);
+  }
+
+  @override
+  Future<void> deleteDiveStarAssessment({
+    required String shopId,
+    required String assessmentId,
+  }) async {
+    final ref = _diveStarAssessments(shopId).doc(assessmentId);
+    final snap = await ref.get();
+    final data = snap.data();
+    if (!snap.exists || data == null) {
+      throw StateError('Assessment not found: $assessmentId');
+    }
+    if (data['confirmed'] == true) {
+      throw StateError('Confirmed assessments cannot be deleted');
+    }
+    await ref.delete();
   }
 
   @override

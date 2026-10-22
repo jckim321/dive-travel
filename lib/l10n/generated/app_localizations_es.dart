@@ -1816,6 +1816,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminDiveStarStatusDraft => '미확정';
 
   @override
+  String get adminDiveStarModeNew => '새 심사';
+
+  @override
+  String get adminDiveStarModeEditing => '수정 중 · 미확정';
+
+  @override
+  String get adminDiveStarModeReadonly => '확정됨 · 읽기 전용';
+
+  @override
+  String get adminDiveStarStartNew => '새 심사 시작';
+
+  @override
+  String get adminDiveStarCopyAsNew => '이 기록을 복사해서 새 심사 만들기';
+
+  @override
+  String get adminDiveStarDeleteDraft => '미확정 심사 삭제';
+
+  @override
+  String get adminDiveStarDeleteConfirmTitle => '심사를 삭제할까요?';
+
+  @override
+  String get adminDiveStarDeleteConfirmBody => '이 미확정 기록을 삭제합니다. 되돌릴 수 없습니다.';
+
+  @override
+  String get adminDiveStarDeleted => '심사를 삭제했습니다.';
+
+  @override
+  String get adminDiveStarAssessmentUpdated => '심사를 덮어써서 저장했습니다.';
+
+  @override
   String get adminViewShopProducts => '상품 보기';
 
   @override
