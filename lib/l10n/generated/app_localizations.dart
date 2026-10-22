@@ -3300,11 +3300,221 @@ abstract class AppLocalizations {
   /// **'미스터리 심사'**
   String get adminDiveStarTypeMystery;
 
+  /// No description provided for @adminDiveStarTypeDocument.
+  ///
+  /// In ko, this message translates to:
+  /// **'서류 심사'**
+  String get adminDiveStarTypeDocument;
+
+  /// No description provided for @adminDiveStarTrialMenu.
+  ///
+  /// In ko, this message translates to:
+  /// **'v2 시험 심사'**
+  String get adminDiveStarTrialMenu;
+
+  /// No description provided for @adminDiveStarTrialTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 심사 (v2 시험)'**
+  String get adminDiveStarTrialTitle;
+
+  /// No description provided for @adminDiveStarTrialHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안 v2 양식으로 미리보기만 합니다. 저장은 3단계에서 됩니다. 지금 활성 양식은 v1로 유지됩니다.'**
+  String get adminDiveStarTrialHint;
+
+  /// No description provided for @adminDiveStarTrialNoDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'항목이 있는 v2 초안 양식이 없습니다. 먼저 「심사 양식 가져오기」로 저장하세요.'**
+  String get adminDiveStarTrialNoDraft;
+
+  /// No description provided for @adminDiveStarTrialSaveLocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 모드에서는 저장할 수 없습니다. 3단계에서 저장됩니다.'**
+  String get adminDiveStarTrialSaveLocked;
+
+  /// No description provided for @adminDiveStarFillMaxScores.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 항목 만점으로 채우기'**
+  String get adminDiveStarFillMaxScores;
+
   /// No description provided for @adminDiveStarGatesSection.
   ///
   /// In ko, this message translates to:
   /// **'필수 게이트 (하나라도 탈락이면 별 부여 불가)'**
   String get adminDiveStarGatesSection;
+
+  /// No description provided for @adminDiveStarCountryGatesSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가별 게이트 (최대 {max}개)'**
+  String adminDiveStarCountryGatesSection(int max);
+
+  /// No description provided for @adminDiveStarCountryGateName.
+  ///
+  /// In ko, this message translates to:
+  /// **'게이트 이름'**
+  String get adminDiveStarCountryGateName;
+
+  /// No description provided for @adminDiveStarCountryGateCriteria.
+  ///
+  /// In ko, this message translates to:
+  /// **'기준'**
+  String get adminDiveStarCountryGateCriteria;
+
+  /// No description provided for @adminDiveStarCountryGateAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가 게이트 추가'**
+  String get adminDiveStarCountryGateAdd;
+
+  /// No description provided for @adminDiveStarAreaApplicable.
+  ///
+  /// In ko, this message translates to:
+  /// **'적용'**
+  String get adminDiveStarAreaApplicable;
+
+  /// No description provided for @adminDiveStarAreaNotApplicable.
+  ///
+  /// In ko, this message translates to:
+  /// **'해당없음'**
+  String get adminDiveStarAreaNotApplicable;
+
+  /// No description provided for @adminDiveStarAreaNaBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'안전 영역은 해당없음으로 둘 수 없습니다.'**
+  String get adminDiveStarAreaNaBlocked;
+
+  /// No description provided for @adminDiveStarItemsSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'항목별 채점'**
+  String get adminDiveStarItemsSection;
+
+  /// No description provided for @adminDiveStarItemScore.
+  ///
+  /// In ko, this message translates to:
+  /// **'득점 (0–{max})'**
+  String adminDiveStarItemScore(int max);
+
+  /// No description provided for @adminDiveStarItemGuidance.
+  ///
+  /// In ko, this message translates to:
+  /// **'채점 기준·증빙·근거'**
+  String get adminDiveStarItemGuidance;
+
+  /// No description provided for @adminDiveStarItemCriteria.
+  ///
+  /// In ko, this message translates to:
+  /// **'기준'**
+  String get adminDiveStarItemCriteria;
+
+  /// No description provided for @adminDiveStarItemEvidence.
+  ///
+  /// In ko, this message translates to:
+  /// **'증빙'**
+  String get adminDiveStarItemEvidence;
+
+  /// No description provided for @adminDiveStarItemBasis.
+  ///
+  /// In ko, this message translates to:
+  /// **'근거'**
+  String get adminDiveStarItemBasis;
+
+  /// No description provided for @adminDiveStarAreaProgress.
+  ///
+  /// In ko, this message translates to:
+  /// **'입력 {filled}/{total}'**
+  String adminDiveStarAreaProgress(int filled, int total);
+
+  /// No description provided for @adminDiveStarItemUnscored.
+  ///
+  /// In ko, this message translates to:
+  /// **'미입력'**
+  String get adminDiveStarItemUnscored;
+
+  /// No description provided for @adminDiveStarMysteryVisits.
+  ///
+  /// In ko, this message translates to:
+  /// **'미스터리 방문 횟수 (0–20)'**
+  String get adminDiveStarMysteryVisits;
+
+  /// No description provided for @adminDiveStarAuditor1.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사관 1'**
+  String get adminDiveStarAuditor1;
+
+  /// No description provided for @adminDiveStarAuditor2.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사관 2'**
+  String get adminDiveStarAuditor2;
+
+  /// No description provided for @adminDiveStarAreaRateLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'{area}: {earned}/{max} ({pct}%)'**
+  String adminDiveStarAreaRateLine(String area, int earned, int max, int pct);
+
+  /// No description provided for @adminDiveStarReasonGateFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'게이트 미통과로 후보 등급 0'**
+  String get adminDiveStarReasonGateFailed;
+
+  /// No description provided for @adminDiveStarReasonBelowStar1.
+  ///
+  /// In ko, this message translates to:
+  /// **'1스타 기준 점수 미달'**
+  String get adminDiveStarReasonBelowStar1;
+
+  /// No description provided for @adminDiveStarReasonStar1.
+  ///
+  /// In ko, this message translates to:
+  /// **'1스타 기준 충족'**
+  String get adminDiveStarReasonStar1;
+
+  /// No description provided for @adminDiveStarReasonStar2.
+  ///
+  /// In ko, this message translates to:
+  /// **'2스타 기준 충족'**
+  String get adminDiveStarReasonStar2;
+
+  /// No description provided for @adminDiveStarReasonStar3.
+  ///
+  /// In ko, this message translates to:
+  /// **'3스타 기준 충족'**
+  String get adminDiveStarReasonStar3;
+
+  /// No description provided for @adminDiveStarReasonSafety.
+  ///
+  /// In ko, this message translates to:
+  /// **'총점은 충분하나 안전 영역 비율 미달'**
+  String get adminDiveStarReasonSafety;
+
+  /// No description provided for @adminDiveStarReasonAreaRatio.
+  ///
+  /// In ko, this message translates to:
+  /// **'3스타용 영역별 최소 비율 미달'**
+  String get adminDiveStarReasonAreaRatio;
+
+  /// No description provided for @adminDiveStarReasonMystery.
+  ///
+  /// In ko, this message translates to:
+  /// **'3스타용 미스터리 방문 횟수 미달'**
+  String get adminDiveStarReasonMystery;
+
+  /// No description provided for @adminDiveStarReasonOther.
+  ///
+  /// In ko, this message translates to:
+  /// **'후보 등급 사유: {code}'**
+  String adminDiveStarReasonOther(String code);
 
   /// No description provided for @adminDiveStarGatePass.
   ///
@@ -3609,7 +3819,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminDiveStarFormActivateLockedHint.
   ///
   /// In ko, this message translates to:
-  /// **'2단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.'**
+  /// **'3단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.'**
   String get adminDiveStarFormActivateLockedHint;
 
   /// No description provided for @adminDocsTitle.

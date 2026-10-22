@@ -645,7 +645,71 @@
   "adminDiveStarAssessmentType": "Audit type",
   "adminDiveStarTypeOnsite": "On-site",
   "adminDiveStarTypeMystery": "Mystery",
+  "adminDiveStarTypeDocument": "Document",
+  "adminDiveStarTrialMenu": "v2 trial audit",
+  "adminDiveStarTrialTitle": "Dive Star audit (v2 trial)",
+  "adminDiveStarTrialHint": "Preview only with a draft v2 form. Saving comes in phase 3. The active form stays v1 for now.",
+  "adminDiveStarTrialNoDraft": "No draft v2 form with items found. Import a form first.",
+  "adminDiveStarTrialSaveLocked": "Saving is disabled in trial mode. Phase 3 will persist answers.",
+  "adminDiveStarFillMaxScores": "Fill all items with max scores",
   "adminDiveStarGatesSection": "Required gates (any fail blocks stars)",
+  "adminDiveStarCountryGatesSection": "Country gates (up to {max})",
+  "@adminDiveStarCountryGatesSection": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "adminDiveStarCountryGateName": "Gate name",
+  "adminDiveStarCountryGateCriteria": "Criteria",
+  "adminDiveStarCountryGateAdd": "Add country gate",
+  "adminDiveStarAreaApplicable": "Applies",
+  "adminDiveStarAreaNotApplicable": "N/A",
+  "adminDiveStarAreaNaBlocked": "The safety area cannot be marked N/A.",
+  "adminDiveStarItemsSection": "Item scores",
+  "adminDiveStarItemScore": "Score (0–{max})",
+  "@adminDiveStarItemScore": {
+    "placeholders": {
+      "max": { "type": "int" }
+    }
+  },
+  "adminDiveStarItemGuidance": "Criteria, evidence, basis",
+  "adminDiveStarItemCriteria": "Criteria",
+  "adminDiveStarItemEvidence": "Evidence",
+  "adminDiveStarItemBasis": "Basis",
+  "adminDiveStarAreaProgress": "Filled {filled}/{total}",
+  "@adminDiveStarAreaProgress": {
+    "placeholders": {
+      "filled": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "adminDiveStarItemUnscored": "Not scored",
+  "adminDiveStarMysteryVisits": "Mystery visits (0–20)",
+  "adminDiveStarAuditor1": "Auditor 1",
+  "adminDiveStarAuditor2": "Auditor 2",
+  "adminDiveStarAreaRateLine": "{area}: {earned}/{max} ({pct}%)",
+  "@adminDiveStarAreaRateLine": {
+    "placeholders": {
+      "area": { "type": "String" },
+      "earned": { "type": "int" },
+      "max": { "type": "int" },
+      "pct": { "type": "int" }
+    }
+  },
+  "adminDiveStarReasonGateFailed": "Gates failed — candidate grade 0",
+  "adminDiveStarReasonBelowStar1": "Below 1-star score",
+  "adminDiveStarReasonStar1": "Meets 1-star criteria",
+  "adminDiveStarReasonStar2": "Meets 2-star criteria",
+  "adminDiveStarReasonStar3": "Meets 3-star criteria",
+  "adminDiveStarReasonSafety": "Score OK but safety area ratio too low",
+  "adminDiveStarReasonAreaRatio": "Area ratios below 3-star minimum",
+  "adminDiveStarReasonMystery": "Mystery visits below 3-star minimum",
+  "adminDiveStarReasonOther": "Grade reason: {code}",
+  "@adminDiveStarReasonOther": {
+    "placeholders": {
+      "code": { "type": "String" }
+    }
+  },
   "adminDiveStarGatePass": "Pass",
   "adminDiveStarGateFail": "Fail",
   "adminDiveStarAreasSection": "Area scores",
@@ -730,7 +794,7 @@
   "adminDiveStarFormStatusActive": "In use",
   "adminDiveStarFormStatusDraft": "Draft",
   "adminDiveStarFormActivate": "Make this form active",
-  "adminDiveStarFormActivateLockedHint": "Available after phase 2. Active form stays v1 for now.",
+  "adminDiveStarFormActivateLockedHint": "Available after phase 3. Active form stays v1 for now.",
   "adminDocsTitle": "Documents",
   "adminDocsHint": "Store public partner guides and forms for sharing. Do not put internal files here.",
   "adminDocsListSection": "Documents",

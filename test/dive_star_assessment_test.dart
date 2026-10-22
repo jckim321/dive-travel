@@ -116,6 +116,32 @@ void main() {
     expect(result.candidateGrade, 3);
   });
 
+  test('서류 유형으로 저장해도 v1 점수 경로가 깨지지 않는다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final saved = await repo.saveDiveStarAssessment(
+      shopId: 'shop-doc',
+      type: DiveStarAssessmentType.document,
+      reviewedAt: DateTime.utc(2026, 5, 1),
+      gates: allGatesPass(),
+      scores: {
+        'safety': 25,
+        'service': 20,
+        'equipment': 15,
+        'hospitality': 10,
+        'environment': 0,
+        'experience': 0,
+        'reviews': 0,
+      },
+      comments: const {},
+    );
+    expect(saved.type, DiveStarAssessmentType.document);
+    expect(saved.totalScore, 70);
+    expect(saved.candidateGrade, 1);
+
+    final listed = await repo.listDiveStarAssessments('shop-doc');
+    expect(listed.single.type, DiveStarAssessmentType.document);
+  });
+
   test('메모리 저장소: 저장만으로는 샵 등급이 안 바뀌고 확정 시 바뀐다', () async {
     final repo = MemoryDiverRepository.forTest(isAdmin: true);
     final before = await repo.watchShopStats().first;

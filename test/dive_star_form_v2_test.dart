@@ -243,6 +243,118 @@ void main() {
     expect(form.thresholds.safetyAreaId, 'safety');
   });
 
+  test('항목 채점 → 영역 합산 → 환산 → 등급 전체 흐름', () {
+    // A: 40/50, B N/A → normalized 80 → 1 star; raise A to 45 → 90 → 2 star.
+    final form = _miniV2(mysteryMin: 0);
+    final gates = {'G1': true};
+    final step1 = DiveStarScoring.evaluate(
+      form: form,
+      gates: gates,
+      itemScores: {'S1': 40, 'D1': 10},
+      areaNotApplicable: {'B': true},
+    );
+    expect(step1.areaScores['A'], 40);
+    expect(step1.areaMax['A'], 50);
+    expect(step1.totalScore, 80);
+    expect(step1.candidateGrade, 1);
+
+    final step2 = DiveStarScoring.evaluate(
+      form: form,
+      gates: gates,
+      itemScores: {'S1': 45, 'D1': 10},
+      areaNotApplicable: {'B': true},
+      mysteryVisits: 0,
+    );
+    expect(step2.totalScore, 90);
+    expect(step2.candidateGrade, 2);
+  });
+
+  test('N/A + 국가 게이트 탈락은 환산해도 등급 0', () {
+    final form = _miniV2();
+    final result = DiveStarScoring.evaluate(
+      form: form,
+      gates: {'G1': true},
+      itemScores: {'S1': 50, 'D1': 0},
+      areaNotApplicable: {'B': true},
+      countryGatesPassed: [false],
+      mysteryVisits: 5,
+    );
+    expect(result.totalScore, 100);
+    expect(result.gatesPassed, isFalse);
+    expect(result.candidateGrade, 0);
+    expect(result.reason, 'gate_failed');
+  });
+
+  test('assessment type parse keeps v1 values and accepts document', () {
+    expect(
+      DiveStarAssessmentType.parse('onsite'),
+      DiveStarAssessmentType.onsite,
+    );
+    expect(
+      DiveStarAssessmentType.parse('mystery'),
+      DiveStarAssessmentType.mystery,
+    );
+    expect(
+      DiveStarAssessmentType.parse('document'),
+      DiveStarAssessmentType.document,
+    );
+    expect(
+      DiveStarAssessmentType.parse('docs'),
+      DiveStarAssessmentType.document,
+    );
+    // Legacy / unknown → onsite (does not throw).
+    expect(
+      DiveStarAssessmentType.parse(null),
+      DiveStarAssessmentType.onsite,
+    );
+    expect(
+      DiveStarAssessmentType.parse(''),
+      DiveStarAssessmentType.onsite,
+    );
+    expect(
+      DiveStarAssessmentType.parse('weird_legacy'),
+      DiveStarAssessmentType.onsite,
+    );
+  });
+
+  test('v1 assessment document with document type round-trips', () {
+    final assessment = DiveStarAssessment.fromDocument(
+      'a1',
+      'shop1',
+      {
+        'form_version': 'v1',
+        'type': 'document',
+        'reviewed_at': '2024-01-15T00:00:00.000Z',
+        'gates': {'business_license': true},
+        'scores': {'safety': 20},
+        'comments': {},
+        'total_score': 70,
+        'candidate_grade': 1,
+        'gates_passed': true,
+        'confirmed': false,
+      },
+    );
+    expect(assessment.type, DiveStarAssessmentType.document);
+    expect(assessment.type.firestoreValue, 'document');
+
+    final v1Onsite = DiveStarAssessment.fromDocument(
+      'a2',
+      'shop1',
+      {
+        'form_version': 'v1',
+        'type': 'onsite',
+        'reviewed_at': '2024-01-15T00:00:00.000Z',
+        'gates': {},
+        'scores': {},
+        'total_score': 0,
+        'candidate_grade': 0,
+        'gates_passed': false,
+        'confirmed': false,
+      },
+    );
+    expect(v1Onsite.type, DiveStarAssessmentType.onsite);
+  });
+
   test('null string fields on gates and status do not throw', () {
     final form = DiveStarForm.fromDocument('v1', {
       'version': null,

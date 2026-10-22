@@ -1747,7 +1747,125 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminDiveStarTypeMystery => '미스터리 심사';
 
   @override
+  String get adminDiveStarTypeDocument => '서류 심사';
+
+  @override
+  String get adminDiveStarTrialMenu => 'v2 시험 심사';
+
+  @override
+  String get adminDiveStarTrialTitle => '다이브스타 심사 (v2 시험)';
+
+  @override
+  String get adminDiveStarTrialHint =>
+      '초안 v2 양식으로 미리보기만 합니다. 저장은 3단계에서 됩니다. 지금 활성 양식은 v1로 유지됩니다.';
+
+  @override
+  String get adminDiveStarTrialNoDraft =>
+      '항목이 있는 v2 초안 양식이 없습니다. 먼저 「심사 양식 가져오기」로 저장하세요.';
+
+  @override
+  String get adminDiveStarTrialSaveLocked =>
+      '시험 모드에서는 저장할 수 없습니다. 3단계에서 저장됩니다.';
+
+  @override
+  String get adminDiveStarFillMaxScores => '모든 항목 만점으로 채우기';
+
+  @override
   String get adminDiveStarGatesSection => '필수 게이트 (하나라도 탈락이면 별 부여 불가)';
+
+  @override
+  String adminDiveStarCountryGatesSection(int max) {
+    return '국가별 게이트 (최대 $max개)';
+  }
+
+  @override
+  String get adminDiveStarCountryGateName => '게이트 이름';
+
+  @override
+  String get adminDiveStarCountryGateCriteria => '기준';
+
+  @override
+  String get adminDiveStarCountryGateAdd => '국가 게이트 추가';
+
+  @override
+  String get adminDiveStarAreaApplicable => '적용';
+
+  @override
+  String get adminDiveStarAreaNotApplicable => '해당없음';
+
+  @override
+  String get adminDiveStarAreaNaBlocked => '안전 영역은 해당없음으로 둘 수 없습니다.';
+
+  @override
+  String get adminDiveStarItemsSection => '항목별 채점';
+
+  @override
+  String adminDiveStarItemScore(int max) {
+    return '득점 (0–$max)';
+  }
+
+  @override
+  String get adminDiveStarItemGuidance => '채점 기준·증빙·근거';
+
+  @override
+  String get adminDiveStarItemCriteria => '기준';
+
+  @override
+  String get adminDiveStarItemEvidence => '증빙';
+
+  @override
+  String get adminDiveStarItemBasis => '근거';
+
+  @override
+  String adminDiveStarAreaProgress(int filled, int total) {
+    return '입력 $filled/$total';
+  }
+
+  @override
+  String get adminDiveStarItemUnscored => '미입력';
+
+  @override
+  String get adminDiveStarMysteryVisits => '미스터리 방문 횟수 (0–20)';
+
+  @override
+  String get adminDiveStarAuditor1 => '심사관 1';
+
+  @override
+  String get adminDiveStarAuditor2 => '심사관 2';
+
+  @override
+  String adminDiveStarAreaRateLine(String area, int earned, int max, int pct) {
+    return '$area: $earned/$max ($pct%)';
+  }
+
+  @override
+  String get adminDiveStarReasonGateFailed => '게이트 미통과로 후보 등급 0';
+
+  @override
+  String get adminDiveStarReasonBelowStar1 => '1스타 기준 점수 미달';
+
+  @override
+  String get adminDiveStarReasonStar1 => '1스타 기준 충족';
+
+  @override
+  String get adminDiveStarReasonStar2 => '2스타 기준 충족';
+
+  @override
+  String get adminDiveStarReasonStar3 => '3스타 기준 충족';
+
+  @override
+  String get adminDiveStarReasonSafety => '총점은 충분하나 안전 영역 비율 미달';
+
+  @override
+  String get adminDiveStarReasonAreaRatio => '3스타용 영역별 최소 비율 미달';
+
+  @override
+  String get adminDiveStarReasonMystery => '3스타용 미스터리 방문 횟수 미달';
+
+  @override
+  String adminDiveStarReasonOther(String code) {
+    return '후보 등급 사유: $code';
+  }
 
   @override
   String get adminDiveStarGatePass => '통과';
@@ -1915,7 +2033,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adminDiveStarFormActivateLockedHint =>
-      '2단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.';
+      '3단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.';
 
   @override
   String get adminDocsTitle => '문서·양식';

@@ -1769,8 +1769,130 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarTypeMystery => 'Mystery';
 
   @override
+  String get adminDiveStarTypeDocument => 'Document';
+
+  @override
+  String get adminDiveStarTrialMenu => 'v2 trial audit';
+
+  @override
+  String get adminDiveStarTrialTitle => 'Dive Star audit (v2 trial)';
+
+  @override
+  String get adminDiveStarTrialHint =>
+      'Preview only with a draft v2 form. Saving comes in phase 3. The active form stays v1 for now.';
+
+  @override
+  String get adminDiveStarTrialNoDraft =>
+      'No draft v2 form with items found. Import a form first.';
+
+  @override
+  String get adminDiveStarTrialSaveLocked =>
+      'Saving is disabled in trial mode. Phase 3 will persist answers.';
+
+  @override
+  String get adminDiveStarFillMaxScores => 'Fill all items with max scores';
+
+  @override
   String get adminDiveStarGatesSection =>
       'Required gates (any fail blocks stars)';
+
+  @override
+  String adminDiveStarCountryGatesSection(int max) {
+    return 'Country gates (up to $max)';
+  }
+
+  @override
+  String get adminDiveStarCountryGateName => 'Gate name';
+
+  @override
+  String get adminDiveStarCountryGateCriteria => 'Criteria';
+
+  @override
+  String get adminDiveStarCountryGateAdd => 'Add country gate';
+
+  @override
+  String get adminDiveStarAreaApplicable => 'Applies';
+
+  @override
+  String get adminDiveStarAreaNotApplicable => 'N/A';
+
+  @override
+  String get adminDiveStarAreaNaBlocked =>
+      'The safety area cannot be marked N/A.';
+
+  @override
+  String get adminDiveStarItemsSection => 'Item scores';
+
+  @override
+  String adminDiveStarItemScore(int max) {
+    return 'Score (0–$max)';
+  }
+
+  @override
+  String get adminDiveStarItemGuidance => 'Criteria, evidence, basis';
+
+  @override
+  String get adminDiveStarItemCriteria => 'Criteria';
+
+  @override
+  String get adminDiveStarItemEvidence => 'Evidence';
+
+  @override
+  String get adminDiveStarItemBasis => 'Basis';
+
+  @override
+  String adminDiveStarAreaProgress(int filled, int total) {
+    return 'Filled $filled/$total';
+  }
+
+  @override
+  String get adminDiveStarItemUnscored => 'Not scored';
+
+  @override
+  String get adminDiveStarMysteryVisits => 'Mystery visits (0–20)';
+
+  @override
+  String get adminDiveStarAuditor1 => 'Auditor 1';
+
+  @override
+  String get adminDiveStarAuditor2 => 'Auditor 2';
+
+  @override
+  String adminDiveStarAreaRateLine(String area, int earned, int max, int pct) {
+    return '$area: $earned/$max ($pct%)';
+  }
+
+  @override
+  String get adminDiveStarReasonGateFailed =>
+      'Gates failed — candidate grade 0';
+
+  @override
+  String get adminDiveStarReasonBelowStar1 => 'Below 1-star score';
+
+  @override
+  String get adminDiveStarReasonStar1 => 'Meets 1-star criteria';
+
+  @override
+  String get adminDiveStarReasonStar2 => 'Meets 2-star criteria';
+
+  @override
+  String get adminDiveStarReasonStar3 => 'Meets 3-star criteria';
+
+  @override
+  String get adminDiveStarReasonSafety =>
+      'Score OK but safety area ratio too low';
+
+  @override
+  String get adminDiveStarReasonAreaRatio => 'Area ratios below 3-star minimum';
+
+  @override
+  String get adminDiveStarReasonMystery =>
+      'Mystery visits below 3-star minimum';
+
+  @override
+  String adminDiveStarReasonOther(String code) {
+    return 'Grade reason: $code';
+  }
 
   @override
   String get adminDiveStarGatePass => 'Pass';
@@ -1945,7 +2067,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminDiveStarFormActivateLockedHint =>
-      'Available after phase 2. Active form stays v1 for now.';
+      'Available after phase 3. Active form stays v1 for now.';
 
   @override
   String get adminDocsTitle => 'Documents';
