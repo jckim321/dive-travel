@@ -1342,6 +1342,59 @@
   "partnerDocsTitle": "안내·신청 문서",
   "partnerDocsHint": "승인된 공개 안내서와 신청서를 확인하고 출력할 수 있습니다.",
   "partnerDocsEmpty": "아직 열 수 있는 승인 문서가 없습니다. 관리자 승인을 기다려 주세요.",
+  "partnerLoiTitle": "참여 의향서",
+  "partnerLoiHint": "샵 정보를 입력하고 손가락으로 서명한 뒤 제출하세요. PDF가 만들어지고 다이브트래블에 접수됩니다.",
+  "partnerLoiCompany": "회사·샵 이름",
+  "partnerLoiContact": "담당자 이름",
+  "partnerLoiEmail": "이메일",
+  "partnerLoiPhone": "전화",
+  "partnerLoiCountry": "국가",
+  "partnerLoiNotes": "메모 (선택)",
+  "partnerLoiSignature": "서명 (아래에 그려 주세요)",
+  "partnerLoiClearSignature": "서명 지우기",
+  "partnerLoiSubmit": "의향서 제출",
+  "partnerLoiMissingFields": "회사명, 담당자, 서명을 입력해 주세요.",
+  "partnerLoiSubmitted": "의향서를 접수했습니다.",
+  "partnerLoiOpenForm": "의향서 작성",
+  "partnerLoiOpenFormHint": "앱에서 작성·터치 서명·PDF 생성",
+  "partnerLoiStatusSection": "내 신청 현황",
+  "partnerLoiStatusEmpty": "아직 제출한 의향서가 없습니다.",
+  "pipelineGuideSent": "안내 발송",
+  "pipelineLoiReceived": "의향서 접수",
+  "pipelineDocsSubmitted": "서류 제출",
+  "pipelineUnderReview": "심사 중",
+  "pipelineResultNotified": "결과 통보",
+  "pipelineReminderSubject": "다이브스타 안내: {shopName}",
+  "@pipelineReminderSubject": {
+    "placeholders": {
+      "shopName": { "type": "String" }
+    }
+  },
+  "pipelineReminderBody": "{contactName} 님 안녕하세요.\n\n{shopName} 다이브스타 신청 관련 안내입니다. 남은 서류나 문의가 있으면 회신해 주세요.\n\n감사합니다.\n다이브트래블",
+  "@pipelineReminderBody": {
+    "placeholders": {
+      "shopName": { "type": "String" },
+      "contactName": { "type": "String" }
+    }
+  },
+  "pipelineReminderQueued": "이메일 앱을 열고 발송 큐에 기록했습니다.",
+  "adminAppsTitle": "다이브스타 신청",
+  "adminAppsHint": "의향서 접수와 파트너 진행 상태를 관리합니다. 이메일은 큐에 쌓이며, Cloud Functions 연동 전까지는 mailto로 보냅니다.",
+  "adminAppsReminderSection": "리마인더 대상",
+  "adminAppsEmailServerNote": "서버 메일 발송은 아직 없습니다. 리마인더는 메일 앱을 열고 큐에 기록합니다.",
+  "adminAppsReminderEmpty": "기한이 된 리마인더가 없습니다.",
+  "adminAppsListSection": "신청 목록",
+  "adminAppsEmpty": "접수된 신청이 없습니다.",
+  "adminAppsSendReminder": "리마인더 보내기",
+  "adminAppsAdvanceTo": "{status}(으)로 진행",
+  "@adminAppsAdvanceTo": {
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "adminAppsOutboxSection": "이메일 발송 큐",
+  "adminAppsOutboxEmpty": "발송 큐가 비어 있습니다.",
+  "adminAppsOpenList": "신청·진행 상태",
   "adminViewShopProducts": "상품 보기",
   "adminSameBoatRemaining": "잔여 {count}",
   "@adminSameBoatRemaining": {

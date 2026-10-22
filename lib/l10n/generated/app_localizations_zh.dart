@@ -2000,6 +2000,126 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerDocsEmpty => '아직 열 수 있는 승인 문서가 없습니다. 관리자 승인을 기다려 주세요.';
 
   @override
+  String get partnerLoiTitle => '참여 의향서';
+
+  @override
+  String get partnerLoiHint =>
+      '샵 정보를 입력하고 손가락으로 서명한 뒤 제출하세요. PDF가 만들어지고 다이브트래블에 접수됩니다.';
+
+  @override
+  String get partnerLoiCompany => '회사·샵 이름';
+
+  @override
+  String get partnerLoiContact => '담당자 이름';
+
+  @override
+  String get partnerLoiEmail => '이메일';
+
+  @override
+  String get partnerLoiPhone => '전화';
+
+  @override
+  String get partnerLoiCountry => '국가';
+
+  @override
+  String get partnerLoiNotes => '메모 (선택)';
+
+  @override
+  String get partnerLoiSignature => '서명 (아래에 그려 주세요)';
+
+  @override
+  String get partnerLoiClearSignature => '서명 지우기';
+
+  @override
+  String get partnerLoiSubmit => '의향서 제출';
+
+  @override
+  String get partnerLoiMissingFields => '회사명, 담당자, 서명을 입력해 주세요.';
+
+  @override
+  String get partnerLoiSubmitted => '의향서를 접수했습니다.';
+
+  @override
+  String get partnerLoiOpenForm => '의향서 작성';
+
+  @override
+  String get partnerLoiOpenFormHint => '앱에서 작성·터치 서명·PDF 생성';
+
+  @override
+  String get partnerLoiStatusSection => '내 신청 현황';
+
+  @override
+  String get partnerLoiStatusEmpty => '아직 제출한 의향서가 없습니다.';
+
+  @override
+  String get pipelineGuideSent => '안내 발송';
+
+  @override
+  String get pipelineLoiReceived => '의향서 접수';
+
+  @override
+  String get pipelineDocsSubmitted => '서류 제출';
+
+  @override
+  String get pipelineUnderReview => '심사 중';
+
+  @override
+  String get pipelineResultNotified => '결과 통보';
+
+  @override
+  String pipelineReminderSubject(String shopName) {
+    return '다이브스타 안내: $shopName';
+  }
+
+  @override
+  String pipelineReminderBody(String shopName, String contactName) {
+    return '$contactName 님 안녕하세요.\n\n$shopName 다이브스타 신청 관련 안내입니다. 남은 서류나 문의가 있으면 회신해 주세요.\n\n감사합니다.\n다이브트래블';
+  }
+
+  @override
+  String get pipelineReminderQueued => '이메일 앱을 열고 발송 큐에 기록했습니다.';
+
+  @override
+  String get adminAppsTitle => '다이브스타 신청';
+
+  @override
+  String get adminAppsHint =>
+      '의향서 접수와 파트너 진행 상태를 관리합니다. 이메일은 큐에 쌓이며, Cloud Functions 연동 전까지는 mailto로 보냅니다.';
+
+  @override
+  String get adminAppsReminderSection => '리마인더 대상';
+
+  @override
+  String get adminAppsEmailServerNote =>
+      '서버 메일 발송은 아직 없습니다. 리마인더는 메일 앱을 열고 큐에 기록합니다.';
+
+  @override
+  String get adminAppsReminderEmpty => '기한이 된 리마인더가 없습니다.';
+
+  @override
+  String get adminAppsListSection => '신청 목록';
+
+  @override
+  String get adminAppsEmpty => '접수된 신청이 없습니다.';
+
+  @override
+  String get adminAppsSendReminder => '리마인더 보내기';
+
+  @override
+  String adminAppsAdvanceTo(String status) {
+    return '$status(으)로 진행';
+  }
+
+  @override
+  String get adminAppsOutboxSection => '이메일 발송 큐';
+
+  @override
+  String get adminAppsOutboxEmpty => '발송 큐가 비어 있습니다.';
+
+  @override
+  String get adminAppsOpenList => '신청·진행 상태';
+
+  @override
   String get adminViewShopProducts => '상품 보기';
 
   @override

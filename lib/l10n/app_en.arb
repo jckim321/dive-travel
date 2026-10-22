@@ -763,6 +763,59 @@
   "partnerDocsTitle": "Guides & forms",
   "partnerDocsHint": "View and print approved public guides and application forms.",
   "partnerDocsEmpty": "No approved documents yet. Please wait for admin approval.",
+  "partnerLoiTitle": "Letter of intent",
+  "partnerLoiHint": "Fill in your shop details and sign with your finger. We will generate a PDF and notify Dive Travel.",
+  "partnerLoiCompany": "Company / shop name",
+  "partnerLoiContact": "Contact name",
+  "partnerLoiEmail": "Email",
+  "partnerLoiPhone": "Phone",
+  "partnerLoiCountry": "Country",
+  "partnerLoiNotes": "Notes (optional)",
+  "partnerLoiSignature": "Signature (draw below)",
+  "partnerLoiClearSignature": "Clear signature",
+  "partnerLoiSubmit": "Submit letter of intent",
+  "partnerLoiMissingFields": "Enter company, contact, and a signature.",
+  "partnerLoiSubmitted": "Letter of intent submitted.",
+  "partnerLoiOpenForm": "Write letter of intent",
+  "partnerLoiOpenFormHint": "In-app form with touch signature and PDF.",
+  "partnerLoiStatusSection": "My applications",
+  "partnerLoiStatusEmpty": "No letter of intent submitted yet.",
+  "pipelineGuideSent": "Guide sent",
+  "pipelineLoiReceived": "LOI received",
+  "pipelineDocsSubmitted": "Docs submitted",
+  "pipelineUnderReview": "Under review",
+  "pipelineResultNotified": "Result notified",
+  "pipelineReminderSubject": "Dive Star follow-up: {shopName}",
+  "@pipelineReminderSubject": {
+    "placeholders": {
+      "shopName": { "type": "String" }
+    }
+  },
+  "pipelineReminderBody": "Hello {contactName},\n\nThis is a reminder about the Dive Star application for {shopName}. Please reply with any remaining documents or questions.\n\nThank you,\nDive Travel",
+  "@pipelineReminderBody": {
+    "placeholders": {
+      "shopName": { "type": "String" },
+      "contactName": { "type": "String" }
+    }
+  },
+  "pipelineReminderQueued": "Reminder opened in email and queued.",
+  "adminAppsTitle": "Dive Star applications",
+  "adminAppsHint": "Track letters of intent and advance the partner pipeline. Email is queued here; use mailto until Cloud Functions send mail.",
+  "adminAppsReminderSection": "Reminders due",
+  "adminAppsEmailServerNote": "Server email is not connected yet. Reminder opens your mail app and records a queue entry.",
+  "adminAppsReminderEmpty": "No reminders due.",
+  "adminAppsListSection": "Applications",
+  "adminAppsEmpty": "No applications yet.",
+  "adminAppsSendReminder": "Send reminder",
+  "adminAppsAdvanceTo": "Advance to {status}",
+  "@adminAppsAdvanceTo": {
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "adminAppsOutboxSection": "Email outbox",
+  "adminAppsOutboxEmpty": "Outbox is empty.",
+  "adminAppsOpenList": "Applications & pipeline",
   "adminViewShopProducts": "View products",
   "adminSameBoatRemaining": "{count} left",
   "@adminSameBoatRemaining": {

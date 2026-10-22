@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -82,11 +83,15 @@ class MemoryDiverRepository implements DiverRepository {
   int _reviewSequence = 0;
   int _assessmentSequence = 0;
   int _shareSequence = 0;
+  int _applicationSequence = 0;
+  int _emailOutboxSequence = 0;
   DiveStarForm? _diveStarForm;
   final _assessments = <String, List<DiveStarAssessment>>{};
   List<PartnerDocument>? _partnerDocuments;
   PartnerDocConfig? _partnerDocConfig;
   final _documentShares = <DocumentShareRecord>[];
+  final _applications = <DiveStarApplication>[];
+  final _emailOutbox = <PartnerEmailOutboxItem>[];
   final _bookings = <TourBooking>[];
   final _pending = <PendingInstructor>[];
   final _members = <MemberAccount>[];
@@ -1200,6 +1205,131 @@ class MemoryDiverRepository implements DiverRepository {
     );
     _documentShares.insert(0, record);
     return record;
+  }
+
+  @override
+  Future<DiveStarApplication> submitDiveStarApplication({
+    required String shopId,
+    required String shopName,
+    required String partnerUid,
+    required String companyName,
+    required String contactName,
+    required String contactEmail,
+    required String contactPhone,
+    required String country,
+    required String notes,
+    required String signaturePngBase64,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final app = DiveStarApplication(
+      id: 'app-${++_applicationSequence}',
+      shopId: shopId,
+      shopName: shopName,
+      partnerUid: partnerUid,
+      companyName: companyName.trim(),
+      contactName: contactName.trim(),
+      contactEmail: contactEmail.trim(),
+      contactPhone: contactPhone.trim(),
+      country: country.trim(),
+      notes: notes.trim(),
+      signaturePngBase64: signaturePngBase64,
+      pipelineStatus: DiveStarPipelineStatus.loiReceived,
+      submittedAt: now,
+      reminderDueAt: now.add(const Duration(days: 14)),
+    );
+    _applications.insert(0, app);
+    return app;
+  }
+
+  @override
+  Future<List<DiveStarApplication>> listDiveStarApplications({
+    String? shopId,
+    String? partnerUid,
+    int limit = 50,
+  }) async {
+    var list = List<DiveStarApplication>.from(_applications);
+    if (partnerUid != null && partnerUid.isNotEmpty) {
+      list = [for (final a in list) if (a.partnerUid == partnerUid) a];
+    } else if (shopId != null && shopId.isNotEmpty) {
+      list = [for (final a in list) if (a.shopId == shopId) a];
+    }
+    list.sort((a, b) => b.submittedAt.compareTo(a.submittedAt));
+    if (list.length > limit) {
+      return list.sublist(0, limit);
+    }
+    return list;
+  }
+
+  @override
+  Future<DiveStarApplication> updateDiveStarApplicationPipeline({
+    required String applicationId,
+    required DiveStarPipelineStatus status,
+    DateTime? reminderDueAt,
+    bool clearReminder = false,
+  }) async {
+    final index = _applications.indexWhere((a) => a.id == applicationId);
+    if (index < 0) {
+      throw StateError('Application not found: $applicationId');
+    }
+    final updated = _applications[index].copyWith(
+      pipelineStatus: status,
+      reminderDueAt: reminderDueAt,
+      clearReminder: clearReminder,
+    );
+    _applications[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<PartnerEmailOutboxItem> queuePartnerEmail({
+    required String toEmail,
+    required String subject,
+    required String body,
+    String applicationId = '',
+    String shopId = '',
+  }) async {
+    final item = PartnerEmailOutboxItem(
+      id: 'mail-${++_emailOutboxSequence}',
+      toEmail: toEmail.trim(),
+      subject: subject.trim(),
+      body: body.trim(),
+      status: 'pending',
+      createdAt: DateTime.now().toUtc(),
+      applicationId: applicationId,
+      shopId: shopId,
+    );
+    _emailOutbox.insert(0, item);
+    return item;
+  }
+
+  @override
+  Future<List<PartnerEmailOutboxItem>> listPartnerEmailOutbox({
+    int limit = 30,
+  }) async {
+    final list = List<PartnerEmailOutboxItem>.from(_emailOutbox);
+    if (list.length > limit) {
+      return list.sublist(0, limit);
+    }
+    return list;
+  }
+
+  @override
+  Future<void> markPartnerEmailOutboxSent(String outboxId) async {
+    final index = _emailOutbox.indexWhere((m) => m.id == outboxId);
+    if (index < 0) {
+      return;
+    }
+    final old = _emailOutbox[index];
+    _emailOutbox[index] = PartnerEmailOutboxItem(
+      id: old.id,
+      toEmail: old.toEmail,
+      subject: old.subject,
+      body: old.body,
+      status: 'sent',
+      createdAt: old.createdAt,
+      applicationId: old.applicationId,
+      shopId: old.shopId,
+    );
   }
 
   @override

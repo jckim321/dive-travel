@@ -20,6 +20,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
@@ -1519,6 +1520,146 @@ class FirestoreDiverRepository implements DiverRepository {
       ...payload,
       'created_at': now.toIso8601String(),
     });
+  }
+
+  CollectionReference<Map<String, dynamic>> get _diveStarApplications =>
+      _db.collection('dive_star_applications');
+
+  CollectionReference<Map<String, dynamic>> get _partnerEmailOutbox =>
+      _db.collection('partner_email_outbox');
+
+  @override
+  Future<DiveStarApplication> submitDiveStarApplication({
+    required String shopId,
+    required String shopName,
+    required String partnerUid,
+    required String companyName,
+    required String contactName,
+    required String contactEmail,
+    required String contactPhone,
+    required String country,
+    required String notes,
+    required String signaturePngBase64,
+  }) async {
+    final ref = _diveStarApplications.doc();
+    final now = DateTime.now().toUtc();
+    final reminder = now.add(const Duration(days: 14));
+    final payload = <String, dynamic>{
+      'shop_id': shopId,
+      'shop_name': shopName,
+      'partner_uid': partnerUid,
+      'company_name': companyName.trim(),
+      'contact_name': contactName.trim(),
+      'contact_email': contactEmail.trim(),
+      'contact_phone': contactPhone.trim(),
+      'country': country.trim(),
+      'notes': notes.trim(),
+      'signature_png_base64': signaturePngBase64,
+      'pipeline_status': DiveStarPipelineStatus.loiReceived.firestoreValue,
+      'submitted_at': Timestamp.fromDate(now),
+      'reminder_due_at': Timestamp.fromDate(reminder),
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    await ref.set(payload);
+    return DiveStarApplication.fromDocument(ref.id, {
+      ...payload,
+      'submitted_at': now.toIso8601String(),
+      'reminder_due_at': reminder.toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<DiveStarApplication>> listDiveStarApplications({
+    String? shopId,
+    String? partnerUid,
+    int limit = 50,
+  }) async {
+    Query<Map<String, dynamic>> query = _diveStarApplications;
+    if (partnerUid != null && partnerUid.isNotEmpty) {
+      query = query.where('partner_uid', isEqualTo: partnerUid);
+    } else if (shopId != null && shopId.isNotEmpty) {
+      query = query.where('shop_id', isEqualTo: shopId);
+    }
+    final snap =
+        await query.orderBy('submitted_at', descending: true).limit(limit).get();
+    return [
+      for (final doc in snap.docs)
+        DiveStarApplication.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<DiveStarApplication> updateDiveStarApplicationPipeline({
+    required String applicationId,
+    required DiveStarPipelineStatus status,
+    DateTime? reminderDueAt,
+    bool clearReminder = false,
+  }) async {
+    final ref = _diveStarApplications.doc(applicationId);
+    final payload = <String, dynamic>{
+      'pipeline_status': status.firestoreValue,
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    if (clearReminder) {
+      payload['reminder_due_at'] = FieldValue.delete();
+    } else if (reminderDueAt != null) {
+      payload['reminder_due_at'] = Timestamp.fromDate(reminderDueAt.toUtc());
+    }
+    await ref.set(payload, SetOptions(merge: true));
+    final snap = await ref.get();
+    final data = snap.data();
+    if (data == null) {
+      throw StateError('Application not found: $applicationId');
+    }
+    return DiveStarApplication.fromDocument(applicationId, data);
+  }
+
+  @override
+  Future<PartnerEmailOutboxItem> queuePartnerEmail({
+    required String toEmail,
+    required String subject,
+    required String body,
+    String applicationId = '',
+    String shopId = '',
+  }) async {
+    final ref = _partnerEmailOutbox.doc();
+    final now = DateTime.now().toUtc();
+    final payload = <String, dynamic>{
+      'to_email': toEmail.trim(),
+      'subject': subject.trim(),
+      'body': body.trim(),
+      'status': 'pending',
+      'created_at': Timestamp.fromDate(now),
+      'application_id': applicationId,
+      'shop_id': shopId,
+    };
+    await ref.set(payload);
+    return PartnerEmailOutboxItem.fromDocument(ref.id, {
+      ...payload,
+      'created_at': now.toIso8601String(),
+    });
+  }
+
+  @override
+  Future<List<PartnerEmailOutboxItem>> listPartnerEmailOutbox({
+    int limit = 30,
+  }) async {
+    final snap = await _partnerEmailOutbox
+        .orderBy('created_at', descending: true)
+        .limit(limit)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        PartnerEmailOutboxItem.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<void> markPartnerEmailOutboxSent(String outboxId) {
+    return _partnerEmailOutbox.doc(outboxId).set({
+      'status': 'sent',
+      'sent_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   @override

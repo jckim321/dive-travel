@@ -7,6 +7,22 @@
         { "fieldPath": "audience", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "dive_star_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "shop_id", "order": "ASCENDING" },
+        { "fieldPath": "submitted_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dive_star_applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "partner_uid", "order": "ASCENDING" },
+        { "fieldPath": "submitted_at", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

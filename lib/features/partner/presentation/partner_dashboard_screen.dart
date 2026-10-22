@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_loi_form_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -118,6 +119,21 @@ class PartnerDashboardScreen extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const PartnerDocumentsScreen(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: ListTile(
+                  key: const Key('partner-loi-form'),
+                  leading: const Icon(Icons.draw_outlined),
+                  title: Text(l10n.partnerLoiOpenForm),
+                  subtitle: Text(l10n.partnerLoiOpenFormHint),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PartnerLoiFormScreen(),
                     ),
                   ),
                 ),

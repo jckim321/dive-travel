@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
@@ -196,6 +197,46 @@ abstract class DiverRepository {
     required PartnerDocShareMethod method,
     required String adminUid,
   });
+
+  Future<DiveStarApplication> submitDiveStarApplication({
+    required String shopId,
+    required String shopName,
+    required String partnerUid,
+    required String companyName,
+    required String contactName,
+    required String contactEmail,
+    required String contactPhone,
+    required String country,
+    required String notes,
+    required String signaturePngBase64,
+  });
+
+  Future<List<DiveStarApplication>> listDiveStarApplications({
+    String? shopId,
+    String? partnerUid,
+    int limit = 50,
+  });
+
+  Future<DiveStarApplication> updateDiveStarApplicationPipeline({
+    required String applicationId,
+    required DiveStarPipelineStatus status,
+    DateTime? reminderDueAt,
+    bool clearReminder = false,
+  });
+
+  Future<PartnerEmailOutboxItem> queuePartnerEmail({
+    required String toEmail,
+    required String subject,
+    required String body,
+    String applicationId = '',
+    String shopId = '',
+  });
+
+  Future<List<PartnerEmailOutboxItem>> listPartnerEmailOutbox({
+    int limit = 30,
+  });
+
+  Future<void> markPartnerEmailOutboxSent(String outboxId);
 
   Future<void> setPostHidden({required String postId, required bool hidden});
 

@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_applications_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_doc_config_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -118,23 +119,38 @@ class _AdminPartnerDocumentsScreenState
                           ),
                     ),
                     const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const AdminPartnerDocConfigScreen(),
-                            ),
-                          );
-                          if (mounted) {
-                            await _reload();
-                          }
-                        },
-                        icon: const Icon(Icons.tune),
-                        label: Text(l10n.adminDocConfigTitle),
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const AdminPartnerDocConfigScreen(),
+                              ),
+                            );
+                            if (mounted) {
+                              await _reload();
+                            }
+                          },
+                          icon: const Icon(Icons.tune),
+                          label: Text(l10n.adminDocConfigTitle),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const AdminDiveStarApplicationsScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.assignment_outlined),
+                          label: Text(l10n.adminAppsOpenList),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Wrap(

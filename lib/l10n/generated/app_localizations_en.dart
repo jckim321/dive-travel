@@ -2058,6 +2058,128 @@ class AppLocalizationsEn extends AppLocalizations {
       'No approved documents yet. Please wait for admin approval.';
 
   @override
+  String get partnerLoiTitle => 'Letter of intent';
+
+  @override
+  String get partnerLoiHint =>
+      'Fill in your shop details and sign with your finger. We will generate a PDF and notify Dive Travel.';
+
+  @override
+  String get partnerLoiCompany => 'Company / shop name';
+
+  @override
+  String get partnerLoiContact => 'Contact name';
+
+  @override
+  String get partnerLoiEmail => 'Email';
+
+  @override
+  String get partnerLoiPhone => 'Phone';
+
+  @override
+  String get partnerLoiCountry => 'Country';
+
+  @override
+  String get partnerLoiNotes => 'Notes (optional)';
+
+  @override
+  String get partnerLoiSignature => 'Signature (draw below)';
+
+  @override
+  String get partnerLoiClearSignature => 'Clear signature';
+
+  @override
+  String get partnerLoiSubmit => 'Submit letter of intent';
+
+  @override
+  String get partnerLoiMissingFields =>
+      'Enter company, contact, and a signature.';
+
+  @override
+  String get partnerLoiSubmitted => 'Letter of intent submitted.';
+
+  @override
+  String get partnerLoiOpenForm => 'Write letter of intent';
+
+  @override
+  String get partnerLoiOpenFormHint =>
+      'In-app form with touch signature and PDF.';
+
+  @override
+  String get partnerLoiStatusSection => 'My applications';
+
+  @override
+  String get partnerLoiStatusEmpty => 'No letter of intent submitted yet.';
+
+  @override
+  String get pipelineGuideSent => 'Guide sent';
+
+  @override
+  String get pipelineLoiReceived => 'LOI received';
+
+  @override
+  String get pipelineDocsSubmitted => 'Docs submitted';
+
+  @override
+  String get pipelineUnderReview => 'Under review';
+
+  @override
+  String get pipelineResultNotified => 'Result notified';
+
+  @override
+  String pipelineReminderSubject(String shopName) {
+    return 'Dive Star follow-up: $shopName';
+  }
+
+  @override
+  String pipelineReminderBody(String shopName, String contactName) {
+    return 'Hello $contactName,\n\nThis is a reminder about the Dive Star application for $shopName. Please reply with any remaining documents or questions.\n\nThank you,\nDive Travel';
+  }
+
+  @override
+  String get pipelineReminderQueued => 'Reminder opened in email and queued.';
+
+  @override
+  String get adminAppsTitle => 'Dive Star applications';
+
+  @override
+  String get adminAppsHint =>
+      'Track letters of intent and advance the partner pipeline. Email is queued here; use mailto until Cloud Functions send mail.';
+
+  @override
+  String get adminAppsReminderSection => 'Reminders due';
+
+  @override
+  String get adminAppsEmailServerNote =>
+      'Server email is not connected yet. Reminder opens your mail app and records a queue entry.';
+
+  @override
+  String get adminAppsReminderEmpty => 'No reminders due.';
+
+  @override
+  String get adminAppsListSection => 'Applications';
+
+  @override
+  String get adminAppsEmpty => 'No applications yet.';
+
+  @override
+  String get adminAppsSendReminder => 'Send reminder';
+
+  @override
+  String adminAppsAdvanceTo(String status) {
+    return 'Advance to $status';
+  }
+
+  @override
+  String get adminAppsOutboxSection => 'Email outbox';
+
+  @override
+  String get adminAppsOutboxEmpty => 'Outbox is empty.';
+
+  @override
+  String get adminAppsOpenList => 'Applications & pipeline';
+
+  @override
   String get adminViewShopProducts => 'View products';
 
   @override

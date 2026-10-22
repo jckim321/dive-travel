@@ -229,6 +229,27 @@ service cloud.firestore {
       allow read: if isAdmin() || isBusiness();
     }
 
+    // Dive Star LOI applications + pipeline (no Storage; signature PNG in doc).
+    match /dive_star_applications/{appId} {
+      allow read: if isAdmin()
+        || (isBusiness() && resource.data.partner_uid == request.auth.uid);
+      allow create: if isBusiness()
+        && request.resource.data.partner_uid == request.auth.uid
+        && request.resource.data.shop_id is string
+        && request.resource.data.shop_id.size() > 0
+        && request.resource.data.company_name is string
+        && request.resource.data.contact_name is string
+        && request.resource.data.signature_png_base64 is string
+        && request.resource.data.signature_png_base64.size() > 0
+        && request.resource.data.signature_png_base64.size() < 400000;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /partner_email_outbox/{mailId} {
+      allow read, write: if isAdmin();
+    }
+
     match /posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();

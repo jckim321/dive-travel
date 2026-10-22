@@ -3834,6 +3834,228 @@ abstract class AppLocalizations {
   /// **'아직 열 수 있는 승인 문서가 없습니다. 관리자 승인을 기다려 주세요.'**
   String get partnerDocsEmpty;
 
+  /// No description provided for @partnerLoiTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여 의향서'**
+  String get partnerLoiTitle;
+
+  /// No description provided for @partnerLoiHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 정보를 입력하고 손가락으로 서명한 뒤 제출하세요. PDF가 만들어지고 다이브트래블에 접수됩니다.'**
+  String get partnerLoiHint;
+
+  /// No description provided for @partnerLoiCompany.
+  ///
+  /// In ko, this message translates to:
+  /// **'회사·샵 이름'**
+  String get partnerLoiCompany;
+
+  /// No description provided for @partnerLoiContact.
+  ///
+  /// In ko, this message translates to:
+  /// **'담당자 이름'**
+  String get partnerLoiContact;
+
+  /// No description provided for @partnerLoiEmail.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일'**
+  String get partnerLoiEmail;
+
+  /// No description provided for @partnerLoiPhone.
+  ///
+  /// In ko, this message translates to:
+  /// **'전화'**
+  String get partnerLoiPhone;
+
+  /// No description provided for @partnerLoiCountry.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가'**
+  String get partnerLoiCountry;
+
+  /// No description provided for @partnerLoiNotes.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 (선택)'**
+  String get partnerLoiNotes;
+
+  /// No description provided for @partnerLoiSignature.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명 (아래에 그려 주세요)'**
+  String get partnerLoiSignature;
+
+  /// No description provided for @partnerLoiClearSignature.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명 지우기'**
+  String get partnerLoiClearSignature;
+
+  /// No description provided for @partnerLoiSubmit.
+  ///
+  /// In ko, this message translates to:
+  /// **'의향서 제출'**
+  String get partnerLoiSubmit;
+
+  /// No description provided for @partnerLoiMissingFields.
+  ///
+  /// In ko, this message translates to:
+  /// **'회사명, 담당자, 서명을 입력해 주세요.'**
+  String get partnerLoiMissingFields;
+
+  /// No description provided for @partnerLoiSubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'의향서를 접수했습니다.'**
+  String get partnerLoiSubmitted;
+
+  /// No description provided for @partnerLoiOpenForm.
+  ///
+  /// In ko, this message translates to:
+  /// **'의향서 작성'**
+  String get partnerLoiOpenForm;
+
+  /// No description provided for @partnerLoiOpenFormHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱에서 작성·터치 서명·PDF 생성'**
+  String get partnerLoiOpenFormHint;
+
+  /// No description provided for @partnerLoiStatusSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 신청 현황'**
+  String get partnerLoiStatusSection;
+
+  /// No description provided for @partnerLoiStatusEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 제출한 의향서가 없습니다.'**
+  String get partnerLoiStatusEmpty;
+
+  /// No description provided for @pipelineGuideSent.
+  ///
+  /// In ko, this message translates to:
+  /// **'안내 발송'**
+  String get pipelineGuideSent;
+
+  /// No description provided for @pipelineLoiReceived.
+  ///
+  /// In ko, this message translates to:
+  /// **'의향서 접수'**
+  String get pipelineLoiReceived;
+
+  /// No description provided for @pipelineDocsSubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'서류 제출'**
+  String get pipelineDocsSubmitted;
+
+  /// No description provided for @pipelineUnderReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 중'**
+  String get pipelineUnderReview;
+
+  /// No description provided for @pipelineResultNotified.
+  ///
+  /// In ko, this message translates to:
+  /// **'결과 통보'**
+  String get pipelineResultNotified;
+
+  /// No description provided for @pipelineReminderSubject.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 안내: {shopName}'**
+  String pipelineReminderSubject(String shopName);
+
+  /// No description provided for @pipelineReminderBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{contactName} 님 안녕하세요.\n\n{shopName} 다이브스타 신청 관련 안내입니다. 남은 서류나 문의가 있으면 회신해 주세요.\n\n감사합니다.\n다이브트래블'**
+  String pipelineReminderBody(String shopName, String contactName);
+
+  /// No description provided for @pipelineReminderQueued.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일 앱을 열고 발송 큐에 기록했습니다.'**
+  String get pipelineReminderQueued;
+
+  /// No description provided for @adminAppsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 신청'**
+  String get adminAppsTitle;
+
+  /// No description provided for @adminAppsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'의향서 접수와 파트너 진행 상태를 관리합니다. 이메일은 큐에 쌓이며, Cloud Functions 연동 전까지는 mailto로 보냅니다.'**
+  String get adminAppsHint;
+
+  /// No description provided for @adminAppsReminderSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'리마인더 대상'**
+  String get adminAppsReminderSection;
+
+  /// No description provided for @adminAppsEmailServerNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'서버 메일 발송은 아직 없습니다. 리마인더는 메일 앱을 열고 큐에 기록합니다.'**
+  String get adminAppsEmailServerNote;
+
+  /// No description provided for @adminAppsReminderEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'기한이 된 리마인더가 없습니다.'**
+  String get adminAppsReminderEmpty;
+
+  /// No description provided for @adminAppsListSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청 목록'**
+  String get adminAppsListSection;
+
+  /// No description provided for @adminAppsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'접수된 신청이 없습니다.'**
+  String get adminAppsEmpty;
+
+  /// No description provided for @adminAppsSendReminder.
+  ///
+  /// In ko, this message translates to:
+  /// **'리마인더 보내기'**
+  String get adminAppsSendReminder;
+
+  /// No description provided for @adminAppsAdvanceTo.
+  ///
+  /// In ko, this message translates to:
+  /// **'{status}(으)로 진행'**
+  String adminAppsAdvanceTo(String status);
+
+  /// No description provided for @adminAppsOutboxSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일 발송 큐'**
+  String get adminAppsOutboxSection;
+
+  /// No description provided for @adminAppsOutboxEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'발송 큐가 비어 있습니다.'**
+  String get adminAppsOutboxEmpty;
+
+  /// No description provided for @adminAppsOpenList.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청·진행 상태'**
+  String get adminAppsOpenList;
+
   /// No description provided for @adminViewShopProducts.
   ///
   /// In ko, this message translates to:
