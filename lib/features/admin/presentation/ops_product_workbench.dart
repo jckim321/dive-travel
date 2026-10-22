@@ -927,8 +927,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           includes: _includes.text.trim(),
           excludes: _excludes.text.trim(),
           difficulty: '',
-          minGuests: 0,
-          maxGuests: 0,
+          // min/max guests are not on the form; leave defaults so merge keeps
+          // any legacy min_guests on the document (checkout ignores min).
           cancellationNote: _cancel.text.trim(),
           category: _category,
           detail: existing?.detail ?? '',
@@ -936,6 +936,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             for (final item in _gallery)
               if (item.url != null && item.url!.isNotEmpty) item.url!,
           ],
+          // Folded into schedule on open; clear so detail/duration stay in sync.
           itineraryDays: const [],
           guestRates: guestRates,
           focPayCount: existing?.focPayCount ?? 0,

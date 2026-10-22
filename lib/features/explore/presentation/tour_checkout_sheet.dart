@@ -272,12 +272,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final product = widget.product;
     final party = _hasProduct ? _partySize : 1;
     if (product != null) {
-      if (product.minGuests > 0 && party < product.minGuests) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.checkoutGuestsBelowMin(product.minGuests))),
-        );
-        return;
-      }
+      // min_guests is legacy / unused by the product form — do not block checkout.
       if (product.maxGuests > 0 && party > product.maxGuests) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.checkoutGuestsAboveMax(product.maxGuests))),
@@ -1009,15 +1004,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       l10n.productFormDifficulty,
       product.difficulty,
     );
-    if (product.minGuests > 0 || product.maxGuests > 0) {
-      final range = [
-        if (product.minGuests > 0) l10n.productFormMinGuests,
-        if (product.minGuests > 0) '${product.minGuests}',
-        if (product.minGuests > 0 && product.maxGuests > 0) '·',
-        if (product.maxGuests > 0) l10n.productFormMaxGuests,
-        if (product.maxGuests > 0) '${product.maxGuests}',
-      ].join(' ');
-      addCard(Icons.groups_outlined, l10n.checkoutGuests, range);
+    if (product.maxGuests > 0) {
+      addCard(
+        Icons.groups_outlined,
+        l10n.checkoutGuests,
+        '${l10n.productFormMaxGuests} ${product.maxGuests}',
+      );
     }
     return cards;
   }

@@ -2434,6 +2434,7 @@ class FirestoreDiverRepository implements DiverRepository {
     String? photoContentType,
     bool useAsResortCover = false,
     List<ShopGallerySlot>? gallery,
+    bool clearAbsentFormFields = false,
   }) async {
     var saved = product;
     // Upload first so we never persist a product that looks saved without a
@@ -2460,29 +2461,29 @@ class FirestoreDiverRepository implements DiverRepository {
     }
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
-    final current = <String, ShopProduct>{
-      for (final parsed in ShopProduct.listFrom(
-        shopId,
-        snap.data()?['products'],
-      ))
-        parsed.id: parsed,
+    final rawProducts = snap.data()?['products'];
+    final previousRaw = _rawProductMap(rawProducts, saved.id);
+    final current = <String, Map<String, dynamic>>{
+      for (final entry in _rawProductEntries(rawProducts))
+        entry.key: entry.value,
     };
     // Keep an existing cover if the edit omitted bytes/url (avoids wiping R2).
     // An explicit gallery, even an empty one, is the new photo list.
-    final previous = current[saved.id];
-    if (gallery == null &&
-        saved.coverUrl.isEmpty &&
-        previous != null &&
-        previous.coverUrl.isNotEmpty) {
-      saved = saved.copyWith(coverUrl: previous.coverUrl);
+    final previousCover = previousRaw?['cover_url'] as String? ?? '';
+    if (gallery == null && saved.coverUrl.isEmpty && previousCover.isNotEmpty) {
+      saved = saved.copyWith(coverUrl: previousCover);
     }
-    current[saved.id] = saved;
+    current[saved.id] = ShopProduct.mergePersistedMap(
+      previous: previousRaw,
+      product: saved,
+      clearAbsentFormFields: clearAbsentFormFields,
+    );
     final next = current.values.toList();
     final coverForShop = saved.coverUrl.isNotEmpty
         ? saved.coverUrl
         : (snap.data()?['cover_url'] as String? ?? '');
     await ref.set({
-      'products': [for (final item in next) item.toMap()],
+      'products': next,
       'product_name': saved.name,
       'consumer_price': saved.consumerPrice,
       'professional_price': saved.professionalPrice,
@@ -2505,6 +2506,34 @@ class FirestoreDiverRepository implements DiverRepository {
       },
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Map<String, dynamic>? _rawProductMap(dynamic raw, String productId) {
+    for (final entry in _rawProductEntries(raw)) {
+      if (entry.key == productId) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  Iterable<MapEntry<String, Map<String, dynamic>>> _rawProductEntries(
+    dynamic raw,
+  ) sync* {
+    if (raw is! List) {
+      return;
+    }
+    for (final item in raw) {
+      if (item is! Map) {
+        continue;
+      }
+      final map = Map<String, dynamic>.from(item);
+      final id = map['id'] as String? ?? '';
+      if (id.isEmpty) {
+        continue;
+      }
+      yield MapEntry(id, map);
+    }
   }
 
   @override

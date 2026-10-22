@@ -1091,15 +1091,32 @@ class _ProductOptionEditorDialogState extends State<_ProductOptionEditorDialog> 
             if (name.isEmpty) {
               return;
             }
+            final existing = widget.existing;
+            final edited = ShopProductOption(
+              id: _id,
+              name: name,
+              description: _description.text.trim(),
+              consumerPrice: int.tryParse(_consumer.text) ?? 0,
+              professionalPrice: int.tryParse(_professional.text) ?? 0,
+            );
+            // Preserve same-boat / seat fields the dialog does not edit.
             Navigator.pop(
               context,
-              ShopProductOption(
-                id: _id,
-                name: name,
-                description: _description.text.trim(),
-                consumerPrice: int.tryParse(_consumer.text) ?? 0,
-                professionalPrice: int.tryParse(_professional.text) ?? 0,
-              ),
+              existing == null
+                  ? edited
+                  : edited.copyWith(
+                      kind: existing.kind,
+                      bookable: existing.bookable,
+                      guestRole: existing.guestRole,
+                      openEmptySeats: existing.openEmptySeats,
+                      capacity: existing.capacity,
+                      bookedSeats: existing.bookedSeats,
+                      flagHolds: existing.flagHolds,
+                      departureStart: existing.departureStart,
+                      flagClosesAt: existing.flagClosesAt,
+                      parentOptionId: existing.parentOptionId,
+                      sameBoatStatus: existing.sameBoatStatus,
+                    ),
             );
           },
           style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),

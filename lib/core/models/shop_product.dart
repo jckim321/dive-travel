@@ -1501,6 +1501,58 @@ class ShopProduct {
     };
   }
 
+  /// Optional keys owned by the full product workbench. When absent from
+  /// [toMap] (empty), [mergePersistedMap] deletes them so clears stick.
+  /// Not included: min_guests/max_guests (legacy, not on the form) or seat
+  /// inventory keys managed by SameBoatSeatsScreen.
+  static const formOwnedOptionalKeys = <String>{
+    'blurb',
+    'duration_label',
+    'cover_url',
+    'continent',
+    'meeting_point',
+    'schedule',
+    'includes',
+    'excludes',
+    'difficulty',
+    'cancellation_note',
+    'detail',
+    'photo_urls',
+    'itinerary_days',
+    'guest_rates',
+    'review_note',
+  };
+
+  /// Merge [product] onto a previous Firestore/product map.
+  ///
+  /// Always overlays [toMap]. When [clearAbsentFormFields] is true, form-owned
+  /// keys missing from the overlay are removed (empty form wins). Unknown and
+  /// non-form keys (e.g. `min_guests`, custom legacy fields) are kept.
+  static Map<String, dynamic> mergePersistedMap({
+    Map<String, dynamic>? previous,
+    required ShopProduct product,
+    bool clearAbsentFormFields = false,
+  }) {
+    final overlay = product.toMap();
+    final merged = <String, dynamic>{
+      if (previous != null) ...previous,
+      ...overlay,
+    };
+    if (clearAbsentFormFields) {
+      for (final key in formOwnedOptionalKeys) {
+        if (!overlay.containsKey(key)) {
+          merged.remove(key);
+        }
+      }
+      // Structured days are folded into schedule on open; wipe to avoid
+      // derivedDurationLabel / duplicate itinerary drift.
+      if (product.itineraryDays.isEmpty) {
+        merged.remove('itinerary_days');
+      }
+    }
+    return merged;
+  }
+
   static List<SeatHold> _holds(dynamic raw) {
     if (raw is! List) {
       return const [];

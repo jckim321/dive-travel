@@ -2035,6 +2035,24 @@ class MemoryDiverRepository implements DiverRepository {
     _shopController.add(_shopStats.values.toList());
   }
 
+  /// Raw product maps so merge can preserve unknown / legacy keys in tests.
+  final _productRawByShop = <String, Map<String, Map<String, dynamic>>>{};
+
+  /// Test helper: stash extra raw keys on a product before [saveShopProduct].
+  void seedProductRawOverlay(
+    String shopId,
+    String productId,
+    Map<String, dynamic> extra,
+  ) {
+    final byId = _productRawByShop.putIfAbsent(shopId, () => {});
+    final previous = byId[productId] ?? <String, dynamic>{'id': productId};
+    byId[productId] = {...previous, ...extra};
+  }
+
+  Map<String, dynamic>? readProductRaw(String shopId, String productId) {
+    return _productRawByShop[shopId]?[productId];
+  }
+
   @override
   Future<void> saveShopProduct({
     required String shopId,
@@ -2044,6 +2062,7 @@ class MemoryDiverRepository implements DiverRepository {
     String? photoContentType,
     bool useAsResortCover = false,
     List<ShopGallerySlot>? gallery,
+    bool clearAbsentFormFields = false,
   }) async {
     final current = _shopStats[shopId];
     final ShopProduct saved;
@@ -2070,10 +2089,40 @@ class MemoryDiverRepository implements DiverRepository {
       saved = product.copyWith(coverUrl: coverUrl);
       coverBytes = photoBytes;
     }
+    final byId = _productRawByShop.putIfAbsent(shopId, () => {});
+    ShopProduct? previousProduct;
+    for (final item in current?.products ?? const <ShopProduct>[]) {
+      if (item.id == product.id) {
+        previousProduct = item;
+        break;
+      }
+    }
+    final previousRaw = byId[saved.id] ?? previousProduct?.toMap();
+    if (gallery == null &&
+        saved.coverUrl.isEmpty &&
+        previousProduct != null &&
+        previousProduct.coverUrl.isNotEmpty) {
+      // Match Firestore: keep prior cover when edit omits bytes/url.
+    }
+    var toPersist = saved;
+    if (gallery == null &&
+        toPersist.coverUrl.isEmpty &&
+        (previousRaw?['cover_url'] as String?)?.isNotEmpty == true) {
+      toPersist = toPersist.copyWith(
+        coverUrl: previousRaw!['cover_url'] as String,
+      );
+    }
+    final merged = ShopProduct.mergePersistedMap(
+      previous: previousRaw,
+      product: toPersist,
+      clearAbsentFormFields: clearAbsentFormFields,
+    );
+    byId[toPersist.id] = merged;
+    final parsed = ShopProduct.fromMap(shopId, merged);
     final products = [
       for (final item in current?.products ?? const <ShopProduct>[])
         if (item.id != product.id) item,
-      saved,
+      parsed,
     ];
     await saveShopProfile(
       shopId: shopId,
@@ -2088,8 +2137,8 @@ class MemoryDiverRepository implements DiverRepository {
         ? _shopStats[shopId]!.coverUrl
         : (coverBytes != null
               ? 'memory://shop-cover-$shopId'
-              : (saved.coverUrl.isNotEmpty
-                    ? saved.coverUrl
+              : (parsed.coverUrl.isNotEmpty
+                    ? parsed.coverUrl
                     : _shopStats[shopId]!.coverUrl));
     _shopStats[shopId] = _shopStats[shopId]!.copyWith(
       products: products,

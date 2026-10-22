@@ -1386,6 +1386,8 @@ class DiverStore extends ChangeNotifier {
       photoContentType: photoContentType,
       useAsResortCover: useAsResortCover,
       gallery: gallery,
+      // Same-boat seat screen only patches seat fields — keep other keys as-is.
+      clearAbsentFormFields: intent != ProductSaveIntent.preserveListing,
     );
     // Only mirror bytes locally after a durable R2 URL was written.
     if (gallery != null) {

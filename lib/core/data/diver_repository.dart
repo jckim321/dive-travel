@@ -337,6 +337,8 @@ abstract class DiverRepository {
     String? photoContentType,
     bool useAsResortCover = false,
     List<ShopGallerySlot>? gallery,
+    /// When true, empty workbench fields delete persisted keys; unknown keys stay.
+    bool clearAbsentFormFields = false,
   });
 
   Future<void> deleteShopProduct({
