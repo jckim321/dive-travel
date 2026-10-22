@@ -37,4 +37,40 @@ void main() {
     expect(list, hasLength(1));
     expect(list.first.method, PartnerDocShareMethod.share);
   });
+
+  test('승인된 공개 문서만 파트너 목록에 나온다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.ensurePartnerDocumentsSeeded();
+    expect(await repo.listApprovedPublicPartnerDocuments(), isEmpty);
+
+    await repo.updatePartnerDocumentStatus(
+      documentId: 'dive-star-guide-ko',
+      status: PartnerDocStatus.approved,
+    );
+    final approved = await repo.listApprovedPublicPartnerDocuments();
+    expect(approved, hasLength(1));
+    expect(approved.first.id, 'dive-star-guide-ko');
+  });
+
+  test('채널·문구 설정을 저장한다', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final config = await repo.ensurePartnerDocConfig();
+    final next = config.copyWith(
+      channelsByCountry: {
+        ...config.channelsByCountry,
+        'KR': ['kakao', 'email'],
+      },
+      templates: {
+        'ko': const PartnerMessageTemplate(
+          subject: '테스트 {파트너명}',
+          body: '링크 {링크}',
+        ),
+        'en': config.templateFor('en'),
+      },
+    );
+    await repo.savePartnerDocConfig(next);
+    final saved = await repo.ensurePartnerDocConfig();
+    expect(saved.channelsForCountry('KR'), ['kakao', 'email']);
+    expect(saved.templateFor('ko').subject, contains('테스트'));
+  });
 }

@@ -174,7 +174,17 @@ abstract class DiverRepository {
   /// Seeds phase-1 public drafts + default config when missing.
   Future<List<PartnerDocument>> ensurePartnerDocumentsSeeded();
 
+  /// Public + approved only (for partner mode).
+  Future<List<PartnerDocument>> listApprovedPublicPartnerDocuments();
+
   Future<PartnerDocConfig> ensurePartnerDocConfig();
+
+  Future<void> savePartnerDocConfig(PartnerDocConfig config);
+
+  Future<void> updatePartnerDocumentStatus({
+    required String documentId,
+    required PartnerDocStatus status,
+  });
 
   Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50});
 

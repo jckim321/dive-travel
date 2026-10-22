@@ -143,6 +143,25 @@ class PartnerDocument {
         'url': url,
       };
 
+  PartnerDocument copyWith({
+    PartnerDocStatus? status,
+    String? version,
+    String? title,
+  }) {
+    return PartnerDocument(
+      id: id,
+      title: title ?? this.title,
+      category: category,
+      audience: audience,
+      language: language,
+      version: version ?? this.version,
+      status: status ?? this.status,
+      assetPath: assetPath,
+      url: url,
+      updatedAt: updatedAt,
+    );
+  }
+
   /// Phase-1 seed: Dive Star guide + letter of intent (KO drafts).
   static List<PartnerDocument> phase1Seeds() => const [
         PartnerDocument(
@@ -313,6 +332,16 @@ class PartnerDocConfig {
           for (final entry in templates.entries) entry.key: entry.value.toMap(),
         },
       };
+
+  PartnerDocConfig copyWith({
+    Map<String, List<String>>? channelsByCountry,
+    Map<String, PartnerMessageTemplate>? templates,
+  }) {
+    return PartnerDocConfig(
+      channelsByCountry: channelsByCountry ?? this.channelsByCountry,
+      templates: templates ?? this.templates,
+    );
+  }
 
   static const PartnerDocConfig defaultConfig = PartnerDocConfig(
     channelsByCountry: {

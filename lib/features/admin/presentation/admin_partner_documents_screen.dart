@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_doc_config_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -115,6 +116,25 @@ class _AdminPartnerDocumentsScreenState
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AdminConsoleTheme.muted,
                           ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const AdminPartnerDocConfigScreen(),
+                            ),
+                          );
+                          if (mounted) {
+                            await _reload();
+                          }
+                        },
+                        icon: const Icon(Icons.tune),
+                        label: Text(l10n.adminDocConfigTitle),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -226,14 +246,57 @@ class _PartnerDocumentDetailPage extends StatefulWidget {
 class _PartnerDocumentDetailPageState extends State<_PartnerDocumentDetailPage> {
   Uint8List? _pdfBytes;
   bool _loadingPdf = true;
+  bool _updatingStatus = false;
   DiveShop? _selectedShop;
+  late PartnerDocument _doc;
 
-  PartnerDocument get doc => widget.document;
+  PartnerDocument get doc => _doc;
 
   @override
   void initState() {
     super.initState();
+    _doc = widget.document;
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadPdf());
+  }
+
+  Future<void> _toggleStatus(AppLocalizations l10n) async {
+    if (_updatingStatus) {
+      return;
+    }
+    final next = _doc.status == PartnerDocStatus.approved
+        ? PartnerDocStatus.draft
+        : PartnerDocStatus.approved;
+    setState(() => _updatingStatus = true);
+    try {
+      await DiverStoreScope.of(context).updatePartnerDocumentStatus(
+        documentId: _doc.id,
+        status: next,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _doc = _doc.copyWith(status: next);
+        _updatingStatus = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            next == PartnerDocStatus.approved
+                ? l10n.adminDocStatusApproved
+                : l10n.adminDocStatusDraft,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _updatingStatus = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
+    }
   }
 
   Future<void> _loadPdf() async {
@@ -583,6 +646,15 @@ class _PartnerDocumentDetailPageState extends State<_PartnerDocumentDetailPage> 
               doc.language.toUpperCase(),
             ].join(' · '),
             style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: _updatingStatus ? null : () => _toggleStatus(l10n),
+            child: Text(
+              doc.status == PartnerDocStatus.approved
+                  ? l10n.adminDocMarkDraft
+                  : l10n.adminDocMarkApproved,
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(

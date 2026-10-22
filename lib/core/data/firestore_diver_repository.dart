@@ -1436,6 +1436,20 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PartnerDocument>> listApprovedPublicPartnerDocuments() async {
+    final snap = await _partnerDocuments
+        .where('audience', isEqualTo: 'public')
+        .where('status', isEqualTo: 'approved')
+        .get();
+    final list = [
+      for (final doc in snap.docs)
+        PartnerDocument.fromDocument(doc.id, doc.data()),
+    ];
+    list.sort((a, b) => a.title.compareTo(b.title));
+    return list;
+  }
+
+  @override
   Future<PartnerDocConfig> ensurePartnerDocConfig() async {
     final snap = await _partnerDocConfig.get();
     if (!snap.exists || snap.data() == null) {
@@ -1447,6 +1461,25 @@ class FirestoreDiverRepository implements DiverRepository {
       return seed;
     }
     return PartnerDocConfig.fromDocument(snap.data()!);
+  }
+
+  @override
+  Future<void> savePartnerDocConfig(PartnerDocConfig config) {
+    return _partnerDocConfig.set({
+      ...config.toMap(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> updatePartnerDocumentStatus({
+    required String documentId,
+    required PartnerDocStatus status,
+  }) {
+    return _partnerDocuments.doc(documentId).set({
+      'status': status.firestoreValue,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   @override

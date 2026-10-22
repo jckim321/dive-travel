@@ -223,8 +223,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Channel/template config: partners may read (recommended channels).
     match /partner_doc_config/{configId} {
-      allow read, write: if isAdmin();
+      allow write: if isAdmin();
+      allow read: if isAdmin() || isBusiness();
     }
 
     match /posts/{postId} {

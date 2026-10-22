@@ -941,8 +941,26 @@ class DiverStore extends ChangeNotifier {
     return _repository.ensurePartnerDocumentsSeeded();
   }
 
+  Future<List<PartnerDocument>> listApprovedPublicPartnerDocuments() {
+    return _repository.listApprovedPublicPartnerDocuments();
+  }
+
   Future<PartnerDocConfig> ensurePartnerDocConfig() {
     return _repository.ensurePartnerDocConfig();
+  }
+
+  Future<void> savePartnerDocConfig(PartnerDocConfig config) {
+    return _repository.savePartnerDocConfig(config);
+  }
+
+  Future<void> updatePartnerDocumentStatus({
+    required String documentId,
+    required PartnerDocStatus status,
+  }) {
+    return _repository.updatePartnerDocumentStatus(
+      documentId: documentId,
+      status: status,
+    );
   }
 
   Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50}) {

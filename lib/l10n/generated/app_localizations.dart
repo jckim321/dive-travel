@@ -3714,6 +3714,126 @@ abstract class AppLocalizations {
   /// **'(받는 곳 미지정)'**
   String get adminDocFaxToBlank;
 
+  /// No description provided for @adminDocMarkApproved.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인으로 바꾸기'**
+  String get adminDocMarkApproved;
+
+  /// No description provided for @adminDocMarkDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'초안으로 되돌리기'**
+  String get adminDocMarkDraft;
+
+  /// No description provided for @adminDocConfigTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'채널·문구 설정'**
+  String get adminDocConfigTitle;
+
+  /// No description provided for @adminDocConfigChannelsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가별 추천 채널을 쉼표로 적어 주세요. (예: kakao, email, share)'**
+  String get adminDocConfigChannelsHint;
+
+  /// No description provided for @adminDocConfigChannelsKr.
+  ///
+  /// In ko, this message translates to:
+  /// **'한국 (KR)'**
+  String get adminDocConfigChannelsKr;
+
+  /// No description provided for @adminDocConfigChannelsJp.
+  ///
+  /// In ko, this message translates to:
+  /// **'일본 (JP)'**
+  String get adminDocConfigChannelsJp;
+
+  /// No description provided for @adminDocConfigChannelsTh.
+  ///
+  /// In ko, this message translates to:
+  /// **'태국 (TH)'**
+  String get adminDocConfigChannelsTh;
+
+  /// No description provided for @adminDocConfigChannelsId.
+  ///
+  /// In ko, this message translates to:
+  /// **'인도네시아 (ID)'**
+  String get adminDocConfigChannelsId;
+
+  /// No description provided for @adminDocConfigChannelsDefault.
+  ///
+  /// In ko, this message translates to:
+  /// **'그 외 (DEFAULT)'**
+  String get adminDocConfigChannelsDefault;
+
+  /// No description provided for @adminDocConfigTemplatesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'발송 문구 템플릿. 자리표시자: 파트너명, 링크 (영문 partner_name, link)'**
+  String get adminDocConfigTemplatesHint;
+
+  /// No description provided for @adminDocConfigKoSubject.
+  ///
+  /// In ko, this message translates to:
+  /// **'한국어 제목'**
+  String get adminDocConfigKoSubject;
+
+  /// No description provided for @adminDocConfigKoBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'한국어 본문'**
+  String get adminDocConfigKoBody;
+
+  /// No description provided for @adminDocConfigEnSubject.
+  ///
+  /// In ko, this message translates to:
+  /// **'English subject'**
+  String get adminDocConfigEnSubject;
+
+  /// No description provided for @adminDocConfigEnBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'English body'**
+  String get adminDocConfigEnBody;
+
+  /// No description provided for @adminDocConfigPlaceholders.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리표시자 예: 중괄호+파트너명, 중괄호+링크, partner_name, link'**
+  String get adminDocConfigPlaceholders;
+
+  /// No description provided for @adminDocConfigSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'채널·문구 설정을 저장했습니다.'**
+  String get adminDocConfigSaved;
+
+  /// No description provided for @partnerDocsSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 자료'**
+  String get partnerDocsSection;
+
+  /// No description provided for @partnerDocsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'안내·신청 문서'**
+  String get partnerDocsTitle;
+
+  /// No description provided for @partnerDocsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인된 공개 안내서와 신청서를 확인하고 출력할 수 있습니다.'**
+  String get partnerDocsHint;
+
+  /// No description provided for @partnerDocsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 열 수 있는 승인 문서가 없습니다. 관리자 승인을 기다려 주세요.'**
+  String get partnerDocsEmpty;
+
   /// No description provided for @adminViewShopProducts.
   ///
   /// In ko, this message translates to:

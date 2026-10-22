@@ -1937,6 +1937,69 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminDocFaxToBlank => '(받는 곳 미지정)';
 
   @override
+  String get adminDocMarkApproved => '승인으로 바꾸기';
+
+  @override
+  String get adminDocMarkDraft => '초안으로 되돌리기';
+
+  @override
+  String get adminDocConfigTitle => '채널·문구 설정';
+
+  @override
+  String get adminDocConfigChannelsHint =>
+      '국가별 추천 채널을 쉼표로 적어 주세요. (예: kakao, email, share)';
+
+  @override
+  String get adminDocConfigChannelsKr => '한국 (KR)';
+
+  @override
+  String get adminDocConfigChannelsJp => '일본 (JP)';
+
+  @override
+  String get adminDocConfigChannelsTh => '태국 (TH)';
+
+  @override
+  String get adminDocConfigChannelsId => '인도네시아 (ID)';
+
+  @override
+  String get adminDocConfigChannelsDefault => '그 외 (DEFAULT)';
+
+  @override
+  String get adminDocConfigTemplatesHint =>
+      '발송 문구 템플릿. 자리표시자: 파트너명, 링크 (영문 partner_name, link)';
+
+  @override
+  String get adminDocConfigKoSubject => '한국어 제목';
+
+  @override
+  String get adminDocConfigKoBody => '한국어 본문';
+
+  @override
+  String get adminDocConfigEnSubject => 'English subject';
+
+  @override
+  String get adminDocConfigEnBody => 'English body';
+
+  @override
+  String get adminDocConfigPlaceholders =>
+      '자리표시자 예: 중괄호+파트너명, 중괄호+링크, partner_name, link';
+
+  @override
+  String get adminDocConfigSaved => '채널·문구 설정을 저장했습니다.';
+
+  @override
+  String get partnerDocsSection => '다이브스타 자료';
+
+  @override
+  String get partnerDocsTitle => '안내·신청 문서';
+
+  @override
+  String get partnerDocsHint => '승인된 공개 안내서와 신청서를 확인하고 출력할 수 있습니다.';
+
+  @override
+  String get partnerDocsEmpty => '아직 열 수 있는 승인 문서가 없습니다. 관리자 승인을 기다려 주세요.';
+
+  @override
   String get adminViewShopProducts => '상품 보기';
 
   @override

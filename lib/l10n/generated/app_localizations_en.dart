@@ -1993,6 +1993,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDocFaxToBlank => '(recipient blank)';
 
   @override
+  String get adminDocMarkApproved => 'Mark approved';
+
+  @override
+  String get adminDocMarkDraft => 'Revert to draft';
+
+  @override
+  String get adminDocConfigTitle => 'Channels & templates';
+
+  @override
+  String get adminDocConfigChannelsHint =>
+      'Comma-separated channels per country (e.g. kakao, email, share).';
+
+  @override
+  String get adminDocConfigChannelsKr => 'Korea (KR)';
+
+  @override
+  String get adminDocConfigChannelsJp => 'Japan (JP)';
+
+  @override
+  String get adminDocConfigChannelsTh => 'Thailand (TH)';
+
+  @override
+  String get adminDocConfigChannelsId => 'Indonesia (ID)';
+
+  @override
+  String get adminDocConfigChannelsDefault => 'Other (DEFAULT)';
+
+  @override
+  String get adminDocConfigTemplatesHint =>
+      'Message templates. Placeholders: partner_name, link (and Korean equivalents).';
+
+  @override
+  String get adminDocConfigKoSubject => 'Korean subject';
+
+  @override
+  String get adminDocConfigKoBody => 'Korean body';
+
+  @override
+  String get adminDocConfigEnSubject => 'English subject';
+
+  @override
+  String get adminDocConfigEnBody => 'English body';
+
+  @override
+  String get adminDocConfigPlaceholders =>
+      'Placeholder examples: partner_name, link (wrap in curly braces in the template text).';
+
+  @override
+  String get adminDocConfigSaved => 'Channel and template settings saved.';
+
+  @override
+  String get partnerDocsSection => 'Dive Star materials';
+
+  @override
+  String get partnerDocsTitle => 'Guides & forms';
+
+  @override
+  String get partnerDocsHint =>
+      'View and print approved public guides and application forms.';
+
+  @override
+  String get partnerDocsEmpty =>
+      'No approved documents yet. Please wait for admin approval.';
+
+  @override
   String get adminViewShopProducts => 'View products';
 
   @override

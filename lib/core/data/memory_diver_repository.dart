@@ -1136,8 +1136,37 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PartnerDocument>> listApprovedPublicPartnerDocuments() async {
+    final all = await ensurePartnerDocumentsSeeded();
+    return [
+      for (final doc in all)
+        if (doc.audience == PartnerDocAudience.public &&
+            doc.status == PartnerDocStatus.approved)
+          doc,
+    ];
+  }
+
+  @override
   Future<PartnerDocConfig> ensurePartnerDocConfig() async {
     return _partnerDocConfig ??= PartnerDocConfig.defaultConfig;
+  }
+
+  @override
+  Future<void> savePartnerDocConfig(PartnerDocConfig config) async {
+    _partnerDocConfig = config;
+  }
+
+  @override
+  Future<void> updatePartnerDocumentStatus({
+    required String documentId,
+    required PartnerDocStatus status,
+  }) async {
+    final list = await ensurePartnerDocumentsSeeded();
+    final index = list.indexWhere((item) => item.id == documentId);
+    if (index < 0) {
+      throw StateError('Document not found: $documentId');
+    }
+    list[index] = list[index].copyWith(status: status);
   }
 
   @override
