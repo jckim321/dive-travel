@@ -213,6 +213,15 @@ class _ReviewCard extends StatelessWidget {
                   color: const Color(0xFFC4A35A),
                 ),
               const Spacer(),
+              if (review.wasEdited) ...[
+                Text(
+                  l10n.myReviewEditedBadge,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.muted,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Text(
                 _date.format(review.createdAt.toLocal()),
                 style: theme.textTheme.bodySmall?.copyWith(

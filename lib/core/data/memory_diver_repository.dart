@@ -80,6 +80,9 @@ class MemoryDiverRepository implements DiverRepository {
   MemberGrade _memberGrade = MemberGrade.silver;
   final _shopStats = <String, ShopLiveStats>{};
   final _shopReviews = <String, List<GuestReview>>{};
+  /// Running shop sums for accurate edit/delete (mirrors Firestore sum_*).
+  final _shopReviewSums = <String, List<double>>{};
+  final _myReviews = <String, List<GuestReview>>{};
   int _reviewSequence = 0;
   int _assessmentSequence = 0;
   int _shareSequence = 0;
@@ -565,13 +568,15 @@ class MemoryDiverRepository implements DiverRepository {
     );
 
     final current = _shopStats[shopId];
+    final prevSums = _shopReviewSums[shopId] ?? const [0.0, 0.0, 0.0];
     final count = (current?.reviewCount ?? 0) + 1;
-    final avgSafety =
-        ((current?.avgSafety ?? 0) * (count - 1) + safeSafety) / count;
-    final avgGuide =
-        ((current?.avgGuide ?? 0) * (count - 1) + safeGuide) / count;
-    final avgBoat =
-        ((current?.avgBoat ?? 0) * (count - 1) + safeBoat) / count;
+    final sumSafety = prevSums[0] + safeSafety;
+    final sumGuide = prevSums[1] + safeGuide;
+    final sumBoat = prevSums[2] + safeBoat;
+    _shopReviewSums[shopId] = [sumSafety, sumGuide, sumBoat];
+    final avgSafety = sumSafety / count;
+    final avgGuide = sumGuide / count;
+    final avgBoat = sumBoat / count;
     final guestStars =
         ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
     final productKey = (productId?.trim().isNotEmpty ?? false)
@@ -606,15 +611,23 @@ class MemoryDiverRepository implements DiverRepository {
     final review = GuestReview(
       id: 'review-$_reviewSequence',
       shopId: shopId,
+      uid: uid,
+      bookingId: resolvedBookingId,
+      safety: safeSafety,
+      guide: safeGuide,
+      boat: safeBoat,
       stars: guestStars,
       comment: safeComment ?? '',
       createdAt: DateTime.now().toUtc(),
       authorDisplayName: authorDisplayName?.trim() ?? '',
       productId: productKey,
+      optionId: optionKey,
       details: safeDetails,
     );
     final existing = _shopReviews[shopId] ?? <GuestReview>[];
     _shopReviews[shopId] = [review, ...existing];
+    final mine = _myReviews[uid] ?? <GuestReview>[];
+    _myReviews[uid] = [review, ...mine];
     _shopStats[shopId] = ShopLiveStats(
       shopId: shopId,
       reviewCount: count,
@@ -660,6 +673,225 @@ class MemoryDiverRepository implements DiverRepository {
       productLink: link,
       productId: productKey,
     );
+  }
+
+  @override
+  Future<List<GuestReview>> listMyReviews(String uid) async {
+    final list = List<GuestReview>.from(_myReviews[uid] ?? const []);
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  @override
+  Future<void> updateOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+    required int safety,
+    required int guide,
+    required int boat,
+    String? comment,
+    ReviewDetails? details,
+  }) async {
+    final safeSafety = OperationReviewPolicy.clampStars(safety);
+    final safeGuide = OperationReviewPolicy.clampStars(guide);
+    final safeBoat = OperationReviewPolicy.clampStars(boat);
+    OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
+    final safeComment = OperationReviewPolicy.normalizeComment(comment);
+    final safeDetails = OperationReviewPolicy.normalizeDetails(details);
+    final shopList = _shopReviews[shopId] ?? <GuestReview>[];
+    final index = shopList.indexWhere((item) => item.id == reviewId);
+    if (index < 0) {
+      throw StateError('Review not found');
+    }
+    final old = shopList[index];
+    if (old.uid != uid) {
+      throw StateError('Not your review');
+    }
+    final current = _shopStats[shopId];
+    final count = current?.reviewCount ?? 0;
+    if (count <= 0) {
+      throw StateError('Shop has no reviews to update');
+    }
+    final prevSums = _shopReviewSums[shopId] ?? const [0.0, 0.0, 0.0];
+    final sumSafety = prevSums[0] - old.safety + safeSafety;
+    final sumGuide = prevSums[1] - old.guide + safeGuide;
+    final sumBoat = prevSums[2] - old.boat + safeBoat;
+    _shopReviewSums[shopId] = [sumSafety, sumGuide, sumBoat];
+    final avgSafety = sumSafety / count;
+    final avgGuide = sumGuide / count;
+    final avgBoat = sumBoat / count;
+    final oldGuest =
+        ((old.safety + old.guide + old.boat) / 3).round().clamp(1, 5);
+    final newGuest =
+        ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
+    final products = <ShopProduct>[];
+    for (final item in current?.products ?? const <ShopProduct>[]) {
+      if (old.productId.isNotEmpty && item.id == old.productId) {
+        products.add(
+          item.replaceGuestStarReview(
+            oldGuest,
+            newGuest,
+            optionId: old.optionId,
+          ),
+        );
+      } else {
+        products.add(item);
+      }
+    }
+    final updated = GuestReview(
+      id: old.id,
+      shopId: old.shopId,
+      uid: old.uid,
+      bookingId: old.bookingId,
+      safety: safeSafety,
+      guide: safeGuide,
+      boat: safeBoat,
+      stars: newGuest,
+      comment: safeComment ?? '',
+      createdAt: old.createdAt,
+      editedAt: DateTime.now().toUtc(),
+      authorDisplayName: old.authorDisplayName,
+      productId: old.productId,
+      optionId: old.optionId,
+      details: safeDetails,
+    );
+    shopList[index] = updated;
+    _shopReviews[shopId] = shopList;
+    final mine = _myReviews[uid] ?? <GuestReview>[];
+    final myIndex = mine.indexWhere((item) => item.id == reviewId);
+    if (myIndex >= 0) {
+      mine[myIndex] = updated;
+      _myReviews[uid] = mine;
+    }
+    if (current != null) {
+      _shopStats[shopId] = ShopLiveStats(
+        shopId: shopId,
+        reviewCount: count,
+        avgSafety: avgSafety,
+        avgGuide: avgGuide,
+        avgBoat: avgBoat,
+        avgOverall: DiveStar.overall(
+          safety: avgSafety,
+          guide: avgGuide,
+          boat: avgBoat,
+        ),
+        diveStar: current.diveStar,
+        diveStarReviewedAt: current.diveStarReviewedAt,
+        diveStarExpiresAt: current.diveStarExpiresAt,
+        plaqueStatus: current.plaqueStatus,
+        name: current.name,
+        location: current.location,
+        country: current.country,
+        continent: current.continent,
+        curated: current.curated,
+        productName: current.productName,
+        consumerPrice: current.consumerPrice,
+        professionalPrice: current.professionalPrice,
+        commissionRate: current.commissionRate,
+        internalScore: current.internalScore,
+        products: products,
+        intro: current.intro,
+        address: current.address,
+        coverUrl: current.coverUrl,
+        galleryUrls: current.galleryUrls,
+        amenities: current.amenities,
+      );
+      _shopController.add(_shopStats.values.toList());
+    }
+  }
+
+  @override
+  Future<void> deleteOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+  }) async {
+    final shopList = _shopReviews[shopId] ?? <GuestReview>[];
+    final index = shopList.indexWhere((item) => item.id == reviewId);
+    if (index < 0) {
+      throw StateError('Review not found');
+    }
+    final old = shopList[index];
+    if (old.uid != uid) {
+      throw StateError('Not your review');
+    }
+    shopList.removeAt(index);
+    _shopReviews[shopId] = shopList;
+    final mine = _myReviews[uid] ?? <GuestReview>[];
+    mine.removeWhere((item) => item.id == reviewId);
+    _myReviews[uid] = mine;
+
+    final current = _shopStats[shopId];
+    final count = current?.reviewCount ?? 0;
+    final nextCount = (count - 1).clamp(0, 1 << 30);
+    final prevSums = _shopReviewSums[shopId] ?? const [0.0, 0.0, 0.0];
+    final sumSafety = prevSums[0] - old.safety;
+    final sumGuide = prevSums[1] - old.guide;
+    final sumBoat = prevSums[2] - old.boat;
+    _shopReviewSums[shopId] = nextCount == 0
+        ? [0.0, 0.0, 0.0]
+        : [sumSafety, sumGuide, sumBoat];
+    final avgSafety = nextCount == 0 ? 0.0 : sumSafety / nextCount;
+    final avgGuide = nextCount == 0 ? 0.0 : sumGuide / nextCount;
+    final avgBoat = nextCount == 0 ? 0.0 : sumBoat / nextCount;
+    final oldGuest =
+        ((old.safety + old.guide + old.boat) / 3).round().clamp(1, 5);
+    final products = <ShopProduct>[];
+    for (final item in current?.products ?? const <ShopProduct>[]) {
+      if (old.productId.isNotEmpty && item.id == old.productId) {
+        products.add(
+          item.removeGuestStarReview(oldGuest, optionId: old.optionId),
+        );
+      } else {
+        products.add(item);
+      }
+    }
+    if (old.bookingId.isNotEmpty) {
+      final bIndex = _bookings.indexWhere((item) => item.id == old.bookingId);
+      if (bIndex >= 0) {
+        _bookings[bIndex] = _bookings[bIndex].copyWith(reviewed: false);
+        _bookingController.add(List<TourBooking>.from(_bookings));
+      }
+    }
+    if (current != null) {
+      _shopStats[shopId] = ShopLiveStats(
+        shopId: shopId,
+        reviewCount: nextCount,
+        avgSafety: avgSafety,
+        avgGuide: avgGuide,
+        avgBoat: avgBoat,
+        avgOverall: nextCount == 0
+            ? 0
+            : DiveStar.overall(
+                safety: avgSafety,
+                guide: avgGuide,
+                boat: avgBoat,
+              ),
+        diveStar: current.diveStar,
+        diveStarReviewedAt: current.diveStarReviewedAt,
+        diveStarExpiresAt: current.diveStarExpiresAt,
+        plaqueStatus: current.plaqueStatus,
+        name: current.name,
+        location: current.location,
+        country: current.country,
+        continent: current.continent,
+        curated: current.curated,
+        productName: current.productName,
+        consumerPrice: current.consumerPrice,
+        professionalPrice: current.professionalPrice,
+        commissionRate: current.commissionRate,
+        internalScore: current.internalScore,
+        products: products,
+        intro: current.intro,
+        address: current.address,
+        coverUrl: current.coverUrl,
+        galleryUrls: current.galleryUrls,
+        amenities: current.amenities,
+      );
+      _shopController.add(_shopStats.values.toList());
+    }
+    _bumpActivityLocal(uid: uid, reviewDelta: -1);
   }
 
   /// Test helper: insert a booking into the in-memory list.

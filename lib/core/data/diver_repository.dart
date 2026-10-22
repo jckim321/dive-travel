@@ -86,6 +86,28 @@ abstract class DiverRepository {
     ReviewDetails? details,
   });
 
+  /// Reviews written by [uid], newest first (`users/{uid}/reviews`).
+  Future<List<GuestReview>> listMyReviews(String uid);
+
+  /// Updates scores/comment/details; recomputes shop + product aggregates.
+  Future<void> updateOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+    required int safety,
+    required int guide,
+    required int boat,
+    String? comment,
+    ReviewDetails? details,
+  });
+
+  /// Deletes a review and rolls back shop/product aggregates; clears booking.reviewed.
+  Future<void> deleteOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+  });
+
   /// Newest-first page of guest reviews for a shop (default 10).
   Future<GuestReviewsPage> fetchShopReviewsPage({
     required String shopId,

@@ -516,6 +516,8 @@ class DiverStore extends ChangeNotifier {
 
   String? get uid => _uid;
 
+  List<ShopLiveStats> get shopStats => _shopStats;
+
   List<DiveShop> get shops => DiveShopCatalog.withLiveStats(_shopStats);
 
   List<DiveShop> get resortHulls => DiveShopCatalog.hulls(shops);
@@ -791,6 +793,54 @@ class DiverStore extends ChangeNotifier {
       comment: comment,
       authorDisplayName: name.isEmpty ? null : name,
       details: details,
+    );
+  }
+
+  Future<List<GuestReview>> listMyReviews() {
+    final uid = _uid;
+    if (uid == null) {
+      return Future.value(const []);
+    }
+    return _repository.listMyReviews(uid);
+  }
+
+  Future<void> updateOperationReview({
+    required String shopId,
+    required String reviewId,
+    required int safety,
+    required int guide,
+    required int boat,
+    String? comment,
+    ReviewDetails? details,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.updateOperationReview(
+      uid: uid,
+      shopId: shopId,
+      reviewId: reviewId,
+      safety: safety,
+      guide: guide,
+      boat: boat,
+      comment: comment,
+      details: details,
+    );
+  }
+
+  Future<void> deleteOperationReview({
+    required String shopId,
+    required String reviewId,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.deleteOperationReview(
+      uid: uid,
+      shopId: shopId,
+      reviewId: reviewId,
     );
   }
 

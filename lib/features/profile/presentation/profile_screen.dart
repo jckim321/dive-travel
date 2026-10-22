@@ -19,6 +19,7 @@ import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_s
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
+import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.dart';
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
@@ -180,6 +181,20 @@ class ProfileScreen extends StatelessWidget {
                               detail: suggested.location,
                             ),
                         ],
+                      ),
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(title: l10n.myReviewsTitle),
+                      const SizedBox(height: 12),
+                      Material(
+                        color: const Color(0xFFE8F4FC),
+                        borderRadius: BorderRadius.circular(16),
+                        child: ListTile(
+                          leading: const Icon(Icons.rate_review_outlined),
+                          title: Text(l10n.myReviewsMenu),
+                          subtitle: Text(l10n.myReviewsMenuHint),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => openMyReviews(context),
+                        ),
                       ),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.profileWriteReviewTitle),

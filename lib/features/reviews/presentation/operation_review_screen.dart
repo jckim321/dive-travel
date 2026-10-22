@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/features/reviews/presentation/review_detail_labels.dart';
@@ -17,12 +18,16 @@ class OperationReviewScreen extends StatefulWidget {
     this.bookingId,
     this.logId,
     this.productId,
+    this.existingReview,
   });
 
   final String? shopId;
   final String? bookingId;
   final String? logId;
   final String? productId;
+
+  /// When set, screen edits this review (shop/booking/product locked).
+  final GuestReview? existingReview;
 
   @override
   State<OperationReviewScreen> createState() => _OperationReviewScreenState();
@@ -45,16 +50,36 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   final _audiences = <String>{};
   var _detailsOpen = false;
 
+  bool get _isEditing => widget.existingReview != null;
+
   @override
   void initState() {
     super.initState();
-    _shopId = widget.shopId ?? DiveShopCatalog.shops.first.id;
-    _bookingId = widget.bookingId?.trim();
-    if (_bookingId != null && _bookingId!.isEmpty) {
-      _bookingId = null;
+    final existing = widget.existingReview;
+    if (existing != null) {
+      _shopId = existing.shopId;
+      _bookingId = existing.bookingId.isEmpty ? null : existing.bookingId;
+      _stars = existing.stars.clamp(1, 5);
+      _comment.text = existing.comment;
+      _diverLevel = existing.details.diverLevel;
+      _diveCountBand = existing.details.diveCountBand;
+      _visibility = existing.details.visibility;
+      _current = existing.details.current;
+      _guideCrowd = existing.details.guideCrowd;
+      _revisitIntent = existing.details.revisitIntent;
+      _audiences.addAll(existing.details.recommendFor);
+      if (existing.details.waterTempC != null) {
+        _waterTemp.text = '${existing.details.waterTempC}';
+      }
+    } else {
+      _shopId = widget.shopId ?? DiveShopCatalog.shops.first.id;
+      _bookingId = widget.bookingId?.trim();
+      if (_bookingId != null && _bookingId!.isEmpty) {
+        _bookingId = null;
+      }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted && !_isEditing) {
         _resolveBookingGate();
       }
     });
@@ -196,6 +221,45 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
     }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    final existing = widget.existingReview;
+    if (existing != null) {
+      setState(() => _saving = true);
+      try {
+        final stars = OperationReviewPolicy.clampStars(_stars);
+        final comment = OperationReviewPolicy.normalizeComment(_comment.text);
+        final details =
+            OperationReviewPolicy.normalizeDetails(_collectDetails());
+        await store.updateOperationReview(
+          shopId: existing.shopId,
+          reviewId: existing.id,
+          safety: stars,
+          guide: stars,
+          boat: stars,
+          comment: comment,
+          details: details,
+        );
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.myReviewUpdated)),
+        );
+        Navigator.of(context).pop(true);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${l10n.reviewSaveFailed} ($error)')),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _saving = false);
+        }
+      }
+      return;
+    }
+
     final bookingId = _bookingId;
     if (bookingId == null || bookingId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -280,19 +344,78 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final existing = widget.existingReview;
+    if (existing == null || _saving) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.myReviewDeleteTitle),
+        content: Text(l10n.myReviewDeleteBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.adminHqClose),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.myReviewDeleteAction),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) {
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    setState(() => _saving = true);
+    try {
+      await store.deleteOperationReview(
+        shopId: existing.shopId,
+        reviewId: existing.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.myReviewDeleted)),
+      );
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final shops = DiveShopCatalog.shops;
-    final blocked = _gateMessage != null;
+    final blocked = !_isEditing && _gateMessage != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.reviewTitle)),
+      appBar: AppBar(
+        title: Text(_isEditing ? l10n.myReviewEditTitle : l10n.reviewTitle),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          Text(l10n.reviewIntro, style: theme.textTheme.bodyMedium),
+          Text(
+            _isEditing ? l10n.myReviewEditHint : l10n.reviewIntro,
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             key: const Key('review-shop'),
@@ -305,8 +428,11 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
               for (final shop in shops)
                 DropdownMenuItem(value: shop.id, child: Text(shop.name)),
             ],
-            onChanged: widget.shopId == null && widget.bookingId == null
-                ? (value) {
+            onChanged: _isEditing ||
+                    widget.shopId != null ||
+                    widget.bookingId != null
+                ? null
+                : (value) {
                     if (value != null) {
                       setState(() {
                         _shopId = value;
@@ -314,10 +440,9 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
                       });
                       _resolveBookingGate();
                     }
-                  }
-                : null,
+                  },
           ),
-          if (_gateMessage != null) ...[
+          if (!_isEditing && _gateMessage != null) ...[
             const SizedBox(height: 16),
             Material(
               color: const Color(0xFFFFF4E5),
@@ -483,8 +608,20 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
           FilledButton(
             key: const Key('review-submit'),
             onPressed: (_saving || blocked) ? null : _submit,
-            child: Text(_saving ? l10n.logbookUploading : l10n.reviewSubmit),
+            child: Text(
+              _saving
+                  ? l10n.logbookUploading
+                  : (_isEditing ? l10n.myReviewSaveEdit : l10n.reviewSubmit),
+            ),
           ),
+          if (_isEditing) ...[
+            const SizedBox(height: 12),
+            OutlinedButton(
+              key: const Key('review-delete'),
+              onPressed: _saving ? null : _delete,
+              child: Text(l10n.myReviewDeleteAction),
+            ),
+          ],
         ],
       ),
     );
@@ -581,20 +718,22 @@ class _MultiChoiceSection extends StatelessWidget {
   }
 }
 
-void openOperationReview(
+Future<bool?> openOperationReview(
   BuildContext context, {
   String? shopId,
   String? bookingId,
   String? logId,
   String? productId,
+  GuestReview? existingReview,
 }) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
+  return Navigator.of(context).push<bool>(
+    MaterialPageRoute<bool>(
       builder: (_) => OperationReviewScreen(
         shopId: shopId,
         bookingId: bookingId,
         logId: logId,
         productId: productId,
+        existingReview: existingReview,
       ),
     ),
   );

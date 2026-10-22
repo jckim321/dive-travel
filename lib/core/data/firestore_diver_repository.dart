@@ -871,6 +871,218 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<GuestReview>> listMyReviews(String uid) async {
+    final snap = await _userDoc(uid)
+        .collection('reviews')
+        .orderBy('created_at', descending: true)
+        .get();
+    return [
+      for (final doc in snap.docs) GuestReview.fromMap(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<void> updateOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+    required int safety,
+    required int guide,
+    required int boat,
+    String? comment,
+    ReviewDetails? details,
+  }) async {
+    final safeSafety = OperationReviewPolicy.clampStars(safety);
+    final safeGuide = OperationReviewPolicy.clampStars(guide);
+    final safeBoat = OperationReviewPolicy.clampStars(boat);
+    OperationReviewPolicy.assertStarsInRange(safeSafety, safeGuide, safeBoat);
+    final safeComment = OperationReviewPolicy.normalizeComment(comment);
+    final safeDetails = OperationReviewPolicy.normalizeDetails(details);
+    final shopRef = _shops.doc(shopId);
+    final reviewRef = shopRef.collection('reviews').doc(reviewId);
+    final userReviewRef = _userDoc(uid).collection('reviews').doc(reviewId);
+
+    await _db.runTransaction((transaction) async {
+      final reviewSnap = await transaction.get(reviewRef);
+      final reviewData = reviewSnap.data();
+      if (!reviewSnap.exists || reviewData == null) {
+        throw StateError('Review not found');
+      }
+      if ((reviewData['uid'] as String? ?? '') != uid) {
+        throw StateError('Not your review');
+      }
+      final shopSnap = await transaction.get(shopRef);
+      final shopData = shopSnap.data() ?? {};
+      final oldSafety = (reviewData['safety'] as num?)?.toInt() ?? 0;
+      final oldGuide = (reviewData['guide'] as num?)?.toInt() ?? 0;
+      final oldBoat = (reviewData['boat'] as num?)?.toInt() ?? 0;
+      final count = (shopData['review_count'] as num?)?.toInt() ?? 0;
+      if (count <= 0) {
+        throw StateError('Shop has no reviews to update');
+      }
+      final sumSafety = ((shopData['sum_safety'] as num?)?.toDouble() ?? 0) -
+          oldSafety +
+          safeSafety;
+      final sumGuide = ((shopData['sum_guide'] as num?)?.toDouble() ?? 0) -
+          oldGuide +
+          safeGuide;
+      final sumBoat =
+          ((shopData['sum_boat'] as num?)?.toDouble() ?? 0) - oldBoat + safeBoat;
+      final avgSafety = sumSafety / count;
+      final avgGuide = sumGuide / count;
+      final avgBoat = sumBoat / count;
+      final avgOverall = DiveStar.overall(
+        safety: avgSafety,
+        guide: avgGuide,
+        boat: avgBoat,
+      );
+      final oldGuest =
+          ((oldSafety + oldGuide + oldBoat) / 3).round().clamp(1, 5);
+      final newGuest =
+          ((safeSafety + safeGuide + safeBoat) / 3).round().clamp(1, 5);
+      final productKey = (reviewData['product_id'] as String? ?? '').trim();
+      final optionKey = (reviewData['option_id'] as String? ?? '').trim();
+
+      List<Map<String, dynamic>>? nextProducts;
+      if (productKey.isNotEmpty) {
+        final products = ShopProduct.listFrom(shopId, shopData['products']);
+        nextProducts = [
+          for (final item in products)
+            if (item.id == productKey)
+              item
+                  .replaceGuestStarReview(
+                    oldGuest,
+                    newGuest,
+                    optionId: optionKey,
+                  )
+                  .toMap()
+            else
+              item.toMap(),
+        ];
+      }
+
+      final patch = <String, dynamic>{
+        'safety': safeSafety,
+        'guide': safeGuide,
+        'boat': safeBoat,
+        'overall': (safeSafety + safeGuide + safeBoat) / 3,
+        'comment': ?safeComment,
+        ...safeDetails.toFirestoreFields(),
+        'edited_at': FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+      transaction.set(reviewRef, patch, SetOptions(merge: true));
+      transaction.set(userReviewRef, patch, SetOptions(merge: true));
+      transaction.set(shopRef, {
+        'review_count': count,
+        'sum_safety': sumSafety,
+        'sum_guide': sumGuide,
+        'sum_boat': sumBoat,
+        'avg_safety': avgSafety,
+        'avg_guide': avgGuide,
+        'avg_boat': avgBoat,
+        'avg_overall': avgOverall,
+        'safety_pass': avgSafety >= DiveStar.safetyPassThreshold,
+        'products': ?nextProducts,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  @override
+  Future<void> deleteOperationReview({
+    required String uid,
+    required String shopId,
+    required String reviewId,
+  }) async {
+    final shopRef = _shops.doc(shopId);
+    final reviewRef = shopRef.collection('reviews').doc(reviewId);
+    final userReviewRef = _userDoc(uid).collection('reviews').doc(reviewId);
+
+    await _db.runTransaction((transaction) async {
+      final reviewSnap = await transaction.get(reviewRef);
+      final reviewData = reviewSnap.data();
+      if (!reviewSnap.exists || reviewData == null) {
+        throw StateError('Review not found');
+      }
+      final ownerUid = reviewData['uid'] as String? ?? '';
+      if (ownerUid != uid) {
+        throw StateError('Not your review');
+      }
+      final shopSnap = await transaction.get(shopRef);
+      final shopData = shopSnap.data() ?? {};
+      final oldSafety = (reviewData['safety'] as num?)?.toInt() ?? 0;
+      final oldGuide = (reviewData['guide'] as num?)?.toInt() ?? 0;
+      final oldBoat = (reviewData['boat'] as num?)?.toInt() ?? 0;
+      final count = (shopData['review_count'] as num?)?.toInt() ?? 0;
+      final nextCount = (count - 1).clamp(0, 1 << 30);
+      final sumSafety =
+          ((shopData['sum_safety'] as num?)?.toDouble() ?? 0) - oldSafety;
+      final sumGuide =
+          ((shopData['sum_guide'] as num?)?.toDouble() ?? 0) - oldGuide;
+      final sumBoat =
+          ((shopData['sum_boat'] as num?)?.toDouble() ?? 0) - oldBoat;
+      final avgSafety = nextCount == 0 ? 0.0 : sumSafety / nextCount;
+      final avgGuide = nextCount == 0 ? 0.0 : sumGuide / nextCount;
+      final avgBoat = nextCount == 0 ? 0.0 : sumBoat / nextCount;
+      final avgOverall = nextCount == 0
+          ? 0.0
+          : DiveStar.overall(
+              safety: avgSafety,
+              guide: avgGuide,
+              boat: avgBoat,
+            );
+      final oldGuest =
+          ((oldSafety + oldGuide + oldBoat) / 3).round().clamp(1, 5);
+      final productKey = (reviewData['product_id'] as String? ?? '').trim();
+      final optionKey = (reviewData['option_id'] as String? ?? '').trim();
+
+      List<Map<String, dynamic>>? nextProducts;
+      if (productKey.isNotEmpty) {
+        final products = ShopProduct.listFrom(shopId, shopData['products']);
+        nextProducts = [
+          for (final item in products)
+            if (item.id == productKey)
+              item
+                  .removeGuestStarReview(oldGuest, optionId: optionKey)
+                  .toMap()
+            else
+              item.toMap(),
+        ];
+      }
+
+      final bookingId = (reviewData['booking_id'] as String? ?? '').trim();
+      transaction.delete(reviewRef);
+      transaction.delete(userReviewRef);
+      transaction.set(shopRef, {
+        'review_count': nextCount,
+        'sum_safety': nextCount == 0 ? 0 : sumSafety,
+        'sum_guide': nextCount == 0 ? 0 : sumGuide,
+        'sum_boat': nextCount == 0 ? 0 : sumBoat,
+        'avg_safety': avgSafety,
+        'avg_guide': avgGuide,
+        'avg_boat': avgBoat,
+        'avg_overall': avgOverall,
+        'safety_pass':
+            nextCount > 0 && avgSafety >= DiveStar.safetyPassThreshold,
+        'products': ?nextProducts,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (bookingId.isNotEmpty) {
+        transaction.set(
+          _userDoc(uid).collection('bookings').doc(bookingId),
+          {
+            'reviewed': false,
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+    });
+    await _bumpActivityAndMaybeUpgrade(uid: uid, reviewDelta: -1);
+  }
+
+  @override
   Future<GuestReviewsPage> fetchShopReviewsPage({
     required String shopId,
     int limit = 10,

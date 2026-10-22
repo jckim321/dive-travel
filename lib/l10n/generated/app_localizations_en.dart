@@ -987,6 +987,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileReviewRecommendTitle => 'Recommended by reviews';
 
   @override
+  String get myReviewsTitle => 'My reviews';
+
+  @override
+  String get myReviewsMenu => 'View and edit my reviews';
+
+  @override
+  String get myReviewsMenuHint =>
+      'Open reviews you wrote to edit or delete them.';
+
+  @override
+  String get myReviewsEmpty =>
+      'You have not written a review yet. Leave one after a finished trip.';
+
+  @override
+  String get myReviewNoProduct => 'No product linked';
+
+  @override
+  String get myReviewEditedBadge => 'Edited';
+
+  @override
+  String get myReviewEditTitle => 'Edit review';
+
+  @override
+  String get myReviewEditHint =>
+      'You can change stars, text, and details. Resort, product, and booking stay fixed.';
+
+  @override
+  String get myReviewSaveEdit => 'Save changes';
+
+  @override
+  String get myReviewUpdated => 'Review updated.';
+
+  @override
+  String get myReviewDeleteTitle => 'Delete this review?';
+
+  @override
+  String get myReviewDeleteBody =>
+      'Deleting removes it from resort and product ratings. You can write a new review for the same booking afterward.';
+
+  @override
+  String get myReviewDeleteAction => 'Delete review';
+
+  @override
+  String get myReviewDeleted => 'Review deleted.';
+
+  @override
   String get profileWriteReviewTitle => 'Write a review of a trip I took';
 
   @override

@@ -964,6 +964,49 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileReviewRecommendTitle => '리뷰가 추천하는 곳';
 
   @override
+  String get myReviewsTitle => '내 후기';
+
+  @override
+  String get myReviewsMenu => '내가 쓴 후기 보기·수정';
+
+  @override
+  String get myReviewsMenuHint => '작성한 후기를 확인하고 수정하거나 삭제할 수 있습니다.';
+
+  @override
+  String get myReviewsEmpty => '아직 작성한 후기가 없습니다. 여행이 끝난 예약에서 후기를 남겨 보세요.';
+
+  @override
+  String get myReviewNoProduct => '상품 미연결';
+
+  @override
+  String get myReviewEditedBadge => '수정됨';
+
+  @override
+  String get myReviewEditTitle => '후기 수정';
+
+  @override
+  String get myReviewEditHint => '별점·글·상세만 바꿀 수 있습니다. 리조트·상품·예약은 고정입니다.';
+
+  @override
+  String get myReviewSaveEdit => '수정 저장';
+
+  @override
+  String get myReviewUpdated => '후기를 수정했습니다.';
+
+  @override
+  String get myReviewDeleteTitle => '후기를 삭제할까요?';
+
+  @override
+  String get myReviewDeleteBody =>
+      '삭제하면 리조트·상품 별점에서 이 후기가 빠지고, 같은 예약에 후기를 다시 쓸 수 있습니다.';
+
+  @override
+  String get myReviewDeleteAction => '후기 삭제';
+
+  @override
+  String get myReviewDeleted => '후기를 삭제했습니다.';
+
+  @override
   String get profileWriteReviewTitle => '내가 다녀온 여행 리뷰쓰기';
 
   @override

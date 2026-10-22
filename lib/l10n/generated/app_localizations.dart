@@ -1884,6 +1884,90 @@ abstract class AppLocalizations {
   /// **'리뷰가 추천하는 곳'**
   String get profileReviewRecommendTitle;
 
+  /// No description provided for @myReviewsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 후기'**
+  String get myReviewsTitle;
+
+  /// No description provided for @myReviewsMenu.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 쓴 후기 보기·수정'**
+  String get myReviewsMenu;
+
+  /// No description provided for @myReviewsMenuHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'작성한 후기를 확인하고 수정하거나 삭제할 수 있습니다.'**
+  String get myReviewsMenuHint;
+
+  /// No description provided for @myReviewsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 작성한 후기가 없습니다. 여행이 끝난 예약에서 후기를 남겨 보세요.'**
+  String get myReviewsEmpty;
+
+  /// No description provided for @myReviewNoProduct.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 미연결'**
+  String get myReviewNoProduct;
+
+  /// No description provided for @myReviewEditedBadge.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정됨'**
+  String get myReviewEditedBadge;
+
+  /// No description provided for @myReviewEditTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기 수정'**
+  String get myReviewEditTitle;
+
+  /// No description provided for @myReviewEditHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'별점·글·상세만 바꿀 수 있습니다. 리조트·상품·예약은 고정입니다.'**
+  String get myReviewEditHint;
+
+  /// No description provided for @myReviewSaveEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정 저장'**
+  String get myReviewSaveEdit;
+
+  /// No description provided for @myReviewUpdated.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기를 수정했습니다.'**
+  String get myReviewUpdated;
+
+  /// No description provided for @myReviewDeleteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기를 삭제할까요?'**
+  String get myReviewDeleteTitle;
+
+  /// No description provided for @myReviewDeleteBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제하면 리조트·상품 별점에서 이 후기가 빠지고, 같은 예약에 후기를 다시 쓸 수 있습니다.'**
+  String get myReviewDeleteBody;
+
+  /// No description provided for @myReviewDeleteAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기 삭제'**
+  String get myReviewDeleteAction;
+
+  /// No description provided for @myReviewDeleted.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기를 삭제했습니다.'**
+  String get myReviewDeleted;
+
   /// No description provided for @profileWriteReviewTitle.
   ///
   /// In ko, this message translates to:

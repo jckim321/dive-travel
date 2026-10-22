@@ -464,6 +464,35 @@ class ShopProductOption {
     return copyWith(guestRating: nextAvg, guestReviewCount: nextCount);
   }
 
+  ShopProductOption replaceGuestStarReview(int oldStars, int newStars) {
+    if (guestReviewCount <= 0) {
+      return withGuestStarReview(newStars);
+    }
+    final oldScore = oldStars.clamp(1, 5).toDouble();
+    final newScore = newStars.clamp(1, 5).toDouble();
+    final nextAvg =
+        ((guestRating * guestReviewCount) - oldScore + newScore) /
+            guestReviewCount;
+    return copyWith(guestRating: nextAvg.clamp(0, 5));
+  }
+
+  ShopProductOption removeGuestStarReview(int stars) {
+    if (guestReviewCount <= 0) {
+      return copyWith(guestRating: 0, guestReviewCount: 0);
+    }
+    if (guestReviewCount == 1) {
+      return copyWith(guestRating: 0, guestReviewCount: 0);
+    }
+    final score = stars.clamp(1, 5).toDouble();
+    final nextCount = guestReviewCount - 1;
+    final nextAvg =
+        ((guestRating * guestReviewCount) - score) / nextCount;
+    return copyWith(
+      guestRating: nextAvg.clamp(0, 5),
+      guestReviewCount: nextCount,
+    );
+  }
+
   ShopProductOption copyWith({
     String? name,
     String? description,
@@ -1198,6 +1227,67 @@ class ShopProduct {
           ];
     return copyWith(
       guestRating: nextAvg,
+      guestReviewCount: nextCount,
+      options: nextOptions,
+    );
+  }
+
+  /// Replace one prior guest star with a new score (count unchanged).
+  ShopProduct replaceGuestStarReview(
+    int oldStars,
+    int newStars, {
+    String optionId = '',
+  }) {
+    if (guestReviewCount <= 0) {
+      return withGuestStarReview(newStars, optionId: optionId);
+    }
+    final oldScore = oldStars.clamp(1, 5).toDouble();
+    final newScore = newStars.clamp(1, 5).toDouble();
+    final nextAvg =
+        ((guestRating * guestReviewCount) - oldScore + newScore) /
+            guestReviewCount;
+    final nextOptions = optionId.trim().isEmpty
+        ? options
+        : [
+            for (final option in options)
+              if (option.id == optionId)
+                option.replaceGuestStarReview(oldStars, newStars)
+              else
+                option,
+          ];
+    return copyWith(
+      guestRating: nextAvg.clamp(0, 5),
+      options: nextOptions,
+    );
+  }
+
+  /// Remove one guest star contribution (count −1).
+  ShopProduct removeGuestStarReview(int stars, {String optionId = ''}) {
+    if (guestReviewCount <= 0) {
+      return this;
+    }
+    final nextOptions = optionId.trim().isEmpty
+        ? options
+        : [
+            for (final option in options)
+              if (option.id == optionId)
+                option.removeGuestStarReview(stars)
+              else
+                option,
+          ];
+    if (guestReviewCount == 1) {
+      return copyWith(
+        guestRating: 0,
+        guestReviewCount: 0,
+        options: nextOptions,
+      );
+    }
+    final score = stars.clamp(1, 5).toDouble();
+    final nextCount = guestReviewCount - 1;
+    final nextAvg =
+        ((guestRating * guestReviewCount) - score) / nextCount;
+    return copyWith(
+      guestRating: nextAvg.clamp(0, 5),
       guestReviewCount: nextCount,
       options: nextOptions,
     );

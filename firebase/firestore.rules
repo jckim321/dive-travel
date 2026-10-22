@@ -139,6 +139,27 @@ service cloud.firestore {
           && request.resource.data.keys().hasAll(['booking_id'])
           && request.resource.data.booking_id is string
           && request.resource.data.booking_id.size() > 0;
+        allow update: if isOwner(userId)
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.shop_id == resource.data.shop_id
+          && request.resource.data.booking_id == resource.data.booking_id
+          && (!('product_id' in resource.data)
+              || request.resource.data.product_id == resource.data.product_id)
+          && (!('option_id' in resource.data)
+              || request.resource.data.option_id == resource.data.option_id)
+          && (!('created_at' in resource.data)
+              || request.resource.data.created_at == resource.data.created_at)
+          && (!('log_id' in resource.data)
+              || request.resource.data.log_id == resource.data.log_id)
+          && scoreInRange(request.resource.data.safety)
+          && scoreInRange(request.resource.data.guide)
+          && scoreInRange(request.resource.data.boat)
+          && reviewCommentOk()
+          && reviewDetailsOk();
+        allow delete: if (isOwner(userId)
+            && resource.data.uid == request.auth.uid)
+          || isAdmin();
       }
     }
 
@@ -182,6 +203,27 @@ service cloud.firestore {
       match /reviews/{reviewId} {
         allow read: if isSignedIn();
         allow create: if validShopReviewCreate(shopId);
+        allow update: if isSignedIn()
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.shop_id == shopId
+          && request.resource.data.shop_id == resource.data.shop_id
+          && request.resource.data.booking_id == resource.data.booking_id
+          && (!('product_id' in resource.data)
+              || request.resource.data.product_id == resource.data.product_id)
+          && (!('option_id' in resource.data)
+              || request.resource.data.option_id == resource.data.option_id)
+          && (!('created_at' in resource.data)
+              || request.resource.data.created_at == resource.data.created_at)
+          && (!('log_id' in resource.data)
+              || request.resource.data.log_id == resource.data.log_id)
+          && scoreInRange(request.resource.data.safety)
+          && scoreInRange(request.resource.data.guide)
+          && scoreInRange(request.resource.data.boat)
+          && reviewCommentOk()
+          && reviewDetailsOk();
+        allow delete: if isSignedIn()
+          && (resource.data.uid == request.auth.uid || isAdmin());
       }
 
       match /bookings/{bookingId} {
