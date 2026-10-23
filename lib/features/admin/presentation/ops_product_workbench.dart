@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class OpsProductWorkbench extends StatefulWidget {
@@ -198,7 +199,7 @@ class _IndividualTicket {
 }
 
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
-  static const _sectionCount = 4;
+  static const _sectionCount = 5;
   static const _kBoxRadius = 2.0;
   static const _kDirectShop = '__direct__';
 
@@ -238,6 +239,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   DateTime? _departureStart;
   var _packageNights = 0;
   late bool _editing;
+  late final SameBoatSeatOpenController _seats;
 
   @override
   void initState() {
@@ -367,6 +369,31 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(_rateConsumer[GuestRole.nondiver]!);
     _listen(_rateConsumer[GuestRole.child]!);
     _seedGallery(existing);
+    _seats = SameBoatSeatOpenController(
+      existing: existing,
+      optionSlots: _seatOptionSlots(),
+      isAdmin: false,
+      packageDeparture: _departureStart,
+    );
+  }
+
+  List<SameBoatOptionSeatSlot> _seatOptionSlots() {
+    return [
+      for (final ticket in _individuals)
+        if (ticket.name.text.trim().isNotEmpty ||
+            (widget.existing?.options.any((o) => o.id == ticket.id) ?? false))
+          SameBoatOptionSeatSlot(
+            id: ticket.id,
+            name: ticket.name.text.trim().isEmpty
+                ? ticket.id
+                : ticket.name.text.trim(),
+          ),
+    ];
+  }
+
+  void _syncSeatSlots() {
+    _seats.syncOptionSlots(_seatOptionSlots(), existing: widget.existing);
+    _seats.syncPackageDeparture(_departureStart);
   }
 
   void _seedGallery(ShopProduct? existing) {
@@ -434,6 +461,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final item in _individuals) {
       item.dispose();
     }
+    _seats.dispose();
     super.dispose();
   }
 
@@ -461,7 +489,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(ticket.consumer);
     _listen(ticket.includes);
     _listen(ticket.excludes);
-    setState(() => _individuals.add(ticket));
+    setState(() {
+      _individuals.add(ticket);
+      _syncSeatSlots();
+    });
   }
 
   BookingQuote _individualQuote(_IndividualTicket ticket) {
@@ -727,6 +758,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   void _setCheckIn(DateTime day) {
     setState(() {
       _departureStart = DateTime(day.year, day.month, day.day);
+      _seats.syncPackageDeparture(_departureStart);
     });
   }
 
@@ -844,9 +876,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
       return;
     }
+    final store = DiverStoreScope.of(context);
+    _seats.isAdmin = store.stats.isAdmin;
+    _syncSeatSlots();
+    final seatError = _seats.validate(l10n, now: DateTime.now());
+    if (seatError != null) {
+      _reveal(4);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(seatError)));
+      return;
+    }
     setState(() => _savingIntent = intent);
     try {
-      final store = DiverStoreScope.of(context);
       final sessionUid = store.uid ?? '';
       final existing = widget.existing;
       final diverConsumer =
@@ -909,58 +950,60 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           intro: _blurb.text.trim(),
         );
       }
+      final drafted = ShopProduct(
+        id: existing?.id ?? 'p-${DateTime.now().millisecondsSinceEpoch}',
+        shopId: shopId,
+        name: name,
+        consumerPrice: diverRate.consumer,
+        professionalPrice: diverRate.professional,
+        active: existing?.active ?? true,
+        blurb: _blurb.text.trim(),
+        durationLabel: _nightsLabel,
+        coverUrl: _galleryCoverUrl,
+        continent: _continent,
+        meetingPoint: _meeting.text.trim(),
+        schedule: _detailBody.text.trim(),
+        includes: _includes.text.trim(),
+        excludes: _excludes.text.trim(),
+        difficulty: '',
+        // min/max guests are not on the form; leave defaults so merge keeps
+        // any legacy min_guests on the document (checkout ignores min).
+        cancellationNote: _cancel.text.trim(),
+        category: _category,
+        detail: existing?.detail ?? '',
+        photoUrls: [
+          for (final item in _gallery)
+            if (item.url != null && item.url!.isNotEmpty) item.url!,
+        ],
+        // Folded into schedule on open; clear so detail/duration stay in sync.
+        itineraryDays: const [],
+        guestRates: guestRates,
+        focPayCount: existing?.focPayCount ?? 0,
+        focFreeCount: existing?.focFreeCount ?? 0,
+        focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
+        openEmptySeats: existing?.openEmptySeats ?? false,
+        capacity: existing?.capacity ?? 0,
+        bookedSeats: existing?.bookedSeats ?? 0,
+        flagHolds: existing?.flagHolds ?? const [],
+        departureStart: _departureStart,
+        flagClosesAt: existing?.flagClosesAt,
+        sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
+        options: [for (final option in options) _withSeatOption(option)],
+        listingKind: _shelfKindForSave(existing),
+        featuredAt: _featuredAtForSave(existing),
+        publishStatus:
+            existing?.publishStatus ?? ProductPublishStatus.approved,
+        submittedAt: existing?.submittedAt,
+        reviewedAt: existing?.reviewedAt,
+        reviewNote: existing?.reviewNote ?? '',
+        submittedByUid: existing?.submittedByUid.isNotEmpty == true
+            ? existing!.submittedByUid
+            : sessionUid,
+      );
+      final product = _seats.applyToProduct(drafted);
       await store.saveShopProduct(
         shopId: shopId,
-        product: ShopProduct(
-          id: existing?.id ?? 'p-${DateTime.now().millisecondsSinceEpoch}',
-          shopId: shopId,
-          name: name,
-          consumerPrice: diverRate.consumer,
-          professionalPrice: diverRate.professional,
-          active: existing?.active ?? true,
-          blurb: _blurb.text.trim(),
-          durationLabel: _nightsLabel,
-          coverUrl: _galleryCoverUrl,
-          continent: _continent,
-          meetingPoint: _meeting.text.trim(),
-          schedule: _detailBody.text.trim(),
-          includes: _includes.text.trim(),
-          excludes: _excludes.text.trim(),
-          difficulty: '',
-          // min/max guests are not on the form; leave defaults so merge keeps
-          // any legacy min_guests on the document (checkout ignores min).
-          cancellationNote: _cancel.text.trim(),
-          category: _category,
-          detail: existing?.detail ?? '',
-          photoUrls: [
-            for (final item in _gallery)
-              if (item.url != null && item.url!.isNotEmpty) item.url!,
-          ],
-          // Folded into schedule on open; clear so detail/duration stay in sync.
-          itineraryDays: const [],
-          guestRates: guestRates,
-          focPayCount: existing?.focPayCount ?? 0,
-          focFreeCount: existing?.focFreeCount ?? 0,
-          focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
-          openEmptySeats: existing?.openEmptySeats ?? false,
-          capacity: existing?.capacity ?? 0,
-          bookedSeats: existing?.bookedSeats ?? 0,
-          flagHolds: existing?.flagHolds ?? const [],
-          departureStart: _departureStart,
-          flagClosesAt: existing?.flagClosesAt,
-          sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
-          options: [for (final option in options) _withSeatOption(option)],
-          listingKind: _shelfKindForSave(existing),
-          featuredAt: _featuredAtForSave(existing),
-          publishStatus:
-              existing?.publishStatus ?? ProductPublishStatus.approved,
-          submittedAt: existing?.submittedAt,
-          reviewedAt: existing?.reviewedAt,
-          reviewNote: existing?.reviewNote ?? '',
-          submittedByUid: existing?.submittedByUid.isNotEmpty == true
-              ? existing!.submittedByUid
-              : sessionUid,
-        ),
+        product: product,
         gallery: _gallerySlots,
         useAsResortCover: existing == null || _galleryTouched,
         creatorSubmission: widget.creatorMode,
@@ -972,8 +1015,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_savedMessage(l10n, intent))));
+      final pendingSameBoat = product.openEmptySeats &&
+          product.sameBoatStatus == SameBoatStatus.pending;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            pendingSameBoat
+                ? l10n.sameBoatPendingAfterSave
+                : _savedMessage(l10n, intent),
+          ),
+        ),
+      );
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
@@ -998,6 +1050,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         : _shopsForContinent;
     final hull = DiveShopCatalog.byId(_shopId);
     final store = DiverStoreScope.of(context);
+    _seats.isAdmin = store.stats.isAdmin;
     final canPublish = store.stats.isAdmin &&
         !widget.partnerMode &&
         !widget.creatorMode;
@@ -1217,7 +1270,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ]),
         _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
         _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
+        _block(4, l10n.briefSectionSameBoat, [_sameBoatSeatBlock(l10n)]),
       ],
+    );
+  }
+
+  Widget _sameBoatSeatBlock(AppLocalizations l10n) {
+    _syncSeatSlots();
+    return SameBoatSeatOpenFields(
+      controller: _seats,
+      showPackageDeparturePicker: false,
+      onChanged: () => setState(() {}),
     );
   }
 
@@ -2071,6 +2134,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           setState(() {
                             _dropIndividual(ticket);
                             _individuals.removeAt(index);
+                            _syncSeatSlots();
                           });
                         },
                         icon: const Icon(Icons.close, size: 18),
@@ -2457,6 +2521,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _stayDateStrip(AppLocalizations l10n) {
+    final stayLocked = _seats.packageScheduleLocked;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: const Color(0xFFF7F8FA),
@@ -2472,7 +2537,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 value: _departureStart == null
                     ? l10n.bookingEntryPickDate
                     : _fmtDay(_departureStart),
-                onTap: () => _pickStayDate(checkout: false),
+                onTap: stayLocked ? null : () => _pickStayDate(checkout: false),
+                muted: stayLocked,
               ),
             ),
             Container(width: 1, color: const Color(0xFFE2E8EE)),
@@ -2526,10 +2592,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 value: _checkOut == null
                     ? l10n.bookingEntryPickDate
                     : _fmtDay(_checkOut),
-                onTap: _departureStart == null
+                onTap: stayLocked || _departureStart == null
                     ? null
                     : () => _pickStayDate(checkout: true),
-                muted: _departureStart == null,
+                muted: stayLocked || _departureStart == null,
               ),
             ),
           ],

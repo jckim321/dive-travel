@@ -137,6 +137,7 @@
   "explorePay": "Pay",
   "simPayTitle": "Confirm booking request",
   "simPayNotice": "No charge yet. Payment continues after the shop confirms.",
+  "simPaySameBoatNotice": "Payment confirms your seat.",
   "simPayAction": "Request booking",
   "simPayProcessing": "Submitting request",
   "simPayDoneTitle": "Request submitted",
@@ -1290,10 +1291,29 @@
   "workbenchOpenMap": "Open in maps",
   "workbenchOpenSeats": "Open leftover seats on Same boat",
   "workbenchOpenSeatsHint": "Turn on only to fill an existing team for the same dates. Off = a regular listing.",
-  "workbenchSeatCount": "Seat count",
+  "workbenchSeatCount": "Total seats",
   "workbenchDepartureDate": "Departure date",
   "workbenchFlagDeadline": "Flag deadline",
-  "workbenchOpenSeatsNeedFields": "Seat count, departure date, and flag deadline are required to open leftover seats.",
+  "workbenchOpenSeatsNeedFields": "Total seats, departure date, and flag deadline are required to open leftover seats.",
+  "sameBoatAlreadyBooked": "Already recruited",
+  "sameBoatSeatOpenPreview": "{capacity} seats · {booked} confirmed · {open} open",
+  "@sameBoatSeatOpenPreview": {
+    "placeholders": {
+      "capacity": {"type": "int"},
+      "booked": {"type": "int"},
+      "open": {"type": "int"}
+    }
+  },
+  "sameBoatCapacityBelowOccupied": "Total seats cannot be below confirmed ({booked}) + provisional ({holds}).",
+  "@sameBoatCapacityBelowOccupied": {
+    "placeholders": {
+      "booked": {"type": "int"},
+      "holds": {"type": "int"}
+    }
+  },
+  "sameBoatAskAdminToChange": "Ask an admin to change this.",
+  "sameBoatPendingAfterSave": "Same-boat listing waits for admin approval. (Admin → Shop → Same-boat monitor)",
+  "briefSectionSameBoat": "Same-boat leftover seats",
   "workbenchDetail": "Full description",
   "workbenchItinerary": "Standard itinerary",
   "workbenchAddDay": "Add day",

@@ -930,6 +930,12 @@ abstract class AppLocalizations {
   /// **'지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.'**
   String get simPayNotice;
 
+  /// No description provided for @simPaySameBoatNotice.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 완료 시 자리가 확정됩니다.'**
+  String get simPaySameBoatNotice;
+
   /// No description provided for @simPayAction.
   ///
   /// In ko, this message translates to:
@@ -6159,7 +6165,7 @@ abstract class AppLocalizations {
   /// No description provided for @workbenchSeatCount.
   ///
   /// In ko, this message translates to:
-  /// **'자리 수'**
+  /// **'총 인원'**
   String get workbenchSeatCount;
 
   /// No description provided for @workbenchDepartureDate.
@@ -6177,8 +6183,44 @@ abstract class AppLocalizations {
   /// No description provided for @workbenchOpenSeatsNeedFields.
   ///
   /// In ko, this message translates to:
-  /// **'빈자리를 열려면 자리 수·출발일·깃발 마감을 넣으세요.'**
+  /// **'빈자리를 열려면 총 인원·출발일·깃발 마감을 넣으세요.'**
   String get workbenchOpenSeatsNeedFields;
+
+  /// No description provided for @sameBoatAlreadyBooked.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 모집된 인원'**
+  String get sameBoatAlreadyBooked;
+
+  /// No description provided for @sameBoatSeatOpenPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 {capacity}칸 중 검정 {booked} + 빈자리 {open}'**
+  String sameBoatSeatOpenPreview(int capacity, int booked, int open);
+
+  /// No description provided for @sameBoatCapacityBelowOccupied.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 인원은 확정({booked})+가확정({holds})보다 작을 수 없습니다.'**
+  String sameBoatCapacityBelowOccupied(int booked, int holds);
+
+  /// No description provided for @sameBoatAskAdminToChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경은 관리자에게 문의하세요.'**
+  String get sameBoatAskAdminToChange;
+
+  /// No description provided for @sameBoatPendingAfterSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 노출은 관리자 승인 후입니다. (관리자 → 샵 → 같은배 모니터)'**
+  String get sameBoatPendingAfterSave;
+
+  /// No description provided for @briefSectionSameBoat.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 빈자리'**
+  String get briefSectionSameBoat;
 
   /// No description provided for @workbenchDetail.
   ///

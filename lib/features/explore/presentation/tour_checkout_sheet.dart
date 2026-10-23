@@ -300,6 +300,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       builder: (context) => _SimPayDialog(
         title: _hasProduct ? _chosenLabels() : widget.shop.name,
         amount: formatted,
+        sameBoatPayment: opensSeats || widget.fromFlag,
       ),
     );
     if (paid != true || !mounted) {
@@ -1543,10 +1544,17 @@ class _DateBox extends StatelessWidget {
 }
 
 class _SimPayDialog extends StatefulWidget {
-  const _SimPayDialog({required this.title, required this.amount});
+  const _SimPayDialog({
+    required this.title,
+    required this.amount,
+    this.sameBoatPayment = false,
+  });
 
   final String title;
   final String amount;
+
+  /// Same-boat / flag checkout uses a different notice than Explore booking.
+  final bool sameBoatPayment;
 
   @override
   State<_SimPayDialog> createState() => _SimPayDialogState();
@@ -1576,7 +1584,11 @@ class _SimPayDialogState extends State<_SimPayDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            done ? l10n.simPayDoneBody : l10n.simPayNotice,
+            done
+                ? l10n.simPayDoneBody
+                : (widget.sameBoatPayment
+                    ? l10n.simPaySameBoatNotice
+                    : l10n.simPayNotice),
             style: const TextStyle(color: AppTheme.muted),
           ),
           const SizedBox(height: 16),

@@ -440,6 +440,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get simPayNotice => '지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.';
 
   @override
+  String get simPaySameBoatNotice => '결제 완료 시 자리가 확정됩니다.';
+
+  @override
   String get simPayAction => '예약 요청';
 
   @override
@@ -3249,7 +3252,7 @@ class AppLocalizationsJa extends AppLocalizations {
       '이미 팀이 있는데 같은 기간에 인원을 더 뽑을 때만 켭니다. 끄면 일반 상품입니다.';
 
   @override
-  String get workbenchSeatCount => '자리 수';
+  String get workbenchSeatCount => '총 인원';
 
   @override
   String get workbenchDepartureDate => '출발일';
@@ -3258,7 +3261,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workbenchFlagDeadline => '깃발 마감일';
 
   @override
-  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 자리 수·출발일·깃발 마감을 넣으세요.';
+  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 총 인원·출발일·깃발 마감을 넣으세요.';
+
+  @override
+  String get sameBoatAlreadyBooked => '이미 모집된 인원';
+
+  @override
+  String sameBoatSeatOpenPreview(int capacity, int booked, int open) {
+    return '총 $capacity칸 중 검정 $booked + 빈자리 $open';
+  }
+
+  @override
+  String sameBoatCapacityBelowOccupied(int booked, int holds) {
+    return '총 인원은 확정($booked)+가확정($holds)보다 작을 수 없습니다.';
+  }
+
+  @override
+  String get sameBoatAskAdminToChange => '변경은 관리자에게 문의하세요.';
+
+  @override
+  String get sameBoatPendingAfterSave =>
+      '같은배 노출은 관리자 승인 후입니다. (관리자 → 샵 → 같은배 모니터)';
+
+  @override
+  String get briefSectionSameBoat => '같은배 빈자리';
 
   @override
   String get workbenchDetail => '상세 설명';

@@ -99,16 +99,14 @@ abstract final class SameBoatBoard {
       if (!product.isListedPublicly) {
         continue;
       }
-      final opened = [
-        for (final option in product.options)
-          if (option.listsOnSameBoat) option,
-      ];
-      if (opened.isNotEmpty) {
-        for (final option in opened) {
+      // Product-level and option-level can both list at once.
+      if (product.listsOnSameBoat) {
+        listed.add(SameBoatOffer(product: product));
+      }
+      for (final option in product.options) {
+        if (option.listsOnSameBoat) {
           listed.add(SameBoatOffer(product: product, option: option));
         }
-      } else if (product.listsOnSameBoat) {
-        listed.add(SameBoatOffer(product: product));
       }
     }
     listed.sort((a, b) {

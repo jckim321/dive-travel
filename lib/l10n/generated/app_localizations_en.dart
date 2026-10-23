@@ -458,6 +458,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No charge yet. Payment continues after the shop confirms.';
 
   @override
+  String get simPaySameBoatNotice => 'Payment confirms your seat.';
+
+  @override
   String get simPayAction => 'Request booking';
 
   @override
@@ -3354,7 +3357,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn on only to fill an existing team for the same dates. Off = a regular listing.';
 
   @override
-  String get workbenchSeatCount => 'Seat count';
+  String get workbenchSeatCount => 'Total seats';
 
   @override
   String get workbenchDepartureDate => 'Departure date';
@@ -3364,7 +3367,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workbenchOpenSeatsNeedFields =>
-      'Seat count, departure date, and flag deadline are required to open leftover seats.';
+      'Total seats, departure date, and flag deadline are required to open leftover seats.';
+
+  @override
+  String get sameBoatAlreadyBooked => 'Already recruited';
+
+  @override
+  String sameBoatSeatOpenPreview(int capacity, int booked, int open) {
+    return '$capacity seats · $booked confirmed · $open open';
+  }
+
+  @override
+  String sameBoatCapacityBelowOccupied(int booked, int holds) {
+    return 'Total seats cannot be below confirmed ($booked) + provisional ($holds).';
+  }
+
+  @override
+  String get sameBoatAskAdminToChange => 'Ask an admin to change this.';
+
+  @override
+  String get sameBoatPendingAfterSave =>
+      'Same-boat listing waits for admin approval. (Admin → Shop → Same-boat monitor)';
+
+  @override
+  String get briefSectionSameBoat => 'Same-boat leftover seats';
 
   @override
   String get workbenchDetail => 'Full description';
