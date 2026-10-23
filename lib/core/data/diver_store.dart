@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
@@ -1352,6 +1353,10 @@ class DiverStore extends ChangeNotifier {
     return out;
   }
 
+  /// Shop id used for partner UI + saves (DevRoles overlay, else Firestore).
+  String get partnerOwnedShopId =>
+      stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
+
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,
@@ -1365,10 +1370,12 @@ class DiverStore extends ChangeNotifier {
     ProductSaveIntent? intent,
   }) async {
     // Partners may only manage their own hull; divers may submit as creators;
-    // everyone else needs admin.
-    final owned = _stats.ownedShopId;
+    // everyone else needs admin. Use overlay-aware [stats] so DevRoles shop
+    // matches list/form lockedShopId.
+    final effective = stats;
+    final owned = effective.ownedShopId;
     final isOwnerPartner =
-        _stats.isBusiness && owned != null && owned == shopId;
+        effective.isBusiness && owned != null && owned == shopId;
     final creatorUid = submitterUid?.trim() ?? '';
     if (creatorSubmission) {
       if (creatorUid.isEmpty || creatorUid != _uid) {
@@ -1434,15 +1441,52 @@ class DiverStore extends ChangeNotifier {
           _coverBytes[shopId] = first;
         }
       }
-      notifyListeners();
     } else if (photoBytes != null && photoBytes.isNotEmpty) {
       _coverBytes['$shopId--${gated.id}'] = photoBytes;
       if (useAsResortCover) {
         _coverBytes[shopId] = photoBytes;
       }
-      notifyListeners();
     }
-    await refreshShopStat(shopId);
+    // Show the saved product in partner lists immediately, then confirm via fetch.
+    _upsertLocalShopProduct(shopId, gated);
+    final refreshed = await refreshShopStat(shopId);
+    if (!refreshed) {
+      throw StateError('SHOP_STAT_REFRESH_FAILED');
+    }
+  }
+
+  void _upsertLocalShopProduct(String shopId, ShopProduct product) {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      return;
+    }
+    final next = [..._shopStats];
+    final index = next.indexWhere((item) => item.shopId == id);
+    if (index < 0) {
+      next.add(
+        ShopLiveStats(
+          shopId: id,
+          reviewCount: 0,
+          avgSafety: 0,
+          avgGuide: 0,
+          avgBoat: 0,
+          avgOverall: 0,
+          diveStar: 0,
+          products: [product],
+        ),
+      );
+    } else {
+      final current = next[index];
+      final products = [
+        for (final item in current.products)
+          if (item.id != product.id) item,
+        product,
+      ];
+      next[index] = current.copyWith(products: products);
+    }
+    _shopStats = next;
+    _shopStatsLoaded = true;
+    notifyListeners();
   }
 
   ShopProduct _withSaveIntent({
@@ -1818,15 +1862,16 @@ class DiverStore extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshShopStat(String shopId) async {
+  /// Reloads one shop into [_shopStats]. Returns false if missing or on error.
+  Future<bool> refreshShopStat(String shopId) async {
     final id = shopId.trim();
     if (id.isEmpty) {
-      return;
+      return false;
     }
     try {
       final updated = await _repository.fetchShopStat(id);
       if (updated == null) {
-        return;
+        return false;
       }
       final next = [..._shopStats];
       final index = next.indexWhere((item) => item.shopId == id);
@@ -1839,9 +1884,11 @@ class DiverStore extends ChangeNotifier {
       _shopStatsLoaded = true;
       notifyListeners();
       unawaited(_hydrateShopCovers([updated]));
+      return true;
     } catch (error, stackTrace) {
       debugPrint('샵 통계 단건 갱신 실패: $error');
       debugPrint('$stackTrace');
+      return false;
     }
   }
 
@@ -2138,6 +2185,8 @@ class DiverStore extends ChangeNotifier {
         userRole: 'business',
       );
       _devRoleOverlay = DevRoleOverlay(kind: kind, ownedShopId: shop);
+      // Keep raw _stats aligned with overlay until the user-doc snapshot arrives.
+      _stats = _stats.copyWith(isBusiness: true, ownedShopId: shop);
     } else {
       await _repository.updateDevTestRole(
         uid: uid,
@@ -2146,6 +2195,7 @@ class DiverStore extends ChangeNotifier {
         userRole: kind == DevRoleKind.admin ? 'admin' : 'diver',
       );
       _devRoleOverlay = DevRoleOverlay(kind: kind);
+      _stats = _stats.copyWith(isBusiness: false, clearOwnedShopId: true);
     }
     _rebindRoleInboxes();
     notifyListeners();

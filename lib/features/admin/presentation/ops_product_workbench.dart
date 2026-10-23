@@ -1031,8 +1031,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
+      final message = '$error'.contains('SHOP_STAT_REFRESH_FAILED')
+          ? l10n.shopStatRefreshFailed
+          : '$error';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error'), duration: const Duration(seconds: 8)),
+        SnackBar(content: Text(message), duration: const Duration(seconds: 8)),
       );
     } finally {
       if (mounted) {

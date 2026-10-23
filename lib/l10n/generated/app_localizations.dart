@@ -3201,8 +3201,38 @@ abstract class AppLocalizations {
   /// No description provided for @sameBoatSeatsNoProducts.
   ///
   /// In ko, this message translates to:
-  /// **'조건에 맞는 공개 상품이 없습니다. 상품을 등록·승인했는지 확인하세요.'**
+  /// **'빈자리를 열 수 있는 승인된 상품이 없습니다. 관리자가 상품을 승인한 뒤 빈자리를 열 수 있습니다.'**
   String get sameBoatSeatsNoProducts;
+
+  /// No description provided for @sameBoatHubAwaitingPublishTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 승인 대기'**
+  String get sameBoatHubAwaitingPublishTitle;
+
+  /// No description provided for @sameBoatHubAwaitingPublishHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 공개되지 않은 상품입니다. 좌석 신청은 승인된 상품만 가능합니다.'**
+  String get sameBoatHubAwaitingPublishHint;
+
+  /// No description provided for @sameBoatHubAwaitingPublishEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 중인 상품이 없습니다.'**
+  String get sameBoatHubAwaitingPublishEmpty;
+
+  /// No description provided for @partnerProductListEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록한 상품이 없습니다. 저장하면 이 목록에 「승인 대기」로 나타납니다.'**
+  String get partnerProductListEmpty;
+
+  /// No description provided for @shopStatRefreshFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장은 됐지만 목록을 새로고치지 못했습니다. 당겨서 새로고침하거나 화면을 다시 열어 주세요.'**
+  String get shopStatRefreshFailed;
 
   /// No description provided for @sameBoatSeatsSubmit.
   ///
@@ -5139,7 +5169,7 @@ abstract class AppLocalizations {
   /// No description provided for @partnerProductPendingHint.
   ///
   /// In ko, this message translates to:
-  /// **'등록 후 관리자 승인이 완료되면 여행상품에 노출됩니다.'**
+  /// **'대기 중에도 목록에서 보고 수정할 수 있고, 같은배 신청과 여행상품 노출은 관리자 승인 후입니다.'**
   String get partnerProductPendingHint;
 
   /// No description provided for @adminPlaqueQueue.

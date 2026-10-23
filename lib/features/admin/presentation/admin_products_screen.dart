@@ -46,8 +46,12 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final owned =
-            store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
+        final owned = widget.partnerMode
+            ? store.partnerOwnedShopId
+            : (store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId);
+        final partnerProducts = widget.partnerMode
+            ? store.productsForShop(owned)
+            : const <ShopProduct>[];
         final pending = widget.partnerMode
             ? [
                 for (final product in store.pendingProductApprovals)
@@ -264,66 +268,91 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              for (final product in store.productsForShop(owned)) ...[
+              if (partnerProducts.isEmpty)
                 Card(
+                  key: const Key('partner-products-empty'),
                   child: ListTile(
-                    title: Text(product.name),
-                    subtitle: _productLines(l10n, product),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) async {
-                        if (value == 'edit') {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => TravelProductRegistrationScreen(
-                                lockedShopId: owned,
-                                partnerMode: true,
-                                existing: product,
+                    title: Text(l10n.partnerProductListEmpty),
+                  ),
+                )
+              else
+                for (final product in partnerProducts) ...[
+                  Card(
+                    key: Key('partner-product-${product.id}'),
+                    child: ListTile(
+                      title: Text(product.name),
+                      subtitle: _productLines(l10n, product),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _PublishStatusChip(product: product),
+                          PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              if (value == 'edit') {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        TravelProductRegistrationScreen(
+                                      lockedShopId: owned,
+                                      partnerMode: true,
+                                      existing: product,
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (value == 'seats') {
+                                if (!product.isListedPublicly) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(l10n.sameBoatSeatsNoProducts),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        SameBoatSeatsScreen(product: product),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (value == 'delete') {
+                                await _confirmDeleteProduct(context, product);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Text(l10n.exploreEditResort),
                               ),
-                            ),
-                          );
-                          return;
-                        }
-                        if (value == 'seats') {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  SameBoatSeatsScreen(product: product),
-                            ),
-                          );
-                          return;
-                        }
-                        if (value == 'delete') {
-                          await _confirmDeleteProduct(context, product);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Text(l10n.exploreEditResort),
-                        ),
-                        PopupMenuItem(
-                          value: 'seats',
-                          child: Text(l10n.sameBoatSeatsTitle),
-                        ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Text(l10n.adminProductDelete),
-                        ),
-                      ],
-                    ),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => TravelProductRegistrationScreen(
-                          lockedShopId: owned,
-                          partnerMode: true,
-                          existing: product,
+                              if (product.isListedPublicly)
+                                PopupMenuItem(
+                                  value: 'seats',
+                                  child: Text(l10n.sameBoatSeatsTitle),
+                                ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text(l10n.adminProductDelete),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => TravelProductRegistrationScreen(
+                            lockedShopId: owned,
+                            partnerMode: true,
+                            existing: product,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 8),
+                ],
             ],
           ],
         );
@@ -515,6 +544,26 @@ class _PendingProductTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PublishStatusChip extends StatelessWidget {
+  const _PublishStatusChip({required this.product});
+
+  final ShopProduct product;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Chip(
+        key: Key('partner-product-status-${product.id}'),
+        label: Text(_statusLabel(l10n, product.publishStatus)),
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

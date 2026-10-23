@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -70,8 +69,7 @@ class PartnerDashboardScreen extends StatelessWidget {
       body: ListenableBuilder(
         listenable: store,
         builder: (context, _) {
-          final shopId =
-              store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
+          final shopId = store.partnerOwnedShopId;
           final shop = DiveShopCatalog.byId(shopId);
           final live = store.liveStatsFor(shopId);
           final theme = Theme.of(context);

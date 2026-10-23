@@ -34,6 +34,22 @@ List<ShopProduct> filterSameBoatHubProducts({
   ];
 }
 
+/// Partner products waiting for Explore publish (not yet seat-applyable).
+List<ShopProduct> filterAwaitingPublishProducts({
+  required Iterable<ShopProduct> products,
+  required String shopId,
+}) {
+  return [
+    for (final product in products)
+      if (product.shopId == shopId &&
+          !product.isListedPublicly &&
+          (product.publishStatus == ProductPublishStatus.pending ||
+              product.publishStatus == ProductPublishStatus.draft ||
+              product.publishStatus == ProductPublishStatus.rejected))
+        product,
+  ];
+}
+
 bool _matchesStatus(ShopProduct product, SameBoatHubStatusFilter filter) {
   return switch (filter) {
     SameBoatHubStatusFilter.all => true,
@@ -97,6 +113,7 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final dayFmt = DateFormat('yyyy.MM.dd');
+    final partnerShopId = widget.shopId;
 
     final body = ListenableBuilder(
       listenable: store,
@@ -111,6 +128,13 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
               : SameBoatHubSourceFilter.all,
           query: _query.text,
         );
+        final awaitingPublish = partnerShopId == null ||
+                widget.adminBypassApproval
+            ? const <ShopProduct>[]
+            : filterAwaitingPublishProducts(
+                products: store.productsForShop(partnerShopId),
+                shopId: partnerShopId,
+              );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -209,21 +233,63 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
             ],
             const SizedBox(height: 8),
             Expanded(
-              child: products.isEmpty
-                  ? Center(child: Text(l10n.sameBoatSeatsNoProducts))
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-                      itemCount: products.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return _HubProductTile(
-                          product: product,
-                          dayFmt: dayFmt,
-                          adminBypass: widget.adminBypassApproval,
-                        );
-                      },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                children: [
+                  if (awaitingPublish.isNotEmpty) ...[
+                    Text(
+                      l10n.sameBoatHubAwaitingPublishTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.sameBoatHubAwaitingPublishHint,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    for (final product in awaitingPublish) ...[
+                      Card(
+                        key: Key('same-boat-hub-awaiting-${product.id}'),
+                        child: ListTile(
+                          title: Text(product.name),
+                          subtitle: Text(
+                            product.publishStatus == ProductPublishStatus.rejected
+                                ? l10n.productStatusRejected
+                                : product.publishStatus ==
+                                        ProductPublishStatus.draft
+                                    ? l10n.productStatusDraft
+                                    : l10n.productStatusPending,
+                          ),
+                          enabled: false,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 12),
+                  ],
+                  if (products.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          l10n.sameBoatSeatsNoProducts,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  else
+                    for (var i = 0; i < products.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      _HubProductTile(
+                        product: products[i],
+                        dayFmt: dayFmt,
+                        adminBypass: widget.adminBypassApproval,
+                      ),
+                    ],
+                ],
+              ),
             ),
           ],
         );

@@ -1693,7 +1693,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sameBoatSeatsNoProducts =>
-      '조건에 맞는 공개 상품이 없습니다. 상품을 등록·승인했는지 확인하세요.';
+      '빈자리를 열 수 있는 승인된 상품이 없습니다. 관리자가 상품을 승인한 뒤 빈자리를 열 수 있습니다.';
+
+  @override
+  String get sameBoatHubAwaitingPublishTitle => '상품 승인 대기';
+
+  @override
+  String get sameBoatHubAwaitingPublishHint =>
+      '아직 공개되지 않은 상품입니다. 좌석 신청은 승인된 상품만 가능합니다.';
+
+  @override
+  String get sameBoatHubAwaitingPublishEmpty => '승인 대기 중인 상품이 없습니다.';
+
+  @override
+  String get partnerProductListEmpty =>
+      '등록한 상품이 없습니다. 저장하면 이 목록에 「승인 대기」로 나타납니다.';
+
+  @override
+  String get shopStatRefreshFailed =>
+      '저장은 됐지만 목록을 새로고치지 못했습니다. 당겨서 새로고침하거나 화면을 다시 열어 주세요.';
 
   @override
   String get sameBoatSeatsSubmit => '승인 요청';
@@ -2729,7 +2747,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get partnerOwnProductsOnly => '파트너는 본인 샵 상품만 등록·수정할 수 있습니다.';
 
   @override
-  String get partnerProductPendingHint => '등록 후 관리자 승인이 완료되면 여행상품에 노출됩니다.';
+  String get partnerProductPendingHint =>
+      '대기 중에도 목록에서 보고 수정할 수 있고, 같은배 신청과 여행상품 노출은 관리자 승인 후입니다.';
 
   @override
   String get adminPlaqueQueue => 'Lista de envío de placas';

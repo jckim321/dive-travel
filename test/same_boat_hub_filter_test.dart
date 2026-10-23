@@ -42,11 +42,27 @@ void main() {
           id: 'draft',
           shopId: 'shop-a',
           publishStatus: ProductPublishStatus.pending,
+          active: false,
         ),
       ],
       shopId: 'shop-a',
     );
     expect(listed.map((p) => p.id), ['a']);
+  });
+
+  test('awaiting-publish list shows partner pending not open for seats', () {
+    final pending = _product(
+      id: 'pending',
+      shopId: 'shop-a',
+      publishStatus: ProductPublishStatus.pending,
+      active: false,
+    );
+    final live = _product(id: 'live', shopId: 'shop-a');
+    final awaiting = filterAwaitingPublishProducts(
+      products: [pending, live],
+      shopId: 'shop-a',
+    );
+    expect(awaiting.map((p) => p.id), ['pending']);
   });
 
   test('hub filter splits by same-boat status and source', () {

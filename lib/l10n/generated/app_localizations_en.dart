@@ -1716,7 +1716,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sameBoatSeatsNoProducts =>
-      'No matching public products. Register and approve a product first.';
+      'No approved products to open seats on yet. You can open leftover seats after an admin approves the product.';
+
+  @override
+  String get sameBoatHubAwaitingPublishTitle => 'Awaiting product approval';
+
+  @override
+  String get sameBoatHubAwaitingPublishHint =>
+      'These products are not public yet. Seat apply is available only after approval.';
+
+  @override
+  String get sameBoatHubAwaitingPublishEmpty =>
+      'No products waiting for admin approval.';
+
+  @override
+  String get partnerProductListEmpty =>
+      'No products yet. Register one to see it here as pending approval.';
+
+  @override
+  String get shopStatRefreshFailed =>
+      'Saved, but the product list could not refresh. Pull to refresh or reopen this screen.';
 
   @override
   String get sameBoatSeatsSubmit => 'Request approval';
@@ -2789,7 +2808,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partnerProductPendingHint =>
-      'After you submit, the product appears once an admin approves it.';
+      'You can view and edit pending products in this list. Same-boat apply and Explore listing appear after admin approval.';
 
   @override
   String get adminPlaqueQueue => 'Physical plaque shipping list';
