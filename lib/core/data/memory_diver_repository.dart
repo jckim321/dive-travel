@@ -24,6 +24,7 @@ import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
 class MemoryDiverRepository implements DiverRepository {
@@ -1974,6 +1975,16 @@ class MemoryDiverRepository implements DiverRepository {
     String? intro,
     String? address,
     List<String>? amenities,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
     String? country,
     String? continent,
     bool? curated,
@@ -1983,6 +1994,9 @@ class MemoryDiverRepository implements DiverRepository {
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
   }) async {
+    if (mapUrl != null && !isShopMapUrlValid(mapUrl)) {
+      throw StateError('INVALID_MAP_URL');
+    }
     final current = _shopStats[shopId];
     List<String> galleryUrls;
     String? coverUrl;
@@ -2016,6 +2030,9 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
 
+    // Keep existing products list — never rewrite from profile save.
+    final products = current?.products ?? const <ShopProduct>[];
+
     _shopStats[shopId] =
         (current ??
                 ShopLiveStats(
@@ -2040,8 +2057,19 @@ class MemoryDiverRepository implements DiverRepository {
               intro: intro ?? current?.intro,
               address: address ?? current?.address,
               amenities: amenities ?? current?.amenities,
+              mapUrl: mapUrl ?? current?.mapUrl,
+              nearestHub: nearestHub ?? current?.nearestHub,
+              accessRoutes: accessRoutes ?? current?.accessRoutes,
+              featureBlurb: featureBlurb ?? current?.featureBlurb,
+              featureTags: featureTags ?? current?.featureTags,
+              nearbySpots: nearbySpots ?? current?.nearbySpots,
+              localContact: localContact ?? current?.localContact,
+              checkIn: checkIn ?? current?.checkIn,
+              checkOut: checkOut ?? current?.checkOut,
+              businessHours: businessHours ?? current?.businessHours,
               coverUrl: coverUrl,
               galleryUrls: galleryUrls,
+              products: products,
             );
     _shopController.add(_shopStats.values.toList());
   }

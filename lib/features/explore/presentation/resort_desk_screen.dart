@@ -8,10 +8,12 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -31,10 +33,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _location = TextEditingController();
   final _address = TextEditingController();
   final _intro = TextEditingController();
-  final _product = TextEditingController();
-  final _consumer = TextEditingController();
-  final _pro = TextEditingController();
-  final _amenities = TextEditingController();
+  final _info = ResortDeskInfoDraft();
+  /// Preserved listing scalars — desk no longer edits product name/prices.
+  var _listingProductName = '';
+  var _listingConsumerPrice = 0;
+  var _listingProfessionalPrice = 0;
   final _photoPicker = const DivePhotoPicker();
   final List<BookingGalleryItem> _slots = [];
   var _seeded = false;
@@ -57,13 +60,26 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _location.text = live?.location ?? hull?.location ?? '';
     _address.text = live?.address ?? hull?.address ?? '';
     _intro.text = live?.intro ?? hull?.intro ?? '';
-    _product.text = live?.productName ?? hull?.productName ?? '';
-    _consumer.text = '${live?.consumerPrice ?? hull?.consumerPrice ?? 0}';
-    _pro.text = '${live?.professionalPrice ?? hull?.professionalPrice ?? 0}';
+    _listingProductName = live?.productName ?? hull?.productName ?? '';
+    _listingConsumerPrice = live?.consumerPrice ?? hull?.consumerPrice ?? 0;
+    _listingProfessionalPrice =
+        live?.professionalPrice ?? hull?.professionalPrice ?? 0;
     final amenitySource = (live?.amenities.isNotEmpty ?? false)
         ? live!.amenities
         : (hull?.amenities ?? const <String>[]);
-    _amenities.text = amenitySource.join(', ');
+    _info.seed(
+      mapUrl: live?.mapUrl ?? '',
+      nearestHub: live?.nearestHub ?? '',
+      featureBlurb: live?.featureBlurb ?? '',
+      localContact: live?.localContact ?? '',
+      checkIn: live?.checkIn ?? '',
+      checkOut: live?.checkOut ?? '',
+      businessHours: live?.businessHours ?? '',
+      amenities: amenitySource,
+      featureTags: live?.featureTags ?? const [],
+      accessRoutes: live?.accessRoutes ?? const [],
+      nearbySpots: live?.nearbySpots ?? const [],
+    );
     _seedGallery(store, live, hull);
   }
 
@@ -125,10 +141,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _location.dispose();
     _address.dispose();
     _intro.dispose();
-    _product.dispose();
-    _consumer.dispose();
-    _pro.dispose();
-    _amenities.dispose();
+    _info.dispose();
     super.dispose();
   }
 
@@ -214,21 +227,50 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
 
+    final mapError = validateShopMapUrl(_info.mapUrl.text);
+    if (mapError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            mapError == 'map_url_https_only'
+                ? '지도 링크는 https로 시작하는 주소만 저장할 수 있어요.'
+                : mapError == 'map_url_domain'
+                    ? '구글·네이버·카카오 지도 링크만 저장할 수 있어요.'
+                    : '지도 링크 형식을 확인해 주세요.',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       await DiverStoreScope.of(context).saveShopProfile(
         shopId: widget.shopId,
         name: name,
         location: _location.text,
-        productName: _product.text,
-        consumerPrice: int.tryParse(_consumer.text) ?? 0,
-        professionalPrice: int.tryParse(_pro.text) ?? 0,
+        productName: _listingProductName,
+        consumerPrice: _listingConsumerPrice,
+        professionalPrice: _listingProfessionalPrice,
         intro: _intro.text,
         address: _address.text,
         amenities: [
-          for (final part in _amenities.text.split(RegExp(r'[,，\n]')))
-            if (part.trim().isNotEmpty) part.trim(),
+          for (final item in _info.amenities.take(kMaxAmenities))
+            if (item.trim().isNotEmpty) clampShort(item),
         ],
+        mapUrl: _info.mapUrl.text.trim(),
+        nearestHub: clampShort(_info.nearestHub.text),
+        accessRoutes: _info.builtRoutes(),
+        featureBlurb: clampShort(_info.featureBlurb.text, kMaxShortLine * 2),
+        featureTags: [
+          for (final tag in _info.featureTags.take(kMaxFeatureTags))
+            clampShort(tag),
+        ],
+        nearbySpots: _info.builtSpots(),
+        localContact: clampShort(_info.localContact.text),
+        checkIn: clampShort(_info.checkIn.text),
+        checkOut: clampShort(_info.checkOut.text),
+        businessHours: clampShort(_info.businessHours.text),
         // Only rewrite gallery/cover when the user edited photos. An empty
         // _slots from a race before live stats loaded used to wipe cover_url.
         gallery: _galleryTouched
@@ -254,9 +296,14 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       if (!mounted) {
         return;
       }
+      final raw = '$error';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$error'),
+          content: Text(
+            raw.contains('INVALID_MAP_URL')
+                ? '구글·네이버·카카오 지도 https 링크만 저장할 수 있어요.'
+                : raw,
+          ),
           duration: const Duration(seconds: 6),
         ),
       );
@@ -274,15 +321,15 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     if (products.isNotEmpty) {
       return products.first;
     }
-    final fallbackName = _product.text.trim().isNotEmpty
-        ? _product.text.trim()
+    final fallbackName = _listingProductName.trim().isNotEmpty
+        ? _listingProductName.trim()
         : (_name.text.trim().isEmpty ? '기본 상품' : _name.text.trim());
     return ShopProduct(
       id: 'p-${widget.shopId}-default',
       shopId: widget.shopId,
       name: fallbackName,
-      consumerPrice: int.tryParse(_consumer.text) ?? 0,
-      professionalPrice: int.tryParse(_pro.text) ?? 0,
+      consumerPrice: _listingConsumerPrice,
+      professionalPrice: _listingProfessionalPrice,
     );
   }
 
@@ -419,8 +466,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             location: _location,
             address: _address,
             intro: _intro,
-            amenities: _amenities,
-            product: _product,
+            info: _info,
+            onInfoChanged: () => setState(() {}),
             slots: _slots,
             onAddPhotos: _addPhotos,
             onTestPhoto: _useTestPhoto,
@@ -435,8 +482,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           );
           final side = _DeskStickySidebar(
             saving: _saving,
-            consumer: _consumer,
-            pro: _pro,
             onSave: _saveProfile,
             onPreview: _openPreview,
           );
@@ -528,15 +573,11 @@ class _RequiredLabel extends StatelessWidget {
 class _DeskStickySidebar extends StatelessWidget {
   const _DeskStickySidebar({
     required this.saving,
-    required this.consumer,
-    required this.pro,
     required this.onSave,
     required this.onPreview,
   });
 
   final bool saving;
-  final TextEditingController consumer;
-  final TextEditingController pro;
   final VoidCallback onSave;
   final VoidCallback onPreview;
 
@@ -598,37 +639,18 @@ class _DeskStickySidebar extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 16),
             Text(
-              '핵심 금액',
+              '상품 가격',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Text(
-              '손님에게 먼저 보이는 대표 가격입니다.',
+              '가격과 옵션은 상품 관리에서 수정하세요. 이 화면은 리조트 소개만 저장합니다.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTheme.muted,
+                    height: 1.35,
                   ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: consumer,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: _deskInputDecoration(
-                label: l10n.exploreConsumerPrice,
-                required: true,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: pro,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: _deskInputDecoration(
-                label: l10n.exploreProPrice,
-                required: true,
-              ),
             ),
           ],
         ),
@@ -644,8 +666,8 @@ class _DeskMainColumn extends StatelessWidget {
     required this.location,
     required this.address,
     required this.intro,
-    required this.amenities,
-    required this.product,
+    required this.info,
+    required this.onInfoChanged,
     required this.slots,
     required this.onAddPhotos,
     required this.onTestPhoto,
@@ -662,8 +684,8 @@ class _DeskMainColumn extends StatelessWidget {
   final TextEditingController location;
   final TextEditingController address;
   final TextEditingController intro;
-  final TextEditingController amenities;
-  final TextEditingController product;
+  final ResortDeskInfoDraft info;
+  final VoidCallback onInfoChanged;
   final List<BookingGalleryItem> slots;
   final VoidCallback onAddPhotos;
   final VoidCallback onTestPhoto;
@@ -721,25 +743,9 @@ class _DeskMainColumn extends StatelessWidget {
                 key: const Key('resort-intro-field'),
                 controller: intro,
                 maxLines: 5,
+                maxLength: kMaxIntroBody,
                 decoration: _deskInputDecoration(
                   label: l10n.exploreResortIntro,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                key: const Key('resort-amenities-field'),
-                controller: amenities,
-                maxLines: 2,
-                decoration: _deskInputDecoration(
-                  label: l10n.exploreResortTraits,
-                  hint: l10n.exploreAmenitiesHint,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: product,
-                decoration: _deskInputDecoration(
-                  label: l10n.partnerDefaultProduct,
                 ),
               ),
             ],
@@ -747,7 +753,7 @@ class _DeskMainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         BookingFormSection(
-          step: '2',
+          step: '1b',
           title: '미디어 (사진)',
           subtitle: l10n.exploreCoverPhotoHint,
           child: BookingGalleryEditor(
@@ -763,21 +769,44 @@ class _DeskMainColumn extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
+        const SizedBox(height: 16),
         BookingFormSection(
-          step: '3',
-          title: '상품 옵션',
-          subtitle: '룸·탱크·장비 등 선택 옵션을 이 창에서 바로 추가·수정합니다.',
+          step: '8',
+          title: '상품 가격·옵션',
+          subtitle: '가격과 옵션은 상품 관리에서 수정하세요.',
           trailing: FilledButton.tonalIcon(
             key: const Key('partner-product-form'),
             onPressed: onAddOption,
             icon: const Icon(Icons.add, size: 18),
             label: Text(l10n.productFormAddOption),
           ),
-          child: _OptionAdminTable(
-            options: primaryProduct.options,
-            onEdit: onEditOption,
-            onDelete: onDeleteOption,
-            onAdd: onAddOption,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F9FB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE6EBEF)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    '대표 상품명·가격 칸은 여기서 바꾸지 않습니다. '
+                    '상품 워크벤치에서 수정한 내용이 손님 화면에 반영됩니다.',
+                    style: TextStyle(color: AppTheme.muted, height: 1.35),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _OptionAdminTable(
+                options: primaryProduct.options,
+                onEdit: onEditOption,
+                onDelete: onDeleteOption,
+                onAdd: onAddOption,
+              ),
+            ],
           ),
         ),
       ],

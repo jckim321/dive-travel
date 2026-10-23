@@ -30,6 +30,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/dev/dev_roles.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -1272,6 +1273,16 @@ class DiverStore extends ChangeNotifier {
     String? intro,
     String? address,
     List<String>? amenities,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
     String? country,
     String? continent,
     bool? curated,
@@ -1325,6 +1336,16 @@ class DiverStore extends ChangeNotifier {
       intro: intro,
       address: address,
       amenities: amenities,
+      mapUrl: mapUrl,
+      nearestHub: nearestHub,
+      accessRoutes: accessRoutes,
+      featureBlurb: featureBlurb,
+      featureTags: featureTags,
+      nearbySpots: nearbySpots,
+      localContact: localContact,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      businessHours: businessHours,
       country: country,
       continent: continent,
       curated: curated,

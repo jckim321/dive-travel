@@ -28,6 +28,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
@@ -2353,6 +2354,16 @@ class FirestoreDiverRepository implements DiverRepository {
     String? intro,
     String? address,
     List<String>? amenities,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
     String? country,
     String? continent,
     bool? curated,
@@ -2383,29 +2394,12 @@ class FirestoreDiverRepository implements DiverRepository {
       );
     }
 
-    final ref = _shops.doc(shopId);
-    final existing = await ref.get();
-    final currentProducts = ShopProduct.listFrom(
-      shopId,
-      existing.data()?['products'],
-    );
-    // Keep listing cards in sync: desk price edits used to update only the
-    // shop doc while Explore/Home still read the stale products[] prices.
-    final syncedProducts = currentProducts.isEmpty
-        ? currentProducts
-        : [
-            for (var i = 0; i < currentProducts.length; i++)
-              i == 0
-                  ? currentProducts[i].copyWith(
-                      name: productName.trim().isEmpty
-                          ? currentProducts[i].name
-                          : productName.trim(),
-                      consumerPrice: consumerPrice,
-                      professionalPrice: professionalPrice,
-                    )
-                  : currentProducts[i],
-          ];
+    if (mapUrl != null && !isShopMapUrlValid(mapUrl)) {
+      throw StateError('INVALID_MAP_URL');
+    }
 
+    final ref = _shops.doc(shopId);
+    // Never read or write products[] here — unit prices live in the workbench.
     await ref.set({
       'name': name.trim(),
       'location': location.trim(),
@@ -2415,6 +2409,28 @@ class FirestoreDiverRepository implements DiverRepository {
       if (intro != null) 'intro': intro.trim(),
       if (address != null) 'address': address.trim(),
       if (amenities != null) 'amenities': amenities,
+      if (mapUrl != null) 'map_url': mapUrl.trim(),
+      if (nearestHub != null) 'nearest_hub': nearestHub.trim(),
+      if (accessRoutes != null)
+        'access_routes': [
+          for (final route in accessRoutes.take(kMaxAccessRoutes))
+            if (!route.isEmpty) route.toMap(),
+        ],
+      if (featureBlurb != null) 'feature_blurb': featureBlurb.trim(),
+      if (featureTags != null)
+        'feature_tags': [
+          for (final tag in featureTags.take(kMaxFeatureTags))
+            if (tag.trim().isNotEmpty) clampShort(tag),
+        ],
+      if (nearbySpots != null)
+        'nearby_spots': [
+          for (final spot in nearbySpots.take(kMaxNearbySpots))
+            if (!spot.isEmpty) spot.toMap(),
+        ],
+      if (localContact != null) 'local_contact': localContact.trim(),
+      if (checkIn != null) 'check_in': checkIn.trim(),
+      if (checkOut != null) 'check_out': checkOut.trim(),
+      if (businessHours != null) 'business_hours': businessHours.trim(),
       if (galleryUrls != null) 'gallery_urls': galleryUrls,
       if (galleryUrls != null && galleryUrls.isEmpty)
         'cover_url': FieldValue.delete()
@@ -2425,8 +2441,6 @@ class FirestoreDiverRepository implements DiverRepository {
       'country': (country ?? catalog?.country)?.trim(),
       'continent': (continent ?? catalog?.continent)?.trim(),
       if (curated != null) 'curated': curated,
-      if (syncedProducts.isNotEmpty)
-        'products': [for (final item in syncedProducts) item.toMap()],
       'commission_rate': RefundPolicy.defaultCommissionRate,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

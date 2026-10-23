@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
 /// Legacy helper: once used to auto-grade shops from operation-review averages.
 /// Shop Dive Star grade is now admin-assigned (`dive_star_grade`); do not use
@@ -93,6 +94,16 @@ class ShopLiveStats {
     this.products = const [],
     this.intro,
     this.address,
+    this.mapUrl = '',
+    this.nearestHub = '',
+    this.accessRoutes = const [],
+    this.featureBlurb = '',
+    this.featureTags = const [],
+    this.nearbySpots = const [],
+    this.localContact = '',
+    this.checkIn = '',
+    this.checkOut = '',
+    this.businessHours = '',
     this.coverUrl,
     this.galleryUrls = const [],
     this.amenities = const [],
@@ -134,6 +145,19 @@ class ShopLiveStats {
       products: ShopProduct.listFrom(id, data['products']),
       intro: data['intro'] as String?,
       address: data['address'] as String?,
+      mapUrl: (data['map_url'] as String? ?? '').trim(),
+      nearestHub: (data['nearest_hub'] as String? ?? '').trim(),
+      accessRoutes: AccessRoute.listFrom(data['access_routes']),
+      featureBlurb: (data['feature_blurb'] as String? ?? '').trim(),
+      featureTags: stringListFrom(
+        data['feature_tags'],
+        maxItems: kMaxFeatureTags,
+      ),
+      nearbySpots: NearbySpot.listFrom(data['nearby_spots']),
+      localContact: (data['local_contact'] as String? ?? '').trim(),
+      checkIn: (data['check_in'] as String? ?? '').trim(),
+      checkOut: (data['check_out'] as String? ?? '').trim(),
+      businessHours: (data['business_hours'] as String? ?? '').trim(),
       coverUrl: () {
         final raw = data['cover_url'] as String?;
         if (raw == null || raw.trim().isEmpty) {
@@ -180,6 +204,16 @@ class ShopLiveStats {
   final List<ShopProduct> products;
   final String? intro;
   final String? address;
+  final String mapUrl;
+  final String nearestHub;
+  final List<AccessRoute> accessRoutes;
+  final String featureBlurb;
+  final List<String> featureTags;
+  final List<NearbySpot> nearbySpots;
+  final String localContact;
+  final String checkIn;
+  final String checkOut;
+  final String businessHours;
   final String? coverUrl;
   final List<String> galleryUrls;
   final List<String> amenities;
@@ -228,6 +262,16 @@ class ShopLiveStats {
     List<ShopProduct>? products,
     String? intro,
     String? address,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
     String? coverUrl,
     List<String>? galleryUrls,
     List<String>? amenities,
@@ -260,6 +304,16 @@ class ShopLiveStats {
       products: products ?? this.products,
       intro: intro ?? this.intro,
       address: address ?? this.address,
+      mapUrl: mapUrl ?? this.mapUrl,
+      nearestHub: nearestHub ?? this.nearestHub,
+      accessRoutes: accessRoutes ?? this.accessRoutes,
+      featureBlurb: featureBlurb ?? this.featureBlurb,
+      featureTags: featureTags ?? this.featureTags,
+      nearbySpots: nearbySpots ?? this.nearbySpots,
+      localContact: localContact ?? this.localContact,
+      checkIn: checkIn ?? this.checkIn,
+      checkOut: checkOut ?? this.checkOut,
+      businessHours: businessHours ?? this.businessHours,
       coverUrl: coverUrl ?? this.coverUrl,
       galleryUrls: galleryUrls ?? this.galleryUrls,
       amenities: amenities ?? this.amenities,

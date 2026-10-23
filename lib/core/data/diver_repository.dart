@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
 abstract class DiverRepository {
   Stream<AppUser?> authState();
@@ -327,6 +328,16 @@ abstract class DiverRepository {
     String? intro,
     String? address,
     List<String>? amenities,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
     String? country,
     String? continent,
     bool? curated,
