@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -8,7 +7,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
-import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_products_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _ProductSourceFilter { all, partner, diy, special }
@@ -40,24 +39,18 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.partnerMode) {
+      return PartnerProductsScreen(embedded: widget.embedded);
+    }
+
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
 
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-        final owned = widget.partnerMode
-            ? store.partnerOwnedShopId
-            : (store.stats.ownedShopId ?? AppConstants.defaultPartnerShopId);
-        final partnerProducts = widget.partnerMode
-            ? store.productsForShop(owned)
-            : const <ShopProduct>[];
-        final pending = widget.partnerMode
-            ? [
-                for (final product in store.pendingProductApprovals)
-                  if (product.shopId == owned) product,
-              ]
-            : store.pendingProductApprovals;
+        // partnerMode early-returns above; admin path only from here.
+        final pending = store.pendingProductApprovals;
         final shopFilter = widget.filterShopId;
         final all = [
           for (final product in store.allShopProducts)
@@ -73,47 +66,33 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
             Text(
-              widget.partnerMode
-                  ? l10n.partnerProductPendingHint
-                  : l10n.adminProductsSubtitle,
+              l10n.adminProductsSubtitle,
               style: Theme.of(context).textTheme.bodyMedium
                   ?.copyWith(color: widget.embedded ? AdminConsoleTheme.muted : null),
             ),
-            if (widget.partnerMode) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.partnerOwnProductsOnly,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
             const SizedBox(height: 16),
             FilledButton.icon(
               key: const Key('admin-product-register'),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => TravelProductRegistrationScreen(
-                    lockedShopId: widget.partnerMode ? owned : null,
-                    partnerMode: widget.partnerMode,
-                  ),
+                  builder: (_) => const TravelProductRegistrationScreen(),
                 ),
               ),
               icon: const Icon(Icons.add_box_outlined),
               label: Text(l10n.adminProductsTitle),
             ),
-            if (!widget.partnerMode) ...[
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ResortDeskScreen(
-                      shopId: DiveShopCatalog.shops.first.id,
-                    ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ResortDeskScreen(
+                    shopId: DiveShopCatalog.shops.first.id,
                   ),
                 ),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: Text(l10n.exploreEditResort),
               ),
-            ],
+              icon: const Icon(Icons.photo_library_outlined),
+              label: Text(l10n.exploreEditResort),
+            ),
             const SizedBox(height: 24),
             Text(
               l10n.adminProductPendingQueue,
@@ -137,226 +116,129 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
               for (final product in pending) ...[
                 _PendingProductTile(
                   product: product,
-                  canApprove: !widget.partnerMode && store.stats.isAdmin,
+                  canApprove: store.stats.isAdmin,
                 ),
                 const SizedBox(height: 8),
               ],
-            if (!widget.partnerMode) ...[
-              const SizedBox(height: 24),
-              Text(
-                l10n.adminAllProducts,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: widget.embedded ? Colors.white : null),
-              ),
-              if (shopFilter != null) ...[
-                const SizedBox(height: 8),
-                InputChip(
-                  label: Text(
-                    l10n.adminProductFilterShop(
-                      DiveShopCatalog.byId(shopFilter)?.name ?? shopFilter,
-                    ),
-                  ),
-                  onDeleted: widget.onClearShopFilter,
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                ),
-              ],
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final entry in <(_ProductSourceFilter, String)>[
-                    (_ProductSourceFilter.all, l10n.adminProductSourceAll),
-                    (
-                      _ProductSourceFilter.partner,
-                      l10n.adminProductSourcePartner,
-                    ),
-                    (_ProductSourceFilter.diy, l10n.adminProductSourceDiy),
-                    (
-                      _ProductSourceFilter.special,
-                      l10n.adminProductSourceSpecial,
-                    ),
-                  ])
-                    ChoiceChip(
-                      key: Key('admin-product-source-${entry.$1.name}'),
-                      label: Text(entry.$2),
-                      selected: _source == entry.$1,
-                      onSelected: (_) => setState(() => _source = entry.$1),
-                    ),
-                ],
-              ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.adminAllProducts,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(color: widget.embedded ? Colors.white : null),
+            ),
+            if (shopFilter != null) ...[
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final entry in <(_ProductStatusFilter, String)>[
-                    (_ProductStatusFilter.all, l10n.adminProductSourceAll),
-                    (
-                      _ProductStatusFilter.pending,
-                      l10n.productStatusPending,
-                    ),
-                    (
-                      _ProductStatusFilter.approved,
-                      l10n.productStatusApproved,
-                    ),
-                    (
-                      _ProductStatusFilter.rejected,
-                      l10n.productStatusRejected,
-                    ),
-                    (_ProductStatusFilter.draft, l10n.productStatusDraft),
-                  ])
-                    FilterChip(
-                      key: Key('admin-product-status-${entry.$1.name}'),
-                      label: Text(entry.$2),
-                      selected: _status == entry.$1,
-                      onSelected: (_) => setState(() => _status = entry.$1),
-                    ),
-                ],
+              InputChip(
+                label: Text(
+                  l10n.adminProductFilterShop(
+                    DiveShopCatalog.byId(shopFilter)?.name ?? shopFilter,
+                  ),
+                ),
+                onDeleted: widget.onClearShopFilter,
+                deleteIcon: const Icon(Icons.close, size: 16),
               ),
-              const SizedBox(height: 12),
-              for (final product in filtered) ...[
-                Card(
-                  color: widget.embedded ? AdminConsoleTheme.surfaceHigh : null,
-                  child: ListTile(
-                    title: Row(
-                      children: [
-                        Expanded(child: Text(product.name)),
-                        if (_hasOpenSeats(product))
-                          Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: Text(
-                              l10n.adminOpenSeatsBadge,
-                              style: const TextStyle(
-                                color: AdminConsoleTheme.aqua,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final entry in <(_ProductSourceFilter, String)>[
+                  (_ProductSourceFilter.all, l10n.adminProductSourceAll),
+                  (
+                    _ProductSourceFilter.partner,
+                    l10n.adminProductSourcePartner,
+                  ),
+                  (_ProductSourceFilter.diy, l10n.adminProductSourceDiy),
+                  (
+                    _ProductSourceFilter.special,
+                    l10n.adminProductSourceSpecial,
+                  ),
+                ])
+                  ChoiceChip(
+                    key: Key('admin-product-source-${entry.$1.name}'),
+                    label: Text(entry.$2),
+                    selected: _source == entry.$1,
+                    onSelected: (_) => setState(() => _source = entry.$1),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final entry in <(_ProductStatusFilter, String)>[
+                  (_ProductStatusFilter.all, l10n.adminProductSourceAll),
+                  (
+                    _ProductStatusFilter.pending,
+                    l10n.productStatusPending,
+                  ),
+                  (
+                    _ProductStatusFilter.approved,
+                    l10n.productStatusApproved,
+                  ),
+                  (
+                    _ProductStatusFilter.rejected,
+                    l10n.productStatusRejected,
+                  ),
+                  (_ProductStatusFilter.draft, l10n.productStatusDraft),
+                ])
+                  FilterChip(
+                    key: Key('admin-product-status-${entry.$1.name}'),
+                    label: Text(entry.$2),
+                    selected: _status == entry.$1,
+                    onSelected: (_) => setState(() => _status = entry.$1),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (final product in filtered) ...[
+              Card(
+                color: widget.embedded ? AdminConsoleTheme.surfaceHigh : null,
+                child: ListTile(
+                  title: Row(
+                    children: [
+                      Expanded(child: Text(product.name)),
+                      if (_hasOpenSeats(product))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Text(
+                            l10n.adminOpenSeatsBadge,
+                            style: const TextStyle(
+                              color: AdminConsoleTheme.aqua,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                      ],
-                    ),
-                    subtitle: _productLines(
-                      l10n,
-                      product,
+                        ),
+                    ],
+                  ),
+                  subtitle: _productLines(
+                    l10n,
+                    product,
+                    color: widget.embedded ? AdminConsoleTheme.muted : null,
+                  ),
+                  trailing: IconButton(
+                    key: Key('delete-product-${product.id}'),
+                    tooltip: l10n.adminProductDelete,
+                    onPressed: () => _confirmDeleteProduct(context, product),
+                    icon: Icon(
+                      Icons.delete_outline,
                       color: widget.embedded ? AdminConsoleTheme.muted : null,
                     ),
-                    trailing: IconButton(
-                      key: Key('delete-product-${product.id}'),
-                      tooltip: l10n.adminProductDelete,
-                      onPressed: () => _confirmDeleteProduct(context, product),
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: widget.embedded ? AdminConsoleTheme.muted : null,
-                      ),
-                    ),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => TravelProductRegistrationScreen(
-                          existing: product,
-                          startEditing: true,
-                        ),
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => TravelProductRegistrationScreen(
+                        existing: product,
+                        startEditing: true,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-              ],
-            ],
-            if (widget.partnerMode) ...[
-              const SizedBox(height: 24),
-              Text(
-                l10n.partnerProductForm,
-                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              if (partnerProducts.isEmpty)
-                Card(
-                  key: const Key('partner-products-empty'),
-                  child: ListTile(
-                    title: Text(l10n.partnerProductListEmpty),
-                  ),
-                )
-              else
-                for (final product in partnerProducts) ...[
-                  Card(
-                    key: Key('partner-product-${product.id}'),
-                    child: ListTile(
-                      title: Text(product.name),
-                      subtitle: _productLines(l10n, product),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _PublishStatusChip(product: product),
-                          PopupMenuButton<String>(
-                            onSelected: (value) async {
-                              if (value == 'edit') {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        TravelProductRegistrationScreen(
-                                      lockedShopId: owned,
-                                      partnerMode: true,
-                                      existing: product,
-                                      startEditing: true,
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-                              if (value == 'seats') {
-                                if (!product.isListedPublicly) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.sameBoatSeatsNoProducts),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        SameBoatSeatsScreen(product: product),
-                                  ),
-                                );
-                                return;
-                              }
-                              if (value == 'delete') {
-                                await _confirmDeleteProduct(context, product);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Text(l10n.exploreEditResort),
-                              ),
-                              if (product.isListedPublicly)
-                                PopupMenuItem(
-                                  value: 'seats',
-                                  child: Text(l10n.sameBoatSeatsTitle),
-                                ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Text(l10n.adminProductDelete),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => TravelProductRegistrationScreen(
-                            lockedShopId: owned,
-                            partnerMode: true,
-                            existing: product,
-                            startEditing: true,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
             ],
           ],
         );
@@ -548,26 +430,6 @@ class _PendingProductTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PublishStatusChip extends StatelessWidget {
-  const _PublishStatusChip({required this.product});
-
-  final ShopProduct product;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(right: 4),
-      child: Chip(
-        key: Key('partner-product-status-${product.id}'),
-        label: Text(_statusLabel(l10n, product.publishStatus)),
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

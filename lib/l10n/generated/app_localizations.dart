@@ -5178,6 +5178,48 @@ abstract class AppLocalizations {
   /// **'가격 미입력'**
   String get partnerProductBadgeMissingPrice;
 
+  /// No description provided for @partnerProductsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 관리'**
+  String get partnerProductsTitle;
+
+  /// No description provided for @partnerProductsGuide.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 중에도 고칠 수 있고, 탐색·같은배에는 관리자 승인 후 나타납니다.'**
+  String get partnerProductsGuide;
+
+  /// No description provided for @partnerProductFilterAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get partnerProductFilterAll;
+
+  /// No description provided for @partnerProductsEmptyReason.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 등록한 상품이 없습니다.'**
+  String get partnerProductsEmptyReason;
+
+  /// No description provided for @partnerProductsEmptyNext.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품을 등록하면 이 목록에 「승인 대기」로 나타납니다.'**
+  String get partnerProductsEmptyNext;
+
+  /// No description provided for @partnerProductsEmptyCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 상품 등록하기'**
+  String get partnerProductsEmptyCta;
+
+  /// No description provided for @partnerProductsFilterEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 필터에 해당하는 상품이 없습니다.'**
+  String get partnerProductsFilterEmpty;
+
   /// No description provided for @productStatusApproved.
   ///
   /// In ko, this message translates to:

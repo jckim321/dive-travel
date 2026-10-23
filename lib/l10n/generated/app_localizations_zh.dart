@@ -2725,6 +2725,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerProductBadgeMissingPrice => '가격 미입력';
 
   @override
+  String get partnerProductsTitle => '상품 관리';
+
+  @override
+  String get partnerProductsGuide =>
+      '승인 대기 중에도 고칠 수 있고, 탐색·같은배에는 관리자 승인 후 나타납니다.';
+
+  @override
+  String get partnerProductFilterAll => '전체';
+
+  @override
+  String get partnerProductsEmptyReason => '아직 등록한 상품이 없습니다.';
+
+  @override
+  String get partnerProductsEmptyNext => '상품을 등록하면 이 목록에 「승인 대기」로 나타납니다.';
+
+  @override
+  String get partnerProductsEmptyCta => '첫 상품 등록하기';
+
+  @override
+  String get partnerProductsFilterEmpty => '이 필터에 해당하는 상품이 없습니다.';
+
+  @override
   String get productStatusApproved => '공개됨';
 
   @override

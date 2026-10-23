@@ -1083,6 +1083,13 @@
   "partnerProductBadgeRejected": "Rejected",
   "partnerProductBadgeClosed": "Closed",
   "partnerProductBadgeMissingPrice": "Price missing",
+  "partnerProductsTitle": "Manage products",
+  "partnerProductsGuide": "You can edit products while they await approval. They appear in Explore and Same-boat only after an admin approves them.",
+  "partnerProductFilterAll": "All",
+  "partnerProductsEmptyReason": "No products yet.",
+  "partnerProductsEmptyNext": "Register a product and it will show here as pending approval.",
+  "partnerProductsEmptyCta": "Register your first product",
+  "partnerProductsFilterEmpty": "No products match this filter.",
   "partnerOwnProductsOnly": "Partners can only manage products for their own shop.",
   "partnerProductPendingHint": "You can view and edit pending products in this list. Same-boat apply and Explore listing appear after admin approval.",
 

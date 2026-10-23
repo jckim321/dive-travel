@@ -2812,6 +2812,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductBadgeMissingPrice => 'Price missing';
 
   @override
+  String get partnerProductsTitle => 'Manage products';
+
+  @override
+  String get partnerProductsGuide =>
+      'You can edit products while they await approval. They appear in Explore and Same-boat only after an admin approves them.';
+
+  @override
+  String get partnerProductFilterAll => 'All';
+
+  @override
+  String get partnerProductsEmptyReason => 'No products yet.';
+
+  @override
+  String get partnerProductsEmptyNext =>
+      'Register a product and it will show here as pending approval.';
+
+  @override
+  String get partnerProductsEmptyCta => 'Register your first product';
+
+  @override
+  String get partnerProductsFilterEmpty => 'No products match this filter.';
+
+  @override
   String get productStatusApproved => 'Published';
 
   @override
