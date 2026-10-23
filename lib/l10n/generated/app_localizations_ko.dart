@@ -3573,6 +3573,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get briefEdit => '수정';
 
   @override
+  String get briefViewModeHint => '수정을 누르면 편집할 수 있습니다.';
+
+  @override
   String get adminProductDelete => '삭제';
 
   @override

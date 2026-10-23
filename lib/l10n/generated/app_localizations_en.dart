@@ -3669,6 +3669,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefEdit => 'Edit';
 
   @override
+  String get briefViewModeHint => 'Tap Edit to make changes.';
+
+  @override
   String get adminProductDelete => 'Delete';
 
   @override

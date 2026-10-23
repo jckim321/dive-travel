@@ -2024,6 +2024,8 @@
   "briefTakenDown": "상품을 손님 화면에서 내려 두었습니다.",
   "briefSave": "저장",
   "briefEdit": "수정",
+  "briefViewModeHint": "수정을 누르면 편집할 수 있습니다.",
+
   "adminProductDelete": "삭제",
   "adminProductDeleteBody": "「{name}」을 삭제하면 상품 목록에서 빠집니다.",
   "@adminProductDeleteBody": {

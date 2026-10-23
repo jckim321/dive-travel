@@ -1065,19 +1065,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          final brief = AbsorbPointer(
-            absorbing: !_editing,
-            child: Opacity(
-              opacity: _editing ? 1 : 0.92,
-              child: _brief(l10n, shops, shopLocked),
-            ),
+          // IgnorePointer is applied to scroll *children* in _brief / _guestCard
+          // so view mode can still scroll while blocking field taps.
+          final brief = Opacity(
+            opacity: _editing ? 1 : 0.92,
+            child: _brief(l10n, shops, shopLocked),
           );
-          final guest = AbsorbPointer(
-            absorbing: !_editing,
-            child: Opacity(
-              opacity: _editing ? 1 : 0.92,
-              child: _guestCard(l10n, hull),
-            ),
+          final guest = Opacity(
+            opacity: _editing ? 1 : 0.92,
+            child: _guestCard(l10n, hull),
           );
           return Column(
             children: [
@@ -1262,15 +1258,34 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _brief(AppLocalizations l10n, List<DiveShop> shops, bool shopLocked) {
     return ListView(
+      key: const Key('ops-product-brief-scroll'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
-        _block(1, l10n.briefSectionPlace, [
-          _placeBlock(l10n, shops, shopLocked),
-        ]),
-        _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
-        _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
-        _block(4, l10n.briefSectionSameBoat, [_sameBoatSeatBlock(l10n)]),
+        if (!_editing) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              l10n.briefViewModeHint,
+              key: const Key('ops-product-view-hint'),
+              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+            ),
+          ),
+        ],
+        IgnorePointer(
+          ignoring: !_editing,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
+              _block(1, l10n.briefSectionPlace, [
+                _placeBlock(l10n, shops, shopLocked),
+              ]),
+              _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
+              _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
+              _block(4, l10n.briefSectionSameBoat, [_sameBoatSeatBlock(l10n)]),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -2824,64 +2839,67 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.briefGuestCard,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            if (cover != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(_kBoxRadius),
-                child: SizedBox(
-                  height: 96,
-                  width: double.infinity,
-                  child: cover.photo != null
-                      ? Image.memory(cover.photo!.bytes, fit: BoxFit.cover)
-                      : Image.network(cover.url!, fit: BoxFit.cover),
-                ),
-              ),
-            if (cover != null) const SizedBox(height: 8),
-            Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
-            Text(
-              resort,
-              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-            ),
-            Text(_nightsLabel),
-            if (_departureStart != null)
+        child: IgnorePointer(
+          ignoring: !_editing,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                l10n.bookingEntryStayRange(
-                  _fmtDay(_departureStart),
-                  _fmtDay(_checkOut),
+                l10n.briefGuestCard,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              if (cover != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(_kBoxRadius),
+                  child: SizedBox(
+                    height: 96,
+                    width: double.infinity,
+                    child: cover.photo != null
+                        ? Image.memory(cover.photo!.bytes, fit: BoxFit.cover)
+                        : Image.network(cover.url!, fit: BoxFit.cover),
+                  ),
                 ),
+              if (cover != null) const SizedBox(height: 8),
+              Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
+              Text(
+                resort,
                 style: const TextStyle(color: AppTheme.muted, fontSize: 12),
               ),
-            if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
-            const SizedBox(height: 8),
-            Text(
-              '${l10n.briefStartPrice} $start',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${l10n.workbenchGuestDiver} $_previewDiver'
-              '${_hasNondivers && _previewNondiver > 0 ? ' · ${l10n.workbenchGuestNondiver} $_previewNondiver' : ''}'
-              '${_hasNondivers && _previewChild > 0 ? ' · ${l10n.bookingEntryChildInfant} $_previewChild' : ''}',
-              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.checkoutTotal('${quote.total}'),
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.briefSectionTerms,
-              style: const TextStyle(color: AppTheme.muted, fontSize: 11),
-            ),
-          ],
+              Text(_nightsLabel),
+              if (_departureStart != null)
+                Text(
+                  l10n.bookingEntryStayRange(
+                    _fmtDay(_departureStart),
+                    _fmtDay(_checkOut),
+                  ),
+                  style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+                ),
+              if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
+              const SizedBox(height: 8),
+              Text(
+                '${l10n.briefStartPrice} $start',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${l10n.workbenchGuestDiver} $_previewDiver'
+                '${_hasNondivers && _previewNondiver > 0 ? ' · ${l10n.workbenchGuestNondiver} $_previewNondiver' : ''}'
+                '${_hasNondivers && _previewChild > 0 ? ' · ${l10n.bookingEntryChildInfant} $_previewChild' : ''}',
+                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.checkoutTotal('${quote.total}'),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.briefSectionTerms,
+                style: const TextStyle(color: AppTheme.muted, fontSize: 11),
+              ),
+            ],
+          ),
         ),
       ),
     );

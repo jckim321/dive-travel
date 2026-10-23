@@ -6744,6 +6744,12 @@ abstract class AppLocalizations {
   /// **'수정'**
   String get briefEdit;
 
+  /// No description provided for @briefViewModeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정을 누르면 편집할 수 있습니다.'**
+  String get briefViewModeHint;
+
   /// No description provided for @adminProductDelete.
   ///
   /// In ko, this message translates to:

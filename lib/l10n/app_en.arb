@@ -1417,6 +1417,8 @@
   "briefTakenDown": "The trip is hidden from guests.",
   "briefSave": "Save",
   "briefEdit": "Edit",
+  "briefViewModeHint": "Tap Edit to make changes.",
+
   "adminProductDelete": "Delete",
   "adminProductDeleteBody": "Delete \"{name}\" from the product list.",
   "@adminProductDeleteBody": {
