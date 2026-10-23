@@ -930,11 +930,23 @@ abstract class AppLocalizations {
   /// **'지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.'**
   String get simPayNotice;
 
+  /// No description provided for @simPaySameBoatTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 확인'**
+  String get simPaySameBoatTitle;
+
   /// No description provided for @simPaySameBoatNotice.
   ///
   /// In ko, this message translates to:
-  /// **'결제 완료 시 자리가 확정됩니다.'**
+  /// **'테스트 결제입니다. 실제 결제는 아직 연결되지 않았습니다. 결제 완료 시 자리가 확정됩니다.'**
   String get simPaySameBoatNotice;
+
+  /// No description provided for @simPaySameBoatAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제하기'**
+  String get simPaySameBoatAction;
 
   /// No description provided for @simPayAction.
   ///
@@ -1083,7 +1095,7 @@ abstract class AppLocalizations {
   /// No description provided for @sameBoatSeatConfirmed.
   ///
   /// In ko, this message translates to:
-  /// **'가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.'**
+  /// **'결제가 완료되어 자리가 확정되었습니다(테스트 결제).'**
   String get sameBoatSeatConfirmed;
 
   /// 일반 다이버 결제 시트 보조 문구입니다.

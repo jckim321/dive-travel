@@ -723,6 +723,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     );
   }
 
+  /// Same-boat / flag checkout: pay CTA and SimPay copy (not Explore request).
+  bool get _sameBoatCheckout => widget.fromFlag || _checksSeats;
+
   Widget _workbenchFooter(AppLocalizations l10n) {
     final canReview = _bookPackage || _selected.isNotEmpty;
     if (_bookStep == 0) {
@@ -733,6 +736,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         child: Text(l10n.checkoutReviewCta),
       );
     }
+    final sameBoat = _sameBoatCheckout;
     return Row(
       children: [
         OutlinedButton(
@@ -743,10 +747,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         const SizedBox(width: 8),
         Expanded(
           child: FilledButton(
-            key: const Key('checkout-confirm'),
+            key: Key(sameBoat ? 'checkout-pay-same-boat' : 'checkout-confirm'),
             onPressed: _pay,
             style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-            child: Text(l10n.checkoutConfirm),
+            child: Text(
+              sameBoat ? l10n.explorePay : l10n.checkoutConfirm,
+            ),
           ),
         ),
       ],
@@ -1576,19 +1582,25 @@ class _SimPayDialogState extends State<_SimPayDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final done = _phase == 2;
+    final sameBoat = widget.sameBoatPayment;
+    final titleText = done
+        ? l10n.simPayDoneTitle
+        : (sameBoat ? l10n.simPaySameBoatTitle : l10n.simPayTitle);
+    final bodyText = done
+        ? l10n.simPayDoneBody
+        : (sameBoat ? l10n.simPaySameBoatNotice : l10n.simPayNotice);
+    final actionText = done
+        ? l10n.simPayClose
+        : (sameBoat ? l10n.simPaySameBoatAction : l10n.simPayAction);
     return AlertDialog(
       key: const Key('sim-pay-dialog'),
-      title: Text(done ? l10n.simPayDoneTitle : l10n.simPayTitle),
+      title: Text(titleText),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            done
-                ? l10n.simPayDoneBody
-                : (widget.sameBoatPayment
-                    ? l10n.simPaySameBoatNotice
-                    : l10n.simPayNotice),
+            bodyText,
             style: const TextStyle(color: AppTheme.muted),
           ),
           const SizedBox(height: 16),
@@ -1629,7 +1641,7 @@ class _SimPayDialogState extends State<_SimPayDialog> {
               ? () => Navigator.of(context).pop(true)
               : _submit,
           style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-          child: Text(done ? l10n.simPayClose : l10n.simPayAction),
+          child: Text(actionText),
         ),
       ],
     );

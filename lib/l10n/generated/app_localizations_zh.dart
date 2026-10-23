@@ -440,7 +440,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get simPayNotice => '지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.';
 
   @override
-  String get simPaySameBoatNotice => '결제 완료 시 자리가 확정됩니다.';
+  String get simPaySameBoatTitle => '결제 확인';
+
+  @override
+  String get simPaySameBoatNotice =>
+      '테스트 결제입니다. 실제 결제는 아직 연결되지 않았습니다. 결제 완료 시 자리가 확정됩니다.';
+
+  @override
+  String get simPaySameBoatAction => '결제하기';
 
   @override
   String get simPayAction => '예약 요청';
@@ -527,7 +534,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get sameBoatSeatConfirmed => '가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.';
+  String get sameBoatSeatConfirmed => '결제가 완료되어 자리가 확정되었습니다(테스트 결제).';
 
   @override
   String get exploreConsumerPayHint => '店铺登记的消费者价。';

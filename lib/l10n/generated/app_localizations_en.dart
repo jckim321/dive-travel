@@ -458,7 +458,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'No charge yet. Payment continues after the shop confirms.';
 
   @override
-  String get simPaySameBoatNotice => 'Payment confirms your seat.';
+  String get simPaySameBoatTitle => 'Confirm payment';
+
+  @override
+  String get simPaySameBoatNotice =>
+      'This is a test payment. Real payments are not connected yet. Completing payment confirms your seat.';
+
+  @override
+  String get simPaySameBoatAction => 'Pay';
 
   @override
   String get simPayAction => 'Request booking';
@@ -549,7 +556,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get sameBoatSeatConfirmed => 'Your provisional seats are confirmed.';
+  String get sameBoatSeatConfirmed =>
+      'Payment completed and your seat is confirmed (test payment).';
 
   @override
   String get exploreConsumerPayHint =>

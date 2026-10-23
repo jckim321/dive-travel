@@ -383,7 +383,9 @@
   },
   "simPayTitle": "예약 요청 확인",
   "simPayNotice": "지금은 결제하지 않습니다. 샵 확정 후 결제가 이어집니다.",
-  "simPaySameBoatNotice": "결제 완료 시 자리가 확정됩니다.",
+  "simPaySameBoatTitle": "결제 확인",
+  "simPaySameBoatNotice": "테스트 결제입니다. 실제 결제는 아직 연결되지 않았습니다. 결제 완료 시 자리가 확정됩니다.",
+  "simPaySameBoatAction": "결제하기",
   "simPayAction": "예약 요청",
   "simPayProcessing": "예약 요청 처리 중",
   "simPayDoneTitle": "예약 요청 완료",
@@ -438,7 +440,7 @@
     "description": "자리 확보가 실패해 결제 예약을 저장하지 않았을 때 안내입니다."
   },
   "exploreCheckoutDone": "{label} {price}원 예약을 샵에 전달했습니다.",
-  "sameBoatSeatConfirmed": "가확정 좌석이 확정되었습니다. 결제가 완료된 예약입니다.",
+  "sameBoatSeatConfirmed": "결제가 완료되어 자리가 확정되었습니다(테스트 결제).",
   "@exploreCheckoutDone": {
     "description": "결제 버튼을 눌렀을 때 안내입니다.",
     "placeholders": {
