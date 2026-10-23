@@ -617,6 +617,9 @@ class ShopProduct {
     this.featuredAt,
     this.reviewedAt,
     this.reviewNote = '',
+    this.rejectedContentHash = '',
+    this.resubmitCount = 0,
+    this.resubmitNote = '',
     this.submittedByUid = '',
     this.guestRating = 0,
     this.guestReviewCount = 0,
@@ -685,6 +688,9 @@ class ShopProduct {
       featuredAt: _readTime(data['featured_at']),
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
+      rejectedContentHash: data['rejected_content_hash'] as String? ?? '',
+      resubmitCount: (data['resubmit_count'] as num?)?.toInt() ?? 0,
+      resubmitNote: data['resubmit_note'] as String? ?? '',
       submittedByUid: data['submitted_by_uid'] as String? ?? '',
       guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
       guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
@@ -732,7 +738,18 @@ class ShopProduct {
   /// When an admin last assigned this product to a home shelf.
   final DateTime? featuredAt;
   final DateTime? reviewedAt;
+
+  /// Latest admin reject reason (kept across resubmit; cleared on approve).
   final String reviewNote;
+
+  /// Content fingerprint at last reject (for unchanged-resubmit gate).
+  final String rejectedContentHash;
+
+  /// Times the partner resubmitted after a reject (0 = first submission).
+  final int resubmitCount;
+
+  /// Partner note describing what they fixed (required on resubmit — build 2).
+  final String resubmitNote;
 
   /// Diver/partner who submitted this trip for approval.
   final String submittedByUid;
@@ -1338,6 +1355,9 @@ class ShopProduct {
     Object? featuredAt = _unset,
     DateTime? reviewedAt,
     String? reviewNote,
+    String? rejectedContentHash,
+    int? resubmitCount,
+    String? resubmitNote,
     String? submittedByUid,
     double? guestRating,
     int? guestReviewCount,
@@ -1389,6 +1409,9 @@ class ShopProduct {
           : featuredAt as DateTime?,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
+      rejectedContentHash: rejectedContentHash ?? this.rejectedContentHash,
+      resubmitCount: resubmitCount ?? this.resubmitCount,
+      resubmitNote: resubmitNote ?? this.resubmitNote,
       submittedByUid: submittedByUid ?? this.submittedByUid,
       guestRating: guestRating ?? this.guestRating,
       guestReviewCount: guestReviewCount ?? this.guestReviewCount,
@@ -1525,6 +1548,10 @@ class ShopProduct {
       if (featuredAt != null) 'featured_at': featuredAt!.toIso8601String(),
       if (reviewedAt != null) 'reviewed_at': reviewedAt!.toIso8601String(),
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
+      if (rejectedContentHash.isNotEmpty)
+        'rejected_content_hash': rejectedContentHash,
+      if (resubmitCount > 0) 'resubmit_count': resubmitCount,
+      if (resubmitNote.isNotEmpty) 'resubmit_note': resubmitNote,
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
       if (guestReviewCount > 0) 'guest_rating': guestRating,
       if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,

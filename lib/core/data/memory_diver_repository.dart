@@ -22,6 +22,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
@@ -2189,10 +2190,9 @@ class MemoryDiverRepository implements DiverRepository {
     final products = [
       for (final item in current.products)
         if (item.id == productId)
-          item.copyWith(
-            publishStatus: status,
-            active: status == ProductPublishStatus.approved,
-            reviewedAt: DateTime.now(),
+          ProductPublishGuard.applyStatusChange(
+            product: item,
+            status: status,
             reviewNote: reviewNote,
           )
         else

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
@@ -378,14 +379,32 @@ class _PendingProductTile extends StatelessWidget {
                     FilledButton(
                       key: Key('approve-product-${product.id}'),
                       onPressed: () async {
-                        await store.approveShopProduct(
-                          shopId: product.shopId,
-                          productId: product.id,
-                        );
-                        if (context.mounted) {
+                        if (!ProductPublishGuard.hasDiverPrice(product)) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.adminProductApproved)),
+                            SnackBar(
+                              content: Text(l10n.adminProductApproveNeedsPrice),
+                            ),
                           );
+                          return;
+                        }
+                        try {
+                          await store.approveShopProduct(
+                            shopId: product.shopId,
+                            productId: product.id,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.adminProductApproved),
+                              ),
+                            );
+                          }
+                        } catch (error) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('$error')),
+                            );
+                          }
                         }
                       },
                       child: Text(l10n.adminApprove),

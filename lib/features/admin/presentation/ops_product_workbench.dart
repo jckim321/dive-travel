@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -1305,6 +1306,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Future<void> _approveExisting(AppLocalizations l10n) async {
     final existing = widget.existing;
     if (existing == null) {
+      return;
+    }
+    if (!ProductPublishGuard.hasDiverPrice(existing)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveNeedsPrice)),
+      );
       return;
     }
     setState(() => _savingIntent = ProductSaveIntent.publish);

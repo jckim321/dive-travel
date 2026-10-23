@@ -1015,6 +1015,8 @@
   "adminAllProducts": "Registered products",
   "adminProductSpecial": "Publish on the home shelf as a planned special",
   "adminProductApproved": "Product approved and published.",
+  "adminProductApproveNeedsPrice": "Only products with a diver price can be approved.",
+  "adminProductRejectNeedsNote": "Please enter a rejection reason.",
   "adminProductRejected": "Product registration rejected.",
   "adminProductSubmitHint": "Saving sends the product to the approval queue. It stays hidden until approved.",
   "adminProductSubmitted": "Submitted for approval.",

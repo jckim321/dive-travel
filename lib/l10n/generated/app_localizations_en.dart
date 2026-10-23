@@ -2607,6 +2607,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminProductApproved => 'Product approved and published.';
 
   @override
+  String get adminProductApproveNeedsPrice =>
+      'Only products with a diver price can be approved.';
+
+  @override
+  String get adminProductRejectNeedsNote => 'Please enter a rejection reason.';
+
+  @override
   String get adminProductRejected => 'Product registration rejected.';
 
   @override

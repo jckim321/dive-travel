@@ -26,6 +26,7 @@ import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -2573,10 +2574,9 @@ class FirestoreDiverRepository implements DiverRepository {
     final next = [
       for (final item in current)
         if (item.id == productId)
-          item.copyWith(
-            publishStatus: status,
-            active: status == ProductPublishStatus.approved,
-            reviewedAt: DateTime.now(),
+          ProductPublishGuard.applyStatusChange(
+            product: item,
+            status: status,
             reviewNote: reviewNote,
           )
         else

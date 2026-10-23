@@ -28,6 +28,7 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/dev/dev_roles.dart';
@@ -1506,19 +1507,25 @@ class DiverStore extends ChangeNotifier {
     // partners wait, an admin save goes live.
     if (creatorSubmission || intent == null) {
       final forcePending = creatorSubmission || !_stats.isAdmin;
-      return forcePending
-          ? product.copyWith(
-              publishStatus: ProductPublishStatus.pending,
-              submittedAt: DateTime.now(),
-              active: false,
-              submittedByUid: submitter,
-            )
-          : product.copyWith(
-              publishStatus: ProductPublishStatus.approved,
-              active: true,
-              reviewedAt: DateTime.now(),
-              submittedAt: product.submittedAt ?? DateTime.now(),
-            );
+      if (forcePending) {
+        return product.copyWith(
+          publishStatus: ProductPublishStatus.pending,
+          submittedAt: DateTime.now(),
+          active: false,
+          submittedByUid: submitter,
+        );
+      }
+      ProductPublishGuard.ensureCanApprove(product);
+      return product.copyWith(
+        publishStatus: ProductPublishStatus.approved,
+        active: true,
+        reviewedAt: DateTime.now(),
+        reviewNote: '',
+        rejectedContentHash: '',
+        resubmitCount: 0,
+        resubmitNote: '',
+        submittedAt: product.submittedAt ?? DateTime.now(),
+      );
     }
     switch (intent) {
       case ProductSaveIntent.keepEditing:
@@ -1528,22 +1535,26 @@ class DiverStore extends ChangeNotifier {
           submittedByUid: submitter,
         );
       case ProductSaveIntent.submitForReview:
+        // Keep review_note so admin still sees the prior reject reason.
         return product.copyWith(
           publishStatus: ProductPublishStatus.pending,
           submittedAt: DateTime.now(),
           active: false,
-          reviewNote: '',
           submittedByUid: submitter,
         );
       case ProductSaveIntent.publish:
         if (!_stats.isAdmin) {
           throw StateError('Admin only');
         }
+        ProductPublishGuard.ensureCanApprove(product);
         return product.copyWith(
           publishStatus: ProductPublishStatus.approved,
           active: true,
           reviewedAt: DateTime.now(),
           reviewNote: '',
+          rejectedContentHash: '',
+          resubmitCount: 0,
+          resubmitNote: '',
           submittedAt: product.submittedAt ?? DateTime.now(),
         );
       case ProductSaveIntent.takeDown:

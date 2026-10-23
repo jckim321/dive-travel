@@ -1595,6 +1595,8 @@
   "adminAllProducts": "등록된 상품",
   "adminProductSpecial": "기획 스페셜로 첫 화면에 올리기",
   "adminProductApproved": "상품이 승인되어 공개되었습니다.",
+  "adminProductApproveNeedsPrice": "가격을 입력한 상품만 승인할 수 있어요",
+  "adminProductRejectNeedsNote": "반려 사유를 입력해 주세요",
   "adminProductRejected": "상품 등록이 거절되었습니다.",
   "adminProductSubmitHint": "저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.",
   "adminProductSubmitted": "승인 요청이 접수되었습니다.",

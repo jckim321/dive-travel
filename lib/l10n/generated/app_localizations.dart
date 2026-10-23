@@ -4788,6 +4788,18 @@ abstract class AppLocalizations {
   /// **'상품이 승인되어 공개되었습니다.'**
   String get adminProductApproved;
 
+  /// No description provided for @adminProductApproveNeedsPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격을 입력한 상품만 승인할 수 있어요'**
+  String get adminProductApproveNeedsPrice;
+
+  /// No description provided for @adminProductRejectNeedsNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'반려 사유를 입력해 주세요'**
+  String get adminProductRejectNeedsNote;
+
   /// No description provided for @adminProductRejected.
   ///
   /// In ko, this message translates to:

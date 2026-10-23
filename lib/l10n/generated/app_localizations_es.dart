@@ -2554,6 +2554,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminProductApproved => '상품이 승인되어 공개되었습니다.';
 
   @override
+  String get adminProductApproveNeedsPrice => '가격을 입력한 상품만 승인할 수 있어요';
+
+  @override
+  String get adminProductRejectNeedsNote => '반려 사유를 입력해 주세요';
+
+  @override
   String get adminProductRejected => '상품 등록이 거절되었습니다.';
 
   @override
