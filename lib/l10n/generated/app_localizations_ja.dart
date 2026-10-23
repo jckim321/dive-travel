@@ -1130,6 +1130,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get devRolesNeedShop => '파트너 역할을 쓰려면 샵을 고르세요.';
 
   @override
+  String get devRolesTrialCaption => '시험용, 출시 전 제거';
+
+  @override
   String profileUpcomingConfirmed(String date) {
     return '예약 확정 · $date';
   }

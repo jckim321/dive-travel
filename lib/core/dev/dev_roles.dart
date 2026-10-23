@@ -4,8 +4,12 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 enum DevRoleKind { diver, partner, admin }
 
 abstract final class DevRoles {
-  /// Menu / API gate — owner email only (no kDebugMode; works on release web).
-  static bool canUse(String? email) => AppOwner.isOwnerEmail(email);
+  /// Flip to `false` before public launch to hide and disable the whole switcher.
+  static const bool enabled = true;
+
+  /// Menu / API gate — owner email only when [enabled].
+  static bool canUse(String? email) =>
+      enabled && AppOwner.isOwnerEmail(email);
 }
 
 /// Session overlay so UI can look like diver/partner without clearing Firestore

@@ -2214,6 +2214,12 @@ abstract class AppLocalizations {
   /// **'파트너 역할을 쓰려면 샵을 고르세요.'**
   String get devRolesNeedShop;
 
+  /// No description provided for @devRolesTrialCaption.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험용, 출시 전 제거'**
+  String get devRolesTrialCaption;
+
   /// No description provided for @profileUpcomingConfirmed.
   ///
   /// In ko, this message translates to:

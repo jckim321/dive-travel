@@ -8,10 +8,19 @@ import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
-  test('DevRoles.canUse is owner-email only', () {
+  test('DevRoles.canUse is owner-email only when enabled', () {
+    expect(DevRoles.enabled, isTrue);
     expect(DevRoles.canUse(AppOwner.email), isTrue);
     expect(DevRoles.canUse('other@example.com'), isFalse);
     expect(DevRoles.canUse(null), isFalse);
+  });
+
+  test('canUseDevRoles is false for non-owner even if repo is admin', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final store = DiverStore(repo);
+    await repo.signIn(email: 'guest@example.com', password: 'test');
+    await pumpEventQueue();
+    expect(store.canUseDevRoles, isFalse);
   });
 
   test('grants stay off', () {

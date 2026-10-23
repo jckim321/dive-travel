@@ -380,6 +380,8 @@
   "devRolesApply": "Apply",
   "devRolesApplied": "Test role applied.",
   "devRolesNeedShop": "Pick a shop for the partner role.",
+  "devRolesTrialCaption": "Trial only — remove before launch.",
+
   "profileUpcomingConfirmed": "Confirmed · {date}",
   "profileProBadge": "PRO instructor verified",
   "profileMasterChallenge": "100-log master challenge",

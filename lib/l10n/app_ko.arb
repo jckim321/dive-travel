@@ -833,6 +833,8 @@
   "devRolesApply": "적용",
   "devRolesApplied": "테스트 역할을 적용했습니다.",
   "devRolesNeedShop": "파트너 역할을 쓰려면 샵을 고르세요.",
+  "devRolesTrialCaption": "시험용, 출시 전 제거",
+
   "profileUpcomingConfirmed": "예약 확정 · {date}",
   "@profileUpcomingConfirmed": {
     "placeholders": {

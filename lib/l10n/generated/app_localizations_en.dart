@@ -1168,6 +1168,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devRolesNeedShop => 'Pick a shop for the partner role.';
 
   @override
+  String get devRolesTrialCaption => 'Trial only — remove before launch.';
+
+  @override
   String profileUpcomingConfirmed(String date) {
     return 'Confirmed · $date';
   }

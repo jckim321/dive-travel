@@ -21,13 +21,13 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  final _tabIndex = ValueNotifier<int>(0);
   DiverStore? _store;
+  final _seenNotices = <String>{};
 
   void goToTab(int index) {
-    setState(() => _index = index);
+    _tabIndex.value = index;
   }
-  final _seenNotices = <String>{};
 
   static const _screens = <Widget>[
     HomeScreen(),
@@ -51,6 +51,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _store?.removeListener(_onStore);
+    _tabIndex.dispose();
     super.dispose();
   }
 
@@ -106,50 +107,53 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: [
-          for (var i = 0; i < _screens.length; i++)
-            TickerMode(
-              enabled: _index == i,
-              child: _screens[i],
-            ),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (index) {
-          setState(() => _index = index);
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home_outlined),
-            label: l10n.navHome,
+    return ValueListenableBuilder<int>(
+      valueListenable: _tabIndex,
+      builder: (context, index, _) {
+        return Scaffold(
+          body: IndexedStack(
+            index: index,
+            children: [
+              for (var i = 0; i < _screens.length; i++)
+                TickerMode(
+                  enabled: index == i,
+                  child: _screens[i],
+                ),
+            ],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.travel_explore_outlined),
-            selectedIcon: const Icon(Icons.travel_explore_outlined),
-            label: l10n.navExplore,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: index,
+            onDestinationSelected: goToTab,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home_outlined),
+                label: l10n.navHome,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.travel_explore_outlined),
+                selectedIcon: const Icon(Icons.travel_explore_outlined),
+                label: l10n.navExplore,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.groups_2_outlined),
+                selectedIcon: const Icon(Icons.groups_2_outlined),
+                label: l10n.navCommunity,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.menu_book_outlined),
+                selectedIcon: const Icon(Icons.menu_book_outlined),
+                label: l10n.navLogbook,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline),
+                selectedIcon: const Icon(Icons.person_outline),
+                label: l10n.navProfile,
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.groups_2_outlined),
-            selectedIcon: const Icon(Icons.groups_2_outlined),
-            label: l10n.navCommunity,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.menu_book_outlined),
-            selectedIcon: const Icon(Icons.menu_book_outlined),
-            label: l10n.navLogbook,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person_outline),
-            label: l10n.navProfile,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -112,6 +112,10 @@ class DiverStore extends ChangeNotifier {
   var _adminConsoleUnlocked = false;
 
   DiverStats get stats {
+    // When DevRoles is off or this account cannot use them, ignore any leftover overlay.
+    if (!DevRoles.enabled || !DevRoles.canUse(_email)) {
+      return _stats;
+    }
     final overlay = _devRoleOverlay;
     if (overlay == null) {
       return _stats;
