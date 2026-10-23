@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
@@ -166,35 +167,64 @@ class _PendingSameBoatTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      await store.setSameBoatStatus(
-                        shopId: product.shopId,
-                        productId: product.id,
-                        status: SameBoatStatus.rejected,
-                      );
-                    },
-                    child: Text(l10n.adminSameBoatReject),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    key: Key('admin-same-boat-approve-${product.id}'),
-                    onPressed: () async {
-                      await store.setSameBoatStatus(
-                        shopId: product.shopId,
-                        productId: product.id,
-                        status: SameBoatStatus.approved,
-                      );
-                    },
-                    child: Text(l10n.adminSameBoatApprove),
-                  ),
-                ),
-              ],
+            Builder(
+              builder: (context) {
+                final canApprove =
+                    SameBoatSeatOpenLogic.canApprovePending(product);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            key: Key(
+                              'admin-same-boat-reject-${product.id}',
+                            ),
+                            onPressed: () async {
+                              await store.setSameBoatStatus(
+                                shopId: product.shopId,
+                                productId: product.id,
+                                status: SameBoatStatus.rejected,
+                              );
+                            },
+                            child: Text(l10n.adminSameBoatReject),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            key: Key(
+                              'admin-same-boat-approve-${product.id}',
+                            ),
+                            onPressed: canApprove
+                                ? () async {
+                                    await store.setSameBoatStatus(
+                                      shopId: product.shopId,
+                                      productId: product.id,
+                                      status: SameBoatStatus.approved,
+                                    );
+                                  }
+                                : null,
+                            child: Text(l10n.adminSameBoatApprove),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!canApprove)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          l10n.sameBoatApproveIncomplete,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: embedded ? AdminConsoleTheme.muted : null,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
             TextButton(
               onPressed: () {

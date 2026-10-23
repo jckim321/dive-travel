@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
@@ -39,11 +40,10 @@ bool _matchesStatus(ShopProduct product, SameBoatHubStatusFilter filter) {
     SameBoatHubStatusFilter.closed =>
       product.sameBoatStatus == SameBoatStatus.closed &&
           !product.hasPendingSameBoat &&
-          !product.listsOnSameBoat,
+          !product.hasLiveSameBoatOffer,
     SameBoatHubStatusFilter.pending => product.hasPendingSameBoat,
-    SameBoatHubStatusFilter.live => product.listsOnSameBoat,
-    SameBoatHubStatusFilter.rejected =>
-      product.sameBoatStatus == SameBoatStatus.rejected,
+    SameBoatHubStatusFilter.live => product.hasLiveSameBoatOffer,
+    SameBoatHubStatusFilter.rejected => product.hasRejectedSameBoat,
   };
 }
 
@@ -257,15 +257,58 @@ class _HubProductTile extends StatelessWidget {
   final DateFormat dayFmt;
   final bool adminBypass;
 
+  void _openSeatsForm(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SameBoatSeatsScreen(
+          product: product,
+          adminBypassApproval: adminBypass,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _setStatus(
+    BuildContext context,
+    SameBoatStatus status,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    if (status == SameBoatStatus.approved &&
+        !SameBoatSeatOpenLogic.canApprovePending(product)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.sameBoatApproveIncomplete)),
+      );
+      return;
+    }
+    try {
+      await store.setSameBoatStatus(
+        shopId: product.shopId,
+        productId: product.id,
+        status: status,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final statusLabel = switch (product.sameBoatStatus) {
-      SameBoatStatus.pending => l10n.adminSameBoatPendingBadge,
-      SameBoatStatus.approved => l10n.adminSameBoatLiveBadge,
-      SameBoatStatus.rejected => l10n.adminSameBoatRejectedBadge,
-      SameBoatStatus.closed => l10n.adminSameBoatClosedBadge,
-    };
+    final pending = product.hasPendingSameBoat;
+    final blocked = SameBoatSeatOpenLogic.blocksPartnerRequest(product);
+    final canApprove = SameBoatSeatOpenLogic.canApprovePending(product);
+    final statusLabel = pending
+        ? l10n.adminSameBoatPendingBadge
+        : product.hasLiveSameBoatOffer
+            ? l10n.adminSameBoatLiveBadge
+            : product.hasRejectedSameBoat
+                ? l10n.adminSameBoatRejectedBadge
+                : l10n.adminSameBoatClosedBadge;
     final bits = <String>[statusLabel];
     if (product.openEmptySeats && product.capacity > 0) {
       final left = product.capacity - product.bookedSeats;
@@ -281,22 +324,81 @@ class _HubProductTile extends StatelessWidget {
         '${l10n.workbenchFlagDeadline} ${dayFmt.format(product.flagClosesAt!)}',
       );
     }
+
+    if (adminBypass && pending) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                product.name,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              Text(bits.join(' · '), style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      key: Key('same-boat-hub-reject-${product.id}'),
+                      onPressed: () =>
+                          _setStatus(context, SameBoatStatus.rejected),
+                      child: Text(l10n.adminSameBoatReject),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton(
+                      key: Key('same-boat-hub-approve-${product.id}'),
+                      onPressed: canApprove
+                          ? () =>
+                              _setStatus(context, SameBoatStatus.approved)
+                          : null,
+                      child: Text(l10n.sameBoatHubApprove),
+                    ),
+                  ),
+                ],
+              ),
+              if (!canApprove)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n.sameBoatApproveIncomplete,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!adminBypass && blocked) {
+      return Card(
+        child: ListTile(
+          key: Key('same-boat-hub-${product.id}'),
+          title: Text(product.name),
+          subtitle: Text(bits.join(' · ')),
+          trailing: Text(
+            pending ? l10n.sameBoatSeatsWaiting : l10n.adminSameBoatLiveBadge,
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: ListTile(
         key: Key('same-boat-hub-${product.id}'),
         title: Text(product.name),
         subtitle: Text(bits.join(' · ')),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => SameBoatSeatsScreen(
-                product: product,
-                adminBypassApproval: adminBypass,
-              ),
-            ),
-          );
-        },
+        trailing: adminBypass
+            ? Text(l10n.sameBoatHubOpenSeats)
+            : const Icon(Icons.chevron_right),
+        onTap: () => _openSeatsForm(context),
       ),
     );
   }

@@ -77,6 +77,46 @@ abstract final class SameBoatSeatOpenLogic {
     }
     return SameBoatStatus.pending;
   }
+
+  /// Product- or option-level seat open fields required for board / approve.
+  static bool hasCompleteSeatOpenFields({
+    required bool openEmptySeats,
+    required int capacity,
+    required DateTime? departureStart,
+  }) {
+    return openEmptySeats && capacity > 0 && departureStart != null;
+  }
+
+  /// Partner may not submit again while pending or already live (product/option).
+  static bool blocksPartnerRequest(ShopProduct product) {
+    return product.hasPendingSameBoat || product.hasLiveSameBoatOffer;
+  }
+
+  /// Every pending unit (package and/or options) has complete seat fields.
+  static bool canApprovePending(ShopProduct product) {
+    if (!product.hasPendingSameBoat) {
+      return false;
+    }
+    if (product.sameBoatStatus.isPendingReview &&
+        !hasCompleteSeatOpenFields(
+          openEmptySeats: product.openEmptySeats,
+          capacity: product.capacity,
+          departureStart: product.departureStart,
+        )) {
+      return false;
+    }
+    for (final option in product.options) {
+      if (option.sameBoatStatus.isPendingReview &&
+          !hasCompleteSeatOpenFields(
+            openEmptySeats: option.openEmptySeats,
+            capacity: option.capacity,
+            departureStart: option.departureStart,
+          )) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 class SameBoatCapacityViolation {

@@ -3234,6 +3234,54 @@ abstract class AppLocalizations {
   /// **'빈자리 수정'**
   String get sameBoatSeatsEdit;
 
+  /// No description provided for @sameBoatSeatsWaiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 중'**
+  String get sameBoatSeatsWaiting;
+
+  /// No description provided for @sameBoatSeatsAlreadyPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 승인 대기 중인 요청이 있습니다.'**
+  String get sameBoatSeatsAlreadyPending;
+
+  /// No description provided for @sameBoatSeatsAlreadyLive.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 같은배에 게시된 상품입니다.'**
+  String get sameBoatSeatsAlreadyLive;
+
+  /// No description provided for @sameBoatApproveIncomplete.
+  ///
+  /// In ko, this message translates to:
+  /// **'좌석·출발일 정보가 부족해 승인할 수 없습니다.'**
+  String get sameBoatApproveIncomplete;
+
+  /// No description provided for @sameBoatHubApprove.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인'**
+  String get sameBoatHubApprove;
+
+  /// No description provided for @sameBoatHubOpenSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 열기'**
+  String get sameBoatHubOpenSeats;
+
+  /// No description provided for @partnerSameBoatRequestsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 같은배 요청'**
+  String get partnerSameBoatRequestsTitle;
+
+  /// No description provided for @partnerSameBoatRequestsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청한 빈자리가 없습니다.'**
+  String get partnerSameBoatRequestsEmpty;
+
   /// No description provided for @adminSameBoatApplyTab.
   ///
   /// In ko, this message translates to:

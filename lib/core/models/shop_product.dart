@@ -761,6 +761,31 @@ class ShopProduct {
     return false;
   }
 
+  /// Product or any option is live on the same-boat board.
+  bool get hasLiveSameBoatOffer {
+    if (listsOnSameBoat) {
+      return true;
+    }
+    for (final option in options) {
+      if (option.listsOnSameBoat) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool get hasRejectedSameBoat {
+    if (sameBoatStatus == SameBoatStatus.rejected) {
+      return true;
+    }
+    for (final option in options) {
+      if (option.sameBoatStatus == SameBoatStatus.rejected) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool get hasAnySameBoatOpen {
     if (openEmptySeats || sameBoatStatus != SameBoatStatus.closed) {
       return true;

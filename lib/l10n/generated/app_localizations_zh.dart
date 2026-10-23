@@ -1683,6 +1683,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sameBoatSeatsEdit => '빈자리 수정';
 
   @override
+  String get sameBoatSeatsWaiting => '승인 대기 중';
+
+  @override
+  String get sameBoatSeatsAlreadyPending => '이미 승인 대기 중인 요청이 있습니다.';
+
+  @override
+  String get sameBoatSeatsAlreadyLive => '이미 같은배에 게시된 상품입니다.';
+
+  @override
+  String get sameBoatApproveIncomplete => '좌석·출발일 정보가 부족해 승인할 수 없습니다.';
+
+  @override
+  String get sameBoatHubApprove => '승인';
+
+  @override
+  String get sameBoatHubOpenSeats => '빈자리 열기';
+
+  @override
+  String get partnerSameBoatRequestsTitle => '내 같은배 요청';
+
+  @override
+  String get partnerSameBoatRequestsEmpty => '요청한 빈자리가 없습니다.';
+
+  @override
   String get adminSameBoatApplyTab => '빈자리 신청';
 
   @override

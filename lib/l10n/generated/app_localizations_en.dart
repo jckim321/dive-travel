@@ -1734,6 +1734,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatSeatsEdit => 'Edit seats';
 
   @override
+  String get sameBoatSeatsWaiting => 'Awaiting approval';
+
+  @override
+  String get sameBoatSeatsAlreadyPending =>
+      'A request is already awaiting approval.';
+
+  @override
+  String get sameBoatSeatsAlreadyLive =>
+      'This product is already on Same-boat.';
+
+  @override
+  String get sameBoatApproveIncomplete =>
+      'Cannot approve: seat or departure fields are incomplete.';
+
+  @override
+  String get sameBoatHubApprove => 'Approve';
+
+  @override
+  String get sameBoatHubOpenSeats => 'Open seats';
+
+  @override
+  String get partnerSameBoatRequestsTitle => 'My Same-boat requests';
+
+  @override
+  String get partnerSameBoatRequestsEmpty => 'No seat requests yet.';
+
+  @override
   String get adminSameBoatApplyTab => 'Open seats';
 
   @override

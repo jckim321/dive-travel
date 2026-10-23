@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
@@ -12,6 +13,49 @@ import 'package:dive_travel_app/features/partner/presentation/partner_documents_
 import 'package:dive_travel_app/features/partner/presentation/partner_loi_form_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+List<Widget> _partnerSameBoatRequestTiles({
+  required BuildContext context,
+  required AppLocalizations l10n,
+  required List<ShopProduct> products,
+}) {
+  if (products.isEmpty) {
+    return [
+      Card(
+        key: const Key('partner-same-boat-requests-empty'),
+        child: ListTile(
+          title: Text(l10n.partnerSameBoatRequestsEmpty),
+        ),
+      ),
+    ];
+  }
+  return [
+    for (final product in products)
+      Card(
+        key: Key('partner-same-boat-request-${product.id}'),
+        child: ListTile(
+          title: Text(product.name),
+          subtitle: Text(_partnerSameBoatRequestStatus(l10n, product)),
+        ),
+      ),
+  ];
+}
+
+String _partnerSameBoatRequestStatus(
+  AppLocalizations l10n,
+  ShopProduct product,
+) {
+  if (product.hasPendingSameBoat) {
+    return l10n.adminSameBoatPendingBadge;
+  }
+  if (product.hasLiveSameBoatOffer) {
+    return l10n.adminSameBoatLiveBadge;
+  }
+  if (product.hasRejectedSameBoat) {
+    return l10n.adminSameBoatRejectedBadge;
+  }
+  return l10n.adminSameBoatClosedBadge;
+}
 
 class PartnerDashboardScreen extends StatelessWidget {
   const PartnerDashboardScreen({super.key});
@@ -100,6 +144,26 @@ class PartnerDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.partnerSameBoatRequestsTitle,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ..._partnerSameBoatRequestTiles(
+                context: context,
+                l10n: l10n,
+                products: [
+                  for (final product in store.allShopProducts)
+                    if (product.shopId == shopId &&
+                        (product.hasPendingSameBoat ||
+                            product.hasLiveSameBoatOffer ||
+                            product.hasRejectedSameBoat))
+                      product,
+                ],
               ),
               const SizedBox(height: 24),
               Text(

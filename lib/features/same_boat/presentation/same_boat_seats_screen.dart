@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -26,6 +27,10 @@ class SameBoatSeatsScreen extends StatefulWidget {
 class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   late final SameBoatSeatOpenController _seats;
   var _saving = false;
+
+  bool get _partnerBlocked =>
+      !widget.adminBypassApproval &&
+      SameBoatSeatOpenLogic.blocksPartnerRequest(widget.product);
 
   @override
   void initState() {
@@ -61,6 +66,18 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    if (_partnerBlocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.product.hasPendingSameBoat
+                ? l10n.sameBoatSeatsAlreadyPending
+                : l10n.sameBoatSeatsAlreadyLive,
+          ),
+        ),
+      );
+      return;
+    }
     _seats.isAdmin = widget.adminBypassApproval;
     final error = _seats.validate(l10n, now: DateTime.now());
     if (error != null) {
@@ -98,6 +115,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.sameBoatSeatsTitle)),
       body: ListView(
@@ -113,18 +131,26 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
-          SameBoatSeatOpenFields(
-            controller: _seats,
-            onChanged: () => setState(() {}),
+          IgnorePointer(
+            ignoring: _partnerBlocked,
+            child: Opacity(
+              opacity: _partnerBlocked ? 0.55 : 1,
+              child: SameBoatSeatOpenFields(
+                controller: _seats,
+                onChanged: () => setState(() {}),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton(
             key: const Key('same-boat-seats-submit'),
-            onPressed: _saving ? null : _submit,
+            onPressed: (_saving || _partnerBlocked) ? null : _submit,
             child: Text(
-              widget.adminBypassApproval
-                  ? l10n.sameBoatSeatsPublish
-                  : l10n.sameBoatSeatsSubmit,
+              waiting
+                  ? l10n.sameBoatSeatsWaiting
+                  : widget.adminBypassApproval
+                      ? l10n.sameBoatSeatsPublish
+                      : l10n.sameBoatSeatsSubmit,
             ),
           ),
         ],
