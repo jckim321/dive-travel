@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
+import 'package:dive_travel_app/features/profile/presentation/dev_role_switcher.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -18,92 +19,101 @@ class ProfileSettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final session = SessionScope.of(context);
-    final stats = store.stats;
     final email = session.user?.email ?? '';
-    final useGrade = ProfileDisplayGrade.fromMember(
-      grade: stats.memberGrade,
-      isInstructor: stats.isInstructor,
-    );
 
     return Scaffold(
       backgroundColor: AppTheme.seaMist,
       appBar: AppBar(title: Text(l10n.profileSettingsTitle)),
-      body: ListView(
-        key: const Key('profile-settings-scroll'),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
-        children: [
-          _SettingsCard(
-            child: Column(
-              children: [
-                _SettingsRow(
-                  icon: Icons.person_outline_rounded,
-                  title: stats.displayName,
-                  subtitle: email,
+      body: ListenableBuilder(
+        listenable: store,
+        builder: (context, _) {
+          final live = store.stats;
+          final liveGrade = ProfileDisplayGrade.fromMember(
+            grade: live.memberGrade,
+            isInstructor: live.isInstructor,
+          );
+          return ListView(
+            key: const Key('profile-settings-scroll'),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+            children: [
+              _SettingsCard(
+                child: Column(
+                  children: [
+                    _SettingsRow(
+                      icon: Icons.person_outline_rounded,
+                      title: live.displayName,
+                      subtitle: email,
+                    ),
+                    const Divider(height: 28),
+                    _SettingsRow(
+                      icon: Icons.workspace_premium_outlined,
+                      title: l10n.profileMembershipTitle,
+                      subtitle: _useGradeLabel(l10n, liveGrade),
+                    ),
+                    const SizedBox(height: 16),
+                    _GradeLadder(current: liveGrade),
+                    const SizedBox(height: 10),
+                    Text(
+                      _nextGradeLine(l10n, live),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
-                const Divider(height: 28),
-                _SettingsRow(
-                  icon: Icons.workspace_premium_outlined,
-                  title: l10n.profileMembershipTitle,
-                  subtitle: _useGradeLabel(l10n, useGrade),
-                ),
-                const SizedBox(height: 16),
-                _GradeLadder(current: useGrade),
-                const SizedBox(height: 10),
+              ),
+              if (store.canUseDevRoles) ...[
+                const SizedBox(height: 24),
+                const DevRoleSwitcher(),
+              ],
+              if (live.isAdmin || live.isBusiness) ...[
+                const SizedBox(height: 24),
                 Text(
-                  _nextGradeLine(l10n, stats),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  l10n.profileWorkModeTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                _SettingsCard(
+                  child: Column(
+                    children: [
+                      if (live.isAdmin)
+                        _SettingsAction(
+                          key: const Key('open-admin-mode'),
+                          icon: Icons.admin_panel_settings_outlined,
+                          title: l10n.adminMode,
+                          onTap: () => openAdminMode(context),
+                        ),
+                      if (live.isAdmin && live.isBusiness)
+                        const Divider(height: 1),
+                      if (live.isBusiness)
+                        _SettingsAction(
+                          key: const Key('open-partner-mode'),
+                          icon: Icons.storefront_outlined,
+                          title: l10n.partnerTitle,
+                          onTap: () => openPartnerMode(context),
+                        ),
+                    ],
+                  ),
                 ),
               ],
-            ),
-          ),
-          if (stats.isAdmin || stats.isBusiness) ...[
-            const SizedBox(height: 24),
-            Text(
-              l10n.profileWorkModeTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            _SettingsCard(
-              child: Column(
-                children: [
-                  if (stats.isAdmin)
-                    _SettingsAction(
-                      key: const Key('open-admin-mode'),
-                      icon: Icons.admin_panel_settings_outlined,
-                      title: l10n.adminMode,
-                      onTap: () => openAdminMode(context),
-                    ),
-                  if (stats.isAdmin && stats.isBusiness)
-                    const Divider(height: 1),
-                  if (stats.isBusiness)
-                    _SettingsAction(
-                      key: const Key('open-partner-mode'),
-                      icon: Icons.storefront_outlined,
-                      title: l10n.partnerTitle,
-                      onTap: () => openPartnerMode(context),
-                    ),
-                ],
+              const SizedBox(height: 28),
+              OutlinedButton.icon(
+                key: const Key('profile-sign-out'),
+                onPressed: () => session.signOut(),
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: Text(l10n.profileSignOut),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
               ),
-            ),
-          ],
-          const SizedBox(height: 28),
-          OutlinedButton.icon(
-            key: const Key('profile-sign-out'),
-            onPressed: () => session.signOut(),
-            icon: const Icon(Icons.logout_rounded, size: 18),
-            label: Text(l10n.profileSignOut),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-          ),
-          const SizedBox(height: 28),
-          Text(
-            l10n.profileCredentialsTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 10),
-          const ProVerificationCard(),
-        ],
+              const SizedBox(height: 28),
+              Text(
+                l10n.profileCredentialsTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 10),
+              const ProVerificationCard(),
+            ],
+          );
+        },
       ),
     );
   }

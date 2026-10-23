@@ -29,6 +29,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/dev/dev_roles.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
 class DiverStore extends ChangeNotifier {
@@ -39,6 +40,10 @@ class DiverStore extends ChangeNotifier {
     _gear = List<GearItem>.from(_defaultGear);
     _authSubscription = _repository.authState().listen((user) {
       _uid = user?.uid;
+      _email = user?.email;
+      if (user == null) {
+        _devRoleOverlay = null;
+      }
       _bindDiver(user);
     });
     _discountSubscription = _repository.watchInstructorDiscount().listen(
@@ -62,6 +67,8 @@ class DiverStore extends ChangeNotifier {
   StreamSubscription<InstructorDiscount>? _discountSubscription;
   Timer? _loadingTimeout;
   String? _uid;
+  String? _email;
+  DevRoleOverlay? _devRoleOverlay;
   var _shopStatsLoaded = false;
   var _shopStatsLoading = false;
   DateTime? _shopStatsFetchedAt;
@@ -103,7 +110,25 @@ class DiverStore extends ChangeNotifier {
   /// PIN unlock for admin console; cleared on sign-out.
   var _adminConsoleUnlocked = false;
 
-  DiverStats get stats => _stats;
+  DiverStats get stats {
+    final overlay = _devRoleOverlay;
+    if (overlay == null) {
+      return _stats;
+    }
+    return _stats.copyWith(
+      isAdmin: overlay.effectiveIsAdmin,
+      isBusiness: overlay.effectiveIsBusiness,
+      ownedShopId: overlay.effectiveOwnedShopId,
+      clearOwnedShopId: overlay.kind != DevRoleKind.partner,
+    );
+  }
+
+  DevRoleOverlay? get devRoleOverlay => _devRoleOverlay;
+
+  bool get canUseDevRoles => DevRoles.canUse(_email);
+
+  String? get email => _email;
+
   bool get adminConsoleUnlocked => _adminConsoleUnlocked;
 
   void unlockAdminConsole() {
@@ -2061,11 +2086,7 @@ class DiverStore extends ChangeNotifier {
               ..clear()
               ..addAll(snapshot.favoriteShopIds);
             _loading = false;
-            _bindAdminInbox(snapshot.stats.isAdmin);
-            _bindPartnerInbox(
-              snapshot.stats.isBusiness,
-              snapshot.stats.ownedShopId,
-            );
+            _rebindRoleInboxes();
             notifyListeners();
           },
           onError: (Object error, StackTrace stackTrace) {
@@ -2088,6 +2109,55 @@ class DiverStore extends ChangeNotifier {
             debugPrint('Firestore 예약 구독 실패: $error');
           },
         );
+  }
+
+  void _rebindRoleInboxes() {
+    final effective = stats;
+    _bindAdminInbox(effective.isAdmin);
+    _bindPartnerInbox(effective.isBusiness, effective.ownedShopId);
+  }
+
+  /// Owner-only: overlay UI role; keeps Firestore `is_admin` true.
+  Future<void> applyDevRole({
+    required DevRoleKind kind,
+    String? ownedShopId,
+  }) async {
+    final uid = _uid;
+    if (uid == null || !DevRoles.canUse(_email)) {
+      throw StateError('Dev roles are owner-only');
+    }
+    if (kind == DevRoleKind.partner) {
+      final shop = (ownedShopId ?? '').trim();
+      if (shop.isEmpty) {
+        throw StateError('Partner role needs a shop id');
+      }
+      await _repository.updateDevTestRole(
+        uid: uid,
+        isBusiness: true,
+        ownedShopId: shop,
+        userRole: 'business',
+      );
+      _devRoleOverlay = DevRoleOverlay(kind: kind, ownedShopId: shop);
+    } else {
+      await _repository.updateDevTestRole(
+        uid: uid,
+        isBusiness: false,
+        ownedShopId: null,
+        userRole: kind == DevRoleKind.admin ? 'admin' : 'diver',
+      );
+      _devRoleOverlay = DevRoleOverlay(kind: kind);
+    }
+    _rebindRoleInboxes();
+    notifyListeners();
+  }
+
+  void clearDevRoleOverlay() {
+    if (_devRoleOverlay == null) {
+      return;
+    }
+    _devRoleOverlay = null;
+    _rebindRoleInboxes();
+    notifyListeners();
   }
 
   void _bindAdminInbox(bool isAdmin) {

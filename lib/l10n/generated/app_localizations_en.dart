@@ -1140,6 +1140,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileWorkModeTitle => 'Work mode';
 
   @override
+  String get devRolesTitle => 'Test role switcher';
+
+  @override
+  String get devRolesHint =>
+      'Owner account only. Keeps Firestore is_admin; overlays diver / partner / admin in the app.';
+
+  @override
+  String get devRolesDiver => 'Guest';
+
+  @override
+  String get devRolesPartner => 'Partner';
+
+  @override
+  String get devRolesAdmin => 'Admin';
+
+  @override
+  String get devRolesShop => 'Partner shop';
+
+  @override
+  String get devRolesApply => 'Apply';
+
+  @override
+  String get devRolesApplied => 'Test role applied.';
+
+  @override
+  String get devRolesNeedShop => 'Pick a shop for the partner role.';
+
+  @override
   String profileUpcomingConfirmed(String date) {
     return 'Confirmed · $date';
   }

@@ -133,6 +133,27 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> signOut() => _auth.signOut();
 
   @override
+  Future<void> updateDevTestRole({
+    required String uid,
+    required bool isBusiness,
+    String? ownedShopId,
+    required String userRole,
+  }) async {
+    final ref = _db.collection('users').doc(uid);
+    final payload = <String, dynamic>{
+      'is_business': isBusiness,
+      'user_role': userRole,
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    if (isBusiness && ownedShopId != null && ownedShopId.isNotEmpty) {
+      payload['owned_shop_id'] = ownedShopId;
+    } else {
+      payload['owned_shop_id'] = FieldValue.delete();
+    }
+    await ref.set(payload, SetOptions(merge: true));
+  }
+
+  @override
   Future<void> ensureUserDocument(AppUser user) async {
     final ref = _userDoc(user.uid);
     final snapshot = await ref.get().timeout(const Duration(seconds: 8));
@@ -148,26 +169,11 @@ class FirestoreDiverRepository implements DiverRepository {
       'display_name': displayName,
       'updated_at': FieldValue.serverTimestamp(),
     };
-    final grantAdmin =
-        AppOwner.isOwnerEmail(user.email) ||
-        AppConstants.grantAdminToCurrentSession;
-    final grantBusiness =
-        AppOwner.isOwnerEmail(user.email) ||
-        AppConstants.grantBusinessToCurrentSession;
-    if (grantAdmin) {
-      payload['is_admin'] = true;
-      payload['user_role'] = 'admin';
-    }
-    if (grantBusiness) {
-      payload['is_business'] = true;
-      payload['owned_shop_id'] =
-          snapshot.data()?['owned_shop_id'] as String? ??
-          AppConstants.defaultPartnerShopId;
-      payload['user_role'] = grantAdmin ? 'admin' : 'business';
-    }
+    // Do not auto-write is_admin / is_business here. Roles come from the
+    // Firestore document (and owner-only session overlay for testing).
     if (!snapshot.exists) {
       payload.addAll({
-        if (!grantAdmin) 'user_role': 'diver',
+        'user_role': 'diver',
         'member_grade': MemberGrade.silver.firestoreValue,
         'is_instructor': false,
         'is_verified_pro': false,

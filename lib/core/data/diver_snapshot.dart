@@ -1,4 +1,3 @@
-import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -153,17 +152,13 @@ class DiverSnapshot {
   }
 
   static bool _isAdminOf(Map<String, dynamic> data) {
-    return data['is_admin'] == true ||
-        data['isAdmin'] == true ||
-        AppOwner.isOwnerEmail(data['email'] as String?) ||
-        AppConstants.grantAdminToCurrentSession;
+    return data['is_admin'] == true || data['isAdmin'] == true;
   }
 
   static bool _isBusinessOf(Map<String, dynamic> data) {
     return data['is_business'] == true ||
         data['isBusiness'] == true ||
-        (data['user_role'] as String?) == 'business' ||
-        AppConstants.grantBusinessToCurrentSession;
+        (data['user_role'] as String?) == 'business';
   }
 
   static String _displayNameOf(Map<String, dynamic> data) {

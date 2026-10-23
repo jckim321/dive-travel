@@ -113,6 +113,7 @@ class DiverStats {
     bool? gradeCelebrationPending,
     MemberGrade? gradeCelebrationTo,
     bool clearCelebrationTo = false,
+    bool clearOwnedShopId = false,
   }) {
     return DiverStats(
       displayName: displayName,
@@ -122,7 +123,9 @@ class DiverStats {
       proStatus: proStatus ?? this.proStatus,
       isAdmin: isAdmin ?? this.isAdmin,
       isBusiness: isBusiness ?? this.isBusiness,
-      ownedShopId: ownedShopId ?? this.ownedShopId,
+      ownedShopId: clearOwnedShopId
+          ? null
+          : (ownedShopId ?? this.ownedShopId),
       memberGrade: memberGrade ?? this.memberGrade,
       paidPurchaseCount: paidPurchaseCount ?? this.paidPurchaseCount,
       reviewCount: reviewCount ?? this.reviewCount,

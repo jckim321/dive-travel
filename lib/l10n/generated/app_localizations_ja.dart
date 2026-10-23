@@ -1102,6 +1102,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileWorkModeTitle => '업무용 전환';
 
   @override
+  String get devRolesTitle => '테스트 역할 전환';
+
+  @override
+  String get devRolesHint =>
+      '소유자 계정 전용. Firestore is_admin은 유지하고, 화면만 일반·파트너·관리자로 바꿉니다.';
+
+  @override
+  String get devRolesDiver => '일반 회원';
+
+  @override
+  String get devRolesPartner => '파트너';
+
+  @override
+  String get devRolesAdmin => '관리자';
+
+  @override
+  String get devRolesShop => '파트너 샵';
+
+  @override
+  String get devRolesApply => '적용';
+
+  @override
+  String get devRolesApplied => '테스트 역할을 적용했습니다.';
+
+  @override
+  String get devRolesNeedShop => '파트너 역할을 쓰려면 샵을 고르세요.';
+
+  @override
   String profileUpcomingConfirmed(String date) {
     return '예약 확정 · $date';
   }

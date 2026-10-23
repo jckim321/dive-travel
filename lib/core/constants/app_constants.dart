@@ -7,11 +7,11 @@ abstract final class AppConstants {
   static const int masterLogTarget = 100;
   static const String adminPin = '9118';
 
-  /// 테스트 동안 로그인 세션을 관리자로 연다. 실서비스 배포 전 false로 되돌리세요.
-  static const bool grantAdminToCurrentSession = true;
+  /// Legacy session grants — keep false. Use owner-only「테스트 역할 전환」instead.
+  static const bool grantAdminToCurrentSession = false;
 
-  /// 테스트 동안 로그인 세션을 파트너(Business)로 연다. 실서비스 배포 전 false로 되돌리세요.
-  static const bool grantBusinessToCurrentSession = true;
+  /// Legacy session grants — keep false. Use owner-only「테스트 역할 전환」instead.
+  static const bool grantBusinessToCurrentSession = false;
   static const String defaultPartnerShopId = 'bohol-hideout';
 
   /// GitHub Pages site root (Flutter web `--base-href /dive-travel/`).

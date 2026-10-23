@@ -2160,6 +2160,60 @@ abstract class AppLocalizations {
   /// **'업무용 전환'**
   String get profileWorkModeTitle;
 
+  /// No description provided for @devRolesTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'테스트 역할 전환'**
+  String get devRolesTitle;
+
+  /// No description provided for @devRolesHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'소유자 계정 전용. Firestore is_admin은 유지하고, 화면만 일반·파트너·관리자로 바꿉니다.'**
+  String get devRolesHint;
+
+  /// No description provided for @devRolesDiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'일반 회원'**
+  String get devRolesDiver;
+
+  /// No description provided for @devRolesPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너'**
+  String get devRolesPartner;
+
+  /// No description provided for @devRolesAdmin.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자'**
+  String get devRolesAdmin;
+
+  /// No description provided for @devRolesShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 샵'**
+  String get devRolesShop;
+
+  /// No description provided for @devRolesApply.
+  ///
+  /// In ko, this message translates to:
+  /// **'적용'**
+  String get devRolesApply;
+
+  /// No description provided for @devRolesApplied.
+  ///
+  /// In ko, this message translates to:
+  /// **'테스트 역할을 적용했습니다.'**
+  String get devRolesApplied;
+
+  /// No description provided for @devRolesNeedShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 역할을 쓰려면 샵을 고르세요.'**
+  String get devRolesNeedShop;
+
   /// No description provided for @profileUpcomingConfirmed.
   ///
   /// In ko, this message translates to:

@@ -146,15 +146,9 @@ class MemoryDiverRepository implements DiverRepository {
   final _discountController = StreamController<InstructorDiscount>.broadcast();
   InstructorDiscount _discount = InstructorDiscount.standard;
 
-  bool get _resolvedBusiness =>
-      _isBusiness ||
-      AppConstants.grantBusinessToCurrentSession ||
-      AppOwner.isOwnerEmail(_user?.email);
+  bool get _resolvedBusiness => _isBusiness;
 
-  bool get _resolvedAdmin =>
-      _isAdmin ||
-      AppConstants.grantAdminToCurrentSession ||
-      AppOwner.isOwnerEmail(_user?.email);
+  bool get _resolvedAdmin => _isAdmin;
 
   void _seedAdminInbox() {
     if (_pending.isEmpty) {
@@ -245,16 +239,28 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> sendPasswordReset(String email) async {}
 
   @override
+  Future<void> updateDevTestRole({
+    required String uid,
+    required bool isBusiness,
+    String? ownedShopId,
+    required String userRole,
+  }) async {
+    _isBusiness = isBusiness;
+    _ownedShopId = isBusiness ? ownedShopId : null;
+    _snapshot = DiverSnapshot.empty(
+      displayName: _snapshot.stats.displayName,
+      isInstructor: _isInstructor,
+      proStatus: _proStatus,
+      isAdmin: _resolvedAdmin,
+      isBusiness: _resolvedBusiness,
+      ownedShopId: _ownedShopId,
+      memberGrade: _memberGrade,
+    );
+    _diverController.add(_snapshot);
+  }
+
+  @override
   Future<void> ensureUserDocument(AppUser user) async {
-    if (AppOwner.isOwnerEmail(user.email) ||
-        AppConstants.grantAdminToCurrentSession) {
-      _isAdmin = true;
-    }
-    if (AppOwner.isOwnerEmail(user.email) ||
-        AppConstants.grantBusinessToCurrentSession) {
-      _isBusiness = true;
-      _ownedShopId ??= AppConstants.defaultPartnerShopId;
-    }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
       isInstructor: _isInstructor,

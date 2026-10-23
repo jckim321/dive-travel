@@ -35,6 +35,14 @@ abstract class DiverRepository {
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
   Future<void> ensureUserDocument(AppUser user);
 
+  /// Owner test-role helper: updates business/owned_shop only; never clears is_admin.
+  Future<void> updateDevTestRole({
+    required String uid,
+    required bool isBusiness,
+    String? ownedShopId,
+    required String userRole,
+  });
+
   /// Profile fields only (no logs subcollection). Prefer [fetchDiveLogs] for logs.
   Stream<DiverSnapshot> watchDiver(String uid);
 
