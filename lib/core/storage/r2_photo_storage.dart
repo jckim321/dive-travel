@@ -101,7 +101,8 @@ class R2PhotoStorage {
   /// Turns a stored R2 public URL into a short-lived signed GET when the
   /// public r2.dev host is locked down (401). Non-R2 URLs pass through.
   Future<String> readableUrl(String storedUrl) async {
-    final trimmed = storedUrl.trim();
+    // Prefer current public host over a stale pub-*.r2.dev URL in Firestore.
+    final trimmed = R2Config.normalizePublicUrl(storedUrl.trim());
     if (trimmed.isEmpty || trimmed.startsWith('memory://')) {
       return trimmed;
     }

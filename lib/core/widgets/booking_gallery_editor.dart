@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -11,7 +12,7 @@ class BookingGalleryItem {
   const BookingGalleryItem._({this.url, this.photo});
 
   factory BookingGalleryItem.remote(String url) =>
-      BookingGalleryItem._(url: url);
+      BookingGalleryItem._(url: R2Config.normalizePublicUrl(url));
 
   factory BookingGalleryItem.local(PickedPhoto photo) =>
       BookingGalleryItem._(photo: photo);

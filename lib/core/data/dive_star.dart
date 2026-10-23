@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -133,10 +134,17 @@ class ShopLiveStats {
       products: ShopProduct.listFrom(id, data['products']),
       intro: data['intro'] as String?,
       address: data['address'] as String?,
-      coverUrl: data['cover_url'] as String?,
+      coverUrl: () {
+        final raw = data['cover_url'] as String?;
+        if (raw == null || raw.trim().isEmpty) {
+          return null;
+        }
+        return R2Config.normalizePublicUrl(raw);
+      }(),
       galleryUrls: [
         for (final item in (data['gallery_urls'] as List<dynamic>? ?? const []))
-          if (item is String && item.trim().isNotEmpty) item.trim(),
+          if (item is String && item.trim().isNotEmpty)
+            R2Config.normalizePublicUrl(item),
       ],
       amenities: [
         for (final item in (data['amenities'] as List<dynamic>? ?? const []))

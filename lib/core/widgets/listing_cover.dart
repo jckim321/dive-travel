@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -40,7 +41,7 @@ class ListingCoverPhoto extends StatelessWidget {
     final data = bytes ??
         store.coverBytesFor(shop.id) ??
         store.coverBytesFor(shop.hullId);
-    final url = shop.coverUrl;
+    final url = R2Config.normalizePublicUrl(shop.coverUrl);
     final accent = Color(shop.accentColor);
     final dpr = MediaQuery.devicePixelRatioOf(context);
 

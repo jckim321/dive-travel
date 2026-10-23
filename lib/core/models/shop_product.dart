@@ -1,3 +1,5 @@
+import 'package:dive_travel_app/core/config/r2_config.dart';
+
 /// Explore-only vs home shelf placement for an approved product.
 enum ProductListingKind {
   /// Registered / approved but not pushed to any home shelf.
@@ -645,7 +647,7 @@ class ShopProduct {
       active: data['active'] != false,
       blurb: data['blurb'] as String? ?? '',
       durationLabel: data['duration_label'] as String? ?? '',
-      coverUrl: data['cover_url'] as String? ?? '',
+      coverUrl: R2Config.normalizePublicUrl(data['cover_url'] as String? ?? ''),
       continent: data['continent'] as String? ?? '',
       meetingPoint: data['meeting_point'] as String? ?? '',
       schedule: data['schedule'] as String? ?? '',
@@ -658,7 +660,10 @@ class ShopProduct {
       options: options,
       category: ProductCategory.parse(data['category']),
       detail: data['detail'] as String? ?? '',
-      photoUrls: _stringList(data['photo_urls']),
+      photoUrls: [
+        for (final url in _stringList(data['photo_urls']))
+          R2Config.normalizePublicUrl(url),
+      ],
       itineraryDays: _days(data['itinerary_days']),
       guestRates: _rates(data['guest_rates']),
       focPayCount: (data['foc_pay_count'] as num?)?.toInt() ?? 0,

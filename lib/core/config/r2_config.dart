@@ -1,4 +1,8 @@
+import 'package:dive_travel_app/core/config/r2_public_url.dart';
 import 'package:dive_travel_app/core/config/r2_secrets.dart';
+
+export 'package:dive_travel_app/core/config/r2_public_url.dart'
+    show normalizeR2PublicUrl;
 
 /// Cloudflare R2 설정.
 /// 우선순위: `--dart-define` (CI/배포) → gitignore된 `r2_secrets.dart` (로컬).
@@ -89,5 +93,10 @@ abstract final class R2Config {
       return '$base/$key';
     }
     return 'https://$endpointHost/$bucketName/$key';
+  }
+
+  /// Display helper: map any stored `*.r2.dev` URL onto [publicBaseUrl].
+  static String normalizePublicUrl(String url) {
+    return normalizeR2PublicUrl(url, publicBaseUrl: publicBaseUrl);
   }
 }
