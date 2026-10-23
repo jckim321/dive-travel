@@ -2835,6 +2835,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductsFilterEmpty => 'No products match this filter.';
 
   @override
+  String partnerProductPriceLine(String price) {
+    return 'Base package · diver $price KRW';
+  }
+
+  @override
+  String get partnerProductSameBoatPending => 'Same-boat pending approval';
+
+  @override
+  String partnerProductSameBoatLive(int seats, String date) {
+    return '$seats seats open · departs $date';
+  }
+
+  @override
+  String get partnerProductSameBoatRejected => 'Same-boat rejected';
+
+  @override
+  String get partnerProductSameBoatNotOpened => 'Not opened yet';
+
+  @override
+  String get partnerProductSeatsManage => 'Manage seats';
+
+  @override
+  String get partnerProductResubmit => 'Fix and resubmit';
+
+  @override
   String get productStatusApproved => 'Published';
 
   @override

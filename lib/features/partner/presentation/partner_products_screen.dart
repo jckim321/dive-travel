@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
-import 'package:dive_travel_app/features/partner/presentation/widgets/product_publish_status_badge.dart';
+import 'package:dive_travel_app/features/partner/presentation/widgets/partner_product_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Partner-only product list (build 2 shell). Full card actions arrive in build 3.
+/// Partner-only product list with full [PartnerProductCard] actions.
 class PartnerProductsScreen extends StatefulWidget {
   const PartnerProductsScreen({super.key, this.embedded = false});
 
@@ -118,7 +117,7 @@ class _PartnerProductsScreenState extends State<PartnerProductsScreen> {
               )
             else
               for (final product in visible) ...[
-                _MinimalProductCard(
+                PartnerProductCard(
                   product: product,
                   shopId: owned,
                 ),
@@ -236,55 +235,6 @@ class _EmptyProductsCard extends StatelessWidget {
               key: const Key('partner-products-empty-cta'),
               onPressed: onRegister,
               child: Text(l10n.partnerProductsEmptyCta),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MinimalProductCard extends StatelessWidget {
-  const _MinimalProductCard({
-    required this.product,
-    required this.shopId,
-  });
-
-  final ShopProduct product;
-  final String shopId;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Card(
-      key: Key('partner-product-${product.id}'),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                product.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ),
-            ProductPublishStatusBadge(product: product),
-            const SizedBox(width: 4),
-            TextButton(
-              key: Key('partner-product-edit-${product.id}'),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => TravelProductRegistrationScreen(
-                    lockedShopId: shopId,
-                    partnerMode: true,
-                    existing: product,
-                    startEditing: true,
-                  ),
-                ),
-              ),
-              child: Text(l10n.briefEdit),
             ),
           ],
         ),

@@ -127,6 +127,34 @@ void main() {
         isTrue,
       );
     });
+
+    test('rejected actions only for rejected publish', () {
+      expect(partnerShowRejectedActions(_product(id: 'live')), isFalse);
+      expect(
+        partnerShowRejectedActions(
+          _product(
+            id: 'rej',
+            publish: ProductPublishStatus.rejected,
+            active: false,
+          ),
+        ),
+        isTrue,
+      );
+    });
+
+    test('live summary uses remaining seats and departure', () {
+      final live = _product(
+        id: 'live',
+        sameBoat: SameBoatStatus.approved,
+        openEmptySeats: true,
+        capacity: 10,
+        departure: DateTime(2026, 11, 15),
+      );
+      // bookedSeats defaults 0 → remaining 10
+      final summary = partnerSameBoatLiveSummary(live);
+      expect(summary.seats, 10);
+      expect(summary.departure, DateTime(2026, 11, 15));
+    });
   });
 
   group('filter counts + list', () {

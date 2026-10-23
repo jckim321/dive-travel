@@ -1667,6 +1667,24 @@
   "partnerProductsEmptyNext": "상품을 등록하면 이 목록에 「승인 대기」로 나타납니다.",
   "partnerProductsEmptyCta": "첫 상품 등록하기",
   "partnerProductsFilterEmpty": "이 필터에 해당하는 상품이 없습니다.",
+  "partnerProductPriceLine": "기본 패키지 · 다이버 {price}원",
+  "@partnerProductPriceLine": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "partnerProductSameBoatPending": "같은배 승인 대기",
+  "partnerProductSameBoatLive": "빈자리 {seats}석 열림 · 출발 {date}",
+  "@partnerProductSameBoatLive": {
+    "placeholders": {
+      "seats": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "partnerProductSameBoatRejected": "같은배 반려",
+  "partnerProductSameBoatNotOpened": "아직 안 열림",
+  "partnerProductSeatsManage": "빈자리 관리",
+  "partnerProductResubmit": "고쳐서 다시 요청",
   "productStatusApproved": "공개됨",
   "productStatusRejected": "거절됨",
   "productStatusDraft": "임시저장",

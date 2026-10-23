@@ -80,6 +80,30 @@ bool partnerSeatsIsManage(ShopProduct product) => product.hasAnySameBoatOpen;
 /// Show 「가격 미입력」 when consumer price was never set (≤ 0).
 bool partnerPriceMissing(ShopProduct product) => product.consumerPrice <= 0;
 
+/// Rejected cards show resubmit + delete.
+bool partnerShowRejectedActions(ShopProduct product) =>
+    partnerPublishBadgeKind(product) == PartnerPublishBadgeKind.rejected;
+
+/// Live same-boat seat count + departure for the card line (base, else options).
+({int seats, DateTime? departure}) partnerSameBoatLiveSummary(
+  ShopProduct product,
+) {
+  if (product.listsOnSameBoat) {
+    return (seats: product.remainingSeats, departure: product.departureStart);
+  }
+  var seats = 0;
+  DateTime? departure;
+  for (final option in product.options) {
+    if (!option.listsOnSameBoat) {
+      continue;
+    }
+    final left = option.capacity - option.bookedSeats;
+    seats += left < 0 ? 0 : left;
+    departure ??= option.departureStart;
+  }
+  return (seats: seats, departure: departure);
+}
+
 PartnerProductFilterCounts partnerProductFilterCounts(
   Iterable<ShopProduct> products,
 ) {

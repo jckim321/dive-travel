@@ -1090,6 +1090,24 @@
   "partnerProductsEmptyNext": "Register a product and it will show here as pending approval.",
   "partnerProductsEmptyCta": "Register your first product",
   "partnerProductsFilterEmpty": "No products match this filter.",
+  "partnerProductPriceLine": "Base package · diver {price} KRW",
+  "@partnerProductPriceLine": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "partnerProductSameBoatPending": "Same-boat pending approval",
+  "partnerProductSameBoatLive": "{seats} seats open · departs {date}",
+  "@partnerProductSameBoatLive": {
+    "placeholders": {
+      "seats": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "partnerProductSameBoatRejected": "Same-boat rejected",
+  "partnerProductSameBoatNotOpened": "Not opened yet",
+  "partnerProductSeatsManage": "Manage seats",
+  "partnerProductResubmit": "Fix and resubmit",
   "partnerOwnProductsOnly": "Partners can only manage products for their own shop.",
   "partnerProductPendingHint": "You can view and edit pending products in this list. Same-boat apply and Explore listing appear after admin approval.",
 

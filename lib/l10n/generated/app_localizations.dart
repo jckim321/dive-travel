@@ -5220,6 +5220,48 @@ abstract class AppLocalizations {
   /// **'이 필터에 해당하는 상품이 없습니다.'**
   String get partnerProductsFilterEmpty;
 
+  /// No description provided for @partnerProductPriceLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 패키지 · 다이버 {price}원'**
+  String partnerProductPriceLine(String price);
+
+  /// No description provided for @partnerProductSameBoatPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 승인 대기'**
+  String get partnerProductSameBoatPending;
+
+  /// No description provided for @partnerProductSameBoatLive.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 {seats}석 열림 · 출발 {date}'**
+  String partnerProductSameBoatLive(int seats, String date);
+
+  /// No description provided for @partnerProductSameBoatRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 반려'**
+  String get partnerProductSameBoatRejected;
+
+  /// No description provided for @partnerProductSameBoatNotOpened.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 안 열림'**
+  String get partnerProductSameBoatNotOpened;
+
+  /// No description provided for @partnerProductSeatsManage.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 관리'**
+  String get partnerProductSeatsManage;
+
+  /// No description provided for @partnerProductResubmit.
+  ///
+  /// In ko, this message translates to:
+  /// **'고쳐서 다시 요청'**
+  String get partnerProductResubmit;
+
   /// No description provided for @productStatusApproved.
   ///
   /// In ko, this message translates to:

@@ -2764,6 +2764,31 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerProductsFilterEmpty => '이 필터에 해당하는 상품이 없습니다.';
 
   @override
+  String partnerProductPriceLine(String price) {
+    return '기본 패키지 · 다이버 $price원';
+  }
+
+  @override
+  String get partnerProductSameBoatPending => '같은배 승인 대기';
+
+  @override
+  String partnerProductSameBoatLive(int seats, String date) {
+    return '빈자리 $seats석 열림 · 출발 $date';
+  }
+
+  @override
+  String get partnerProductSameBoatRejected => '같은배 반려';
+
+  @override
+  String get partnerProductSameBoatNotOpened => '아직 안 열림';
+
+  @override
+  String get partnerProductSeatsManage => '빈자리 관리';
+
+  @override
+  String get partnerProductResubmit => '고쳐서 다시 요청';
+
+  @override
   String get productStatusApproved => '공개됨';
 
   @override
