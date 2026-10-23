@@ -5148,6 +5148,36 @@ abstract class AppLocalizations {
   /// **'승인 대기'**
   String get productStatusPending;
 
+  /// No description provided for @partnerProductBadgePending.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get partnerProductBadgePending;
+
+  /// No description provided for @partnerProductBadgeListed.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시중'**
+  String get partnerProductBadgeListed;
+
+  /// No description provided for @partnerProductBadgeRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'반려'**
+  String get partnerProductBadgeRejected;
+
+  /// No description provided for @partnerProductBadgeClosed.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫힘'**
+  String get partnerProductBadgeClosed;
+
+  /// No description provided for @partnerProductBadgeMissingPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격 미입력'**
+  String get partnerProductBadgeMissingPrice;
+
   /// No description provided for @productStatusApproved.
   ///
   /// In ko, this message translates to:

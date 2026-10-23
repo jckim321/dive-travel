@@ -2797,6 +2797,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productStatusPending => 'Pending';
 
   @override
+  String get partnerProductBadgePending => 'Pending approval';
+
+  @override
+  String get partnerProductBadgeListed => 'Listed';
+
+  @override
+  String get partnerProductBadgeRejected => 'Rejected';
+
+  @override
+  String get partnerProductBadgeClosed => 'Closed';
+
+  @override
+  String get partnerProductBadgeMissingPrice => 'Price missing';
+
+  @override
   String get productStatusApproved => 'Published';
 
   @override

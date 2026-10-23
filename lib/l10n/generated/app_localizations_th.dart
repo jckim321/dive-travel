@@ -2727,6 +2727,21 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productStatusPending => '승인 대기';
 
   @override
+  String get partnerProductBadgePending => '승인 대기';
+
+  @override
+  String get partnerProductBadgeListed => '게시중';
+
+  @override
+  String get partnerProductBadgeRejected => '반려';
+
+  @override
+  String get partnerProductBadgeClosed => '닫힘';
+
+  @override
+  String get partnerProductBadgeMissingPrice => '가격 미입력';
+
+  @override
   String get productStatusApproved => '공개됨';
 
   @override

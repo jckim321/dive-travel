@@ -1078,6 +1078,11 @@
   "productStatusApproved": "Published",
   "productStatusRejected": "Rejected",
   "productStatusDraft": "Draft",
+  "partnerProductBadgePending": "Pending approval",
+  "partnerProductBadgeListed": "Listed",
+  "partnerProductBadgeRejected": "Rejected",
+  "partnerProductBadgeClosed": "Closed",
+  "partnerProductBadgeMissingPrice": "Price missing",
   "partnerOwnProductsOnly": "Partners can only manage products for their own shop.",
   "partnerProductPendingHint": "You can view and edit pending products in this list. Same-boat apply and Explore listing appear after admin approval.",
 
