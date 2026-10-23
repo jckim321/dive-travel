@@ -40,6 +40,8 @@ class MemoryDiverRepository implements DiverRepository {
   factory MemoryDiverRepository.forTest({
     bool isInstructor = false,
     bool isAdmin = false,
+    bool isBusiness = false,
+    String? ownedShopId,
   }) {
     final repo = MemoryDiverRepository(
       user: const AppUser(
@@ -50,8 +52,10 @@ class MemoryDiverRepository implements DiverRepository {
     );
     repo._isInstructor = isInstructor;
     repo._isAdmin = isAdmin;
-    repo._isBusiness = isAdmin || AppConstants.grantBusinessToCurrentSession;
-    repo._ownedShopId = AppConstants.defaultPartnerShopId;
+    repo._isBusiness =
+        isBusiness || isAdmin || AppConstants.grantBusinessToCurrentSession;
+    repo._ownedShopId = ownedShopId ??
+        (repo._isBusiness ? AppConstants.defaultPartnerShopId : null);
     repo._proStatus = isInstructor
         ? ProVerificationStatus.approved
         : ProVerificationStatus.none;

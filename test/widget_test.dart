@@ -142,6 +142,25 @@ void main() {
     expect(find.text(l10n.exploreChooseRoom), findsOneWidget);
     expect(find.textContaining('팡라오 앞바다'), findsOneWidget);
     expect(find.byKey(const Key('shop-book-bohol-hideout')), findsOneWidget);
+    // Regular diver session: no partner edit affordance.
+    expect(find.byKey(const Key('edit-resort-page')), findsNothing);
+  });
+
+  testWidgets('파트너 세션은 리조트 편집으로 들어간다', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      DiveTravelApp(
+        firebaseReady: true,
+        repository: MemoryDiverRepository.forTest(isBusiness: true),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    final l10n = await loadKo();
+
+    await tester.tap(find.text(l10n.navExplore));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('edit-resort-page')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('edit-resort-page')));

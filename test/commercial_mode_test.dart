@@ -187,7 +187,7 @@ void main() {
     await tester.pumpWidget(
       DiveTravelApp(
         firebaseReady: true,
-        repository: MemoryDiverRepository.forTest(),
+        repository: MemoryDiverRepository.forTest(isBusiness: true),
       ),
     );
     await tester.pump();

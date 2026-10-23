@@ -23,10 +23,10 @@ void main() {
     expect(snapshot.regions.map((region) => region.name), ['팔라우', '코멜']);
     expect(snapshot.regions.first.logCount, 7);
     expect(snapshot.favoriteShopIds, {'bohol-hideout', 'palau-rock'});
-    expect(snapshot.stats.isAdmin, isTrue);
+    expect(snapshot.stats.isAdmin, isFalse);
   });
 
-  test('is_admin 또는 소유자 이메일이면 관리자 스냅샷이 된다', () {
+  test('is_admin 플래그만 관리자 스냅샷이 된다', () {
     final byFlag = DiverSnapshot.fromUserDocument(
       data: {
         'display_name': '관리자',
@@ -39,7 +39,7 @@ void main() {
     );
     expect(byFlag.stats.isAdmin, isTrue);
 
-    final byOwner = DiverSnapshot.fromUserDocument(
+    final byOwnerEmailOnly = DiverSnapshot.fromUserDocument(
       data: {
         'display_name': 'Jongcheol',
         'email': 'jckim321@gmail.com',
@@ -48,6 +48,6 @@ void main() {
       },
       logs: const [],
     );
-    expect(byOwner.stats.isAdmin, isTrue);
+    expect(byOwnerEmailOnly.stats.isAdmin, isFalse);
   });
 }
