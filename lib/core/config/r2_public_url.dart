@@ -1,7 +1,8 @@
 /// Pure rewrite of legacy `*.r2.dev` public URLs onto [publicBaseUrl].
 ///
-/// Path after the host is kept. Non-r2.dev hosts (external CDNs, S3 API) and
-/// empty strings are unchanged. When [publicBaseUrl] is empty, no rewrite.
+/// Path after the host is kept as already-encoded [Uri.path] (leading `/`
+/// stripped only). Non-r2.dev hosts (external CDNs, S3 API) and empty strings
+/// are unchanged. When [publicBaseUrl] is empty, no rewrite.
 ///
 /// TODO(launch): Prefer storing object keys only in Firestore and build URLs
 /// with [R2Config.publicUrlFor] at display time so host rotates need no migrate.
@@ -27,12 +28,10 @@ String normalizeR2PublicUrl(
   if (base.isEmpty) {
     return trimmed;
   }
-  final key = [
-    for (final part in uri.pathSegments)
-      if (part.isNotEmpty) part,
-  ].join('/');
-  if (key.isEmpty) {
+  // Keep percent-encoding; pathSegments would decode 한글/공백/% and break keys.
+  final path = uri.path.replaceFirst(RegExp(r'^/+'), '');
+  if (path.isEmpty) {
     return base;
   }
-  return '$base/$key';
+  return '$base/$path';
 }
