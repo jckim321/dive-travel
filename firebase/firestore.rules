@@ -108,10 +108,29 @@ service cloud.firestore {
         && reviewBookingEligible(shopId);
     }
 
+    // New-user create must match ensureUserDocument defaults (diver/silver).
+    // Privilege escalation on create is denied; update already blocks these keys.
+    function userCreatePrivilegeOk() {
+      return (!('is_admin' in request.resource.data)
+          || request.resource.data.is_admin == false)
+        && (!('is_business' in request.resource.data)
+          || request.resource.data.is_business == false)
+        && !('owned_shop_id' in request.resource.data)
+        && (!('user_role' in request.resource.data)
+          || request.resource.data.user_role == 'diver')
+        && (!('member_grade' in request.resource.data)
+          || request.resource.data.member_grade == 'silver')
+        && (!('member_grade_locked' in request.resource.data)
+          || request.resource.data.member_grade_locked == false)
+        && !('isAdmin' in request.resource.data)
+        && !('isBusiness' in request.resource.data)
+        && !('ownedShopId' in request.resource.data);
+    }
+
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) && userCreatePrivilegeOk();
       allow update: if isAdmin() || (
         isOwner(userId)
         && !request.resource.data.diff(resource.data).affectedKeys()

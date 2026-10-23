@@ -1,0 +1,14 @@
+{
+  "name": "dive-travel-firestore-rules-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test user_create_privilege.test.js",
+    "test:emu": "firebase emulators:exec --only firestore --project dive-travel-rules-test \"node --test user_create_privilege.test.js\""
+  },
+
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.6.0"
+  }
+}

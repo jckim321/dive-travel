@@ -57,3 +57,10 @@ app.*.map.json
 .env.*
 !.env.example
 lib/core/config/r2_secrets.dart
+
+# Firestore rules unit tests (Node)
+firebase/rules-tests/node_modules/
+firebase/rules-tests/.tools/
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
