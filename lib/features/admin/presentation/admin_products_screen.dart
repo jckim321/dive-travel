@@ -252,8 +252,10 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            TravelProductRegistrationScreen(existing: product),
+                        builder: (_) => TravelProductRegistrationScreen(
+                          existing: product,
+                          startEditing: true,
+                        ),
                       ),
                     ),
                   ),
@@ -296,6 +298,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                                       lockedShopId: owned,
                                       partnerMode: true,
                                       existing: product,
+                                      startEditing: true,
                                     ),
                                   ),
                                 );
@@ -346,6 +349,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                             lockedShopId: owned,
                             partnerMode: true,
                             existing: product,
+                            startEditing: true,
                           ),
                         ),
                       ),

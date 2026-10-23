@@ -1143,6 +1143,7 @@ class PartnerProductFormScreen extends StatelessWidget {
       lockedShopId: shopId,
       partnerMode: true,
       existing: existing,
+      startEditing: existing != null,
     );
   }
 }

@@ -321,7 +321,24 @@ class _GalleryTile extends StatelessWidget {
                     ? Image.network(
                         item.url!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        errorBuilder: (_, _, _) => ColoredBox(
+                          color: const Color(0xFF16344A),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                l10n.workbenchPhotoLoadFailed,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       )
                     : Image.asset(
                         'assets/images/test_dive_photo.png',

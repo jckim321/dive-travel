@@ -19,6 +19,7 @@ class MyCraftedTripsSection extends StatelessWidget {
         builder: (_) => TravelProductRegistrationScreen(
           creatorMode: true,
           existing: existing,
+          startEditing: true,
         ),
       ),
     );

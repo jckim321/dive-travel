@@ -3320,6 +3320,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workbenchNeedDiverPrice => '다이버 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.';
 
   @override
+  String get workbenchUnitPriceRequired => '1인 기준 가격 (필수)';
+
+  @override
+  String get workbenchCurrencyWon => '원';
+
+  @override
+  String get workbenchGuestPreviewTitle => '고객 구매 화면 예시';
+
+  @override
+  String get workbenchGuestPreviewHint =>
+      '저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.';
+
+  @override
+  String get workbenchPhotoUploadFailed =>
+      '사진 업로드에 실패했습니다. 연결·R2 설정을 확인한 뒤 다시 저장하세요. 상품은 저장되지 않았습니다.';
+
+  @override
+  String get workbenchPhotoLoadFailed => '사진을 불러오지 못했어요';
+
+  @override
   String get workbenchNeedGuestPrice => '비다이버·아동 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.';
 
   @override

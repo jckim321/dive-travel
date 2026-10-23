@@ -310,6 +310,7 @@ class _SameBoatTile extends StatelessWidget {
               builder: (_) => TravelProductRegistrationScreen(
                 lockedShopId: product.shopId,
                 existing: product,
+                startEditing: true,
               ),
             ),
           );

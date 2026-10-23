@@ -45,7 +45,10 @@ void main() {
     addTearDown(() => FlutterError.onError = previous);
   }
 
-  Future<void> pumpWorkbench(WidgetTester tester) async {
+  Future<void> pumpWorkbench(
+    WidgetTester tester, {
+    bool startEditing = false,
+  }) async {
     ignoreKnownListTileNoise();
     final repo = MemoryDiverRepository.forTest(isAdmin: true);
     final store = DiverStore(repo);
@@ -58,7 +61,10 @@ void main() {
           locale: AppConstants.defaultLocale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: TravelProductRegistrationScreen(existing: pendingProduct()),
+          home: TravelProductRegistrationScreen(
+            existing: pendingProduct(),
+            startEditing: startEditing,
+          ),
         ),
       ),
     );
@@ -106,6 +112,13 @@ void main() {
       openBefore,
       reason: 'view mode IgnorePointer must block switch taps',
     );
+  });
+
+  testWidgets('startEditing true면 바로 편집 모드', (tester) async {
+    await pumpWorkbench(tester, startEditing: true);
+    expect(find.byKey(const Key('ops-product-view-hint')), findsNothing);
+    expect(find.byKey(const Key('admin-product-submit')), findsOneWidget);
+    expect(find.byKey(const Key('workbench-diver-price')), findsOneWidget);
   });
 
   testWidgets('수정 모드에서는 입력이 된다', (tester) async {

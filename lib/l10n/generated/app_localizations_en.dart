@@ -3430,6 +3430,26 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter a diver package price greater than 0 before saving.';
 
   @override
+  String get workbenchUnitPriceRequired => 'Price per person (required)';
+
+  @override
+  String get workbenchCurrencyWon => 'KRW';
+
+  @override
+  String get workbenchGuestPreviewTitle => 'Guest checkout preview';
+
+  @override
+  String get workbenchGuestPreviewHint =>
+      'Example only — guest counts here are not saved.';
+
+  @override
+  String get workbenchPhotoUploadFailed =>
+      'Photo upload failed. Fix the connection or R2 settings, then save again. Nothing was saved.';
+
+  @override
+  String get workbenchPhotoLoadFailed => 'Couldn\'t load this photo';
+
+  @override
   String get workbenchNeedGuestPrice =>
       'Enter non-diver and child prices greater than 0 before saving.';
 

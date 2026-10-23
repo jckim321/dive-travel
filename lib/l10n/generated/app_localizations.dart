@@ -6288,6 +6288,42 @@ abstract class AppLocalizations {
   /// **'다이버 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.'**
   String get workbenchNeedDiverPrice;
 
+  /// No description provided for @workbenchUnitPriceRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 기준 가격 (필수)'**
+  String get workbenchUnitPriceRequired;
+
+  /// No description provided for @workbenchCurrencyWon.
+  ///
+  /// In ko, this message translates to:
+  /// **'원'**
+  String get workbenchCurrencyWon;
+
+  /// No description provided for @workbenchGuestPreviewTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'고객 구매 화면 예시'**
+  String get workbenchGuestPreviewTitle;
+
+  /// No description provided for @workbenchGuestPreviewHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.'**
+  String get workbenchGuestPreviewHint;
+
+  /// No description provided for @workbenchPhotoUploadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 업로드에 실패했습니다. 연결·R2 설정을 확인한 뒤 다시 저장하세요. 상품은 저장되지 않았습니다.'**
+  String get workbenchPhotoUploadFailed;
+
+  /// No description provided for @workbenchPhotoLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진을 불러오지 못했어요'**
+  String get workbenchPhotoLoadFailed;
+
   /// No description provided for @workbenchNeedGuestPrice.
   ///
   /// In ko, this message translates to:

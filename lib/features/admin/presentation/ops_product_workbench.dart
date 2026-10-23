@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -27,6 +28,7 @@ class OpsProductWorkbench extends StatefulWidget {
     this.partnerMode = false,
     this.creatorMode = false,
     this.existing,
+    this.startEditing = false,
   });
 
   final String? lockedShopId;
@@ -35,6 +37,9 @@ class OpsProductWorkbench extends StatefulWidget {
   /// Diver "craft a trip" — always submits for review as diverPlanned.
   final bool creatorMode;
   final ShopProduct? existing;
+
+  /// Open in edit mode when revisiting an existing product (partner/admin edit).
+  final bool startEditing;
 
   @override
   State<OpsProductWorkbench> createState() => _OpsProductWorkbenchState();
@@ -221,6 +226,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _photoPicker = const DivePhotoPicker();
   final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
+  /// User removed every photo on purpose; empty gallery may clear Firestore.
+  var _galleryClearedByUser = false;
   final _sectionKeys = List<GlobalKey>.generate(
     _sectionCount,
     (_) => GlobalKey(),
@@ -281,7 +288,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _excludes = TextEditingController(text: existing?.excludes ?? '');
     _departureStart = existing?.departureStart;
     _packageNights = _parsePackageNights(existing?.durationLabel);
-    _editing = existing == null;
+    _editing = existing == null || widget.startEditing;
     for (final role in GuestRole.values) {
       GuestRate? found;
       for (final rate in existing?.guestRates ?? const <GuestRate>[]) {
@@ -671,6 +678,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       setState(() {
         _galleryTouched = true;
+        _galleryClearedByUser = false;
         for (final photo in photos) {
           if (_gallery.length >= _maxGallery) {
             break;
@@ -694,8 +702,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     setState(() {
       _galleryTouched = true;
       _gallery.removeAt(index);
+      if (_gallery.isEmpty) {
+        _galleryClearedByUser = true;
+      }
     });
   }
+
+  bool get _existingHasPhotos {
+    final existing = widget.existing;
+    if (existing == null) {
+      return false;
+    }
+    return existingProductHasPhotos(
+      photoUrls: existing.photoUrls,
+      coverUrl: existing.coverUrl,
+    );
+  }
+
+  bool get _preserveExistingPhotos => shouldPreserveExistingPhotos(
+        galleryEmpty: _gallery.isEmpty,
+        userClearedGallery: _galleryClearedByUser,
+        existingHasPhotos: _existingHasPhotos,
+      );
 
   void _makeCover(int index) {
     if (index <= 0 || index >= _gallery.length) {
@@ -1034,7 +1062,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         active: existing?.active ?? true,
         blurb: _blurb.text.trim(),
         durationLabel: _nightsLabel,
-        coverUrl: _galleryCoverUrl,
+        coverUrl: _preserveExistingPhotos
+            ? (existing?.coverUrl ?? '')
+            : _galleryCoverUrl,
         continent: _continent,
         meetingPoint: _meeting.text.trim(),
         schedule: _detailBody.text.trim(),
@@ -1046,10 +1076,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         cancellationNote: _cancel.text.trim(),
         category: _category,
         detail: existing?.detail ?? '',
-        photoUrls: [
-          for (final item in _gallery)
-            if (item.url != null && item.url!.isNotEmpty) item.url!,
-        ],
+        photoUrls: _preserveExistingPhotos
+            ? (existing?.photoUrls ?? const <String>[])
+            : [
+                for (final item in _gallery)
+                  if (item.url != null && item.url!.isNotEmpty) item.url!,
+              ],
         // Folded into schedule on open; clear so detail/duration stay in sync.
         itineraryDays: const [],
         guestRates: guestRates,
@@ -1076,10 +1108,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             : sessionUid,
       );
       final product = _seats.applyToProduct(drafted);
+      // null gallery = leave Firestore photo_urls/cover_url unchanged.
+      // Empty list = user cleared photos. Non-empty = upload/keep listed URLs.
+      final List<ShopGallerySlot>? galleryArg = _preserveExistingPhotos
+          ? null
+          : _gallerySlots;
       await store.saveShopProduct(
         shopId: shopId,
         product: product,
-        gallery: _gallerySlots,
+        gallery: galleryArg,
         useAsResortCover: existing == null || _galleryTouched,
         creatorSubmission: widget.creatorMode,
         submitterUid: sessionUid,
@@ -1106,9 +1143,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
-      final message = '$error'.contains('SHOP_STAT_REFRESH_FAILED')
+      final raw = '$error';
+      final message = raw.contains('SHOP_STAT_REFRESH_FAILED')
           ? l10n.shopStatRefreshFailed
-          : '$error';
+          : (raw.contains('R2') || raw.contains('업로드')
+              ? l10n.workbenchPhotoUploadFailed
+              : raw);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), duration: const Duration(seconds: 8)),
       );
@@ -1796,32 +1836,45 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     String? hint,
     int lines = 1,
     String? errorText,
+    String? suffixText,
   }) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(_kBoxRadius),
-      borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+      borderSide: const BorderSide(color: Color(0xFF94A3B8), width: 1.2),
     );
     final errorBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(_kBoxRadius),
-      borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.4),
+      borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.6),
     );
     return InputDecoration(
       labelText: label,
       hintText: hint,
       errorText: errorText,
+      suffixText: suffixText,
       isDense: true,
       alignLabelWithHint: lines > 1,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       border: border,
       enabledBorder: border,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(_kBoxRadius),
-        borderSide: const BorderSide(color: AppTheme.navy, width: 1.4),
+        borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
       ),
       errorBorder: errorBorder,
       focusedErrorBorder: errorBorder,
+    );
+  }
+
+  InputDecoration _priceFieldDecoration(
+    AppLocalizations l10n, {
+    String? errorText,
+  }) {
+    return _bookingDense(
+      l10n.workbenchUnitPriceRequired,
+      errorText: errorText,
+      suffixText: l10n.workbenchCurrencyWon,
     );
   }
 
@@ -1897,79 +1950,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              key: const Key('workbench-diver-price'),
-                              focusNode: _diverPriceFocus,
-                              controller: _rateConsumer[GuestRole.diver],
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                              ),
-                              cursorColor: AppTheme.gold,
-                              decoration: InputDecoration(
-                                labelText: l10n.bookingEntryDiverPrice,
-                                labelStyle: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.75),
-                                  fontSize: 12,
-                                ),
-                                errorText: _diverPriceError,
-                                errorStyle: const TextStyle(
-                                  color: Color(0xFFFFCDD2),
-                                  fontSize: 11,
-                                ),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    _kBoxRadius,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.35),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    _kBoxRadius,
-                                  ),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.gold,
-                                    width: 1.4,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    _kBoxRadius,
-                                  ),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFFF8A80),
-                                    width: 1.4,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    _kBoxRadius,
-                                  ),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFFF8A80),
-                                    width: 1.4,
-                                  ),
-                                ),
-                              ),
-                              onChanged: (_) => setState(() {
-                                _diverPriceError = null;
-                              }),
-                            ),
-                          ),
                         ],
                       ),
                     ],
@@ -1981,6 +1961,34 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    TextField(
+                      key: const Key('workbench-diver-price'),
+                      focusNode: _diverPriceFocus,
+                      controller: _rateConsumer[GuestRole.diver],
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                      cursorColor: AppTheme.navy,
+                      decoration: _priceFieldDecoration(
+                        l10n,
+                        errorText: _diverPriceError,
+                      ).copyWith(
+                        errorStyle: const TextStyle(
+                          color: Color(0xFFE53935),
+                          fontSize: 11,
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {
+                        _diverPriceError = null;
+                      }),
+                    ),
+                    const SizedBox(height: 10),
                     _stayDateStrip(l10n),
                     const SizedBox(height: 8),
                     Theme(
@@ -2025,19 +2033,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      l10n.checkoutGuests,
+                      l10n.workbenchGuestPreviewTitle,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.workbenchGuestPreviewHint,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     _guestStepperRow(
                       label: l10n.workbenchGuestDiver,
                       value: _previewDiver,
                       onChanged: (v) =>
                           setState(() => _previewDiver = v < 1 ? 1 : v),
-                      priceLabel: l10n.bookingEntryUnitPrice,
+                      priceLabel: l10n.workbenchUnitPriceRequired,
                       priceText:
                           _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
                           ? '—'
@@ -2078,7 +2095,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                         setState(() => _previewNondiver = v),
                                     priceField:
                                         _rateConsumer[GuestRole.nondiver],
-                                    priceLabel: l10n.bookingEntryUnitPrice,
+                                    priceLabel: l10n.workbenchUnitPriceRequired,
                                     priceFocus: _nondiverPriceFocus,
                                     priceError: _nondiverPriceError,
                                     onPriceChanged: () => setState(() {
@@ -2092,7 +2109,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                     onChanged: (v) =>
                                         setState(() => _previewChild = v),
                                     priceField: _rateConsumer[GuestRole.child],
-                                    priceLabel: l10n.bookingEntryUnitPrice,
+                                    priceLabel: l10n.workbenchUnitPriceRequired,
                                     priceFocus: _childPriceFocus,
                                     priceError: _childPriceError,
                                     onPriceChanged: () => setState(() {
@@ -2868,6 +2885,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     String? priceError,
     VoidCallback? onPriceChanged,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2911,6 +2929,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   decoration: _bookingDense(
                     priceLabel ?? '',
                     errorText: priceError,
+                    suffixText: l10n.workbenchCurrencyWon,
+                  ),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                   onChanged: (_) {
                     onPriceChanged?.call();
