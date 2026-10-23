@@ -1955,6 +1955,12 @@
   "workbenchPhotoLoadFailed": "사진을 불러오지 못했어요",
   "workbenchNeedGuestPrice": "비다이버·아동 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.",
   "workbenchNeedOptionPrice": "옵션 이름을 적었다면 가격도 0보다 크게 입력합니다.",
+  "workbenchNeedOptionPriceNamed": "옵션 '{name}'의 가격을 입력하세요",
+  "@workbenchNeedOptionPriceNamed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "workbenchCategory": "분류",
   "workbenchCatResort": "리조트",
   "workbenchCatLiveaboard": "리브어보드",

@@ -24,8 +24,31 @@ void main() {
       expect(parsePositivePrice(' 1 '), 1);
     });
 
-    test('비숫자는 null', () {
+    test('쉼표·공백·원을 제거하고 인식', () {
+      expect(parsePositivePrice('20,000'), 20000);
+      expect(parsePositivePrice('20000원'), 20000);
+      expect(parsePositivePrice(' 20 000 '), 20000);
+      expect(parsePositivePrice('1,500,000원'), 1500000);
+    });
+
+    test('숫자 없으면 null', () {
       expect(parsePositivePrice('abc'), isNull);
+      expect(parsePositivePrice('원'), isNull);
+    });
+
+    test('자릿수 12자리 이상이면 null', () {
+      expect(parsePositivePrice('123456789012'), isNull);
+      expect(parsePositivePrice('12,345,678,9012'), isNull);
+    });
+
+    test('상한 초과면 null', () {
+      expect(parsePositivePrice('10000000001'), isNull);
+      expect(parsePositivePrice('10,000,000,001'), isNull);
+    });
+
+    test('상한 이내(10,000,000,000)는 허용', () {
+      expect(parsePositivePrice('9999999999'), 9999999999);
+      expect(parsePositivePrice('10,000,000,000'), 10000000000);
     });
   });
 
@@ -37,7 +60,7 @@ void main() {
           hasNondivers: false,
           nondiverRaw: '',
           childRaw: '',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).isOk,
         isTrue,
       );
@@ -47,7 +70,7 @@ void main() {
           hasNondivers: false,
           nondiverRaw: '',
           childRaw: '',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).target,
         WorkbenchPriceTarget.diver,
       );
@@ -57,7 +80,7 @@ void main() {
           hasNondivers: false,
           nondiverRaw: '999',
           childRaw: '999',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).target,
         WorkbenchPriceTarget.diver,
       );
@@ -70,7 +93,7 @@ void main() {
           hasNondivers: true,
           nondiverRaw: '',
           childRaw: '50000',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).target,
         WorkbenchPriceTarget.nondiver,
       );
@@ -80,7 +103,7 @@ void main() {
           hasNondivers: true,
           nondiverRaw: '80000',
           childRaw: '0',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).target,
         WorkbenchPriceTarget.child,
       );
@@ -90,30 +113,36 @@ void main() {
           hasNondivers: true,
           nondiverRaw: '80000',
           childRaw: '50000',
-          namedOptionPriceRaws: const [],
+          namedOptions: const [],
         ).isOk,
         isTrue,
       );
     });
 
-    test('이름 있는 옵션 가격도 필수', () {
-      expect(
-        checkWorkbenchPrices(
-          diverRaw: '100000',
-          hasNondivers: false,
-          nondiverRaw: '',
-          childRaw: '',
-          namedOptionPriceRaws: const [''],
-        ).target,
-        WorkbenchPriceTarget.option,
+    test('옵션 이름만 있고 가격 없으면 옵션 이름 반환', () {
+      final check = checkWorkbenchPrices(
+        diverRaw: '100000',
+        hasNondivers: false,
+        nondiverRaw: '',
+        childRaw: '',
+        namedOptions: const [
+          WorkbenchNamedOptionPrice(name: '기본패키지', priceRaw: ''),
+        ],
       );
+      expect(check.target, WorkbenchPriceTarget.option);
+      expect(check.optionName, '기본패키지');
+    });
+
+    test('이름 있는 옵션 가격 정상이면 통과', () {
       expect(
         checkWorkbenchPrices(
           diverRaw: '100000',
           hasNondivers: false,
           nondiverRaw: '',
           childRaw: '',
-          namedOptionPriceRaws: const ['30000'],
+          namedOptions: const [
+            WorkbenchNamedOptionPrice(name: '기본패키지', priceRaw: '30,000원'),
+          ],
         ).isOk,
         isTrue,
       );

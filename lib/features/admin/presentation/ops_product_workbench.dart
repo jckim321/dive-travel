@@ -59,13 +59,16 @@ class _LineEditors {
        name = TextEditingController(text: name),
        description = TextEditingController(text: description),
        consumer = TextEditingController(text: consumer),
-       professional = TextEditingController(text: professional);
+       professional = TextEditingController(text: professional),
+       consumerFocus = FocusNode();
 
   final String id;
   final TextEditingController name;
   final TextEditingController description;
   final TextEditingController consumer;
   final TextEditingController professional;
+  final FocusNode consumerFocus;
+  String? priceError;
   ProductOptionKind kind;
   bool bookable;
 
@@ -74,15 +77,17 @@ class _LineEditors {
     description.dispose();
     consumer.dispose();
     professional.dispose();
+    consumerFocus.dispose();
   }
 
   ShopProductOption toOption() {
+    final price = parsePositivePrice(consumer.text) ?? 0;
     return ShopProductOption(
       id: id,
       name: name.text.trim(),
       description: description.text.trim(),
-      consumerPrice: int.tryParse(consumer.text) ?? 0,
-      professionalPrice: int.tryParse(professional.text) ?? 0,
+      consumerPrice: price,
+      professionalPrice: parsePositivePrice(professional.text) ?? price,
       kind: kind,
       bookable: bookable,
     );
@@ -100,7 +105,8 @@ class _IndividualTicket {
        name = TextEditingController(text: name),
        consumer = TextEditingController(text: consumer),
        includes = TextEditingController(text: includes),
-       excludes = TextEditingController(text: excludes);
+       excludes = TextEditingController(text: excludes),
+       consumerFocus = FocusNode();
 
   factory _IndividualTicket.fromOption(ShopProductOption option) {
     final raw = option.description.trim();
@@ -129,6 +135,8 @@ class _IndividualTicket {
   final TextEditingController consumer;
   final TextEditingController includes;
   final TextEditingController excludes;
+  final FocusNode consumerFocus;
+  String? priceError;
   final addons = <_LineEditors>[];
   final addonQty = <String, int>{};
   int nights = 0;
@@ -172,12 +180,13 @@ class _IndividualTicket {
   }
 
   ShopProductOption toOption() {
+    final price = parsePositivePrice(consumer.text) ?? 0;
     return ShopProductOption(
       id: id,
       name: name.text.trim(),
       description: descriptionText,
-      consumerPrice: int.tryParse(consumer.text) ?? 0,
-      professionalPrice: int.tryParse(consumer.text) ?? 0,
+      consumerPrice: price,
+      professionalPrice: price,
       kind: ProductOptionKind.individual,
       bookable: true,
     );
@@ -199,6 +208,7 @@ class _IndividualTicket {
     consumer.dispose();
     includes.dispose();
     excludes.dispose();
+    consumerFocus.dispose();
     for (final draft in addons) {
       draft.dispose();
     }
@@ -249,6 +259,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
+  static final _priceInputFormatters = <TextInputFormatter>[
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9,\s원]')),
+    LengthLimitingTextInputFormatter(kWorkbenchPriceInputMaxLength),
+  ];
+
   final _diverPriceFocus = FocusNode();
   final _nondiverPriceFocus = FocusNode();
   final _childPriceFocus = FocusNode();
@@ -879,44 +894,122 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _diverPriceError = null;
     _nondiverPriceError = null;
     _childPriceError = null;
+    for (final draft in _addons) {
+      draft.priceError = null;
+    }
+    for (final ticket in _individuals) {
+      ticket.priceError = null;
+      for (final draft in ticket.addons) {
+        draft.priceError = null;
+      }
+    }
+  }
+
+  List<WorkbenchNamedOptionPrice> _namedOptionPrices() {
+    return [
+      for (final draft in _addons)
+        if (draft.name.text.trim().isNotEmpty)
+          WorkbenchNamedOptionPrice(
+            name: draft.name.text.trim(),
+            priceRaw: draft.consumer.text,
+          ),
+      for (final ticket in _individuals) ...[
+        if (ticket.name.text.trim().isNotEmpty)
+          WorkbenchNamedOptionPrice(
+            name: ticket.name.text.trim(),
+            priceRaw: ticket.consumer.text,
+          ),
+        for (final draft in ticket.addons)
+          if (draft.name.text.trim().isNotEmpty)
+            WorkbenchNamedOptionPrice(
+              name: draft.name.text.trim(),
+              priceRaw: draft.consumer.text,
+            ),
+      ],
+    ];
+  }
+
+  /// First named option row that fails price parse (addons → individuals → ticket addons).
+  ({FocusNode focus, void Function(String?) setError})? _findFailedOptionTarget(
+    String optionName,
+  ) {
+    for (final draft in _addons) {
+      if (draft.name.text.trim() == optionName &&
+          parsePositivePrice(draft.consumer.text) == null) {
+        return (focus: draft.consumerFocus, setError: (e) => draft.priceError = e);
+      }
+    }
+    for (final ticket in _individuals) {
+      if (ticket.name.text.trim() == optionName &&
+          parsePositivePrice(ticket.consumer.text) == null) {
+        return (
+          focus: ticket.consumerFocus,
+          setError: (e) => ticket.priceError = e,
+        );
+      }
+      for (final draft in ticket.addons) {
+        if (draft.name.text.trim() == optionName &&
+            parsePositivePrice(draft.consumer.text) == null) {
+          return (
+            focus: draft.consumerFocus,
+            setError: (e) => draft.priceError = e,
+          );
+        }
+      }
+    }
+    return null;
+  }
+
+  void _focusPriceField(FocusNode focus) {
+    focus.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = focus.context;
+      if (target == null || !mounted) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 280),
+        alignment: 0.15,
+      );
+    });
   }
 
   /// Blocks save when diver (always) / nondiver·child (switch on) / named
   /// option prices are empty, zero, or negative. Edit screen still opens for
   /// legacy 0-price products — only save is refused until prices are fixed.
   bool _validatePricesBeforeSave(AppLocalizations l10n) {
-    final namedOptionRaws = <String>[
-      for (final draft in _addons)
-        if (draft.name.text.trim().isNotEmpty) draft.consumer.text,
-      for (final ticket in _individuals) ...[
-        if (ticket.name.text.trim().isNotEmpty) ticket.consumer.text,
-        for (final draft in ticket.addons)
-          if (draft.name.text.trim().isNotEmpty) draft.consumer.text,
-      ],
-    ];
     final check = checkWorkbenchPrices(
       diverRaw: _rateConsumer[GuestRole.diver]!.text,
       hasNondivers: _hasNondivers,
       nondiverRaw: _rateConsumer[GuestRole.nondiver]!.text,
       childRaw: _rateConsumer[GuestRole.child]!.text,
-      namedOptionPriceRaws: namedOptionRaws,
+      namedOptions: _namedOptionPrices(),
     );
     if (check.isOk) {
       setState(_clearPriceErrors);
       return true;
     }
     final target = check.target!;
+    final optionName = check.optionName?.trim() ?? '';
     final message = switch (target) {
       WorkbenchPriceTarget.diver => l10n.workbenchNeedDiverPrice,
       WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
         l10n.workbenchNeedGuestPrice,
-      WorkbenchPriceTarget.option => l10n.workbenchNeedOptionPrice,
+      WorkbenchPriceTarget.option => optionName.isEmpty
+          ? l10n.workbenchNeedOptionPrice
+          : l10n.workbenchNeedOptionPriceNamed(optionName),
     };
+    final optionTarget = target == WorkbenchPriceTarget.option &&
+            optionName.isNotEmpty
+        ? _findFailedOptionTarget(optionName)
+        : null;
     final focus = switch (target) {
       WorkbenchPriceTarget.diver => _diverPriceFocus,
       WorkbenchPriceTarget.nondiver => _nondiverPriceFocus,
       WorkbenchPriceTarget.child => _childPriceFocus,
-      WorkbenchPriceTarget.option => _diverPriceFocus,
+      WorkbenchPriceTarget.option =>
+        optionTarget?.focus ?? _diverPriceFocus,
     };
     setState(() {
       _clearPriceErrors();
@@ -928,11 +1021,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         case WorkbenchPriceTarget.child:
           _childPriceError = message;
         case WorkbenchPriceTarget.option:
-          break;
+          optionTarget?.setError(message);
       }
     });
     _reveal(3);
-    focus.requestFocus();
+    _focusPriceField(focus);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     return false;
   }
@@ -995,7 +1088,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       final sessionUid = store.uid ?? '';
       final existing = widget.existing;
       final diverConsumer =
-          int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
+          parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
       final diverRate = GuestRate(
         role: GuestRole.diver,
         enabled: _rateEnabled[GuestRole.diver] ?? true,
@@ -1011,8 +1104,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               GuestRole.nondiver || GuestRole.child => _hasNondivers,
               GuestRole.infant => false,
             },
-            consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
-            professional: int.tryParse(_rateConsumer[role]!.text) ?? 0,
+            consumer: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
+            professional: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
           ),
       ];
       final options = <ShopProductOption>[
@@ -1973,9 +2066,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       focusNode: _diverPriceFocus,
                       controller: _rateConsumer[GuestRole.diver],
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      maxLength: kWorkbenchPriceInputMaxLength,
+                      inputFormatters: _priceInputFormatters,
                       style: const TextStyle(
                         color: Colors.black87,
                         fontWeight: FontWeight.w700,
@@ -1986,6 +2078,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         l10n,
                         errorText: _diverPriceError,
                       ).copyWith(
+                        counterText: '',
                         errorStyle: const TextStyle(
                           color: Color(0xFFE53935),
                           fontSize: 11,
@@ -2352,11 +2445,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
+                          focusNode: ticket.consumerFocus,
                           controller: ticket.consumer,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
+                          maxLength: kWorkbenchPriceInputMaxLength,
+                          inputFormatters: _priceInputFormatters,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -2369,6 +2462,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                               color: Colors.white.withValues(alpha: 0.75),
                               fontSize: 12,
                             ),
+                            errorText: ticket.priceError,
+                            counterText: '',
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -2387,8 +2482,24 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                 width: 1.4,
                               ),
                             ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_kBoxRadius),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE53935),
+                                width: 1.4,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(_kBoxRadius),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE53935),
+                                width: 1.4,
+                              ),
+                            ),
                           ),
-                          onChanged: (_) => setState(() {}),
+                          onChanged: (_) => setState(() {
+                            ticket.priceError = null;
+                          }),
                         ),
                       ),
                     ],
@@ -2836,13 +2947,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
             const SizedBox(width: 6),
             SizedBox(
-              width: 72,
+              width: 88,
               child: TextField(
+                focusNode: draft.consumerFocus,
                 controller: draft.consumer,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _bookingDense(l10n.bookingEntryOptionPrice),
-                onChanged: (_) => setState(() {}),
+                maxLength: kWorkbenchPriceInputMaxLength,
+                inputFormatters: _priceInputFormatters,
+                decoration: _bookingDense(
+                  l10n.bookingEntryOptionPrice,
+                  errorText: draft.priceError,
+                ).copyWith(counterText: ''),
+                onChanged: (_) => setState(() {
+                  draft.priceError = null;
+                }),
               ),
             ),
             IconButton(
@@ -2932,12 +3050,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   focusNode: priceFocus,
                   controller: priceField,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: kWorkbenchPriceInputMaxLength,
+                  inputFormatters: _priceInputFormatters,
                   decoration: _bookingDense(
                     priceLabel ?? '',
                     errorText: priceError,
                     suffixText: l10n.workbenchCurrencyWon,
-                  ),
+                  ).copyWith(counterText: ''),
                   style: const TextStyle(
                     color: Colors.black87,
                     fontWeight: FontWeight.w700,
@@ -2968,7 +3087,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   ShopProduct get _draftProduct {
     final existing = widget.existing;
     final diverPrice =
-        int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
+        parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
     return ShopProduct(
       id: 'draft',
       shopId: _shopId,
@@ -2986,8 +3105,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               GuestRole.nondiver || GuestRole.child => _hasNondivers,
               GuestRole.infant => false,
             },
-            consumer: int.tryParse(_rateConsumer[role]!.text) ?? 0,
-            professional: int.tryParse(_rateConsumer[role]!.text) ?? 0,
+            consumer: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
+            professional: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
           ),
       ],
       options: [
@@ -3006,7 +3125,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final resort = _namedResort
         ? (_resortName.text.trim().isEmpty ? '—' : _resortName.text.trim())
         : (hull?.name ?? '');
-    final start = int.tryParse(_rateConsumer[GuestRole.diver]!.text) ?? 0;
+    final start = parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
     final cover = _gallery.isEmpty ? null : _gallery.first;
     return DecoratedBox(
       decoration: BoxDecoration(

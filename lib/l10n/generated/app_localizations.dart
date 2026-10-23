@@ -6432,6 +6432,12 @@ abstract class AppLocalizations {
   /// **'옵션 이름을 적었다면 가격도 0보다 크게 입력합니다.'**
   String get workbenchNeedOptionPrice;
 
+  /// No description provided for @workbenchNeedOptionPriceNamed.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 \'{name}\'의 가격을 입력하세요'**
+  String workbenchNeedOptionPriceNamed(String name);
+
   /// No description provided for @workbenchCategory.
   ///
   /// In ko, this message translates to:

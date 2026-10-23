@@ -3513,6 +3513,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'If an option has a name, enter a price greater than 0.';
 
   @override
+  String workbenchNeedOptionPriceNamed(String name) {
+    return 'Enter a price for option \'$name\'';
+  }
+
+  @override
   String get workbenchCategory => 'Category';
 
   @override

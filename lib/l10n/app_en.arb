@@ -1350,6 +1350,12 @@
   "workbenchPhotoLoadFailed": "Couldn't load this photo",
   "workbenchNeedGuestPrice": "Enter non-diver and child prices greater than 0 before saving.",
   "workbenchNeedOptionPrice": "If an option has a name, enter a price greater than 0.",
+  "workbenchNeedOptionPriceNamed": "Enter a price for option '{name}'",
+  "@workbenchNeedOptionPriceNamed": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
   "workbenchCategory": "Category",
   "workbenchCatResort": "Resort",
   "workbenchCatLiveaboard": "Liveaboard",
