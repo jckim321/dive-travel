@@ -48,6 +48,30 @@ void main() {
         ),
       );
     });
+
+    test('가격 1억 초과면 StateError', () {
+      expect(
+        () => ProductPublishGuard.ensureCanApprove(
+          _product(consumerPrice: 100000001),
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            ProductPublishGuard.overCapPriceMessage,
+          ),
+        ),
+      );
+    });
+
+    test('가격 1억이면 통과', () {
+      expect(
+        () => ProductPublishGuard.ensureCanApprove(
+          _product(consumerPrice: 100000000),
+        ),
+        returnsNormally,
+      );
+    });
   });
 
   group('ensureRejectNote', () {

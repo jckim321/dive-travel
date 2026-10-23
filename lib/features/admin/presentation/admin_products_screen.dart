@@ -387,6 +387,16 @@ class _PendingProductTile extends StatelessWidget {
                           );
                           return;
                         }
+                        if (!ProductPublishGuard.hasValidPricesForApprove(
+                          product,
+                        )) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.adminProductApproveOverCap),
+                            ),
+                          );
+                          return;
+                        }
                         try {
                           await store.approveShopProduct(
                             shopId: product.shopId,

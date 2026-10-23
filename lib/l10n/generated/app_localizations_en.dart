@@ -2611,6 +2611,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only products with a diver price can be approved.';
 
   @override
+  String get adminProductApproveOverCap =>
+      'Cannot approve: a unit price is over 100 million won.';
+
+  @override
   String get adminProductRejectNeedsNote => 'Please enter a rejection reason.';
 
   @override
@@ -3483,6 +3487,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workbenchNeedDiverPrice =>
       'Enter a diver package price greater than 0 before saving.';
+
+  @override
+  String get workbenchPriceOverCap =>
+      'Enter a price of 100 million won or less.';
+
+  @override
+  String workbenchPriceOverCapNamed(String name) {
+    return 'Option \'$name\' price must be 100 million won or less.';
+  }
 
   @override
   String get workbenchUnitPriceRequired => 'Price per person (required)';

@@ -4794,6 +4794,12 @@ abstract class AppLocalizations {
   /// **'가격을 입력한 상품만 승인할 수 있어요'**
   String get adminProductApproveNeedsPrice;
 
+  /// No description provided for @adminProductApproveOverCap.
+  ///
+  /// In ko, this message translates to:
+  /// **'1억 원을 넘는 가격이 있어 승인할 수 없어요'**
+  String get adminProductApproveOverCap;
+
   /// No description provided for @adminProductRejectNeedsNote.
   ///
   /// In ko, this message translates to:
@@ -6383,6 +6389,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'다이버 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.'**
   String get workbenchNeedDiverPrice;
+
+  /// No description provided for @workbenchPriceOverCap.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격은 1억 원 이하로 입력해 주세요.'**
+  String get workbenchPriceOverCap;
+
+  /// No description provided for @workbenchPriceOverCapNamed.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 \'{name}\'의 가격은 1억 원 이하로 입력해 주세요.'**
+  String workbenchPriceOverCapNamed(String name);
 
   /// No description provided for @workbenchUnitPriceRequired.
   ///

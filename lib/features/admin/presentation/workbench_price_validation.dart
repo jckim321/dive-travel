@@ -1,37 +1,71 @@
-/// Max digit count after stripping non-digits (12+ → invalid).
-/// 11 allows the max value 10,000,000,000.
-const kWorkbenchPriceMaxDigits = 11;
+/// Max digit count after stripping non-digits (10+ → over cap).
+/// 9 allows the max value 100,000,000.
+const kWorkbenchPriceMaxDigits = 9;
 
-/// Max accepted price value (above → invalid).
-const kWorkbenchPriceMaxValue = 10000000000; // 10,000,000,000
+/// Max accepted unit price (above → over cap). 1억 원.
+const kWorkbenchPriceMaxValue = 100000000; // 100,000,000
 
 /// TextField maxLength allowing commas / spaces / 원 around digits.
-const kWorkbenchPriceInputMaxLength = 16;
+/// Fits `100,000,000` plus a little slack.
+const kWorkbenchPriceInputMaxLength = 12;
+
+/// Why [parseWorkbenchPrice] rejected the input.
+enum WorkbenchPriceParseFailure {
+  /// Empty, non-numeric, zero, or negative.
+  emptyOrNonPositive,
+
+  /// Too many digits or value above [kWorkbenchPriceMaxValue].
+  overCap,
+}
+
+/// Result of parsing a workbench price field.
+class WorkbenchPriceParse {
+  const WorkbenchPriceParse.ok(this.value) : failure = null;
+  const WorkbenchPriceParse.fail(this.failure) : value = null;
+
+  final int? value;
+  final WorkbenchPriceParseFailure? failure;
+
+  bool get isOk => value != null && failure == null;
+}
 
 /// Parses a workbench price field. Digits-only after stripping commas, spaces,
-/// and 「원」. Returns a positive int, or null when empty, non-numeric, zero,
-/// negative, too many digits, or above [kWorkbenchPriceMaxValue].
-int? parsePositivePrice(String raw) {
+/// and 「원」. Distinguishes empty/non-positive from over-cap.
+WorkbenchPriceParse parseWorkbenchPrice(String raw) {
   final trimmed = raw.trim();
   if (trimmed.isEmpty) {
-    return null;
+    return const WorkbenchPriceParse.fail(
+      WorkbenchPriceParseFailure.emptyOrNonPositive,
+    );
   }
   if (trimmed.startsWith('-')) {
-    return null;
+    return const WorkbenchPriceParse.fail(
+      WorkbenchPriceParseFailure.emptyOrNonPositive,
+    );
   }
   final digits = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
   if (digits.isEmpty) {
-    return null;
+    return const WorkbenchPriceParse.fail(
+      WorkbenchPriceParseFailure.emptyOrNonPositive,
+    );
   }
   if (digits.length > kWorkbenchPriceMaxDigits) {
-    return null;
+    return const WorkbenchPriceParse.fail(WorkbenchPriceParseFailure.overCap);
   }
   final n = int.tryParse(digits);
-  if (n == null || n <= 0 || n > kWorkbenchPriceMaxValue) {
-    return null;
+  if (n == null || n <= 0) {
+    return const WorkbenchPriceParse.fail(
+      WorkbenchPriceParseFailure.emptyOrNonPositive,
+    );
   }
-  return n;
+  if (n > kWorkbenchPriceMaxValue) {
+    return const WorkbenchPriceParse.fail(WorkbenchPriceParseFailure.overCap);
+  }
+  return WorkbenchPriceParse.ok(n);
 }
+
+/// Parses a workbench price field. Returns a positive int, or null when invalid.
+int? parsePositivePrice(String raw) => parseWorkbenchPrice(raw).value;
 
 /// Which guest / option price failed workbench save validation.
 enum WorkbenchPriceTarget {
@@ -56,13 +90,31 @@ class WorkbenchNamedOptionPrice {
 class WorkbenchPriceCheck {
   const WorkbenchPriceCheck.ok()
       : target = null,
-        optionName = null;
-  const WorkbenchPriceCheck.fail(this.target, {this.optionName});
+        optionName = null,
+        failure = null;
+  const WorkbenchPriceCheck.fail(
+    this.target, {
+    this.optionName,
+    required this.failure,
+  });
 
   final WorkbenchPriceTarget? target;
   final String? optionName;
+  final WorkbenchPriceParseFailure? failure;
 
   bool get isOk => target == null;
+}
+
+WorkbenchPriceCheck _failFromParse({
+  required WorkbenchPriceTarget target,
+  required WorkbenchPriceParse parse,
+  String? optionName,
+}) {
+  return WorkbenchPriceCheck.fail(
+    target,
+    optionName: optionName,
+    failure: parse.failure ?? WorkbenchPriceParseFailure.emptyOrNonPositive,
+  );
 }
 
 /// Shared rules for [OpsProductWorkbench] save (partner / admin / creator).
@@ -73,24 +125,36 @@ WorkbenchPriceCheck checkWorkbenchPrices({
   required String childRaw,
   required Iterable<WorkbenchNamedOptionPrice> namedOptions,
 }) {
-  if (parsePositivePrice(diverRaw) == null) {
-    return const WorkbenchPriceCheck.fail(WorkbenchPriceTarget.diver);
+  final diver = parseWorkbenchPrice(diverRaw);
+  if (!diver.isOk) {
+    return _failFromParse(target: WorkbenchPriceTarget.diver, parse: diver);
   }
   if (hasNondivers) {
-    if (parsePositivePrice(nondiverRaw) == null) {
-      return const WorkbenchPriceCheck.fail(WorkbenchPriceTarget.nondiver);
+    final nondiver = parseWorkbenchPrice(nondiverRaw);
+    if (!nondiver.isOk) {
+      return _failFromParse(
+        target: WorkbenchPriceTarget.nondiver,
+        parse: nondiver,
+      );
     }
-    if (parsePositivePrice(childRaw) == null) {
-      return const WorkbenchPriceCheck.fail(WorkbenchPriceTarget.child);
+    final child = parseWorkbenchPrice(childRaw);
+    if (!child.isOk) {
+      return _failFromParse(target: WorkbenchPriceTarget.child, parse: child);
     }
   }
   for (final option in namedOptions) {
-    if (parsePositivePrice(option.priceRaw) == null) {
-      return WorkbenchPriceCheck.fail(
-        WorkbenchPriceTarget.option,
+    final parsed = parseWorkbenchPrice(option.priceRaw);
+    if (!parsed.isOk) {
+      return _failFromParse(
+        target: WorkbenchPriceTarget.option,
+        parse: parsed,
         optionName: option.name,
       );
     }
   }
   return const WorkbenchPriceCheck.ok();
 }
+
+/// True when a stored unit price is within the workbench save/approve band.
+bool isWorkbenchUnitPriceAllowed(int price) =>
+    price > 0 && price <= kWorkbenchPriceMaxValue;

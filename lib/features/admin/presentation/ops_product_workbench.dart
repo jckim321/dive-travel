@@ -976,8 +976,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   /// Blocks save when diver (always) / nondiver·child (switch on) / named
-  /// option prices are empty, zero, or negative. Edit screen still opens for
-  /// legacy 0-price products — only save is refused until prices are fixed.
+  /// option prices are empty, zero, negative, or over the 1억 unit cap.
+  /// Edit screen still opens for legacy bad prices — only save is refused.
   bool _validatePricesBeforeSave(AppLocalizations l10n) {
     final check = checkWorkbenchPrices(
       diverRaw: _rateConsumer[GuestRole.diver]!.text,
@@ -992,14 +992,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     final target = check.target!;
     final optionName = check.optionName?.trim() ?? '';
-    final message = switch (target) {
-      WorkbenchPriceTarget.diver => l10n.workbenchNeedDiverPrice,
-      WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
-        l10n.workbenchNeedGuestPrice,
-      WorkbenchPriceTarget.option => optionName.isEmpty
-          ? l10n.workbenchNeedOptionPrice
-          : l10n.workbenchNeedOptionPriceNamed(optionName),
-    };
+    final overCap = check.failure == WorkbenchPriceParseFailure.overCap;
+    final message = overCap
+        ? (target == WorkbenchPriceTarget.option && optionName.isNotEmpty
+            ? l10n.workbenchPriceOverCapNamed(optionName)
+            : l10n.workbenchPriceOverCap)
+        : switch (target) {
+            WorkbenchPriceTarget.diver => l10n.workbenchNeedDiverPrice,
+            WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
+              l10n.workbenchNeedGuestPrice,
+            WorkbenchPriceTarget.option => optionName.isEmpty
+                ? l10n.workbenchNeedOptionPrice
+                : l10n.workbenchNeedOptionPriceNamed(optionName),
+          };
     final optionTarget = target == WorkbenchPriceTarget.option &&
             optionName.isNotEmpty
         ? _findFailedOptionTarget(optionName)
@@ -1404,6 +1409,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (!ProductPublishGuard.hasDiverPrice(existing)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.adminProductApproveNeedsPrice)),
+      );
+      return;
+    }
+    if (!ProductPublishGuard.hasValidPricesForApprove(existing)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveOverCap)),
       );
       return;
     }
@@ -3125,7 +3136,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final resort = _namedResort
         ? (_resortName.text.trim().isEmpty ? '—' : _resortName.text.trim())
         : (hull?.name ?? '');
-    final start = parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
+    final diverRaw = _rateConsumer[GuestRole.diver]!.text.trim();
+    final diverParsed = parseWorkbenchPrice(diverRaw);
+    final startLabel = diverParsed.isOk
+        ? '${diverParsed.value}'
+        : (diverRaw.isEmpty ? '—' : diverRaw);
     final cover = _gallery.isEmpty ? null : _gallery.first;
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -3174,7 +3189,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
               const SizedBox(height: 8),
               Text(
-                '${l10n.briefStartPrice} $start',
+                '${l10n.briefStartPrice} $startLabel',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
