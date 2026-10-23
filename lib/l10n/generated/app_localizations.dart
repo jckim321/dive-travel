@@ -6252,6 +6252,24 @@ abstract class AppLocalizations {
   /// **'상품 이름을 적은 뒤에 저장합니다.'**
   String get workbenchNeedName;
 
+  /// No description provided for @workbenchNeedDiverPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.'**
+  String get workbenchNeedDiverPrice;
+
+  /// No description provided for @workbenchNeedGuestPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버·아동 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.'**
+  String get workbenchNeedGuestPrice;
+
+  /// No description provided for @workbenchNeedOptionPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 이름을 적었다면 가격도 0보다 크게 입력합니다.'**
+  String get workbenchNeedOptionPrice;
+
   /// No description provided for @workbenchCategory.
   ///
   /// In ko, this message translates to:

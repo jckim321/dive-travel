@@ -3411,6 +3411,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workbenchNeedName => 'Enter a product name before saving.';
 
   @override
+  String get workbenchNeedDiverPrice =>
+      'Enter a diver package price greater than 0 before saving.';
+
+  @override
+  String get workbenchNeedGuestPrice =>
+      'Enter non-diver and child prices greater than 0 before saving.';
+
+  @override
+  String get workbenchNeedOptionPrice =>
+      'If an option has a name, enter a price greater than 0.';
+
+  @override
   String get workbenchCategory => 'Category';
 
   @override

@@ -3334,6 +3334,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get workbenchNeedName => '상품 이름을 적은 뒤에 저장합니다.';
 
   @override
+  String get workbenchNeedDiverPrice => '다이버 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.';
+
+  @override
+  String get workbenchNeedGuestPrice => '비다이버·아동 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.';
+
+  @override
+  String get workbenchNeedOptionPrice => '옵션 이름을 적었다면 가격도 0보다 크게 입력합니다.';
+
+  @override
   String get workbenchCategory => '분류';
 
   @override

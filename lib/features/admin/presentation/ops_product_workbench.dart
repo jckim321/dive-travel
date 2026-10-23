@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -240,6 +241,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
+  final _diverPriceFocus = FocusNode();
+  final _nondiverPriceFocus = FocusNode();
+  final _childPriceFocus = FocusNode();
+  String? _diverPriceError;
+  String? _nondiverPriceError;
+  String? _childPriceError;
 
   @override
   void initState() {
@@ -461,6 +468,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final item in _individuals) {
       item.dispose();
     }
+    _diverPriceFocus.dispose();
+    _nondiverPriceFocus.dispose();
+    _childPriceFocus.dispose();
     _seats.dispose();
     super.dispose();
   }
@@ -836,6 +846,68 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  void _clearPriceErrors() {
+    _diverPriceError = null;
+    _nondiverPriceError = null;
+    _childPriceError = null;
+  }
+
+  /// Blocks save when diver (always) / nondiver·child (switch on) / named
+  /// option prices are empty, zero, or negative. Edit screen still opens for
+  /// legacy 0-price products — only save is refused until prices are fixed.
+  bool _validatePricesBeforeSave(AppLocalizations l10n) {
+    final namedOptionRaws = <String>[
+      for (final draft in _addons)
+        if (draft.name.text.trim().isNotEmpty) draft.consumer.text,
+      for (final ticket in _individuals) ...[
+        if (ticket.name.text.trim().isNotEmpty) ticket.consumer.text,
+        for (final draft in ticket.addons)
+          if (draft.name.text.trim().isNotEmpty) draft.consumer.text,
+      ],
+    ];
+    final check = checkWorkbenchPrices(
+      diverRaw: _rateConsumer[GuestRole.diver]!.text,
+      hasNondivers: _hasNondivers,
+      nondiverRaw: _rateConsumer[GuestRole.nondiver]!.text,
+      childRaw: _rateConsumer[GuestRole.child]!.text,
+      namedOptionPriceRaws: namedOptionRaws,
+    );
+    if (check.isOk) {
+      setState(_clearPriceErrors);
+      return true;
+    }
+    final target = check.target!;
+    final message = switch (target) {
+      WorkbenchPriceTarget.diver => l10n.workbenchNeedDiverPrice,
+      WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
+        l10n.workbenchNeedGuestPrice,
+      WorkbenchPriceTarget.option => l10n.workbenchNeedOptionPrice,
+    };
+    final focus = switch (target) {
+      WorkbenchPriceTarget.diver => _diverPriceFocus,
+      WorkbenchPriceTarget.nondiver => _nondiverPriceFocus,
+      WorkbenchPriceTarget.child => _childPriceFocus,
+      WorkbenchPriceTarget.option => _diverPriceFocus,
+    };
+    setState(() {
+      _clearPriceErrors();
+      switch (target) {
+        case WorkbenchPriceTarget.diver:
+          _diverPriceError = message;
+        case WorkbenchPriceTarget.nondiver:
+          _nondiverPriceError = message;
+        case WorkbenchPriceTarget.child:
+          _childPriceError = message;
+        case WorkbenchPriceTarget.option:
+          break;
+      }
+    });
+    _reveal(3);
+    focus.requestFocus();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    return false;
+  }
+
   ProductListingKind _shelfKindForSave(ShopProduct? existing) {
     final current = existing?.listingKind;
     if (current != null && current != ProductListingKind.exploreOnly) {
@@ -874,6 +946,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _reveal(1);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
+      return;
+    }
+    if (!_validatePricesBeforeSave(l10n)) {
       return;
     }
     final store = DiverStoreScope.of(context);
@@ -1716,14 +1791,24 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
-  InputDecoration _bookingDense(String label, {String? hint, int lines = 1}) {
+  InputDecoration _bookingDense(
+    String label, {
+    String? hint,
+    int lines = 1,
+    String? errorText,
+  }) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(_kBoxRadius),
       borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
     );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(_kBoxRadius),
+      borderSide: const BorderSide(color: Color(0xFFD32F2F), width: 1.4),
+    );
     return InputDecoration(
       labelText: label,
       hintText: hint,
+      errorText: errorText,
       isDense: true,
       alignLabelWithHint: lines > 1,
       filled: true,
@@ -1735,6 +1820,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         borderRadius: BorderRadius.circular(_kBoxRadius),
         borderSide: const BorderSide(color: AppTheme.navy, width: 1.4),
       ),
+      errorBorder: errorBorder,
+      focusedErrorBorder: errorBorder,
     );
   }
 
@@ -1813,6 +1900,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
+                              key: const Key('workbench-diver-price'),
+                              focusNode: _diverPriceFocus,
                               controller: _rateConsumer[GuestRole.diver],
                               keyboardType: TextInputType.number,
                               inputFormatters: [
@@ -1829,6 +1918,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                 labelStyle: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.75),
                                   fontSize: 12,
+                                ),
+                                errorText: _diverPriceError,
+                                errorStyle: const TextStyle(
+                                  color: Color(0xFFFFCDD2),
+                                  fontSize: 11,
                                 ),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -1852,8 +1946,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                     width: 1.4,
                                   ),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    _kBoxRadius,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFFF8A80),
+                                    width: 1.4,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    _kBoxRadius,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFFF8A80),
+                                    width: 1.4,
+                                  ),
+                                ),
                               ),
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (_) => setState(() {
+                                _diverPriceError = null;
+                              }),
                             ),
                           ),
                         ],
@@ -1965,6 +2079,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                     priceField:
                                         _rateConsumer[GuestRole.nondiver],
                                     priceLabel: l10n.bookingEntryUnitPrice,
+                                    priceFocus: _nondiverPriceFocus,
+                                    priceError: _nondiverPriceError,
+                                    onPriceChanged: () => setState(() {
+                                      _nondiverPriceError = null;
+                                    }),
                                   ),
                                   const SizedBox(height: 4),
                                   _guestStepperRow(
@@ -1974,6 +2093,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                                         setState(() => _previewChild = v),
                                     priceField: _rateConsumer[GuestRole.child],
                                     priceLabel: l10n.bookingEntryUnitPrice,
+                                    priceFocus: _childPriceFocus,
+                                    priceError: _childPriceError,
+                                    onPriceChanged: () => setState(() {
+                                      _childPriceError = null;
+                                    }),
                                   ),
                                 ],
                               ),
@@ -2740,13 +2864,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     String? priceLabel,
     String? priceText,
     TextEditingController? priceField,
+    FocusNode? priceFocus,
+    String? priceError,
+    VoidCallback? onPriceChanged,
   }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           flex: 3,
-          child: Text(label, style: const TextStyle(fontSize: 13)),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(label, style: const TextStyle(fontSize: 13)),
+          ),
         ),
         IconButton(
           visualDensity: VisualDensity.compact,
@@ -2755,10 +2885,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         SizedBox(
           width: 22,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
           ),
         ),
         IconButton(
@@ -2771,19 +2904,29 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           flex: 2,
           child: priceField != null
               ? TextField(
+                  focusNode: priceFocus,
                   controller: priceField,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: _bookingDense(priceLabel ?? ''),
-                  onChanged: (_) => setState(() {}),
+                  decoration: _bookingDense(
+                    priceLabel ?? '',
+                    errorText: priceError,
+                  ),
+                  onChanged: (_) {
+                    onPriceChanged?.call();
+                    setState(() {});
+                  },
                 )
-              : Text(
-                  priceText ?? '',
-                  textAlign: TextAlign.end,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.muted,
-                    fontSize: 12,
+              : Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    priceText ?? '',
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.muted,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
         ),
