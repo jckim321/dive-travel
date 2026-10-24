@@ -1603,6 +1603,9 @@ class DiverStore extends ChangeNotifier {
       creatorSubmission: creatorSubmission,
       creatorUid: creatorUid,
       intent: intent,
+      // DevRoles "partner" overlay: underlying account may still be admin —
+      // must go live, not pending (H1a/H1b).
+      publishAsPartner: isOwnerPartner,
     );
 
     await _repository.saveShopProduct(
@@ -1648,6 +1651,8 @@ class DiverStore extends ChangeNotifier {
     if (!refreshed) {
       throw StateError('SHOP_STAT_REFRESH_FAILED');
     }
+    // Stale fetch can omit the row we just wrote — keep the gated product.
+    _upsertLocalShopProduct(shopId, gated.product);
     return ShopProductSaveResult(
       stagedPriceOrNewOptions: gated.stagedPriceOrNewOptions,
     );
@@ -1747,6 +1752,7 @@ class DiverStore extends ChangeNotifier {
     required bool creatorSubmission,
     required String creatorUid,
     required ProductSaveIntent? intent,
+    bool publishAsPartner = false,
   }) {
     final submitter = creatorUid.isNotEmpty
         ? creatorUid
@@ -1765,8 +1771,12 @@ class DiverStore extends ChangeNotifier {
       );
     }
 
+    // Overlay-aware: owner testing as partner must go live (not pending).
+    // Do not use raw [_stats.isAdmin] — that stays true under DevRoles partner.
+    final adminPublisher = stats.isAdmin && !publishAsPartner;
+
     if (intent == null) {
-      if (!_stats.isAdmin) {
+      if (!adminPublisher) {
         // Partner save without intent → immediate listing (H1a).
         return _GatedShopProduct(_partnerGoLive(product, submitter), false);
       }
@@ -1816,9 +1826,8 @@ class DiverStore extends ChangeNotifier {
           false,
         );
       case ProductSaveIntent.submitForReview:
-        // Affiliate partner: publish immediately. Creators never reach here
-        // with creatorSubmission (handled above).
-        if (!_stats.isAdmin) {
+        // Affiliate partner: publish immediately (incl. admin→partner overlay).
+        if (!adminPublisher) {
           return _GatedShopProduct(_partnerGoLive(product, submitter), false);
         }
         return _GatedShopProduct(
@@ -1831,7 +1840,7 @@ class DiverStore extends ChangeNotifier {
           false,
         );
       case ProductSaveIntent.publish:
-        if (!_stats.isAdmin) {
+        if (!stats.isAdmin) {
           throw StateError('Admin only');
         }
         // Ignore legacy price_revision rather than merging it.

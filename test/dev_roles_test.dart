@@ -62,6 +62,38 @@ void main() {
     );
   });
 
+  test('admin→partner overlay publish goes live (not pending)', () async {
+    final shopId = AppConstants.defaultPartnerShopId;
+    final repo = MemoryDiverRepository.forTest(
+      isAdmin: true,
+      isBusiness: true,
+      ownedShopId: shopId,
+    );
+    final store = DiverStore(repo);
+    await repo.signIn(email: AppOwner.email, password: 'test');
+    await pumpEventQueue();
+    await store.applyDevRole(kind: DevRoleKind.partner, ownedShopId: shopId);
+
+    final draft = ShopProduct(
+      id: 'partner-live-1',
+      shopId: shopId,
+      name: '즉시 공개 테스트',
+      consumerPrice: 120000,
+      professionalPrice: 120000,
+      active: false,
+      publishStatus: ProductPublishStatus.draft,
+    );
+    await store.saveShopProduct(
+      shopId: shopId,
+      product: draft,
+      intent: ProductSaveIntent.submitForReview,
+    );
+    final saved = store.productsForShop(shopId).firstWhere((p) => p.id == draft.id);
+    expect(saved.publishStatus, ProductPublishStatus.approved);
+    expect(saved.active, isTrue);
+    expect(saved.isListedPublicly, isTrue);
+  });
+
   test('same-boat statusWhenOpen goes live; legacy pending stays for partner', () {
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
