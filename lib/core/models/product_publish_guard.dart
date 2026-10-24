@@ -3,6 +3,34 @@ import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 
+/// Fixed reject-reason tag codes (admin multi-select).
+abstract final class ProductRejectTags {
+  static const photos = 'photos';
+  static const price = 'price';
+  static const copy = 'copy';
+  static const schedule = 'schedule';
+  static const options = 'options';
+  static const other = 'other';
+
+  static const all = <String>[
+    photos,
+    price,
+    copy,
+    schedule,
+    options,
+    other,
+  ];
+
+  /// Tags that map to a content section (excludes [other]).
+  static const sectionMapped = <String>[
+    photos,
+    price,
+    copy,
+    schedule,
+    options,
+  ];
+}
+
 /// Shared publish approve/reject/resubmit guards (API + UI).
 abstract final class ProductPublishGuard {
   /// Shown when admin tries to approve a product with no diver price.
@@ -66,6 +94,45 @@ abstract final class ProductPublishGuard {
     }
   }
 
+  /// Normalize admin-selected tags to known codes (order preserved, unique).
+  static List<String> normalizeReasonTags(Iterable<String> raw) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final item in raw) {
+      final code = item.trim();
+      if (!ProductRejectTags.all.contains(code) || !seen.add(code)) {
+        continue;
+      }
+      out.add(code);
+    }
+    return out;
+  }
+
+  /// Tagged sections (excluding `other`) that are still [SectionChangeFlag.same].
+  ///
+  /// Used by build 3B soft warn; does not block. Empty tags/hashes → empty list.
+  static List<String> untouchedTaggedSections({
+    required ShopProduct previous,
+    required ShopProduct next,
+    List<ShopGallerySlot>? pendingGallery,
+  }) {
+    final tags = previous.rejectedReasonTags
+        .where(ProductRejectTags.sectionMapped.contains)
+        .toList();
+    if (tags.isEmpty || previous.rejectedSectionHashes.isEmpty) {
+      return const [];
+    }
+    final flags = sectionChangeFlags(
+      previous.rejectedSectionHashes,
+      next,
+      pendingGallery: pendingGallery,
+    );
+    return [
+      for (final tag in tags)
+        if (flags[tag] == SectionChangeFlag.same) tag,
+    ];
+  }
+
   /// When [previous.rejectedContentHash] is set, [next] must differ.
   /// Empty hash (legacy rejects) skips the unchanged check.
   ///
@@ -109,6 +176,8 @@ abstract final class ProductPublishGuard {
       submittedByUid: submitter,
       reviewNote: previous.reviewNote,
       rejectedContentHash: previous.rejectedContentHash,
+      rejectedReasonTags: previous.rejectedReasonTags,
+      rejectedSectionHashes: previous.rejectedSectionHashes,
       resubmitCount: previous.resubmitCount + 1,
       resubmitNote: resubmitNote.trim(),
     );
@@ -119,6 +188,7 @@ abstract final class ProductPublishGuard {
     required ShopProduct product,
     required ProductPublishStatus status,
     String reviewNote = '',
+    List<String> reasonTags = const [],
   }) {
     final now = DateTime.now();
     switch (status) {
@@ -130,6 +200,8 @@ abstract final class ProductPublishGuard {
           reviewedAt: now,
           reviewNote: '',
           rejectedContentHash: '',
+          rejectedReasonTags: const [],
+          rejectedSectionHashes: const {},
           resubmitCount: 0,
           resubmitNote: '',
         );
@@ -141,6 +213,8 @@ abstract final class ProductPublishGuard {
           reviewedAt: now,
           reviewNote: reviewNote.trim(),
           rejectedContentHash: productContentFingerprint(product),
+          rejectedReasonTags: normalizeReasonTags(reasonTags),
+          rejectedSectionHashes: productSectionFingerprints(product),
           resubmitNote: '',
         );
       case ProductPublishStatus.pending:

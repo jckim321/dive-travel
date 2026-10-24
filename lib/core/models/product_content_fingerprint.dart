@@ -6,6 +6,23 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
+/// Section keys stored in [ShopProduct.rejectedSectionHashes].
+const productContentSectionKeys = <String>[
+  'photos',
+  'price',
+  'options',
+  'copy',
+  'schedule',
+  'cancel',
+];
+
+/// Result of comparing a section hash from the last reject to current content.
+enum SectionChangeFlag {
+  changed,
+  same,
+  unknown,
+}
+
 /// Stable content fingerprint for reject → resubmit change detection.
 ///
 /// Includes listing content only (name, copy, prices, photos, schedule, …).
@@ -20,6 +37,51 @@ String productContentFingerprint(
 }) {
   final payload = jsonEncode(_canonicalContent(product, pendingGallery));
   return sha256.convert(utf8.encode(payload)).toString();
+}
+
+/// Per-section sha256 fingerprints (same payload rules as the full hash).
+Map<String, String> productSectionFingerprints(
+  ShopProduct product, {
+  List<ShopGallerySlot>? pendingGallery,
+}) {
+  final canonical = _canonicalContent(product, pendingGallery);
+  return {
+    for (final key in productContentSectionKeys)
+      key: sha256
+          .convert(utf8.encode(jsonEncode(_sectionSlice(canonical, key))))
+          .toString(),
+  };
+}
+
+/// Compare [previousHashes] (from last reject) to current product sections.
+///
+/// Empty [previousHashes] → every key [SectionChangeFlag.unknown].
+Map<String, SectionChangeFlag> sectionChangeFlags(
+  Map<String, String> previousHashes,
+  ShopProduct product, {
+  List<ShopGallerySlot>? pendingGallery,
+}) {
+  if (previousHashes.isEmpty) {
+    return {
+      for (final key in productContentSectionKeys) key: SectionChangeFlag.unknown,
+    };
+  }
+  final current = productSectionFingerprints(
+    product,
+    pendingGallery: pendingGallery,
+  );
+  return {
+    for (final key in productContentSectionKeys)
+      key: () {
+        final prev = previousHashes[key]?.trim() ?? '';
+        if (prev.isEmpty) {
+          return SectionChangeFlag.unknown;
+        }
+        return prev == current[key]
+            ? SectionChangeFlag.same
+            : SectionChangeFlag.changed;
+      }(),
+  };
 }
 
 /// Normalize a stored photo URL to a durable object path for fingerprinting.
@@ -59,6 +121,44 @@ String contentFingerprintGallerySlot(ShopGallerySlot slot) {
     return contentFingerprintPhotoRef(slot.url!);
   }
   return '';
+}
+
+Map<String, Object?> _sectionSlice(Map<String, Object?> canonical, String key) {
+  switch (key) {
+    case 'photos':
+      return {
+        'cover_url': canonical['cover_url'],
+        'photo_urls': canonical['photo_urls'],
+      };
+    case 'price':
+      return {
+        'consumer_price': canonical['consumer_price'],
+        'professional_price': canonical['professional_price'],
+        'guest_rates': canonical['guest_rates'],
+      };
+    case 'options':
+      return {'options': canonical['options']};
+    case 'copy':
+      return {
+        'name': canonical['name'],
+        'blurb': canonical['blurb'],
+        'detail': canonical['detail'],
+      };
+    case 'schedule':
+      return {
+        'schedule': canonical['schedule'],
+        'includes': canonical['includes'],
+        'excludes': canonical['excludes'],
+        'itinerary_days': canonical['itinerary_days'],
+        'meeting_point': canonical['meeting_point'],
+        'duration_label': canonical['duration_label'],
+        'difficulty': canonical['difficulty'],
+      };
+    case 'cancel':
+      return {'cancellation_note': canonical['cancellation_note']};
+    default:
+      return const {};
+  }
 }
 
 Map<String, Object?> _canonicalContent(

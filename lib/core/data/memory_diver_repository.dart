@@ -2210,6 +2210,7 @@ class MemoryDiverRepository implements DiverRepository {
     required String productId,
     required ProductPublishStatus status,
     String reviewNote = '',
+    List<String> reasonTags = const [],
   }) async {
     final current = _shopStats[shopId];
     if (current == null) {
@@ -2222,6 +2223,7 @@ class MemoryDiverRepository implements DiverRepository {
             product: item,
             status: status,
             reviewNote: reviewNote,
+            reasonTags: reasonTags,
           )
         else
           item,

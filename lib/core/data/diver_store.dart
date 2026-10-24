@@ -1731,6 +1731,8 @@ class DiverStore extends ChangeNotifier {
         reviewedAt: DateTime.now(),
         reviewNote: '',
         rejectedContentHash: '',
+        rejectedReasonTags: const [],
+        rejectedSectionHashes: const {},
         resubmitCount: 0,
         resubmitNote: '',
         submittedAt: product.submittedAt ?? DateTime.now(),
@@ -1749,6 +1751,10 @@ class DiverStore extends ChangeNotifier {
           reviewNote: previous?.reviewNote ?? product.reviewNote,
           rejectedContentHash:
               previous?.rejectedContentHash ?? product.rejectedContentHash,
+          rejectedReasonTags:
+              previous?.rejectedReasonTags ?? product.rejectedReasonTags,
+          rejectedSectionHashes:
+              previous?.rejectedSectionHashes ?? product.rejectedSectionHashes,
           resubmitCount: previous?.resubmitCount ?? product.resubmitCount,
           resubmitNote: previous?.resubmitNote ?? product.resubmitNote,
         );
@@ -1770,6 +1776,8 @@ class DiverStore extends ChangeNotifier {
           reviewedAt: DateTime.now(),
           reviewNote: '',
           rejectedContentHash: '',
+          rejectedReasonTags: const [],
+          rejectedSectionHashes: const {},
           resubmitCount: 0,
           resubmitNote: '',
           submittedAt: product.submittedAt ?? DateTime.now(),
@@ -1855,6 +1863,7 @@ class DiverStore extends ChangeNotifier {
     required String shopId,
     required String productId,
     String reviewNote = '',
+    List<String> reasonTags = const [],
   }) async {
     if (!_stats.isAdmin) {
       throw StateError('Admin only');
@@ -1864,6 +1873,7 @@ class DiverStore extends ChangeNotifier {
       productId: productId,
       status: ProductPublishStatus.rejected,
       reviewNote: reviewNote,
+      reasonTags: reasonTags,
     );
     await refreshShopStat(shopId);
   }

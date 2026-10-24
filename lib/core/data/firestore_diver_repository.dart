@@ -2581,6 +2581,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required String productId,
     required ProductPublishStatus status,
     String reviewNote = '',
+    List<String> reasonTags = const [],
   }) async {
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
@@ -2592,6 +2593,7 @@ class FirestoreDiverRepository implements DiverRepository {
             product: item,
             status: status,
             reviewNote: reviewNote,
+            reasonTags: reasonTags,
           )
         else
           item,

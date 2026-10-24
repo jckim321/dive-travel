@@ -110,13 +110,16 @@ void main() {
       );
     });
 
-    test('승인: 메모·해시·회차 클리어', () {
+    test('승인: 메모·해시·태그·회차 클리어', () {
       final next = ProductPublishGuard.applyStatusChange(
         product: _product(
           reviewNote: 'old reject',
           rejectedContentHash: 'abc',
           resubmitCount: 2,
           resubmitNote: 'fixed photos',
+        ).copyWith(
+          rejectedReasonTags: const ['photos'],
+          rejectedSectionHashes: const {'photos': 'x'},
         ),
         status: ProductPublishStatus.approved,
       );
@@ -124,6 +127,8 @@ void main() {
       expect(next.active, isTrue);
       expect(next.reviewNote, '');
       expect(next.rejectedContentHash, '');
+      expect(next.rejectedReasonTags, isEmpty);
+      expect(next.rejectedSectionHashes, isEmpty);
       expect(next.resubmitCount, 0);
       expect(next.resubmitNote, '');
     });
@@ -139,18 +144,54 @@ void main() {
       );
     });
 
-    test('반려: 가격 0이어도 가능, 해시·사유 기록, 재요청 메모 클리어', () {
+    test('반려: 가격 0이어도 가능, 해시·사유·태그·섹션 기록, 재요청 메모 클리어', () {
       final product = _product(consumerPrice: 0, resubmitNote: 'old memo');
       final next = ProductPublishGuard.applyStatusChange(
         product: product,
         status: ProductPublishStatus.rejected,
         reviewNote: '  가격 미입력  ',
+        reasonTags: const ['price', 'other', 'price', 'nope'],
       );
       expect(next.publishStatus, ProductPublishStatus.rejected);
       expect(next.active, isFalse);
       expect(next.reviewNote, '가격 미입력');
       expect(next.rejectedContentHash, productContentFingerprint(product));
+      expect(next.rejectedReasonTags, ['price', 'other']);
+      expect(
+        next.rejectedSectionHashes,
+        productSectionFingerprints(product),
+      );
       expect(next.resubmitNote, '');
+    });
+  });
+
+  group('untouchedTaggedSections', () {
+    test('태그 photos인데 사진 그대로면 photos 포함', () {
+      final base = _product();
+      final previous = base.copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        rejectedReasonTags: const ['photos', 'other'],
+        rejectedSectionHashes: productSectionFingerprints(base),
+        rejectedContentHash: productContentFingerprint(base),
+      );
+      final next = base.copyWith(consumerPrice: 200000);
+      expect(
+        ProductPublishGuard.untouchedTaggedSections(
+          previous: previous,
+          next: next,
+        ),
+        ['photos'],
+      );
+    });
+
+    test('태그·섹션 해시 없으면 빈 목록', () {
+      expect(
+        ProductPublishGuard.untouchedTaggedSections(
+          previous: _product(),
+          next: _product(consumerPrice: 1),
+        ),
+        isEmpty,
+      );
     });
   });
 
@@ -177,12 +218,14 @@ void main() {
       );
     });
 
-    test('내용 변경 + 메모면 pending·회차+1·사유 유지', () {
+    test('내용 변경 + 메모면 pending·회차+1·사유·태그·섹션 유지', () {
       final base = _product();
       final previous = base.copyWith(
         publishStatus: ProductPublishStatus.rejected,
         reviewNote: '사진 부족',
         rejectedContentHash: productContentFingerprint(base),
+        rejectedReasonTags: const ['photos'],
+        rejectedSectionHashes: productSectionFingerprints(base),
         resubmitCount: 1,
       );
       final next = ProductPublishGuard.applyResubmit(
@@ -195,6 +238,8 @@ void main() {
       expect(next.resubmitNote, '가격을 올렸습니다');
       expect(next.reviewNote, '사진 부족');
       expect(next.rejectedContentHash, previous.rejectedContentHash);
+      expect(next.rejectedReasonTags, previous.rejectedReasonTags);
+      expect(next.rejectedSectionHashes, previous.rejectedSectionHashes);
     });
 
     test('해시 없는 옛 반려는 무변경 검사를 건너뛴다', () {

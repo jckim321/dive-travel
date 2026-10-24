@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
+import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_products_screen.dart';
@@ -325,6 +327,10 @@ class _PendingProductTile extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final shopName =
         DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+    final changeFlags = sectionChangeFlags(
+      product.rejectedSectionHashes,
+      product,
+    );
 
     return Card(
       color: AdminConsoleTheme.surfaceHigh,
@@ -362,15 +368,105 @@ class _PendingProductTile extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
+              if (product.resubmitCount > 0) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    key: Key('pending-resubmit-count-${product.id}'),
+                    label: Text(l10n.partnerResubmitCount(product.resubmitCount)),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    labelStyle: const TextStyle(
+                      color: AdminConsoleTheme.bg,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    backgroundColor: AdminConsoleTheme.amber,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+              ],
               if (product.reviewNote.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
+                  l10n.adminPendingPreviousReject,
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  key: Key('pending-review-note-${product.id}'),
                   product.reviewNote,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AdminConsoleTheme.muted,
                     fontSize: 12,
                   ),
                 ),
+              ],
+              if (product.resubmitNote.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  l10n.adminPendingPartnerNote,
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  key: Key('pending-resubmit-note-${product.id}'),
+                  product.resubmitNote,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.ice,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              if (product.resubmitCount > 0 ||
+                  product.rejectedSectionHashes.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.adminPendingChangesTitle,
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (product.rejectedSectionHashes.isEmpty)
+                  Text(
+                    key: Key('pending-changes-unknown-${product.id}'),
+                    l10n.adminPendingChangeUnknown,
+                    style: const TextStyle(
+                      color: AdminConsoleTheme.muted,
+                      fontSize: 12,
+                    ),
+                  )
+                else
+                  Wrap(
+                    key: Key('pending-changes-wrap-${product.id}'),
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      for (final section in productContentSectionKeys)
+                        _PendingChangeChip(
+                          productId: product.id,
+                          section: section,
+                          flag: changeFlags[section] ??
+                              SectionChangeFlag.unknown,
+                          label: productRejectTagLabel(l10n, section),
+                        ),
+                    ],
+                  ),
               ],
               const SizedBox(height: 10),
               Row(
@@ -423,17 +519,15 @@ class _PendingProductTile extends StatelessWidget {
                     OutlinedButton(
                       key: Key('reject-product-${product.id}'),
                       onPressed: () async {
-                        final note = await showDialog<String>(
-                          context: context,
-                          builder: (_) => const _RejectNoteDialog(),
-                        );
-                        if (note == null || !context.mounted) {
+                        final result = await showProductRejectDialog(context);
+                        if (result == null || !context.mounted) {
                           return;
                         }
                         await store.rejectShopProduct(
                           shopId: product.shopId,
                           productId: product.id,
-                          reviewNote: note,
+                          reviewNote: result.note,
+                          reasonTags: result.reasonTags,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -458,6 +552,46 @@ class _PendingProductTile extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingChangeChip extends StatelessWidget {
+  const _PendingChangeChip({
+    required this.productId,
+    required this.section,
+    required this.flag,
+    required this.label,
+  });
+
+  final String productId;
+  final String section;
+  final SectionChangeFlag flag;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final changed = flag == SectionChangeFlag.changed;
+    final color = changed ? AdminConsoleTheme.aqua : AdminConsoleTheme.muted;
+    return Container(
+      key: Key('pending-change-$section-$productId'),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: changed
+            ? AdminConsoleTheme.aqua.withValues(alpha: 0.16)
+            : AdminConsoleTheme.border.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: changed ? FontWeight.w700 : FontWeight.w500,
+          height: 1.1,
         ),
       ),
     );
@@ -514,6 +648,25 @@ Widget _productLines(
         '${_statusLabel(l10n, product.publishStatus)}',
         style: style.copyWith(fontSize: 12),
       ),
+      if (product.rejectedReasonTags.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final tag in product.rejectedReasonTags)
+                Text(
+                  productRejectTagLabel(l10n, tag),
+                  style: style.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color ?? AdminConsoleTheme.amber,
+                  ),
+                ),
+            ],
+          ),
+        ),
       if (product.reviewNote.isNotEmpty)
         Text(product.reviewNote, style: style.copyWith(fontSize: 12)),
     ],
@@ -563,45 +716,3 @@ Future<void> _confirmDeleteProduct(
   }
 }
 
-class _RejectNoteDialog extends StatefulWidget {
-  const _RejectNoteDialog();
-
-  @override
-  State<_RejectNoteDialog> createState() => _RejectNoteDialogState();
-}
-
-class _RejectNoteDialogState extends State<_RejectNoteDialog> {
-  final _note = TextEditingController();
-
-  @override
-  void dispose() {
-    _note.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final note = _note.text.trim();
-    return AlertDialog(
-      title: Text(l10n.adminProductRejectNote),
-      content: TextField(
-        controller: _note,
-        autofocus: true,
-        maxLines: 3,
-        decoration: InputDecoration(hintText: l10n.adminProductRejectNoteHint),
-        onChanged: (_) => setState(() {}),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.adminHqClose),
-        ),
-        FilledButton(
-          onPressed: note.isEmpty ? null : () => Navigator.pop(context, note),
-          child: Text(l10n.adminReject),
-        ),
-      ],
-    );
-  }
-}

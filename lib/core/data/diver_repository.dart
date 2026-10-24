@@ -370,6 +370,7 @@ abstract class DiverRepository {
     required String productId,
     required ProductPublishStatus status,
     String reviewNote = '',
+    List<String> reasonTags = const [],
   });
 
   Future<void> setShopProductListingKind({

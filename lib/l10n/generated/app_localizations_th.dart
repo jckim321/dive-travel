@@ -2582,6 +2582,42 @@ class AppLocalizationsTh extends AppLocalizations {
       '반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.';
 
   @override
+  String get adminProductRejectTagsHint => '해당되는 항목을 고르세요 (선택)';
+
+  @override
+  String get rejectTagPhotos => '사진';
+
+  @override
+  String get rejectTagPrice => '가격';
+
+  @override
+  String get rejectTagOptions => '옵션';
+
+  @override
+  String get rejectTagCopy => '이름·소개';
+
+  @override
+  String get rejectTagSchedule => '일정·집결·포함';
+
+  @override
+  String get rejectTagCancel => '취소 규정';
+
+  @override
+  String get rejectTagOther => '기타';
+
+  @override
+  String get adminPendingPreviousReject => '직전 반려';
+
+  @override
+  String get adminPendingPartnerNote => '파트너 메모';
+
+  @override
+  String get adminPendingChangesTitle => '이번 변경';
+
+  @override
+  String get adminPendingChangeUnknown => '비교 불가';
+
+  @override
   String get adminProductSubmitHint =>
       '저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.';
 

@@ -618,6 +618,8 @@ class ShopProduct {
     this.reviewedAt,
     this.reviewNote = '',
     this.rejectedContentHash = '',
+    this.rejectedReasonTags = const [],
+    this.rejectedSectionHashes = const {},
     this.resubmitCount = 0,
     this.resubmitNote = '',
     this.submittedByUid = '',
@@ -689,6 +691,8 @@ class ShopProduct {
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
       rejectedContentHash: data['rejected_content_hash'] as String? ?? '',
+      rejectedReasonTags: _stringList(data['rejected_reason_tags']),
+      rejectedSectionHashes: _stringMap(data['rejected_section_hashes']),
       resubmitCount: (data['resubmit_count'] as num?)?.toInt() ?? 0,
       resubmitNote: data['resubmit_note'] as String? ?? '',
       submittedByUid: data['submitted_by_uid'] as String? ?? '',
@@ -744,6 +748,12 @@ class ShopProduct {
 
   /// Content fingerprint at last reject (for unchanged-resubmit gate).
   final String rejectedContentHash;
+
+  /// Admin-selected reject category codes (`photos`, `price`, …, `other`).
+  final List<String> rejectedReasonTags;
+
+  /// Per-section content hashes at last reject (admin change chips / soft warn).
+  final Map<String, String> rejectedSectionHashes;
 
   /// Times the partner resubmitted after a reject (0 = first submission).
   final int resubmitCount;
@@ -1356,6 +1366,8 @@ class ShopProduct {
     DateTime? reviewedAt,
     String? reviewNote,
     String? rejectedContentHash,
+    List<String>? rejectedReasonTags,
+    Map<String, String>? rejectedSectionHashes,
     int? resubmitCount,
     String? resubmitNote,
     String? submittedByUid,
@@ -1410,6 +1422,9 @@ class ShopProduct {
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
       rejectedContentHash: rejectedContentHash ?? this.rejectedContentHash,
+      rejectedReasonTags: rejectedReasonTags ?? this.rejectedReasonTags,
+      rejectedSectionHashes:
+          rejectedSectionHashes ?? this.rejectedSectionHashes,
       resubmitCount: resubmitCount ?? this.resubmitCount,
       resubmitNote: resubmitNote ?? this.resubmitNote,
       submittedByUid: submittedByUid ?? this.submittedByUid,
@@ -1550,6 +1565,10 @@ class ShopProduct {
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
       if (rejectedContentHash.isNotEmpty)
         'rejected_content_hash': rejectedContentHash,
+      if (rejectedReasonTags.isNotEmpty)
+        'rejected_reason_tags': rejectedReasonTags,
+      if (rejectedSectionHashes.isNotEmpty)
+        'rejected_section_hashes': rejectedSectionHashes,
       if (resubmitCount > 0) 'resubmit_count': resubmitCount,
       if (resubmitNote.isNotEmpty) 'resubmit_note': resubmitNote,
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
@@ -1578,6 +1597,11 @@ class ShopProduct {
     'itinerary_days',
     'guest_rates',
     'review_note',
+    'rejected_content_hash',
+    'rejected_reason_tags',
+    'rejected_section_hashes',
+    'resubmit_count',
+    'resubmit_note',
   };
 
   /// Merge [product] onto a previous Firestore/product map.
@@ -1635,6 +1659,22 @@ class ShopProduct {
       for (final item in raw)
         if (item is String && item.trim().isNotEmpty) item.trim(),
     ];
+  }
+
+  static Map<String, String> _stringMap(dynamic raw) {
+    if (raw is! Map) {
+      return const {};
+    }
+    final out = <String, String>{};
+    raw.forEach((key, value) {
+      if (key is! String || key.isEmpty) {
+        return;
+      }
+      if (value is String && value.trim().isNotEmpty) {
+        out[key] = value.trim();
+      }
+    });
+    return out;
   }
 
   static List<ItineraryDay> _days(dynamic raw) {

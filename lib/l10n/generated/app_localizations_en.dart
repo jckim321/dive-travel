@@ -2648,6 +2648,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Nothing changed since the return. Fix the noted issues, then request again.';
 
   @override
+  String get adminProductRejectTagsHint => 'Select related items (optional)';
+
+  @override
+  String get rejectTagPhotos => 'Photos';
+
+  @override
+  String get rejectTagPrice => 'Price';
+
+  @override
+  String get rejectTagOptions => 'Options';
+
+  @override
+  String get rejectTagCopy => 'Name & intro';
+
+  @override
+  String get rejectTagSchedule => 'Schedule & includes';
+
+  @override
+  String get rejectTagCancel => 'Cancellation';
+
+  @override
+  String get rejectTagOther => 'Other';
+
+  @override
+  String get adminPendingPreviousReject => 'Previous return';
+
+  @override
+  String get adminPendingPartnerNote => 'Partner note';
+
+  @override
+  String get adminPendingChangesTitle => 'This change';
+
+  @override
+  String get adminPendingChangeUnknown => 'Cannot compare';
+
+  @override
   String get adminProductSubmitHint =>
       'Saving sends the product to the approval queue. It stays hidden until approved.';
 

@@ -171,4 +171,57 @@ void main() {
     );
     expect(same, hash);
   });
+
+  test('섹션 지문: 가격만 바꾸면 price만 changed', () {
+    final base = _base();
+    final prev = productSectionFingerprints(base);
+    final flags = sectionChangeFlags(
+      prev,
+      _base(consumerPrice: 200000),
+    );
+    expect(flags['price'], SectionChangeFlag.changed);
+    expect(flags['photos'], SectionChangeFlag.same);
+    expect(flags['copy'], SectionChangeFlag.same);
+    expect(flags['options'], SectionChangeFlag.same);
+  });
+
+  test('섹션 지문: 사진만 바꾸면 photos만 changed', () {
+    final base = _base();
+    final prev = productSectionFingerprints(base);
+    final flags = sectionChangeFlags(
+      prev,
+      _base(photoUrls: const ['https://cdn.example/b.jpg']),
+    );
+    expect(flags['photos'], SectionChangeFlag.changed);
+    expect(flags['price'], SectionChangeFlag.same);
+  });
+
+  test('섹션 지문: 이름만 바꾸면 copy만 changed', () {
+    final base = _base();
+    final prev = productSectionFingerprints(base);
+    final flags = sectionChangeFlags(prev, _base(name: 'Other'));
+    expect(flags['copy'], SectionChangeFlag.changed);
+    expect(flags['price'], SectionChangeFlag.same);
+  });
+
+  test('섹션 지문: pendingGallery bytes는 photos changed', () {
+    final empty = _base(coverUrl: '', photoUrls: const []);
+    final prev = productSectionFingerprints(empty);
+    final flags = sectionChangeFlags(
+      prev,
+      empty,
+      pendingGallery: [
+        ShopGallerySlot(bytes: Uint8List.fromList([9, 8, 7])),
+      ],
+    );
+    expect(flags['photos'], SectionChangeFlag.changed);
+    expect(flags['price'], SectionChangeFlag.same);
+  });
+
+  test('섹션 지문: 이전 해시 없으면 전부 unknown', () {
+    final flags = sectionChangeFlags(const {}, _base());
+    for (final key in productContentSectionKeys) {
+      expect(flags[key], SectionChangeFlag.unknown);
+    }
+  });
 }

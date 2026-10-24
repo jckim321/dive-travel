@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
@@ -1205,6 +1206,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         reviewedAt: existing?.reviewedAt,
         reviewNote: existing?.reviewNote ?? '',
         rejectedContentHash: existing?.rejectedContentHash ?? '',
+        rejectedReasonTags: existing?.rejectedReasonTags ?? const [],
+        rejectedSectionHashes: existing?.rejectedSectionHashes ?? const {},
         resubmitCount: existing?.resubmitCount ?? 0,
         resubmitNote: existing?.resubmitNote ?? '',
         submittedByUid: existing?.submittedByUid.isNotEmpty == true
@@ -1525,11 +1528,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (existing == null) {
       return;
     }
-    final note = await showDialog<String>(
-      context: context,
-      builder: (context) => _WorkbenchRejectDialog(),
-    );
-    if (note == null || !mounted) {
+    final result = await showProductRejectDialog(context);
+    if (result == null || !mounted) {
       return;
     }
     setState(() => _savingIntent = ProductSaveIntent.takeDown);
@@ -1537,7 +1537,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       await DiverStoreScope.of(context).rejectShopProduct(
         shopId: existing.shopId,
         productId: existing.id,
-        reviewNote: note,
+        reviewNote: result.note,
+        reasonTags: result.reasonTags,
       );
       if (!mounted) {
         return;
@@ -3620,47 +3621,6 @@ class _CategoryPick extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _WorkbenchRejectDialog extends StatefulWidget {
-  @override
-  State<_WorkbenchRejectDialog> createState() => _WorkbenchRejectDialogState();
-}
-
-class _WorkbenchRejectDialogState extends State<_WorkbenchRejectDialog> {
-  final _note = TextEditingController();
-
-  @override
-  void dispose() {
-    _note.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final note = _note.text.trim();
-    return AlertDialog(
-      title: Text(l10n.adminProductRejectNote),
-      content: TextField(
-        controller: _note,
-        autofocus: true,
-        maxLines: 3,
-        decoration: InputDecoration(hintText: l10n.adminProductRejectNoteHint),
-        onChanged: (_) => setState(() {}),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.adminHqClose),
-        ),
-        FilledButton(
-          onPressed: note.isEmpty ? null : () => Navigator.pop(context, note),
-          child: Text(l10n.adminReject),
-        ),
-      ],
     );
   }
 }

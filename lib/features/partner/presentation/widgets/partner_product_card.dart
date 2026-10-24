@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/widgets/missing_price_badge.dart';
@@ -77,6 +78,32 @@ class PartnerProductCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (product.rejectedReasonTags.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                key: Key('partner-product-reason-tags-${product.id}'),
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final tag in product.rejectedReasonTags)
+                    Chip(
+                      key: Key('partner-reason-tag-$tag-${product.id}'),
+                      label: Text(productRejectTagLabel(l10n, tag)),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      labelStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8B1A1A),
+                      ),
+                      backgroundColor: const Color(0xFFFFF1F0),
+                      side: BorderSide.none,
+                      padding: EdgeInsets.zero,
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                ],
+              ),
+            ],
             if (rejected && product.reviewNote.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(

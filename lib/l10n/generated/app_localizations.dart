@@ -4860,6 +4860,78 @@ abstract class AppLocalizations {
   /// **'반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.'**
   String get partnerResubmitUnchanged;
 
+  /// No description provided for @adminProductRejectTagsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'해당되는 항목을 고르세요 (선택)'**
+  String get adminProductRejectTagsHint;
+
+  /// No description provided for @rejectTagPhotos.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진'**
+  String get rejectTagPhotos;
+
+  /// No description provided for @rejectTagPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격'**
+  String get rejectTagPrice;
+
+  /// No description provided for @rejectTagOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션'**
+  String get rejectTagOptions;
+
+  /// No description provided for @rejectTagCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름·소개'**
+  String get rejectTagCopy;
+
+  /// No description provided for @rejectTagSchedule.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정·집결·포함'**
+  String get rejectTagSchedule;
+
+  /// No description provided for @rejectTagCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소 규정'**
+  String get rejectTagCancel;
+
+  /// No description provided for @rejectTagOther.
+  ///
+  /// In ko, this message translates to:
+  /// **'기타'**
+  String get rejectTagOther;
+
+  /// No description provided for @adminPendingPreviousReject.
+  ///
+  /// In ko, this message translates to:
+  /// **'직전 반려'**
+  String get adminPendingPreviousReject;
+
+  /// No description provided for @adminPendingPartnerNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 메모'**
+  String get adminPendingPartnerNote;
+
+  /// No description provided for @adminPendingChangesTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 변경'**
+  String get adminPendingChangesTitle;
+
+  /// No description provided for @adminPendingChangeUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'비교 불가'**
+  String get adminPendingChangeUnknown;
+
   /// No description provided for @adminProductSubmitHint.
   ///
   /// In ko, this message translates to:
