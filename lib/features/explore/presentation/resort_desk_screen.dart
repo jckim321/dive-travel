@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -34,6 +35,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _address = TextEditingController();
   final _intro = TextEditingController();
   final _info = ResortDeskInfoDraft();
+  final _mainScroll = ScrollController();
+  final _sideScroll = ScrollController();
   /// Preserved listing scalars — desk no longer edits product name/prices.
   var _listingProductName = '';
   var _listingConsumerPrice = 0;
@@ -44,15 +47,75 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   var _galleryTouched = false;
   var _gallerySeedDone = false;
   var _saving = false;
+  DiverStore? _store;
+  var _storeListening = false;
+  /// Cached primary product for the read-only options table.
+  ShopProduct? _cachedPrimary;
+  int _optionsSig = 0;
+
+  /// Read store without registering an InheritedNotifier dependency (avoids
+  /// full-scaffold rebuild on every [refreshShopStat] after profile save).
+  DiverStore _storeRead(BuildContext context) {
+    final scope = context.getInheritedWidgetOfExactType<DiverStoreScope>();
+    assert(scope != null, 'DiverStoreScope가 위젯 트리에 없습니다.');
+    return scope!.notifier!;
+  }
+
+  static int _optionsSignature(ShopProduct product) {
+    return Object.hashAll([
+      product.id,
+      product.name,
+      product.consumerPrice,
+      product.professionalPrice,
+      for (final option in product.options)
+        Object.hash(
+          option.id,
+          option.name,
+          option.description,
+          option.consumerPrice,
+          option.professionalPrice,
+        ),
+    ]);
+  }
+
+  void _handleStoreTick() {
+    if (!mounted || _store == null) {
+      return;
+    }
+    final store = _store!;
+    final live = store.liveStatsFor(widget.shopId);
+    final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
+        DiveShopCatalog.byId(widget.shopId);
+    if (!_gallerySeedDone &&
+        !_galleryTouched &&
+        _slots.isEmpty &&
+        live != null) {
+      setState(() => _seedGallery(store, live, hull, markDone: true));
+      return;
+    }
+    final primary = _primaryProduct(live);
+    final sig = _optionsSignature(primary);
+    if (sig != _optionsSig || _cachedPrimary == null) {
+      setState(() {
+        _optionsSig = sig;
+        _cachedPrimary = primary;
+      });
+    }
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final store = _storeRead(context);
+    _store = store;
+    if (!_storeListening) {
+      _storeListening = true;
+      store.addListener(_handleStoreTick);
+    }
     if (_seeded) {
       return;
     }
     _seeded = true;
-    final store = DiverStoreScope.of(context);
     final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
         DiveShopCatalog.byId(widget.shopId);
     final live = store.liveStatsFor(widget.shopId);
@@ -81,6 +144,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       nearbySpots: live?.nearbySpots ?? const [],
     );
     _seedGallery(store, live, hull);
+    _cachedPrimary = _primaryProduct(live);
+    _optionsSig = _optionsSignature(_cachedPrimary!);
   }
 
   void _seedGallery(
@@ -137,6 +202,12 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
   @override
   void dispose() {
+    if (_storeListening) {
+      _store?.removeListener(_handleStoreTick);
+      _storeListening = false;
+    }
+    _mainScroll.dispose();
+    _sideScroll.dispose();
     _name.dispose();
     _location.dispose();
     _address.dispose();
@@ -245,7 +316,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
     setState(() => _saving = true);
     try {
-      await DiverStoreScope.of(context).saveShopProfile(
+      await (_store ?? _storeRead(context)).saveShopProfile(
         shopId: widget.shopId,
         name: name,
         location: _location.text,
@@ -316,6 +387,14 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
   void _openPreview() => openResortDetail(context, widget.shopId);
 
+  void _openProductManagement() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const AdminProductsScreen(partnerMode: true),
+      ),
+    );
+  }
+
   ShopProduct _primaryProduct(ShopLiveStats? live) {
     final products = live?.products ?? const <ShopProduct>[];
     if (products.isNotEmpty) {
@@ -333,102 +412,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     );
   }
 
-  Future<void> _persistPrimaryProduct(ShopProduct product) async {
-    final l10n = AppLocalizations.of(context);
-    try {
-      await DiverStoreScope.of(context).saveShopProduct(
-        shopId: widget.shopId,
-        product: product,
-        useAsResortCover: false,
-      );
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exploreSaveOk)),
-      );
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
-    }
-  }
-
-  Future<void> _editOption({
-    required ShopProduct product,
-    ShopProductOption? existing,
-  }) async {
-    final result = await showDialog<ShopProductOption>(
-      context: context,
-      builder: (context) => _ProductOptionEditorDialog(existing: existing),
-    );
-    if (result == null || !mounted) {
-      return;
-    }
-    final nextOptions = [
-      for (final option in product.options)
-        if (option.id != result.id) option,
-      result,
-    ];
-    await _persistPrimaryProduct(product.copyWith(options: nextOptions));
-  }
-
-  Future<void> _deleteOption({
-    required ShopProduct product,
-    required ShopProductOption option,
-  }) async {
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.productFormRemoveOption),
-        content: Text(option.name),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-            child: Text(l10n.adminDeletePost),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    await _persistPrimaryProduct(
-      product.copyWith(
-        options: [
-          for (final item in product.options)
-            if (item.id != option.id) item,
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final store = DiverStoreScope.of(context);
-    final live = store.liveStatsFor(widget.shopId);
-    final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
-        DiveShopCatalog.byId(widget.shopId);
-    // Live stats can arrive after first frame — fill empty gallery once.
-    if (!_gallerySeedDone && !_galleryTouched && _slots.isEmpty && live != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _gallerySeedDone || _galleryTouched) {
-          return;
-        }
-        setState(() => _seedGallery(store, live, hull, markDone: true));
-      });
-    }
-    final primary = _primaryProduct(live);
+    final primary = _cachedPrimary ??
+        _primaryProduct((_store ?? _storeRead(context)).liveStatsFor(widget.shopId));
 
     return Scaffold(
       backgroundColor: AppTheme.canvas,
@@ -474,11 +462,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             onRemovePhoto: _removeAt,
             onMakeCover: _makeCover,
             primaryProduct: primary,
-            onAddOption: () => _editOption(product: primary),
-            onEditOption: (option) =>
-                _editOption(product: primary, existing: option),
-            onDeleteOption: (option) =>
-                _deleteOption(product: primary, option: option),
+            onOpenProductManagement: _openProductManagement,
           );
           final side = _DeskStickySidebar(
             saving: _saving,
@@ -488,6 +472,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           if (!wide) {
             return ListView(
               key: const Key('resort-desk'),
+              controller: _mainScroll,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
               children: [
                 side,
@@ -503,6 +488,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
               Expanded(
                 flex: 7,
                 child: SingleChildScrollView(
+                  controller: _mainScroll,
                   padding: const EdgeInsets.fromLTRB(20, 20, 12, 40),
                   child: main,
                 ),
@@ -510,6 +496,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
               Expanded(
                 flex: 3,
                 child: SingleChildScrollView(
+                  controller: _sideScroll,
                   padding: const EdgeInsets.fromLTRB(8, 20, 20, 40),
                   child: side,
                 ),
@@ -674,9 +661,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.onRemovePhoto,
     required this.onMakeCover,
     required this.primaryProduct,
-    required this.onAddOption,
-    required this.onEditOption,
-    required this.onDeleteOption,
+    required this.onOpenProductManagement,
   });
 
   final String hint;
@@ -692,9 +677,7 @@ class _DeskMainColumn extends StatelessWidget {
   final ValueChanged<int> onRemovePhoto;
   final ValueChanged<int> onMakeCover;
   final ShopProduct primaryProduct;
-  final VoidCallback onAddOption;
-  final ValueChanged<ShopProductOption> onEditOption;
-  final ValueChanged<ShopProductOption> onDeleteOption;
+  final VoidCallback onOpenProductManagement;
 
   @override
   Widget build(BuildContext context) {
@@ -756,16 +739,18 @@ class _DeskMainColumn extends StatelessWidget {
           step: '1b',
           title: '미디어 (사진)',
           subtitle: l10n.exploreCoverPhotoHint,
-          child: BookingGalleryEditor(
-            items: slots,
-            onAdd: onAddPhotos,
-            onTest: onTestPhoto,
-            onRemove: onRemovePhoto,
-            onMakeCover: onMakeCover,
-            maxItems: _kMaxGallery,
-            fieldKey: const Key('resort-cover-field'),
-            attachKey: const Key('resort-cover-field-attach'),
-            testKey: const Key('resort-cover-field-test'),
+          child: RepaintBoundary(
+            child: BookingGalleryEditor(
+              items: slots,
+              onAdd: onAddPhotos,
+              onTest: onTestPhoto,
+              onRemove: onRemovePhoto,
+              onMakeCover: onMakeCover,
+              maxItems: _kMaxGallery,
+              fieldKey: const Key('resort-cover-field'),
+              attachKey: const Key('resort-cover-field-attach'),
+              testKey: const Key('resort-cover-field-test'),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -777,9 +762,9 @@ class _DeskMainColumn extends StatelessWidget {
           subtitle: '가격과 옵션은 상품 관리에서 수정하세요.',
           trailing: FilledButton.tonalIcon(
             key: const Key('partner-product-form'),
-            onPressed: onAddOption,
-            icon: const Icon(Icons.add, size: 18),
-            label: Text(l10n.productFormAddOption),
+            onPressed: onOpenProductManagement,
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: const Text('상품 관리에서 수정'),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -794,17 +779,14 @@ class _DeskMainColumn extends StatelessWidget {
                   padding: EdgeInsets.all(12),
                   child: Text(
                     '대표 상품명·가격 칸은 여기서 바꾸지 않습니다. '
-                    '상품 워크벤치에서 수정한 내용이 손님 화면에 반영됩니다.',
+                    '상품 관리에서 수정한 내용이 손님 화면에 반영됩니다.',
                     style: TextStyle(color: AppTheme.muted, height: 1.35),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              _OptionAdminTable(
-                options: primaryProduct.options,
-                onEdit: onEditOption,
-                onDelete: onDeleteOption,
-                onAdd: onAddOption,
+              RepaintBoundary(
+                child: _OptionAdminTable(options: primaryProduct.options),
               ),
             ],
           ),
@@ -815,17 +797,9 @@ class _DeskMainColumn extends StatelessWidget {
 }
 
 class _OptionAdminTable extends StatelessWidget {
-  const _OptionAdminTable({
-    required this.options,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onAdd,
-  });
+  const _OptionAdminTable({required this.options});
 
   final List<ShopProductOption> options;
-  final ValueChanged<ShopProductOption> onEdit;
-  final ValueChanged<ShopProductOption> onDelete;
-  final VoidCallback onAdd;
 
   static final _price = NumberFormat('#,###');
 
@@ -852,11 +826,13 @@ class _OptionAdminTable extends StatelessWidget {
                       color: AppTheme.muted,
                     ),
               ),
-              const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add),
-                label: Text(l10n.productFormAddOption),
+              const SizedBox(height: 6),
+              Text(
+                '상품 관리에서 옵션을 추가하세요.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.muted,
+                    ),
               ),
             ],
           ),
@@ -909,7 +885,6 @@ class _OptionAdminTable extends StatelessWidget {
                         ),
                   ),
                 ),
-                const SizedBox(width: 72),
               ],
             ),
           ),
@@ -918,8 +893,6 @@ class _OptionAdminTable extends StatelessWidget {
             _OptionAdminRow(
               option: options[i],
               price: _price,
-              onEdit: () => onEdit(options[i]),
-              onDelete: () => onDelete(options[i]),
             ),
           ],
         ],
@@ -932,226 +905,54 @@ class _OptionAdminRow extends StatelessWidget {
   const _OptionAdminRow({
     required this.option,
     required this.price,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   final ShopProductOption option;
   final NumberFormat price;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      child: InkWell(
-        onTap: onEdit,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    option.name,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (option.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
                     Text(
-                      option.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    if (option.description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        option.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.muted,
-                            ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text('${price.format(option.consumerPrice)}원'),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text('${price.format(option.professionalPrice)}원'),
-              ),
-              SizedBox(
-                width: 72,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Tooltip(
-                      message: '수정',
-                      child: InkWell(
-                        onTap: onEdit,
-                        borderRadius: BorderRadius.circular(8),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(Icons.edit_outlined, size: 18),
-                        ),
-                      ),
-                    ),
-                    Tooltip(
-                      message: '삭제',
-                      child: InkWell(
-                        onTap: onDelete,
-                        borderRadius: BorderRadius.circular(8),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(Icons.delete_outline, size: 18),
-                        ),
-                      ),
+                      option.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.muted,
+                          ),
                     ),
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text('${price.format(option.consumerPrice)}원'),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text('${price.format(option.professionalPrice)}원'),
+            ),
+          ],
         ),
       ),
-    );
-  }
-}
-
-class _ProductOptionEditorDialog extends StatefulWidget {
-  const _ProductOptionEditorDialog({this.existing});
-
-  final ShopProductOption? existing;
-
-  @override
-  State<_ProductOptionEditorDialog> createState() =>
-      _ProductOptionEditorDialogState();
-}
-
-class _ProductOptionEditorDialogState extends State<_ProductOptionEditorDialog> {
-  late final TextEditingController _name;
-  late final TextEditingController _description;
-  late final TextEditingController _consumer;
-  late final TextEditingController _professional;
-  late final String _id;
-
-  @override
-  void initState() {
-    super.initState();
-    final existing = widget.existing;
-    _id = existing?.id ?? 'opt-${DateTime.now().microsecondsSinceEpoch}';
-    _name = TextEditingController(text: existing?.name ?? '');
-    _description = TextEditingController(text: existing?.description ?? '');
-    _consumer = TextEditingController(
-      text: (existing?.consumerPrice ?? 0) > 0 ? '${existing!.consumerPrice}' : '',
-    );
-    _professional = TextEditingController(
-      text: (existing?.professionalPrice ?? 0) > 0
-          ? '${existing!.professionalPrice}'
-          : '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _description.dispose();
-    _consumer.dispose();
-    _professional.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final editing = widget.existing != null;
-    return AlertDialog(
-      title: Text(editing ? '옵션 수정' : l10n.productFormAddOption),
-      content: SizedBox(
-        width: 420,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _name,
-                decoration: _deskInputDecoration(
-                  label: '옵션명',
-                  required: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _description,
-                maxLines: 2,
-                decoration: _deskInputDecoration(label: '설명'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _consumer,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _deskInputDecoration(
-                  label: l10n.exploreConsumerPrice,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _professional,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _deskInputDecoration(label: l10n.exploreProPrice),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-        ),
-        FilledButton(
-          onPressed: () {
-            final name = _name.text.trim();
-            if (name.isEmpty) {
-              return;
-            }
-            final existing = widget.existing;
-            final edited = ShopProductOption(
-              id: _id,
-              name: name,
-              description: _description.text.trim(),
-              consumerPrice: int.tryParse(_consumer.text) ?? 0,
-              professionalPrice: int.tryParse(_professional.text) ?? 0,
-            );
-            // Preserve same-boat / seat fields the dialog does not edit.
-            Navigator.pop(
-              context,
-              existing == null
-                  ? edited
-                  : edited.copyWith(
-                      kind: existing.kind,
-                      bookable: existing.bookable,
-                      guestRole: existing.guestRole,
-                      openEmptySeats: existing.openEmptySeats,
-                      capacity: existing.capacity,
-                      bookedSeats: existing.bookedSeats,
-                      flagHolds: existing.flagHolds,
-                      departureStart: existing.departureStart,
-                      flagClosesAt: existing.flagClosesAt,
-                      parentOptionId: existing.parentOptionId,
-                      sameBoatStatus: existing.sameBoatStatus,
-                    ),
-            );
-          },
-          style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-          child: Text(l10n.partnerSave),
-        ),
-      ],
     );
   }
 }
