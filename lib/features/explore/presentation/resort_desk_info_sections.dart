@@ -194,6 +194,7 @@ InputDecoration _deskDeco({required String label, String? hint}) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
+    floatingLabelBehavior: FloatingLabelBehavior.always,
     filled: true,
     fillColor: Colors.white,
     border: border,

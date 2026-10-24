@@ -1263,7 +1263,8 @@ class DiverStore extends ChangeNotifier {
     await refreshCommunityPosts();
   }
 
-  Future<void> saveShopProfile({
+  /// TODO(a1-desk-save-timing): temporary write/read probe — remove after latency check.
+  Future<ShopProfileSaveProbe> saveShopProfile({
     required String shopId,
     required String name,
     required String location,
@@ -1317,15 +1318,13 @@ class DiverStore extends ChangeNotifier {
         _coverBytes.remove(shopId);
         _galleryBytes.remove(shopId);
       }
-      notifyListeners();
     } else if (coverBytes != null && coverBytes.isNotEmpty) {
       _coverBytes[shopId] = coverBytes;
-      notifyListeners();
     } else if (removeCover) {
       _coverBytes.remove(shopId);
       _galleryBytes.remove(shopId);
-      notifyListeners();
     }
+    final writeSw = Stopwatch()..start();
     await _repository.saveShopProfile(
       shopId: shopId,
       name: name,
@@ -1355,7 +1354,150 @@ class DiverStore extends ChangeNotifier {
       removeCover: removeCover,
       gallery: gallery,
     );
-    await refreshShopStat(shopId);
+    writeSw.stop();
+    _patchLocalShopProfile(
+      shopId: shopId,
+      name: name,
+      location: location,
+      productName: productName,
+      consumerPrice: consumerPrice,
+      professionalPrice: professionalPrice,
+      intro: intro,
+      address: address,
+      amenities: amenities,
+      mapUrl: mapUrl,
+      nearestHub: nearestHub,
+      accessRoutes: accessRoutes,
+      featureBlurb: featureBlurb,
+      featureTags: featureTags,
+      nearbySpots: nearbySpots,
+      localContact: localContact,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      businessHours: businessHours,
+      country: country,
+      continent: continent,
+      curated: curated,
+      removeCover: removeCover,
+      gallery: gallery,
+    );
+    notifyListeners();
+    // Do not block the save UX on the follow-up read.
+    final readFuture = () async {
+      final readSw = Stopwatch()..start();
+      try {
+        await refreshShopStat(shopId);
+      } catch (error, stackTrace) {
+        debugPrint('saveShopProfile background refresh failed: $error');
+        debugPrint('$stackTrace');
+      }
+      return readSw.elapsed;
+    }();
+    return ShopProfileSaveProbe(
+      write: writeSw.elapsed,
+      readFuture: readFuture,
+    );
+  }
+
+  void _patchLocalShopProfile({
+    required String shopId,
+    required String name,
+    required String location,
+    required String productName,
+    required int consumerPrice,
+    required int professionalPrice,
+    String? intro,
+    String? address,
+    List<String>? amenities,
+    String? mapUrl,
+    String? nearestHub,
+    List<AccessRoute>? accessRoutes,
+    String? featureBlurb,
+    List<String>? featureTags,
+    List<NearbySpot>? nearbySpots,
+    String? localContact,
+    String? checkIn,
+    String? checkOut,
+    String? businessHours,
+    String? country,
+    String? continent,
+    bool? curated,
+    bool removeCover = false,
+    List<ShopGallerySlot>? gallery,
+  }) {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      return;
+    }
+    final index = _shopStats.indexWhere((item) => item.shopId == id);
+    final previous = index >= 0 ? _shopStats[index] : null;
+    final catalog = DiveShopCatalog.byId(id);
+    List<String>? nextGallery;
+    String? nextCover;
+    var clearCover = false;
+    if (gallery != null) {
+      final hasNewBytes = gallery.any((slot) => slot.hasBytes);
+      if (!hasNewBytes) {
+        nextGallery = [
+          for (final slot in gallery)
+            if ((slot.url ?? '').trim().isNotEmpty) slot.url!.trim(),
+        ];
+        if (nextGallery.isEmpty) {
+          clearCover = true;
+        } else {
+          nextCover = nextGallery.first;
+        }
+      }
+    } else if (removeCover) {
+      nextGallery = const [];
+      clearCover = true;
+    }
+    final patched = (previous ??
+            ShopLiveStats(
+              shopId: id,
+              reviewCount: 0,
+              avgSafety: 0,
+              avgGuide: 0,
+              avgBoat: 0,
+              avgOverall: 0,
+              diveStar: 0,
+              name: catalog?.name,
+              location: catalog?.location,
+            ))
+        .copyWith(
+          name: name.trim(),
+          location: location.trim(),
+          productName: productName.trim(),
+          consumerPrice: consumerPrice,
+          professionalPrice: professionalPrice,
+          intro: intro?.trim(),
+          address: address?.trim(),
+          amenities: amenities,
+          mapUrl: mapUrl?.trim(),
+          nearestHub: nearestHub?.trim(),
+          accessRoutes: accessRoutes,
+          featureBlurb: featureBlurb?.trim(),
+          featureTags: featureTags,
+          nearbySpots: nearbySpots,
+          localContact: localContact?.trim(),
+          checkIn: checkIn?.trim(),
+          checkOut: checkOut?.trim(),
+          businessHours: businessHours?.trim(),
+          country: country?.trim() ?? catalog?.country,
+          continent: continent?.trim() ?? catalog?.continent,
+          curated: curated,
+          coverUrl: nextCover,
+          clearCoverUrl: clearCover,
+          galleryUrls: nextGallery,
+        );
+    if (index >= 0) {
+      final next = [..._shopStats];
+      next[index] = patched;
+      _shopStats = next;
+    } else {
+      _shopStats = [..._shopStats, patched];
+    }
+    _shopStatsLoaded = true;
   }
 
   /// Products this diver submitted from My (departure desk).
@@ -2307,6 +2449,17 @@ class DiverStoreScope extends InheritedNotifier<DiverStore> {
     assert(scope != null, 'DiverStoreScope가 위젯 트리에 없습니다.');
     return scope!.notifier!;
   }
+}
+
+/// TODO(a1-desk-save-timing): temporary probe result — remove after latency check.
+class ShopProfileSaveProbe {
+  const ShopProfileSaveProbe({
+    required this.write,
+    required this.readFuture,
+  });
+
+  final Duration write;
+  final Future<Duration> readFuture;
 }
 
 const _defaultGear = <GearItem>[

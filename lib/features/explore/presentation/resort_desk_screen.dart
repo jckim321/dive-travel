@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -315,8 +317,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     }
 
     setState(() => _saving = true);
+    final store = _store ?? _storeRead(context);
     try {
-      await (_store ?? _storeRead(context)).saveShopProfile(
+      final probe = await store.saveShopProfile(
         shopId: widget.shopId,
         name: name,
         location: _location.text,
@@ -360,9 +363,33 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exploreSaveOk)),
-      );
+      // Unblock UI as soon as the write + local patch finish.
+      setState(() => _saving = false);
+      // Controllers already hold saved values; local store patch ran in save.
+      if (_canSeeSaveProbe(store)) {
+        // TODO(a1-desk-save-timing): remove owner timing snackbar after probe.
+        final write = probe.write;
+        final read = await probe.readFuture;
+        if (!mounted) {
+          return;
+        }
+        final total = write + read;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '쓰기 ${_formatSaveSeconds(write)}초 / '
+              '읽기 ${_formatSaveSeconds(read)}초 / '
+              '전체 ${_formatSaveSeconds(total)}초',
+            ),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else {
+        unawaited(probe.readFuture);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exploreSaveOk)),
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -379,11 +406,22 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         ),
       );
     } finally {
-      if (mounted) {
+      if (mounted && _saving) {
         setState(() => _saving = false);
       }
     }
   }
+
+  /// Owner / admin (incl. DevRoles overlay) only — for temporary save probe.
+  bool _canSeeSaveProbe(DiverStore store) {
+    final s = store.stats;
+    return s.isAdmin ||
+        (s.isBusiness && s.ownedShopId == widget.shopId);
+  }
+
+  // TODO(a1-desk-save-timing): remove with owner timing snackbar.
+  static String _formatSaveSeconds(Duration d) =>
+      (d.inMilliseconds / 1000).toStringAsFixed(1);
 
   void _openPreview() => openResortDetail(context, widget.shopId);
 
@@ -445,65 +483,106 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 980;
-          final main = _DeskMainColumn(
-            hint: l10n.exploreDeskHint,
-            name: _name,
-            location: _location,
-            address: _address,
-            intro: _intro,
-            info: _info,
-            onInfoChanged: () => setState(() {}),
-            slots: _slots,
-            onAddPhotos: _addPhotos,
-            onTestPhoto: _useTestPhoto,
-            onRemovePhoto: _removeAt,
-            onMakeCover: _makeCover,
-            primaryProduct: primary,
-            onOpenProductManagement: _openProductManagement,
-          );
-          final side = _DeskStickySidebar(
-            saving: _saving,
-            onSave: _saveProfile,
-            onPreview: _openPreview,
-          );
-          if (!wide) {
-            return ListView(
-              key: const Key('resort-desk'),
-              controller: _mainScroll,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              children: [
-                side,
-                const SizedBox(height: 16),
-                main,
-              ],
-            );
-          }
-          return Row(
-            key: const Key('resort-desk'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 7,
-                child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 980;
+              final main = _DeskMainColumn(
+                hint: l10n.exploreDeskHint,
+                name: _name,
+                location: _location,
+                address: _address,
+                intro: _intro,
+                info: _info,
+                onInfoChanged: () => setState(() {}),
+                slots: _slots,
+                onAddPhotos: _addPhotos,
+                onTestPhoto: _useTestPhoto,
+                onRemovePhoto: _removeAt,
+                onMakeCover: _makeCover,
+                primaryProduct: primary,
+                onOpenProductManagement: _openProductManagement,
+              );
+              final side = _DeskStickySidebar(
+                saving: _saving,
+                onSave: _saveProfile,
+                onPreview: _openPreview,
+              );
+              if (!wide) {
+                return ListView(
+                  key: const Key('resort-desk'),
                   controller: _mainScroll,
-                  padding: const EdgeInsets.fromLTRB(20, 20, 12, 40),
-                  child: main,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  children: [
+                    side,
+                    const SizedBox(height: 16),
+                    main,
+                  ],
+                );
+              }
+              return Row(
+                key: const Key('resort-desk'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: SingleChildScrollView(
+                      controller: _mainScroll,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 12, 40),
+                      child: main,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: SingleChildScrollView(
+                      controller: _sideScroll,
+                      padding: const EdgeInsets.fromLTRB(8, 20, 20, 40),
+                      child: side,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          if (_saving) ...[
+            const ModalBarrier(
+              dismissible: false,
+              color: Color(0x66000000),
+            ),
+            Center(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: AppTheme.navy),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.exploreSaving,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Expanded(
-                flex: 3,
-                child: SingleChildScrollView(
-                  controller: _sideScroll,
-                  padding: const EdgeInsets.fromLTRB(8, 20, 20, 40),
-                  child: side,
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ],
+        ],
       ),
     );
   }

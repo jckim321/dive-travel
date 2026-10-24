@@ -273,6 +273,7 @@ class ShopLiveStats {
     String? checkOut,
     String? businessHours,
     String? coverUrl,
+    bool clearCoverUrl = false,
     List<String>? galleryUrls,
     List<String>? amenities,
   }) {
@@ -314,7 +315,7 @@ class ShopLiveStats {
       checkIn: checkIn ?? this.checkIn,
       checkOut: checkOut ?? this.checkOut,
       businessHours: businessHours ?? this.businessHours,
-      coverUrl: coverUrl ?? this.coverUrl,
+      coverUrl: clearCoverUrl ? null : (coverUrl ?? this.coverUrl),
       galleryUrls: galleryUrls ?? this.galleryUrls,
       amenities: amenities ?? this.amenities,
     );
