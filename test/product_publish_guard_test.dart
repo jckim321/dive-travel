@@ -150,4 +150,98 @@ void main() {
       expect(next.resubmitNote, '');
     });
   });
+
+  group('applyResubmit', () {
+    test('내용 동일하면 차단', () {
+      final previous = _product().copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        reviewNote: '사진 부족',
+        rejectedContentHash: productContentFingerprint(_product()),
+      );
+      expect(
+        () => ProductPublishGuard.applyResubmit(
+          previous: previous,
+          next: _product(),
+          resubmitNote: '사진을 바꿨습니다',
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            ProductPublishGuard.unchangedSinceRejectMessage,
+          ),
+        ),
+      );
+    });
+
+    test('내용 변경 + 메모면 pending·회차+1·사유 유지', () {
+      final base = _product();
+      final previous = base.copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        reviewNote: '사진 부족',
+        rejectedContentHash: productContentFingerprint(base),
+        resubmitCount: 1,
+      );
+      final next = ProductPublishGuard.applyResubmit(
+        previous: previous,
+        next: _product(consumerPrice: 120000),
+        resubmitNote: '가격을 올렸습니다',
+      );
+      expect(next.publishStatus, ProductPublishStatus.pending);
+      expect(next.resubmitCount, 2);
+      expect(next.resubmitNote, '가격을 올렸습니다');
+      expect(next.reviewNote, '사진 부족');
+      expect(next.rejectedContentHash, previous.rejectedContentHash);
+    });
+
+    test('해시 없는 옛 반려는 무변경 검사를 건너뛴다', () {
+      final previous = _product().copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        reviewNote: 'old',
+        rejectedContentHash: '',
+      );
+      final next = ProductPublishGuard.applyResubmit(
+        previous: previous,
+        next: _product(),
+        resubmitNote: '메모를 남깁니다',
+      );
+      expect(next.publishStatus, ProductPublishStatus.pending);
+      expect(next.resubmitCount, 1);
+    });
+
+    test('재요청 메모 길이 검증', () {
+      final previous = _product().copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        rejectedContentHash: '',
+      );
+      expect(
+        () => ProductPublishGuard.applyResubmit(
+          previous: previous,
+          next: _product(),
+          resubmitNote: '짧음',
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            ProductPublishGuard.resubmitNoteTooShortMessage,
+          ),
+        ),
+      );
+      expect(
+        () => ProductPublishGuard.applyResubmit(
+          previous: previous,
+          next: _product(),
+          resubmitNote: 'x' * 201,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            ProductPublishGuard.resubmitNoteTooLongMessage,
+          ),
+        ),
+      );
+    });
+  });
 }

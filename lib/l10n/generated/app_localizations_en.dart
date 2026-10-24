@@ -2618,7 +2618,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminProductRejectNeedsNote => 'Please enter a rejection reason.';
 
   @override
-  String get adminProductRejected => 'Product registration rejected.';
+  String get adminProductRejected => 'Product registration returned.';
+
+  @override
+  String get partnerRejectReasonBanner => 'Admin return reason';
+
+  @override
+  String get partnerRejectReasonExpand => 'Show more';
+
+  @override
+  String get partnerRejectReasonCollapse => 'Show less';
+
+  @override
+  String get partnerResubmitNoteTitle => 'What did you fix?';
+
+  @override
+  String get partnerResubmitNoteHint => 'e.g. Updated cover photo and price.';
+
+  @override
+  String get partnerResubmitNoteHelper => '5–200 characters';
+
+  @override
+  String partnerResubmitCount(int count) {
+    return 'Resubmit #$count';
+  }
+
+  @override
+  String get partnerResubmitUnchanged =>
+      'Nothing changed since the return. Fix the noted issues, then request again.';
 
   @override
   String get adminProductSubmitHint =>

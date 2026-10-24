@@ -2560,7 +2560,34 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminProductRejectNeedsNote => '반려 사유를 입력해 주세요';
 
   @override
-  String get adminProductRejected => '상품 등록이 거절되었습니다.';
+  String get adminProductRejected => '상품 등록이 반려되었습니다.';
+
+  @override
+  String get partnerRejectReasonBanner => '관리자 반려 사유';
+
+  @override
+  String get partnerRejectReasonExpand => '더 보기';
+
+  @override
+  String get partnerRejectReasonCollapse => '접기';
+
+  @override
+  String get partnerResubmitNoteTitle => '무엇을 고쳤나요?';
+
+  @override
+  String get partnerResubmitNoteHint => '예: 대표 사진을 바꾸고 가격을 수정했습니다.';
+
+  @override
+  String get partnerResubmitNoteHelper => '5자 이상 200자 이하';
+
+  @override
+  String partnerResubmitCount(int count) {
+    return '재요청 $count회차';
+  }
+
+  @override
+  String get partnerResubmitUnchanged =>
+      '반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.';
 
   @override
   String get adminProductSubmitHint =>

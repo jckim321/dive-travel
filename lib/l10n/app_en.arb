@@ -1018,7 +1018,20 @@
   "adminProductApproveNeedsPrice": "Only products with a diver price can be approved.",
   "adminProductApproveOverCap": "Cannot approve: a unit price is over 100 million won.",
   "adminProductRejectNeedsNote": "Please enter a rejection reason.",
-  "adminProductRejected": "Product registration rejected.",
+  "adminProductRejected": "Product registration returned.",
+  "partnerRejectReasonBanner": "Admin return reason",
+  "partnerRejectReasonExpand": "Show more",
+  "partnerRejectReasonCollapse": "Show less",
+  "partnerResubmitNoteTitle": "What did you fix?",
+  "partnerResubmitNoteHint": "e.g. Updated cover photo and price.",
+  "partnerResubmitNoteHelper": "5–200 characters",
+  "partnerResubmitCount": "Resubmit #{count}",
+  "@partnerResubmitCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerResubmitUnchanged": "Nothing changed since the return. Fix the noted issues, then request again.",
   "adminProductSubmitHint": "Saving sends the product to the approval queue. It stays hidden until approved.",
   "adminProductSubmitted": "Submitted for approval.",
   "productFormHeroTitle": "Register a travel product",

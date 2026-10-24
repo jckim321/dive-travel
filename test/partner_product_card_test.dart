@@ -19,6 +19,7 @@ ShopProduct _product({
   int bookedSeats = 0,
   DateTime? departure,
   String reviewNote = '',
+  int resubmitCount = 0,
 }) {
   return ShopProduct(
     id: id,
@@ -34,6 +35,7 @@ ShopProduct _product({
     bookedSeats: bookedSeats,
     departureStart: departure,
     reviewNote: reviewNote,
+    resubmitCount: resubmitCount,
   );
 }
 
@@ -164,6 +166,24 @@ void main() {
       find.byKey(const Key('partner-product-seats-rej-1')),
     );
     expect(seats.onPressed, isNull);
+  });
+
+  testWidgets('재요청 회차 표시', (tester) async {
+    final l10n = await _pumpCard(
+      tester,
+      _product(
+        id: 'resub-1',
+        publish: ProductPublishStatus.pending,
+        active: false,
+        resubmitCount: 2,
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('partner-product-resubmit-count-resub-1')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.partnerResubmitCount(2)), findsOneWidget);
   });
 
   testWidgets('닫힘: 빈자리 비활성', (tester) async {

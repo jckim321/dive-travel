@@ -87,6 +87,17 @@ class PartnerProductCard extends StatelessWidget {
                 ),
               ),
             ],
+            if (product.resubmitCount > 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                key: Key('partner-product-resubmit-count-${product.id}'),
+                l10n.partnerResubmitCount(product.resubmitCount),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

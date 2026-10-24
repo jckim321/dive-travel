@@ -1571,8 +1571,10 @@ class DiverStore extends ChangeNotifier {
       throw StateError('Not allowed to edit this shop product');
     }
 
+    final previous = _findShopProduct(shopId, product.id);
     final gated = _withSaveIntent(
       product: product,
+      previous: previous,
       creatorSubmission: creatorSubmission,
       creatorUid: creatorUid,
       intent: intent,
@@ -1657,8 +1659,48 @@ class DiverStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  ShopProduct? _findShopProduct(String shopId, String productId) {
+    final sid = shopId.trim();
+    final pid = productId.trim();
+    if (sid.isEmpty || pid.isEmpty) {
+      return null;
+    }
+    for (final stats in _shopStats) {
+      if (stats.shopId != sid) {
+        continue;
+      }
+      for (final item in stats.products) {
+        if (item.id == pid) {
+          return item;
+        }
+      }
+    }
+    return null;
+  }
+
+  ShopProduct _pendingAfterSave({
+    required ShopProduct product,
+    required ShopProduct? previous,
+    required String submitter,
+  }) {
+    if (previous?.publishStatus == ProductPublishStatus.rejected) {
+      return ProductPublishGuard.applyResubmit(
+        previous: previous!,
+        next: product.copyWith(submittedByUid: submitter),
+        resubmitNote: product.resubmitNote,
+      );
+    }
+    return product.copyWith(
+      publishStatus: ProductPublishStatus.pending,
+      submittedAt: DateTime.now(),
+      active: false,
+      submittedByUid: submitter,
+    );
+  }
+
   ShopProduct _withSaveIntent({
     required ShopProduct product,
+    ShopProduct? previous,
     required bool creatorSubmission,
     required String creatorUid,
     required ProductSaveIntent? intent,
@@ -1671,11 +1713,10 @@ class DiverStore extends ChangeNotifier {
     if (creatorSubmission || intent == null) {
       final forcePending = creatorSubmission || !_stats.isAdmin;
       if (forcePending) {
-        return product.copyWith(
-          publishStatus: ProductPublishStatus.pending,
-          submittedAt: DateTime.now(),
-          active: false,
-          submittedByUid: submitter,
+        return _pendingAfterSave(
+          product: product,
+          previous: previous,
+          submitter: submitter,
         );
       }
       ProductPublishGuard.ensureCanApprove(product);
@@ -1692,18 +1733,25 @@ class DiverStore extends ChangeNotifier {
     }
     switch (intent) {
       case ProductSaveIntent.keepEditing:
+        // Rejected products stay rejected until an explicit resubmit
+        // (build B will add true draft saves for rejected listings).
         return product.copyWith(
-          publishStatus: ProductPublishStatus.draft,
+          publishStatus: previous?.publishStatus == ProductPublishStatus.rejected
+              ? ProductPublishStatus.rejected
+              : ProductPublishStatus.draft,
           active: false,
           submittedByUid: submitter,
+          reviewNote: previous?.reviewNote ?? product.reviewNote,
+          rejectedContentHash:
+              previous?.rejectedContentHash ?? product.rejectedContentHash,
+          resubmitCount: previous?.resubmitCount ?? product.resubmitCount,
+          resubmitNote: previous?.resubmitNote ?? product.resubmitNote,
         );
       case ProductSaveIntent.submitForReview:
-        // Keep review_note so admin still sees the prior reject reason.
-        return product.copyWith(
-          publishStatus: ProductPublishStatus.pending,
-          submittedAt: DateTime.now(),
-          active: false,
-          submittedByUid: submitter,
+        return _pendingAfterSave(
+          product: product,
+          previous: previous,
+          submitter: submitter,
         );
       case ProductSaveIntent.publish:
         if (!_stats.isAdmin) {

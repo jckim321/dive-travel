@@ -7,6 +7,7 @@ ShopProduct _base({
   String name = 'Trip',
   int consumerPrice = 100000,
   String blurb = 'hello',
+  String coverUrl = '',
   List<String> photoUrls = const ['https://cdn.example/a.jpg'],
 }) {
   return ShopProduct(
@@ -16,6 +17,7 @@ ShopProduct _base({
     consumerPrice: consumerPrice,
     professionalPrice: consumerPrice,
     blurb: blurb,
+    coverUrl: coverUrl,
     photoUrls: photoUrls,
     publishStatus: ProductPublishStatus.pending,
     active: false,
@@ -70,5 +72,38 @@ void main() {
       _base(photoUrls: const ['https://a/2.jpg', 'https://a/1.jpg']),
     );
     expect(b, a);
+  });
+
+  test('같은 사진에서 호스트·서명·쿼리만 달라도 지문 동일', () {
+    const key = 'shops/shop1/products/p1/cover.jpg';
+    final a = productContentFingerprint(
+      _base(
+        coverUrl: 'https://cdn.example/$key',
+        photoUrls: [
+          'https://cdn.example/$key',
+          'https://cdn.example/gallery/one.jpg',
+        ],
+      ),
+    );
+    final b = productContentFingerprint(
+      _base(
+        coverUrl: 'https://signed.example/$key'
+            '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=abc',
+        photoUrls: [
+          'https://other-host.example/$key?token=1',
+          'https://mirror.example/gallery/one.jpg#frag',
+        ],
+      ),
+    );
+    expect(b, a);
+  });
+
+  test('contentFingerprintPhotoRef strips query and prefers path', () {
+    expect(
+      contentFingerprintPhotoRef(
+        'https://cdn.example/shops/x/a.jpg?X-Amz-Signature=zz',
+      ),
+      'shops/x/a.jpg',
+    );
   });
 }

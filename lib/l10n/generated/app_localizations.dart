@@ -4809,8 +4809,56 @@ abstract class AppLocalizations {
   /// No description provided for @adminProductRejected.
   ///
   /// In ko, this message translates to:
-  /// **'상품 등록이 거절되었습니다.'**
+  /// **'상품 등록이 반려되었습니다.'**
   String get adminProductRejected;
+
+  /// No description provided for @partnerRejectReasonBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자 반려 사유'**
+  String get partnerRejectReasonBanner;
+
+  /// No description provided for @partnerRejectReasonExpand.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get partnerRejectReasonExpand;
+
+  /// No description provided for @partnerRejectReasonCollapse.
+  ///
+  /// In ko, this message translates to:
+  /// **'접기'**
+  String get partnerRejectReasonCollapse;
+
+  /// No description provided for @partnerResubmitNoteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'무엇을 고쳤나요?'**
+  String get partnerResubmitNoteTitle;
+
+  /// No description provided for @partnerResubmitNoteHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 대표 사진을 바꾸고 가격을 수정했습니다.'**
+  String get partnerResubmitNoteHint;
+
+  /// No description provided for @partnerResubmitNoteHelper.
+  ///
+  /// In ko, this message translates to:
+  /// **'5자 이상 200자 이하'**
+  String get partnerResubmitNoteHelper;
+
+  /// No description provided for @partnerResubmitCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'재요청 {count}회차'**
+  String partnerResubmitCount(int count);
+
+  /// No description provided for @partnerResubmitUnchanged.
+  ///
+  /// In ko, this message translates to:
+  /// **'반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.'**
+  String get partnerResubmitUnchanged;
 
   /// No description provided for @adminProductSubmitHint.
   ///

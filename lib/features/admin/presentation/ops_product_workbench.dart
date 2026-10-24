@@ -1088,10 +1088,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           .showSnackBar(SnackBar(content: Text(seatError)));
       return;
     }
+    final existing = widget.existing;
+    final isResubmit = existing?.publishStatus == ProductPublishStatus.rejected &&
+        (intent == ProductSaveIntent.submitForReview || widget.creatorMode);
+    var resubmitNote = existing?.resubmitNote ?? '';
+    if (isResubmit) {
+      final note = await _askResubmitNote(l10n);
+      if (note == null) {
+        return;
+      }
+      resubmitNote = note;
+    }
     setState(() => _savingIntent = intent);
     try {
       final sessionUid = store.uid ?? '';
-      final existing = widget.existing;
       final diverConsumer =
           parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
       final diverRate = GuestRate(
@@ -1202,6 +1212,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         submittedAt: existing?.submittedAt,
         reviewedAt: existing?.reviewedAt,
         reviewNote: existing?.reviewNote ?? '',
+        rejectedContentHash: existing?.rejectedContentHash ?? '',
+        resubmitCount: existing?.resubmitCount ?? 0,
+        resubmitNote: resubmitNote,
         submittedByUid: existing?.submittedByUid.isNotEmpty == true
             ? existing!.submittedByUid
             : sessionUid,
@@ -1242,12 +1255,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
+      // Stay on the edit screen so partner inputs are preserved.
       final raw = '$error';
       final message = raw.contains('SHOP_STAT_REFRESH_FAILED')
           ? l10n.shopStatRefreshFailed
           : (raw.contains('R2') || raw.contains('업로드')
               ? l10n.workbenchPhotoUploadFailed
-              : raw);
+              : raw
+                  .replaceFirst('Bad state: ', '')
+                  .replaceFirst('StateError: ', ''));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), duration: const Duration(seconds: 8)),
       );
@@ -1255,6 +1271,60 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (mounted) {
         setState(() => _savingIntent = null);
       }
+    }
+  }
+
+  Future<String?> _askResubmitNote(AppLocalizations l10n) async {
+    final controller = TextEditingController();
+    try {
+      return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(l10n.partnerResubmitNoteTitle),
+            content: TextField(
+              key: const Key('partner-resubmit-note-field'),
+              controller: controller,
+              maxLength: ProductPublishGuard.resubmitNoteMaxLength,
+              maxLines: 4,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: l10n.partnerResubmitNoteHint,
+                helperText: l10n.partnerResubmitNoteHelper,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(
+                  MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+                ),
+              ),
+              FilledButton(
+                key: const Key('partner-resubmit-note-submit'),
+                onPressed: () {
+                  final note = controller.text.trim();
+                  if (note.length < ProductPublishGuard.resubmitNoteMinLength) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ProductPublishGuard.resubmitNoteTooShortMessage,
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  Navigator.pop(dialogContext, note);
+                },
+                child: Text(l10n.partnerProductResubmit),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -1486,10 +1556,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _brief(AppLocalizations l10n, List<DiveShop> shops, bool shopLocked) {
+    final rejectNote = widget.existing?.reviewNote.trim() ?? '';
+    final showRejectBanner =
+        widget.existing?.publishStatus == ProductPublishStatus.rejected &&
+            rejectNote.isNotEmpty;
     return ListView(
       key: const Key('ops-product-brief-scroll'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
+        if (showRejectBanner)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _RejectReasonBanner(note: rejectNote, l10n: l10n),
+          ),
         if (!_editing) ...[
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -3577,6 +3656,69 @@ class _WorkbenchRejectDialogState extends State<_WorkbenchRejectDialog> {
           child: Text(l10n.adminReject),
         ),
       ],
+    );
+  }
+}
+
+class _RejectReasonBanner extends StatefulWidget {
+  const _RejectReasonBanner({required this.note, required this.l10n});
+
+  final String note;
+  final AppLocalizations l10n;
+
+  @override
+  State<_RejectReasonBanner> createState() => _RejectReasonBannerState();
+}
+
+class _RejectReasonBannerState extends State<_RejectReasonBanner> {
+  var _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final long = widget.note.length > 120 || widget.note.contains('\n');
+    return Material(
+      key: const Key('partner-reject-reason-banner'),
+      color: const Color(0xFFFFF1F0),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              widget.l10n.partnerRejectReasonBanner,
+              style: const TextStyle(
+                color: Color(0xFF8B1A1A),
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.note,
+              maxLines: (!_expanded && long) ? 3 : null,
+              overflow:
+                  (!_expanded && long) ? TextOverflow.ellipsis : TextOverflow.visible,
+              style: const TextStyle(
+                color: Color(0xFF5C1A1A),
+                height: 1.4,
+              ),
+            ),
+            if (long)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  child: Text(
+                    _expanded
+                        ? widget.l10n.partnerRejectReasonCollapse
+                        : widget.l10n.partnerRejectReasonExpand,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
