@@ -5796,6 +5796,54 @@ abstract class AppLocalizations {
   /// **'LOCATION'**
   String get exploreResortMap;
 
+  /// No description provided for @exploreOpenMap.
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 열기'**
+  String get exploreOpenMap;
+
+  /// No description provided for @exploreAccessRoutes.
+  ///
+  /// In ko, this message translates to:
+  /// **'오시는 길'**
+  String get exploreAccessRoutes;
+
+  /// No description provided for @exploreResortFeatures.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 특징'**
+  String get exploreResortFeatures;
+
+  /// No description provided for @exploreNearbySpots.
+  ///
+  /// In ko, this message translates to:
+  /// **'주변 관광'**
+  String get exploreNearbySpots;
+
+  /// No description provided for @exploreOpsHours.
+  ///
+  /// In ko, this message translates to:
+  /// **'운영 안내'**
+  String get exploreOpsHours;
+
+  /// No description provided for @exploreCheckInLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크인'**
+  String get exploreCheckInLabel;
+
+  /// No description provided for @exploreCheckOutLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크아웃'**
+  String get exploreCheckOutLabel;
+
+  /// No description provided for @exploreBusinessHoursLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'영업시간'**
+  String get exploreBusinessHoursLabel;
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

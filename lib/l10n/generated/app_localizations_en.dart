@@ -3155,6 +3155,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreResortMap => 'LOCATION';
 
   @override
+  String get exploreOpenMap => 'Open map';
+
+  @override
+  String get exploreAccessRoutes => 'Getting there';
+
+  @override
+  String get exploreResortFeatures => 'Resort highlights';
+
+  @override
+  String get exploreNearbySpots => 'Nearby places';
+
+  @override
+  String get exploreOpsHours => 'Hours';
+
+  @override
+  String get exploreCheckInLabel => 'Check-in';
+
+  @override
+  String get exploreCheckOutLabel => 'Check-out';
+
+  @override
+  String get exploreBusinessHoursLabel => 'Business hours';
+
+  @override
   String get exploreResortAddress => 'Address';
 
   @override

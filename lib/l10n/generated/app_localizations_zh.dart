@@ -3055,6 +3055,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exploreResortMap => 'LOCATION';
 
   @override
+  String get exploreOpenMap => '지도 열기';
+
+  @override
+  String get exploreAccessRoutes => '오시는 길';
+
+  @override
+  String get exploreResortFeatures => '리조트 특징';
+
+  @override
+  String get exploreNearbySpots => '주변 관광';
+
+  @override
+  String get exploreOpsHours => '운영 안내';
+
+  @override
+  String get exploreCheckInLabel => '체크인';
+
+  @override
+  String get exploreCheckOutLabel => '체크아웃';
+
+  @override
+  String get exploreBusinessHoursLabel => '영업시간';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override
