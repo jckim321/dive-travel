@@ -3939,6 +3939,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get briefEdit => 'Edit';
 
   @override
+  String get briefStepBasics => 'Basics';
+
+  @override
+  String get briefStepPricing => 'Price';
+
+  @override
+  String get briefStepReview => 'Review';
+
+  @override
+  String get briefStepNext => 'Next';
+
+  @override
+  String get briefStepBack => 'Back';
+
+  @override
+  String get briefTempSave => 'Save draft';
+
+  @override
+  String get briefSubmit => 'Submit for review';
+
+  @override
+  String get briefChecklistTitle => 'Before you submit';
+
+  @override
+  String get briefChecklistHint => 'Check these, then submit.';
+
+  @override
+  String get briefChecklistPhotos => 'Photos';
+
+  @override
+  String get briefChecklistCopy => 'Name & intro';
+
+  @override
+  String get briefChecklistPrice => 'Base price';
+
+  @override
+  String get briefChecklistOptions => 'Option prices';
+
+  @override
+  String get briefChecklistIncludes => 'Includes & excludes';
+
+  @override
+  String get briefChecklistCancel => 'Cancellation';
+
+  @override
+  String get briefShopInfoTitle => 'Shop & resort info';
+
+  @override
+  String get briefShopInfoBody =>
+      'Name, location, and intro are managed on the resort desk.';
+
+  @override
+  String get briefShopInfoOpen => 'Open resort desk';
+
+  @override
+  String get briefSameBoatPartnerHint =>
+      'Same-boat leftover seats open from product management after approval.';
+
+  @override
   String get briefViewModeHint => 'Tap Edit to make changes.';
 
   @override

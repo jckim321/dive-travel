@@ -3833,6 +3833,63 @@ class AppLocalizationsKo extends AppLocalizations {
   String get briefEdit => '수정';
 
   @override
+  String get briefStepBasics => '기본 정보';
+
+  @override
+  String get briefStepPricing => '가격·옵션';
+
+  @override
+  String get briefStepReview => '확인·제출';
+
+  @override
+  String get briefStepNext => '다음';
+
+  @override
+  String get briefStepBack => '이전';
+
+  @override
+  String get briefTempSave => '임시 저장';
+
+  @override
+  String get briefSubmit => '승인 요청';
+
+  @override
+  String get briefChecklistTitle => '제출 전 확인';
+
+  @override
+  String get briefChecklistHint => '아래를 확인한 뒤 제출해 주세요.';
+
+  @override
+  String get briefChecklistPhotos => '사진';
+
+  @override
+  String get briefChecklistCopy => '이름·소개';
+
+  @override
+  String get briefChecklistPrice => '기본 가격';
+
+  @override
+  String get briefChecklistOptions => '옵션 가격';
+
+  @override
+  String get briefChecklistIncludes => '포함·불포함';
+
+  @override
+  String get briefChecklistCancel => '취소 규정';
+
+  @override
+  String get briefShopInfoTitle => '샵·리조트 정보';
+
+  @override
+  String get briefShopInfoBody => '상호·위치·소개는 리조트 소개 화면에서 관리합니다.';
+
+  @override
+  String get briefShopInfoOpen => '리조트 소개 열기';
+
+  @override
+  String get briefSameBoatPartnerHint => '같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.';
+
+  @override
   String get briefViewModeHint => '수정을 누르면 편집할 수 있습니다.';
 
   @override

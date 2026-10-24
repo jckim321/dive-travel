@@ -7224,6 +7224,120 @@ abstract class AppLocalizations {
   /// **'수정'**
   String get briefEdit;
 
+  /// No description provided for @briefStepBasics.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 정보'**
+  String get briefStepBasics;
+
+  /// No description provided for @briefStepPricing.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격·옵션'**
+  String get briefStepPricing;
+
+  /// No description provided for @briefStepReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인·제출'**
+  String get briefStepReview;
+
+  /// No description provided for @briefStepNext.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get briefStepNext;
+
+  /// No description provided for @briefStepBack.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get briefStepBack;
+
+  /// No description provided for @briefTempSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'임시 저장'**
+  String get briefTempSave;
+
+  /// No description provided for @briefSubmit.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 요청'**
+  String get briefSubmit;
+
+  /// No description provided for @briefChecklistTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'제출 전 확인'**
+  String get briefChecklistTitle;
+
+  /// No description provided for @briefChecklistHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'아래를 확인한 뒤 제출해 주세요.'**
+  String get briefChecklistHint;
+
+  /// No description provided for @briefChecklistPhotos.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진'**
+  String get briefChecklistPhotos;
+
+  /// No description provided for @briefChecklistCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름·소개'**
+  String get briefChecklistCopy;
+
+  /// No description provided for @briefChecklistPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 가격'**
+  String get briefChecklistPrice;
+
+  /// No description provided for @briefChecklistOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 가격'**
+  String get briefChecklistOptions;
+
+  /// No description provided for @briefChecklistIncludes.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함·불포함'**
+  String get briefChecklistIncludes;
+
+  /// No description provided for @briefChecklistCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소 규정'**
+  String get briefChecklistCancel;
+
+  /// No description provided for @briefShopInfoTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵·리조트 정보'**
+  String get briefShopInfoTitle;
+
+  /// No description provided for @briefShopInfoBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'상호·위치·소개는 리조트 소개 화면에서 관리합니다.'**
+  String get briefShopInfoBody;
+
+  /// No description provided for @briefShopInfoOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 소개 열기'**
+  String get briefShopInfoOpen;
+
+  /// No description provided for @briefSameBoatPartnerHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.'**
+  String get briefSameBoatPartnerHint;
+
   /// No description provided for @briefViewModeHint.
   ///
   /// In ko, this message translates to:

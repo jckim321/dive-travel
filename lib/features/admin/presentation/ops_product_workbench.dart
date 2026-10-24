@@ -19,9 +19,12 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/product_brief_stepper.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
+import 'package:dive_travel_app/features/admin/presentation/product_submit_checklist.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -219,9 +222,11 @@ class _IndividualTicket {
 }
 
 class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
+  /// Scroll targets: 0 cover, 1 place, 2 detail, 3 booking, 4 same-boat.
   static const _sectionCount = 5;
   static const _kBoxRadius = 2.0;
   static const _kDirectShop = '__direct__';
+  static const _stepCount = 3;
 
   late final TextEditingController _name;
   late final TextEditingController _resortName;
@@ -262,6 +267,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
+  /// 0 basics · 1 pricing · 2 review/submit.
+  var _stepIndex = 0;
+  /// After first temp-save of a new product, reuse this id on later saves.
+  String? _persistedProductId;
+  final _checklist = <String, bool>{
+    for (final id in ProductSubmitChecklist.ids) id: false,
+  };
   static final _priceInputFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[0-9,\s원]')),
     LengthLimitingTextInputFormatter(kWorkbenchPriceInputMaxLength),
@@ -273,6 +285,30 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   String? _diverPriceError;
   String? _nondiverPriceError;
   String? _childPriceError;
+
+  bool get _canTempSave {
+    if (!_editing) {
+      return false;
+    }
+    return widget.existing?.publishStatus != ProductPublishStatus.approved;
+  }
+
+  bool _adminSameBoatFields(DiverStore store) {
+    return store.stats.isAdmin && !widget.partnerMode && !widget.creatorMode;
+  }
+
+  void _goToStep(int step, {int? revealSection}) {
+    final next = step.clamp(0, _stepCount - 1);
+    setState(() => _stepIndex = next);
+    if (revealSection != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _reveal(revealSection);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -291,6 +327,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ? ProductCategory.liveaboard
         : ProductCategory.resortPackage;
     _namedResort = _shopId.startsWith('curated-');
+    _persistedProductId =
+        existing?.id.isNotEmpty == true ? existing!.id : null;
     _name = TextEditingController(text: existing?.name ?? '');
     _resortName = TextEditingController(text: shop?.name ?? '');
     _resortCountry = TextEditingController(text: shop?.country ?? '');
@@ -882,6 +920,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   void _reveal(int index) {
+    final step = briefStepForSection(index);
+    if (_stepIndex != step) {
+      _goToStep(step, revealSection: index);
+      return;
+    }
     final target = _sectionKeys[index].currentContext;
     if (target == null) {
       return;
@@ -1084,12 +1127,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final store = DiverStoreScope.of(context);
     _seats.isAdmin = store.stats.isAdmin;
     _syncSeatSlots();
-    final seatError = _seats.validate(l10n, now: DateTime.now());
-    if (seatError != null) {
-      _reveal(4);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(seatError)));
-      return;
+    final validateSeats = _adminSameBoatFields(store) ||
+        widget.existing?.openEmptySeats == true;
+    if (validateSeats) {
+      final seatError = _seats.validate(l10n, now: DateTime.now());
+      if (seatError != null) {
+        _reveal(4);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(seatError)));
+        return;
+      }
     }
     final existing = widget.existing;
     final isResubmit = existing?.publishStatus == ProductPublishStatus.rejected &&
@@ -1157,8 +1204,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           intro: _blurb.text.trim(),
         );
       }
+      final productId = existing?.id.isNotEmpty == true
+          ? existing!.id
+          : (_persistedProductId ??
+              'p-${DateTime.now().millisecondsSinceEpoch}');
       final drafted = ShopProduct(
-        id: existing?.id ?? 'p-${DateTime.now().millisecondsSinceEpoch}',
+        id: productId,
         shopId: shopId,
         name: name,
         consumerPrice: diverRate.consumer,
@@ -1253,6 +1304,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         }
         product = product.copyWith(resubmitNote: note);
       }
+      final effectiveIntent =
+          widget.creatorMode && intent != ProductSaveIntent.keepEditing
+              ? ProductSaveIntent.submitForReview
+              : intent;
       await store.saveShopProduct(
         shopId: shopId,
         product: product,
@@ -1260,25 +1315,27 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         useAsResortCover: existing == null || _galleryTouched,
         creatorSubmission: widget.creatorMode,
         submitterUid: sessionUid,
-        intent: widget.creatorMode
-            ? ProductSaveIntent.submitForReview
-            : intent,
+        intent: effectiveIntent,
       );
       if (!mounted) {
         return;
       }
+      _persistedProductId = product.id;
       final pendingSameBoat = product.openEmptySeats &&
           product.sameBoatStatus == SameBoatStatus.pending;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pendingSameBoat
+            pendingSameBoat && effectiveIntent != ProductSaveIntent.keepEditing
                 ? l10n.sameBoatPendingAfterSave
-                : _savedMessage(l10n, intent),
+                : _savedMessage(l10n, effectiveIntent),
           ),
         ),
       );
-      Navigator.of(context).pop();
+      // Temp save stays on the form; submit/publish leaves.
+      if (effectiveIntent != ProductSaveIntent.keepEditing) {
+        Navigator.of(context).pop();
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -1414,11 +1471,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
+          final showSidePreview = wide;
+          final showMobilePreview = !wide && _stepIndex == 2;
           // IgnorePointer is applied to scroll *children* in _brief / _guestCard
           // so view mode can still scroll while blocking field taps.
           final brief = Opacity(
             opacity: _editing ? 1 : 0.92,
-            child: _brief(l10n, shops, shopLocked),
+            child: _brief(
+              l10n,
+              shops,
+              shopLocked,
+              showMobilePreview: showMobilePreview,
+              hull: hull,
+              adminSameBoat: _adminSameBoatFields(store),
+            ),
           );
           final guest = Opacity(
             opacity: _editing ? 1 : 0.92,
@@ -1426,8 +1492,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           );
           return Column(
             children: [
+              ProductBriefStepper(
+                stepIndex: _stepIndex,
+                // Allow browsing steps in view mode; fields stay IgnorePointer.
+                enabled: true,
+                onStepTap: (i) => _goToStep(i),
+              ),
               Expanded(
-                child: wide
+                child: showSidePreview
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -1462,7 +1534,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _saveBar(AppLocalizations l10n, {required bool canPublish}) {
-    final intent = widget.creatorMode
+    final submitIntent = widget.creatorMode
         ? ProductSaveIntent.submitForReview
         : (canPublish
             ? ProductSaveIntent.publish
@@ -1470,6 +1542,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final busy = _savingIntent != null;
     final pending = canPublish &&
         (widget.existing?.publishStatus == ProductPublishStatus.pending);
+    final onLastStep = _stepIndex >= _stepCount - 1;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -1516,16 +1589,78 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 child: Text(l10n.briefEdit),
               )
             else
-              FilledButton(
-                key: canPublish
-                    ? const Key('admin-product-submit')
-                    : const Key('partner-product-save'),
-                onPressed: busy ? null : () => _save(intent),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  backgroundColor: AppTheme.navy,
-                ),
-                child: Text(busy ? l10n.exploreSaving : l10n.briefSave),
+              Row(
+                children: [
+                  if (_stepIndex > 0) ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key('brief-step-back'),
+                        onPressed: busy
+                            ? null
+                            : () => _goToStep(_stepIndex - 1),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: Text(l10n.briefStepBack),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  if (_canTempSave) ...[
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key('brief-temp-save'),
+                        onPressed: busy
+                            ? null
+                            : () => _save(ProductSaveIntent.keepEditing),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: Text(
+                          busy &&
+                                  _savingIntent == ProductSaveIntent.keepEditing
+                              ? l10n.exploreSaving
+                              : l10n.briefTempSave,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      key: onLastStep
+                          ? (canPublish
+                              ? const Key('admin-product-submit')
+                              : const Key('partner-product-save'))
+                          : const Key('brief-step-next'),
+                      onPressed: busy
+                          ? null
+                          : () {
+                              if (onLastStep) {
+                                _save(submitIntent);
+                              } else {
+                                _goToStep(_stepIndex + 1);
+                              }
+                            },
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        backgroundColor: AppTheme.navy,
+                      ),
+                      child: Text(
+                        busy &&
+                                _savingIntent != null &&
+                                _savingIntent != ProductSaveIntent.keepEditing
+                            ? l10n.exploreSaving
+                            : (onLastStep
+                                ? (canPublish
+                                    ? l10n.briefSave
+                                    : l10n.briefSubmit)
+                                : l10n.briefStepNext),
+                      ),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -1617,11 +1752,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
-  Widget _brief(AppLocalizations l10n, List<DiveShop> shops, bool shopLocked) {
+  Widget _brief(
+    AppLocalizations l10n,
+    List<DiveShop> shops,
+    bool shopLocked, {
+    required bool showMobilePreview,
+    required DiveShop? hull,
+    required bool adminSameBoat,
+  }) {
     final rejectNote = widget.existing?.reviewNote.trim() ?? '';
+    final rejectTags = widget.existing?.rejectedReasonTags ?? const <String>[];
     final showRejectBanner =
         widget.existing?.publishStatus == ProductPublishStatus.rejected &&
-            rejectNote.isNotEmpty;
+            (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
     return ListView(
       key: const Key('ops-product-brief-scroll'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -1629,7 +1772,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         if (showRejectBanner)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _RejectReasonBanner(note: rejectNote, l10n: l10n),
+            child: _RejectReasonBanner(
+              note: rejectNote,
+              tags: rejectTags,
+              l10n: l10n,
+            ),
           ),
         if (!_editing) ...[
           Padding(
@@ -1646,17 +1793,101 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
-              _block(1, l10n.briefSectionPlace, [
-                _placeBlock(l10n, shops, shopLocked),
-              ]),
-              _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
-              _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
-              _block(4, l10n.briefSectionSameBoat, [_sameBoatSeatBlock(l10n)]),
+              if (_stepIndex == 0) ...[
+                _shopInfoCard(l10n),
+                _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
+                _block(1, l10n.briefSectionPlace, [
+                  _placeBlock(l10n, shops, shopLocked),
+                ]),
+                _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
+              ] else if (_stepIndex == 1) ...[
+                _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
+              ] else ...[
+                ProductSubmitChecklist(
+                  checked: _checklist,
+                  onChanged: (id, value) {
+                    setState(() => _checklist[id] = value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                if (showMobilePreview) ...[
+                  _guestCard(l10n, hull),
+                  const SizedBox(height: 12),
+                ],
+                if (adminSameBoat ||
+                    widget.existing?.openEmptySeats == true)
+                  _block(
+                    4,
+                    l10n.briefSectionSameBoat,
+                    [_sameBoatSeatBlock(l10n)],
+                  )
+                else
+                  _sameBoatPartnerHint(l10n),
+              ],
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _shopInfoCard(AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        key: const Key('brief-shop-info-card'),
+        color: const Color(0xFFF3F6FA),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.briefShopInfoTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.navy,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.briefShopInfoBody,
+                style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('brief-shop-info-open'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ResortDeskScreen(shopId: _shopId),
+                      ),
+                    );
+                  },
+                  child: Text(l10n.briefShopInfoOpen),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sameBoatPartnerHint(AppLocalizations l10n) {
+    return Material(
+      key: const Key('brief-same-boat-partner-hint'),
+      color: const Color(0xFFF3F6FA),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          l10n.briefSameBoatPartnerHint,
+          style: const TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.4),
+        ),
+      ),
     );
   }
 
@@ -3682,9 +3913,14 @@ class _CategoryPick extends StatelessWidget {
 }
 
 class _RejectReasonBanner extends StatefulWidget {
-  const _RejectReasonBanner({required this.note, required this.l10n});
+  const _RejectReasonBanner({
+    required this.note,
+    required this.l10n,
+    this.tags = const [],
+  });
 
   final String note;
+  final List<String> tags;
   final AppLocalizations l10n;
 
   @override
@@ -3714,29 +3950,57 @@ class _RejectReasonBannerState extends State<_RejectReasonBanner> {
                 fontSize: 13,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              widget.note,
-              maxLines: (!_expanded && long) ? 3 : null,
-              overflow:
-                  (!_expanded && long) ? TextOverflow.ellipsis : TextOverflow.visible,
-              style: const TextStyle(
-                color: Color(0xFF5C1A1A),
-                height: 1.4,
+            if (widget.tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final tag in widget.tags)
+                    Chip(
+                      key: Key('reject-banner-tag-$tag'),
+                      label: Text(productRejectTagLabel(widget.l10n, tag)),
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      labelStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8B1A1A),
+                      ),
+                      backgroundColor: Colors.white,
+                      side: BorderSide.none,
+                      padding: EdgeInsets.zero,
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                ],
               ),
-            ),
-            if (long)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() => _expanded = !_expanded),
-                  child: Text(
-                    _expanded
-                        ? widget.l10n.partnerRejectReasonCollapse
-                        : widget.l10n.partnerRejectReasonExpand,
-                  ),
+            ],
+            if (widget.note.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                widget.note,
+                maxLines: (!_expanded && long) ? 3 : null,
+                overflow: (!_expanded && long)
+                    ? TextOverflow.ellipsis
+                    : TextOverflow.visible,
+                style: const TextStyle(
+                  color: Color(0xFF5C1A1A),
+                  height: 1.4,
                 ),
               ),
+              if (long)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () => setState(() => _expanded = !_expanded),
+                    child: Text(
+                      _expanded
+                          ? widget.l10n.partnerRejectReasonCollapse
+                          : widget.l10n.partnerRejectReasonExpand,
+                    ),
+                  ),
+                ),
+            ],
           ],
         ),
       ),

@@ -72,6 +72,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  Future<void> goToStep(WidgetTester tester, int step) async {
+    await tester.tap(find.byKey(Key('brief-step-$step')));
+    await tester.pumpAndSettle();
+  }
+
   Future<void> reveal(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
@@ -94,6 +99,7 @@ void main() {
       reason: 'view mode must not focus the name field',
     );
 
+    await goToStep(tester, 2);
     await reveal(tester, find.text(l10n.briefSectionSameBoat));
     expect(find.text(l10n.briefSectionSameBoat), findsWidgets);
 
@@ -117,8 +123,11 @@ void main() {
   testWidgets('startEditing true면 바로 편집 모드', (tester) async {
     await pumpWorkbench(tester, startEditing: true);
     expect(find.byKey(const Key('ops-product-view-hint')), findsNothing);
-    expect(find.byKey(const Key('admin-product-submit')), findsOneWidget);
+    expect(find.byKey(const Key('brief-step-next')), findsOneWidget);
+    await goToStep(tester, 1);
     expect(find.byKey(const Key('workbench-diver-price')), findsOneWidget);
+    await goToStep(tester, 2);
+    expect(find.byKey(const Key('admin-product-submit')), findsOneWidget);
   });
 
   testWidgets('수정 모드에서는 입력이 된다', (tester) async {
@@ -128,7 +137,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('ops-product-view-hint')), findsNothing);
-    expect(find.byKey(const Key('admin-product-submit')), findsOneWidget);
+    expect(find.byKey(const Key('brief-step-next')), findsOneWidget);
 
     await reveal(tester, find.byKey(const Key('admin-product-name')));
     await tester.enterText(
@@ -144,6 +153,7 @@ void main() {
       '수정된 상품명',
     );
 
+    await goToStep(tester, 2);
     await reveal(tester, find.byKey(const Key('same-boat-open-package')));
     final openBefore = tester
         .widget<SwitchListTile>(find.byKey(const Key('same-boat-open-package')))
