@@ -2554,6 +2554,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
+  /// White filled fields on the booking step — dark text for contrast.
+  static const TextStyle _bookingFieldStyle = TextStyle(
+    color: AppTheme.navy,
+    fontWeight: FontWeight.w700,
+    fontSize: 14,
+  );
+
   InputDecoration _bookingDense(
     String label, {
     String? hint,
@@ -2578,6 +2585,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       alignLabelWithHint: lines > 1,
       filled: true,
       fillColor: Colors.white,
+      labelStyle: const TextStyle(color: AppTheme.muted, fontSize: 12),
+      hintStyle: const TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w400),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       border: border,
       enabledBorder: border,
@@ -2691,11 +2700,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       keyboardType: TextInputType.number,
                       maxLength: kWorkbenchPriceInputMaxLength,
                       inputFormatters: _priceInputFormatters,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
+                      style: _bookingFieldStyle.copyWith(fontSize: 15),
                       cursorColor: AppTheme.navy,
                       decoration: _priceFieldDecoration(
                         l10n,
@@ -2734,6 +2739,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             controller: _includes,
                             minLines: 2,
                             maxLines: 4,
+                            style: _bookingFieldStyle.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
                             decoration: _bookingDense(
                               l10n.productFormIncludes,
                               hint: l10n.productFormIncludesHint,
@@ -2745,6 +2753,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             controller: _excludes,
                             minLines: 2,
                             maxLines: 4,
+                            style: _bookingFieldStyle.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
                             decoration: _bookingDense(
                               l10n.productFormExcludes,
                               hint: l10n.productFormExcludesHint,
@@ -3040,20 +3051,40 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     controller: ticket.name,
                     style: TextStyle(
                       color: emptyName
-                          ? Colors.white.withValues(alpha: 0.45)
-                          : Colors.white,
+                          ? AppTheme.muted
+                          : AppTheme.navy,
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
                     ),
-                    cursorColor: AppTheme.gold,
+                    cursorColor: AppTheme.navy,
                     decoration: InputDecoration(
                       hintText: l10n.bookingEntryIndividualName,
-                      hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
+                      hintStyle: const TextStyle(
+                        color: AppTheme.muted,
+                        fontWeight: FontWeight.w400,
                       ),
                       isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(_kBoxRadius),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(_kBoxRadius),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(_kBoxRadius),
+                        borderSide: const BorderSide(
+                          color: AppTheme.gold,
+                          width: 1.4,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
                     ),
                     onChanged: (_) => setState(() {}),
                   ),
@@ -3086,35 +3117,34 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           keyboardType: TextInputType.number,
                           maxLength: kWorkbenchPriceInputMaxLength,
                           inputFormatters: _priceInputFormatters,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                          cursorColor: AppTheme.gold,
+                          style: _bookingFieldStyle,
+                          cursorColor: AppTheme.navy,
                           decoration: InputDecoration(
                             labelText: l10n.bookingEntryDiverPrice,
-                            labelStyle: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
+                            labelStyle: const TextStyle(
+                              color: AppTheme.muted,
                               fontSize: 12,
                             ),
                             errorText: ticket.priceError,
                             counterText: '',
                             isDense: true,
+                            filled: true,
+                            fillColor: Colors.white,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 8,
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(_kBoxRadius),
-                              borderSide: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.35),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF94A3B8),
+                                width: 1.2,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(_kBoxRadius),
                               borderSide: const BorderSide(
-                                color: AppTheme.gold,
+                                color: AppTheme.navy,
                                 width: 1.4,
                               ),
                             ),
@@ -3171,6 +3201,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         controller: ticket.includes,
                         minLines: 2,
                         maxLines: 4,
+                        style: _bookingFieldStyle.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: _bookingDense(
                           l10n.productFormIncludes,
                           hint: l10n.productFormIncludesHint,
@@ -3182,6 +3215,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         controller: ticket.excludes,
                         minLines: 2,
                         maxLines: 4,
+                        style: _bookingFieldStyle.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: _bookingDense(
                           l10n.productFormExcludes,
                           hint: l10n.productFormExcludesHint,
@@ -3577,6 +3613,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               flex: 3,
               child: TextField(
                 controller: draft.name,
+                style: _bookingFieldStyle.copyWith(fontWeight: FontWeight.w600),
                 decoration: _bookingDense(l10n.bookingEntryOptionName),
                 onChanged: (_) => setState(() {}),
               ),
@@ -3590,6 +3627,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 keyboardType: TextInputType.number,
                 maxLength: kWorkbenchPriceInputMaxLength,
                 inputFormatters: _priceInputFormatters,
+                style: _bookingFieldStyle,
                 decoration: _bookingDense(
                   l10n.bookingEntryOptionPrice,
                   errorText: draft.priceError,
@@ -3697,11 +3735,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     errorText: priceError,
                     suffixText: l10n.workbenchCurrencyWon,
                   ).copyWith(counterText: ''),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
+                  style: _bookingFieldStyle,
                   onChanged: (_) {
                     onPriceChanged?.call();
                     setState(() {});
