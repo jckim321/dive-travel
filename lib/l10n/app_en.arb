@@ -1183,9 +1183,42 @@
   "adminPostTypeBuddy": "Buddy crew",
   "adminPostTypeTour": "Shop tour",
   "adminPostHidden": "Hidden",
-  "partnerTitle": "Partner mode",
+  "partnerTitle": "Affiliate partner mode",
   "partnerSubtitle": "Edit your shop, list tours, and track this month's payout.",
-  "partnerAccessDenied": "This account is not a Business partner.",
+  "partnerAccessDenied": "This account is not an affiliate partner (Business).",
+  "partnerHomeShopInfo": "Shop info",
+  "partnerHomeMenuSameBoat": "Same-boat seats",
+  "partnerHomeSameBoatRejectedBanner": "{count} same-boat rejection(s) — please re-apply",
+  "@partnerHomeSameBoatRejectedBanner": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerQuickProducts": "Products",
+  "partnerQuickBookings": "Booking vouchers",
+  "partnerQuickStats": "Stats",
+  "partnerQuickDocs": "Partnership docs",
+  "partnerQuickSettlement": "Settlement",
+  "partnerComingSoonBody": "This feature is coming soon.",
+  "partnerBusinessHighlightTitle": "Business Highlight",
+  "partnerHighlightJourney": "Diver journey",
+  "partnerHighlightBookingHits": "Booking hits",
+  "partnerHighlightPromoHits": "Promotion hits",
+  "partnerHighlightEmptyMetrics": "No data to show yet",
+  "partnerHighlightMilestoneTitle": "Resort milestones · Dive Star",
+  "partnerMilestoneGeneral": "General",
+  "partnerMilestonePreReview": "Pre-review",
+  "partnerMilestoneOneStar": "1★",
+  "partnerMilestoneTwoStar": "2★",
+  "partnerMilestoneThreeStar": "3★",
+  "partnerHighlightReviewsTitle": "Reviews",
+  "partnerHighlightNoReviews": "No reviews yet",
+  "partnerHighlightReviewCount": "{count} reviews",
+  "@partnerHighlightReviewCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "partnerShopEdit": "Edit shop profile",
   "partnerShopEditHint": "Save name, location, default product, and both prices.",
   "partnerProductForm": "Add product",

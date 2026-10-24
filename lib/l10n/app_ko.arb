@@ -1769,12 +1769,45 @@
   "adminPostTypeBuddy": "버디 모집",
   "adminPostTypeTour": "샵 투어 상품",
   "adminPostHidden": "숨김 처리됨",
-  "partnerTitle": "파트너 모드",
+  "partnerTitle": "제휴파트너 모드",
   "@partnerTitle": {
     "description": "샵 사장님 전용 대시보드 제목입니다."
   },
   "partnerSubtitle": "샵 정보, 투어 상품, 이번 달 예약과 정산을 한곳에서 관리합니다.",
-  "partnerAccessDenied": "파트너(Business) 권한이 없는 계정입니다.",
+  "partnerAccessDenied": "제휴파트너(Business) 권한이 없는 계정입니다.",
+  "partnerHomeShopInfo": "샵 정보",
+  "partnerHomeMenuSameBoat": "같은배 좌석",
+  "partnerHomeSameBoatRejectedBanner": "같은배 반려 {count}건 — 재신청이 필요해요",
+  "@partnerHomeSameBoatRejectedBanner": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerQuickProducts": "상품 관리",
+  "partnerQuickBookings": "예약 바우처",
+  "partnerQuickStats": "통계 보기",
+  "partnerQuickDocs": "제휴 계약서",
+  "partnerQuickSettlement": "매출 정산",
+  "partnerComingSoonBody": "이 기능은 준비 중이에요. 곧 만나 보세요.",
+  "partnerBusinessHighlightTitle": "Business Highlight (비즈니스 하이라이트)",
+  "partnerHighlightJourney": "다이버 여정",
+  "partnerHighlightBookingHits": "예약 Hits",
+  "partnerHighlightPromoHits": "프로모션 Hits",
+  "partnerHighlightEmptyMetrics": "아직 표시할 데이터가 없어요",
+  "partnerHighlightMilestoneTitle": "리조트 이정표 · 다이브스타 진행",
+  "partnerMilestoneGeneral": "일반",
+  "partnerMilestonePreReview": "심사 전",
+  "partnerMilestoneOneStar": "원스타",
+  "partnerMilestoneTwoStar": "투스타",
+  "partnerMilestoneThreeStar": "쓰리스타",
+  "partnerHighlightReviewsTitle": "리뷰 평점",
+  "partnerHighlightNoReviews": "아직 리뷰가 없어요",
+  "partnerHighlightReviewCount": "리뷰 {count}개",
+  "@partnerHighlightReviewCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "partnerShopEdit": "샵 정보 수정",
   "partnerShopEditHint": "이름, 위치, 기본 상품과 두 가지 가격을 저장합니다.",
   "partnerProductForm": "상품 등록",

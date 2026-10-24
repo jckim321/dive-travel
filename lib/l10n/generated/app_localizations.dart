@@ -5637,7 +5637,7 @@ abstract class AppLocalizations {
   /// 샵 사장님 전용 대시보드 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'파트너 모드'**
+  /// **'제휴파트너 모드'**
   String get partnerTitle;
 
   /// No description provided for @partnerSubtitle.
@@ -5649,8 +5649,146 @@ abstract class AppLocalizations {
   /// No description provided for @partnerAccessDenied.
   ///
   /// In ko, this message translates to:
-  /// **'파트너(Business) 권한이 없는 계정입니다.'**
+  /// **'제휴파트너(Business) 권한이 없는 계정입니다.'**
   String get partnerAccessDenied;
+
+  /// No description provided for @partnerHomeShopInfo.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 정보'**
+  String get partnerHomeShopInfo;
+
+  /// No description provided for @partnerHomeMenuSameBoat.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 좌석'**
+  String get partnerHomeMenuSameBoat;
+
+  /// No description provided for @partnerHomeSameBoatRejectedBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 반려 {count}건 — 재신청이 필요해요'**
+  String partnerHomeSameBoatRejectedBanner(int count);
+
+  /// No description provided for @partnerQuickProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 관리'**
+  String get partnerQuickProducts;
+
+  /// No description provided for @partnerQuickBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 바우처'**
+  String get partnerQuickBookings;
+
+  /// No description provided for @partnerQuickStats.
+  ///
+  /// In ko, this message translates to:
+  /// **'통계 보기'**
+  String get partnerQuickStats;
+
+  /// No description provided for @partnerQuickDocs.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 계약서'**
+  String get partnerQuickDocs;
+
+  /// No description provided for @partnerQuickSettlement.
+  ///
+  /// In ko, this message translates to:
+  /// **'매출 정산'**
+  String get partnerQuickSettlement;
+
+  /// No description provided for @partnerComingSoonBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기능은 준비 중이에요. 곧 만나 보세요.'**
+  String get partnerComingSoonBody;
+
+  /// No description provided for @partnerBusinessHighlightTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'Business Highlight (비즈니스 하이라이트)'**
+  String get partnerBusinessHighlightTitle;
+
+  /// No description provided for @partnerHighlightJourney.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 여정'**
+  String get partnerHighlightJourney;
+
+  /// No description provided for @partnerHighlightBookingHits.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 Hits'**
+  String get partnerHighlightBookingHits;
+
+  /// No description provided for @partnerHighlightPromoHits.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로모션 Hits'**
+  String get partnerHighlightPromoHits;
+
+  /// No description provided for @partnerHighlightEmptyMetrics.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 표시할 데이터가 없어요'**
+  String get partnerHighlightEmptyMetrics;
+
+  /// No description provided for @partnerHighlightMilestoneTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 이정표 · 다이브스타 진행'**
+  String get partnerHighlightMilestoneTitle;
+
+  /// No description provided for @partnerMilestoneGeneral.
+  ///
+  /// In ko, this message translates to:
+  /// **'일반'**
+  String get partnerMilestoneGeneral;
+
+  /// No description provided for @partnerMilestonePreReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 전'**
+  String get partnerMilestonePreReview;
+
+  /// No description provided for @partnerMilestoneOneStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'원스타'**
+  String get partnerMilestoneOneStar;
+
+  /// No description provided for @partnerMilestoneTwoStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'투스타'**
+  String get partnerMilestoneTwoStar;
+
+  /// No description provided for @partnerMilestoneThreeStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'쓰리스타'**
+  String get partnerMilestoneThreeStar;
+
+  /// No description provided for @partnerHighlightReviewsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'리뷰 평점'**
+  String get partnerHighlightReviewsTitle;
+
+  /// No description provided for @partnerHighlightNoReviews.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 리뷰가 없어요'**
+  String get partnerHighlightNoReviews;
+
+  /// No description provided for @partnerHighlightReviewCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'리뷰 {count}개'**
+  String partnerHighlightReviewCount(int count);
 
   /// No description provided for @partnerShopEdit.
   ///

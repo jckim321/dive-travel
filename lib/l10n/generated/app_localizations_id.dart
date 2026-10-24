@@ -3005,6 +3005,79 @@ class AppLocalizationsId extends AppLocalizations {
   String get partnerAccessDenied => 'Akun ini bukan partner Business.';
 
   @override
+  String get partnerHomeShopInfo => '샵 정보';
+
+  @override
+  String get partnerHomeMenuSameBoat => '같은배 좌석';
+
+  @override
+  String partnerHomeSameBoatRejectedBanner(int count) {
+    return '같은배 반려 $count건 — 재신청이 필요해요';
+  }
+
+  @override
+  String get partnerQuickProducts => '상품 관리';
+
+  @override
+  String get partnerQuickBookings => '예약 바우처';
+
+  @override
+  String get partnerQuickStats => '통계 보기';
+
+  @override
+  String get partnerQuickDocs => '제휴 계약서';
+
+  @override
+  String get partnerQuickSettlement => '매출 정산';
+
+  @override
+  String get partnerComingSoonBody => '이 기능은 준비 중이에요. 곧 만나 보세요.';
+
+  @override
+  String get partnerBusinessHighlightTitle => 'Business Highlight (비즈니스 하이라이트)';
+
+  @override
+  String get partnerHighlightJourney => '다이버 여정';
+
+  @override
+  String get partnerHighlightBookingHits => '예약 Hits';
+
+  @override
+  String get partnerHighlightPromoHits => '프로모션 Hits';
+
+  @override
+  String get partnerHighlightEmptyMetrics => '아직 표시할 데이터가 없어요';
+
+  @override
+  String get partnerHighlightMilestoneTitle => '리조트 이정표 · 다이브스타 진행';
+
+  @override
+  String get partnerMilestoneGeneral => '일반';
+
+  @override
+  String get partnerMilestonePreReview => '심사 전';
+
+  @override
+  String get partnerMilestoneOneStar => '원스타';
+
+  @override
+  String get partnerMilestoneTwoStar => '투스타';
+
+  @override
+  String get partnerMilestoneThreeStar => '쓰리스타';
+
+  @override
+  String get partnerHighlightReviewsTitle => '리뷰 평점';
+
+  @override
+  String get partnerHighlightNoReviews => '아직 리뷰가 없어요';
+
+  @override
+  String partnerHighlightReviewCount(int count) {
+    return '리뷰 $count개';
+  }
+
+  @override
   String get partnerShopEdit => 'Edit profil toko';
 
   @override

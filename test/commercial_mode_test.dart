@@ -209,7 +209,8 @@ void main() {
     await tester.tap(find.byKey(const Key('open-partner-mode')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.partnerTitle), findsWidgets);
-    expect(find.text(l10n.partnerProductForm), findsOneWidget);
+    expect(find.byKey(const Key('partner-quick-products')), findsOneWidget);
+    expect(find.text(l10n.partnerQuickProducts), findsOneWidget);
   });
 
   testWidgets('같은배 탭은 빈자리를 연 상품이 없으면 탐색으로 안내한다', (tester) async {

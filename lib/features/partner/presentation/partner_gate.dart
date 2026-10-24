@@ -15,6 +15,7 @@ Future<void> openPartnerMode(BuildContext context) async {
   }
   await Navigator.of(context).push(
     MaterialPageRoute<void>(
+      // Theme is applied inside PartnerDashboardScreen (home only).
       builder: (_) => const PartnerDashboardScreen(),
     ),
   );

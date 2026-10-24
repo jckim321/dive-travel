@@ -3061,14 +3061,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPostHidden => 'Hidden';
 
   @override
-  String get partnerTitle => 'Partner mode';
+  String get partnerTitle => 'Affiliate partner mode';
 
   @override
   String get partnerSubtitle =>
       'Edit your shop, list tours, and track this month\'s payout.';
 
   @override
-  String get partnerAccessDenied => 'This account is not a Business partner.';
+  String get partnerAccessDenied =>
+      'This account is not an affiliate partner (Business).';
+
+  @override
+  String get partnerHomeShopInfo => 'Shop info';
+
+  @override
+  String get partnerHomeMenuSameBoat => 'Same-boat seats';
+
+  @override
+  String partnerHomeSameBoatRejectedBanner(int count) {
+    return '$count same-boat rejection(s) — please re-apply';
+  }
+
+  @override
+  String get partnerQuickProducts => 'Products';
+
+  @override
+  String get partnerQuickBookings => 'Booking vouchers';
+
+  @override
+  String get partnerQuickStats => 'Stats';
+
+  @override
+  String get partnerQuickDocs => 'Partnership docs';
+
+  @override
+  String get partnerQuickSettlement => 'Settlement';
+
+  @override
+  String get partnerComingSoonBody => 'This feature is coming soon.';
+
+  @override
+  String get partnerBusinessHighlightTitle => 'Business Highlight';
+
+  @override
+  String get partnerHighlightJourney => 'Diver journey';
+
+  @override
+  String get partnerHighlightBookingHits => 'Booking hits';
+
+  @override
+  String get partnerHighlightPromoHits => 'Promotion hits';
+
+  @override
+  String get partnerHighlightEmptyMetrics => 'No data to show yet';
+
+  @override
+  String get partnerHighlightMilestoneTitle => 'Resort milestones · Dive Star';
+
+  @override
+  String get partnerMilestoneGeneral => 'General';
+
+  @override
+  String get partnerMilestonePreReview => 'Pre-review';
+
+  @override
+  String get partnerMilestoneOneStar => '1★';
+
+  @override
+  String get partnerMilestoneTwoStar => '2★';
+
+  @override
+  String get partnerMilestoneThreeStar => '3★';
+
+  @override
+  String get partnerHighlightReviewsTitle => 'Reviews';
+
+  @override
+  String get partnerHighlightNoReviews => 'No reviews yet';
+
+  @override
+  String partnerHighlightReviewCount(int count) {
+    return '$count reviews';
+  }
 
   @override
   String get partnerShopEdit => 'Edit shop profile';
