@@ -1595,6 +1595,15 @@
   "adminAllProducts": "등록된 상품",
   "adminProductSpecial": "기획 스페셜로 첫 화면에 올리기",
   "adminProductApproved": "상품이 승인되어 공개되었습니다.",
+  "adminPriceRevisionChip": "가격 변경 요청",
+  "adminPriceRevisionPendingOptions": "승인 대기 신규 옵션: {names}",
+  "@adminPriceRevisionPendingOptions": {
+    "placeholders": {
+      "names": { "type": "String" }
+    }
+  },
+  "adminPriceRevisionApproved": "가격 변경이 승인되어 반영되었어요.",
+  "adminPriceRevisionRejected": "가격 변경 요청이 반려되었어요.",
   "adminProductApproveNeedsPrice": "가격을 입력한 상품만 승인할 수 있어요",
   "adminProductApproveOverCap": "1억 원을 넘는 가격이 있어 승인할 수 없어요",
   "adminProductRejectNeedsNote": "반려 사유를 입력해 주세요",
@@ -2001,6 +2010,15 @@
   "workbenchCurrencyWon": "원",
   "workbenchGuestPreviewTitle": "고객 구매 화면 예시",
   "workbenchGuestPreviewHint": "저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.",
+  "workbenchPriceRevisionPendingBanner": "가격·신규 옵션 변경은 관리자 승인을 기다리는 중이에요. 그 외 수정은 이미 공개 상품에 반영되었어요.",
+  "workbenchPriceRevisionRejectedBanner": "관리자가 가격 변경을 반려했어요: {note}",
+  "@workbenchPriceRevisionRejectedBanner": {
+    "placeholders": {
+      "note": { "type": "String" }
+    }
+  },
+  "workbenchPriceRevisionStaged": "가격·새 옵션은 관리자 승인 뒤에 반영돼요. 나머지는 바로 반영되었어요",
+  "workbenchOptionClosedNotDeleted": "예약·홀드가 있는 옵션이라 삭제 대신 예약 마감 처리했어요.",
   "workbenchPhotoUploadFailed": "사진 업로드에 실패했습니다. 연결·R2 설정을 확인한 뒤 다시 저장하세요. 상품은 저장되지 않았습니다.",
   "workbenchPhotoLoadFailed": "사진을 불러오지 못했어요",
   "workbenchNeedGuestPrice": "비다이버·아동 가격을 0보다 큰 금액으로 입력한 뒤 저장합니다.",

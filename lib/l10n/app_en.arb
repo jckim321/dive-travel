@@ -1015,6 +1015,15 @@
   "adminAllProducts": "Registered products",
   "adminProductSpecial": "Publish on the home shelf as a planned special",
   "adminProductApproved": "Product approved and published.",
+  "adminPriceRevisionChip": "Price change request",
+  "adminPriceRevisionPendingOptions": "New options pending approval: {names}",
+  "@adminPriceRevisionPendingOptions": {
+    "placeholders": {
+      "names": { "type": "String" }
+    }
+  },
+  "adminPriceRevisionApproved": "Price changes approved and live.",
+  "adminPriceRevisionRejected": "Price change request returned.",
   "adminProductApproveNeedsPrice": "Only products with a diver price can be approved.",
   "adminProductApproveOverCap": "Cannot approve: a unit price is over 100 million won.",
   "adminProductRejectNeedsNote": "Please enter a rejection reason.",
@@ -1396,6 +1405,15 @@
   "workbenchCurrencyWon": "KRW",
   "workbenchGuestPreviewTitle": "Guest checkout preview",
   "workbenchGuestPreviewHint": "Example only — guest counts here are not saved.",
+  "workbenchPriceRevisionPendingBanner": "Price or new-option changes are waiting for admin approval. Other edits are already saved on the live listing.",
+  "workbenchPriceRevisionRejectedBanner": "Admin returned the price change request: {note}",
+  "@workbenchPriceRevisionRejectedBanner": {
+    "placeholders": {
+      "note": { "type": "String" }
+    }
+  },
+  "workbenchPriceRevisionStaged": "Prices and new options will go live after admin approval. Everything else was saved right away.",
+  "workbenchOptionClosedNotDeleted": "This option has bookings or holds, so it was closed instead of removed.",
   "workbenchPhotoUploadFailed": "Photo upload failed. Fix the connection or R2 settings, then save again. Nothing was saved.",
   "workbenchPhotoLoadFailed": "Couldn't load this photo",
   "workbenchNeedGuestPrice": "Enter non-diver and child prices greater than 0 before saving.",

@@ -28,12 +28,27 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/dev/dev_roles.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
+
+/// Outcome flags from [DiverStore.saveShopProduct].
+class ShopProductSaveResult {
+  const ShopProductSaveResult({this.stagedPriceOrNewOptions = false});
+
+  final bool stagedPriceOrNewOptions;
+}
+
+class _GatedShopProduct {
+  const _GatedShopProduct(this.product, this.stagedPriceOrNewOptions);
+
+  final ShopProduct product;
+  final bool stagedPriceOrNewOptions;
+}
 
 class DiverStore extends ChangeNotifier {
   /// Explore/홈 auto-refresh window for shop stats cache.
@@ -391,14 +406,18 @@ class DiverStore extends ChangeNotifier {
     final out = <ShopProduct>[];
     for (final stats in _shopStats) {
       for (final product in stats.products) {
-        if (product.isPendingApproval) {
+        if (product.isPendingApproval || product.hasPendingPriceRevision) {
           out.add(product);
         }
       }
     }
     out.sort((a, b) {
-      final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final aAt = a.priceRevision?.submittedAt ??
+          a.submittedAt ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final bAt = b.priceRevision?.submittedAt ??
+          b.submittedAt ??
+          DateTime.fromMillisecondsSinceEpoch(0);
       return bAt.compareTo(aAt);
     });
     return out;
@@ -1525,7 +1544,7 @@ class DiverStore extends ChangeNotifier {
   String get partnerOwnedShopId =>
       stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
 
-  Future<void> saveShopProduct({
+  Future<ShopProductSaveResult> saveShopProduct({
     required String shopId,
     required ShopProduct product,
     Uint8List? photoBytes,
@@ -1583,7 +1602,7 @@ class DiverStore extends ChangeNotifier {
 
     await _repository.saveShopProduct(
       shopId: shopId,
-      product: gated,
+      product: gated.product,
       photoBytes: photoBytes,
       photoFileName: photoFileName,
       photoContentType: photoContentType,
@@ -1598,7 +1617,7 @@ class DiverStore extends ChangeNotifier {
         for (final slot in gallery)
           if (slot.hasBytes || slot.hasUrl) slot.hasBytes ? slot.bytes : null,
       ];
-      _productFrames['$shopId--${gated.id}'] = frames;
+      _productFrames['$shopId--${gated.product.id}'] = frames;
       Uint8List? first;
       for (final frame in frames) {
         if (frame != null && frame.isNotEmpty) {
@@ -1607,23 +1626,26 @@ class DiverStore extends ChangeNotifier {
         }
       }
       if (first != null) {
-        _coverBytes['$shopId--${gated.id}'] = first;
+        _coverBytes['$shopId--${gated.product.id}'] = first;
         if (useAsResortCover) {
           _coverBytes[shopId] = first;
         }
       }
     } else if (photoBytes != null && photoBytes.isNotEmpty) {
-      _coverBytes['$shopId--${gated.id}'] = photoBytes;
+      _coverBytes['$shopId--${gated.product.id}'] = photoBytes;
       if (useAsResortCover) {
         _coverBytes[shopId] = photoBytes;
       }
     }
     // Show the saved product in partner lists immediately, then confirm via fetch.
-    _upsertLocalShopProduct(shopId, gated);
+    _upsertLocalShopProduct(shopId, gated.product);
     final refreshed = await refreshShopStat(shopId);
     if (!refreshed) {
       throw StateError('SHOP_STAT_REFRESH_FAILED');
     }
+    return ShopProductSaveResult(
+      stagedPriceOrNewOptions: gated.stagedPriceOrNewOptions,
+    );
   }
 
   void _upsertLocalShopProduct(String shopId, ShopProduct product) {
@@ -1701,7 +1723,7 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  ShopProduct _withSaveIntent({
+  _GatedShopProduct _withSaveIntent({
     required ShopProduct product,
     ShopProduct? previous,
     List<ShopGallerySlot>? pendingGallery,
@@ -1717,25 +1739,32 @@ class DiverStore extends ChangeNotifier {
     if (creatorSubmission || intent == null) {
       final forcePending = creatorSubmission || !_stats.isAdmin;
       if (forcePending) {
-        return _pendingAfterSave(
-          product: product,
-          previous: previous,
-          submitter: submitter,
-          pendingGallery: pendingGallery,
+        return _GatedShopProduct(
+          _pendingAfterSave(
+            product: product,
+            previous: previous,
+            submitter: submitter,
+            pendingGallery: pendingGallery,
+          ),
+          false,
         );
       }
       ProductPublishGuard.ensureCanApprove(product);
-      return product.copyWith(
-        publishStatus: ProductPublishStatus.approved,
-        active: true,
-        reviewedAt: DateTime.now(),
-        reviewNote: '',
-        rejectedContentHash: '',
-        rejectedReasonTags: const [],
-        rejectedSectionHashes: const {},
-        resubmitCount: 0,
-        resubmitNote: '',
-        submittedAt: product.submittedAt ?? DateTime.now(),
+      return _GatedShopProduct(
+        product.copyWith(
+          publishStatus: ProductPublishStatus.approved,
+          active: true,
+          reviewedAt: DateTime.now(),
+          reviewNote: '',
+          rejectedContentHash: '',
+          rejectedReasonTags: const [],
+          rejectedSectionHashes: const {},
+          resubmitCount: 0,
+          resubmitNote: '',
+          submittedAt: product.submittedAt ?? DateTime.now(),
+          priceRevision: null,
+        ),
+        false,
       );
     }
     switch (intent) {
@@ -1747,49 +1776,130 @@ class DiverStore extends ChangeNotifier {
         final nextActive = prevStatus == ProductPublishStatus.approved
             ? (previous?.active ?? product.active)
             : false;
-        return product.copyWith(
-          publishStatus: nextStatus,
-          active: nextActive,
-          submittedByUid: submitter,
-          reviewNote: previous?.reviewNote ?? product.reviewNote,
-          rejectedContentHash:
-              previous?.rejectedContentHash ?? product.rejectedContentHash,
-          rejectedReasonTags:
-              previous?.rejectedReasonTags ?? product.rejectedReasonTags,
-          rejectedSectionHashes:
-              previous?.rejectedSectionHashes ?? product.rejectedSectionHashes,
-          resubmitCount: previous?.resubmitCount ?? product.resubmitCount,
-          resubmitNote: previous?.resubmitNote ?? product.resubmitNote,
+        return _GatedShopProduct(
+          product.copyWith(
+            publishStatus: nextStatus,
+            active: nextActive,
+            submittedByUid: submitter,
+            reviewNote: previous?.reviewNote ?? product.reviewNote,
+            rejectedContentHash:
+                previous?.rejectedContentHash ?? product.rejectedContentHash,
+            rejectedReasonTags:
+                previous?.rejectedReasonTags ?? product.rejectedReasonTags,
+            rejectedSectionHashes: previous?.rejectedSectionHashes ??
+                product.rejectedSectionHashes,
+            resubmitCount: previous?.resubmitCount ?? product.resubmitCount,
+            resubmitNote: previous?.resubmitNote ?? product.resubmitNote,
+            priceRevision: previous?.priceRevision ?? product.priceRevision,
+          ),
+          false,
         );
       case ProductSaveIntent.submitForReview:
-        return _pendingAfterSave(
-          product: product,
-          previous: previous,
-          submitter: submitter,
-          pendingGallery: pendingGallery,
+        if (previous?.publishStatus == ProductPublishStatus.approved &&
+            !_stats.isAdmin) {
+          final staged = stageApprovedPartnerSave(
+            previous: previous!,
+            draft: product,
+          );
+          return _GatedShopProduct(
+            staged.product,
+            staged.stagedPriceOrNewOptions,
+          );
+        }
+        return _GatedShopProduct(
+          _pendingAfterSave(
+            product: product,
+            previous: previous,
+            submitter: submitter,
+            pendingGallery: pendingGallery,
+          ),
+          false,
         );
       case ProductSaveIntent.publish:
         if (!_stats.isAdmin) {
           throw StateError('Admin only');
         }
-        ProductPublishGuard.ensureCanApprove(product);
-        return product.copyWith(
-          publishStatus: ProductPublishStatus.approved,
-          active: true,
-          reviewedAt: DateTime.now(),
-          reviewNote: '',
-          rejectedContentHash: '',
-          rejectedReasonTags: const [],
-          rejectedSectionHashes: const {},
-          resubmitCount: 0,
-          resubmitNote: '',
-          submittedAt: product.submittedAt ?? DateTime.now(),
+        var next = product;
+        if (next.priceRevision != null) {
+          next = applyPriceRevisionToLive(next);
+        } else {
+          next = next.copyWith(priceRevision: null);
+        }
+        ProductPublishGuard.ensureCanApprove(next);
+        return _GatedShopProduct(
+          next.copyWith(
+            publishStatus: ProductPublishStatus.approved,
+            active: true,
+            reviewedAt: DateTime.now(),
+            reviewNote: '',
+            rejectedContentHash: '',
+            rejectedReasonTags: const [],
+            rejectedSectionHashes: const {},
+            resubmitCount: 0,
+            resubmitNote: '',
+            submittedAt: next.submittedAt ?? DateTime.now(),
+            priceRevision: null,
+          ),
+          false,
         );
       case ProductSaveIntent.takeDown:
-        return product.copyWith(active: false);
+        return _GatedShopProduct(product.copyWith(active: false), false);
       case ProductSaveIntent.preserveListing:
-        return product;
+        return _GatedShopProduct(product, false);
     }
+  }
+
+  Future<void> approvePriceRevision({
+    required String shopId,
+    required String productId,
+    required String expectedFreshness,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final previous = _findShopProduct(shopId, productId);
+    if (previous == null) {
+      throw StateError('Product not found');
+    }
+    PriceRevisionGuard.ensureFreshPending(
+      revision: previous.priceRevision,
+      expectedFreshness: expectedFreshness,
+    );
+    final live = applyPriceRevisionToLive(previous);
+    ProductPublishGuard.ensureCanApprove(live);
+    await saveShopProduct(
+      shopId: shopId,
+      product: live,
+      intent: ProductSaveIntent.publish,
+    );
+  }
+
+  Future<void> rejectPriceRevision({
+    required String shopId,
+    required String productId,
+    required String expectedFreshness,
+    String reviewNote = '',
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final previous = _findShopProduct(shopId, productId);
+    if (previous == null) {
+      throw StateError('Product not found');
+    }
+    PriceRevisionGuard.ensureFreshPending(
+      revision: previous.priceRevision,
+      expectedFreshness: expectedFreshness,
+    );
+    final revision = previous.priceRevision!.copyWith(
+      status: PriceRevisionStatus.rejected,
+      reviewNote: reviewNote.trim(),
+    );
+    await saveShopProduct(
+      shopId: shopId,
+      product: previous.copyWith(priceRevision: revision),
+      intent: ProductSaveIntent.preserveListing,
+    );
   }
 
   Future<void> setSameBoatStatus({

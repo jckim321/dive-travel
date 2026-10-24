@@ -2526,6 +2526,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminProductApproved => '상품이 승인되어 공개되었습니다.';
 
   @override
+  String get adminPriceRevisionChip => '가격 변경 요청';
+
+  @override
+  String adminPriceRevisionPendingOptions(String names) {
+    return '승인 대기 신규 옵션: $names';
+  }
+
+  @override
+  String get adminPriceRevisionApproved => '가격 변경이 승인되어 반영되었어요.';
+
+  @override
+  String get adminPriceRevisionRejected => '가격 변경 요청이 반려되었어요.';
+
+  @override
   String get adminProductApproveNeedsPrice => '가격을 입력한 상품만 승인할 수 있어요';
 
   @override
@@ -3496,6 +3510,23 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get workbenchGuestPreviewHint =>
       '저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.';
+
+  @override
+  String get workbenchPriceRevisionPendingBanner =>
+      '가격·신규 옵션 변경은 관리자 승인을 기다리는 중이에요. 그 외 수정은 이미 공개 상품에 반영되었어요.';
+
+  @override
+  String workbenchPriceRevisionRejectedBanner(String note) {
+    return '관리자가 가격 변경을 반려했어요: $note';
+  }
+
+  @override
+  String get workbenchPriceRevisionStaged =>
+      '가격·새 옵션은 관리자 승인 뒤에 반영돼요. 나머지는 바로 반영되었어요';
+
+  @override
+  String get workbenchOptionClosedNotDeleted =>
+      '예약·홀드가 있는 옵션이라 삭제 대신 예약 마감 처리했어요.';
 
   @override
   String get workbenchPhotoUploadFailed =>

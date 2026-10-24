@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -332,11 +333,110 @@ class _PendingProductTileState extends State<_PendingProductTile> {
 
   ShopProduct get product => widget.product;
 
+  bool get _isPriceRevisionQueue =>
+      product.hasPendingPriceRevision && !product.isPendingApproval;
+
   // TODO(a1-desk-save-timing): remove with owner timing snackbar.
   static String _formatSeconds(Duration d) =>
       (d.inMilliseconds / 1000).toStringAsFixed(1);
 
+  Future<void> _approvePriceRevision() async {
+    if (_busy) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final preview = applyPriceRevisionToLive(product);
+    if (!ProductPublishGuard.hasDiverPrice(preview)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveNeedsPrice)),
+      );
+      return;
+    }
+    if (!ProductPublishGuard.hasValidPricesForApprove(preview)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveOverCap)),
+      );
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await store.approvePriceRevision(
+        shopId: product.shopId,
+        productId: product.id,
+        expectedFreshness: product.priceRevision!.freshnessToken,
+      );
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.adminPriceRevisionApproved)),
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(_errorMessage(error))),
+      );
+    } finally {
+      if (mounted && _busy) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _rejectPriceRevision() async {
+    if (_busy) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final result = await showProductRejectDialog(context);
+    if (result == null || !mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await store.rejectPriceRevision(
+        shopId: product.shopId,
+        productId: product.id,
+        expectedFreshness: product.priceRevision!.freshnessToken,
+        reviewNote: result.note,
+      );
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.adminPriceRevisionRejected)),
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(_errorMessage(error))),
+      );
+    } finally {
+      if (mounted && _busy) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  static String _errorMessage(Object error) {
+    final raw = '$error';
+    return raw
+        .replaceFirst('Bad state: ', '')
+        .replaceFirst('StateError: ', '');
+  }
+
   Future<void> _approve() async {
+    if (_isPriceRevisionQueue) {
+      return _approvePriceRevision();
+    }
     if (_busy) {
       return;
     }
@@ -396,6 +496,9 @@ class _PendingProductTileState extends State<_PendingProductTile> {
   }
 
   Future<void> _reject() async {
+    if (_isPriceRevisionQueue) {
+      return _rejectPriceRevision();
+    }
     if (_busy) {
       return;
     }
@@ -489,14 +592,55 @@ class _PendingProductTileState extends State<_PendingProductTile> {
                 style: const TextStyle(color: AdminConsoleTheme.muted),
               ),
               const SizedBox(height: 4),
-              Text(
-                '${l10n.exploreConsumerPrice} ${product.consumerPrice} · '
-                '${l10n.exploreProPrice} ${product.professionalPrice}',
-                style: const TextStyle(
-                  color: AdminConsoleTheme.muted,
-                  fontSize: 12,
+              if (_isPriceRevisionQueue) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(
+                    key: Key('price-revision-chip-${product.id}'),
+                    label: Text(l10n.adminPriceRevisionChip),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    labelStyle: const TextStyle(
+                      color: AdminConsoleTheme.bg,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    backgroundColor: AdminConsoleTheme.aqua,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 6),
+                Text(
+                  _priceRevisionSummary(l10n, product),
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.ice,
+                    fontSize: 12,
+                  ),
+                ),
+                if (product.priceRevision!.pendingOptions.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.adminPriceRevisionPendingOptions(
+                      product.priceRevision!.pendingOptions
+                          .map((o) => o.name.trim().isEmpty ? o.id : o.name)
+                          .join(', '),
+                    ),
+                    style: const TextStyle(
+                      color: AdminConsoleTheme.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ] else
+                Text(
+                  '${l10n.exploreConsumerPrice} ${product.consumerPrice} · '
+                  '${l10n.exploreProPrice} ${product.professionalPrice}',
+                  style: const TextStyle(
+                    color: AdminConsoleTheme.muted,
+                    fontSize: 12,
+                  ),
+                ),
               if (product.resubmitCount > 0) ...[
                 const SizedBox(height: 8),
                 Align(
@@ -678,6 +822,35 @@ class _PendingChangeChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _priceRevisionSummary(AppLocalizations l10n, ShopProduct product) {
+  final revision = product.priceRevision!;
+  final liveConsumer = product.consumerPrice;
+  final livePro = product.professionalPrice;
+  final nextConsumer = revision.consumerPrice ?? liveConsumer;
+  final nextPro = revision.professionalPrice ?? livePro;
+  final parts = <String>[
+    '${l10n.exploreConsumerPrice} $liveConsumer → $nextConsumer',
+    '${l10n.exploreProPrice} $livePro → $nextPro',
+  ];
+  for (final update in revision.optionPriceUpdates) {
+    ShopProductOption? live;
+    for (final option in product.options) {
+      if (option.id == update.id) {
+        live = option;
+        break;
+      }
+    }
+    if (live == null) {
+      continue;
+    }
+    final label = live.name.trim().isEmpty ? live.id : live.name;
+    parts.add(
+      '$label ${live.consumerPrice}→${update.consumerPrice}',
+    );
+  }
+  return parts.join(' · ');
 }
 
 String _kindLabel(AppLocalizations l10n, ProductListingKind kind) {

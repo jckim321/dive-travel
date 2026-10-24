@@ -1,4 +1,5 @@
 import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/models/price_revision.dart';
 
 /// Explore-only vs home shelf placement for an approved product.
 enum ProductListingKind {
@@ -625,6 +626,7 @@ class ShopProduct {
     this.submittedByUid = '',
     this.guestRating = 0,
     this.guestReviewCount = 0,
+    this.priceRevision,
   });
 
   static const Object _unset = Object();
@@ -698,6 +700,7 @@ class ShopProduct {
       submittedByUid: data['submitted_by_uid'] as String? ?? '',
       guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
       guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
+      priceRevision: _priceRevision(data['price_revision']),
     );
   }
 
@@ -768,7 +771,13 @@ class ShopProduct {
   final double guestRating;
   final int guestReviewCount;
 
+  /// Staged partner price / new-option request (guests never read this).
+  final PriceRevision? priceRevision;
+
   bool get isPendingApproval => publishStatus == ProductPublishStatus.pending;
+
+  bool get hasPendingPriceRevision =>
+      priceRevision?.status == PriceRevisionStatus.pending;
 
   bool get isListedPublicly => active && publishStatus.isPublic;
 
@@ -1373,6 +1382,7 @@ class ShopProduct {
     String? submittedByUid,
     double? guestRating,
     int? guestReviewCount,
+    Object? priceRevision = _unset,
   }) {
     return ShopProduct(
       id: id,
@@ -1430,6 +1440,9 @@ class ShopProduct {
       submittedByUid: submittedByUid ?? this.submittedByUid,
       guestRating: guestRating ?? this.guestRating,
       guestReviewCount: guestReviewCount ?? this.guestReviewCount,
+      priceRevision: identical(priceRevision, _unset)
+          ? this.priceRevision
+          : priceRevision as PriceRevision?,
     );
   }
 
@@ -1574,6 +1587,7 @@ class ShopProduct {
       if (submittedByUid.isNotEmpty) 'submitted_by_uid': submittedByUid,
       if (guestReviewCount > 0) 'guest_rating': guestRating,
       if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
+      if (priceRevision != null) 'price_revision': priceRevision!.toMap(),
     };
   }
 
@@ -1602,6 +1616,7 @@ class ShopProduct {
     'rejected_section_hashes',
     'resubmit_count',
     'resubmit_note',
+    'price_revision',
   };
 
   /// Merge [product] onto a previous Firestore/product map.
@@ -1632,6 +1647,14 @@ class ShopProduct {
       }
     }
     return merged;
+  }
+
+  static PriceRevision? _priceRevision(dynamic raw) {
+    final map = mapFrom(raw);
+    if (map == null) {
+      return null;
+    }
+    return PriceRevision.fromMap(map);
   }
 
   static List<SeatHold> _holds(dynamic raw) {

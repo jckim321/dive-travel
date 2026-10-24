@@ -4788,6 +4788,30 @@ abstract class AppLocalizations {
   /// **'상품이 승인되어 공개되었습니다.'**
   String get adminProductApproved;
 
+  /// No description provided for @adminPriceRevisionChip.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격 변경 요청'**
+  String get adminPriceRevisionChip;
+
+  /// No description provided for @adminPriceRevisionPendingOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 신규 옵션: {names}'**
+  String adminPriceRevisionPendingOptions(String names);
+
+  /// No description provided for @adminPriceRevisionApproved.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격 변경이 승인되어 반영되었어요.'**
+  String get adminPriceRevisionApproved;
+
+  /// No description provided for @adminPriceRevisionRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격 변경 요청이 반려되었어요.'**
+  String get adminPriceRevisionRejected;
+
   /// No description provided for @adminProductApproveNeedsPrice.
   ///
   /// In ko, this message translates to:
@@ -6617,6 +6641,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.'**
   String get workbenchGuestPreviewHint;
+
+  /// No description provided for @workbenchPriceRevisionPendingBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격·신규 옵션 변경은 관리자 승인을 기다리는 중이에요. 그 외 수정은 이미 공개 상품에 반영되었어요.'**
+  String get workbenchPriceRevisionPendingBanner;
+
+  /// No description provided for @workbenchPriceRevisionRejectedBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자가 가격 변경을 반려했어요: {note}'**
+  String workbenchPriceRevisionRejectedBanner(String note);
+
+  /// No description provided for @workbenchPriceRevisionStaged.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격·새 옵션은 관리자 승인 뒤에 반영돼요. 나머지는 바로 반영되었어요'**
+  String get workbenchPriceRevisionStaged;
+
+  /// No description provided for @workbenchOptionClosedNotDeleted.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약·홀드가 있는 옵션이라 삭제 대신 예약 마감 처리했어요.'**
+  String get workbenchOptionClosedNotDeleted;
 
   /// No description provided for @workbenchPhotoUploadFailed.
   ///

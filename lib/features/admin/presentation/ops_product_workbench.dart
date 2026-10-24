@@ -14,6 +14,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -107,6 +108,7 @@ class _IndividualTicket {
     String consumer = '',
     String includes = '',
     String excludes = '',
+    this.bookable = true,
   }) : id = id ?? 'ind-${DateTime.now().microsecondsSinceEpoch}',
        name = TextEditingController(text: name),
        consumer = TextEditingController(text: consumer),
@@ -133,6 +135,7 @@ class _IndividualTicket {
       consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
       includes: includes,
       excludes: excludes,
+      bookable: option.bookable,
     );
   }
 
@@ -148,6 +151,7 @@ class _IndividualTicket {
   int nights = 0;
   DateTime? checkIn;
   int guests = 1;
+  bool bookable;
   bool hasNondivers = false;
   int nondivers = 0;
   int children = 0;
@@ -194,7 +198,7 @@ class _IndividualTicket {
       consumerPrice: price,
       professionalPrice: price,
       kind: ProductOptionKind.individual,
-      bookable: true,
+      bookable: bookable,
     );
   }
 
@@ -315,7 +319,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   @override
   void initState() {
     super.initState();
-    final existing = widget.existing;
+    final existing = widget.existing == null
+        ? null
+        : productWithRevisionFormValues(widget.existing!);
     _shopId =
         widget.lockedShopId ??
         existing?.shopId ??
@@ -443,7 +449,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(_rateConsumer[GuestRole.child]!);
     _seedGallery(existing);
     _seats = SameBoatSeatOpenController(
-      existing: existing,
+      existing: widget.existing,
       optionSlots: _seatOptionSlots(),
       isAdmin: false,
       packageDeparture: _departureStart,
@@ -454,6 +460,31 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       _baselineSignature = _formSignature();
     });
+  }
+
+  ShopProductOption? _existingOption(String id) {
+    for (final option in widget.existing?.options ?? const <ShopProductOption>[]) {
+      if (option.id == id) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  bool _closeOptionInsteadOfRemove(_LineEditors draft) {
+    final existing = _existingOption(draft.id);
+    if (existing == null || !optionHasSeatCommitment(existing)) {
+      return false;
+    }
+    draft.bookable = false;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).workbenchOptionClosedNotDeleted,
+        ),
+      ),
+    );
+    return true;
   }
 
   bool get _hasPhotosForSave =>
@@ -1418,7 +1449,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           widget.creatorMode && intent != ProductSaveIntent.keepEditing
               ? ProductSaveIntent.submitForReview
               : intent;
-      await store.saveShopProduct(
+      final saveResult = await store.saveShopProduct(
         shopId: shopId,
         product: product,
         gallery: galleryArg,
@@ -1434,14 +1465,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _baselineSignature = _formSignature();
       final pendingSameBoat = product.openEmptySeats &&
           product.sameBoatStatus == SameBoatStatus.pending;
+      final savedText = saveResult.stagedPriceOrNewOptions
+          ? l10n.workbenchPriceRevisionStaged
+          : (pendingSameBoat && effectiveIntent != ProductSaveIntent.keepEditing
+              ? l10n.sameBoatPendingAfterSave
+              : _savedMessage(l10n, effectiveIntent));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            pendingSameBoat && effectiveIntent != ProductSaveIntent.keepEditing
-                ? l10n.sameBoatPendingAfterSave
-                : _savedMessage(l10n, effectiveIntent),
-          ),
-        ),
+        SnackBar(content: Text(savedText)),
       );
       // Temp save stays on the form; submit/publish leaves.
       if (effectiveIntent != ProductSaveIntent.keepEditing) {
@@ -1938,10 +1968,47 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final showRejectBanner =
         widget.existing?.publishStatus == ProductPublishStatus.rejected &&
             (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
+    final priceRevision = widget.existing?.priceRevision;
+    final showPriceRevisionPending = priceRevision?.isPending ?? false;
+    final showPriceRevisionRejected = priceRevision?.isRejected ?? false;
     return ListView(
       key: const Key('ops-product-brief-scroll'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
+        if (showPriceRevisionPending)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: AppTheme.navyMid.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  l10n.workbenchPriceRevisionPendingBanner,
+                  style: const TextStyle(fontSize: 13, height: 1.35),
+                ),
+              ),
+            ),
+          ),
+        if (showPriceRevisionRejected)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  l10n.workbenchPriceRevisionRejectedBanner(
+                    priceRevision!.reviewNote.trim().isEmpty
+                        ? '—'
+                        : priceRevision.reviewNote.trim(),
+                  ),
+                  style: const TextStyle(fontSize: 13, height: 1.35),
+                ),
+              ),
+            ),
+          ),
         if (showRejectBanner)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -2946,6 +3013,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         visualDensity: VisualDensity.compact,
                         color: Colors.white70,
                         onPressed: () {
+                          final existingOpt = _existingOption(ticket.id);
+                          if (existingOpt != null &&
+                              optionHasSeatCommitment(existingOpt)) {
+                            setState(() => ticket.bookable = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  l10n.workbenchOptionClosedNotDeleted,
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           setState(() {
                             _dropIndividual(ticket);
                             _individuals.removeAt(index);
@@ -3541,6 +3621,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               onPressed: !canRemove
                   ? null
                   : () {
+                      if (_closeOptionInsteadOfRemove(draft)) {
+                        setState(() {});
+                        return;
+                      }
                       setState(() {
                         qtyMap.remove(draft.id);
                         _dropLine(draft);

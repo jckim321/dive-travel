@@ -2607,6 +2607,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminProductApproved => 'Product approved and published.';
 
   @override
+  String get adminPriceRevisionChip => 'Price change request';
+
+  @override
+  String adminPriceRevisionPendingOptions(String names) {
+    return 'New options pending approval: $names';
+  }
+
+  @override
+  String get adminPriceRevisionApproved => 'Price changes approved and live.';
+
+  @override
+  String get adminPriceRevisionRejected => 'Price change request returned.';
+
+  @override
   String get adminProductApproveNeedsPrice =>
       'Only products with a diver price can be approved.';
 
@@ -3610,6 +3624,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workbenchGuestPreviewHint =>
       'Example only — guest counts here are not saved.';
+
+  @override
+  String get workbenchPriceRevisionPendingBanner =>
+      'Price or new-option changes are waiting for admin approval. Other edits are already saved on the live listing.';
+
+  @override
+  String workbenchPriceRevisionRejectedBanner(String note) {
+    return 'Admin returned the price change request: $note';
+  }
+
+  @override
+  String get workbenchPriceRevisionStaged =>
+      'Prices and new options will go live after admin approval. Everything else was saved right away.';
+
+  @override
+  String get workbenchOptionClosedNotDeleted =>
+      'This option has bookings or holds, so it was closed instead of removed.';
 
   @override
   String get workbenchPhotoUploadFailed =>
