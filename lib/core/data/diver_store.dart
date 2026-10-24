@@ -401,23 +401,28 @@ class DiverStore extends ChangeNotifier {
         stats,
   ];
 
-  /// Partner/admin submissions waiting for owner approval.
+  /// Creator product submissions waiting for owner approval.
+  ///
+  /// Affiliate-partner products never enter this queue (H1a). Legacy
+  /// `price_revision` rows are ignored. Creators use
+  /// [ProductListingKind.diverPlanned] and still appear for approve/reject.
   List<ShopProduct> get pendingProductApprovals {
     final out = <ShopProduct>[];
     for (final stats in _shopStats) {
       for (final product in stats.products) {
-        if (product.isPendingApproval || product.hasPendingPriceRevision) {
-          out.add(product);
+        if (!product.isPendingApproval) {
+          continue;
         }
+        // Partner (and other non-creator) pending rows stay out of the queue.
+        if (product.listingKind != ProductListingKind.diverPlanned) {
+          continue;
+        }
+        out.add(product);
       }
     }
     out.sort((a, b) {
-      final aAt = a.priceRevision?.submittedAt ??
-          a.submittedAt ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      final bAt = b.priceRevision?.submittedAt ??
-          b.submittedAt ??
-          DateTime.fromMillisecondsSinceEpoch(0);
+      final aAt = a.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bAt = b.submittedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       return bAt.compareTo(aAt);
     });
     return out;
@@ -1723,6 +1728,18 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  /// Affiliate-partner go-live: ignore legacy price_revision / pending_options.
+  ShopProduct _partnerGoLive(ShopProduct product, String submitter) {
+    return product.copyWith(
+      publishStatus: ProductPublishStatus.approved,
+      active: true,
+      submittedAt: product.submittedAt ?? DateTime.now(),
+      submittedByUid: submitter.isNotEmpty ? submitter : product.submittedByUid,
+      // Do not apply staged revision; drop the field so it cannot resurface.
+      priceRevision: null,
+    );
+  }
+
   _GatedShopProduct _withSaveIntent({
     required ShopProduct product,
     ShopProduct? previous,
@@ -1734,20 +1751,24 @@ class DiverStore extends ChangeNotifier {
     final submitter = creatorUid.isNotEmpty
         ? creatorUid
         : product.submittedByUid;
-    // Callers that do not pick a branch keep the old rule: creators and
-    // partners wait, an admin save goes live.
-    if (creatorSubmission || intent == null) {
-      final forcePending = creatorSubmission || !_stats.isAdmin;
-      if (forcePending) {
-        return _GatedShopProduct(
-          _pendingAfterSave(
-            product: product,
-            previous: previous,
-            submitter: submitter,
-            pendingGallery: pendingGallery,
-          ),
-          false,
-        );
+
+    // Creators still wait in the admin queue (unchanged).
+    if (creatorSubmission) {
+      return _GatedShopProduct(
+        _pendingAfterSave(
+          product: product,
+          previous: previous,
+          submitter: submitter,
+          pendingGallery: pendingGallery,
+        ),
+        false,
+      );
+    }
+
+    if (intent == null) {
+      if (!_stats.isAdmin) {
+        // Partner save without intent → immediate listing (H1a).
+        return _GatedShopProduct(_partnerGoLive(product, submitter), false);
       }
       ProductPublishGuard.ensureCanApprove(product);
       return _GatedShopProduct(
@@ -1769,17 +1790,17 @@ class DiverStore extends ChangeNotifier {
     }
     switch (intent) {
       case ProductSaveIntent.keepEditing:
-        // Preserve queue status: pending stays pending, rejected stays rejected.
-        // New / draft → draft. Approved should not use temp-save UI.
+        // Temp-save is draft-only. Never demote an approved listing.
+        if (previous?.publishStatus == ProductPublishStatus.approved) {
+          return _GatedShopProduct(_partnerGoLive(product, submitter), false);
+        }
         final prevStatus = previous?.publishStatus;
         final nextStatus = ProductPublishGuard.keepEditingStatus(prevStatus);
-        final nextActive = prevStatus == ProductPublishStatus.approved
-            ? (previous?.active ?? product.active)
-            : false;
+        // Creator pending stays pending; partner new/draft stays draft.
         return _GatedShopProduct(
           product.copyWith(
             publishStatus: nextStatus,
-            active: nextActive,
+            active: false,
             submittedByUid: submitter,
             reviewNote: previous?.reviewNote ?? product.reviewNote,
             rejectedContentHash:
@@ -1790,21 +1811,15 @@ class DiverStore extends ChangeNotifier {
                 product.rejectedSectionHashes,
             resubmitCount: previous?.resubmitCount ?? product.resubmitCount,
             resubmitNote: previous?.resubmitNote ?? product.resubmitNote,
-            priceRevision: previous?.priceRevision ?? product.priceRevision,
+            priceRevision: null,
           ),
           false,
         );
       case ProductSaveIntent.submitForReview:
-        if (previous?.publishStatus == ProductPublishStatus.approved &&
-            !_stats.isAdmin) {
-          final staged = stageApprovedPartnerSave(
-            previous: previous!,
-            draft: product,
-          );
-          return _GatedShopProduct(
-            staged.product,
-            staged.stagedPriceOrNewOptions,
-          );
+        // Affiliate partner: publish immediately. Creators never reach here
+        // with creatorSubmission (handled above).
+        if (!_stats.isAdmin) {
+          return _GatedShopProduct(_partnerGoLive(product, submitter), false);
         }
         return _GatedShopProduct(
           _pendingAfterSave(
@@ -1819,12 +1834,8 @@ class DiverStore extends ChangeNotifier {
         if (!_stats.isAdmin) {
           throw StateError('Admin only');
         }
-        var next = product;
-        if (next.priceRevision != null) {
-          next = applyPriceRevisionToLive(next);
-        } else {
-          next = next.copyWith(priceRevision: null);
-        }
+        // Ignore legacy price_revision rather than merging it.
+        final next = product.copyWith(priceRevision: null);
         ProductPublishGuard.ensureCanApprove(next);
         return _GatedShopProduct(
           next.copyWith(
@@ -1843,7 +1854,10 @@ class DiverStore extends ChangeNotifier {
           false,
         );
       case ProductSaveIntent.takeDown:
-        return _GatedShopProduct(product.copyWith(active: false), false);
+        return _GatedShopProduct(
+          product.copyWith(active: false, priceRevision: null),
+          false,
+        );
       case ProductSaveIntent.preserveListing:
         return _GatedShopProduct(product, false);
     }

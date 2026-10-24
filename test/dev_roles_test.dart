@@ -62,18 +62,32 @@ void main() {
     );
   });
 
-  test('same-boat statusWhenOpen uses effective admin flag', () {
+  test('same-boat statusWhenOpen goes live; legacy pending stays for partner', () {
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
         isAdmin: false,
         previous: SameBoatStatus.closed,
+      ),
+      SameBoatStatus.approved,
+    );
+    expect(
+      SameBoatSeatOpenLogic.statusWhenOpen(
+        isAdmin: true,
+        previous: SameBoatStatus.closed,
+      ),
+      SameBoatStatus.approved,
+    );
+    expect(
+      SameBoatSeatOpenLogic.statusWhenOpen(
+        isAdmin: false,
+        previous: SameBoatStatus.pending,
       ),
       SameBoatStatus.pending,
     );
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
         isAdmin: true,
-        previous: SameBoatStatus.closed,
+        previous: SameBoatStatus.pending,
       ),
       SameBoatStatus.approved,
     );

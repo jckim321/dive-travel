@@ -5340,6 +5340,12 @@ abstract class AppLocalizations {
   /// **'승인 대기'**
   String get partnerProductBadgePending;
 
+  /// No description provided for @partnerProductBadgeDrafting.
+  ///
+  /// In ko, this message translates to:
+  /// **'작성 중'**
+  String get partnerProductBadgeDrafting;
+
   /// No description provided for @partnerProductBadgeListed.
   ///
   /// In ko, this message translates to:
@@ -5364,6 +5370,36 @@ abstract class AppLocalizations {
   /// **'가격 미입력'**
   String get partnerProductBadgeMissingPrice;
 
+  /// No description provided for @partnerProductPublish.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시'**
+  String get partnerProductPublish;
+
+  /// No description provided for @partnerProductPublished.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품이 게시되었습니다.'**
+  String get partnerProductPublished;
+
+  /// No description provided for @partnerPriceSwingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격이 크게 바뀌었어요'**
+  String get partnerPriceSwingTitle;
+
+  /// No description provided for @partnerPriceSwingBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본가·옵션·비다이버·아동·전문가 가격 중 ±30% 이상 변경된 항목이 있습니다. 그대로 반영할까요?'**
+  String get partnerPriceSwingBody;
+
+  /// No description provided for @partnerPriceSwingConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'반영하기'**
+  String get partnerPriceSwingConfirm;
+
   /// No description provided for @partnerProductsTitle.
   ///
   /// In ko, this message translates to:
@@ -5373,7 +5409,7 @@ abstract class AppLocalizations {
   /// No description provided for @partnerProductsGuide.
   ///
   /// In ko, this message translates to:
-  /// **'승인 대기 중에도 고칠 수 있고, 탐색·같은배에는 관리자 승인 후 나타납니다.'**
+  /// **'저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.'**
   String get partnerProductsGuide;
 
   /// No description provided for @partnerProductFilterAll.
@@ -5391,7 +5427,7 @@ abstract class AppLocalizations {
   /// No description provided for @partnerProductsEmptyNext.
   ///
   /// In ko, this message translates to:
-  /// **'상품을 등록하면 이 목록에 「승인 대기」로 나타납니다.'**
+  /// **'상품을 등록·게시하면 이 목록에 나타납니다.'**
   String get partnerProductsEmptyNext;
 
   /// No description provided for @partnerProductsEmptyCta.

@@ -63,19 +63,17 @@ abstract final class SameBoatSeatOpenLogic {
     return left < 0 ? 0 : left;
   }
 
-  /// Admin → approved. Non-admin keeps an existing approved listing live;
-  /// otherwise pending for the monitor queue.
+  /// Open seats go live immediately (H1a). Legacy `pending` rows stay pending
+  /// until an admin approves/rejects them in the monitor.
   static SameBoatStatus statusWhenOpen({
     required bool isAdmin,
     required SameBoatStatus previous,
   }) {
-    if (isAdmin) {
-      return SameBoatStatus.approved;
+    if (previous == SameBoatStatus.pending) {
+      // Do not auto-approve an in-flight legacy request on re-save.
+      return isAdmin ? SameBoatStatus.approved : SameBoatStatus.pending;
     }
-    if (previous == SameBoatStatus.approved) {
-      return SameBoatStatus.approved;
-    }
-    return SameBoatStatus.pending;
+    return SameBoatStatus.approved;
   }
 
   /// Product- or option-level seat open fields required for board / approve.

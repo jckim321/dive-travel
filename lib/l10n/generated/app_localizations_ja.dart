@@ -2813,6 +2813,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get partnerProductBadgePending => '승인 대기';
 
   @override
+  String get partnerProductBadgeDrafting => '작성 중';
+
+  @override
   String get partnerProductBadgeListed => '게시중';
 
   @override
@@ -2825,11 +2828,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get partnerProductBadgeMissingPrice => '가격 미입력';
 
   @override
+  String get partnerProductPublish => '게시';
+
+  @override
+  String get partnerProductPublished => '상품이 게시되었습니다.';
+
+  @override
+  String get partnerPriceSwingTitle => '가격이 크게 바뀌었어요';
+
+  @override
+  String get partnerPriceSwingBody =>
+      '기본가·옵션·비다이버·아동·전문가 가격 중 ±30% 이상 변경된 항목이 있습니다. 그대로 반영할까요?';
+
+  @override
+  String get partnerPriceSwingConfirm => '반영하기';
+
+  @override
   String get partnerProductsTitle => '상품 관리';
 
   @override
   String get partnerProductsGuide =>
-      '승인 대기 중에도 고칠 수 있고, 탐색·같은배에는 관리자 승인 후 나타납니다.';
+      '저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.';
 
   @override
   String get partnerProductFilterAll => '전체';
@@ -2838,7 +2857,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get partnerProductsEmptyReason => '아직 등록한 상품이 없습니다.';
 
   @override
-  String get partnerProductsEmptyNext => '상품을 등록하면 이 목록에 「승인 대기」로 나타납니다.';
+  String get partnerProductsEmptyNext => '상품을 등록·게시하면 이 목록에 나타납니다.';
 
   @override
   String get partnerProductsEmptyCta => '첫 상품 등록하기';

@@ -9,9 +9,9 @@ import 'package:dive_travel_app/features/partner/presentation/partner_bookings_t
 import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_h1_same_boat_reject_alert.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerDashboardScreen extends StatefulWidget {
@@ -69,18 +69,6 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
               final shop = DiveShopCatalog.byId(shopId);
               final live = store.liveStatsFor(shopId);
               final shopName = live?.name ?? shop?.name ?? shopId;
-              final shopProducts = [
-                for (final p in store.allShopProducts)
-                  if (p.shopId == shopId) p,
-              ];
-              final rejected =
-                  PartnerH1SameBoatRejectAlert.rejectedCount(shopProducts);
-              final banner = PartnerH1SameBoatRejectAlert.homeBanner(
-                context: context,
-                l10n: l10n,
-                shopId: shopId,
-                rejectedCount: rejected,
-              );
               final step = PartnerDiveStarMilestone.resolve(
                 diveStarGrade: live?.diveStar ?? 0,
                 latestApplication: PartnerDiveStarMilestone.latestForShop(
@@ -94,15 +82,9 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                 children: [
                   _HomeHeader(
                     shopName: shopName,
-                    rejectedCount: rejected,
                     onShopInfo: () => _open(ResortDeskScreen(shopId: shopId)),
-                    onSameBoat: () =>
-                        PartnerH1SameBoatRejectAlert.openHub(context, shopId),
+                    onSameBoat: () => _open(SameBoatSeatsHubScreen(shopId: shopId)),
                   ),
-                  if (banner != null) ...[
-                    const SizedBox(height: 10),
-                    banner,
-                  ],
                   const SizedBox(height: 14),
                   _QuickGrid(
                     onProducts: () => _open(
@@ -155,13 +137,11 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.shopName,
-    required this.rejectedCount,
     required this.onShopInfo,
     required this.onSameBoat,
   });
 
   final String shopName;
-  final int rejectedCount;
   final VoidCallback onShopInfo;
   final VoidCallback onSameBoat;
 
@@ -209,9 +189,9 @@ class _HomeHeader extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PartnerH1SameBoatRejectAlert.menuItem(
-              l10n: l10n,
-              rejectedCount: rejectedCount,
+            PopupMenuItem<String>(
+              value: 'same_boat',
+              child: Text(l10n.partnerHomeMenuSameBoat),
             ),
           ],
         ),

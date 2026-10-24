@@ -73,12 +73,12 @@ class _PartnerProductsScreenState extends State<PartnerProductsScreen> {
                   ),
                 ),
                 _filterChip(
-                  key: 'partner-product-filter-pending',
-                  label: l10n.partnerProductBadgePending,
-                  count: counts.pending,
-                  selected: _filter == PartnerProductStatusFilter.pending,
+                  key: 'partner-product-filter-drafting',
+                  label: l10n.partnerProductBadgeDrafting,
+                  count: counts.drafting,
+                  selected: _filter == PartnerProductStatusFilter.drafting,
                   onSelected: () => setState(
-                    () => _filter = PartnerProductStatusFilter.pending,
+                    () => _filter = PartnerProductStatusFilter.drafting,
                   ),
                 ),
                 _filterChip(
@@ -91,12 +91,12 @@ class _PartnerProductsScreenState extends State<PartnerProductsScreen> {
                   ),
                 ),
                 _filterChip(
-                  key: 'partner-product-filter-rejected',
-                  label: l10n.partnerProductBadgeRejected,
-                  count: counts.rejected,
-                  selected: _filter == PartnerProductStatusFilter.rejected,
+                  key: 'partner-product-filter-closed',
+                  label: l10n.partnerProductBadgeClosed,
+                  count: counts.closed,
+                  selected: _filter == PartnerProductStatusFilter.closed,
                   onSelected: () => setState(
-                    () => _filter = PartnerProductStatusFilter.rejected,
+                    () => _filter = PartnerProductStatusFilter.closed,
                   ),
                 ),
               ],

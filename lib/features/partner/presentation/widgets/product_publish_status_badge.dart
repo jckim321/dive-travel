@@ -4,7 +4,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Colored publish-status chip for partner product cards (reusable later).
+/// Colored publish-status chip for partner product cards (작성 중 / 게시중 / 닫힘).
 class ProductPublishStatusBadge extends StatelessWidget {
   const ProductPublishStatusBadge({
     super.key,
@@ -41,15 +41,10 @@ class ProductPublishStatusBadge extends StatelessWidget {
     PartnerPublishBadgeKind kind,
   ) {
     return switch (kind) {
-      PartnerPublishBadgeKind.pending => (
-          l10n.partnerProductBadgePending,
-          const Color(0xFF9A5B00),
-          const Color(0xFFFFE8C2),
-        ),
-      PartnerPublishBadgeKind.rejected => (
-          l10n.partnerProductBadgeRejected,
-          const Color(0xFF8B1A1A),
-          const Color(0xFFFFCDD2),
+      PartnerPublishBadgeKind.drafting => (
+          l10n.partnerProductBadgeDrafting,
+          const Color(0xFF4A5560),
+          const Color(0xFFE2E6EA),
         ),
       PartnerPublishBadgeKind.listed => (
           l10n.partnerProductBadgeListed,

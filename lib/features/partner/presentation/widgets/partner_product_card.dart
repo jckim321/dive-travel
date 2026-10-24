@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
-import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/widgets/missing_price_badge.dart';
@@ -11,7 +10,7 @@ import 'package:dive_travel_app/features/partner/presentation/widgets/product_pu
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Full partner product card (build 3): price, same-boat line, edit/seats/reject actions.
+/// Partner product card (H1a): price, same-boat line, edit/seats — no reject UX.
 class PartnerProductCard extends StatelessWidget {
   const PartnerProductCard({
     super.key,
@@ -31,7 +30,6 @@ class PartnerProductCard extends StatelessWidget {
     final theme = Theme.of(context);
     final seatsEnabled = partnerSeatsActionEnabled(product);
     final seatsManage = partnerSeatsIsManage(product);
-    final rejected = partnerShowRejectedActions(product);
     final sameBoatKind = partnerSameBoatLineKind(product);
 
     return Card(
@@ -78,53 +76,6 @@ class PartnerProductCard extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (product.rejectedReasonTags.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Wrap(
-                key: Key('partner-product-reason-tags-${product.id}'),
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final tag in product.rejectedReasonTags)
-                    Chip(
-                      key: Key('partner-reason-tag-$tag-${product.id}'),
-                      label: Text(productRejectTagLabel(l10n, tag)),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      labelStyle: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF8B1A1A),
-                      ),
-                      backgroundColor: const Color(0xFFFFF1F0),
-                      side: BorderSide.none,
-                      padding: EdgeInsets.zero,
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                ],
-              ),
-            ],
-            if (rejected && product.reviewNote.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                key: Key('partner-product-review-note-${product.id}'),
-                product.reviewNote.trim(),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF8B1A1A),
-                ),
-              ),
-            ],
-            if (product.resubmitCount > 0) ...[
-              const SizedBox(height: 6),
-              Text(
-                key: Key('partner-product-resubmit-count-${product.id}'),
-                l10n.partnerResubmitCount(product.resubmitCount),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -151,21 +102,6 @@ class PartnerProductCard extends StatelessWidget {
                         : l10n.sameBoatSeatsTitle,
                   ),
                 ),
-                if (rejected) ...[
-                  FilledButton(
-                    key: Key('partner-product-resubmit-${product.id}'),
-                    onPressed: () => _openEdit(context),
-                    child: Text(l10n.partnerProductResubmit),
-                  ),
-                  OutlinedButton(
-                    key: Key('partner-product-delete-${product.id}'),
-                    onPressed: () => confirmDeletePartnerProduct(
-                      context,
-                      product,
-                    ),
-                    child: Text(l10n.adminProductDelete),
-                  ),
-                ],
               ],
             ),
             if (!seatsEnabled) ...[

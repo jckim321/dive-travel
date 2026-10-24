@@ -56,7 +56,7 @@ ShopProductOption _option({
 void main() {
   final departure = DateTime(2026, 11, 1);
 
-  test('partner product request saves pending and keeps seat fields', () {
+  test('partner product open goes live immediately (H1a)', () {
     final closed = _product();
     final controller = SameBoatSeatOpenController(
       existing: closed,
@@ -71,18 +71,18 @@ void main() {
     final next = controller.applyToProduct(closed);
     controller.dispose();
 
-    expect(next.sameBoatStatus, SameBoatStatus.pending);
+    expect(next.sameBoatStatus, SameBoatStatus.approved);
     expect(next.openEmptySeats, isTrue);
     expect(next.capacity, 10);
     expect(next.bookedSeats, 4);
     expect(next.departureStart, departure);
     expect(next.publishStatus, ProductPublishStatus.approved);
     expect(next.active, isTrue);
-    expect(next.hasPendingSameBoat, isTrue);
-    expect(next.listsOnSameBoat, isFalse);
+    expect(next.hasPendingSameBoat, isFalse);
+    expect(next.listsOnSameBoat, isTrue);
   });
 
-  test('partner option-only request sets option pending', () {
+  test('partner option-only open goes live immediately (H1a)', () {
     final cabin = _option(id: 'cabin');
     final product = _product(options: [cabin]);
     final controller = SameBoatSeatOpenController(
@@ -99,11 +99,32 @@ void main() {
     controller.dispose();
 
     expect(next.sameBoatStatus, SameBoatStatus.closed);
-    expect(next.options.single.sameBoatStatus, SameBoatStatus.pending);
+    expect(next.options.single.sameBoatStatus, SameBoatStatus.approved);
     expect(next.options.single.openEmptySeats, isTrue);
     expect(next.options.single.capacity, 2);
     expect(next.options.single.departureStart, departure);
-    expect(next.hasPendingSameBoat, isTrue);
+    expect(next.hasPendingSameBoat, isFalse);
+    expect(next.hasLiveSameBoatOffer, isTrue);
+  });
+
+  test('legacy pending re-save stays pending for partner (admin can still approve)', () {
+    final pending = _product(
+      open: true,
+      status: SameBoatStatus.pending,
+      capacity: 10,
+      booked: 2,
+      departure: departure,
+    );
+    final controller = SameBoatSeatOpenController(
+      existing: pending,
+      optionSlots: const [],
+      isAdmin: false,
+    );
+    controller.openPackage = true;
+    controller.packageCapacity.text = '10';
+    final next = controller.applyToProduct(pending);
+    controller.dispose();
+    expect(next.sameBoatStatus, SameBoatStatus.pending);
   });
 
   test('blocksPartnerRequest while pending or live', () {

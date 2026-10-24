@@ -102,7 +102,7 @@ void main() {
     );
   });
 
-  testWidgets('승인 대기: 빈자리 비활성 + 이유, 삭제/재요청 없음', (tester) async {
+  testWidgets('작성 중(레거시 pending): 빈자리 비활성 + 이유, 삭제/재요청 없음', (tester) async {
     final l10n = await _pumpCard(
       tester,
       _product(
@@ -112,7 +112,7 @@ void main() {
       ),
     );
 
-    expect(find.text(l10n.partnerProductBadgePending), findsOneWidget);
+    expect(find.text(l10n.partnerProductBadgeDrafting), findsOneWidget);
     final seats = tester.widget<FilledButton>(
       find.byKey(const Key('partner-product-seats-pend-1')),
     );
@@ -136,7 +136,7 @@ void main() {
     );
   });
 
-  testWidgets('반려: 사유·재요청·삭제 표시, 빈자리 비활성', (tester) async {
+  testWidgets('레거시 반려: 작성 중 뱃지, 재요청/삭제/사유 미표시', (tester) async {
     final l10n = await _pumpCard(
       tester,
       _product(
@@ -147,20 +147,18 @@ void main() {
       ),
     );
 
-    expect(find.text(l10n.partnerProductBadgeRejected), findsOneWidget);
+    expect(find.text(l10n.partnerProductBadgeDrafting), findsOneWidget);
     expect(
       find.byKey(const Key('partner-product-review-note-rej-1')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('사진이 부족합니다'), findsOneWidget);
     expect(
       find.byKey(const Key('partner-product-resubmit-rej-1')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text(l10n.partnerProductResubmit), findsOneWidget);
     expect(
       find.byKey(const Key('partner-product-delete-rej-1')),
-      findsOneWidget,
+      findsNothing,
     );
     final seats = tester.widget<FilledButton>(
       find.byKey(const Key('partner-product-seats-rej-1')),
@@ -168,8 +166,8 @@ void main() {
     expect(seats.onPressed, isNull);
   });
 
-  testWidgets('재요청 회차 표시', (tester) async {
-    final l10n = await _pumpCard(
+  testWidgets('재요청 회차는 카드에 표시하지 않음 (H1a)', (tester) async {
+    await _pumpCard(
       tester,
       _product(
         id: 'resub-1',
@@ -181,9 +179,8 @@ void main() {
 
     expect(
       find.byKey(const Key('partner-product-resubmit-count-resub-1')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text(l10n.partnerResubmitCount(2)), findsOneWidget);
   });
 
   testWidgets('닫힘: 빈자리 비활성', (tester) async {
@@ -253,14 +250,13 @@ void main() {
         openEmptySeats: true,
         capacity: 10,
         bookedSeats: 3,
-        departure: DateTime(2026, 11, 15),
+        departure: DateTime(2026, 11, 20),
       ),
     );
 
     expect(
-      find.text(l10n.partnerProductSameBoatLive(7, '2026.11.15')),
+      find.text(l10n.partnerProductSameBoatLive(7, '2026.11.20')),
       findsOneWidget,
     );
-    expect(find.text(l10n.partnerProductSeatsManage), findsOneWidget);
   });
 }

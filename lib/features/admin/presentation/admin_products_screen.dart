@@ -333,8 +333,8 @@ class _PendingProductTileState extends State<_PendingProductTile> {
 
   ShopProduct get product => widget.product;
 
-  bool get _isPriceRevisionQueue =>
-      product.hasPendingPriceRevision && !product.isPendingApproval;
+  // H1a: ignore legacy price_revision / pending_options (do not surface).
+  bool get _isPriceRevisionQueue => false;
 
   // TODO(a1-desk-save-timing): remove with owner timing snackbar.
   static String _formatSeconds(Duration d) =>

@@ -2902,6 +2902,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductBadgePending => 'Pending approval';
 
   @override
+  String get partnerProductBadgeDrafting => 'Drafting';
+
+  @override
   String get partnerProductBadgeListed => 'Listed';
 
   @override
@@ -2914,11 +2917,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductBadgeMissingPrice => 'Price missing';
 
   @override
+  String get partnerProductPublish => 'Publish';
+
+  @override
+  String get partnerProductPublished => 'Product published.';
+
+  @override
+  String get partnerPriceSwingTitle => 'Large price change';
+
+  @override
+  String get partnerPriceSwingBody =>
+      'One or more prices (base, options, non-diver/child, professional) moved by ±30% or more. Apply these changes?';
+
+  @override
+  String get partnerPriceSwingConfirm => 'Apply';
+
+  @override
   String get partnerProductsTitle => 'Manage products';
 
   @override
   String get partnerProductsGuide =>
-      'You can edit products while they await approval. They appear in Explore and Same-boat only after an admin approves them.';
+      'Saving publishes to Explore and Same-boat right away. Draft products can use temp save.';
 
   @override
   String get partnerProductFilterAll => 'All';
@@ -2928,7 +2947,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partnerProductsEmptyNext =>
-      'Register a product and it will show here as pending approval.';
+      'Register and publish a product to see it here.';
 
   @override
   String get partnerProductsEmptyCta => 'Register your first product';

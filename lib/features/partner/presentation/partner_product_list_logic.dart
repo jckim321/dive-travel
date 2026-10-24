@@ -1,17 +1,14 @@
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
-/// Partner product list publish badge (시안 색 칩).
+/// Partner product list publish badge (H1a: no approval queue for partners).
 enum PartnerPublishBadgeKind {
-  /// `publish_status == pending`
-  pending,
-
-  /// `publish_status == rejected`
-  rejected,
+  /// Draft / legacy pending / legacy rejected — editing, not public.
+  drafting,
 
   /// `isListedPublicly` (approved + active)
   listed,
 
-  /// draft, or approved but inactive ("닫힘")
+  /// approved but inactive ("닫힘")
   closed,
 }
 
@@ -23,37 +20,33 @@ enum PartnerSameBoatLineKind {
   rejected,
 }
 
-/// Counts for partner filter chips (전체 / 승인 대기 / 게시중 / 반려).
+/// Counts for partner filter chips (전체 / 작성 중 / 게시중 / 닫힘).
 class PartnerProductFilterCounts {
   const PartnerProductFilterCounts({
     required this.all,
-    required this.pending,
+    required this.drafting,
     required this.listed,
-    required this.rejected,
+    required this.closed,
   });
 
   final int all;
-  final int pending;
+  final int drafting;
   final int listed;
-  final int rejected;
+  final int closed;
 }
 
-enum PartnerProductStatusFilter { all, pending, listed, rejected }
+enum PartnerProductStatusFilter { all, drafting, listed, closed }
 
 /// Publish badge for a partner product card.
 PartnerPublishBadgeKind partnerPublishBadgeKind(ShopProduct product) {
-  switch (product.publishStatus) {
-    case ProductPublishStatus.pending:
-      return PartnerPublishBadgeKind.pending;
-    case ProductPublishStatus.rejected:
-      return PartnerPublishBadgeKind.rejected;
-    case ProductPublishStatus.approved:
-      return product.active
-          ? PartnerPublishBadgeKind.listed
-          : PartnerPublishBadgeKind.closed;
-    case ProductPublishStatus.draft:
-      return PartnerPublishBadgeKind.closed;
+  if (product.isListedPublicly) {
+    return PartnerPublishBadgeKind.listed;
   }
+  if (product.publishStatus == ProductPublishStatus.approved && !product.active) {
+    return PartnerPublishBadgeKind.closed;
+  }
+  // draft, pending, rejected → 작성 중 (legacy approval states)
+  return PartnerPublishBadgeKind.drafting;
 }
 
 /// Same-boat line kind (independent of publish badge).
@@ -80,9 +73,8 @@ bool partnerSeatsIsManage(ShopProduct product) => product.hasAnySameBoatOpen;
 /// Show 「가격 미입력」 when consumer price was never set (≤ 0).
 bool partnerPriceMissing(ShopProduct product) => product.consumerPrice <= 0;
 
-/// Rejected cards show resubmit + delete.
-bool partnerShowRejectedActions(ShopProduct product) =>
-    partnerPublishBadgeKind(product) == PartnerPublishBadgeKind.rejected;
+/// Legacy rejected cards no longer need special resubmit actions (H1a).
+bool partnerShowRejectedActions(ShopProduct product) => false;
 
 /// Live same-boat seat count + departure for the card line (base, else options).
 ({int seats, DateTime? departure}) partnerSameBoatLiveSummary(
@@ -107,30 +99,26 @@ bool partnerShowRejectedActions(ShopProduct product) =>
 PartnerProductFilterCounts partnerProductFilterCounts(
   Iterable<ShopProduct> products,
 ) {
-  var pending = 0;
+  var drafting = 0;
   var listed = 0;
-  var rejected = 0;
+  var closed = 0;
   var all = 0;
   for (final product in products) {
     all += 1;
-    switch (product.publishStatus) {
-      case ProductPublishStatus.pending:
-        pending += 1;
-      case ProductPublishStatus.rejected:
-        rejected += 1;
-      case ProductPublishStatus.approved:
-        if (product.isListedPublicly) {
-          listed += 1;
-        }
-      case ProductPublishStatus.draft:
-        break;
+    switch (partnerPublishBadgeKind(product)) {
+      case PartnerPublishBadgeKind.drafting:
+        drafting += 1;
+      case PartnerPublishBadgeKind.listed:
+        listed += 1;
+      case PartnerPublishBadgeKind.closed:
+        closed += 1;
     }
   }
   return PartnerProductFilterCounts(
     all: all,
-    pending: pending,
+    drafting: drafting,
     listed: listed,
-    rejected: rejected,
+    closed: closed,
   );
 }
 
@@ -150,10 +138,10 @@ bool _matchesPartnerFilter(
 ) {
   return switch (filter) {
     PartnerProductStatusFilter.all => true,
-    PartnerProductStatusFilter.pending =>
-      product.publishStatus == ProductPublishStatus.pending,
+    PartnerProductStatusFilter.drafting =>
+      partnerPublishBadgeKind(product) == PartnerPublishBadgeKind.drafting,
     PartnerProductStatusFilter.listed => product.isListedPublicly,
-    PartnerProductStatusFilter.rejected =>
-      product.publishStatus == ProductPublishStatus.rejected,
+    PartnerProductStatusFilter.closed =>
+      partnerPublishBadgeKind(product) == PartnerPublishBadgeKind.closed,
   };
 }

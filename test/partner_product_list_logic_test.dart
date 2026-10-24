@@ -30,18 +30,18 @@ ShopProduct _product({
 
 void main() {
   group('partnerPublishBadgeKind', () {
-    test('pending / rejected / listed / closed', () {
+    test('drafting / listed / closed (H1a)', () {
       expect(
         partnerPublishBadgeKind(
           _product(id: 'p', publish: ProductPublishStatus.pending, active: false),
         ),
-        PartnerPublishBadgeKind.pending,
+        PartnerPublishBadgeKind.drafting,
       );
       expect(
         partnerPublishBadgeKind(
           _product(id: 'r', publish: ProductPublishStatus.rejected, active: false),
         ),
-        PartnerPublishBadgeKind.rejected,
+        PartnerPublishBadgeKind.drafting,
       );
       expect(
         partnerPublishBadgeKind(_product(id: 'live')),
@@ -57,7 +57,7 @@ void main() {
         partnerPublishBadgeKind(
           _product(id: 'draft', publish: ProductPublishStatus.draft, active: false),
         ),
-        PartnerPublishBadgeKind.closed,
+        PartnerPublishBadgeKind.drafting,
       );
     });
   });
@@ -128,7 +128,7 @@ void main() {
       );
     });
 
-    test('rejected actions only for rejected publish', () {
+    test('rejected actions never shown (H1a)', () {
       expect(partnerShowRejectedActions(_product(id: 'live')), isFalse);
       expect(
         partnerShowRejectedActions(
@@ -138,7 +138,7 @@ void main() {
             active: false,
           ),
         ),
-        isTrue,
+        isFalse,
       );
     });
 
@@ -150,7 +150,6 @@ void main() {
         capacity: 10,
         departure: DateTime(2026, 11, 15),
       );
-      // bookedSeats defaults 0 → remaining 10
       final summary = partnerSameBoatLiveSummary(live);
       expect(summary.seats, 10);
       expect(summary.departure, DateTime(2026, 11, 15));
@@ -166,12 +165,12 @@ void main() {
       _product(id: 'draft', publish: ProductPublishStatus.draft, active: false),
     ];
 
-    test('counts: all includes closed/draft; listed is isListedPublicly only', () {
+    test('counts: drafting folds pending/rejected/draft; listed is public only', () {
       final counts = partnerProductFilterCounts(products);
       expect(counts.all, 5);
-      expect(counts.pending, 1);
+      expect(counts.drafting, 3);
       expect(counts.listed, 1);
-      expect(counts.rejected, 1);
+      expect(counts.closed, 1);
     });
 
     test('filter listed excludes approved+inactive', () {
@@ -182,20 +181,20 @@ void main() {
       expect(listed.map((p) => p.id), ['listed']);
     });
 
-    test('filter pending / rejected / all', () {
+    test('filter drafting / closed / all', () {
       expect(
         filterPartnerProducts(
           products: products,
-          filter: PartnerProductStatusFilter.pending,
-        ).single.id,
-        'pending',
+          filter: PartnerProductStatusFilter.drafting,
+        ).map((p) => p.id).toSet(),
+        {'pending', 'rejected', 'draft'},
       );
       expect(
         filterPartnerProducts(
           products: products,
-          filter: PartnerProductStatusFilter.rejected,
+          filter: PartnerProductStatusFilter.closed,
         ).single.id,
-        'rejected',
+        'closed',
       );
       expect(
         filterPartnerProducts(

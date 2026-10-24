@@ -14,7 +14,9 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
-import 'package:dive_travel_app/core/models/price_revision.dart';
+import 'package:dive_travel_app/core/models/price_revision.dart'
+    show optionHasSeatCommitment;
+import 'package:dive_travel_app/core/models/product_price_swing.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -292,11 +294,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   String? _nondiverPriceError;
   String? _childPriceError;
 
+  /// Temp-save (keepEditing) only for drafts. Approved listings use live 「저장」.
+  /// Creators may still temp-save pending/rejected; partners may not.
   bool get _canTempSave {
     if (!_editing) {
       return false;
     }
-    return widget.existing?.publishStatus != ProductPublishStatus.approved;
+    final status = widget.existing?.publishStatus;
+    if (status == ProductPublishStatus.approved) {
+      return false;
+    }
+    if (widget.partnerMode) {
+      return status == null || status == ProductPublishStatus.draft;
+    }
+    return true;
   }
 
   bool _adminSameBoatFields(DiverStore store) {
@@ -319,9 +330,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   @override
   void initState() {
     super.initState();
-    final existing = widget.existing == null
-        ? null
-        : productWithRevisionFormValues(widget.existing!);
+    // H1a: ignore legacy price_revision / pending_options (do not overlay).
+    final existing = widget.existing;
     _shopId =
         widget.lockedShopId ??
         existing?.shopId ??
@@ -1280,8 +1290,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
     }
     final existing = widget.existing;
-    final isResubmit = existing?.publishStatus == ProductPublishStatus.rejected &&
-        (intent == ProductSaveIntent.submitForReview || widget.creatorMode);
+    // Creator rejected → resubmit gate only. Partners publish immediately (H1a).
+    final isResubmit = widget.creatorMode &&
+        existing?.publishStatus == ProductPublishStatus.rejected &&
+        intent != ProductSaveIntent.keepEditing;
     setState(() => _savingIntent = intent);
     try {
       final sessionUid = store.uid ?? '';
@@ -1449,7 +1461,27 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           widget.creatorMode && intent != ProductSaveIntent.keepEditing
               ? ProductSaveIntent.submitForReview
               : intent;
-      final saveResult = await store.saveShopProduct(
+
+      // Partner live save: confirm when any unit price swings ±30%+.
+      if (widget.partnerMode &&
+          !widget.creatorMode &&
+          effectiveIntent != ProductSaveIntent.keepEditing &&
+          existing?.publishStatus == ProductPublishStatus.approved &&
+          ProductPriceSwingGate.needsConfirm(
+            previous: existing!,
+            next: product,
+          )) {
+        final swings = ProductPriceSwingGate.findSwings(
+          previous: existing,
+          next: product,
+        );
+        final ok = await _confirmPriceSwing(l10n, swings);
+        if (ok != true) {
+          return false;
+        }
+      }
+
+      await store.saveShopProduct(
         shopId: shopId,
         product: product,
         gallery: galleryArg,
@@ -1463,13 +1495,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       _persistedProductId = product.id;
       _baselineSignature = _formSignature();
-      final pendingSameBoat = product.openEmptySeats &&
-          product.sameBoatStatus == SameBoatStatus.pending;
-      final savedText = saveResult.stagedPriceOrNewOptions
-          ? l10n.workbenchPriceRevisionStaged
-          : (pendingSameBoat && effectiveIntent != ProductSaveIntent.keepEditing
-              ? l10n.sameBoatPendingAfterSave
-              : _savedMessage(l10n, effectiveIntent));
+      final savedText = _savedMessage(
+        l10n,
+        effectiveIntent,
+        partnerLive: widget.partnerMode && !widget.creatorMode,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(savedText)),
       );
@@ -1746,7 +1776,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  String _savedMessage(AppLocalizations l10n, ProductSaveIntent intent) {
+  String _savedMessage(
+    AppLocalizations l10n,
+    ProductSaveIntent intent, {
+    bool partnerLive = false,
+  }) {
+    if (partnerLive && intent == ProductSaveIntent.submitForReview) {
+      return l10n.partnerProductPublished;
+    }
     return switch (intent) {
       ProductSaveIntent.keepEditing => l10n.briefKept,
       ProductSaveIntent.submitForReview => l10n.adminProductSubmitted,
@@ -1754,6 +1791,39 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ProductSaveIntent.takeDown => l10n.briefTakenDown,
       ProductSaveIntent.preserveListing => l10n.adminProductApproved,
     };
+  }
+
+  Future<bool?> _confirmPriceSwing(
+    AppLocalizations l10n,
+    List<ProductPriceSwing> swings,
+  ) {
+    final lines = swings
+        .take(6)
+        .map(
+          (s) =>
+              '${s.oldPrice} → ${s.newPrice} (${s.percent.isFinite ? s.percent.toStringAsFixed(0) : "—"}%)',
+        )
+        .join('\n');
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.partnerPriceSwingTitle),
+        content: Text(
+          '${l10n.partnerPriceSwingBody}\n\n$lines',
+          style: const TextStyle(height: 1.35),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.profileFlagCancelCta),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.partnerPriceSwingConfirm),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _saveBar(AppLocalizations l10n, {required bool canPublish}) {
@@ -1766,6 +1836,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final pending = canPublish &&
         (widget.existing?.publishStatus == ProductPublishStatus.pending);
     final onLastStep = _stepIndex >= _stepCount - 1;
+    final partnerSaveLabel = widget.existing?.publishStatus ==
+            ProductPublishStatus.approved
+        ? l10n.briefSave
+        : l10n.partnerProductPublish;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -1858,7 +1932,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             : (onLastStep
                                 ? (canPublish
                                     ? l10n.briefSave
-                                    : l10n.briefSubmit)
+                                    : (widget.partnerMode
+                                        ? partnerSaveLabel
+                                        : l10n.briefSubmit))
                                 : l10n.briefStepNext),
                       ),
                     ),
@@ -1965,50 +2041,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }) {
     final rejectNote = widget.existing?.reviewNote.trim() ?? '';
     final rejectTags = widget.existing?.rejectedReasonTags ?? const <String>[];
-    final showRejectBanner =
+    // Creator-only reject banner (partners have no approval flow — H1a).
+    final showRejectBanner = widget.creatorMode &&
         widget.existing?.publishStatus == ProductPublishStatus.rejected &&
-            (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
-    final priceRevision = widget.existing?.priceRevision;
-    final showPriceRevisionPending = priceRevision?.isPending ?? false;
-    final showPriceRevisionRejected = priceRevision?.isRejected ?? false;
+        (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
     return ListView(
       key: const Key('ops-product-brief-scroll'),
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        if (showPriceRevisionPending)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Material(
-              color: AppTheme.navyMid.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  l10n.workbenchPriceRevisionPendingBanner,
-                  style: const TextStyle(fontSize: 13, height: 1.35),
-                ),
-              ),
-            ),
-          ),
-        if (showPriceRevisionRejected)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Material(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  l10n.workbenchPriceRevisionRejectedBanner(
-                    priceRevision!.reviewNote.trim().isEmpty
-                        ? '—'
-                        : priceRevision.reviewNote.trim(),
-                  ),
-                  style: const TextStyle(fontSize: 13, height: 1.35),
-                ),
-              ),
-            ),
-          ),
         if (showRejectBanner)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
