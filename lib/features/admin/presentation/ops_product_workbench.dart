@@ -271,6 +271,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _stepIndex = 0;
   /// After first temp-save of a new product, reuse this id on later saves.
   String? _persistedProductId;
+  /// Form fingerprint after load / successful save (dirty detection).
+  String? _baselineSignature;
   final _checklist = <String, bool>{
     for (final id in ProductSubmitChecklist.ids) id: false,
   };
@@ -446,6 +448,102 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       isAdmin: false,
       packageDeparture: _departureStart,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _baselineSignature = _formSignature();
+    });
+  }
+
+  bool get _hasPhotosForSave =>
+      _gallery.isNotEmpty || _preserveExistingPhotos;
+
+  int get _diverPriceValue =>
+      parsePositivePrice(_rateConsumer[GuestRole.diver]?.text ?? '') ?? 0;
+
+  /// Effective status for temp-save rules (pending needs min fields).
+  ProductPublishStatus? get _editingPublishStatus =>
+      widget.existing?.publishStatus;
+
+  bool get _isDirty {
+    final baseline = _baselineSignature;
+    if (baseline == null) {
+      return false;
+    }
+    return _formSignature() != baseline;
+  }
+
+  String _formSignature() {
+    final gallerySig = [
+      for (final item in _gallery)
+        if (item.url != null && item.url!.isNotEmpty)
+          'u:${item.url}'
+        else if (item.photo != null)
+          'b:${item.photo!.bytes.length}:${item.photo!.fileName}',
+    ].join('|');
+    final addonSig = [
+      for (final a in _addons) '${a.name.text}|${a.consumer.text}',
+    ].join(';');
+    final ticketSig = [
+      for (final t in _individuals)
+        '${t.name.text}|${t.consumer.text}|${[
+          for (final a in t.addons) '${a.name.text}|${a.consumer.text}',
+        ].join(',')}',
+    ].join(';');
+    return [
+      _name.text,
+      _blurb.text,
+      _meeting.text,
+      _detailBody.text,
+      _includes.text,
+      _excludes.text,
+      _cancel.text,
+      _shopId,
+      _continent,
+      _category.firestoreValue,
+      _packageNights,
+      _departureStart?.toIso8601String() ?? '',
+      _hasNondivers,
+      _rateConsumer[GuestRole.diver]?.text ?? '',
+      _rateConsumer[GuestRole.nondiver]?.text ?? '',
+      _rateConsumer[GuestRole.child]?.text ?? '',
+      _namedResort,
+      _resortName.text,
+      _resortCountry.text,
+      _resortRegion.text,
+      _galleryTouched,
+      _galleryClearedByUser,
+      gallerySig,
+      addonSig,
+      ticketSig,
+    ].join('\u001f');
+  }
+
+  /// Pending temp-save: photo + name + price > 0. Others: no min gate.
+  bool _validatePendingTempSave(AppLocalizations l10n) {
+    if (!_hasPhotosForSave) {
+      _reveal(0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.briefTempSaveNeedPhoto)),
+      );
+      return false;
+    }
+    if (_name.text.trim().isEmpty) {
+      _reveal(0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchNeedName)),
+      );
+      return false;
+    }
+    if (_diverPriceValue <= 0) {
+      _reveal(3);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
+      );
+      return false;
+    }
+    return true;
   }
 
   List<SameBoatOptionSeatSlot> _seatOptionSlots() {
@@ -1103,39 +1201,51 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return existing?.featuredAt ?? DateTime.now();
   }
 
-  Future<void> _save(ProductSaveIntent intent) async {
+  /// Returns true when Firestore/local save finished successfully.
+  Future<bool> _save(ProductSaveIntent intent) async {
     final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
     if (_savingIntent != null) {
-      return;
+      return false;
     }
-    if (name.isEmpty) {
-      _reveal(0);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
-      return;
-    }
-    if (_namedResort && _resortName.text.trim().isEmpty) {
-      _reveal(1);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.productFormCuratedResort)));
-      return;
-    }
-    if (!_validatePricesBeforeSave(l10n)) {
-      return;
+    final isTemp = intent == ProductSaveIntent.keepEditing;
+    final pendingTemp = isTemp &&
+        _editingPublishStatus == ProductPublishStatus.pending;
+    if (pendingTemp) {
+      if (!_validatePendingTempSave(l10n)) {
+        return false;
+      }
+    } else if (!isTemp) {
+      if (name.isEmpty) {
+        _reveal(0);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
+        return false;
+      }
+      if (_namedResort && _resortName.text.trim().isEmpty) {
+        _reveal(1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.productFormCuratedResort)),
+        );
+        return false;
+      }
+      if (!_validatePricesBeforeSave(l10n)) {
+        return false;
+      }
     }
     final store = DiverStoreScope.of(context);
     _seats.isAdmin = store.stats.isAdmin;
     _syncSeatSlots();
-    final validateSeats = _adminSameBoatFields(store) ||
-        widget.existing?.openEmptySeats == true;
+    final validateSeats = !isTemp &&
+        (_adminSameBoatFields(store) ||
+            widget.existing?.openEmptySeats == true);
     if (validateSeats) {
       final seatError = _seats.validate(l10n, now: DateTime.now());
       if (seatError != null) {
         _reveal(4);
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(seatError)));
-        return;
+        return false;
       }
     }
     final existing = widget.existing;
@@ -1295,12 +1405,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             untouched,
           );
           if (proceed != true) {
-            return;
+            return false;
           }
         }
         final note = await _askResubmitNote(l10n);
         if (note == null) {
-          return;
+          return false;
         }
         product = product.copyWith(resubmitNote: note);
       }
@@ -1318,9 +1428,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         intent: effectiveIntent,
       );
       if (!mounted) {
-        return;
+        return false;
       }
       _persistedProductId = product.id;
+      _baselineSignature = _formSignature();
       final pendingSameBoat = product.openEmptySeats &&
           product.sameBoatStatus == SameBoatStatus.pending;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1336,9 +1447,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (effectiveIntent != ProductSaveIntent.keepEditing) {
         Navigator.of(context).pop();
       }
+      return true;
     } catch (error) {
       if (!mounted) {
-        return;
+        return false;
       }
       // Stay on the edit screen so partner inputs are preserved.
       final raw = '$error';
@@ -1352,9 +1464,66 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), duration: const Duration(seconds: 8)),
       );
+      return false;
     } finally {
       if (mounted) {
         setState(() => _savingIntent = null);
+      }
+    }
+  }
+
+  Future<void> _handleSystemBack() async {
+    if (_savingIntent != null) {
+      return;
+    }
+    if (!_editing || !_isDirty) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final allowTemp = _canTempSave;
+    final choice = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: const Key('brief-leave-dialog'),
+          title: Text(l10n.briefLeaveTitle),
+          content: Text(l10n.briefLeaveBody),
+          actions: [
+            TextButton(
+              key: const Key('brief-leave-stay'),
+              onPressed: () => Navigator.pop(dialogContext, 'stay'),
+              child: Text(l10n.briefLeaveStay),
+            ),
+            TextButton(
+              key: const Key('brief-leave-discard'),
+              onPressed: () => Navigator.pop(dialogContext, 'discard'),
+              child: Text(l10n.briefLeaveDiscard),
+            ),
+            if (allowTemp)
+              FilledButton(
+                key: const Key('brief-leave-temp-save'),
+                onPressed: () => Navigator.pop(dialogContext, 'temp'),
+                child: Text(l10n.briefLeaveTempSave),
+              ),
+          ],
+        );
+      },
+    );
+    if (!mounted) {
+      return;
+    }
+    if (choice == 'discard') {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (choice == 'temp') {
+      final ok = await _save(ProductSaveIntent.keepEditing);
+      if (ok && mounted) {
+        Navigator.of(context).pop();
       }
     }
   }
@@ -1460,13 +1629,36 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final canPublish = store.stats.isAdmin &&
         !widget.partnerMode &&
         !widget.creatorMode;
-    return Scaffold(
+    final busy = _savingIntent != null;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          return;
+        }
+        unawaited(_handleSystemBack());
+      },
+      child: Scaffold(
       backgroundColor: AppTheme.canvas,
       appBar: AppBar(
         title: Text(
           widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
         ),
         backgroundColor: AppTheme.canvas,
+        actions: [
+          if (_editing && _canTempSave)
+            TextButton(
+              key: const Key('brief-temp-save'),
+              onPressed: busy
+                  ? null
+                  : () => unawaited(_save(ProductSaveIntent.keepEditing)),
+              child: Text(
+                busy && _savingIntent == ProductSaveIntent.keepEditing
+                    ? l10n.exploreSaving
+                    : l10n.briefTempSave,
+              ),
+            ),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -1520,6 +1712,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           );
         },
       ),
+    ),
     );
   }
 
@@ -1602,26 +1795,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           minimumSize: const Size.fromHeight(48),
                         ),
                         child: Text(l10n.briefStepBack),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  if (_canTempSave) ...[
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const Key('brief-temp-save'),
-                        onPressed: busy
-                            ? null
-                            : () => _save(ProductSaveIntent.keepEditing),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        child: Text(
-                          busy &&
-                                  _savingIntent == ProductSaveIntent.keepEditing
-                              ? l10n.exploreSaving
-                              : l10n.briefTempSave,
-                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

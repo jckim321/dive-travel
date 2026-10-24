@@ -3890,6 +3890,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get briefSameBoatPartnerHint => '같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.';
 
   @override
+  String get briefTempSaveNeedPhoto => '사진을 한 장 이상 넣어 주세요.';
+
+  @override
+  String get briefTempSaveNeedPrice => '기본 가격을 0원보다 크게 입력해 주세요.';
+
+  @override
+  String get briefLeaveTitle => '저장하지 않고 나갈까요?';
+
+  @override
+  String get briefLeaveBody => '수정한 내용이 아직 저장되지 않았어요.';
+
+  @override
+  String get briefLeaveTempSave => '임시 저장하고 나가기';
+
+  @override
+  String get briefLeaveDiscard => '저장하지 않고 나가기';
+
+  @override
+  String get briefLeaveStay => '계속 작성';
+
+  @override
   String get briefViewModeHint => '수정을 누르면 편집할 수 있습니다.';
 
   @override

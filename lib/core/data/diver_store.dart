@@ -1740,13 +1740,16 @@ class DiverStore extends ChangeNotifier {
     }
     switch (intent) {
       case ProductSaveIntent.keepEditing:
-        // Rejected products stay rejected until an explicit resubmit
-        // (build B will add true draft saves for rejected listings).
+        // Preserve queue status: pending stays pending, rejected stays rejected.
+        // New / draft → draft. Approved should not use temp-save UI.
+        final prevStatus = previous?.publishStatus;
+        final nextStatus = ProductPublishGuard.keepEditingStatus(prevStatus);
+        final nextActive = prevStatus == ProductPublishStatus.approved
+            ? (previous?.active ?? product.active)
+            : false;
         return product.copyWith(
-          publishStatus: previous?.publishStatus == ProductPublishStatus.rejected
-              ? ProductPublishStatus.rejected
-              : ProductPublishStatus.draft,
-          active: false,
+          publishStatus: nextStatus,
+          active: nextActive,
           submittedByUid: submitter,
           reviewNote: previous?.reviewNote ?? product.reviewNote,
           rejectedContentHash:

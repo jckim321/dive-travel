@@ -25,35 +25,37 @@ void main() {
     ]);
   });
 
-  test('keepEditing path: rejected stays rejected without resubmit bump', () {
-    // Mirrors DiverStore._withSaveIntent(keepEditing) rules used by temp save.
-    final previous = ShopProduct(
-      id: 'p1',
-      shopId: 'shop',
-      name: 'Trip',
-      consumerPrice: 100000,
-      professionalPrice: 100000,
-      publishStatus: ProductPublishStatus.rejected,
-      active: false,
-      reviewNote: '사진',
-      rejectedContentHash: 'abc',
-      rejectedReasonTags: const ['photos'],
-      resubmitCount: 2,
-      resubmitNote: 'old',
-    );
-    final nextStatus =
-        previous.publishStatus == ProductPublishStatus.rejected
-            ? ProductPublishStatus.rejected
-            : ProductPublishStatus.draft;
-    expect(nextStatus, ProductPublishStatus.rejected);
-    expect(previous.resubmitCount, 2);
-    // Resubmit gate only runs on submitForReview, not keepEditing.
-    expect(
-      () => ProductPublishGuard.assertChangedSinceReject(
-        previous: previous,
-        next: previous,
-      ),
-      returnsNormally,
-    );
+  group('keepEditingStatus', () {
+    test('pending stays pending', () {
+      expect(
+        ProductPublishGuard.keepEditingStatus(ProductPublishStatus.pending),
+        ProductPublishStatus.pending,
+      );
+    });
+
+    test('rejected stays rejected', () {
+      expect(
+        ProductPublishGuard.keepEditingStatus(ProductPublishStatus.rejected),
+        ProductPublishStatus.rejected,
+      );
+    });
+
+    test('null and draft become draft', () {
+      expect(
+        ProductPublishGuard.keepEditingStatus(null),
+        ProductPublishStatus.draft,
+      );
+      expect(
+        ProductPublishGuard.keepEditingStatus(ProductPublishStatus.draft),
+        ProductPublishStatus.draft,
+      );
+    });
+
+    test('approved stays approved (defensive)', () {
+      expect(
+        ProductPublishGuard.keepEditingStatus(ProductPublishStatus.approved),
+        ProductPublishStatus.approved,
+      );
+    });
   });
 }

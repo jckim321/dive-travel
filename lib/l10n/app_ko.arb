@@ -2158,6 +2158,13 @@
   "briefShopInfoBody": "상호·위치·소개는 리조트 소개 화면에서 관리합니다.",
   "briefShopInfoOpen": "리조트 소개 열기",
   "briefSameBoatPartnerHint": "같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.",
+  "briefTempSaveNeedPhoto": "사진을 한 장 이상 넣어 주세요.",
+  "briefTempSaveNeedPrice": "기본 가격을 0원보다 크게 입력해 주세요.",
+  "briefLeaveTitle": "저장하지 않고 나갈까요?",
+  "briefLeaveBody": "수정한 내용이 아직 저장되지 않았어요.",
+  "briefLeaveTempSave": "임시 저장하고 나가기",
+  "briefLeaveDiscard": "저장하지 않고 나가기",
+  "briefLeaveStay": "계속 작성",
   "briefViewModeHint": "수정을 누르면 편집할 수 있습니다.",
 
   "adminProductDelete": "삭제",

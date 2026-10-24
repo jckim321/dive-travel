@@ -1550,6 +1550,13 @@
   "briefShopInfoBody": "Name, location, and intro are managed on the resort desk.",
   "briefShopInfoOpen": "Open resort desk",
   "briefSameBoatPartnerHint": "Same-boat leftover seats open from product management after approval.",
+  "briefTempSaveNeedPhoto": "Add at least one photo.",
+  "briefTempSaveNeedPrice": "Enter a base price greater than 0.",
+  "briefLeaveTitle": "Leave without saving?",
+  "briefLeaveBody": "You have unsaved changes.",
+  "briefLeaveTempSave": "Save draft and leave",
+  "briefLeaveDiscard": "Leave without saving",
+  "briefLeaveStay": "Keep editing",
   "briefViewModeHint": "Tap Edit to make changes.",
 
   "adminProductDelete": "Delete",

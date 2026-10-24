@@ -3998,6 +3998,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Same-boat leftover seats open from product management after approval.';
 
   @override
+  String get briefTempSaveNeedPhoto => 'Add at least one photo.';
+
+  @override
+  String get briefTempSaveNeedPrice => 'Enter a base price greater than 0.';
+
+  @override
+  String get briefLeaveTitle => 'Leave without saving?';
+
+  @override
+  String get briefLeaveBody => 'You have unsaved changes.';
+
+  @override
+  String get briefLeaveTempSave => 'Save draft and leave';
+
+  @override
+  String get briefLeaveDiscard => 'Leave without saving';
+
+  @override
+  String get briefLeaveStay => 'Keep editing';
+
+  @override
   String get briefViewModeHint => 'Tap Edit to make changes.';
 
   @override

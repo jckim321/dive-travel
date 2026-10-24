@@ -94,6 +94,18 @@ abstract final class ProductPublishGuard {
     }
   }
 
+  /// Status after [ProductSaveIntent.keepEditing] (temp save).
+  static ProductPublishStatus keepEditingStatus(
+    ProductPublishStatus? previous,
+  ) {
+    return switch (previous) {
+      ProductPublishStatus.pending => ProductPublishStatus.pending,
+      ProductPublishStatus.rejected => ProductPublishStatus.rejected,
+      ProductPublishStatus.approved => ProductPublishStatus.approved,
+      ProductPublishStatus.draft || null => ProductPublishStatus.draft,
+    };
+  }
+
   /// Normalize admin-selected tags to known codes (order preserved, unique).
   static List<String> normalizeReasonTags(Iterable<String> raw) {
     final seen = <String>{};
