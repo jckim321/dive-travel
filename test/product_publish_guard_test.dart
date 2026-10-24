@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -242,6 +245,28 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('업로드 전 bytes 사진만 추가해도 재요청 가능', () {
+      final emptyPhotos = _product().copyWith(
+        coverUrl: '',
+        photoUrls: const [],
+      );
+      final previous = emptyPhotos.copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        reviewNote: '사진 없음',
+        rejectedContentHash: productContentFingerprint(emptyPhotos),
+      );
+      final next = ProductPublishGuard.applyResubmit(
+        previous: previous,
+        next: emptyPhotos,
+        resubmitNote: '사진을 첨부했습니다',
+        pendingGallery: [
+          ShopGallerySlot(bytes: Uint8List.fromList([9, 8, 7, 6])),
+        ],
+      );
+      expect(next.publishStatus, ProductPublishStatus.pending);
+      expect(next.resubmitCount, 1);
     });
   });
 }

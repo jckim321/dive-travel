@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
@@ -67,15 +68,20 @@ abstract final class ProductPublishGuard {
 
   /// When [previous.rejectedContentHash] is set, [next] must differ.
   /// Empty hash (legacy rejects) skips the unchanged check.
+  ///
+  /// Pass [pendingGallery] on save so local bytes / deletes / cover order are
+  /// compared before R2 upload (product.photoUrls alone omit pending bytes).
   static void assertChangedSinceReject({
     required ShopProduct previous,
     required ShopProduct next,
+    List<ShopGallerySlot>? pendingGallery,
   }) {
     final hash = previous.rejectedContentHash.trim();
     if (hash.isEmpty) {
       return;
     }
-    if (productContentFingerprint(next) == hash) {
+    if (productContentFingerprint(next, pendingGallery: pendingGallery) ==
+        hash) {
       throw StateError(unchangedSinceRejectMessage);
     }
   }
@@ -85,8 +91,13 @@ abstract final class ProductPublishGuard {
     required ShopProduct previous,
     required ShopProduct next,
     required String resubmitNote,
+    List<ShopGallerySlot>? pendingGallery,
   }) {
-    assertChangedSinceReject(previous: previous, next: next);
+    assertChangedSinceReject(
+      previous: previous,
+      next: next,
+      pendingGallery: pendingGallery,
+    );
     ensureResubmitNote(resubmitNote);
     final submitter = next.submittedByUid.isNotEmpty
         ? next.submittedByUid

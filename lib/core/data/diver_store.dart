@@ -1575,6 +1575,7 @@ class DiverStore extends ChangeNotifier {
     final gated = _withSaveIntent(
       product: product,
       previous: previous,
+      pendingGallery: gallery,
       creatorSubmission: creatorSubmission,
       creatorUid: creatorUid,
       intent: intent,
@@ -1682,12 +1683,14 @@ class DiverStore extends ChangeNotifier {
     required ShopProduct product,
     required ShopProduct? previous,
     required String submitter,
+    List<ShopGallerySlot>? pendingGallery,
   }) {
     if (previous?.publishStatus == ProductPublishStatus.rejected) {
       return ProductPublishGuard.applyResubmit(
         previous: previous!,
         next: product.copyWith(submittedByUid: submitter),
         resubmitNote: product.resubmitNote,
+        pendingGallery: pendingGallery,
       );
     }
     return product.copyWith(
@@ -1701,6 +1704,7 @@ class DiverStore extends ChangeNotifier {
   ShopProduct _withSaveIntent({
     required ShopProduct product,
     ShopProduct? previous,
+    List<ShopGallerySlot>? pendingGallery,
     required bool creatorSubmission,
     required String creatorUid,
     required ProductSaveIntent? intent,
@@ -1717,6 +1721,7 @@ class DiverStore extends ChangeNotifier {
           product: product,
           previous: previous,
           submitter: submitter,
+          pendingGallery: pendingGallery,
         );
       }
       ProductPublishGuard.ensureCanApprove(product);
@@ -1752,6 +1757,7 @@ class DiverStore extends ChangeNotifier {
           product: product,
           previous: previous,
           submitter: submitter,
+          pendingGallery: pendingGallery,
         );
       case ProductSaveIntent.publish:
         if (!_stats.isAdmin) {

@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/product_content_fingerprint.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -105,5 +108,67 @@ void main() {
       ),
       'shops/x/a.jpg',
     );
+  });
+
+  test('pendingGallery: 사진만 추가하면 지문이 달라진다', () {
+    final empty = _base(coverUrl: '', photoUrls: const []);
+    final baseHash = productContentFingerprint(empty);
+    final withLocal = productContentFingerprint(
+      empty,
+      pendingGallery: [
+        ShopGallerySlot(bytes: Uint8List.fromList([1, 2, 3, 4])),
+      ],
+    );
+    expect(withLocal, isNot(baseHash));
+  });
+
+  test('pendingGallery: 사진만 삭제하면 지문이 달라진다', () {
+    final withPhotos = _base(
+      coverUrl: 'https://cdn.example/a.jpg',
+      photoUrls: const ['https://cdn.example/a.jpg'],
+    );
+    final baseHash = productContentFingerprint(withPhotos);
+    final cleared = productContentFingerprint(
+      withPhotos,
+      pendingGallery: const [],
+    );
+    expect(cleared, isNot(baseHash));
+  });
+
+  test('pendingGallery: 대표 사진만 바꾸면 지문이 달라진다', () {
+    final slotsA = [
+      const ShopGallerySlot(url: 'https://cdn.example/a.jpg'),
+      const ShopGallerySlot(url: 'https://cdn.example/b.jpg'),
+    ];
+    final slotsB = [
+      const ShopGallerySlot(url: 'https://cdn.example/b.jpg'),
+      const ShopGallerySlot(url: 'https://cdn.example/a.jpg'),
+    ];
+    final product = _base(
+      coverUrl: 'https://cdn.example/a.jpg',
+      photoUrls: const [
+        'https://cdn.example/a.jpg',
+        'https://cdn.example/b.jpg',
+      ],
+    );
+    expect(
+      productContentFingerprint(product, pendingGallery: slotsA),
+      isNot(productContentFingerprint(product, pendingGallery: slotsB)),
+    );
+  });
+
+  test('pendingGallery: 아무것도 안 바꾸면 지문 동일', () {
+    final product = _base(
+      coverUrl: 'https://cdn.example/a.jpg',
+      photoUrls: const ['https://cdn.example/a.jpg'],
+    );
+    final hash = productContentFingerprint(product);
+    final same = productContentFingerprint(
+      product,
+      pendingGallery: const [
+        ShopGallerySlot(url: 'https://cdn.example/a.jpg'),
+      ],
+    );
+    expect(same, hash);
   });
 }

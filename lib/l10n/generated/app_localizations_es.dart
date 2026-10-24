@@ -2839,7 +2839,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productStatusApproved => '공개됨';
 
   @override
-  String get productStatusRejected => '거절됨';
+  String get productStatusRejected => '반려됨';
 
   @override
   String get productStatusDraft => '임시저장';
@@ -3817,7 +3817,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminProductDeleted => '상품을 삭제했습니다.';
 
   @override
-  String get adminProductRejectNote => '거절 사유';
+  String get adminProductRejectNote => '반려 사유';
 
   @override
   String get adminProductRejectNoteHint => '파트너에게 보이는 이유를 적습니다.';

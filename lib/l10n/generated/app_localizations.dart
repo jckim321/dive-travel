@@ -3027,7 +3027,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminReject.
   ///
   /// In ko, this message translates to:
-  /// **'거절'**
+  /// **'반려'**
   String get adminReject;
 
   /// No description provided for @adminNoPending.
@@ -5337,7 +5337,7 @@ abstract class AppLocalizations {
   /// No description provided for @productStatusRejected.
   ///
   /// In ko, this message translates to:
-  /// **'거절됨'**
+  /// **'반려됨'**
   String get productStatusRejected;
 
   /// No description provided for @productStatusDraft.
@@ -7155,7 +7155,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminProductRejectNote.
   ///
   /// In ko, this message translates to:
-  /// **'거절 사유'**
+  /// **'반려 사유'**
   String get adminProductRejectNote;
 
   /// No description provided for @adminProductRejectNoteHint.

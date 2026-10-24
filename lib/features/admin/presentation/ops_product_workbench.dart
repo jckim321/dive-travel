@@ -1091,14 +1091,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final existing = widget.existing;
     final isResubmit = existing?.publishStatus == ProductPublishStatus.rejected &&
         (intent == ProductSaveIntent.submitForReview || widget.creatorMode);
-    var resubmitNote = existing?.resubmitNote ?? '';
-    if (isResubmit) {
-      final note = await _askResubmitNote(l10n);
-      if (note == null) {
-        return;
-      }
-      resubmitNote = note;
-    }
     setState(() => _savingIntent = intent);
     try {
       final sessionUid = store.uid ?? '';
@@ -1214,17 +1206,30 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         reviewNote: existing?.reviewNote ?? '',
         rejectedContentHash: existing?.rejectedContentHash ?? '',
         resubmitCount: existing?.resubmitCount ?? 0,
-        resubmitNote: resubmitNote,
+        resubmitNote: existing?.resubmitNote ?? '',
         submittedByUid: existing?.submittedByUid.isNotEmpty == true
             ? existing!.submittedByUid
             : sessionUid,
       );
-      final product = _seats.applyToProduct(drafted);
+      var product = _seats.applyToProduct(drafted);
       // null gallery = leave Firestore photo_urls/cover_url unchanged.
       // Empty list = user cleared photos. Non-empty = upload/keep listed URLs.
       final List<ShopGallerySlot>? galleryArg = _preserveExistingPhotos
           ? null
           : _gallerySlots;
+      if (isResubmit) {
+        // Check change (incl. pending photo bytes) before asking for a note.
+        ProductPublishGuard.assertChangedSinceReject(
+          previous: existing!,
+          next: product,
+          pendingGallery: galleryArg,
+        );
+        final note = await _askResubmitNote(l10n);
+        if (note == null) {
+          return;
+        }
+        product = product.copyWith(resubmitNote: note);
+      }
       await store.saveShopProduct(
         shopId: shopId,
         product: product,

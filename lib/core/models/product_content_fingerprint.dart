@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
@@ -10,8 +11,14 @@ import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 /// Includes listing content only (name, copy, prices, photos, schedule, …).
 /// Excludes publish/review metadata, seats, same-boat, FOC, and guest ratings.
 /// Photo URLs are compared by object key only (host / signature / query stripped).
-String productContentFingerprint(ShopProduct product) {
-  final payload = jsonEncode(_canonicalContent(product));
+///
+/// When [pendingGallery] is set (save-time slots), local bytes and URL order are
+/// included so add / remove / cover reorder count as changes before R2 upload.
+String productContentFingerprint(
+  ShopProduct product, {
+  List<ShopGallerySlot>? pendingGallery,
+}) {
+  final payload = jsonEncode(_canonicalContent(product, pendingGallery));
   return sha256.convert(utf8.encode(payload)).toString();
 }
 
@@ -43,13 +50,39 @@ String contentFingerprintPhotoRef(String raw) {
   return bare;
 }
 
-Map<String, Object?> _canonicalContent(ShopProduct product) {
-  final photos = [
-    for (final url in product.photoUrls)
-      if (contentFingerprintPhotoRef(url).isNotEmpty)
-        contentFingerprintPhotoRef(url),
-  ]..sort();
-  final cover = contentFingerprintPhotoRef(product.coverUrl);
+/// Stable ref for one gallery slot (remote key or hash of pending bytes).
+String contentFingerprintGallerySlot(ShopGallerySlot slot) {
+  if (slot.hasBytes) {
+    return 'local:${sha256.convert(slot.bytes!).toString()}';
+  }
+  if (slot.hasUrl) {
+    return contentFingerprintPhotoRef(slot.url!);
+  }
+  return '';
+}
+
+Map<String, Object?> _canonicalContent(
+  ShopProduct product,
+  List<ShopGallerySlot>? pendingGallery,
+) {
+  late final String cover;
+  late final List<String> photos;
+  if (pendingGallery != null) {
+    final ordered = <String>[
+      for (final slot in pendingGallery)
+        if (contentFingerprintGallerySlot(slot).isNotEmpty)
+          contentFingerprintGallerySlot(slot),
+    ];
+    cover = ordered.isEmpty ? '' : ordered.first;
+    photos = [...ordered]..sort();
+  } else {
+    photos = [
+      for (final url in product.photoUrls)
+        if (contentFingerprintPhotoRef(url).isNotEmpty)
+          contentFingerprintPhotoRef(url),
+    ]..sort();
+    cover = contentFingerprintPhotoRef(product.coverUrl);
+  }
   final rates = [
     for (final rate in [...product.guestRates]
       ..sort((a, b) => a.role.firestoreValue.compareTo(b.role.firestoreValue)))

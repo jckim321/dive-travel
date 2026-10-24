@@ -1621,7 +1621,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminApprove => 'Approve';
 
   @override
-  String get adminReject => 'Reject';
+  String get adminReject => 'Return';
 
   @override
   String get adminNoPending => 'No pending certificate requests.';
@@ -2901,7 +2901,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productStatusApproved => 'Published';
 
   @override
-  String get productStatusRejected => 'Rejected';
+  String get productStatusRejected => 'Returned';
 
   @override
   String get productStatusDraft => 'Draft';
@@ -3903,7 +3903,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminProductDeleted => 'Product deleted.';
 
   @override
-  String get adminProductRejectNote => 'Reason for rejection';
+  String get adminProductRejectNote => 'Reason for return';
 
   @override
   String get adminProductRejectNoteHint => 'The partner will see this note.';

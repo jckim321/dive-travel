@@ -1169,7 +1169,7 @@
     }
   },
   "adminApprove": "승인",
-  "adminReject": "거절",
+  "adminReject": "반려",
   "adminNoPending": "대기 중인 자격증 신청이 없습니다.",
   "adminShopsTitle": "파트너",
   "adminPartnersGradeHint": "다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.",
@@ -1702,7 +1702,7 @@
   "partnerProductSeatsManage": "빈자리 관리",
   "partnerProductResubmit": "고쳐서 다시 요청",
   "productStatusApproved": "공개됨",
-  "productStatusRejected": "거절됨",
+  "productStatusRejected": "반려됨",
   "productStatusDraft": "임시저장",
   "partnerOwnProductsOnly": "파트너는 본인 샵 상품만 등록·수정할 수 있습니다.",
   "partnerProductPendingHint": "대기 중에도 목록에서 보고 수정할 수 있고, 같은배 신청과 여행상품 노출은 관리자 승인 후입니다.",
@@ -2128,7 +2128,7 @@
     }
   },
   "adminProductDeleted": "상품을 삭제했습니다.",
-  "adminProductRejectNote": "거절 사유",
+  "adminProductRejectNote": "반려 사유",
   "adminProductRejectNoteHint": "파트너에게 보이는 이유를 적습니다.",
   "checkoutStepSelect": "예약 선택",
   "checkoutStepReview": "예약한 사항",
