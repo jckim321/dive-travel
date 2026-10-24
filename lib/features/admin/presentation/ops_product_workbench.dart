@@ -1221,12 +1221,30 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ? null
           : _gallerySlots;
       if (isResubmit) {
-        // Check change (incl. pending photo bytes) before asking for a note.
+        // 1) Hard gate (build 2) → 2) soft warn (build 3B) → 3) fix note.
         ProductPublishGuard.assertChangedSinceReject(
           previous: existing!,
           next: product,
           pendingGallery: galleryArg,
         );
+        if (ProductPublishGuard.shouldWarnUntouchedTaggedSections(
+          previous: existing,
+          next: product,
+          pendingGallery: galleryArg,
+        )) {
+          final untouched = ProductPublishGuard.untouchedTaggedSections(
+            previous: existing,
+            next: product,
+            pendingGallery: galleryArg,
+          );
+          final proceed = await _confirmUntouchedTaggedSections(
+            l10n,
+            untouched,
+          );
+          if (proceed != true) {
+            return;
+          }
+        }
         final note = await _askResubmitNote(l10n);
         if (note == null) {
           return;
@@ -1280,6 +1298,40 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         setState(() => _savingIntent = null);
       }
     }
+  }
+
+  /// Soft confirm when tagged reject sections are all still unchanged.
+  /// Returns true to continue, false/null to stay editing.
+  Future<bool?> _confirmUntouchedTaggedSections(
+    AppLocalizations l10n,
+    List<String> untouchedTags,
+  ) {
+    final sections = [
+      for (final tag in untouchedTags) productRejectTagLabel(l10n, tag),
+    ].join(' · ');
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          key: const Key('partner-resubmit-soft-warn'),
+          title: Text(l10n.partnerResubmitSoftWarnTitle),
+          content: Text(l10n.partnerResubmitSoftWarnBody(sections)),
+          actions: [
+            TextButton(
+              key: const Key('partner-resubmit-soft-warn-fix'),
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.partnerResubmitSoftWarnFix),
+            ),
+            FilledButton(
+              key: const Key('partner-resubmit-soft-warn-continue'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.partnerResubmitSoftWarnContinue),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<String?> _askResubmitNote(AppLocalizations l10n) async {

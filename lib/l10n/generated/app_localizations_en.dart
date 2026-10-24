@@ -2648,6 +2648,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Nothing changed since the return. Fix the noted issues, then request again.';
 
   @override
+  String get partnerResubmitSoftWarnTitle => 'Related items are unchanged';
+
+  @override
+  String partnerResubmitSoftWarnBody(String sections) {
+    return 'The return noted $sections, and those items still look the same. Request approval anyway?';
+  }
+
+  @override
+  String get partnerResubmitSoftWarnFix => 'Keep editing';
+
+  @override
+  String get partnerResubmitSoftWarnContinue => 'Request anyway';
+
+  @override
   String get adminProductRejectTagsHint => 'Select related items (optional)';
 
   @override

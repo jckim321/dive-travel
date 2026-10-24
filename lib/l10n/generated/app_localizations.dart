@@ -4860,6 +4860,30 @@ abstract class AppLocalizations {
   /// **'반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.'**
   String get partnerResubmitUnchanged;
 
+  /// No description provided for @partnerResubmitSoftWarnTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'관련 항목이 그대로예요'**
+  String get partnerResubmitSoftWarnTitle;
+
+  /// No description provided for @partnerResubmitSoftWarnBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'반려 사유와 관련된 {sections} 항목이 아직 바뀌지 않았어요. 그래도 요청할까요?'**
+  String partnerResubmitSoftWarnBody(String sections);
+
+  /// No description provided for @partnerResubmitSoftWarnFix.
+  ///
+  /// In ko, this message translates to:
+  /// **'고치러 가기'**
+  String get partnerResubmitSoftWarnFix;
+
+  /// No description provided for @partnerResubmitSoftWarnContinue.
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 요청'**
+  String get partnerResubmitSoftWarnContinue;
+
   /// No description provided for @adminProductRejectTagsHint.
   ///
   /// In ko, this message translates to:

@@ -182,15 +182,54 @@ void main() {
         ),
         ['photos'],
       );
+      expect(
+        ProductPublishGuard.shouldWarnUntouchedTaggedSections(
+          previous: previous,
+          next: next,
+        ),
+        isTrue,
+      );
     });
 
-    test('태그·섹션 해시 없으면 빈 목록', () {
+    test('태그 중 일부만 바뀌면 소프트 경고 없음', () {
+      final base = _product();
+      final previous = base.copyWith(
+        publishStatus: ProductPublishStatus.rejected,
+        rejectedReasonTags: const ['photos', 'price'],
+        rejectedSectionHashes: productSectionFingerprints(base),
+        rejectedContentHash: productContentFingerprint(base),
+      );
+      final next = base.copyWith(consumerPrice: 200000);
+      expect(
+        ProductPublishGuard.untouchedTaggedSections(
+          previous: previous,
+          next: next,
+        ),
+        ['photos'],
+      );
+      expect(
+        ProductPublishGuard.shouldWarnUntouchedTaggedSections(
+          previous: previous,
+          next: next,
+        ),
+        isFalse,
+      );
+    });
+
+    test('태그·섹션 해시 없으면 빈 목록·경고 없음', () {
       expect(
         ProductPublishGuard.untouchedTaggedSections(
           previous: _product(),
           next: _product(consumerPrice: 1),
         ),
         isEmpty,
+      );
+      expect(
+        ProductPublishGuard.shouldWarnUntouchedTaggedSections(
+          previous: _product(),
+          next: _product(consumerPrice: 1),
+        ),
+        isFalse,
       );
     });
   });

@@ -116,9 +116,7 @@ abstract final class ProductPublishGuard {
     required ShopProduct next,
     List<ShopGallerySlot>? pendingGallery,
   }) {
-    final tags = previous.rejectedReasonTags
-        .where(ProductRejectTags.sectionMapped.contains)
-        .toList();
+    final tags = _sectionMappedTags(previous);
     if (tags.isEmpty || previous.rejectedSectionHashes.isEmpty) {
       return const [];
     }
@@ -130,6 +128,33 @@ abstract final class ProductPublishGuard {
     return [
       for (final tag in tags)
         if (flags[tag] == SectionChangeFlag.same) tag,
+    ];
+  }
+
+  /// True when every section-mapped reject tag is still unchanged.
+  ///
+  /// Soft warn only — never throws. Legacy rejects (no tags/hashes) → false.
+  static bool shouldWarnUntouchedTaggedSections({
+    required ShopProduct previous,
+    required ShopProduct next,
+    List<ShopGallerySlot>? pendingGallery,
+  }) {
+    final tags = _sectionMappedTags(previous);
+    if (tags.isEmpty || previous.rejectedSectionHashes.isEmpty) {
+      return false;
+    }
+    final untouched = untouchedTaggedSections(
+      previous: previous,
+      next: next,
+      pendingGallery: pendingGallery,
+    );
+    return untouched.length == tags.length;
+  }
+
+  static List<String> _sectionMappedTags(ShopProduct previous) {
+    return [
+      for (final tag in previous.rejectedReasonTags)
+        if (ProductRejectTags.sectionMapped.contains(tag)) tag,
     ];
   }
 

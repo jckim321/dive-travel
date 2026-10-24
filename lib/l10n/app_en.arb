@@ -1032,6 +1032,15 @@
     }
   },
   "partnerResubmitUnchanged": "Nothing changed since the return. Fix the noted issues, then request again.",
+  "partnerResubmitSoftWarnTitle": "Related items are unchanged",
+  "partnerResubmitSoftWarnBody": "The return noted {sections}, and those items still look the same. Request approval anyway?",
+  "@partnerResubmitSoftWarnBody": {
+    "placeholders": {
+      "sections": { "type": "String" }
+    }
+  },
+  "partnerResubmitSoftWarnFix": "Keep editing",
+  "partnerResubmitSoftWarnContinue": "Request anyway",
   "adminProductRejectTagsHint": "Select related items (optional)",
   "rejectTagPhotos": "Photos",
   "rejectTagPrice": "Price",

@@ -2565,6 +2565,20 @@ class AppLocalizationsJa extends AppLocalizations {
       '반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.';
 
   @override
+  String get partnerResubmitSoftWarnTitle => '관련 항목이 그대로예요';
+
+  @override
+  String partnerResubmitSoftWarnBody(String sections) {
+    return '반려 사유와 관련된 $sections 항목이 아직 바뀌지 않았어요. 그래도 요청할까요?';
+  }
+
+  @override
+  String get partnerResubmitSoftWarnFix => '고치러 가기';
+
+  @override
+  String get partnerResubmitSoftWarnContinue => '그래도 요청';
+
+  @override
   String get adminProductRejectTagsHint => '해당되는 항목을 고르세요 (선택)';
 
   @override

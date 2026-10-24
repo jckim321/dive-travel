@@ -1612,6 +1612,15 @@
     }
   },
   "partnerResubmitUnchanged": "반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.",
+  "partnerResubmitSoftWarnTitle": "관련 항목이 그대로예요",
+  "partnerResubmitSoftWarnBody": "반려 사유와 관련된 {sections} 항목이 아직 바뀌지 않았어요. 그래도 요청할까요?",
+  "@partnerResubmitSoftWarnBody": {
+    "placeholders": {
+      "sections": { "type": "String" }
+    }
+  },
+  "partnerResubmitSoftWarnFix": "고치러 가기",
+  "partnerResubmitSoftWarnContinue": "그래도 요청",
   "adminProductRejectTagsHint": "해당되는 항목을 고르세요 (선택)",
   "rejectTagPhotos": "사진",
   "rejectTagPrice": "가격",
