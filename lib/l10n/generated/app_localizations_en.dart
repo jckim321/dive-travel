@@ -2920,7 +2920,87 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductPublish => 'Publish';
 
   @override
+  String get partnerProductPublishCta => 'Publish';
+
+  @override
   String get partnerProductPublished => 'Product published.';
+
+  @override
+  String get partnerFormSoftGuide =>
+      'Only required fields are needed to save. Leave the rest blank — ops can help fill them in.';
+
+  @override
+  String get partnerFormSectionBasics => 'Basics';
+
+  @override
+  String get partnerFormSectionPricing => 'Prices & options';
+
+  @override
+  String get partnerFormSectionPublish => 'Publish';
+
+  @override
+  String get partnerFormRequiredBadge => 'Required';
+
+  @override
+  String get partnerFormPhotoOptionalHint =>
+      'If empty, ops can add photos. Max 10.';
+
+  @override
+  String get partnerFormPhotoMain => 'Main';
+
+  @override
+  String get partnerFormNameHint => 'e.g. Bohol 3D2N package';
+
+  @override
+  String get partnerFormBlurbHint => 'One-line pitch customers see';
+
+  @override
+  String get partnerFormProductType => 'Product type';
+
+  @override
+  String get partnerFormNights => 'Nights';
+
+  @override
+  String get partnerFormDays => 'Days';
+
+  @override
+  String get partnerFormMeeting => 'Meeting point';
+
+  @override
+  String get partnerFormShopInfoRow =>
+      'Resort location and amenities are managed in shop info.';
+
+  @override
+  String get partnerFormShopInfoCta => 'Shop info';
+
+  @override
+  String get partnerFormBasePrice => 'Base price per person';
+
+  @override
+  String get partnerFormBasePriceHint => 'Standard diver rate for one person.';
+
+  @override
+  String get partnerFormGuestRatesToggle =>
+      'Set non-diver / child prices separately';
+
+  @override
+  String get partnerFormAddOption => '+ Add option';
+
+  @override
+  String get partnerFormAddIndividual => '+ Add individual product';
+
+  @override
+  String get partnerFormIndividualOptions => 'Options for this product';
+
+  @override
+  String get partnerFormPreviewBadge => 'Goes live on publish';
+
+  @override
+  String get partnerFormSameBoatNote =>
+      'Open leftover seats after the product is listed. Once open, they appear to guests right away.';
+
+  @override
+  String get partnerFormCancelPolicy => 'Cancellation / refund policy';
 
   @override
   String get partnerPriceSwingTitle => 'Large price change';

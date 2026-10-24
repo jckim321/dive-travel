@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Affiliate-partner (제휴파트너) dark theme tokens and [ThemeData].
 ///
-/// Apply only to partner home, coming-soon, and temp bookings screens.
-/// Do not wrap product/docs/desk/same-boat screens (H0).
+/// Apply to partner home, coming-soon, temp bookings, and H1b product form.
+/// Do not wrap docs / same-boat hub with this theme unless intentionally dark.
 abstract final class PartnerTheme {
   static const Color bg = Color(0xFF0B1626);
   static const Color card = Color(0xFF14243A);

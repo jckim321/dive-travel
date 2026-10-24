@@ -14,6 +14,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/partner_product_form_fields.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart'
     show optionHasSeatCommitment;
 import 'package:dive_travel_app/core/models/product_price_swing.dart';
@@ -28,6 +29,7 @@ import 'package:dive_travel_app/features/admin/presentation/product_submit_check
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -262,6 +264,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late String _shopId;
   late String _continent;
   late ProductCategory _category;
+  /// Partner chips only; false keeps funDive/course/etc. on save (H1b).
+  var _categoryChipTouched = false;
+  /// Snapshot of durationLabel at load; kept until partner edits 박/일 (H1b).
+  var _originalDurationLabel = '';
+  var _durationFieldsTouched = false;
+  late final TextEditingController _nightsField;
+  late final TextEditingController _daysField;
+  final _partnerScrollController = ScrollController();
+  final _nameFieldKey = GlobalKey();
+  final _diverPriceFieldKey = GlobalKey();
   ProductSaveIntent? _savingIntent;
   var _previewDiver = 1;
   var _previewNondiver = 0;
@@ -273,7 +285,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
-  /// 0 basics · 1 pricing · 2 review/submit.
+  /// 0 basics · 1 pricing · 2 review/submit (admin/creator only).
   var _stepIndex = 0;
   /// After first temp-save of a new product, reuse this id on later saves.
   String? _persistedProductId;
@@ -340,10 +352,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
-    final rawCategory = existing?.category ?? ProductCategory.resortPackage;
-    _category = rawCategory == ProductCategory.liveaboard
-        ? ProductCategory.liveaboard
-        : ProductCategory.resortPackage;
+    // Preserve stored category (funDive/course/…) until a chip is tapped (H1b).
+    _category = existing?.category ?? ProductCategory.resortPackage;
+    _categoryChipTouched = false;
     _namedResort = _shopId.startsWith('curated-');
     _persistedProductId =
         existing?.id.isNotEmpty == true ? existing!.id : null;
@@ -362,7 +373,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _includes = TextEditingController(text: existing?.includes ?? '');
     _excludes = TextEditingController(text: existing?.excludes ?? '');
     _departureStart = existing?.departureStart;
-    _packageNights = _parsePackageNights(existing?.durationLabel);
+    _originalDurationLabel = existing?.durationLabel ?? '';
+    final durationParts = parseDurationLabelParts(_originalDurationLabel);
+    if (durationParts.parsed) {
+      _packageNights = durationParts.nights ?? 0;
+      _nightsField = TextEditingController(
+        text: durationParts.nights?.toString() ?? '',
+      );
+      _daysField = TextEditingController(
+        text: durationParts.days?.toString() ?? '',
+      );
+    } else {
+      // Unparsed freeform: leave 박/일 empty; keep original string on save.
+      _packageNights = widget.partnerMode
+          ? 0
+          : _parsePackageNights(_originalDurationLabel);
+      _nightsField = TextEditingController();
+      _daysField = TextEditingController();
+    }
+    _durationFieldsTouched = false;
     _editing = existing == null || widget.startEditing;
     for (final role in GuestRole.values) {
       GuestRate? found;
@@ -561,7 +590,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ].join('\u001f');
   }
 
-  /// Pending temp-save: photo + name + price > 0. Others: no min gate.
+  /// Pending temp-save (creator/admin): photo + name + price > 0.
   bool _validatePendingTempSave(AppLocalizations l10n) {
     if (!_hasPhotosForSave) {
       _reveal(0);
@@ -585,6 +614,89 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return false;
     }
     return true;
+  }
+
+  /// Partner H1b: name + base price only (photo optional) for temp and publish.
+  bool _validatePartnerRequired(AppLocalizations l10n) {
+    if (_name.text.trim().isEmpty) {
+      _scrollToPartnerKey(_nameFieldKey);
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchNeedName)),
+      );
+      return false;
+    }
+    if (_diverPriceValue <= 0) {
+      _scrollToPartnerKey(_diverPriceFieldKey);
+      setState(() {
+        _diverPriceError = l10n.workbenchNeedDiverPrice;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchNeedDiverPrice)),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  void _scrollToPartnerKey(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 280),
+        alignment: 0.1,
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  String get _durationLabelForSave {
+    if (widget.partnerMode) {
+      final nights = int.tryParse(_nightsField.text.trim());
+      final days = int.tryParse(_daysField.text.trim());
+      return durationLabelForPartnerSave(
+        originalLabel: _originalDurationLabel,
+        userEditedFields: _durationFieldsTouched,
+        nights: nights,
+        days: days,
+      );
+    }
+    return _nightsLabel;
+  }
+
+  ProductCategory get _categoryForSave {
+    if (!widget.partnerMode) {
+      return _category;
+    }
+    return categoryForPartnerSave(
+      stored: widget.existing?.category ?? ProductCategory.resortPackage,
+      userSelectedChip: _categoryChipTouched,
+      chipValue: _category,
+    );
+  }
+
+  void _onPartnerCategoryChip(ProductCategory next) {
+    setState(() {
+      _categoryChipTouched = true;
+      _category = next;
+    });
+  }
+
+  void _onPartnerDurationEdited() {
+    if (!_durationFieldsTouched) {
+      setState(() => _durationFieldsTouched = true);
+    } else {
+      setState(() {});
+    }
+    final nights = int.tryParse(_nightsField.text.trim()) ?? 0;
+    _packageNights = nights < 0 ? 0 : nights;
   }
 
   List<SameBoatOptionSeatSlot> _seatOptionSlots() {
@@ -662,6 +774,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _includes.dispose();
     _excludes.dispose();
     _cancel.dispose();
+    _nightsField.dispose();
+    _daysField.dispose();
+    _partnerScrollController.dispose();
     for (final controller in _rateConsumer.values) {
       controller.dispose();
     }
@@ -1250,28 +1365,39 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return false;
     }
     final isTemp = intent == ProductSaveIntent.keepEditing;
-    final pendingTemp = isTemp &&
-        _editingPublishStatus == ProductPublishStatus.pending;
-    if (pendingTemp) {
-      if (!_validatePendingTempSave(l10n)) {
-        return false;
-      }
-    } else if (!isTemp) {
-      if (name.isEmpty) {
-        _reveal(0);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
-        return false;
-      }
-      if (_namedResort && _resortName.text.trim().isEmpty) {
-        _reveal(1);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.productFormCuratedResort)),
-        );
+    if (widget.partnerMode) {
+      // H1b: name + base price for both temp and publish; photos optional.
+      // Named option/individual rows still need prices (same as before).
+      if (!_validatePartnerRequired(l10n)) {
         return false;
       }
       if (!_validatePricesBeforeSave(l10n)) {
         return false;
+      }
+    } else {
+      final pendingTemp = isTemp &&
+          _editingPublishStatus == ProductPublishStatus.pending;
+      if (pendingTemp) {
+        if (!_validatePendingTempSave(l10n)) {
+          return false;
+        }
+      } else if (!isTemp) {
+        if (name.isEmpty) {
+          _reveal(0);
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
+          return false;
+        }
+        if (_namedResort && _resortName.text.trim().isEmpty) {
+          _reveal(1);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.productFormCuratedResort)),
+          );
+          return false;
+        }
+        if (!_validatePricesBeforeSave(l10n)) {
+          return false;
+        }
       }
     }
     final store = DiverStoreScope.of(context);
@@ -1369,7 +1495,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         professionalPrice: diverRate.professional,
         active: existing?.active ?? true,
         blurb: _blurb.text.trim(),
-        durationLabel: _nightsLabel,
+        durationLabel: _durationLabelForSave,
         coverUrl: _preserveExistingPhotos
             ? (existing?.coverUrl ?? '')
             : _galleryCoverUrl,
@@ -1382,7 +1508,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         // min/max guests are not on the form; leave defaults so merge keeps
         // any legacy min_guests on the document (checkout ignores min).
         cancellationNote: _cancel.text.trim(),
-        category: _category,
+        category: _categoryForSave,
         detail: existing?.detail ?? '',
         photoUrls: _preserveExistingPhotos
             ? (existing?.photoUrls ?? const <String>[])
@@ -1679,13 +1805,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    _seats.isAdmin = store.stats.isAdmin;
+    if (widget.partnerMode) {
+      return PartnerTheme.wrap(_buildPartnerScaffold(l10n, store));
+    }
     final shopLocked = widget.lockedShopId != null;
     final shops = shopLocked
         ? [DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first]
         : _shopsForContinent;
     final hull = DiveShopCatalog.byId(_shopId);
-    final store = DiverStoreScope.of(context);
-    _seats.isAdmin = store.stats.isAdmin;
     final canPublish = store.stats.isAdmin &&
         !widget.partnerMode &&
         !widget.creatorMode;
@@ -1773,6 +1902,861 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         },
       ),
     ),
+    );
+  }
+
+  Widget _buildPartnerScaffold(AppLocalizations l10n, DiverStore _) {
+    final busy = _savingIntent != null;
+    final approved =
+        widget.existing?.publishStatus == ProductPublishStatus.approved;
+    final primaryLabel = approved ? l10n.briefSave : l10n.partnerProductPublishCta;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          return;
+        }
+        unawaited(_handleSystemBack());
+      },
+      child: Scaffold(
+        backgroundColor: PartnerTheme.bg,
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: Text(l10n.briefTitle),
+          actions: [
+            if (_editing && _canTempSave)
+              TextButton(
+                key: const Key('brief-temp-save'),
+                onPressed: busy
+                    ? null
+                    : () => unawaited(_save(ProductSaveIntent.keepEditing)),
+                child: Text(
+                  busy && _savingIntent == ProductSaveIntent.keepEditing
+                      ? l10n.exploreSaving
+                      : l10n.briefTempSave,
+                ),
+              ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                key: const Key('partner-product-form-scroll'),
+                controller: _partnerScrollController,
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + keyboard),
+                children: [
+                  if (!_editing)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        l10n.briefViewModeHint,
+                        style: const TextStyle(
+                          color: PartnerTheme.textDim,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  IgnorePointer(
+                    ignoring: !_editing,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _partnerGuideBanner(l10n),
+                        const SizedBox(height: 16),
+                        _partnerSectionHeader(1, l10n.partnerFormSectionBasics),
+                        const SizedBox(height: 10),
+                        _partnerBasicsSection(l10n),
+                        const SizedBox(height: 20),
+                        _partnerSectionHeader(2, l10n.partnerFormSectionPricing),
+                        const SizedBox(height: 10),
+                        _partnerPricingSection(l10n),
+                        const SizedBox(height: 20),
+                        _partnerSectionHeader(3, l10n.partnerFormSectionPublish),
+                        const SizedBox(height: 10),
+                        _partnerPublishSection(l10n),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    if (_canTempSave) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          key: const Key('partner-form-temp-save'),
+                          onPressed: busy
+                              ? null
+                              : () => unawaited(
+                                    _save(ProductSaveIntent.keepEditing),
+                                  ),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                          child: Text(
+                            busy &&
+                                    _savingIntent ==
+                                        ProductSaveIntent.keepEditing
+                                ? l10n.exploreSaving
+                                : l10n.briefTempSave,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      flex: _canTempSave ? 2 : 1,
+                      child: FilledButton(
+                        key: const Key('partner-product-save'),
+                        onPressed: !_editing || busy
+                            ? (_editing
+                                ? null
+                                : () => setState(() => _editing = true))
+                            : () => unawaited(
+                                  _save(ProductSaveIntent.submitForReview),
+                                ),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          backgroundColor: PartnerTheme.accent,
+                          foregroundColor: PartnerTheme.bg,
+                        ),
+                        child: Text(
+                          !_editing
+                              ? l10n.briefEdit
+                              : (busy &&
+                                      _savingIntent != null &&
+                                      _savingIntent !=
+                                          ProductSaveIntent.keepEditing
+                                  ? l10n.exploreSaving
+                                  : primaryLabel),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _partnerGuideBanner(AppLocalizations l10n) {
+    return Material(
+      key: const Key('partner-form-soft-guide'),
+      color: PartnerTheme.badgeBlueBg,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Text(
+          l10n.partnerFormSoftGuide,
+          style: const TextStyle(
+            color: PartnerTheme.badgeBlueFg,
+            fontSize: 13,
+            height: 1.35,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _partnerSectionHeader(int index, String title) {
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: PartnerTheme.accent,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            '$index',
+            style: const TextStyle(
+              color: PartnerTheme.bg,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _partnerRequiredBadge(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: PartnerTheme.badgeOrangeBg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        l10n.partnerFormRequiredBadge,
+        style: const TextStyle(
+          color: PartnerTheme.badgeOrangeFg,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _partnerField(
+    String label, {
+    String? hint,
+    String? errorText,
+    int lines = 1,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      errorText: errorText,
+      alignLabelWithHint: lines > 1,
+      filled: true,
+      fillColor: PartnerTheme.bg,
+      labelStyle: const TextStyle(color: PartnerTheme.textDim),
+      hintStyle: const TextStyle(color: PartnerTheme.textDim),
+      errorStyle: const TextStyle(color: Color(0xFFFF6B6B), fontSize: 11),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+      ),
+    );
+  }
+
+  Widget _partnerBasicsSection(AppLocalizations l10n) {
+    final chip = selectedPartnerCategoryChip(_category);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.partnerFormPhotoOptionalHint,
+          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        BookingGalleryEditor(
+          items: _gallery,
+          onAdd: _addPhotos,
+          onRemove: _removePhoto,
+          onMakeCover: _makeCover,
+          maxItems: _maxGallery,
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Text(
+              l10n.partnerDefaultProduct,
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _partnerRequiredBadge(l10n),
+          ],
+        ),
+        const SizedBox(height: 6),
+        KeyedSubtree(
+          key: _nameFieldKey,
+          child: TextField(
+            key: const Key('partner-product-name'),
+            controller: _name,
+            style: const TextStyle(color: PartnerTheme.text),
+            cursorColor: PartnerTheme.accent,
+            decoration: _partnerField(
+              l10n.partnerDefaultProduct,
+              hint: l10n.partnerFormNameHint,
+              errorText: _name.text.trim().isEmpty && _diverPriceError != null
+                  ? null
+                  : null,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _blurb,
+          style: const TextStyle(color: PartnerTheme.text),
+          cursorColor: PartnerTheme.accent,
+          decoration: _partnerField(
+            l10n.productFormSubtitle,
+            hint: l10n.partnerFormBlurbHint,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          l10n.partnerFormProductType,
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _partnerTypeChip(
+              key: 'partner-cat-resort',
+              label: l10n.workbenchCatResort,
+              selected: chip == ProductCategory.resortPackage,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.resortPackage),
+            ),
+            _partnerTypeChip(
+              key: 'partner-cat-day',
+              label: l10n.workbenchCatDay,
+              selected: chip == ProductCategory.dayTrip,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.dayTrip),
+            ),
+            _partnerTypeChip(
+              key: 'partner-cat-liveaboard',
+              label: l10n.workbenchCatLiveaboard,
+              selected: chip == ProductCategory.liveaboard,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.liveaboard),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('partner-form-nights'),
+                controller: _nightsField,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: PartnerTheme.text),
+                cursorColor: PartnerTheme.accent,
+                decoration: _partnerField(l10n.partnerFormNights),
+                onChanged: (_) => _onPartnerDurationEdited(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                key: const Key('partner-form-days'),
+                controller: _daysField,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: PartnerTheme.text),
+                cursorColor: PartnerTheme.accent,
+                decoration: _partnerField(l10n.partnerFormDays),
+                onChanged: (_) => _onPartnerDurationEdited(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _meeting,
+          style: const TextStyle(color: PartnerTheme.text),
+          cursorColor: PartnerTheme.accent,
+          decoration: _partnerField(
+            l10n.partnerFormMeeting,
+            hint: l10n.productFormMeetingHint,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Material(
+          color: PartnerTheme.card,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.partnerFormShopInfoRow,
+                    style: const TextStyle(
+                      color: PartnerTheme.textDim,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  key: const Key('partner-form-shop-info'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ResortDeskScreen(shopId: _shopId),
+                      ),
+                    );
+                  },
+                  child: Text(l10n.partnerFormShopInfoCta),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _partnerTypeChip({
+    required String key,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return FilterChip(
+      key: Key(key),
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: PartnerTheme.accent.withValues(alpha: 0.25),
+      checkmarkColor: PartnerTheme.accent,
+      labelStyle: TextStyle(
+        color: selected ? PartnerTheme.accent : PartnerTheme.text,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+      ),
+      side: BorderSide(
+        color: selected ? PartnerTheme.accent : PartnerTheme.borderStrong,
+      ),
+      backgroundColor: PartnerTheme.card,
+    );
+  }
+
+  Widget _partnerPricingSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              l10n.partnerFormBasePrice,
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _partnerRequiredBadge(l10n),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.partnerFormBasePriceHint,
+          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        KeyedSubtree(
+          key: _diverPriceFieldKey,
+          child: TextField(
+            key: const Key('workbench-diver-price'),
+            focusNode: _diverPriceFocus,
+            controller: _rateConsumer[GuestRole.diver],
+            keyboardType: TextInputType.number,
+            maxLength: kWorkbenchPriceInputMaxLength,
+            inputFormatters: _priceInputFormatters,
+            style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+            cursorColor: PartnerTheme.accent,
+            decoration: _partnerField(
+              l10n.partnerFormBasePrice,
+              errorText: _diverPriceError,
+            ).copyWith(counterText: ''),
+            onChanged: (_) => setState(() => _diverPriceError = null),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile.adaptive(
+          key: const Key('partner-form-guest-rates'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            l10n.partnerFormGuestRatesToggle,
+            style: const TextStyle(color: PartnerTheme.text, fontSize: 13),
+          ),
+          value: _hasNondivers,
+          activeThumbColor: PartnerTheme.accent,
+          onChanged: (v) => setState(() => _hasNondivers = v),
+        ),
+        if (_hasNondivers) ...[
+          TextField(
+            focusNode: _nondiverPriceFocus,
+            controller: _rateConsumer[GuestRole.nondiver],
+            keyboardType: TextInputType.number,
+            inputFormatters: _priceInputFormatters,
+            style: const TextStyle(color: PartnerTheme.text),
+            decoration: _partnerField(
+              l10n.workbenchGuestNondiver,
+              errorText: _nondiverPriceError,
+            ),
+            onChanged: (_) => setState(() => _nondiverPriceError = null),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            focusNode: _childPriceFocus,
+            controller: _rateConsumer[GuestRole.child],
+            keyboardType: TextInputType.number,
+            inputFormatters: _priceInputFormatters,
+            style: const TextStyle(color: PartnerTheme.text),
+            decoration: _partnerField(
+              l10n.workbenchGuestChild,
+              errorText: _childPriceError,
+            ),
+            onChanged: (_) => setState(() => _childPriceError = null),
+          ),
+        ],
+        const SizedBox(height: 14),
+        Text(
+          l10n.productFormSectionOptions,
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < _addons.length; i++) ...[
+          _partnerAddonRow(l10n, i),
+          const SizedBox(height: 8),
+        ],
+        OutlinedButton(
+          key: const Key('partner-form-add-option'),
+          onPressed: () {
+            final line = _LineEditors(kind: ProductOptionKind.addon);
+            _listen(line.name);
+            _listen(line.consumer);
+            setState(() => _addons.add(line));
+          },
+          child: Text(l10n.partnerFormAddOption),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.bookingEntryIndividuals,
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var i = 0; i < _individuals.length; i++) ...[
+          _partnerIndividualCard(l10n, i),
+          const SizedBox(height: 8),
+        ],
+        OutlinedButton(
+          key: const Key('partner-form-add-individual'),
+          onPressed: _addIndividualTicket,
+          child: Text(l10n.partnerFormAddIndividual),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _includes,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.productFormIncludes,
+            hint: l10n.productFormIncludesHint,
+            lines: 2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _excludes,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.productFormExcludes,
+            hint: l10n.productFormExcludesHint,
+            lines: 2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _cancel,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.partnerFormCancelPolicy,
+            hint: l10n.productFormCancelHint,
+            lines: 2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _partnerAddonRow(AppLocalizations l10n, int index) {
+    final draft = _addons[index];
+    return Material(
+      color: PartnerTheme.card,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: draft.name,
+                style: const TextStyle(color: PartnerTheme.text),
+                decoration: _partnerField(l10n.productFormOptionName),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                focusNode: draft.consumerFocus,
+                controller: draft.consumer,
+                keyboardType: TextInputType.number,
+                inputFormatters: _priceInputFormatters,
+                style: const TextStyle(color: PartnerTheme.text),
+                decoration: _partnerField(
+                  l10n.productFormOptionConsumer,
+                  errorText: draft.priceError,
+                ),
+                onChanged: (_) => setState(() => draft.priceError = null),
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                if (_closeOptionInsteadOfRemove(draft)) {
+                  setState(() {});
+                  return;
+                }
+                setState(() {
+                  draft.dispose();
+                  _addons.removeAt(index);
+                });
+              },
+              icon: const Icon(Icons.delete_outline, color: PartnerTheme.textDim),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _partnerIndividualCard(AppLocalizations l10n, int index) {
+    final ticket = _individuals[index];
+    return Material(
+      color: PartnerTheme.card,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: ticket.name,
+                    style: const TextStyle(color: PartnerTheme.text),
+                    decoration: _partnerField(l10n.bookingEntryIndividualName),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _dropIndividual(ticket);
+                      _individuals.removeAt(index);
+                      _syncSeatSlots();
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: PartnerTheme.textDim,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              focusNode: ticket.consumerFocus,
+              controller: ticket.consumer,
+              keyboardType: TextInputType.number,
+              inputFormatters: _priceInputFormatters,
+              style: const TextStyle(color: PartnerTheme.text),
+              decoration: _partnerField(
+                l10n.partnerFormBasePrice,
+                errorText: ticket.priceError,
+              ),
+              onChanged: (_) => setState(() => ticket.priceError = null),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: ticket.includes,
+              minLines: 2,
+              maxLines: 3,
+              style: const TextStyle(color: PartnerTheme.text),
+              decoration: _partnerField(
+                l10n.productFormIncludes,
+                lines: 2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (var j = 0; j < ticket.addons.length; j++) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: ticket.addons[j].name,
+                      style: const TextStyle(color: PartnerTheme.text),
+                      decoration: _partnerField(l10n.productFormOptionName),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: TextField(
+                      focusNode: ticket.addons[j].consumerFocus,
+                      controller: ticket.addons[j].consumer,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: _priceInputFormatters,
+                      style: const TextStyle(color: PartnerTheme.text),
+                      decoration: _partnerField(
+                        l10n.productFormOptionConsumer,
+                        errorText: ticket.addons[j].priceError,
+                      ),
+                      onChanged: (_) =>
+                          setState(() => ticket.addons[j].priceError = null),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        ticket.addons[j].dispose();
+                        ticket.addons.removeAt(j);
+                      });
+                    },
+                    icon: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: PartnerTheme.textDim,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
+            TextButton(
+              onPressed: () {
+                final line = _LineEditors(kind: ProductOptionKind.addon);
+                _listen(line.name);
+                _listen(line.consumer);
+                setState(() => ticket.addons.add(line));
+              },
+              child: Text(l10n.partnerFormIndividualOptions),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _partnerPublishSection(AppLocalizations l10n) {
+    final name = _name.text.trim().isEmpty ? '—' : _name.text.trim();
+    final blurb = _blurb.text.trim();
+    final price = _diverPriceValue > 0 ? '$_diverPriceValue' : '—';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          key: const Key('partner-form-preview-card'),
+          color: PartnerTheme.card,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: PartnerTheme.badgeGreenBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      l10n.partnerFormPreviewBadge,
+                      style: const TextStyle(
+                        color: PartnerTheme.badgeGreenFg,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: PartnerTheme.text,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+                if (blurb.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    blurb,
+                    style: const TextStyle(
+                      color: PartnerTheme.textDim,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(
+                  '${l10n.exploreConsumerPrice} $price',
+                  style: const TextStyle(
+                    color: PartnerTheme.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          l10n.partnerFormSameBoatNote,
+          style: const TextStyle(
+            color: PartnerTheme.textDim,
+            fontSize: 12,
+            height: 1.4,
+          ),
+        ),
+      ],
     );
   }
 
@@ -3809,7 +4793,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       consumerPrice: diverPrice,
       professionalPrice: diverPrice,
       blurb: _blurb.text.trim(),
-      durationLabel: _nightsLabel,
+      durationLabel: _durationLabelForSave,
       guestRates: [
         for (final role in GuestRole.values)
           GuestRate(

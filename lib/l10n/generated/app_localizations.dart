@@ -5376,11 +5376,161 @@ abstract class AppLocalizations {
   /// **'게시'**
   String get partnerProductPublish;
 
+  /// No description provided for @partnerProductPublishCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시하기'**
+  String get partnerProductPublishCta;
+
   /// No description provided for @partnerProductPublished.
   ///
   /// In ko, this message translates to:
   /// **'상품이 게시되었습니다.'**
   String get partnerProductPublished;
+
+  /// No description provided for @partnerFormSoftGuide.
+  ///
+  /// In ko, this message translates to:
+  /// **'필수 표시만 적으면 저장돼요. 나머지는 비워도 괜찮아요. 운영팀이 함께 채워 드려요.'**
+  String get partnerFormSoftGuide;
+
+  /// No description provided for @partnerFormSectionBasics.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 정보'**
+  String get partnerFormSectionBasics;
+
+  /// No description provided for @partnerFormSectionPricing.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격과 옵션'**
+  String get partnerFormSectionPricing;
+
+  /// No description provided for @partnerFormSectionPublish.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시'**
+  String get partnerFormSectionPublish;
+
+  /// No description provided for @partnerFormRequiredBadge.
+  ///
+  /// In ko, this message translates to:
+  /// **'필수'**
+  String get partnerFormRequiredBadge;
+
+  /// No description provided for @partnerFormPhotoOptionalHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'없으면 운영팀이 넣어 드려요. 최대 10장.'**
+  String get partnerFormPhotoOptionalHint;
+
+  /// No description provided for @partnerFormPhotoMain.
+  ///
+  /// In ko, this message translates to:
+  /// **'대표'**
+  String get partnerFormPhotoMain;
+
+  /// No description provided for @partnerFormNameHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 보홀 3박 4일 패키지'**
+  String get partnerFormNameHint;
+
+  /// No description provided for @partnerFormBlurbHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'고객에게 보이는 한 줄 소개'**
+  String get partnerFormBlurbHint;
+
+  /// No description provided for @partnerFormProductType.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 종류'**
+  String get partnerFormProductType;
+
+  /// No description provided for @partnerFormNights.
+  ///
+  /// In ko, this message translates to:
+  /// **'몇 박'**
+  String get partnerFormNights;
+
+  /// No description provided for @partnerFormDays.
+  ///
+  /// In ko, this message translates to:
+  /// **'몇 일'**
+  String get partnerFormDays;
+
+  /// No description provided for @partnerFormMeeting.
+  ///
+  /// In ko, this message translates to:
+  /// **'집합 장소'**
+  String get partnerFormMeeting;
+
+  /// No description provided for @partnerFormShopInfoRow.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 위치·시설 정보는 샵 정보에서 관리해요.'**
+  String get partnerFormShopInfoRow;
+
+  /// No description provided for @partnerFormShopInfoCta.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 정보'**
+  String get partnerFormShopInfoCta;
+
+  /// No description provided for @partnerFormBasePrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 기준 가격'**
+  String get partnerFormBasePrice;
+
+  /// No description provided for @partnerFormBasePriceHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 1인 기본 요금이에요.'**
+  String get partnerFormBasePriceHint;
+
+  /// No description provided for @partnerFormGuestRatesToggle.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버·아동 가격을 따로 설정'**
+  String get partnerFormGuestRatesToggle;
+
+  /// No description provided for @partnerFormAddOption.
+  ///
+  /// In ko, this message translates to:
+  /// **'+ 옵션 추가'**
+  String get partnerFormAddOption;
+
+  /// No description provided for @partnerFormAddIndividual.
+  ///
+  /// In ko, this message translates to:
+  /// **'+ 개별 상품 추가'**
+  String get partnerFormAddIndividual;
+
+  /// No description provided for @partnerFormIndividualOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 상품의 옵션'**
+  String get partnerFormIndividualOptions;
+
+  /// No description provided for @partnerFormPreviewBadge.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시하면 바로 공개'**
+  String get partnerFormPreviewBadge;
+
+  /// No description provided for @partnerFormSameBoatNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 빈자리는 상품 게시 후 따로 열 수 있어요. 열면 고객 화면에 바로 보여요.'**
+  String get partnerFormSameBoatNote;
+
+  /// No description provided for @partnerFormCancelPolicy.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·환불 규정'**
+  String get partnerFormCancelPolicy;
 
   /// No description provided for @partnerPriceSwingTitle.
   ///
@@ -6903,7 +7053,7 @@ abstract class AppLocalizations {
   /// No description provided for @workbenchCatDay.
   ///
   /// In ko, this message translates to:
-  /// **'데이트립'**
+  /// **'데이 투어'**
   String get workbenchCatDay;
 
   /// No description provided for @workbenchHullFromShop.

@@ -2859,7 +2859,84 @@ class AppLocalizationsEs extends AppLocalizations {
   String get partnerProductPublish => '게시';
 
   @override
+  String get partnerProductPublishCta => '게시하기';
+
+  @override
   String get partnerProductPublished => '상품이 게시되었습니다.';
+
+  @override
+  String get partnerFormSoftGuide =>
+      '필수 표시만 적으면 저장돼요. 나머지는 비워도 괜찮아요. 운영팀이 함께 채워 드려요.';
+
+  @override
+  String get partnerFormSectionBasics => '기본 정보';
+
+  @override
+  String get partnerFormSectionPricing => '가격과 옵션';
+
+  @override
+  String get partnerFormSectionPublish => '게시';
+
+  @override
+  String get partnerFormRequiredBadge => '필수';
+
+  @override
+  String get partnerFormPhotoOptionalHint => '없으면 운영팀이 넣어 드려요. 최대 10장.';
+
+  @override
+  String get partnerFormPhotoMain => '대표';
+
+  @override
+  String get partnerFormNameHint => '예: 보홀 3박 4일 패키지';
+
+  @override
+  String get partnerFormBlurbHint => '고객에게 보이는 한 줄 소개';
+
+  @override
+  String get partnerFormProductType => '상품 종류';
+
+  @override
+  String get partnerFormNights => '몇 박';
+
+  @override
+  String get partnerFormDays => '몇 일';
+
+  @override
+  String get partnerFormMeeting => '집합 장소';
+
+  @override
+  String get partnerFormShopInfoRow => '리조트 위치·시설 정보는 샵 정보에서 관리해요.';
+
+  @override
+  String get partnerFormShopInfoCta => '샵 정보';
+
+  @override
+  String get partnerFormBasePrice => '1인 기준 가격';
+
+  @override
+  String get partnerFormBasePriceHint => '다이버 1인 기본 요금이에요.';
+
+  @override
+  String get partnerFormGuestRatesToggle => '비다이버·아동 가격을 따로 설정';
+
+  @override
+  String get partnerFormAddOption => '+ 옵션 추가';
+
+  @override
+  String get partnerFormAddIndividual => '+ 개별 상품 추가';
+
+  @override
+  String get partnerFormIndividualOptions => '이 상품의 옵션';
+
+  @override
+  String get partnerFormPreviewBadge => '게시하면 바로 공개';
+
+  @override
+  String get partnerFormSameBoatNote =>
+      '같은배 빈자리는 상품 게시 후 따로 열 수 있어요. 열면 고객 화면에 바로 보여요.';
+
+  @override
+  String get partnerFormCancelPolicy => '취소·환불 규정';
 
   @override
   String get partnerPriceSwingTitle => '가격이 크게 바뀌었어요';
@@ -3689,7 +3766,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workbenchCatCourse => '코스';
 
   @override
-  String get workbenchCatDay => '데이트립';
+  String get workbenchCatDay => '데이 투어';
 
   @override
   String get workbenchHullFromShop => '선체에서 가져옴';
