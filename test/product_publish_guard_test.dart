@@ -161,6 +161,10 @@ void main() {
         next.rejectedSectionHashes,
         productSectionFingerprints(product),
       );
+      expect(
+        next.rejectedSectionHashes[productSectionFpSchemaKey],
+        productSectionFpSchemaVersion,
+      );
       expect(next.resubmitNote, '');
     });
   });

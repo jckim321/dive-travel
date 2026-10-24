@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -315,18 +317,143 @@ bool _hasOpenSeats(ShopProduct product) {
   return false;
 }
 
-class _PendingProductTile extends StatelessWidget {
+class _PendingProductTile extends StatefulWidget {
   const _PendingProductTile({required this.product, required this.canApprove});
 
   final ShopProduct product;
   final bool canApprove;
 
   @override
-  Widget build(BuildContext context) {
+  State<_PendingProductTile> createState() => _PendingProductTileState();
+}
+
+class _PendingProductTileState extends State<_PendingProductTile> {
+  var _busy = false;
+
+  ShopProduct get product => widget.product;
+
+  // TODO(a1-desk-save-timing): remove with owner timing snackbar.
+  static String _formatSeconds(Duration d) =>
+      (d.inMilliseconds / 1000).toStringAsFixed(1);
+
+  Future<void> _approve() async {
+    if (_busy) {
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    if (!ProductPublishGuard.hasDiverPrice(product)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveNeedsPrice)),
+      );
+      return;
+    }
+    if (!ProductPublishGuard.hasValidPricesForApprove(product)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminProductApproveOverCap)),
+      );
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final showProbe = store.stats.isAdmin;
+    setState(() => _busy = true);
+    try {
+      final probe = await store.approveShopProduct(
+        shopId: product.shopId,
+        productId: product.id,
+      );
+      // Local patch may remove this tile from the pending list.
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      // TODO(a1-desk-save-timing): remove owner timing snackbar after probe.
+      if (showProbe) {
+        final write = probe.write;
+        final read = await probe.readFuture;
+        final total = write + read;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('승인 ${_formatSeconds(total)}초'),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else {
+        unawaited(probe.readFuture);
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.adminProductApproved)),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(SnackBar(content: Text('$error')));
+    } finally {
+      if (mounted && _busy) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _reject() async {
+    if (_busy) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final result = await showProductRejectDialog(context);
+    if (result == null || !mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    final showProbe = store.stats.isAdmin;
+    setState(() => _busy = true);
+    try {
+      final probe = await store.rejectShopProduct(
+        shopId: product.shopId,
+        productId: product.id,
+        reviewNote: result.note,
+        reasonTags: result.reasonTags,
+      );
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      // TODO(a1-desk-save-timing): remove owner timing snackbar after probe.
+      if (showProbe) {
+        final write = probe.write;
+        final read = await probe.readFuture;
+        final total = write + read;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('반려 ${_formatSeconds(total)}초'),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else {
+        unawaited(probe.readFuture);
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.adminProductRejected)),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      messenger.showSnackBar(SnackBar(content: Text('$error')));
+    } finally {
+      if (mounted && _busy) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final shopName =
         DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+    final canCompare =
+        productSectionHashesComparable(product.rejectedSectionHashes);
     final changeFlags = sectionChangeFlags(
       product.rejectedSectionHashes,
       product,
@@ -335,12 +462,14 @@ class _PendingProductTile extends StatelessWidget {
     return Card(
       color: AdminConsoleTheme.surfaceHigh,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                TravelProductRegistrationScreen(existing: product),
-          ),
-        ),
+        onTap: _busy
+            ? null
+            : () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        TravelProductRegistrationScreen(existing: product),
+                  ),
+                ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           child: Column(
@@ -442,7 +571,7 @@ class _PendingProductTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (product.rejectedSectionHashes.isEmpty)
+                if (!canCompare)
                   Text(
                     key: Key('pending-changes-unknown-${product.id}'),
                     l10n.adminPendingChangeUnknown,
@@ -471,70 +600,22 @@ class _PendingProductTile extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  if (canApprove) ...[
+                  if (widget.canApprove) ...[
                     FilledButton(
                       key: Key('approve-product-${product.id}'),
-                      onPressed: () async {
-                        if (!ProductPublishGuard.hasDiverPrice(product)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.adminProductApproveNeedsPrice),
-                            ),
-                          );
-                          return;
-                        }
-                        if (!ProductPublishGuard.hasValidPricesForApprove(
-                          product,
-                        )) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.adminProductApproveOverCap),
-                            ),
-                          );
-                          return;
-                        }
-                        try {
-                          await store.approveShopProduct(
-                            shopId: product.shopId,
-                            productId: product.id,
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.adminProductApproved),
-                              ),
-                            );
-                          }
-                        } catch (error) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('$error')),
-                            );
-                          }
-                        }
-                      },
-                      child: Text(l10n.adminApprove),
+                      onPressed: _busy ? null : _approve,
+                      child: _busy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.adminApprove),
                     ),
                     const SizedBox(width: 8),
                     OutlinedButton(
                       key: Key('reject-product-${product.id}'),
-                      onPressed: () async {
-                        final result = await showProductRejectDialog(context);
-                        if (result == null || !context.mounted) {
-                          return;
-                        }
-                        await store.rejectShopProduct(
-                          shopId: product.shopId,
-                          productId: product.id,
-                          reviewNote: result.note,
-                          reasonTags: result.reasonTags,
-                        );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.adminProductRejected)),
-                          );
-                        }
-                      },
+                      onPressed: _busy ? null : _reject,
                       child: Text(l10n.adminReject),
                     ),
                   ],
@@ -542,7 +623,8 @@ class _PendingProductTile extends StatelessWidget {
                   IconButton(
                     key: Key('delete-pending-product-${product.id}'),
                     tooltip: l10n.adminProductDelete,
-                    onPressed: () => _confirmDeleteProduct(context, product),
+                    onPressed:
+                        _busy ? null : () => _confirmDeleteProduct(context, product),
                     icon: const Icon(
                       Icons.delete_outline,
                       color: AdminConsoleTheme.muted,

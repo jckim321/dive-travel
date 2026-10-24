@@ -16,11 +16,29 @@ const productContentSectionKeys = <String>[
   'cancel',
 ];
 
+/// Schema marker in [ShopProduct.rejectedSectionHashes] (not a content section).
+///
+/// Bump [productSectionFpSchemaVersion] when section slice rules change so
+/// legacy maps compare as unknown (UI: 비교 불가) instead of false "changed".
+const productSectionFpSchemaKey = '_fp';
+
+/// Current section-fingerprint schema (`base_package` excluded from options).
+const productSectionFpSchemaVersion = '2';
+
 /// Result of comparing a section hash from the last reject to current content.
 enum SectionChangeFlag {
   changed,
   same,
   unknown,
+}
+
+/// True when [hashes] were written with the current section schema.
+bool productSectionHashesComparable(Map<String, String> hashes) {
+  if (hashes.isEmpty) {
+    return false;
+  }
+  return hashes[productSectionFpSchemaKey]?.trim() ==
+      productSectionFpSchemaVersion;
 }
 
 /// Stable content fingerprint for reject → resubmit change detection.
@@ -40,6 +58,9 @@ String productContentFingerprint(
 }
 
 /// Per-section sha256 fingerprints (same payload rules as the full hash).
+///
+/// Includes [productSectionFpSchemaKey] so rejects can be version-gated.
+/// Options section omits `base_package` (price section owns base price).
 Map<String, String> productSectionFingerprints(
   ShopProduct product, {
   List<ShopGallerySlot>? pendingGallery,
@@ -50,18 +71,19 @@ Map<String, String> productSectionFingerprints(
       key: sha256
           .convert(utf8.encode(jsonEncode(_sectionSlice(canonical, key))))
           .toString(),
+    productSectionFpSchemaKey: productSectionFpSchemaVersion,
   };
 }
 
 /// Compare [previousHashes] (from last reject) to current product sections.
 ///
-/// Empty [previousHashes] → every key [SectionChangeFlag.unknown].
+/// Empty map or wrong/missing schema → every key [SectionChangeFlag.unknown].
 Map<String, SectionChangeFlag> sectionChangeFlags(
   Map<String, String> previousHashes,
   ShopProduct product, {
   List<ShopGallerySlot>? pendingGallery,
 }) {
-  if (previousHashes.isEmpty) {
+  if (!productSectionHashesComparable(previousHashes)) {
     return {
       for (final key in productContentSectionKeys) key: SectionChangeFlag.unknown,
     };
@@ -137,7 +159,18 @@ Map<String, Object?> _sectionSlice(Map<String, Object?> canonical, String key) {
         'guest_rates': canonical['guest_rates'],
       };
     case 'options':
-      return {'options': canonical['options']};
+      // base_package mirrors product base price (price section); exclude here.
+      final raw = canonical['options'];
+      final filtered = <Object?>[];
+      if (raw is List) {
+        for (final item in raw) {
+          if (item is Map && item['kind'] == 'base_package') {
+            continue;
+          }
+          filtered.add(item);
+        }
+      }
+      return {'options': filtered};
     case 'copy':
       return {
         'name': canonical['name'],

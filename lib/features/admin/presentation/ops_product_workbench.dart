@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -1550,10 +1552,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     setState(() => _savingIntent = ProductSaveIntent.publish);
     try {
-      await DiverStoreScope.of(context).approveShopProduct(
+      final probe = await DiverStoreScope.of(context).approveShopProduct(
         shopId: existing.shopId,
         productId: existing.id,
       );
+      unawaited(probe.readFuture);
       if (!mounted) {
         return;
       }
@@ -1586,12 +1589,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     setState(() => _savingIntent = ProductSaveIntent.takeDown);
     try {
-      await DiverStoreScope.of(context).rejectShopProduct(
+      final probe = await DiverStoreScope.of(context).rejectShopProduct(
         shopId: existing.shopId,
         productId: existing.id,
         reviewNote: result.note,
         reasonTags: result.reasonTags,
       );
+      unawaited(probe.readFuture);
       if (!mounted) {
         return;
       }

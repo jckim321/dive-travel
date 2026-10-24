@@ -1844,22 +1844,45 @@ class DiverStore extends ChangeNotifier {
     await refreshShopStat(shopId);
   }
 
-  Future<void> approveShopProduct({
+  /// TODO(a1-desk-save-timing): probe — remove after approve latency check.
+  Future<ShopProfileSaveProbe> approveShopProduct({
     required String shopId,
     required String productId,
   }) async {
     if (!_stats.isAdmin) {
       throw StateError('Admin only');
     }
+    final previous = _findShopProduct(shopId, productId);
+    final writeSw = Stopwatch()..start();
     await _repository.setShopProductPublishStatus(
       shopId: shopId,
       productId: productId,
       status: ProductPublishStatus.approved,
     );
-    await refreshShopStat(shopId);
+    writeSw.stop();
+    if (previous != null) {
+      _upsertLocalShopProduct(
+        shopId,
+        ProductPublishGuard.applyStatusChange(
+          product: previous,
+          status: ProductPublishStatus.approved,
+        ),
+      );
+    }
+    final readFuture = () async {
+      final readSw = Stopwatch()..start();
+      await refreshShopStat(shopId);
+      readSw.stop();
+      return readSw.elapsed;
+    }();
+    return ShopProfileSaveProbe(
+      write: writeSw.elapsed,
+      readFuture: readFuture,
+    );
   }
 
-  Future<void> rejectShopProduct({
+  /// TODO(a1-desk-save-timing): probe — remove after reject latency check.
+  Future<ShopProfileSaveProbe> rejectShopProduct({
     required String shopId,
     required String productId,
     String reviewNote = '',
@@ -1868,6 +1891,8 @@ class DiverStore extends ChangeNotifier {
     if (!_stats.isAdmin) {
       throw StateError('Admin only');
     }
+    final previous = _findShopProduct(shopId, productId);
+    final writeSw = Stopwatch()..start();
     await _repository.setShopProductPublishStatus(
       shopId: shopId,
       productId: productId,
@@ -1875,7 +1900,28 @@ class DiverStore extends ChangeNotifier {
       reviewNote: reviewNote,
       reasonTags: reasonTags,
     );
-    await refreshShopStat(shopId);
+    writeSw.stop();
+    if (previous != null) {
+      _upsertLocalShopProduct(
+        shopId,
+        ProductPublishGuard.applyStatusChange(
+          product: previous,
+          status: ProductPublishStatus.rejected,
+          reviewNote: reviewNote,
+          reasonTags: reasonTags,
+        ),
+      );
+    }
+    final readFuture = () async {
+      final readSw = Stopwatch()..start();
+      await refreshShopStat(shopId);
+      readSw.stop();
+      return readSw.elapsed;
+    }();
+    return ShopProfileSaveProbe(
+      write: writeSw.elapsed,
+      readFuture: readFuture,
+    );
   }
 
   /// Admin-only: place a public product on a home shelf (or clear with exploreOnly).

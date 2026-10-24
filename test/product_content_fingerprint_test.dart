@@ -224,4 +224,92 @@ void main() {
       expect(flags[key], SectionChangeFlag.unknown);
     }
   });
+
+  test('섹션 지문: _fp 없는 옛 맵은 전부 unknown', () {
+    final base = _base();
+    final legacy = Map<String, String>.from(productSectionFingerprints(base))
+      ..remove(productSectionFpSchemaKey);
+    final flags = sectionChangeFlags(legacy, base);
+    for (final key in productContentSectionKeys) {
+      expect(flags[key], SectionChangeFlag.unknown);
+    }
+    expect(productSectionHashesComparable(legacy), isFalse);
+  });
+
+  test('섹션 지문: base_package 가격만 바뀌면 price만 changed', () {
+    final withBase = _base(consumerPrice: 100000).copyWith(
+      options: const [
+        ShopProductOption(
+          id: 'base',
+          name: '기본',
+          consumerPrice: 100000,
+          professionalPrice: 100000,
+          kind: ProductOptionKind.basePackage,
+        ),
+        ShopProductOption(
+          id: 'addon1',
+          name: '나이트',
+          consumerPrice: 30000,
+          professionalPrice: 30000,
+          kind: ProductOptionKind.addon,
+        ),
+      ],
+    );
+    final prev = productSectionFingerprints(withBase);
+    final next = withBase.copyWith(
+      consumerPrice: 150000,
+      professionalPrice: 150000,
+      options: [
+        withBase.options.first.copyWith(
+          consumerPrice: 150000,
+          professionalPrice: 150000,
+        ),
+        withBase.options.last,
+      ],
+    );
+    final flags = sectionChangeFlags(prev, next);
+    expect(flags['price'], SectionChangeFlag.changed);
+    expect(flags['options'], SectionChangeFlag.same);
+    // Full hash (build 2) still sees base_package price change.
+    expect(
+      productContentFingerprint(next),
+      isNot(productContentFingerprint(withBase)),
+    );
+  });
+
+  test('섹션 지문: addon만 바꾸면 options만 changed', () {
+    final withBase = _base(consumerPrice: 100000).copyWith(
+      options: const [
+        ShopProductOption(
+          id: 'base',
+          name: '기본',
+          consumerPrice: 100000,
+          professionalPrice: 100000,
+          kind: ProductOptionKind.basePackage,
+        ),
+        ShopProductOption(
+          id: 'addon1',
+          name: '나이트',
+          consumerPrice: 30000,
+          professionalPrice: 30000,
+          kind: ProductOptionKind.addon,
+        ),
+      ],
+    );
+    final prev = productSectionFingerprints(withBase);
+    final next = withBase.copyWith(
+      options: [
+        withBase.options.first,
+        withBase.options.last.copyWith(consumerPrice: 50000),
+      ],
+    );
+    final flags = sectionChangeFlags(prev, next);
+    expect(flags['options'], SectionChangeFlag.changed);
+    expect(flags['price'], SectionChangeFlag.same);
+  });
+
+  test('섹션 지문에 _fp 스키마 키가 포함된다', () {
+    final fp = productSectionFingerprints(_base());
+    expect(fp[productSectionFpSchemaKey], productSectionFpSchemaVersion);
+  });
 }
