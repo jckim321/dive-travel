@@ -409,6 +409,7 @@ abstract class DiverRepository {
     List<BookingLine> quoteLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
+    String guestDisplayName = '',
   });
 
   Future<SeatFlagPlant> plantSeatFlag({

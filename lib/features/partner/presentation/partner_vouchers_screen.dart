@@ -8,7 +8,6 @@ import 'package:dive_travel_app/features/partner/presentation/partner_back_butto
 import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
-import 'package:dive_travel_app/features/partner/presentation/widgets/partner_temp_confirm_button.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Partner reservation vouchers (시안 24). Replaces H0 temp bookings list.
@@ -281,7 +280,9 @@ class PartnerVoucherCard extends StatelessWidget {
             ),
             _line(
               l10n.partnerVoucherGuestName,
-              l10n.partnerVoucherGuestNameMissing,
+              booking.guestDisplayName.trim().isEmpty
+                  ? l10n.partnerVoucherGuestNameMissing
+                  : booking.guestDisplayName.trim(),
             ),
             _line(
               l10n.partnerVoucherRequests,
@@ -318,11 +319,6 @@ class PartnerVoucherCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                if (PartnerTempConfirmButton.shouldShow(booking))
-                  PartnerTempConfirmButton(
-                    shopId: shopId,
-                    booking: booking,
-                  ),
                 if (unread)
                   FilledButton(
                     key: Key('partner-voucher-ack-${booking.id}'),
@@ -489,10 +485,6 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
               },
               child: Text(l10n.partnerVoucherSavePrint),
             ),
-            if (PartnerTempConfirmButton.shouldShow(booking)) ...[
-              const SizedBox(height: 8),
-              PartnerTempConfirmButton(shopId: shopId, booking: booking),
-            ],
           ],
         ),
       ),
@@ -508,7 +500,7 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
       '${l10n.partnerVoucherParty}: ${booking.hasPartyDetail ? l10n.partnerVoucherPartyDetail(booking.divers, booking.nondivers) : booking.partySize}',
       '${l10n.partnerVoucherOptions}: ${option.isEmpty ? l10n.partnerVoucherNone : option}',
       '${l10n.partnerVoucherFoc}: ${foc ?? l10n.partnerVoucherNone}',
-      '${l10n.partnerVoucherGuestName}: ${l10n.partnerVoucherGuestNameMissing}',
+      '${l10n.partnerVoucherGuestName}: ${booking.guestDisplayName.trim().isEmpty ? l10n.partnerVoucherGuestNameMissing : booking.guestDisplayName.trim()}',
       '${l10n.partnerVoucherRequests}: ${l10n.partnerVoucherNone}',
       l10n.partnerVoucherCreatedStamp(_stamp.format(booking.createdAt)),
     ].join('\n');

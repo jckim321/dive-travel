@@ -65,6 +65,7 @@ class TourBooking {
     this.quoteLines = const [],
     this.seatsHeld = 0,
     this.seatOptionId = '',
+    this.guestDisplayName = '',
     this.partnerAckedAt,
   });
 
@@ -99,6 +100,10 @@ class TourBooking {
   final int seatsHeld;
   /// Option used for seat inventory (may differ from display [optionId]).
   final String seatOptionId;
+
+  /// Snapshot of the guest's profile/login display name at booking time.
+  /// Empty when unset — partners show 「예약자 이름 없음」. Never email local-part.
+  final String guestDisplayName;
 
   /// Partner 「확인했어요」 read receipt (shop booking doc only).
   final DateTime? partnerAckedAt;
@@ -180,6 +185,7 @@ class TourBooking {
     DateTime? tourDate,
     int? seatsHeld,
     String? seatOptionId,
+    String? guestDisplayName,
     DateTime? partnerAckedAt,
     bool clearPartnerAckedAt = false,
   }) {
@@ -212,6 +218,7 @@ class TourBooking {
       quoteLines: quoteLines,
       seatsHeld: seatsHeld ?? this.seatsHeld,
       seatOptionId: seatOptionId ?? this.seatOptionId,
+      guestDisplayName: guestDisplayName ?? this.guestDisplayName,
       partnerAckedAt: clearPartnerAckedAt
           ? null
           : (partnerAckedAt ?? this.partnerAckedAt),
@@ -223,9 +230,52 @@ class TourBooking {
       seatOptionId.isNotEmpty ? seatOptionId : optionId;
 }
 
+/// Real profile/login display name for partner vouchers.
+///
+/// Returns empty when unset. Never invents a name from [email] local-part.
+String resolveGuestDisplayName({
+  String? authDisplayName,
+  String? profileDisplayName,
+  String? email,
+}) {
+  final emailLocal = () {
+    final mail = (email ?? '').trim();
+    if (!mail.contains('@')) {
+      return '';
+    }
+    return mail.split('@').first.trim();
+  }();
+
+  bool usable(String raw) {
+    final name = raw.trim();
+    if (name.isEmpty) {
+      return false;
+    }
+    // App unbound placeholder — not a real profile name.
+    if (name == '다이버') {
+      return false;
+    }
+    if (emailLocal.isNotEmpty && name == emailLocal) {
+      return false;
+    }
+    return true;
+  }
+
+  final profile = (profileDisplayName ?? '').trim();
+  if (usable(profile)) {
+    return profile;
+  }
+  final auth = (authDisplayName ?? '').trim();
+  if (usable(auth)) {
+    return auth;
+  }
+  return '';
+}
+
 /// Guest lifecycle for a tour booking.
 ///
-/// Checkout creates [requested]; shop confirmation moves to [confirmed].
+/// Defaults stay [requested]/[PaymentStatus.unpaid]. Paid checkout writes
+/// [confirmed] + captured; legacy unpaid rows still move via shop confirm.
 enum BookingStatus {
   requested,
   confirmed,

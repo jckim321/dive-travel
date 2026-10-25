@@ -105,6 +105,7 @@ class DiverStore extends ChangeNotifier {
     _authSubscription = _repository.authState().listen((user) {
       _uid = user?.uid;
       _email = user?.email;
+      _authDisplayName = user?.displayName;
       if (user == null) {
         _devRoleOverlay = null;
       }
@@ -132,6 +133,7 @@ class DiverStore extends ChangeNotifier {
   Timer? _loadingTimeout;
   String? _uid;
   String? _email;
+  String? _authDisplayName;
   DevRoleOverlay? _devRoleOverlay;
   var _shopStatsLoaded = false;
   var _shopStatsLoading = false;
@@ -848,9 +850,19 @@ class DiverStore extends ChangeNotifier {
       quoteLines: quoteLines,
       status: status,
       paymentStatus: paymentStatus,
+      guestDisplayName: _resolveGuestDisplayName(),
     );
     unawaited(refreshShopStat(hull));
     return saved;
+  }
+
+  /// Profile/login display name only; never invents from email local-part.
+  String _resolveGuestDisplayName() {
+    return resolveGuestDisplayName(
+      authDisplayName: _authDisplayName,
+      profileDisplayName: _stats.displayName,
+      email: _email,
+    );
   }
 
   Future<SeatFlagPlant> plantSeatFlag({

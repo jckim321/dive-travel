@@ -79,6 +79,10 @@ class MemoryDiverRepository implements DiverRepository {
   late DiverSnapshot _snapshot;
   int _logSequence = 0;
   int _bookingSequence = 0;
+
+  /// Test-only: fail createBooking after the user copy, before the shop copy.
+  /// Clears itself on use. Ensures purchase bump does not run on mid-fail.
+  bool debugFailBeforeShopBookingWrite = false;
   bool _isInstructor = false;
   bool _isAdmin = false;
   bool _isBusiness = false;
@@ -490,6 +494,7 @@ class MemoryDiverRepository implements DiverRepository {
     List<BookingLine> quoteLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
+    String guestDisplayName = '',
   }) {
     return _runTxn(() async {
       final hullId = shopId.split('--').first;
@@ -566,13 +571,24 @@ class MemoryDiverRepository implements DiverRepository {
         quoteLines: quoteLines,
         seatsHeld: seatsHeld,
         seatOptionId: seatKey,
+        guestDisplayName: guestDisplayName.trim(),
       );
+      // Dual write: user copy then shop copy. Bump only after both succeed.
       _bookings.insert(0, booking);
+      if (debugFailBeforeShopBookingWrite) {
+        debugFailBeforeShopBookingWrite = false;
+        _bookings.removeAt(0);
+        _bookingController.add(List<TourBooking>.from(_bookings));
+        return false;
+      }
       _shopBookings.putIfAbsent(booking.shopId, () => []).insert(0, booking);
       _bookingController.add(List<TourBooking>.from(_bookings));
       _shopBookingController.add(
         List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
       );
+      if (paymentStatus == PaymentStatus.captured && uid.isNotEmpty) {
+        _bumpActivityLocal(uid: uid, purchaseDelta: 1);
+      }
       return true;
     });
   }

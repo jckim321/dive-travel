@@ -80,6 +80,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   var _qtyInfant = 0;
   var _bookPackage = true;
   final _selected = <String>{};
+  var _paying = false;
 
   bool get _hasProduct => widget.product != null;
 
@@ -255,6 +256,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   Future<void> _pay() async {
+    if (_paying) {
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     if (store.uid == null) {
@@ -311,47 +315,53 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         : (widget.presetOptionId.isNotEmpty
               ? widget.presetOptionId
               : (_selected.isEmpty ? '' : _selected.first));
-    final saved = await store.createBooking(
-      shop: widget.shop,
-      price: amount,
-      tourDate: _tourDate,
-      productId: product?.id,
-      productName: _hasProduct
-          ? (product?.name ?? widget.shop.productName)
-          : widget.shop.productName,
-      optionName: _optionLabelsOnly(),
-      partySize: party,
-      optionId: recordOption,
-      seatOptionId: seatOption,
-      listingKind: product?.listingKind ?? ProductListingKind.exploreOnly,
-      fromFlag: widget.fromFlag,
-      divers: _hasProduct ? _qtyDiver : 1,
-      nondivers: _hasProduct ? _qtyNondiver : 0,
-      children: _hasProduct ? _qtyChild : 0,
-      infants: _hasProduct ? _qtyInfant : 0,
-      quoteLines: _hasProduct ? _booking.lines : const [],
-      status: BookingStatus.requested,
-      paymentStatus: PaymentStatus.unpaid,
-    );
-    if (!mounted) {
-      return;
-    }
-    if (!saved) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.exploreBookingNotSaved)),
+    _paying = true;
+    try {
+      final saved = await store.createBooking(
+        shop: widget.shop,
+        price: amount,
+        tourDate: _tourDate,
+        productId: product?.id,
+        productName: _hasProduct
+            ? (product?.name ?? widget.shop.productName)
+            : widget.shop.productName,
+        optionName: _optionLabelsOnly(),
+        partySize: party,
+        optionId: recordOption,
+        seatOptionId: seatOption,
+        listingKind: product?.listingKind ?? ProductListingKind.exploreOnly,
+        fromFlag: widget.fromFlag,
+        divers: _hasProduct ? _qtyDiver : 1,
+        nondivers: _hasProduct ? _qtyNondiver : 0,
+        children: _hasProduct ? _qtyChild : 0,
+        infants: _hasProduct ? _qtyInfant : 0,
+        quoteLines: _hasProduct ? _booking.lines : const [],
+        // Paid SimPay checkout: auto-confirm; defaults stay requested/unpaid elsewhere.
+        status: BookingStatus.confirmed,
+        paymentStatus: PaymentStatus.captured,
       );
-      return;
-    }
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.fromFlag
-              ? l10n.sameBoatSeatConfirmed
-              : l10n.exploreCheckoutDone(label, formatted),
+      if (!mounted) {
+        return;
+      }
+      if (!saved) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exploreBookingNotSaved)),
+        );
+        return;
+      }
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.fromFlag
+                ? l10n.sameBoatSeatConfirmed
+                : l10n.exploreCheckoutDone(label, formatted),
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _paying = false;
+    }
   }
 
   @override

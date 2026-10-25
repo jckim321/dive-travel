@@ -554,6 +554,7 @@ class FirestoreDiverRepository implements DiverRepository {
       quoteLines: BookingLine.listFrom(data['quote_lines']),
       seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
       seatOptionId: data['seat_option_id'] as String? ?? '',
+      guestDisplayName: data['guest_display_name'] as String? ?? '',
       partnerAckedAt: data['partner_acked_at'] == null
           ? null
           : _readDate(data['partner_acked_at']),
@@ -586,6 +587,7 @@ class FirestoreDiverRepository implements DiverRepository {
       'infants': booking.infants,
       'seats_held': booking.seatsHeld,
       'seat_option_id': booking.seatOptionId,
+      'guest_display_name': booking.guestDisplayName,
       if (booking.quoteLines.isNotEmpty)
         'quote_lines': [
           for (final line in booking.quoteLines) line.toMap(),
@@ -631,6 +633,7 @@ class FirestoreDiverRepository implements DiverRepository {
     List<BookingLine> quoteLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
+    String guestDisplayName = '',
   }) async {
     final hullId = shopId.split('--').first;
     final now = DateTime.now();
@@ -642,7 +645,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final seatKey = seatOptionId;
 
     try {
-      return await _db.runTransaction((transaction) async {
+      final ok = await _db.runTransaction((transaction) async {
         var seatsHeld = 0;
         List<ShopProduct>? currentProducts;
         ShopProduct? capturedProduct;
@@ -736,13 +739,21 @@ class FirestoreDiverRepository implements DiverRepository {
           quoteLines: quoteLines,
           seatsHeld: seatsHeld,
           seatOptionId: seatKey,
+          guestDisplayName: guestDisplayName.trim(),
         );
         final payload = _bookingPayload(booking);
         payload['created_at'] = FieldValue.serverTimestamp();
+        // Dual write inside txn — bump runs only after both commits succeed.
         transaction.set(userBookingRef, payload);
         transaction.set(shopBookingRef, payload);
         return true;
       });
+      if (ok &&
+          paymentStatus == PaymentStatus.captured &&
+          uid.isNotEmpty) {
+        await _bumpActivityAndMaybeUpgrade(uid: uid, purchaseDelta: 1);
+      }
+      return ok;
     } on FirebaseException catch (error) {
       if (error.code == 'permission-denied') {
         throw StateError(
