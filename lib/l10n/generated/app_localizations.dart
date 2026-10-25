@@ -7848,6 +7848,30 @@ abstract class AppLocalizations {
   /// **'깃발 꽂기'**
   String get communityPlantFlag;
 
+  /// No description provided for @communityFlagButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'🚩 깃발 꽂기'**
+  String get communityFlagButton;
+
+  /// No description provided for @communityFlagPlantAndPay.
+  ///
+  /// In ko, this message translates to:
+  /// **'🚩 깃발 꽂고 결제하러 가기'**
+  String get communityFlagPlantAndPay;
+
+  /// No description provided for @communitySeeProduct.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 자세히 보기'**
+  String get communitySeeProduct;
+
+  /// No description provided for @communityFlagPartyTotal.
+  ///
+  /// In ko, this message translates to:
+  /// **'합계 {amount}'**
+  String communityFlagPartyTotal(String amount);
+
   /// No description provided for @communityFlagOneSeat.
   ///
   /// In ko, this message translates to:

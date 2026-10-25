@@ -213,11 +213,15 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),
-                  for (final entry in _designPreviews(now).indexed) ...[
+                  for (final entry in _designPreviews(now)) ...[
                     _SeatCard(
-                      offer: entry.$2.offer,
-                      plate: entry.$1,
-                      shopName: entry.$2.shopName,
+                      offer: entry.offer,
+                      shopName: entry.shopName,
+                      onOpen: () => _openOfferDetail(
+                        context,
+                        entry.offer,
+                        shopName: entry.shopName,
+                      ),
                       onTake: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -239,8 +243,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   for (var i = 0; i < offers.length; i++) ...[
                     _SeatCard(
                       offer: offers[i],
-                      plate: i,
+                      shop: _shopForProduct(store, offers[i].product),
                       shopName: store.shopLabelFor(offers[i].product.shopId),
+                      onOpen: () => _openOfferDetail(
+                        context,
+                        offers[i],
+                        shop: _shopForProduct(store, offers[i].product),
+                        shopName: store.shopLabelFor(offers[i].product.shopId),
+                      ),
                       onTake: () => _takeSeat(context, store, offers[i]),
                     ),
                     const SizedBox(height: 12),
@@ -284,78 +294,40 @@ class _CommunityScreenState extends State<CommunityScreen> {
     final deadline = DateFormat('yyyy.MM.dd HH:mm').format(until);
     final shortened = offer.flagClosesAt != null &&
         offer.flagClosesAt!.isBefore(now.add(const Duration(hours: 24)));
-    final partySize = await showDialog<int>(
+    final shop = _shopForProduct(store, product);
+    final professional = shop != null && store.quoteFor(shop).isProfessional;
+    final partySize = await showModalBottomSheet<int>(
       context: context,
-      builder: (dialogContext) {
-        var seats = 1;
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.communityFlagPayBy(deadline),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (shortened) ...[
-                    const SizedBox(height: 6),
-                    Text(l10n.communityFlagPayByShortened),
-                  ],
-                  const SizedBox(height: 12),
-                  Text(l10n.communityFlagHoldAsk(deadline)),
-                  const SizedBox(height: 16),
-                  Text(l10n.communityFlagPartyAsk(open)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: seats <= 1
-                            ? null
-                            : () => setLocal(() => seats -= 1),
-                        icon: const Icon(Icons.remove),
-                      ),
-                      Text(
-                        '$seats',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: seats >= open
-                            ? null
-                            : () => setLocal(() => seats += 1),
-                        icon: const Icon(Icons.add),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: Text(l10n.communityPlantFlagLater),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, seats),
-                  child: Text(l10n.communityPlantFlag),
-                ),
-              ],
-            );
-          },
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return _FlagPlantSheet(
+          offer: offer,
+          shop: shop,
+          shopName: store.shopLabelFor(product.shopId),
+          open: open,
+          deadline: deadline,
+          shortened: shortened,
+          totalFor: (seats) => BookingQuote.compute(
+            product: product,
+            professional: professional,
+            divers: seats,
+            nondivers: 0,
+            children: 0,
+            infants: 0,
+            bookPackage: offer.optionId.isEmpty,
+            selectedOptionIds:
+                offer.optionId.isEmpty ? const {} : {offer.optionId},
+          ).total,
         );
       },
     );
     if (partySize == null || partySize <= 0 || !context.mounted) {
       return;
     }
-    final shop = _shopForProduct(store, product);
-    final professional = shop != null && store.quoteFor(shop).isProfessional;
     final lockedPrice = BookingQuote.compute(
       product: product,
       professional: professional,
@@ -505,308 +477,621 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
   return store.listingCardForProduct(hull, product);
 }
 
+void _openOfferDetail(
+  BuildContext context,
+  SameBoatOffer offer, {
+  DiveShop? shop,
+  String shopName = '',
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => _SameBoatDetailPage(
+        offer: offer,
+        shop: shop,
+        shopName: shopName,
+      ),
+    ),
+  );
+}
+
 class _SeatCard extends StatelessWidget {
   const _SeatCard({
     required this.offer,
-    required this.plate,
     required this.shopName,
+    required this.onOpen,
     required this.onTake,
+    this.shop,
   });
 
   final SameBoatOffer offer;
-  final int plate;
+  final DiveShop? shop;
   final String shopName;
+  final VoidCallback onOpen;
   final VoidCallback onTake;
-
-  static const _plates = [
-    (fill: Color(0xFFF7F6F4), edge: Color(0xFFC5C1BA)),
-    (fill: Color(0xFFF3F5F7), edge: Color(0xFFB7C0C8)),
-    (fill: Color(0xFFF4F2EE), edge: Color(0xFFC4BDB4)),
-    (fill: Color(0xFFF6F4EF), edge: Color(0xFFC9C2B4)),
-  ];
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final product = offer.product;
-    final departure = offer.departureStart;
-    final flag = offer.flagClosesAt;
-    final title = shopName.isEmpty ? product.name : shopName;
-    final metal = _plates[plate % _plates.length];
+    final now = DateTime.now();
+    final paid = offer.bookedSeats;
+    final held = offer.flaggedSeatsAt(now);
+    final intro = _offerIntro(offer);
+    final price = _perPersonPrice(offer);
+    final capacity = offer.capacity;
+    final paidSeats = capacity <= 0 ? 0 : paid.clamp(0, capacity).toInt();
+    final heldSeats = capacity <= 0
+        ? 0
+        : held.clamp(0, capacity - paidSeats).toInt();
+    final openSeats = capacity <= 0 ? 0 : capacity - paidSeats - heldSeats;
+    final rating = product.guestRating;
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('same-boat-${product.id}-${offer.optionId}'),
-        onTap: onTake,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: metal.fill,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8EBEE)),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: IntrinsicHeight(
-              child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(width: 4, color: metal.edge),
-                Expanded(
-                  child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.navy,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (offer.optionName.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE8EBEE)),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              key: Key('same-boat-${product.id}-${offer.optionId}'),
+              onTap: onOpen,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _OfferPhoto(
+                      product: product,
+                      departure: offer.departureStart,
                     ),
-                    decoration: BoxDecoration(
-                      color: metal.edge.withValues(alpha: 0.28),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      offer.optionName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.navy,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.navy,
+                            ),
+                          ),
+                          if (offer.optionName.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              offer.optionName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.navy,
+                              ),
+                            ),
+                          ],
+                          if (shopName.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              shopName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.muted,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (shop != null && shop!.showsDiveStarBadge)
+                                Text(
+                                  shop!.isDiveStarCertified
+                                      ? l10n.exploreDiveStarCertified
+                                      : l10n.exploreDiveStarRenewalNeeded,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFE07A1F),
+                                  ),
+                                ),
+                              Text(
+                                rating > 0
+                                    ? '★ ${rating.toStringAsFixed(1)}'
+                                    : l10n.reviewNoReviewsYet,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.navy,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (intro.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              intro,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.muted,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 6),
+                          Text(
+                            _wonTilde(price),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.navy,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-                if (product.detail.isNotEmpty ||
-                    product.blurb.isNotEmpty ||
-                    offer.optionDescription.isNotEmpty)
-                  ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    title: Text(l10n.communityOfferDetail),
-                    children: [
-                      if (product.blurb.isNotEmpty)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(product.blurb),
-                        ),
-                      if (product.detail.isNotEmpty)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(product.detail),
-                        ),
-                      if (offer.optionDescription.isNotEmpty)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(offer.optionDescription),
-                        ),
-                    ],
-                  ),
-                const SizedBox(height: 12),
-                _DateLine(
-                  departure: departure,
-                  flagClose: flag,
-                  todayLabel: l10n.communityDateToday,
-                  flagLabel: l10n.workbenchFlagDeadline,
-                  departureLabel: l10n.workbenchDepartureDate,
-                ),
-                const SizedBox(height: 14),
-                _SeatMeter(
-                  capacity: offer.capacity,
-                  paid: offer.bookedSeats,
-                  held: offer.flaggedSeatsAt(DateTime.now()),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.communityFlagOneSeat,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.muted,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: onTake,
-                    child: Text(l10n.communityPlantFlag),
-                  ),
-                ),
-              ],
-            ),
-                  ),
-                ),
-              ],
-            ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DateLine extends StatelessWidget {
-  const _DateLine({
-    required this.departure,
-    required this.flagClose,
-    required this.todayLabel,
-    required this.flagLabel,
-    required this.departureLabel,
-  });
-
-  final DateTime? departure;
-  final DateTime? flagClose;
-  final String todayLabel;
-  final String flagLabel;
-  final String departureLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final marks = <({DateTime at, String label, Color color})>[
-      (
-        at: DateTime.now(),
-        label: todayLabel,
-        color: AppTheme.muted,
-      ),
-      if (flagClose != null)
-        (
-          at: flagClose!,
-          label: flagLabel,
-          color: const Color(0xFFE8A54B),
-        ),
-      if (departure != null)
-        (
-          at: departure!,
-          label: departureLabel,
-          color: AppTheme.ocean,
-        ),
-    ]..sort((a, b) => a.at.compareTo(b.at));
-    final day = DateFormat('M.d');
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < marks.length; i++) ...[
-          if (i > 0)
-            Expanded(
-              child: Container(
-                height: 2,
-                margin: const EdgeInsets.only(top: 5),
-                color: const Color(0xFFE4E7EB),
-              ),
-            ),
-          Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: marks[i].color,
-                  shape: BoxShape.circle,
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                marks[i].label,
+            ),
+            if (capacity > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                child: Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: [
+                    for (var i = 0; i < capacity; i++)
+                      _SeatDot(
+                        filled: i < paidSeats + heldSeats,
+                        color: i < paidSeats
+                            ? AppTheme.navy
+                            : const Color(0xFFE07A1F),
+                      ),
+                  ],
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text(
+                '${l10n.communitySeatPaid(paidSeats)} · ${l10n.communitySeatHeld(heldSeats)} · ${l10n.communitySeatOpen(openSeats)}',
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.navy,
-                ),
-              ),
-              Text(
-                day.format(marks[i].at),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                   color: AppTheme.muted,
                 ),
               ),
-            ],
-          ),
-        ],
-      ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: FilledButton(
+                key: Key('same-boat-flag-${product.id}-${offer.optionId}'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFE07A1F),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: onTake,
+                child: Text(l10n.communityFlagButton),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _SeatMeter extends StatelessWidget {
-  const _SeatMeter({
-    required this.capacity,
-    required this.paid,
-    required this.held,
-  });
+final _seatMoney = NumberFormat('#,###', 'en_US');
 
-  final int capacity;
-  final int paid;
-  final int held;
+String _wonTilde(int amount) => '₩${_seatMoney.format(amount)}~';
+
+String _won(int amount) => '₩${_seatMoney.format(amount)}';
+
+String? _firstPhoto(ShopProduct product) {
+  for (final url in product.photoUrls) {
+    final trimmed = url.trim();
+    if (trimmed.isNotEmpty) {
+      return trimmed;
+    }
+  }
+  final cover = product.coverUrl.trim();
+  if (cover.isNotEmpty) {
+    return cover;
+  }
+  return null;
+}
+
+String _offerIntro(SameBoatOffer offer) {
+  if (offer.optionDescription.trim().isNotEmpty) {
+    return offer.optionDescription.trim();
+  }
+  if (offer.product.blurb.trim().isNotEmpty) {
+    return offer.product.blurb.trim();
+  }
+  return offer.product.detail.trim();
+}
+
+int _perPersonPrice(SameBoatOffer offer) {
+  final option = offer.option;
+  if (option != null && option.consumerPrice > 0) {
+    return option.consumerPrice;
+  }
+  return offer.product.consumerPrice;
+}
+
+class _SeatDot extends StatelessWidget {
+  const _SeatDot({required this.filled, required this.color});
+
+  final bool filled;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    if (capacity <= 0) {
-      return const SizedBox.shrink();
-    }
-    final paidSeats = paid.clamp(0, capacity).toInt();
-    final heldSeats = held.clamp(0, capacity - paidSeats).toInt();
-    Color tone(int index) {
-      if (index < paidSeats) {
-        return AppTheme.navy;
-      }
-      if (index < paidSeats + heldSeats) {
-        return const Color(0xFFE8A54B);
-      }
-      return const Color(0xFFE4E7EB);
-    }
-    final l10n = AppLocalizations.of(context);
-    final open = capacity - paidSeats - heldSeats;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: filled ? color : Colors.transparent,
+        border: Border.all(
+          color: filled ? color : const Color(0xFFB7C0C8),
+          width: 1.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _OfferPhoto extends StatelessWidget {
+  const _OfferPhoto({required this.product, required this.departure});
+
+  final ShopProduct product;
+  final DateTime? departure;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = _firstPhoto(product);
+    final badge = departure == null ? '' : DateFormat('M.d').format(departure!);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 108,
+        height: 132,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            for (var i = 0; i < capacity; i++)
-              Container(
-                width: 22,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: tone(i),
-                  borderRadius: BorderRadius.circular(6),
+            _OfferImage(url: url),
+            if (badge.isNotEmpty)
+              Positioned(
+                left: 6,
+                bottom: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xF0052A4A),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    badge,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 8),
+      ),
+    );
+  }
+}
+
+class _OfferImage extends StatelessWidget {
+  const _OfferImage({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = url;
+    if (photo != null &&
+        photo.isNotEmpty &&
+        !photo.startsWith('memory://')) {
+      return Image.network(
+        photo,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const _OfferFallback(),
+      );
+    }
+    return const _OfferFallback();
+  }
+}
+
+class _OfferFallback extends StatelessWidget {
+  const _OfferFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/test_dive_photo.png',
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFFE7EEF3)),
+    );
+  }
+}
+
+class _FlagDeadlineNote extends StatelessWidget {
+  const _FlagDeadlineNote({
+    required this.deadline,
+    required this.shortened,
+  });
+
+  final String deadline;
+  final bool shortened;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Text(
-          '${l10n.communitySeatPaid(paidSeats)} · ${l10n.communitySeatHeld(heldSeats)} · ${l10n.communitySeatOpen(open)}',
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.muted,
-          ),
+          l10n.communityFlagPayBy(deadline),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
+        if (shortened) ...[
+          const SizedBox(height: 6),
+          Text(l10n.communityFlagPayByShortened),
+        ],
+        const SizedBox(height: 12),
+        Text(l10n.communityFlagHoldAsk(deadline)),
       ],
+    );
+  }
+}
+
+class _FlagPlantSheet extends StatefulWidget {
+  const _FlagPlantSheet({
+    required this.offer,
+    required this.shopName,
+    required this.open,
+    required this.deadline,
+    required this.shortened,
+    required this.totalFor,
+    this.shop,
+  });
+
+  final SameBoatOffer offer;
+  final DiveShop? shop;
+  final String shopName;
+  final int open;
+  final String deadline;
+  final bool shortened;
+  final int Function(int seats) totalFor;
+
+  @override
+  State<_FlagPlantSheet> createState() => _FlagPlantSheetState();
+}
+
+class _FlagPlantSheetState extends State<_FlagPlantSheet> {
+  var _seats = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    final total = widget.totalFor(_seats);
+    return SingleChildScrollView(
+      child: Padding(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 16 + bottom),
+      child: Column(
+        key: const Key('same-boat-flag-sheet'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE4E7EB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _OfferPhoto(
+                product: widget.offer.product,
+                departure: widget.offer.departureStart,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.offer.product.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (widget.offer.optionName.isNotEmpty)
+                      Text(widget.offer.optionName),
+                    if (widget.shopName.isNotEmpty)
+                      Text(
+                        widget.shopName,
+                        style: const TextStyle(color: AppTheme.muted),
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _wonTilde(_perPersonPrice(widget.offer)),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(l10n.communityFlagPartyAsk(widget.open)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              IconButton(
+                onPressed: _seats <= 1
+                    ? null
+                    : () => setState(() => _seats -= 1),
+                icon: const Icon(Icons.remove),
+              ),
+              Text(
+                '$_seats',
+                key: const Key('same-boat-party-count'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
+              IconButton(
+                onPressed: _seats >= widget.open
+                    ? null
+                    : () => setState(() => _seats += 1),
+                icon: const Icon(Icons.add),
+              ),
+              const Spacer(),
+              Text(
+                l10n.communityFlagPartyTotal(_won(total)),
+                key: const Key('same-boat-party-total'),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _FlagDeadlineNote(
+            deadline: widget.deadline,
+            shortened: widget.shortened,
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            key: const Key('same-boat-plant-pay'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE07A1F),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, _seats),
+            child: Text(l10n.communityFlagPlantAndPay),
+          ),
+          TextButton(
+            key: const Key('same-boat-see-product'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => _SameBoatDetailPage(
+                    offer: widget.offer,
+                    shop: widget.shop,
+                    shopName: widget.shopName,
+                  ),
+                ),
+              );
+            },
+            child: Text(l10n.communitySeeProduct),
+          ),
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+class _SameBoatDetailPage extends StatelessWidget {
+  const _SameBoatDetailPage({
+    required this.offer,
+    required this.shopName,
+    this.shop,
+  });
+
+  final SameBoatOffer offer;
+  final DiveShop? shop;
+  final String shopName;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
+    final deadline = DateFormat('yyyy.MM.dd HH:mm').format(until);
+    final shortened = offer.flagClosesAt != null &&
+        offer.flagClosesAt!.isBefore(now.add(const Duration(hours: 24)));
+    final intro = _offerIntro(offer);
+    return Scaffold(
+      key: const Key('same-boat-detail'),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(offer.product.name),
+        actions: [
+          IconButton(
+            key: const Key('same-boat-detail-close'),
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: _OfferImage(url: _firstPhoto(offer.product)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (offer.optionName.isNotEmpty)
+            Text(
+              offer.optionName,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          if (shopName.isNotEmpty)
+            Text(shopName, style: const TextStyle(color: AppTheme.muted)),
+          if (shop != null && shop!.showsDiveStarBadge)
+            Text(
+              shop!.isDiveStarCertified
+                  ? l10n.exploreDiveStarCertified
+                  : l10n.exploreDiveStarRenewalNeeded,
+            ),
+          const SizedBox(height: 8),
+          Text(
+            _wonTilde(_perPersonPrice(offer)),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          if (intro.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(intro),
+          ],
+          if (offer.product.detail.trim().isNotEmpty &&
+              offer.product.detail.trim() != intro) ...[
+            const SizedBox(height: 8),
+            Text(offer.product.detail.trim()),
+          ],
+          const SizedBox(height: 16),
+          _FlagDeadlineNote(deadline: deadline, shortened: shortened),
+        ],
+      ),
     );
   }
 }

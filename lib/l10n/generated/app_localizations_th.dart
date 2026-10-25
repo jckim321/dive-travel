@@ -4157,6 +4157,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityPlantFlag => '깃발 꽂기';
 
   @override
+  String get communityFlagButton => '🚩 깃발 꽂기';
+
+  @override
+  String get communityFlagPlantAndPay => '🚩 깃발 꽂고 결제하러 가기';
+
+  @override
+  String get communitySeeProduct => '상품 자세히 보기';
+
+  @override
+  String communityFlagPartyTotal(String amount) {
+    return '합계 $amount';
+  }
+
+  @override
   String get communityFlagOneSeat =>
       '깃발을 꽂을 인원만큼 결제시한까지 좌석이 잠깁니다. 결제 화면에서 인원은 바꿀 수 없습니다.';
 

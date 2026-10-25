@@ -1707,6 +1707,15 @@
   "communityViewSeats": "View seats",
   "communityWindowOpen": "Dates TBD",
   "communityPlantFlag": "Plant a flag",
+  "communityFlagButton": "🚩 Plant a flag",
+  "communityFlagPlantAndPay": "🚩 Plant a flag and pay",
+  "communitySeeProduct": "View product",
+  "communityFlagPartyTotal": "Total {amount}",
+  "@communityFlagPartyTotal": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
   "communityFlagOneSeat": "A flag locks as many seats as you choose until the pay deadline. Party size is fixed at checkout.",
   "communityFlagPartyAsk": "How many seats should we lock? ({open} open)",
   "@communityFlagPartyAsk": {

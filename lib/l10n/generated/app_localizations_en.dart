@@ -4261,6 +4261,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityPlantFlag => 'Plant a flag';
 
   @override
+  String get communityFlagButton => '🚩 Plant a flag';
+
+  @override
+  String get communityFlagPlantAndPay => '🚩 Plant a flag and pay';
+
+  @override
+  String get communitySeeProduct => 'View product';
+
+  @override
+  String communityFlagPartyTotal(String amount) {
+    return 'Total $amount';
+  }
+
+  @override
   String get communityFlagOneSeat =>
       'A flag locks as many seats as you choose until the pay deadline. Party size is fixed at checkout.';
 
