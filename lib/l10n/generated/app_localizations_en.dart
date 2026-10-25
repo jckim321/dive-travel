@@ -4499,7 +4499,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingCreatedAt => 'Requested';
 
   @override
-  String get adminBookingsTitle => 'Booking confirm';
+  String get adminBookingsTitle => 'Bookings';
 
   @override
   String get adminBookingsEmpty => 'No bookings to review yet.';

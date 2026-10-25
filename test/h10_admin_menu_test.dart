@@ -92,6 +92,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-nav-more-sheet')), findsOneWidget);
     expect(find.byKey(const Key('admin-tool-shops')), findsOneWidget);
+    final sheet = find.byKey(const Key('admin-nav-more-sheet'));
+    await tester.drag(sheet, const Offset(0, -240));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-menu-weather')), findsOneWidget);
     expect(find.byKey(const Key('admin-tool-posts')), findsOneWidget);
     await tester.tap(find.byKey(const Key('admin-tool-shops')));
