@@ -138,6 +138,39 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   bool get _partyLocked =>
       widget.fromFlag && widget.lockedPartySize > 0;
 
+  /// Flag payment uses the price captured at plant time. Older holds with no
+  /// snapshot, and every normal checkout, keep the live quote.
+  int _payable(BuildContext context) {
+    return flagOrLivePayable(
+      fromFlag: widget.fromFlag,
+      lockedPrice: _flagLockedPrice(context) ?? 0,
+      liveTotal: _hasProduct ? _booking.total : widget.quote.amount,
+    );
+  }
+
+  int? _flagLockedPrice(BuildContext context) {
+    if (!widget.fromFlag) {
+      return null;
+    }
+    final product = widget.product;
+    if (product == null) {
+      return null;
+    }
+    final uid = DiverStoreScope.of(context).uid ?? '';
+    if (uid.isEmpty) {
+      return null;
+    }
+    final hold = product.liveFlagFor(
+      uid,
+      DateTime.now(),
+      optionId: widget.lockedOptionId,
+    );
+    if (hold == null || hold.lockedPrice <= 0) {
+      return null;
+    }
+    return hold.lockedPrice;
+  }
+
   void _applyOption(String id) {
     final product = widget.product;
     if (id.isEmpty || product == null) {
@@ -271,7 +304,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final label = quote.isProfessional
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
-    final amount = _hasProduct ? _booking.total : quote.amount;
+    final amount = _payable(context);
     final formatted = _priceFormat.format(amount);
     final product = widget.product;
     final party = _hasProduct ? _partySize : 1;
@@ -374,7 +407,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final store = DiverStoreScope.of(context);
     final saved = store.isFavoriteShop(widget.shop.id);
     final refund = RefundPolicy.forUserCancel(tourDate: _tourDate);
-    final payAmount = _hasProduct ? _booking.total : quote.amount;
+    final payAmount = _payable(context);
     final formatted = _priceFormat.format(payAmount);
     final label = quote.isProfessional
         ? l10n.exploreProPrice
@@ -1075,7 +1108,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             ),
           const SizedBox(height: 8),
           Text(
-            l10n.checkoutTotal(_priceFormat.format(_booking.total)),
+            l10n.checkoutTotal(_priceFormat.format(_payable(context))),
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
         ],
@@ -1119,7 +1152,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   },
           ),
         Text(
-          l10n.checkoutTotal(_priceFormat.format(_booking.total)),
+          l10n.checkoutTotal(_priceFormat.format(_payable(context))),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ],
@@ -1155,7 +1188,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           if (rate.enabled) _qtyRow(l10n, rate.role),
         const SizedBox(height: 8),
         Text(
-          l10n.checkoutTotal(_priceFormat.format(_booking.total)),
+          l10n.checkoutTotal(_priceFormat.format(_payable(context))),
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ],

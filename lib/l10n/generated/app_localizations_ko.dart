@@ -5141,6 +5141,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminOverviewActivityGap => '가격 변경, 좌석 변경은 준비 중입니다.';
 
   @override
+  String get adminOverviewChangeConsumer => '소비자가';
+
+  @override
+  String get adminOverviewChangePro => '프로가';
+
+  @override
+  String get adminOverviewChangeCapacity => '좌석';
+
+  @override
+  String adminOverviewChangeLine(
+    String name,
+    String label,
+    int before,
+    int after,
+  ) {
+    return '$name $label $before→$after';
+  }
+
+  @override
   String get adminOverviewPaid => '결제완료';
 
   @override

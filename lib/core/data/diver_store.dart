@@ -37,6 +37,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
+import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
@@ -854,6 +855,7 @@ class DiverStore extends ChangeNotifier {
     required String productId,
     required int partySize,
     String optionId = '',
+    int lockedPrice = 0,
   }) async {
     final uid = _uid;
     if (uid == null || uid.isEmpty) {
@@ -868,6 +870,7 @@ class DiverStore extends ChangeNotifier {
       now: now,
       optionId: optionId,
       uid: uid,
+      lockedPrice: lockedPrice,
     );
     unawaited(refreshShopStat(hull));
     return result;
@@ -1496,6 +1499,10 @@ class DiverStore extends ChangeNotifier {
       proposalId: proposalId,
       adminUid: uid,
     );
+  }
+
+  Future<List<ProductChangeRecord>> listProductChanges(String shopId) {
+    return _repository.listProductChanges(shopId);
   }
 
   Future<List<PartnerContract>> listPartnerContracts(

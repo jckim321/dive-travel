@@ -9690,6 +9690,35 @@ abstract class AppLocalizations {
   /// **'가격 변경, 좌석 변경은 준비 중입니다.'**
   String get adminOverviewActivityGap;
 
+  /// No description provided for @adminOverviewChangeConsumer.
+  ///
+  /// In ko, this message translates to:
+  /// **'소비자가'**
+  String get adminOverviewChangeConsumer;
+
+  /// No description provided for @adminOverviewChangePro.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로가'**
+  String get adminOverviewChangePro;
+
+  /// No description provided for @adminOverviewChangeCapacity.
+  ///
+  /// In ko, this message translates to:
+  /// **'좌석'**
+  String get adminOverviewChangeCapacity;
+
+  /// No description provided for @adminOverviewChangeLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} {label} {before}→{after}'**
+  String adminOverviewChangeLine(
+    String name,
+    String label,
+    int before,
+    int after,
+  );
+
   /// No description provided for @adminOverviewPaid.
   ///
   /// In ko, this message translates to:

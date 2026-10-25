@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
+import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/features/admin/overview/admin_overview_metrics.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
@@ -48,6 +49,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
   final _subs = <StreamSubscription<List<TourBooking>>>[];
   List<TourBooking> _bookings = const [];
   List<PartnerContract> _contracts = const [];
+  List<ProductChangeRecord> _changes = const [];
   List<DiveStarApplication> _applications = const [];
   var _newProposals = 0;
   var _newApplications = 0;
@@ -80,6 +82,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
       final windows = AdminOverviewWindows.of(now);
       final batches = <List<TourBooking>>[];
       final contracts = <PartnerContract>[];
+      final changes = <ProductChangeRecord>[];
       for (final stats in store.shopStats) {
         final id = stats.shopId;
         batches.add(
@@ -118,6 +121,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
           ),
         );
         contracts.addAll(await store.listPartnerContracts(id));
+        changes.addAll(await store.listProductChanges(id));
       }
       final applications = await store.listDiveStarApplications();
       final proposals = await store.loadPartnerPromotionInbox();
@@ -129,6 +133,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
       setState(() {
         _bookings = mergeOverviewBookings(batches);
         _contracts = contracts;
+        _changes = changes;
         _applications = applications;
         _newProposals = countIncomingPartnerPromotions(proposals);
         _newApplications = countIncomingPartnerApplications(partnerApplications);
@@ -243,7 +248,17 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
           members: store.members,
           onSeeAll: widget.onOpenBookings,
         );
-        final feed = _ActivityCard(l10n: l10n, items: activity);
+        final names = <String, String>{
+          for (final stats in store.shopStats)
+            for (final product in stats.products)
+              '${stats.shopId}|${product.id}': product.name,
+        };
+        final feed = _ActivityCard(
+          l10n: l10n,
+          items: activity,
+          changes: _changes,
+          productNames: names,
+        );
         if (!wide) {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
@@ -965,10 +980,17 @@ class _LiveRow extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.l10n, required this.items});
+  const _ActivityCard({
+    required this.l10n,
+    required this.items,
+    required this.changes,
+    required this.productNames,
+  });
 
   final AppLocalizations l10n;
   final List<AdminActivityItem> items;
+  final List<ProductChangeRecord> changes;
+  final Map<String, String> productNames;
 
   @override
   Widget build(BuildContext context) {
@@ -1002,11 +1024,36 @@ class _ActivityCard extends StatelessWidget {
                 ),
               ),
           const SizedBox(height: 8),
-          Text(
-            l10n.adminOverviewActivityGap,
-            key: const Key('admin-overview-activity-gap'),
-            style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
-          ),
+          if (changes.isEmpty)
+            Text(
+              l10n.adminOverviewActivityGap,
+              key: const Key('admin-overview-activity-gap'),
+              style: const TextStyle(
+                color: AdminConsoleTheme.muted,
+                fontSize: 12,
+              ),
+            )
+          else
+            for (final line in changes.take(8))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  '${_hhmm(line.createdAt)}  ${l10n.adminOverviewChangeLine(
+                    productNames['${line.shopId}|${line.productId}'] ??
+                        line.productId,
+                    switch (line.field) {
+                      ProductChangeRecord.professionalPrice =>
+                        l10n.adminOverviewChangePro,
+                      ProductChangeRecord.capacity =>
+                        l10n.adminOverviewChangeCapacity,
+                      _ => l10n.adminOverviewChangeConsumer,
+                    },
+                    line.before,
+                    line.after,
+                  )}',
+                  key: const Key('admin-overview-price-change'),
+                ),
+              ),
         ],
       ),
     );

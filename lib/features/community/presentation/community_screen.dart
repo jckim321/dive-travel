@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -353,11 +354,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (partySize == null || partySize <= 0 || !context.mounted) {
       return;
     }
+    final shop = _shopForProduct(store, product);
+    final professional = shop != null && store.quoteFor(shop).isProfessional;
+    final lockedPrice = BookingQuote.compute(
+      product: product,
+      professional: professional,
+      divers: partySize,
+      nondivers: 0,
+      children: 0,
+      infants: 0,
+      bookPackage: offer.optionId.isEmpty,
+      selectedOptionIds: offer.optionId.isEmpty ? const {} : {offer.optionId},
+    ).total;
     final planted = await store.plantSeatFlag(
       shopId: product.shopId,
       productId: product.id,
       partySize: partySize,
       optionId: offer.optionId,
+      lockedPrice: lockedPrice,
     );
     if (!context.mounted) {
       return;

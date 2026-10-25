@@ -261,6 +261,30 @@ service cloud.firestore {
         allow delete: if isAdmin();
       }
 
+      match /product_changes/{changeId} {
+        allow read: if isAdmin();
+        allow create: if (isAdmin() || ownsShop(shopId))
+          && request.resource.data.keys().hasOnly([
+            'product_id', 'option_id', 'field', 'before', 'after',
+            'actor_uid', 'created_at'
+          ])
+          && request.resource.data.product_id is string
+          && request.resource.data.product_id.size() > 0
+          && request.resource.data.product_id.size() <= 120
+          && request.resource.data.option_id is string
+          && request.resource.data.option_id.size() <= 120
+          && request.resource.data.field in [
+            'consumer_price', 'professional_price', 'capacity'
+          ]
+          && request.resource.data.before is int
+          && request.resource.data.after is int
+          && request.resource.data.before != request.resource.data.after
+          && request.resource.data.actor_uid == request.auth.uid
+          && request.resource.data.created_at == request.time;
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+
       // Internal Dive Star audits — admin only; confirmed records are locked.
       match /dive_star_assessments/{assessmentId} {
         allow read: if isAdmin();

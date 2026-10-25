@@ -28,6 +28,7 @@ import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
+import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -97,6 +98,7 @@ class MemoryDiverRepository implements DiverRepository {
   ProVerificationStatus _proStatus = ProVerificationStatus.none;
   MemberGrade _memberGrade = MemberGrade.silver;
   final _shopStats = <String, ShopLiveStats>{};
+  final _productChanges = <String, List<ProductChangeRecord>>{};
   final _shopReviews = <String, List<GuestReview>>{};
   /// Running shop sums for accurate edit/delete (mirrors Firestore sum_*).
   final _shopReviewSums = <String, List<double>>{};
@@ -991,6 +993,7 @@ class MemoryDiverRepository implements DiverRepository {
     required DateTime now,
     String optionId = '',
     String uid = '',
+    int lockedPrice = 0,
   }) {
     return _runTxn(() async {
       if (uid.isEmpty || partySize <= 0) {
@@ -1037,6 +1040,7 @@ class MemoryDiverRepository implements DiverRepository {
         now: now,
         optionId: optionId,
         uid: uid,
+        lockedPrice: lockedPrice,
       );
       if (!planted.memberHasLiveFlag(uid, now, optionId: optionId)) {
         return SeatFlagPlant.taken;
@@ -3216,7 +3220,41 @@ class MemoryDiverRepository implements DiverRepository {
       products: products,
       coverUrl: shopCover,
     );
+    final prior = previousRaw == null
+        ? previousProduct
+        : ShopProduct.fromMap(shopId, previousRaw);
+    final lines = productPriceCapacityChanges(
+      previous: prior,
+      next: parsed,
+    );
+    if (lines.isNotEmpty) {
+      final at = DateTime.now();
+      final stored = _productChanges.putIfAbsent(shopId, () => []);
+      stored.addAll([
+        for (final line in lines)
+          ProductChangeRecord(
+            shopId: shopId,
+            productId: line.productId,
+            optionId: line.optionId,
+            field: line.field,
+            before: line.before,
+            after: line.after,
+            actorUid: 'memory',
+            createdAt: at,
+          ),
+      ]);
+    }
     _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<List<ProductChangeRecord>> listProductChanges(String shopId) async {
+    final rows = [...?_productChanges[shopId]];
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (rows.length > 12) {
+      return rows.sublist(0, 12);
+    }
+    return rows;
   }
 
   @override

@@ -33,6 +33,7 @@ import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
+import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -1599,6 +1600,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required DateTime now,
     String optionId = '',
     String uid = '',
+    int lockedPrice = 0,
   }) async {
     if (uid.isEmpty || partySize <= 0) {
       return SeatFlagPlant.unavailable;
@@ -1669,6 +1671,7 @@ class FirestoreDiverRepository implements DiverRepository {
           now: now,
           optionId: optionId,
           uid: uid,
+          lockedPrice: lockedPrice,
         );
         if (!planted.memberHasLiveFlag(uid, now, optionId: optionId)) {
           writePrunedFlags();
@@ -3882,7 +3885,20 @@ class FirestoreDiverRepository implements DiverRepository {
     final coverForShop = saved.coverUrl.isNotEmpty
         ? saved.coverUrl
         : (snap.data()?['cover_url'] as String? ?? '');
-    await ref.set({
+    final written = current[saved.id];
+    final previousProduct = previousRaw == null
+        ? null
+        : ShopProduct.fromMap(shopId, previousRaw);
+    final nextProduct = written == null
+        ? saved
+        : ShopProduct.fromMap(shopId, written);
+    final lines = productPriceCapacityChanges(
+      previous: previousProduct,
+      next: nextProduct,
+    );
+    final actor = _auth.currentUser?.uid ?? '';
+    final batch = _db.batch();
+    batch.set(ref, {
       'products': next,
       'product_name': saved.name,
       'consumer_price': saved.consumerPrice,
@@ -3906,6 +3922,51 @@ class FirestoreDiverRepository implements DiverRepository {
       },
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    if (actor.isNotEmpty) {
+      for (final line in lines) {
+        batch.set(ref.collection('product_changes').doc(), {
+          'product_id': line.productId,
+          'option_id': line.optionId,
+          'field': line.field,
+          'before': line.before,
+          'after': line.after,
+          'actor_uid': actor,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+    await batch.commit();
+  }
+
+  @override
+  Future<List<ProductChangeRecord>> listProductChanges(String shopId) async {
+    final snap =
+        await _shops.doc(shopId).collection('product_changes').get();
+    final rows = <ProductChangeRecord>[];
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final created = data['created_at'];
+      final at = created is Timestamp
+          ? created.toDate()
+          : DateTime.fromMillisecondsSinceEpoch(0);
+      rows.add(
+        ProductChangeRecord(
+          shopId: shopId,
+          productId: data['product_id'] as String? ?? '',
+          optionId: data['option_id'] as String? ?? '',
+          field: data['field'] as String? ?? '',
+          before: (data['before'] as num?)?.toInt() ?? 0,
+          after: (data['after'] as num?)?.toInt() ?? 0,
+          actorUid: data['actor_uid'] as String? ?? '',
+          createdAt: at,
+        ),
+      );
+    }
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (rows.length > 12) {
+      return rows.sublist(0, 12);
+    }
+    return rows;
   }
 
   Map<String, dynamic>? _rawProductMap(dynamic raw, String productId) {

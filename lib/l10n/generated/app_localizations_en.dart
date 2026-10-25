@@ -5279,6 +5279,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Price changes and seat changes are not ready.';
 
   @override
+  String get adminOverviewChangeConsumer => 'Guest price';
+
+  @override
+  String get adminOverviewChangePro => 'Pro price';
+
+  @override
+  String get adminOverviewChangeCapacity => 'Seats';
+
+  @override
+  String adminOverviewChangeLine(
+    String name,
+    String label,
+    int before,
+    int after,
+  ) {
+    return '$name $label $before→$after';
+  }
+
+  @override
   String get adminOverviewPaid => 'Paid';
 
   @override

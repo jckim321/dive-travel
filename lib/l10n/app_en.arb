@@ -2116,6 +2116,18 @@
   "adminOverviewActivity": "Changes",
   "adminOverviewActivityEmpty": "No recent changes.",
   "adminOverviewActivityGap": "Price changes and seat changes are not ready.",
+  "adminOverviewChangeConsumer": "Guest price",
+  "adminOverviewChangePro": "Pro price",
+  "adminOverviewChangeCapacity": "Seats",
+  "adminOverviewChangeLine": "{name} {label} {before}→{after}",
+  "@adminOverviewChangeLine": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "label": {"type": "String"},
+      "before": {"type": "int"},
+      "after": {"type": "int"}
+    }
+  },
   "adminOverviewPaid": "Paid",
   "adminOverviewCancelled": "Cancelled",
   "adminOverviewPartial": "Partial refund",

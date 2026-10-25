@@ -324,17 +324,27 @@ class GuestRate {
 }
 
 class SeatHold {
-  const SeatHold({required this.seats, required this.expiresAt, this.uid = ''});
+  const SeatHold({
+    required this.seats,
+    required this.expiresAt,
+    this.uid = '',
+    this.lockedPrice = 0,
+  });
 
   final int seats;
   final DateTime expiresAt;
   final String uid;
+
+  /// Quote total captured when the flag was planted. 0 means an older hold
+  /// with no snapshot; payment then uses the live quote.
+  final int lockedPrice;
 
   Map<String, dynamic> toMap() {
     return {
       'seats': seats,
       'expires_at': expiresAt.toIso8601String(),
       if (uid.isNotEmpty) 'uid': uid,
+      if (lockedPrice > 0) 'locked_price': lockedPrice,
     };
   }
 
@@ -349,8 +359,22 @@ class SeatHold {
       seats: seats,
       expiresAt: expires,
       uid: data['uid'] as String? ?? '',
+      lockedPrice: (data['locked_price'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
+/// Flag checkout pays the planted snapshot. A missing snapshot (0) keeps
+/// the live quote, including every normal booking.
+int flagOrLivePayable({
+  required bool fromFlag,
+  required int lockedPrice,
+  required int liveTotal,
+}) {
+  if (fromFlag && lockedPrice > 0) {
+    return lockedPrice;
+  }
+  return liveTotal;
 }
 
 enum SeatFlagPlant {
@@ -990,6 +1014,7 @@ class ShopProduct {
     required DateTime now,
     String uid = '',
     String optionId = '',
+    int lockedPrice = 0,
   }) {
     if (optionId.isNotEmpty) {
       return _mapOption(optionId, (option) {
@@ -1002,6 +1027,7 @@ class ShopProduct {
           now: now,
           flagClosesAt: option.flagClosesAt,
           uid: uid,
+          lockedPrice: lockedPrice,
         );
         return option.copyWith(flagHolds: planted);
       });
@@ -1016,6 +1042,7 @@ class ShopProduct {
         now: now,
         flagClosesAt: flagClosesAt,
         uid: uid,
+        lockedPrice: lockedPrice,
       ),
     );
   }
@@ -1100,6 +1127,7 @@ class ShopProduct {
     required DateTime now,
     required DateTime? flagClosesAt,
     required String uid,
+    int lockedPrice = 0,
   }) {
     final live = [
       for (final hold in holds)
@@ -1121,6 +1149,7 @@ class ShopProduct {
         seats: partySize,
         expiresAt: personalFlagUntil(now, flagClosesAt),
         uid: uid,
+        lockedPrice: lockedPrice,
       ),
     ];
   }

@@ -2713,6 +2713,18 @@
   "adminOverviewActivity": "변동사항",
   "adminOverviewActivityEmpty": "최근 변동이 없습니다.",
   "adminOverviewActivityGap": "가격 변경, 좌석 변경은 준비 중입니다.",
+  "adminOverviewChangeConsumer": "소비자가",
+  "adminOverviewChangePro": "프로가",
+  "adminOverviewChangeCapacity": "좌석",
+  "adminOverviewChangeLine": "{name} {label} {before}→{after}",
+  "@adminOverviewChangeLine": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "label": {"type": "String"},
+      "before": {"type": "int"},
+      "after": {"type": "int"}
+    }
+  },
   "adminOverviewPaid": "결제완료",
   "adminOverviewCancelled": "취소",
   "adminOverviewPartial": "부분환불",

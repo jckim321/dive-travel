@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -537,6 +538,8 @@ abstract class DiverRepository {
     bool clearAbsentFormFields = false,
   });
 
+  Future<List<ProductChangeRecord>> listProductChanges(String shopId);
+
   Future<void> deleteShopProduct({
     required String shopId,
     required String productId,
@@ -616,6 +619,7 @@ abstract class DiverRepository {
     required DateTime now,
     String optionId = '',
     String uid = '',
+    int lockedPrice = 0,
   });
 
   Future<bool> cancelSeatFlag({
