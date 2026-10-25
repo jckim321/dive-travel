@@ -253,21 +253,23 @@ class PartnerProductCard extends StatelessWidget {
       final seats = partnerCloseWarningSeatCount(product);
       final ok = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          key: Key('partner-product-close-confirm-${product.id}'),
-          title: Text(l10n.partnerProductCloseSeatTitle),
-          content: Text(l10n.partnerProductCloseSeatBody(seats)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(l10n.adminHqClose),
-            ),
-            FilledButton(
-              key: Key('partner-product-close-confirm-ok-${product.id}'),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(l10n.partnerProductClose),
-            ),
-          ],
+        builder: (context) => PartnerTheme.wrap(
+          AlertDialog(
+            key: Key('partner-product-close-confirm-${product.id}'),
+            title: Text(l10n.partnerProductCloseSeatTitle),
+            content: Text(l10n.partnerProductCloseSeatBody(seats)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(l10n.adminHqClose),
+              ),
+              FilledButton(
+                key: Key('partner-product-close-confirm-ok-${product.id}'),
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(l10n.partnerProductClose),
+              ),
+            ],
+          ),
         ),
       );
       if (ok != true || !context.mounted) {
@@ -312,21 +314,23 @@ class PartnerProductCard extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        key: Key('partner-option-discard-confirm-${option.id}'),
-        title: Text(l10n.partnerProductDiscardConfirmTitle),
-        content: Text(l10n.partnerProductDiscardConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.adminHqClose),
-          ),
-          FilledButton(
-            key: Key('partner-option-discard-ok-${option.id}'),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.partnerProductDiscard),
-          ),
-        ],
+      builder: (context) => PartnerTheme.wrap(
+        AlertDialog(
+          key: Key('partner-option-discard-confirm-${option.id}'),
+          title: Text(l10n.partnerProductDiscardConfirmTitle),
+          content: Text(l10n.partnerProductDiscardConfirmBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.adminHqClose),
+            ),
+            FilledButton(
+              key: Key('partner-option-discard-ok-${option.id}'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.partnerProductDiscard),
+            ),
+          ],
+        ),
       ),
     );
     if (ok != true || !context.mounted) {

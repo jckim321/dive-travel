@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -140,7 +141,10 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
     final partnerCopy = widget.partnerLiveCopy;
     return Scaffold(
+      backgroundColor: partnerCopy ? PartnerTheme.bg : null,
       appBar: AppBar(
+        backgroundColor: partnerCopy ? PartnerTheme.bg : null,
+        foregroundColor: partnerCopy ? PartnerTheme.text : null,
         leading: partnerCopy ? const PartnerBackButton() : null,
         title: Text(
           partnerCopy ? l10n.partnerOpenSeatsTitle : l10n.sameBoatSeatsTitle,

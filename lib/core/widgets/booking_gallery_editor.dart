@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -67,7 +66,7 @@ class BookingGalleryEditor extends StatelessWidget {
               ? l10n.exploreGalleryEmpty
               : l10n.exploreGalleryCount(items.length),
           style: theme.textTheme.labelLarge?.copyWith(
-            color: AppTheme.navy,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -91,8 +90,8 @@ class BookingGalleryEditor extends StatelessWidget {
               key: attachKey,
               onPressed: canAdd ? onAdd : null,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.navy,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -110,8 +109,8 @@ class BookingGalleryEditor extends StatelessWidget {
                 key: testKey,
                 onPressed: canAdd ? onTest : null,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.navy,
-                  side: const BorderSide(color: Color(0xFFC5CED6)),
+                  foregroundColor: theme.colorScheme.primary,
+                  side: BorderSide(color: theme.colorScheme.outline),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -485,13 +484,13 @@ class BookingFormSection extends StatelessWidget {
                   height: 28,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppTheme.navy,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(stepRadius),
                   ),
                   child: Text(
                     step,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),
@@ -512,7 +511,9 @@ class BookingFormSection extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppTheme.muted),
+                              ?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ],

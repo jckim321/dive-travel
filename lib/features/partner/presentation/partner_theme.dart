@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Affiliate-partner (제휴파트너) dark theme tokens and [ThemeData].
 ///
-/// Apply to partner home, coming-soon, temp bookings, and H1b product form.
-/// Do not wrap docs / same-boat hub with this theme unless intentionally dark.
+/// Apply via [wrap] on partner routes (home, products, docs, seats when
+/// `partnerLiveCopy`, etc.). Shared admin/creator screens stay on AppTheme.
 abstract final class PartnerTheme {
   static const Color bg = Color(0xFF0B1626);
   static const Color card = Color(0xFF14243A);
@@ -139,6 +139,71 @@ abstract final class PartnerTheme {
       listTileTheme: const ListTileThemeData(
         iconColor: textDim,
         textColor: text,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: const TextStyle(
+          color: text,
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+        ),
+        contentTextStyle: const TextStyle(color: textDim, fontSize: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: border),
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: borderStrong,
+        contentTextStyle: TextStyle(color: text),
+        actionTextColor: accent,
+        behavior: SnackBarBehavior.floating,
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: card,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: card,
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accent;
+          }
+          return borderStrong;
+        }),
+        checkColor: const WidgetStatePropertyAll(bg),
+        side: const BorderSide(color: borderStrong),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accent;
+          }
+          return textDim;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accent.withValues(alpha: 0.35);
+          }
+          return border;
+        }),
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: card,
+        headerBackgroundColor: borderStrong,
+        headerForegroundColor: text,
+        dayForegroundColor: WidgetStateProperty.all(text),
+        yearForegroundColor: WidgetStateProperty.all(text),
+        todayForegroundColor: const WidgetStatePropertyAll(accent),
+        todayBorder: const BorderSide(color: accent),
+        dayOverlayColor: WidgetStateProperty.all(
+          accent.withValues(alpha: 0.12),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: accent,
+        circularTrackColor: border,
       ),
     );
     return base;
