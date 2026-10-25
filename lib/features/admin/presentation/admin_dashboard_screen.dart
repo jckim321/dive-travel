@@ -10,18 +10,15 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
-import 'package:dive_travel_app/features/admin/presentation/admin_posts_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_documents_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
-import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_vault_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contracts_overview_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_trial_data_screen.dart';
-import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_applications_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_form_import_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
@@ -29,7 +26,9 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const double _kAdminWideBreakpoint = 900;
 
-/// Primary IA hubs. [tools] is reached via More / tools chip only (phase-1 deferrals).
+/// Primary IA hubs. [tools] is reached via More / tools chip only.
+/// H10 phase-2 keeps trial-data cleanup visible. The other tool screens
+/// stay in the repo and are not linked from this dashboard.
 enum _AdminHub {
   overview,
   members,
@@ -46,7 +45,7 @@ enum _AdminHub {
 
 enum _MembersSub { general, partners, instructors }
 
-enum _DiveStarSub { applications, review, forms }
+enum _DiveStarSub { applications, forms }
 
 enum _ProductsSub { catalog, seats, sameBoat, homeCuration }
 
@@ -56,14 +55,7 @@ enum _ContractsSub { overview, vault, documents }
 
 enum _SettlementSub { pricing, historySoon }
 
-enum _ToolsSub {
-  shopsMonitor,
-  weather,
-  posts,
-  terms,
-  inbox,
-  trialData,
-}
+enum _ToolsSub { trialData }
 
 /// Dive Travel HQ 관리자 콘솔.
 /// 상단 1차 탭 + 필요 시 2차 탭, 현황 탭에 KPI·대기 작업·등급 분포.
@@ -82,7 +74,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _BookingsSub _bookingsSub = _BookingsSub.list;
   _ContractsSub _contractsSub = _ContractsSub.overview;
   _SettlementSub _settlementSub = _SettlementSub.pricing;
-  _ToolsSub _toolsSub = _ToolsSub.shopsMonitor;
+  _ToolsSub _toolsSub = _ToolsSub.trialData;
   String? _productsShopFilter;
   String? _contractsShopFilter;
 
@@ -95,7 +87,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
       final store = DiverStoreScope.of(context);
       unawaited(store.ensureAdminInboxLoaded());
-      unawaited(store.ensureCommunityPostsLoaded());
       unawaited(store.ensureShopStatsLoaded());
     });
   }
@@ -191,83 +182,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   List<_MoreHubEntry> _moreHubEntries(AppLocalizations l10n) => [
-        _MoreHubEntry(
-          hub: _AdminHub.diveStar,
-          label: l10n.adminTabDiveStar,
-          icon: Icons.star_outline,
-          key: const Key('admin-more-dive-star'),
-        ),
-        _MoreHubEntry(
-          hub: _AdminHub.contracts,
-          label: l10n.adminTabContracts,
-          icon: Icons.gavel_outlined,
-          key: const Key('admin-more-contracts'),
-        ),
-        _MoreHubEntry(
-          hub: _AdminHub.settlement,
-          label: l10n.adminTabSettlement,
-          icon: Icons.percent,
-          key: const Key('admin-more-settlement'),
-          sub: _SettlementSub.pricing,
-        ),
-        _MoreHubEntry(
-          hub: _AdminHub.sales,
-          label: l10n.adminTabSales,
-          icon: Icons.point_of_sale_outlined,
-          key: const Key('admin-more-sales'),
-        ),
-        _MoreHubEntry(
-          hub: _AdminHub.stats,
-          label: l10n.adminTabStats,
-          icon: Icons.insights_outlined,
-          key: const Key('admin-more-stats'),
-        ),
-        _MoreHubEntry(
-          hub: _AdminHub.reports,
-          label: l10n.adminTabReports,
-          icon: Icons.assessment_outlined,
-          key: const Key('admin-more-reports'),
-        ),
-      ];
+    _MoreHubEntry(
+      hub: _AdminHub.diveStar,
+      label: l10n.adminTabDiveStar,
+      icon: Icons.star_outline,
+      key: const Key('admin-more-dive-star'),
+    ),
+    _MoreHubEntry(
+      hub: _AdminHub.contracts,
+      label: l10n.adminTabContracts,
+      icon: Icons.gavel_outlined,
+      key: const Key('admin-more-contracts'),
+    ),
+    _MoreHubEntry(
+      hub: _AdminHub.settlement,
+      label: l10n.adminTabSettlement,
+      icon: Icons.percent,
+      key: const Key('admin-more-settlement'),
+      sub: _SettlementSub.pricing,
+    ),
+    _MoreHubEntry(
+      hub: _AdminHub.sales,
+      label: l10n.adminTabSales,
+      icon: Icons.point_of_sale_outlined,
+      key: const Key('admin-more-sales'),
+    ),
+    _MoreHubEntry(
+      hub: _AdminHub.stats,
+      label: l10n.adminTabStats,
+      icon: Icons.insights_outlined,
+      key: const Key('admin-more-stats'),
+    ),
+    _MoreHubEntry(
+      hub: _AdminHub.reports,
+      label: l10n.adminTabReports,
+      icon: Icons.assessment_outlined,
+      key: const Key('admin-more-reports'),
+    ),
+  ];
 
   List<_ToolEntry> _toolsEntries(AppLocalizations l10n) => [
-        _ToolEntry(
-          sub: _ToolsSub.shopsMonitor,
-          label: l10n.adminShopsTitle,
-          icon: Icons.storefront_outlined,
-          key: const Key('admin-tool-shops'),
-        ),
-        _ToolEntry(
-          sub: _ToolsSub.weather,
-          label: l10n.weatherAdminTitle,
-          icon: Icons.thunderstorm_outlined,
-          key: const Key('admin-menu-weather'),
-        ),
-        _ToolEntry(
-          sub: _ToolsSub.posts,
-          label: l10n.adminPostsTitle,
-          icon: Icons.forum_outlined,
-          key: const Key('admin-tool-posts'),
-        ),
-        _ToolEntry(
-          sub: _ToolsSub.terms,
-          label: l10n.adminContractsSubTerms,
-          icon: Icons.description_outlined,
-          key: const Key('admin-sub-contracts-terms'),
-        ),
-        _ToolEntry(
-          sub: _ToolsSub.inbox,
-          label: l10n.adminContractsSubInbox,
-          icon: Icons.inbox_outlined,
-          key: const Key('admin-sub-contracts-inbox'),
-        ),
-        _ToolEntry(
-          sub: _ToolsSub.trialData,
-          label: l10n.adminTrialDataTab,
-          icon: Icons.delete_sweep_outlined,
-          key: const Key('admin-sub-trial-data'),
-        ),
-      ];
+    _ToolEntry(
+      sub: _ToolsSub.trialData,
+      label: l10n.adminTrialDataTab,
+      icon: Icons.delete_sweep_outlined,
+      key: const Key('admin-tool-trial-data'),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +236,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final store = DiverStoreScope.of(context);
     final pending = store.pendingInstructors.length;
     final plaque = store.plaqueQueue.length;
-    final hidden = store.posts.where((p) => p.hidden).length;
     final pendingProducts = store.pendingProductApprovals.length;
 
     return Theme(
@@ -355,7 +315,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             store: store,
                             pending: pending,
                             plaque: plaque,
-                            hidden: hidden,
                             pendingProducts: pendingProducts,
                           ),
                         ),
@@ -390,14 +349,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.members:
         return [
           _SubTabStrip(
-            labels: [
-              l10n.adminMembersSubGeneral,
-              l10n.adminMembersSubPartners,
-            ],
-            keys: const [
-              Key('admin-sub-divers'),
-              Key('admin-sub-partners'),
-            ],
+            labels: [l10n.adminMembersSubGeneral, l10n.adminMembersSubPartners],
+            keys: const [Key('admin-sub-divers'), Key('admin-sub-partners')],
             badges: [pending, plaque],
             selected: switch (_membersSub) {
               _MembersSub.partners => 1,
@@ -425,26 +378,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _SubTabStrip(
             labels: [
               l10n.adminDiveStarSubApplications,
-              l10n.adminDiveStarSubReview,
               l10n.adminDiveStarSubForms,
             ],
             keys: const [
               Key('admin-sub-dive-star-apps'),
-              Key('admin-sub-dive-star-review'),
               Key('admin-sub-dive-star-forms'),
             ],
             selected: switch (_diveStarSub) {
-              _DiveStarSub.applications => 0,
-              _DiveStarSub.review => 1,
-              _DiveStarSub.forms => 2,
+              _DiveStarSub.forms => 1,
+              _ => 0,
             },
             onSelect: (i) => _go(
               _AdminHub.diveStar,
-              sub: switch (i) {
-                1 => _DiveStarSub.review,
-                2 => _DiveStarSub.forms,
-                _ => _DiveStarSub.applications,
-              },
+              sub: i == 1 ? _DiveStarSub.forms : _DiveStarSub.applications,
             ),
           ),
         ];
@@ -558,50 +504,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             },
             onSelect: (i) => _go(
               _AdminHub.settlement,
-              sub: i == 1
-                  ? _SettlementSub.historySoon
-                  : _SettlementSub.pricing,
+              sub: i == 1 ? _SettlementSub.historySoon : _SettlementSub.pricing,
             ),
           ),
         ];
       case _AdminHub.tools:
         return [
           _SubTabStrip(
-            labels: [
-              l10n.adminShopsTitle,
-              l10n.weatherAdminTitle,
-              l10n.adminPostsCommunityShort,
-              l10n.adminContractsSubTerms,
-              l10n.adminContractsSubInbox,
-              l10n.adminTrialDataTab,
-            ],
-            keys: const [
-              Key('admin-sub-shops'),
-              Key('admin-menu-weather'),
-              Key('admin-sub-posts'),
-              Key('admin-sub-contracts-terms'),
-              Key('admin-sub-contracts-inbox'),
-              Key('admin-sub-trial-data'),
-            ],
-            selected: switch (_toolsSub) {
-              _ToolsSub.shopsMonitor => 0,
-              _ToolsSub.weather => 1,
-              _ToolsSub.posts => 2,
-              _ToolsSub.terms => 3,
-              _ToolsSub.inbox => 4,
-              _ToolsSub.trialData => 5,
-            },
-            onSelect: (i) => _go(
-              _AdminHub.tools,
-              sub: switch (i) {
-                1 => _ToolsSub.weather,
-                2 => _ToolsSub.posts,
-                3 => _ToolsSub.terms,
-                4 => _ToolsSub.inbox,
-                5 => _ToolsSub.trialData,
-                _ => _ToolsSub.shopsMonitor,
-              },
-            ),
+            labels: [l10n.adminTrialDataTab],
+            keys: const [Key('admin-sub-trial-data')],
+            selected: 0,
+            onSelect: (_) => _go(_AdminHub.tools, sub: _ToolsSub.trialData),
           ),
         ];
       case _AdminHub.overview:
@@ -617,7 +530,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required DiverStore store,
     required int pending,
     required int plaque,
-    required int hidden,
     required int pendingProducts,
   }) {
     switch (_hub) {
@@ -627,8 +539,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           memberCount: store.members.length,
           pendingCertify: pending,
           plaqueCount: plaque,
-          postCount: store.posts.length,
-          hiddenCount: hidden,
           shopCount: store.shops.length,
           pendingProducts: pendingProducts,
           members: store.members,
@@ -637,9 +547,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ops: store.adminOpsSnapshot(),
           publicProductCount: [
             for (final s in store.shops)
-              for (final p in (store.liveStatsFor(s.hullId)?.products ??
-                  store.liveStatsFor(s.id)?.products ??
-                  const []))
+              for (final p
+                  in (store.liveStatsFor(s.hullId)?.products ??
+                      store.liveStatsFor(s.id)?.products ??
+                      const []))
                 if (p.isListedPublicly) p,
           ].length,
         );
@@ -650,8 +561,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             onOpenInstructors: () =>
                 _go(_AdminHub.members, sub: _MembersSub.instructors),
           ),
-          _MembersSub.instructors =>
-            const AdminInstructorsScreen(embedded: true),
+          _MembersSub.instructors => const AdminInstructorsScreen(
+            embedded: true,
+          ),
           _MembersSub.partners => AdminPartnersRosterScreen(
             embedded: true,
             onOpenProducts: _openShopProducts,
@@ -659,22 +571,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         };
       case _AdminHub.diveStar:
         return switch (_diveStarSub) {
-          _DiveStarSub.applications =>
-            const AdminDiveStarApplicationsScreen(embedded: true),
-          _DiveStarSub.review => AdminShopsScreen(
+          _DiveStarSub.applications => const AdminDiveStarApplicationsScreen(
             embedded: true,
-            onOpenProducts: _openShopProducts,
           ),
-          _DiveStarSub.forms =>
-            const AdminDiveStarFormImportScreen(embedded: true),
+          _DiveStarSub.forms => const AdminDiveStarFormImportScreen(
+            embedded: true,
+          ),
         };
       case _AdminHub.products:
         return switch (_productsSub) {
           _ProductsSub.catalog => AdminProductsScreen(
             embedded: true,
             filterShopId: _productsShopFilter,
-            onClearShopFilter: () =>
-                setState(() => _productsShopFilter = null),
+            onClearShopFilter: () => setState(() => _productsShopFilter = null),
           ),
           _ProductsSub.seats => const SameBoatSeatsHubScreen(
             embedded: true,
@@ -685,8 +594,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _ProductsSub.sameBoat => const AdminSameBoatMonitorScreen(
             embedded: true,
           ),
-          _ProductsSub.homeCuration =>
-            const AdminHomeCurationScreen(embedded: true),
+          _ProductsSub.homeCuration => const AdminHomeCurationScreen(
+            embedded: true,
+          ),
         };
       case _AdminHub.bookings:
         return switch (_bookingsSub) {
@@ -714,13 +624,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             embedded: true,
             initialShopId: _contractsShopFilter,
           ),
-          _ContractsSub.documents =>
-            const AdminPartnerDocumentsScreen(embedded: true),
+          _ContractsSub.documents => const AdminPartnerDocumentsScreen(
+            embedded: true,
+          ),
         };
       case _AdminHub.settlement:
         return switch (_settlementSub) {
-          _SettlementSub.pricing =>
-            const AdminPricingScreen(embedded: true),
+          _SettlementSub.pricing => const AdminPricingScreen(embedded: true),
           _SettlementSub.historySoon => _AdminComingSoonPane(
             title: l10n.adminSettlementSubHistory,
             body: l10n.adminContractsComingSoon,
@@ -742,24 +652,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           body: l10n.adminContractsComingSoon,
         );
       case _AdminHub.tools:
-        return switch (_toolsSub) {
-          _ToolsSub.shopsMonitor => AdminShopsScreen(
-            embedded: true,
-            onOpenProducts: _openShopProducts,
-          ),
-          _ToolsSub.weather => const AdminWeatherScreen(embedded: true),
-          _ToolsSub.posts => const AdminPostsScreen(embedded: true),
-          _ToolsSub.terms => _AdminComingSoonPane(
-            title: l10n.adminContractsSubTerms,
-            body: l10n.adminContractsComingSoon,
-          ),
-          _ToolsSub.inbox => _AdminComingSoonPane(
-            title: l10n.adminContractsSubInbox,
-            body: l10n.adminContractsComingSoon,
-          ),
-          _ToolsSub.trialData =>
-            const AdminTrialDataScreen(embedded: true),
-        };
+        return const AdminTrialDataScreen(embedded: true);
     }
   }
 }
@@ -1021,10 +914,7 @@ class _AdminComingSoonPane extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              body,
-              style: const TextStyle(color: AdminConsoleTheme.muted),
-            ),
+            Text(body, style: const TextStyle(color: AdminConsoleTheme.muted)),
           ],
         ),
       ),
@@ -1224,8 +1114,6 @@ class _OverviewPane extends StatelessWidget {
     required this.memberCount,
     required this.pendingCertify,
     required this.plaqueCount,
-    required this.postCount,
-    required this.hiddenCount,
     required this.shopCount,
     required this.pendingProducts,
     required this.members,
@@ -1239,8 +1127,6 @@ class _OverviewPane extends StatelessWidget {
   final int memberCount;
   final int pendingCertify;
   final int plaqueCount;
-  final int postCount;
-  final int hiddenCount;
   final int shopCount;
   final int pendingProducts;
   final List<MemberAccount> members;
@@ -1301,8 +1187,7 @@ class _OverviewPane extends StatelessWidget {
               label: l10n.adminPulseNewWeek,
               value: '${ops.new7d}',
               accent: AdminConsoleTheme.amber,
-              onTap: () =>
-                  onJump(_AdminHub.members, sub: _MembersSub.general),
+              onTap: () => onJump(_AdminHub.members, sub: _MembersSub.general),
             ),
             _MetricCard(
               label: l10n.adminMetricPendingCert,
@@ -1317,8 +1202,7 @@ class _OverviewPane extends StatelessWidget {
               label: l10n.adminMetricMembers,
               value: '$memberCount',
               accent: AdminConsoleTheme.aqua,
-              onTap: () =>
-                  onJump(_AdminHub.members, sub: _MembersSub.general),
+              onTap: () => onJump(_AdminHub.members, sub: _MembersSub.general),
             ),
             _MetricCard(
               label: l10n.adminProductsTab,
@@ -1412,10 +1296,7 @@ class _OverviewPane extends StatelessWidget {
           title: l10n.adminAttentionTitle,
         ),
         const SizedBox(height: 10),
-        if (pendingCertify == 0 &&
-            plaqueCount == 0 &&
-            hiddenCount == 0 &&
-            pendingProducts == 0)
+        if (pendingCertify == 0 && plaqueCount == 0 && pendingProducts == 0)
           _EmptyAttention(message: l10n.adminAttentionClear)
         else ...[
           if (pendingCertify > 0)
@@ -1442,17 +1323,7 @@ class _OverviewPane extends StatelessWidget {
               icon: Icons.workspace_premium_outlined,
               title: l10n.adminAttentionPlaque(plaqueCount),
               color: AdminConsoleTheme.amber,
-              onTap: () =>
-                  onJump(_AdminHub.members, sub: _MembersSub.partners),
-            ),
-          ],
-          if (hiddenCount > 0) ...[
-            const SizedBox(height: 8),
-            _AttentionTile(
-              icon: Icons.visibility_off_outlined,
-              title: l10n.adminAttentionHidden(hiddenCount),
-              color: AdminConsoleTheme.ice,
-              onTap: () => onJump(_AdminHub.tools, sub: _ToolsSub.posts),
+              onTap: () => onJump(_AdminHub.members, sub: _MembersSub.partners),
             ),
           ],
         ],
@@ -1474,10 +1345,7 @@ class _OverviewPane extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           l10n.adminGradeMixInstructorNote,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AdminConsoleTheme.muted,
-          ),
+          style: const TextStyle(fontSize: 12, color: AdminConsoleTheme.muted),
         ),
         const SizedBox(height: 20),
         _SectionHeader(
@@ -1503,8 +1371,7 @@ class _OverviewPane extends StatelessWidget {
           icon: Icons.gavel_outlined,
           title: l10n.adminTabContracts,
           subtitle: l10n.adminContractsSubOverview,
-          onTap: () =>
-              onJump(_AdminHub.contracts, sub: _ContractsSub.overview),
+          onTap: () => onJump(_AdminHub.contracts, sub: _ContractsSub.overview),
         ),
         const SizedBox(height: 8),
         _QuickAction(
@@ -1542,8 +1409,7 @@ class _OverviewPane extends StatelessWidget {
           icon: Icons.directions_boat_outlined,
           title: l10n.adminSameBoatTab,
           subtitle: l10n.adminSameBoatHint,
-          onTap: () =>
-              onJump(_AdminHub.products, sub: _ProductsSub.sameBoat),
+          onTap: () => onJump(_AdminHub.products, sub: _ProductsSub.sameBoat),
         ),
       ],
     );
@@ -1608,9 +1474,7 @@ class _NearUpgradeTile extends StatelessWidget {
       child: ListTile(
         dense: true,
         title: Text(member.displayName),
-        subtitle: Text(
-          l10n.adminNearUpgradeHint(deficit.$1, deficit.$2),
-        ),
+        subtitle: Text(l10n.adminNearUpgradeHint(deficit.$1, deficit.$2)),
         trailing: Text(
           memberGradeShort(l10n, member.grade),
           style: const TextStyle(
@@ -1855,10 +1719,7 @@ class _AttentionTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: color),
                 ),
               ),
               Icon(Icons.chevron_right, color: color),
@@ -1922,9 +1783,7 @@ class _GradeMixCard extends StatelessWidget {
                             curve: Curves.easeOutCubic,
                             height: total == 0
                                 ? 8
-                                : 16 +
-                                    72 *
-                                        ((counts[grade] ?? 0) / max),
+                                : 16 + 72 * ((counts[grade] ?? 0) / max),
                             decoration: BoxDecoration(
                               color: colors[grade],
                               borderRadius: BorderRadius.circular(8),
@@ -2034,10 +1893,7 @@ class _QuickAction extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: AdminConsoleTheme.muted,
-              ),
+              const Icon(Icons.chevron_right, color: AdminConsoleTheme.muted),
             ],
           ),
         ),

@@ -82,24 +82,44 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-menu-settlement')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);
-    expect(find.byKey(const Key('admin-sub-settlement-history')), findsOneWidget);
+    expect(
+      find.byKey(const Key('admin-sub-settlement-history')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('admin-menu-sales')));
     await tester.pumpAndSettle();
     expect(find.text(l10n.adminContractsComingSoon), findsWidgets);
 
+    await tester.tap(find.byKey(const Key('admin-menu-dive-star')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('admin-sub-dive-star-apps')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-dive-star-forms')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsNothing);
+    expect(find.text(l10n.adminShopMonitor), findsNothing);
+
+    expect(find.text(l10n.weatherAdminTitle), findsNothing);
+    expect(find.text(l10n.adminPostsTitle), findsNothing);
+    expect(find.text(l10n.adminPostsCommunityShort), findsNothing);
+    expect(find.text(l10n.adminContractsSubTerms), findsNothing);
+    expect(find.text(l10n.adminContractsSubInbox), findsNothing);
+
     await tester.tap(find.byKey(const Key('admin-nav-tools')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-nav-more-sheet')), findsOneWidget);
-    expect(find.byKey(const Key('admin-tool-shops')), findsOneWidget);
-    final sheet = find.byKey(const Key('admin-nav-more-sheet'));
-    await tester.drag(sheet, const Offset(0, -240));
+    expect(find.byKey(const Key('admin-tool-trial-data')), findsOneWidget);
+    expect(find.byKey(const Key('admin-tool-shops')), findsNothing);
+    expect(find.byKey(const Key('admin-menu-weather')), findsNothing);
+    expect(find.byKey(const Key('admin-tool-posts')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-contracts-terms')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-contracts-inbox')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('admin-tool-trial-data')));
+    await tester.tap(find.byKey(const Key('admin-tool-trial-data')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('admin-menu-weather')), findsOneWidget);
-    expect(find.byKey(const Key('admin-tool-posts')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('admin-tool-shops')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('admin-sub-shops')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-trial-data')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-shops')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-posts')), findsNothing);
+    expect(find.text(l10n.adminTrialDataTab), findsWidgets);
   });
 
   testWidgets('narrow layout shows bottom 5 and more sheet', (tester) async {
@@ -130,8 +150,16 @@ void main() {
     await tester.tap(find.text(l10n.adminNavMore));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-nav-more-sheet')), findsOneWidget);
+    expect(find.byKey(const Key('admin-tool-shops')), findsNothing);
+    expect(find.byKey(const Key('admin-menu-weather')), findsNothing);
+    expect(find.byKey(const Key('admin-tool-posts')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-contracts-terms')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-contracts-inbox')), findsNothing);
+    expect(find.text(l10n.weatherAdminTitle), findsNothing);
+    expect(find.text(l10n.adminPostsTitle), findsNothing);
     await tester.tap(find.byKey(const Key('admin-more-dive-star')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-sub-dive-star-apps')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsNothing);
   });
 }
