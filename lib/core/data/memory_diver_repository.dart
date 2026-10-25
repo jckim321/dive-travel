@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
+import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
@@ -103,6 +104,11 @@ class MemoryDiverRepository implements DiverRepository {
   final _formsByVersion = <String, DiveStarForm>{};
   final _assessments = <String, List<DiveStarAssessment>>{};
   List<PartnerDocument>? _partnerDocuments;
+  final _partnerContracts = <String, List<PartnerContract>>{};
+  final _partnerContractEvents = <String, List<PartnerContractEvent>>{};
+  final _partnerContractFiles = <String, List<int>>{};
+  int _contractSequence = 0;
+  int _contractEventSequence = 0;
   PartnerDocConfig? _partnerDocConfig;
   final _documentShares = <DocumentShareRecord>[];
   final _applications = <DiveStarApplication>[];
@@ -1801,6 +1807,399 @@ class MemoryDiverRepository implements DiverRepository {
       throw StateError('Document not found: $documentId');
     }
     list[index] = list[index].copyWith(status: status);
+  }
+
+  List<PartnerContract> _contractsFor(String shopId) =>
+      _partnerContracts.putIfAbsent(shopId, () => []);
+
+  String _eventKey(String shopId, String contractId) => '$shopId/$contractId';
+
+  void _appendContractEvent({
+    required String shopId,
+    required String contractId,
+    required PartnerContractEventType type,
+    required String uid,
+    required String docSha256,
+    Map<String, dynamic> meta = const {},
+  }) {
+    final key = _eventKey(shopId, contractId);
+    final list = _partnerContractEvents.putIfAbsent(key, () => []);
+    list.add(
+      PartnerContractEvent(
+        id: 'cevt-${++_contractEventSequence}',
+        type: type,
+        uid: uid,
+        at: DateTime.now().toUtc(),
+        docSha256: docSha256,
+        meta: meta,
+      ),
+    );
+  }
+
+  PartnerContract _requireContract(String shopId, String contractId) {
+    final list = _contractsFor(shopId);
+    final index = list.indexWhere((c) => c.id == contractId);
+    if (index < 0) {
+      throw StateError('Contract not found: $contractId');
+    }
+    return list[index];
+  }
+
+  void _replaceContract(PartnerContract next) {
+    final list = _contractsFor(next.shopId);
+    final index = list.indexWhere((c) => c.id == next.id);
+    if (index < 0) {
+      throw StateError('Contract not found: ${next.id}');
+    }
+    if (list[index].isSealed) {
+      throw StateError('Sealed contract cannot be modified');
+    }
+    list[index] = next;
+  }
+
+  /// Test helper: seed PDF bytes for a vault file URL.
+  void seedPartnerContractFile(String fileUrl, List<int> bytes) {
+    _partnerContractFiles[fileUrl] = List<int>.from(bytes);
+  }
+
+  @override
+  Future<List<PartnerContract>> listPartnerContracts(String shopId) async {
+    final list = List<PartnerContract>.from(_contractsFor(shopId));
+    list.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+    return list;
+  }
+
+  @override
+  Future<PartnerContract?> getPartnerContract({
+    required String shopId,
+    required String contractId,
+  }) async {
+    final list = _contractsFor(shopId);
+    for (final item in list) {
+      if (item.id == contractId) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<List<PartnerContractEvent>> listPartnerContractEvents({
+    required String shopId,
+    required String contractId,
+  }) async {
+    return List<PartnerContractEvent>.from(
+      _partnerContractEvents[_eventKey(shopId, contractId)] ?? const [],
+    );
+  }
+
+  @override
+  Future<PartnerContract> createPartnerContractDraft({
+    required String shopId,
+    required String adminUid,
+    required PartnerContractKind kind,
+    required String title,
+    required String version,
+    required String fileUrl,
+    required String fileSha256,
+    String fileContentType = 'application/pdf',
+    DateTime? validFrom,
+    DateTime? validUntil,
+  }) async {
+    final now = DateTime.now().toUtc();
+    final doc = PartnerContract(
+      id: 'pct-${++_contractSequence}',
+      shopId: shopId,
+      kind: kind,
+      title: title.trim(),
+      version: version.trim().isEmpty ? '1' : version.trim(),
+      status: PartnerContractStatus.drafting,
+      fileUrl: fileUrl,
+      fileSha256: fileSha256,
+      fileContentType: fileContentType,
+      uploadedAt: now,
+      uploadedByUid: adminUid,
+      validFrom: validFrom,
+      validUntil: validUntil,
+      signerPlan: PartnerContractSignerStep.defaultPlan(),
+    );
+    _contractsFor(shopId).insert(0, doc);
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: doc.id,
+      type: PartnerContractEventType.uploaded,
+      uid: adminUid,
+      docSha256: fileSha256,
+    );
+    return doc;
+  }
+
+  @override
+  Future<void> sendPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+  }) async {
+    final current = _requireContract(shopId, contractId);
+    if (current.status != PartnerContractStatus.drafting &&
+        current.status != PartnerContractStatus.awaitingSignature) {
+      throw StateError('Cannot send sealed contract');
+    }
+    final now = DateTime.now().toUtc();
+    _replaceContract(
+      PartnerContract(
+        id: current.id,
+        shopId: current.shopId,
+        kind: current.kind,
+        title: current.title,
+        version: current.version,
+        status: PartnerContractStatus.awaitingSignature,
+        fileUrl: current.fileUrl,
+        fileSha256: current.fileSha256,
+        fileContentType: current.fileContentType,
+        uploadedAt: current.uploadedAt,
+        uploadedByUid: current.uploadedByUid,
+        validFrom: current.validFrom,
+        validUntil: current.validUntil,
+        sentAt: now,
+        executedAt: current.executedAt,
+        voidedAt: current.voidedAt,
+        voidReason: current.voidReason,
+        signerPlan: current.signerPlan,
+        signature: current.signature,
+        revisionNote: current.revisionNote,
+        revisionRequestedAt: current.revisionRequestedAt,
+        lastViewedAt: current.lastViewedAt,
+      ),
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.sent,
+      uid: adminUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<void> voidPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+    String reason = '',
+  }) async {
+    final current = _requireContract(shopId, contractId);
+    if (current.status == PartnerContractStatus.executed ||
+        current.status == PartnerContractStatus.voided) {
+      throw StateError('Sealed contract cannot be voided again');
+    }
+    final now = DateTime.now().toUtc();
+    _replaceContract(
+      PartnerContract(
+        id: current.id,
+        shopId: current.shopId,
+        kind: current.kind,
+        title: current.title,
+        version: current.version,
+        status: PartnerContractStatus.voided,
+        fileUrl: current.fileUrl,
+        fileSha256: current.fileSha256,
+        fileContentType: current.fileContentType,
+        uploadedAt: current.uploadedAt,
+        uploadedByUid: current.uploadedByUid,
+        validFrom: current.validFrom,
+        validUntil: current.validUntil,
+        sentAt: current.sentAt,
+        executedAt: current.executedAt,
+        voidedAt: now,
+        voidReason: reason.trim(),
+        signerPlan: current.signerPlan,
+        signature: current.signature,
+        revisionNote: current.revisionNote,
+        revisionRequestedAt: current.revisionRequestedAt,
+        lastViewedAt: current.lastViewedAt,
+      ),
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.voided,
+      uid: adminUid,
+      docSha256: current.fileSha256,
+      meta: {'reason': reason.trim()},
+    );
+  }
+
+  @override
+  Future<void> markPartnerContractViewed({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+  }) async {
+    final current = _requireContract(shopId, contractId);
+    if (current.status == PartnerContractStatus.drafting) {
+      throw StateError('Draft hidden from partner');
+    }
+    if (!current.canPartnerAct) {
+      return;
+    }
+    final now = DateTime.now().toUtc();
+    _replaceContract(
+      PartnerContract(
+        id: current.id,
+        shopId: current.shopId,
+        kind: current.kind,
+        title: current.title,
+        version: current.version,
+        status: current.status,
+        fileUrl: current.fileUrl,
+        fileSha256: current.fileSha256,
+        fileContentType: current.fileContentType,
+        uploadedAt: current.uploadedAt,
+        uploadedByUid: current.uploadedByUid,
+        validFrom: current.validFrom,
+        validUntil: current.validUntil,
+        sentAt: current.sentAt,
+        executedAt: current.executedAt,
+        voidedAt: current.voidedAt,
+        voidReason: current.voidReason,
+        signerPlan: current.signerPlan,
+        signature: current.signature,
+        revisionNote: current.revisionNote,
+        revisionRequestedAt: current.revisionRequestedAt,
+        lastViewedAt: now,
+      ),
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.viewed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<void> requestPartnerContractRevision({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String memo,
+  }) async {
+    final current = _requireContract(shopId, contractId);
+    if (!current.canPartnerAct) {
+      throw StateError('Not awaiting signature');
+    }
+    final now = DateTime.now().toUtc();
+    _replaceContract(
+      PartnerContract(
+        id: current.id,
+        shopId: current.shopId,
+        kind: current.kind,
+        title: current.title,
+        version: current.version,
+        status: PartnerContractStatus.awaitingSignature,
+        fileUrl: current.fileUrl,
+        fileSha256: current.fileSha256,
+        fileContentType: current.fileContentType,
+        uploadedAt: current.uploadedAt,
+        uploadedByUid: current.uploadedByUid,
+        validFrom: current.validFrom,
+        validUntil: current.validUntil,
+        sentAt: current.sentAt,
+        executedAt: current.executedAt,
+        voidedAt: current.voidedAt,
+        voidReason: current.voidReason,
+        signerPlan: current.signerPlan,
+        signature: current.signature,
+        revisionNote: memo.trim(),
+        revisionRequestedAt: now,
+        lastViewedAt: current.lastViewedAt,
+      ),
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.revisionRequested,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+      meta: {'memo': memo.trim()},
+    );
+  }
+
+  @override
+  Future<void> signPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String signerName,
+    required String signaturePngBase64,
+    required String expectedSha256,
+  }) async {
+    final current = _requireContract(shopId, contractId);
+    if (!current.canPartnerAct) {
+      throw StateError('Not awaiting signature');
+    }
+    if (expectedSha256 != current.fileSha256) {
+      throw StateError('file_sha256_mismatch');
+    }
+    final now = DateTime.now().toUtc();
+    final signature = PartnerContractSignature(
+      signerUid: partnerUid,
+      signerName: signerName.trim(),
+      signaturePngBase64: signaturePngBase64,
+      signedAt: now,
+      docSha256: current.fileSha256,
+    );
+    _replaceContract(
+      PartnerContract(
+        id: current.id,
+        shopId: current.shopId,
+        kind: current.kind,
+        title: current.title,
+        version: current.version,
+        status: PartnerContractStatus.executed,
+        fileUrl: current.fileUrl,
+        fileSha256: current.fileSha256,
+        fileContentType: current.fileContentType,
+        uploadedAt: current.uploadedAt,
+        uploadedByUid: current.uploadedByUid,
+        validFrom: current.validFrom,
+        validUntil: current.validUntil,
+        sentAt: current.sentAt,
+        executedAt: now,
+        voidedAt: current.voidedAt,
+        voidReason: current.voidReason,
+        signerPlan: current.signerPlan,
+        signature: signature,
+        revisionNote: current.revisionNote,
+        revisionRequestedAt: current.revisionRequestedAt,
+        lastViewedAt: current.lastViewedAt,
+      ),
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.signed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+    _appendContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.executed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<List<int>> fetchPartnerContractFileBytes(String fileUrl) async {
+    final bytes = _partnerContractFiles[fileUrl];
+    if (bytes == null) {
+      throw StateError('Contract file not found in memory store');
+    }
+    return List<int>.from(bytes);
   }
 
   @override

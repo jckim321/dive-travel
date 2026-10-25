@@ -1487,7 +1487,110 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTabShops => 'Partners';
 
   @override
+  String get adminTabContracts => 'Partner contracts';
+
+  @override
   String get adminTabOps => 'Ops';
+
+  @override
+  String get adminContractsSubOverview => 'Contract status';
+
+  @override
+  String get adminContractsSubVault => 'Document vault';
+
+  @override
+  String get adminContractsSubTerms => 'Contract terms';
+
+  @override
+  String get adminContractsSubInbox => 'Proposal inbox';
+
+  @override
+  String get adminContractsComingSoon => 'Coming soon';
+
+  @override
+  String get adminContractStatusNone => 'Not signed';
+
+  @override
+  String get adminContractStatusAwaiting => 'Awaiting signature';
+
+  @override
+  String get adminContractStatusExecuted => 'Executed';
+
+  @override
+  String get adminContractStatusExpiring => 'Expiring soon';
+
+  @override
+  String get adminVaultUpload => 'Upload PDF';
+
+  @override
+  String get adminVaultSend => 'Send to partner';
+
+  @override
+  String get adminVaultVoid => 'Void';
+
+  @override
+  String get adminVaultDownload => 'Download executed pack';
+
+  @override
+  String get adminVaultPickShop => 'Select a partner shop';
+
+  @override
+  String get adminVaultTitleHint => 'Document title';
+
+  @override
+  String get adminVaultVersionHint => 'Version';
+
+  @override
+  String get adminVaultKindMaster => 'Master agreement';
+
+  @override
+  String get adminVaultKindAnnex => 'Annex';
+
+  @override
+  String get adminVaultEmpty => 'No documents in this vault.';
+
+  @override
+  String get partnerVaultTitle => 'Document vault';
+
+  @override
+  String get partnerVaultAwaiting => 'Awaiting signature';
+
+  @override
+  String get partnerVaultExecuted => 'Executed';
+
+  @override
+  String get partnerVaultEmpty => 'No contract documents yet.';
+
+  @override
+  String get partnerVaultOpen => 'Review & sign';
+
+  @override
+  String get partnerVaultSign => 'Sign and execute';
+
+  @override
+  String get partnerVaultRevision => 'Request revision';
+
+  @override
+  String get partnerVaultRevisionHint => 'Describe what needs to change';
+
+  @override
+  String get partnerVaultShaMismatch =>
+      'The file changed. Signing stopped. Contact ops.';
+
+  @override
+  String get partnerVaultAckView => 'I have reviewed this document';
+
+  @override
+  String get partnerVaultAgree => 'I agree to the contract terms';
+
+  @override
+  String get partnerVaultSignerName => 'Signer name';
+
+  @override
+  String get partnerVaultSignature => 'Handwritten signature';
+
+  @override
+  String get partnerVaultDownload => 'Download original + signature';
 
   @override
   String get adminMetricMembers => 'Members';

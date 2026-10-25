@@ -264,6 +264,89 @@ service cloud.firestore {
         allow update: if isAdmin() && resource.data.confirmed != true;
         allow delete: if isAdmin() && resource.data.confirmed != true;
       }
+
+      // H6 partner contract vault (additive only — do not alter rules above).
+      match /partner_contracts/{docId} {
+        allow read: if isAdmin()
+          || (ownsShop(shopId) && resource.data.status != 'drafting');
+
+        allow create: if isAdmin()
+          && request.resource.data.status == 'drafting'
+          && request.resource.data.shop_id == shopId;
+
+        allow update: if
+          (
+            isAdmin()
+            && resource.data.status in ['drafting', 'awaiting_signature']
+            && request.resource.data.status in [
+              'drafting', 'awaiting_signature', 'voided'
+            ]
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['signature'])
+          )
+          || (
+            ownsShop(shopId)
+            && resource.data.status == 'awaiting_signature'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly([
+                  'last_viewed_at',
+                  'last_viewed_by_uid',
+                  'revision_note',
+                  'revision_requested_at',
+                  'revision_requested_by_uid',
+                  'signature',
+                  'status',
+                  'executed_at',
+                  'updated_at'
+                ])
+            && (
+              request.resource.data.status == 'awaiting_signature'
+              || (
+                request.resource.data.status == 'executed'
+                && request.resource.data.keys().hasAll([
+                  'signature', 'executed_at'
+                ])
+                && request.resource.data.signature.keys().hasAll([
+                  'signer_uid',
+                  'signer_name',
+                  'signature_png_base64',
+                  'signed_at',
+                  'doc_sha256'
+                ])
+                && request.resource.data.signature.signer_uid
+                    == request.auth.uid
+                && request.resource.data.signature.doc_sha256
+                    == resource.data.file_sha256
+                && request.resource.data.signature.signed_at == request.time
+                && request.resource.data.executed_at == request.time
+              )
+            )
+          );
+
+        allow delete: if false;
+
+        match /events/{eventId} {
+          allow read: if isAdmin() || ownsShop(shopId);
+          allow create: if isSignedIn()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.at == request.time
+            && request.resource.data.doc_sha256 is string
+            && (
+              (isAdmin()
+                && request.resource.data.type in [
+                  'uploaded', 'sent', 'voided'
+                ])
+              || (ownsShop(shopId)
+                && request.resource.data.type in [
+                  'viewed',
+                  'revision_requested',
+                  'signed',
+                  'executed'
+                ])
+            );
+          allow update, delete: if false;
+        }
+      }
     }
 
     // Versioned audit forms (gates, areas, thresholds) — admin only.

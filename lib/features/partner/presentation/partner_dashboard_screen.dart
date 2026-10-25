@@ -23,6 +23,7 @@ class PartnerDashboardScreen extends StatefulWidget {
 
 class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
   List<DiveStarApplication> _apps = const [];
+  var _docsBadge = 0;
 
   @override
   void initState() {
@@ -38,15 +39,28 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
     final shopId = store.partnerOwnedShopId;
     try {
       final list = await store.listDiveStarApplications(shopId: shopId);
+      var badge = 0;
+      try {
+        final contracts = await store.listPartnerContracts(shopId);
+        badge = store.partnerContractAwaitingCount(contracts);
+      } catch (_) {
+        badge = 0;
+      }
       if (!mounted) {
         return;
       }
-      setState(() => _apps = list);
+      setState(() {
+        _apps = list;
+        _docsBadge = badge;
+      });
     } catch (_) {
       if (!mounted) {
         return;
       }
-      setState(() => _apps = const []);
+      setState(() {
+        _apps = const [];
+        _docsBadge = 0;
+      });
     }
   }
 
@@ -98,6 +112,7 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                       PartnerComingSoonScreen(title: l10n.partnerQuickStats),
                     ),
                     onDocs: () => _open(const PartnerDocumentsScreen()),
+                    docsBadge: _docsBadge,
                   ),
                   const SizedBox(height: 14),
                   _BusinessHighlight(
@@ -205,6 +220,7 @@ class _QuickGrid extends StatelessWidget {
     required this.bookingsBadge,
     required this.onStats,
     required this.onDocs,
+    this.docsBadge = 0,
   });
 
   final VoidCallback onProducts;
@@ -212,6 +228,7 @@ class _QuickGrid extends StatelessWidget {
   final int bookingsBadge;
   final VoidCallback onStats;
   final VoidCallback onDocs;
+  final int docsBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +268,7 @@ class _QuickGrid extends StatelessWidget {
             key: const Key('partner-quick-docs'),
             label: l10n.partnerQuickDocs,
             icon: Icons.description_outlined,
+            badgeCount: docsBadge,
             onTap: onDocs,
           ),
         ),

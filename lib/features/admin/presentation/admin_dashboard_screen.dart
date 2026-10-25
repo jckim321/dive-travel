@@ -18,15 +18,19 @@ import 'package:dive_travel_app/features/admin/presentation/admin_products_scree
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_shops_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_contract_vault_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_contracts_overview_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_weather_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-enum _AdminHub { overview, members, shops, ops }
+enum _AdminHub { overview, members, shops, contracts, ops }
 
 enum _MembersSub { divers, instructors, partners }
 
 enum _ShopsSub { monitor, products, seatsApply, sameBoat, pricing }
+
+enum _ContractsSub { overview, vault, terms, inbox }
 
 enum _OpsSub { posts, bookings, weather, homeCuration, documents }
 
@@ -43,8 +47,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _AdminHub _hub = _AdminHub.overview;
   _MembersSub _membersSub = _MembersSub.divers;
   _ShopsSub _shopsSub = _ShopsSub.monitor;
+  _ContractsSub _contractsSub = _ContractsSub.overview;
   _OpsSub _opsSub = _OpsSub.posts;
   String? _productsShopFilter;
+  String? _contractsShopFilter;
 
   @override
   void initState() {
@@ -72,6 +78,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _productsShopFilter = shopFilter;
         }
       }
+      if (hub == _AdminHub.contracts && sub is _ContractsSub) {
+        _contractsSub = sub;
+        if (sub == _ContractsSub.vault) {
+          _contractsShopFilter = shopFilter ?? _contractsShopFilter;
+        }
+      }
       if (hub == _AdminHub.ops && sub is _OpsSub) {
         _opsSub = sub;
       }
@@ -80,6 +92,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _openShopProducts(String shopId) {
     _go(_AdminHub.shops, sub: _ShopsSub.products, shopFilter: shopId);
+  }
+
+  void _openContractVault(String shopId) {
+    _go(_AdminHub.contracts, sub: _ContractsSub.vault, shopFilter: shopId);
   }
 
   @override
@@ -196,6 +212,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       },
                     ),
                   ),
+                if (_hub == _AdminHub.contracts)
+                  _SubTabStrip(
+                    labels: [
+                      l10n.adminContractsSubOverview,
+                      l10n.adminContractsSubVault,
+                      '${l10n.adminContractsSubTerms} (${l10n.adminContractsComingSoon})',
+                      '${l10n.adminContractsSubInbox} (${l10n.adminContractsComingSoon})',
+                    ],
+                    keys: const [
+                      Key('admin-sub-contracts-overview'),
+                      Key('admin-sub-contracts-vault'),
+                      Key('admin-sub-contracts-terms'),
+                      Key('admin-sub-contracts-inbox'),
+                    ],
+                    selected: switch (_contractsSub) {
+                      _ContractsSub.overview => 0,
+                      _ContractsSub.vault => 1,
+                      _ContractsSub.terms => 2,
+                      _ContractsSub.inbox => 3,
+                    },
+                    onSelect: (i) => _go(
+                      _AdminHub.contracts,
+                      sub: switch (i) {
+                        1 => _ContractsSub.vault,
+                        2 => _ContractsSub.terms,
+                        3 => _ContractsSub.inbox,
+                        _ => _ContractsSub.overview,
+                      },
+                    ),
+                  ),
                 if (_hub == _AdminHub.ops)
                   _SubTabStrip(
                     labels: [
@@ -237,7 +283,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     switchOutCurve: Curves.easeInCubic,
                     child: KeyedSubtree(
                       key: ValueKey(
-                        '${_hub.name}-$_membersSub-$_shopsSub-$_opsSub',
+                        '${_hub.name}-$_membersSub-$_shopsSub-$_contractsSub-$_opsSub',
                       ),
                       child: _bodyFor(
                         l10n: l10n,
@@ -325,6 +371,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           _ShopsSub.pricing => const AdminPricingScreen(embedded: true),
         };
+      case _AdminHub.contracts:
+        return switch (_contractsSub) {
+          _ContractsSub.overview => AdminContractsOverviewScreen(
+            embedded: true,
+            onOpenVault: _openContractVault,
+          ),
+          _ContractsSub.vault => AdminContractVaultScreen(
+            embedded: true,
+            initialShopId: _contractsShopFilter,
+          ),
+          _ContractsSub.terms => _AdminComingSoonPane(
+            title: l10n.adminContractsSubTerms,
+            body: l10n.adminContractsComingSoon,
+          ),
+          _ContractsSub.inbox => _AdminComingSoonPane(
+            title: l10n.adminContractsSubInbox,
+            body: l10n.adminContractsComingSoon,
+          ),
+        };
       case _AdminHub.ops:
         return switch (_opsSub) {
           _OpsSub.posts => const AdminPostsScreen(embedded: true),
@@ -370,6 +435,12 @@ class _PrimaryTabStrip extends StatelessWidget {
         l10n.adminTabShops,
         pendingProducts,
       ),
+      (
+        _AdminHub.contracts,
+        Icons.gavel_outlined,
+        l10n.adminTabContracts,
+        0,
+      ),
       (_AdminHub.ops, Icons.tune_outlined, l10n.adminTabOps, 0),
     ];
 
@@ -387,6 +458,7 @@ class _PrimaryTabStrip extends StatelessWidget {
             key: switch (id) {
               _AdminHub.members => const Key('admin-menu-members'),
               _AdminHub.shops => const Key('admin-menu-shops'),
+              _AdminHub.contracts => const Key('admin-menu-contracts'),
               _AdminHub.ops => const Key('admin-menu-posts'),
               _AdminHub.overview => const Key('admin-tab-overview'),
             },
@@ -397,6 +469,40 @@ class _PrimaryTabStrip extends StatelessWidget {
             onTap: () => onSelect(id),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AdminComingSoonPane extends StatelessWidget {
+  const _AdminComingSoonPane({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AdminConsoleTheme.text,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              body,
+              style: const TextStyle(color: AdminConsoleTheme.muted),
+            ),
+          ],
+        ),
       ),
     );
   }

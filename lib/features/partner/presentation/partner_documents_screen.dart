@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_contract_vault_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_loi_form_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -112,6 +113,41 @@ class _PartnerDocumentsScreenState extends State<PartnerDocumentsScreen> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                   children: [
+                    Card(
+                      key: const Key('partner-docs-vault-entry'),
+                      color: PartnerTheme.card,
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.folder_open_outlined,
+                          color: PartnerTheme.orange,
+                        ),
+                        title: Text(
+                          l10n.partnerVaultTitle,
+                          style: const TextStyle(
+                            color: PartnerTheme.text,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        subtitle: Text(
+                          l10n.partnerVaultAwaiting,
+                          style: const TextStyle(color: PartnerTheme.textDim),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: PartnerTheme.text,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => PartnerContractVaultScreen(
+                                shopId: shopId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     Text(
                       l10n.partnerDocsHint,
                       style: Theme.of(context).textTheme.bodyMedium,

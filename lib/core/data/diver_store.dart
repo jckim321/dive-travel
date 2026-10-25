@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
@@ -20,6 +21,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
+import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
@@ -1233,6 +1235,176 @@ class DiverStore extends ChangeNotifier {
       documentId: documentId,
       status: status,
     );
+  }
+
+  Future<List<PartnerContract>> listPartnerContracts(String shopId) {
+    return _repository.listPartnerContracts(shopId);
+  }
+
+  Future<PartnerContract?> getPartnerContract({
+    required String shopId,
+    required String contractId,
+  }) {
+    return _repository.getPartnerContract(
+      shopId: shopId,
+      contractId: contractId,
+    );
+  }
+
+  Future<List<PartnerContractEvent>> listPartnerContractEvents({
+    required String shopId,
+    required String contractId,
+  }) {
+    return _repository.listPartnerContractEvents(
+      shopId: shopId,
+      contractId: contractId,
+    );
+  }
+
+  /// Upload PDF bytes to R2, then create a drafting vault document.
+  Future<PartnerContract> uploadPartnerContractDraft({
+    required String shopId,
+    required Uint8List pdfBytes,
+    required PartnerContractKind kind,
+    required String title,
+    required String version,
+    DateTime? validFrom,
+    DateTime? validUntil,
+  }) async {
+    final adminUid = _uid;
+    if (adminUid == null || adminUid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    final digest = sha256.convert(pdfBytes).toString();
+    final stamp = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final objectKey = 'partner_contracts/$shopId/${stamp}_$digest.pdf';
+    final fileUrl = await _photos.upload(
+      objectKey: objectKey,
+      bytes: pdfBytes,
+      contentType: 'application/pdf',
+    );
+    return _repository.createPartnerContractDraft(
+      shopId: shopId,
+      adminUid: adminUid,
+      kind: kind,
+      title: title,
+      version: version,
+      fileUrl: fileUrl,
+      fileSha256: digest,
+      validFrom: validFrom,
+      validUntil: validUntil,
+    );
+  }
+
+  Future<void> sendPartnerContract({
+    required String shopId,
+    required String contractId,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.sendPartnerContract(
+      shopId: shopId,
+      contractId: contractId,
+      adminUid: uid,
+    );
+  }
+
+  Future<void> voidPartnerContract({
+    required String shopId,
+    required String contractId,
+    String reason = '',
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.voidPartnerContract(
+      shopId: shopId,
+      contractId: contractId,
+      adminUid: uid,
+      reason: reason,
+    );
+  }
+
+  Future<void> markPartnerContractViewed({
+    required String shopId,
+    required String contractId,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.markPartnerContractViewed(
+      shopId: shopId,
+      contractId: contractId,
+      partnerUid: uid,
+    );
+  }
+
+  Future<void> requestPartnerContractRevision({
+    required String shopId,
+    required String contractId,
+    required String memo,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    return _repository.requestPartnerContractRevision(
+      shopId: shopId,
+      contractId: contractId,
+      partnerUid: uid,
+      memo: memo,
+    );
+  }
+
+  /// Re-download PDF, verify SHA-256, then sign. Throws [StateError] on mismatch.
+  Future<void> signPartnerContractVerified({
+    required String shopId,
+    required String contractId,
+    required String signerName,
+    required String signaturePngBase64,
+  }) async {
+    final uid = _uid;
+    if (uid == null) {
+      throw StateError('Sign in required');
+    }
+    final doc = await _repository.getPartnerContract(
+      shopId: shopId,
+      contractId: contractId,
+    );
+    if (doc == null) {
+      throw StateError('Contract not found');
+    }
+    final bytes = await _repository.fetchPartnerContractFileBytes(doc.fileUrl);
+    final liveSha = sha256.convert(bytes).toString();
+    if (liveSha != doc.fileSha256) {
+      throw StateError('file_sha256_mismatch');
+    }
+    await _repository.signPartnerContract(
+      shopId: shopId,
+      contractId: contractId,
+      partnerUid: uid,
+      signerName: signerName,
+      signaturePngBase64: signaturePngBase64,
+      expectedSha256: liveSha,
+    );
+  }
+
+  Future<List<int>> fetchPartnerContractFileBytes(String fileUrl) {
+    return _repository.fetchPartnerContractFileBytes(fileUrl);
+  }
+
+  Future<String> partnerContractReadableUrl(String fileUrl) {
+    return _photos.readableUrl(fileUrl);
+  }
+
+  int partnerContractAwaitingCount(List<PartnerContract> docs) {
+    return docs
+        .where((d) => d.status == PartnerContractStatus.awaitingSignature)
+        .length;
   }
 
   Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50}) {

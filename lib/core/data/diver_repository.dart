@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -262,6 +263,71 @@ abstract class DiverRepository {
     required String documentId,
     required PartnerDocStatus status,
   });
+
+  /// H6: per-shop contract vault (no collectionGroup).
+  Future<List<PartnerContract>> listPartnerContracts(String shopId);
+
+  Future<PartnerContract?> getPartnerContract({
+    required String shopId,
+    required String contractId,
+  });
+
+  Future<List<PartnerContractEvent>> listPartnerContractEvents({
+    required String shopId,
+    required String contractId,
+  });
+
+  Future<PartnerContract> createPartnerContractDraft({
+    required String shopId,
+    required String adminUid,
+    required PartnerContractKind kind,
+    required String title,
+    required String version,
+    required String fileUrl,
+    required String fileSha256,
+    String fileContentType = 'application/pdf',
+    DateTime? validFrom,
+    DateTime? validUntil,
+  });
+
+  Future<void> sendPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+  });
+
+  Future<void> voidPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+    String reason = '',
+  });
+
+  Future<void> markPartnerContractViewed({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+  });
+
+  Future<void> requestPartnerContractRevision({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String memo,
+  });
+
+  /// Partner signs after client re-hashes PDF and matches [expectedSha256].
+  Future<void> signPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String signerName,
+    required String signaturePngBase64,
+    required String expectedSha256,
+  });
+
+  /// Download PDF bytes for vault file (R2 readable URL or http).
+  Future<List<int>> fetchPartnerContractFileBytes(String fileUrl);
 
   Future<List<DocumentShareRecord>> listDocumentShares({int limit = 50});
 

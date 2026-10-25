@@ -1466,7 +1466,109 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminTabShops => 'Tiendas';
 
   @override
+  String get adminTabContracts => '제휴 계약';
+
+  @override
   String get adminTabOps => 'Ops';
+
+  @override
+  String get adminContractsSubOverview => '계약 현황';
+
+  @override
+  String get adminContractsSubVault => '서류함';
+
+  @override
+  String get adminContractsSubTerms => '계약 조건';
+
+  @override
+  String get adminContractsSubInbox => '제안 받은편지함';
+
+  @override
+  String get adminContractsComingSoon => '준비 중';
+
+  @override
+  String get adminContractStatusNone => '미체결';
+
+  @override
+  String get adminContractStatusAwaiting => '서명 대기';
+
+  @override
+  String get adminContractStatusExecuted => '체결';
+
+  @override
+  String get adminContractStatusExpiring => '만료 임박';
+
+  @override
+  String get adminVaultUpload => 'PDF 올리기';
+
+  @override
+  String get adminVaultSend => '파트너에게 발송';
+
+  @override
+  String get adminVaultVoid => '폐기';
+
+  @override
+  String get adminVaultDownload => '체결본 받기';
+
+  @override
+  String get adminVaultPickShop => '제휴파트너를 선택하세요';
+
+  @override
+  String get adminVaultTitleHint => '문서 제목';
+
+  @override
+  String get adminVaultVersionHint => '버전';
+
+  @override
+  String get adminVaultKindMaster => '기본계약';
+
+  @override
+  String get adminVaultKindAnnex => '부속 약정서';
+
+  @override
+  String get adminVaultEmpty => '이 파트너 서류함이 비어 있어요.';
+
+  @override
+  String get partnerVaultTitle => '서류함';
+
+  @override
+  String get partnerVaultAwaiting => '서명 대기';
+
+  @override
+  String get partnerVaultExecuted => '체결';
+
+  @override
+  String get partnerVaultEmpty => '도착한 계약 서류가 없어요.';
+
+  @override
+  String get partnerVaultOpen => '열람·서명';
+
+  @override
+  String get partnerVaultSign => '서명하여 체결';
+
+  @override
+  String get partnerVaultRevision => '수정 요청';
+
+  @override
+  String get partnerVaultRevisionHint => '수정이 필요한 내용을 적어 주세요';
+
+  @override
+  String get partnerVaultShaMismatch => '파일이 바뀌었습니다. 서명을 중단했어요. 운영팀에 문의해 주세요.';
+
+  @override
+  String get partnerVaultAckView => '문서를 열람했습니다';
+
+  @override
+  String get partnerVaultAgree => '계약 내용에 동의합니다';
+
+  @override
+  String get partnerVaultSignerName => '서명자 이름';
+
+  @override
+  String get partnerVaultSignature => '손글씨 서명';
+
+  @override
+  String get partnerVaultDownload => '원본·서명 정보 받기';
 
   @override
   String get adminMetricMembers => 'Miembros';

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -22,6 +23,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
+import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -2165,6 +2167,308 @@ class FirestoreDiverRepository implements DiverRepository {
       'status': status.firestoreValue,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  CollectionReference<Map<String, dynamic>> _partnerContracts(String shopId) =>
+      _shops.doc(shopId).collection('partner_contracts');
+
+  CollectionReference<Map<String, dynamic>> _partnerContractEvents(
+    String shopId,
+    String contractId,
+  ) =>
+      _partnerContracts(shopId).doc(contractId).collection('events');
+
+  Future<void> _appendPartnerContractEvent({
+    required String shopId,
+    required String contractId,
+    required PartnerContractEventType type,
+    required String uid,
+    required String docSha256,
+    Map<String, dynamic>? meta,
+  }) {
+    return _partnerContractEvents(shopId, contractId).doc().set({
+      'type': type.firestoreValue,
+      'uid': uid,
+      'at': FieldValue.serverTimestamp(),
+      'doc_sha256': docSha256,
+      if (meta != null && meta.isNotEmpty) 'meta': meta,
+    });
+  }
+
+  @override
+  Future<List<PartnerContract>> listPartnerContracts(String shopId) async {
+    final snap = await _partnerContracts(shopId)
+        .orderBy('uploaded_at', descending: true)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        PartnerContract.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<PartnerContract?> getPartnerContract({
+    required String shopId,
+    required String contractId,
+  }) async {
+    final snap = await _partnerContracts(shopId).doc(contractId).get();
+    if (!snap.exists) {
+      return null;
+    }
+    return PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+  }
+
+  @override
+  Future<List<PartnerContractEvent>> listPartnerContractEvents({
+    required String shopId,
+    required String contractId,
+  }) async {
+    final snap = await _partnerContractEvents(shopId, contractId)
+        .orderBy('at', descending: false)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        PartnerContractEvent.fromDocument(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<PartnerContract> createPartnerContractDraft({
+    required String shopId,
+    required String adminUid,
+    required PartnerContractKind kind,
+    required String title,
+    required String version,
+    required String fileUrl,
+    required String fileSha256,
+    String fileContentType = 'application/pdf',
+    DateTime? validFrom,
+    DateTime? validUntil,
+  }) async {
+    final ref = _partnerContracts(shopId).doc();
+    final payload = <String, dynamic>{
+      'shop_id': shopId,
+      'kind': kind.firestoreValue,
+      'title': title.trim(),
+      'version': version.trim().isEmpty ? '1' : version.trim(),
+      'status': PartnerContractStatus.drafting.firestoreValue,
+      'file_url': fileUrl,
+      'file_sha256': fileSha256,
+      'file_content_type': fileContentType,
+      'uploaded_at': FieldValue.serverTimestamp(),
+      'uploaded_by_uid': adminUid,
+      if (validFrom != null) 'valid_from': Timestamp.fromDate(validFrom.toUtc()),
+      if (validUntil != null)
+        'valid_until': Timestamp.fromDate(validUntil.toUtc()),
+      'signer_plan': [
+        for (final step in PartnerContractSignerStep.defaultPlan())
+          step.toMap(),
+      ],
+      'revision_note': '',
+      'void_reason': '',
+      'server_seal_hash': null,
+      'identity_reauth_at': null,
+      'composite_pdf_url': null,
+      'external_esign_provider': null,
+      'external_esign_envelope_id': null,
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    await ref.set(payload);
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: ref.id,
+      type: PartnerContractEventType.uploaded,
+      uid: adminUid,
+      docSha256: fileSha256,
+    );
+    final created = await ref.get();
+    return PartnerContract.fromDocument(ref.id, created.data() ?? payload);
+  }
+
+  @override
+  Future<void> sendPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+  }) async {
+    final ref = _partnerContracts(shopId).doc(contractId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw StateError('Contract not found');
+    }
+    final current = PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+    if (current.status != PartnerContractStatus.drafting &&
+        current.status != PartnerContractStatus.awaitingSignature) {
+      throw StateError('Cannot send sealed contract');
+    }
+    await ref.set({
+      'status': PartnerContractStatus.awaitingSignature.firestoreValue,
+      'sent_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.sent,
+      uid: adminUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<void> voidPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String adminUid,
+    String reason = '',
+  }) async {
+    final ref = _partnerContracts(shopId).doc(contractId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw StateError('Contract not found');
+    }
+    final current = PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+    if (current.isSealed) {
+      throw StateError('Sealed contract cannot be voided');
+    }
+    await ref.set({
+      'status': PartnerContractStatus.voided.firestoreValue,
+      'voided_at': FieldValue.serverTimestamp(),
+      'void_reason': reason.trim(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.voided,
+      uid: adminUid,
+      docSha256: current.fileSha256,
+      meta: {'reason': reason.trim()},
+    );
+  }
+
+  @override
+  Future<void> markPartnerContractViewed({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+  }) async {
+    final ref = _partnerContracts(shopId).doc(contractId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw StateError('Contract not found');
+    }
+    final current = PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+    if (current.status == PartnerContractStatus.drafting) {
+      throw StateError('Draft hidden from partner');
+    }
+    if (!current.canPartnerAct) {
+      return;
+    }
+    await ref.set({
+      'last_viewed_at': FieldValue.serverTimestamp(),
+      'last_viewed_by_uid': partnerUid,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.viewed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<void> requestPartnerContractRevision({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String memo,
+  }) async {
+    final ref = _partnerContracts(shopId).doc(contractId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw StateError('Contract not found');
+    }
+    final current = PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+    if (!current.canPartnerAct) {
+      throw StateError('Not awaiting signature');
+    }
+    await ref.set({
+      'revision_note': memo.trim(),
+      'revision_requested_at': FieldValue.serverTimestamp(),
+      'revision_requested_by_uid': partnerUid,
+      'status': PartnerContractStatus.awaitingSignature.firestoreValue,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.revisionRequested,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+      meta: {'memo': memo.trim()},
+    );
+  }
+
+  @override
+  Future<void> signPartnerContract({
+    required String shopId,
+    required String contractId,
+    required String partnerUid,
+    required String signerName,
+    required String signaturePngBase64,
+    required String expectedSha256,
+  }) async {
+    final ref = _partnerContracts(shopId).doc(contractId);
+    final snap = await ref.get();
+    if (!snap.exists) {
+      throw StateError('Contract not found');
+    }
+    final current = PartnerContract.fromDocument(snap.id, snap.data() ?? {});
+    if (!current.canPartnerAct) {
+      throw StateError('Not awaiting signature');
+    }
+    if (expectedSha256 != current.fileSha256) {
+      throw StateError('file_sha256_mismatch');
+    }
+    await ref.set({
+      'signature': {
+        'signer_uid': partnerUid,
+        'signer_name': signerName.trim(),
+        'signature_png_base64': signaturePngBase64,
+        'doc_sha256': current.fileSha256,
+        'signed_at': FieldValue.serverTimestamp(),
+      },
+      'status': PartnerContractStatus.executed.firestoreValue,
+      'executed_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.signed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+    await _appendPartnerContractEvent(
+      shopId: shopId,
+      contractId: contractId,
+      type: PartnerContractEventType.executed,
+      uid: partnerUid,
+      docSha256: current.fileSha256,
+    );
+  }
+
+  @override
+  Future<List<int>> fetchPartnerContractFileBytes(String fileUrl) async {
+    final readable = await _photos.readableUrl(fileUrl);
+    final response = await http.get(Uri.parse(readable));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError('Failed to download contract PDF (${response.statusCode})');
+    }
+    return response.bodyBytes;
   }
 
   @override

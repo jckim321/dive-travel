@@ -2796,11 +2796,215 @@ abstract class AppLocalizations {
   /// **'제휴파트너'**
   String get adminTabShops;
 
+  /// No description provided for @adminTabContracts.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 계약'**
+  String get adminTabContracts;
+
   /// No description provided for @adminTabOps.
   ///
   /// In ko, this message translates to:
   /// **'운영'**
   String get adminTabOps;
+
+  /// No description provided for @adminContractsSubOverview.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 현황'**
+  String get adminContractsSubOverview;
+
+  /// No description provided for @adminContractsSubVault.
+  ///
+  /// In ko, this message translates to:
+  /// **'서류함'**
+  String get adminContractsSubVault;
+
+  /// No description provided for @adminContractsSubTerms.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 조건'**
+  String get adminContractsSubTerms;
+
+  /// No description provided for @adminContractsSubInbox.
+  ///
+  /// In ko, this message translates to:
+  /// **'제안 받은편지함'**
+  String get adminContractsSubInbox;
+
+  /// No description provided for @adminContractsComingSoon.
+  ///
+  /// In ko, this message translates to:
+  /// **'준비 중'**
+  String get adminContractsComingSoon;
+
+  /// No description provided for @adminContractStatusNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'미체결'**
+  String get adminContractStatusNone;
+
+  /// No description provided for @adminContractStatusAwaiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명 대기'**
+  String get adminContractStatusAwaiting;
+
+  /// No description provided for @adminContractStatusExecuted.
+  ///
+  /// In ko, this message translates to:
+  /// **'체결'**
+  String get adminContractStatusExecuted;
+
+  /// No description provided for @adminContractStatusExpiring.
+  ///
+  /// In ko, this message translates to:
+  /// **'만료 임박'**
+  String get adminContractStatusExpiring;
+
+  /// No description provided for @adminVaultUpload.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF 올리기'**
+  String get adminVaultUpload;
+
+  /// No description provided for @adminVaultSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너에게 발송'**
+  String get adminVaultSend;
+
+  /// No description provided for @adminVaultVoid.
+  ///
+  /// In ko, this message translates to:
+  /// **'폐기'**
+  String get adminVaultVoid;
+
+  /// No description provided for @adminVaultDownload.
+  ///
+  /// In ko, this message translates to:
+  /// **'체결본 받기'**
+  String get adminVaultDownload;
+
+  /// No description provided for @adminVaultPickShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴파트너를 선택하세요'**
+  String get adminVaultPickShop;
+
+  /// No description provided for @adminVaultTitleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'문서 제목'**
+  String get adminVaultTitleHint;
+
+  /// No description provided for @adminVaultVersionHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'버전'**
+  String get adminVaultVersionHint;
+
+  /// No description provided for @adminVaultKindMaster.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본계약'**
+  String get adminVaultKindMaster;
+
+  /// No description provided for @adminVaultKindAnnex.
+  ///
+  /// In ko, this message translates to:
+  /// **'부속 약정서'**
+  String get adminVaultKindAnnex;
+
+  /// No description provided for @adminVaultEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파트너 서류함이 비어 있어요.'**
+  String get adminVaultEmpty;
+
+  /// No description provided for @partnerVaultTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'서류함'**
+  String get partnerVaultTitle;
+
+  /// No description provided for @partnerVaultAwaiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명 대기'**
+  String get partnerVaultAwaiting;
+
+  /// No description provided for @partnerVaultExecuted.
+  ///
+  /// In ko, this message translates to:
+  /// **'체결'**
+  String get partnerVaultExecuted;
+
+  /// No description provided for @partnerVaultEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'도착한 계약 서류가 없어요.'**
+  String get partnerVaultEmpty;
+
+  /// No description provided for @partnerVaultOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'열람·서명'**
+  String get partnerVaultOpen;
+
+  /// No description provided for @partnerVaultSign.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명하여 체결'**
+  String get partnerVaultSign;
+
+  /// No description provided for @partnerVaultRevision.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정 요청'**
+  String get partnerVaultRevision;
+
+  /// No description provided for @partnerVaultRevisionHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'수정이 필요한 내용을 적어 주세요'**
+  String get partnerVaultRevisionHint;
+
+  /// No description provided for @partnerVaultShaMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일이 바뀌었습니다. 서명을 중단했어요. 운영팀에 문의해 주세요.'**
+  String get partnerVaultShaMismatch;
+
+  /// No description provided for @partnerVaultAckView.
+  ///
+  /// In ko, this message translates to:
+  /// **'문서를 열람했습니다'**
+  String get partnerVaultAckView;
+
+  /// No description provided for @partnerVaultAgree.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 내용에 동의합니다'**
+  String get partnerVaultAgree;
+
+  /// No description provided for @partnerVaultSignerName.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명자 이름'**
+  String get partnerVaultSignerName;
+
+  /// No description provided for @partnerVaultSignature.
+  ///
+  /// In ko, this message translates to:
+  /// **'손글씨 서명'**
+  String get partnerVaultSignature;
+
+  /// No description provided for @partnerVaultDownload.
+  ///
+  /// In ko, this message translates to:
+  /// **'원본·서명 정보 받기'**
+  String get partnerVaultDownload;
 
   /// No description provided for @adminMetricMembers.
   ///
