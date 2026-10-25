@@ -2192,6 +2192,7 @@
   "adminStatsSeasonHint": "Bookings by month",
   "adminStatsGathering": "Still collecting",
   "adminStatsCountry": "Country",
+  "adminStatsCountryUnknown": "Not set",
   "adminStatsReturn": "Returning",
   "adminStatsBuyerNote": "Returning uses the current lifetime purchase count.",
   "adminStatsGradeUnknown": "No grade",

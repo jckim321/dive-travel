@@ -5511,6 +5511,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminStatsCountry => 'Country';
 
   @override
+  String get adminStatsCountryUnknown => 'Not set';
+
+  @override
   String get adminStatsReturn => 'Returning';
 
   @override

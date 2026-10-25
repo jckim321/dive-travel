@@ -5355,6 +5355,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminStatsCountry => '국가';
 
   @override
+  String get adminStatsCountryUnknown => '미입력';
+
+  @override
   String get adminStatsReturn => '재구매';
 
   @override

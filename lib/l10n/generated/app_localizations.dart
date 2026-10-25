@@ -10146,6 +10146,12 @@ abstract class AppLocalizations {
   /// **'국가'**
   String get adminStatsCountry;
 
+  /// No description provided for @adminStatsCountryUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'미입력'**
+  String get adminStatsCountryUnknown;
+
   /// No description provided for @adminStatsReturn.
   ///
   /// In ko, this message translates to:

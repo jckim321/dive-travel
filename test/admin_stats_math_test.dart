@@ -113,5 +113,54 @@ void main() {
     expect(snap.options, isEmpty);
     expect(snap.topOption, isNull);
     expect(snap.sales.totals.net, 0);
+    expect(snap.countries, isEmpty);
+  });
+
+  test('uid가 없거나 회원 문서가 없으면 미입력이고 합계는 접수 건수와 같다', () {
+    final window = adminStatsWindow(preset: AdminStatsPreset.thisMonth, now: now);
+    final bookings = [
+      booking(id: 'kr', createdAt: DateTime(2026, 10, 2), price: 50000, uid: 'u-kr'),
+      booking(id: 'blank', createdAt: DateTime(2026, 10, 3), price: 20000, uid: 'u-blank'),
+      booking(id: 'no-uid', createdAt: DateTime(2026, 10, 4), price: 10000, uid: ''),
+      booking(id: 'gone', createdAt: DateTime(2026, 10, 5), price: 30000, uid: 'missing'),
+      booking(
+        id: 'outside',
+        createdAt: DateTime(2026, 9, 1),
+        price: 99999,
+        uid: 'u-kr',
+      ),
+    ];
+    final snap = buildAdminStatsSnapshot(
+      bookings: bookings,
+      window: window,
+      now: now,
+      catalog: const [],
+      members: const [
+        MemberAccount(
+          uid: 'u-kr',
+          email: 'kr@b.c',
+          displayName: '한국',
+          grade: MemberGrade.silver,
+          nationality: 'KR',
+        ),
+        MemberAccount(
+          uid: 'u-blank',
+          email: 'x@b.c',
+          displayName: '빈칸',
+          grade: MemberGrade.silver,
+        ),
+      ],
+      shops: const [],
+      applications: const [],
+    );
+    final inWindow = bookings.where((item) => window.contains(item.createdAt));
+    final count = snap.countries.fold<int>(0, (sum, row) => sum + row.count);
+    final net = snap.countries.fold<int>(0, (sum, row) => sum + row.net);
+    expect(count, inWindow.length);
+    expect(net, snap.sales.totals.net);
+    expect(snap.countries.map((row) => row.code), ['', 'KR']);
+    final unknown = snap.countries.firstWhere((row) => row.code.isEmpty);
+    expect(unknown.count, 3);
+    expect(snap.countries.firstWhere((row) => row.code == 'KR').count, 1);
   });
 }

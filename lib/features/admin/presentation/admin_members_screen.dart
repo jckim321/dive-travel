@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -358,6 +359,12 @@ class _MemberCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ],
+            const SizedBox(height: 4),
+            Text(
+              '${l10n.profileNationality} · ${member.nationality.isEmpty ? l10n.profileNationalityEmpty : nationalityNameKo(member.nationality)}',
+              key: Key('admin-member-nationality-${member.uid}'),
+              style: theme.textTheme.bodySmall,
+            ),
             if (member.email.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(member.email, style: theme.textTheme.bodySmall),

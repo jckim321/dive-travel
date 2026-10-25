@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
@@ -240,13 +241,24 @@ Widget _who(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
         const SizedBox(height: 8),
         Text(
           l10n.adminStatsCountry,
+          key: const Key('admin-stats-country'),
           style: const TextStyle(color: AdminConsoleTheme.muted),
         ),
-        Text(
-          l10n.adminStatsGathering,
-          key: const Key('admin-stats-country'),
-          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
-        ),
+        if (snapshot == null || snapshot.countries.isEmpty)
+          Text(
+            l10n.adminStatsGathering,
+            key: const Key('admin-stats-country-empty'),
+            style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
+          )
+        else
+          for (final row in snapshot.countries)
+            Text(
+              '${row.code.isEmpty ? l10n.adminStatsCountryUnknown : nationalityNameKo(row.code)}  ${row.count} · ${row.net}',
+              key: Key(
+                'admin-stats-country-${row.code.isEmpty ? 'unknown' : row.code}',
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
       ],
     ),
   );

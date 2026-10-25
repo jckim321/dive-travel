@@ -2789,6 +2789,7 @@
   "adminStatsSeasonHint": "월별 예약 수",
   "adminStatsGathering": "데이터 모으는 중",
   "adminStatsCountry": "국가",
+  "adminStatsCountryUnknown": "미입력",
   "adminStatsReturn": "재구매",
   "adminStatsBuyerNote": "재구매는 지금 누적 구매 수로 구분합니다.",
   "adminStatsGradeUnknown": "등급 없음",

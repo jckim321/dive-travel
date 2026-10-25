@@ -208,6 +208,7 @@ class MemberAccount {
     this.gradeLocked = false,
     this.createdAt,
     this.lastSeenAt,
+    this.nationality = '',
   });
 
   final String uid;
@@ -227,6 +228,7 @@ class MemberAccount {
   final bool gradeLocked;
   final DateTime? createdAt;
   final DateTime? lastSeenAt;
+  final String nationality;
 
   MemberGrade get suggestedGrade => MemberGrade.fromActivity(
         paidPurchases: paidPurchaseCount,
@@ -244,6 +246,7 @@ class MemberAccount {
     bool? gradeLocked,
     DateTime? createdAt,
     DateTime? lastSeenAt,
+    String? nationality,
     bool clearOwnedShopId = false,
   }) {
     return MemberAccount(
@@ -264,6 +267,7 @@ class MemberAccount {
       gradeLocked: gradeLocked ?? this.gradeLocked,
       createdAt: createdAt ?? this.createdAt,
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      nationality: nationality ?? this.nationality,
     );
   }
 }

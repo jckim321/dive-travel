@@ -2441,6 +2441,8 @@ class FirestoreDiverRepository implements DiverRepository {
       gradeLocked: data['member_grade_locked'] == true,
       createdAt: createdAt,
       lastSeenAt: lastSeenAt,
+      nationality: normalizeNationalityCode(data['nationality'] as String?) ??
+          '',
     );
   }
 

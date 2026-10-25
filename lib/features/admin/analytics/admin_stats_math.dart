@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -41,6 +42,7 @@ class AdminStatsSnapshot {
     required this.diveStarCounts,
     required this.leadCounts,
     required this.seasonCounts,
+    required this.countries,
   });
 
   final AdminSalesWindow window;
@@ -61,6 +63,20 @@ class AdminStatsSnapshot {
   final Map<PartnerDiveStarMilestoneStep, int> diveStarCounts;
   final List<int> leadCounts;
   final List<int> seasonCounts;
+  final List<AdminCountryRow> countries;
+}
+
+class AdminCountryRow {
+  const AdminCountryRow({
+    required this.code,
+    required this.count,
+    required this.net,
+  });
+
+  /// Empty when the booking has no uid, no member document, or no nationality.
+  final String code;
+  final int count;
+  final int net;
 }
 
 AdminSalesWindow adminStatsWindow({
@@ -168,10 +184,17 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
   var buyerUnknown = 0;
   final optionCounts = <String, int>{};
   final lead = List<int>.filled(6, 0);
+  final countryAcc = <String, _CountryAcc>{};
   for (final booking in bookings) {
     if (!window.contains(booking.createdAt)) {
       continue;
     }
+    final country = countryAcc.putIfAbsent(
+      _countryCode(booking, membersByUid),
+      _CountryAcc.new,
+    );
+    country.count++;
+    country.net += _countryNet(booking);
     lead[_leadBucket(booking)]++;
     final member = membersByUid[booking.uid];
     if (member == null) {
@@ -291,11 +314,62 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
     diveStarCounts: dive,
     leadCounts: lead,
     seasonCounts: season,
+    countries: _countryRows(countryAcc),
   );
+}
+
+String _countryCode(
+  TourBooking booking,
+  Map<String, MemberAccount> membersByUid,
+) {
+  final uid = booking.uid.trim();
+  if (uid.isEmpty) {
+    return '';
+  }
+  final member = membersByUid[uid];
+  if (member == null) {
+    return '';
+  }
+  return normalizeNationalityCode(member.nationality) ?? '';
+}
+
+/// Same paid-minus-refund amount the sales snapshot uses for one booking.
+int _countryNet(TourBooking booking) {
+  if (!adminSalesWasPaid(booking)) {
+    return 0;
+  }
+  var net = booking.price;
+  if (adminSalesIsCancelled(booking)) {
+    net -= booking.refundAmount;
+  }
+  return net;
+}
+
+List<AdminCountryRow> _countryRows(Map<String, _CountryAcc> acc) {
+  final rows = [
+    for (final entry in acc.entries)
+      AdminCountryRow(
+        code: entry.key,
+        count: entry.value.count,
+        net: entry.value.net,
+      ),
+  ]..sort((a, b) {
+      final byCount = b.count.compareTo(a.count);
+      if (byCount != 0) {
+        return byCount;
+      }
+      return b.net.compareTo(a.net);
+    });
+  return rows;
 }
 
 class _CancelAcc {
   int count = 0;
   String label = '';
   String shopName = '';
+}
+
+class _CountryAcc {
+  int count = 0;
+  int net = 0;
 }
