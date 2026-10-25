@@ -108,7 +108,7 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-pin-submit')));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
+    expect(find.text(l10n.adminHqTitle), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-shops')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-settlement')), findsOneWidget);
@@ -132,6 +132,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('admin-pin-field')), findsNothing);
-    expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
+    expect(find.text(l10n.adminHqTitle), findsOneWidget);
   });
 }
