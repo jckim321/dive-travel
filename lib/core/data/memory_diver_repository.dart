@@ -114,6 +114,9 @@ class MemoryDiverRepository implements DiverRepository {
   final _contractTerms = <String, PartnerContractTerms>{};
   final _contractTermRevisions = <String, List<PartnerContractTermRevision>>{};
   final _promotions = <String, List<PartnerPromotion>>{};
+  int promotionReadCount = 0;
+  PartnerContractListQuery? lastPartnerContractListQuery;
+  DiveStarApplicationListQuery? lastDiveStarApplicationListQuery;
   int _contractSequence = 0;
   int _contractTermRevisionSequence = 0;
   int _promotionSequence = 0;
@@ -2175,10 +2178,28 @@ class MemoryDiverRepository implements DiverRepository {
     _partnerContractFiles[fileUrl] = List<int>.from(bytes);
   }
 
+  /// Test helper: insert a vault document without a write/read round trip.
+  void seedPartnerContract(PartnerContract contract) {
+    _contractsFor(contract.shopId).add(contract);
+  }
+
   @override
-  Future<List<PartnerContract>> listPartnerContracts(String shopId) async {
-    final list = List<PartnerContract>.from(_contractsFor(shopId));
-    list.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+  Future<List<PartnerContract>> listPartnerContracts(
+    String shopId, {
+    bool forPartner = false,
+  }) async {
+    final spec = partnerContractListQuery(forPartner: forPartner);
+    lastPartnerContractListQuery = spec;
+    var list = List<PartnerContract>.from(_contractsFor(shopId));
+    if (spec.statusIn.isNotEmpty) {
+      list = [
+        for (final doc in list)
+          if (spec.statusIn.contains(doc.status.firestoreValue)) doc,
+      ];
+    }
+    if (spec.orderByUploadedAt) {
+      list.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+    }
     return list;
   }
 
@@ -2261,6 +2282,7 @@ class MemoryDiverRepository implements DiverRepository {
     String shopId, {
     int limit = 20,
   }) async {
+    promotionReadCount++;
     final rows = List<PartnerPromotion>.from(_promotions[shopId] ?? const []);
     rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     if (rows.length > limit) {
@@ -2714,6 +2736,10 @@ class MemoryDiverRepository implements DiverRepository {
     String? partnerUid,
     int limit = 50,
   }) async {
+    lastDiveStarApplicationListQuery = DiveStarApplicationListQuery(
+      shopId: shopId,
+      partnerUid: partnerUid,
+    );
     var list = List<DiveStarApplication>.from(_applications);
     if (partnerUid != null && partnerUid.isNotEmpty) {
       list = [for (final a in list) if (a.partnerUid == partnerUid) a];

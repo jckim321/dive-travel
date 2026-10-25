@@ -189,3 +189,11 @@ class PartnerEmailOutboxItem {
 
   bool get isPending => status == 'pending';
 }
+
+/// What a list call asked for. Partner home must set [partnerUid] only.
+class DiveStarApplicationListQuery {
+  const DiveStarApplicationListQuery({this.shopId, this.partnerUid});
+
+  final String? shopId;
+  final String? partnerUid;
+}

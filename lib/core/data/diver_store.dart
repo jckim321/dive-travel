@@ -1425,8 +1425,11 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  Future<List<PartnerContract>> listPartnerContracts(String shopId) {
-    return _repository.listPartnerContracts(shopId);
+  Future<List<PartnerContract>> listPartnerContracts(
+    String shopId, {
+    bool forPartner = false,
+  }) {
+    return _repository.listPartnerContracts(shopId, forPartner: forPartner);
   }
 
   Future<PartnerContract?> getPartnerContract({

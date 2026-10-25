@@ -296,7 +296,11 @@ abstract class DiverRepository {
   });
 
   /// H6: per-shop contract vault (no collectionGroup).
-  Future<List<PartnerContract>> listPartnerContracts(String shopId);
+  /// [forPartner] limits status to awaiting/executed and skips orderBy.
+  Future<List<PartnerContract>> listPartnerContracts(
+    String shopId, {
+    bool forPartner = false,
+  });
 
   Future<PartnerContract?> getPartnerContract({
     required String shopId,

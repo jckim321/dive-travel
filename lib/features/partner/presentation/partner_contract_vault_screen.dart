@@ -45,7 +45,9 @@ class _PartnerContractVaultScreenState
       _error = null;
     });
     try {
-      final all = await store.listPartnerContracts(widget.shopId);
+      final all = sortPartnerContractsByUploadedAt(
+        await store.listPartnerContracts(widget.shopId, forPartner: true),
+      );
       final visible = [
         for (final d in all)
           if (d.status != PartnerContractStatus.drafting &&

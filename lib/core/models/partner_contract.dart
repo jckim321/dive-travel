@@ -47,6 +47,48 @@ enum PartnerContractStatus {
       this == PartnerContractStatus.voided;
 }
 
+/// Statuses a partner list query may request. Drafts and voided stay out
+/// so the query matches the read rule without an orderBy index.
+const List<String> partnerVisibleContractStatuses = [
+  'awaiting_signature',
+  'executed',
+];
+
+class PartnerContractListQuery {
+  const PartnerContractListQuery({
+    required this.forPartner,
+    required this.statusIn,
+    required this.orderByUploadedAt,
+  });
+
+  final bool forPartner;
+  final List<String> statusIn;
+  final bool orderByUploadedAt;
+}
+
+PartnerContractListQuery partnerContractListQuery({required bool forPartner}) {
+  if (forPartner) {
+    return const PartnerContractListQuery(
+      forPartner: true,
+      statusIn: partnerVisibleContractStatuses,
+      orderByUploadedAt: false,
+    );
+  }
+  return const PartnerContractListQuery(
+    forPartner: false,
+    statusIn: [],
+    orderByUploadedAt: true,
+  );
+}
+
+List<PartnerContract> sortPartnerContractsByUploadedAt(
+  List<PartnerContract> docs,
+) {
+  final copy = List<PartnerContract>.from(docs);
+  copy.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+  return copy;
+}
+
 enum PartnerContractEventType {
   uploaded,
   sent,

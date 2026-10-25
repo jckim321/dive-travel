@@ -38,11 +38,17 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
     }
     final store = DiverStoreScope.of(context);
     final shopId = store.partnerOwnedShopId;
+    final uid = store.uid?.trim() ?? '';
     try {
-      final list = await store.listDiveStarApplications(shopId: shopId);
+      final list = uid.isEmpty
+          ? const <DiveStarApplication>[]
+          : await store.listDiveStarApplications(partnerUid: uid);
       var badge = 0;
       try {
-        final contracts = await store.listPartnerContracts(shopId);
+        final contracts = await store.listPartnerContracts(
+          shopId,
+          forPartner: true,
+        );
         badge = store.partnerContractAwaitingCount(contracts);
       } catch (_) {
         badge = 0;

@@ -3050,18 +3050,30 @@ class FirestoreDiverRepository implements DiverRepository {
       note: note,
     );
     final ref = _promotions(shopId).doc();
+    final dayStart = DateTime(startsOn.year, startsOn.month, startsOn.day);
+    final dayEnd = DateTime(endsOn.year, endsOn.month, endsOn.day);
+    final trimmed = note.trim();
     await ref.set({
       'shop_id': shopId,
       'kind': kind,
-      'starts_on': DateTime(startsOn.year, startsOn.month, startsOn.day),
-      'ends_on': DateTime(endsOn.year, endsOn.month, endsOn.day),
-      'note': note.trim(),
+      'starts_on': dayStart,
+      'ends_on': dayEnd,
+      'note': trimmed,
       'status': PartnerPromotionStatus.incoming.firestoreValue,
       'created_at': FieldValue.serverTimestamp(),
       'created_by_uid': partnerUid,
     });
-    final snap = await ref.get();
-    return PartnerPromotion.fromMap(ref.id, snap.data() ?? {});
+    return PartnerPromotion(
+      id: ref.id,
+      shopId: shopId,
+      kind: kind,
+      startsOn: dayStart,
+      endsOn: dayEnd,
+      note: trimmed,
+      status: PartnerPromotionStatus.incoming,
+      createdAt: DateTime.now().toUtc(),
+      createdByUid: partnerUid,
+    );
   }
 
   @override
@@ -3104,10 +3116,19 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<List<PartnerContract>> listPartnerContracts(String shopId) async {
-    final snap = await _partnerContracts(shopId)
-        .orderBy('uploaded_at', descending: true)
-        .get();
+  Future<List<PartnerContract>> listPartnerContracts(
+    String shopId, {
+    bool forPartner = false,
+  }) async {
+    final spec = partnerContractListQuery(forPartner: forPartner);
+    Query<Map<String, dynamic>> query = _partnerContracts(shopId);
+    if (spec.statusIn.isNotEmpty) {
+      query = query.where('status', whereIn: spec.statusIn);
+    }
+    if (spec.orderByUploadedAt) {
+      query = query.orderBy('uploaded_at', descending: true);
+    }
+    final snap = await query.get();
     return [
       for (final doc in snap.docs)
         PartnerContract.fromDocument(doc.id, doc.data()),
