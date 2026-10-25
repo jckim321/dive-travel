@@ -452,6 +452,58 @@ service cloud.firestore {
       }
     }
 
+    // M1 partner applications. One document per applicant uid.
+    // Does not change users privileges.
+    match /partner_applications/{applicationId} {
+      allow get: if isAdmin()
+        || (isSignedIn() && request.auth.uid == applicationId);
+      allow list: if isAdmin();
+
+      allow create: if isSignedIn()
+        && !isAdmin()
+        && !isBusiness()
+        && request.auth.uid == applicationId
+        && request.resource.data.keys().hasOnly([
+          'applicant_uid', 'login_id', 'shop_name', 'contact_name',
+          'phone', 'region', 'intro', 'link', 'consent',
+          'status', 'created_at'
+        ])
+        && request.resource.data.applicant_uid == request.auth.uid
+        && request.resource.data.login_id is string
+        && request.resource.data.login_id.size() > 0
+        && request.resource.data.login_id.size() <= 80
+        && request.resource.data.shop_name is string
+        && request.resource.data.shop_name.size() > 0
+        && request.resource.data.shop_name.size() <= 80
+        && request.resource.data.contact_name is string
+        && request.resource.data.contact_name.size() > 0
+        && request.resource.data.contact_name.size() <= 40
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 40
+        && request.resource.data.region is string
+        && request.resource.data.region.size() > 0
+        && request.resource.data.region.size() <= 40
+        && request.resource.data.intro is string
+        && request.resource.data.intro.size() > 0
+        && request.resource.data.intro.size() <= 80
+        && request.resource.data.link is string
+        && request.resource.data.link.size() <= 200
+        && request.resource.data.consent == true
+        && request.resource.data.status == 'new'
+        && request.resource.data.created_at == request.time;
+
+      allow update: if isAdmin()
+        && resource.data.status == 'new'
+        && request.resource.data.status == 'handled'
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'handled_at', 'handled_by_uid'])
+        && request.resource.data.handled_at == request.time
+        && request.resource.data.handled_by_uid == request.auth.uid;
+
+      allow delete: if false;
+    }
+
     // Versioned audit forms (gates, areas, thresholds) — admin only.
     match /dive_star_forms/{formId} {
       allow read, write: if isAdmin();

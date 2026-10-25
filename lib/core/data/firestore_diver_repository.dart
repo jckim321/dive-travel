@@ -25,6 +25,7 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
@@ -3087,6 +3088,73 @@ class FirestoreDiverRepository implements DiverRepository {
       'handled_at': FieldValue.serverTimestamp(),
       'handled_by_uid': adminUid,
     });
+  }
+
+  DocumentReference<Map<String, dynamic>> _partnerApplication(String uid) =>
+      _db.collection('partner_applications').doc(uid);
+
+  @override
+  Future<PartnerApplication?> getPartnerApplication(String applicantUid) async {
+    final snap = await _partnerApplication(applicantUid).get();
+    if (!snap.exists) {
+      return null;
+    }
+    return PartnerApplication.fromMap(snap.id, snap.data() ?? {});
+  }
+
+  @override
+  Future<PartnerApplication> createPartnerApplication({
+    required String applicantUid,
+    required String loginId,
+    required String shopName,
+    required String contactName,
+    required String phone,
+    required String region,
+    required String intro,
+    required String link,
+    required bool consent,
+  }) async {
+    validatePartnerApplication(
+      shopName: shopName,
+      contactName: contactName,
+      phone: phone,
+      region: region,
+      intro: intro,
+      link: link,
+      consent: consent,
+    );
+    final login = loginId.trim();
+    if (login.isEmpty || login.length > PartnerApplicationLimits.login) {
+      throw const PartnerApplicationInvalid('login');
+    }
+    final ref = _partnerApplication(applicantUid);
+    final trimmedLink = link.trim();
+    await ref.set({
+      'applicant_uid': applicantUid,
+      'login_id': login,
+      'shop_name': shopName.trim(),
+      'contact_name': contactName.trim(),
+      'phone': phone.trim(),
+      'region': region.trim(),
+      'intro': intro.trim(),
+      'link': trimmedLink,
+      'consent': true,
+      'status': PartnerApplicationStatus.incoming.firestoreValue,
+      'created_at': FieldValue.serverTimestamp(),
+    });
+    return PartnerApplication(
+      applicantUid: applicantUid,
+      loginId: login,
+      shopName: shopName.trim(),
+      contactName: contactName.trim(),
+      phone: phone.trim(),
+      region: region.trim(),
+      intro: intro.trim(),
+      link: trimmedLink,
+      consent: true,
+      status: PartnerApplicationStatus.incoming,
+      createdAt: DateTime.now().toUtc(),
+    );
   }
 
   CollectionReference<Map<String, dynamic>> _partnerContracts(String shopId) =>

@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -348,6 +349,22 @@ abstract class DiverRepository {
     required String shopId,
     required String proposalId,
     required String adminUid,
+  });
+
+  /// Own document only. Null when this person has not applied.
+  Future<PartnerApplication?> getPartnerApplication(String applicantUid);
+
+  /// Creates `partner_applications/{applicantUid}`. Does not read it back.
+  Future<PartnerApplication> createPartnerApplication({
+    required String applicantUid,
+    required String loginId,
+    required String shopName,
+    required String contactName,
+    required String phone,
+    required String region,
+    required String intro,
+    required String link,
+    required bool consent,
   });
 
   Future<PartnerContract> createPartnerContractDraft({

@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -114,7 +115,9 @@ class MemoryDiverRepository implements DiverRepository {
   final _contractTerms = <String, PartnerContractTerms>{};
   final _contractTermRevisions = <String, List<PartnerContractTermRevision>>{};
   final _promotions = <String, List<PartnerPromotion>>{};
+  final _partnerApplications = <String, PartnerApplication>{};
   int promotionReadCount = 0;
+  int applicationReadCount = 0;
   PartnerContractListQuery? lastPartnerContractListQuery;
   DiveStarApplicationListQuery? lastDiveStarApplicationListQuery;
   int _contractSequence = 0;
@@ -2352,6 +2355,57 @@ class MemoryDiverRepository implements DiverRepository {
       handledAt: DateTime.now().toUtc(),
       handledByUid: adminUid,
     );
+  }
+
+  @override
+  Future<PartnerApplication?> getPartnerApplication(String applicantUid) async {
+    applicationReadCount++;
+    return _partnerApplications[applicantUid];
+  }
+
+  @override
+  Future<PartnerApplication> createPartnerApplication({
+    required String applicantUid,
+    required String loginId,
+    required String shopName,
+    required String contactName,
+    required String phone,
+    required String region,
+    required String intro,
+    required String link,
+    required bool consent,
+  }) async {
+    validatePartnerApplication(
+      shopName: shopName,
+      contactName: contactName,
+      phone: phone,
+      region: region,
+      intro: intro,
+      link: link,
+      consent: consent,
+    );
+    final login = loginId.trim();
+    if (login.isEmpty || login.length > PartnerApplicationLimits.login) {
+      throw const PartnerApplicationInvalid('login');
+    }
+    if (_partnerApplications.containsKey(applicantUid)) {
+      throw StateError('already');
+    }
+    final created = PartnerApplication(
+      applicantUid: applicantUid,
+      loginId: login,
+      shopName: shopName.trim(),
+      contactName: contactName.trim(),
+      phone: phone.trim(),
+      region: region.trim(),
+      intro: intro.trim(),
+      link: link.trim(),
+      consent: true,
+      status: PartnerApplicationStatus.incoming,
+      createdAt: DateTime.now().toUtc(),
+    );
+    _partnerApplications[applicantUid] = created;
+    return created;
   }
 
   @override

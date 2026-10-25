@@ -5444,6 +5444,48 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminReportPrinting => 'PDF를 준비하고 있습니다.';
 
   @override
+  String get partnerApplyTitle => '제휴 신청';
+
+  @override
+  String get partnerApplyShop => '리조트·샵 이름';
+
+  @override
+  String get partnerApplyContact => '담당자 이름';
+
+  @override
+  String get partnerApplyPhone => '연락처';
+
+  @override
+  String get partnerApplyRegion => '지역';
+
+  @override
+  String get partnerApplyIntro => '한 줄 소개';
+
+  @override
+  String get partnerApplyLink => '홈페이지/SNS (선택)';
+
+  @override
+  String get partnerApplyConsent => '개인정보 수집·이용에 동의합니다';
+
+  @override
+  String get partnerApplySend => '신청 보내기';
+
+  @override
+  String get partnerApplySent => '신청이 접수됐어요';
+
+  @override
+  String get partnerApplyCopy => '복사';
+
+  @override
+  String get partnerApplyBadField => '칸을 채워 주세요';
+
+  @override
+  String get partnerApplyBadLink => '링크는 200자 안으로 적어 주세요';
+
+  @override
+  String get partnerApplyNeedConsent => '동의한 뒤에 보낼 수 있어요';
+
+  @override
   String refundPolicyHint(int percent) {
     return '今キャンセルすると返金 $percent%';
   }

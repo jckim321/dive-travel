@@ -5600,6 +5600,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminReportPrinting => 'Preparing the PDF.';
 
   @override
+  String get partnerApplyTitle => 'Apply to partner';
+
+  @override
+  String get partnerApplyShop => 'Resort or shop name';
+
+  @override
+  String get partnerApplyContact => 'Contact name';
+
+  @override
+  String get partnerApplyPhone => 'Phone';
+
+  @override
+  String get partnerApplyRegion => 'Region';
+
+  @override
+  String get partnerApplyIntro => 'One-line intro';
+
+  @override
+  String get partnerApplyLink => 'Website or social link (optional)';
+
+  @override
+  String get partnerApplyConsent => 'I agree to the privacy notice';
+
+  @override
+  String get partnerApplySend => 'Send application';
+
+  @override
+  String get partnerApplySent => 'Application received';
+
+  @override
+  String get partnerApplyCopy => 'Copy';
+
+  @override
+  String get partnerApplyBadField => 'Please fill in the fields';
+
+  @override
+  String get partnerApplyBadLink => 'Keep the link within 200 characters';
+
+  @override
+  String get partnerApplyNeedConsent => 'Agree before sending';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }

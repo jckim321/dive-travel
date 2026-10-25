@@ -10320,6 +10320,90 @@ abstract class AppLocalizations {
   /// **'PDF를 준비하고 있습니다.'**
   String get adminReportPrinting;
 
+  /// No description provided for @partnerApplyTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 신청'**
+  String get partnerApplyTitle;
+
+  /// No description provided for @partnerApplyShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트·샵 이름'**
+  String get partnerApplyShop;
+
+  /// No description provided for @partnerApplyContact.
+  ///
+  /// In ko, this message translates to:
+  /// **'담당자 이름'**
+  String get partnerApplyContact;
+
+  /// No description provided for @partnerApplyPhone.
+  ///
+  /// In ko, this message translates to:
+  /// **'연락처'**
+  String get partnerApplyPhone;
+
+  /// No description provided for @partnerApplyRegion.
+  ///
+  /// In ko, this message translates to:
+  /// **'지역'**
+  String get partnerApplyRegion;
+
+  /// No description provided for @partnerApplyIntro.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 소개'**
+  String get partnerApplyIntro;
+
+  /// No description provided for @partnerApplyLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈페이지/SNS (선택)'**
+  String get partnerApplyLink;
+
+  /// No description provided for @partnerApplyConsent.
+  ///
+  /// In ko, this message translates to:
+  /// **'개인정보 수집·이용에 동의합니다'**
+  String get partnerApplyConsent;
+
+  /// No description provided for @partnerApplySend.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청 보내기'**
+  String get partnerApplySend;
+
+  /// No description provided for @partnerApplySent.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청이 접수됐어요'**
+  String get partnerApplySent;
+
+  /// No description provided for @partnerApplyCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get partnerApplyCopy;
+
+  /// No description provided for @partnerApplyBadField.
+  ///
+  /// In ko, this message translates to:
+  /// **'칸을 채워 주세요'**
+  String get partnerApplyBadField;
+
+  /// No description provided for @partnerApplyBadLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크는 200자 안으로 적어 주세요'**
+  String get partnerApplyBadLink;
+
+  /// No description provided for @partnerApplyNeedConsent.
+  ///
+  /// In ko, this message translates to:
+  /// **'동의한 뒤에 보낼 수 있어요'**
+  String get partnerApplyNeedConsent;
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:

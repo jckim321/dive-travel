@@ -23,6 +23,8 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/auth/auth_identity.dart';
+import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
@@ -1395,6 +1397,46 @@ class DiverStore extends ChangeNotifier {
       startsOn: startsOn,
       endsOn: endsOn,
       note: note,
+    );
+  }
+
+  Future<PartnerApplication?> myPartnerApplication() {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return Future.value(null);
+    }
+    return _repository.getPartnerApplication(uid);
+  }
+
+  Future<PartnerApplication> submitPartnerApplication({
+    required String shopName,
+    required String contactName,
+    required String phone,
+    required String region,
+    required String intro,
+    required String link,
+    required bool consent,
+  }) {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    if (_stats.isAdmin || _stats.isBusiness) {
+      throw StateError('not allowed');
+    }
+    final fromEmail = AuthIdentity.loginIdFromAuthEmail(_email);
+    final email = (_email ?? '').trim();
+    final login = (fromEmail ?? (email.isEmpty ? uid : email)).trim();
+    return _repository.createPartnerApplication(
+      applicantUid: uid,
+      loginId: login,
+      shopName: shopName,
+      contactName: contactName,
+      phone: phone,
+      region: region,
+      intro: intro,
+      link: link,
+      consent: consent,
     );
   }
 
