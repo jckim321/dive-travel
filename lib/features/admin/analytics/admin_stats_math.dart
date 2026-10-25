@@ -3,6 +3,7 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 
@@ -35,6 +36,8 @@ class AdminStatsSnapshot {
     required this.returnBuyers,
     required this.buyerUnknown,
     required this.options,
+    required this.optionGroups,
+    required this.optionGroupsKnown,
     required this.topOption,
     required this.cancelByMonth,
     required this.monthLabels,
@@ -56,6 +59,8 @@ class AdminStatsSnapshot {
   final int returnBuyers;
   final int buyerUnknown;
   final List<AdminOptionPick> options;
+  final List<AdminOptionGroupLine> optionGroups;
+  final bool optionGroupsKnown;
   final String? topOption;
   final List<int> cancelByMonth;
   final List<String> monthLabels;
@@ -155,6 +160,7 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
   required List<MemberAccount> members,
   required List<AdminShopGrade> shops,
   required List<DiveStarApplication> applications,
+  List<AdminListedOption> optionCatalog = const [],
 }) {
   final compare = adminSalesCompareWindow(
     window: window,
@@ -182,7 +188,6 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
   var fresh = 0;
   var returning = 0;
   var buyerUnknown = 0;
-  final optionCounts = <String, int>{};
   final lead = List<int>.filled(6, 0);
   final countryAcc = <String, _CountryAcc>{};
   for (final booking in bookings) {
@@ -215,22 +220,16 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
         fresh++;
       }
     }
-    final raw = booking.optionName.trim();
-    if (raw.isEmpty) {
-      continue;
-    }
-    for (final part in raw.split('·')) {
-      final name = part.trim();
-      if (name.isEmpty) {
-        continue;
-      }
-      optionCounts[name] = (optionCounts[name] ?? 0) + 1;
-    }
   }
+  final optionTally = countAdminOptionGroups(
+    bookings: bookings,
+    window: window,
+    catalog: optionCatalog,
+  );
   final options = [
-    for (final entry in optionCounts.entries)
-      AdminOptionPick(name: entry.key, count: entry.value),
-  ]..sort((a, b) => b.count.compareTo(a.count));
+    for (final row in optionTally.names)
+      AdminOptionPick(name: row.name, count: row.count),
+  ];
   final topOptions = options.length > 6 ? options.sublist(0, 6) : options;
 
   final months = <DateTime>[
@@ -311,6 +310,8 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
     returnBuyers: returning,
     buyerUnknown: buyerUnknown,
     options: topOptions,
+    optionGroups: optionTally.lines,
+    optionGroupsKnown: optionTally.hasKnownGroup,
     topOption: topOptions.isEmpty ? null : topOptions.first.name,
     cancelByMonth: cancelByMonth,
     monthLabels: [for (final month in months) '${month.month}'],

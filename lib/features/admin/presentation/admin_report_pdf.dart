@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_report_math.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -66,8 +67,10 @@ Future<Uint8List> buildAdminReportPdf(
                 pw.Text('${option.name}  ${option.count}'),
               if (document.topOption != null)
                 pw.Text('${l10n.adminStatsMost}: ${document.topOption}'),
+              for (final line in reportOptionGroupTexts(document.optionGroups))
+                pw.Text(line),
             ],
-            pw.Text(l10n.adminStatsOptionsHint),
+            if (!document.optionGroupsKnown) pw.Text(l10n.adminStatsOptionsHint),
             pw.SizedBox(height: 10),
           ],
           if (document.showCancels) ...[

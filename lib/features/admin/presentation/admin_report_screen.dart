@@ -4,6 +4,7 @@ import 'package:printing/printing.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_report_math.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
@@ -121,6 +122,18 @@ class _AdminReportScreenState extends State<AdminReportScreen> {
               category: product.category,
             ),
       ];
+      final optionCatalog = <AdminListedOption>[
+        for (final stats in store.shopStats)
+          for (final product in stats.products)
+            for (final option in product.options)
+              AdminListedOption(
+                shopId: stats.shopId,
+                productId: product.id,
+                optionId: option.id,
+                name: option.name,
+                group: option.group,
+              ),
+      ];
       final label =
           '${DateFormat('yyyy-MM-dd').format(window.start)} ~ ${DateFormat('yyyy-MM-dd').format(window.end.subtract(const Duration(days: 1)))}';
       setState(() {
@@ -142,6 +155,7 @@ class _AdminReportScreenState extends State<AdminReportScreen> {
           showBasis: _showBasis,
           basisText: l10n.adminReportBasisBody,
           fontLicense: l10n.adminReportFontLicense,
+          optionCatalog: optionCatalog,
         );
         _busy = false;
       });
@@ -468,8 +482,10 @@ class _ReportPage extends StatelessWidget {
                   Text('${option.name}  ${option.count}'),
                 if (document.topOption != null)
                   Text('${l10n.adminStatsMost}: ${document.topOption}'),
+                for (final line in reportOptionGroupTexts(document.optionGroups))
+                  Text(line),
               ],
-              Text(l10n.adminStatsOptionsHint),
+              if (!document.optionGroupsKnown) Text(l10n.adminStatsOptionsHint),
               const SizedBox(height: 10),
             ],
             if (document.showCancels) ...[

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/constants/nationality.dart';
+import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_stats_math.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
@@ -58,6 +60,18 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
               category: product.category,
             ),
       ];
+      final optionCatalog = <AdminListedOption>[
+        for (final stats in store.shopStats)
+          for (final product in stats.products)
+            for (final option in product.options)
+              AdminListedOption(
+                shopId: stats.shopId,
+                productId: product.id,
+                optionId: option.id,
+                name: option.name,
+                group: option.group,
+              ),
+      ];
       setState(() {
         _snapshot = buildAdminStatsSnapshot(
           bookings: bookings,
@@ -70,6 +84,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
               AdminShopGrade(shopId: stats.shopId, diveStar: stats.diveStar),
           ],
           applications: applications,
+          optionCatalog: optionCatalog,
         );
         _loading = false;
       });
@@ -264,6 +279,31 @@ Widget _who(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
   );
 }
 
+List<Widget> _optionGroupLines(List<AdminOptionGroupLine> lines, int max) {
+  final widgets = <Widget>[];
+  String? current;
+  for (final line in lines) {
+    if (line.group != current) {
+      current = line.group;
+      final key = line.group.isEmpty ? 'unknown' : line.group;
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            optionGroupNameKo(line.group),
+            key: Key('admin-stats-option-group-$key'),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    widgets.add(
+      _hBar(line.name, line.count, max, AdminConsoleTheme.amber),
+    );
+  }
+  return widgets;
+}
+
 int _buyerMax(AdminStatsSnapshot? snapshot) {
   final a = snapshot?.newBuyers ?? 0;
   final b = snapshot?.returnBuyers ?? 0;
@@ -318,13 +358,18 @@ Widget _what(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
               '${l10n.adminStatsMost}: ${snapshot!.topOption}',
               key: const Key('admin-stats-top-option'),
             ),
+          ..._optionGroupLines(
+            snapshot?.optionGroups ?? const [],
+            maxOption,
+          ),
         ],
         const SizedBox(height: 4),
-        Text(
-          l10n.adminStatsOptionsHint,
-          key: const Key('admin-stats-options-hint'),
-          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
-        ),
+        if (snapshot?.optionGroupsKnown != true)
+          Text(
+            l10n.adminStatsOptionsHint,
+            key: const Key('admin-stats-options-hint'),
+            style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
+          ),
       ],
     ),
   );

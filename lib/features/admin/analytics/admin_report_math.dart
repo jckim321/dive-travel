@@ -1,4 +1,5 @@
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
 
 enum AdminReportPeriod { month, quarter, year, custom }
@@ -18,6 +19,8 @@ class AdminReportDocument {
     required this.showCancels,
     required this.showBasis,
     required this.options,
+    required this.optionGroups,
+    required this.optionGroupsKnown,
     required this.topOption,
     required this.optionsApply,
     required this.basisText,
@@ -35,6 +38,8 @@ class AdminReportDocument {
   final bool showCancels;
   final bool showBasis;
   final List<({String name, int count})> options;
+  final List<AdminOptionGroupLine> optionGroups;
+  final bool optionGroupsKnown;
   final String? topOption;
 
   /// True only when the reader picked exactly one product.
@@ -94,31 +99,17 @@ AdminSalesWindow adminReportCompareWindow({
 List<({String name, int count})> adminReportOptionPicks({
   required List<TourBooking> bookings,
   required AdminSalesWindow window,
+  List<AdminListedOption> catalog = const [],
 }) {
-  final counts = <String, int>{};
-  for (final booking in bookings) {
-    if (!window.contains(booking.createdAt)) {
-      continue;
-    }
-    final raw = booking.optionName.trim();
-    if (raw.isEmpty) {
-      continue;
-    }
-    for (final part in raw.split('·')) {
-      final name = part.trim();
-      if (name.isEmpty) {
-        continue;
-      }
-      counts[name] = (counts[name] ?? 0) + 1;
-    }
+  final names = countAdminOptionGroups(
+    bookings: bookings,
+    window: window,
+    catalog: catalog,
+  ).names;
+  if (names.length > 8) {
+    return names.sublist(0, 8);
   }
-  final rows = [
-    for (final entry in counts.entries) (name: entry.key, count: entry.value),
-  ]..sort((a, b) => b.count.compareTo(a.count));
-  if (rows.length > 8) {
-    return rows.sublist(0, 8);
-  }
-  return rows;
+  return names;
 }
 
 AdminReportDocument buildAdminReportDocument({
@@ -139,6 +130,7 @@ AdminReportDocument buildAdminReportDocument({
   required bool showBasis,
   required String basisText,
   required String fontLicense,
+  List<AdminListedOption> optionCatalog = const [],
 }) {
   final byProduct = adminCatalogByProduct(catalog);
   final byName = adminCatalogByName(catalog);
@@ -172,8 +164,15 @@ AdminReportDocument buildAdminReportDocument({
     guard++;
   }
   final optionsApply = productKeys.length == 1;
+  final tally = optionsApply
+      ? countAdminOptionGroups(
+          bookings: filtered,
+          window: window,
+          catalog: optionCatalog,
+        )
+      : const AdminOptionGroupTally(names: [], lines: []);
   final options = optionsApply
-      ? adminReportOptionPicks(bookings: filtered, window: window)
+      ? (tally.names.length > 8 ? tally.names.sublist(0, 8) : tally.names)
       : const <({String name, int count})>[];
   return AdminReportDocument(
     periodLabel: periodLabel,
@@ -187,6 +186,8 @@ AdminReportDocument buildAdminReportDocument({
     showCancels: showCancels,
     showBasis: showBasis,
     options: options,
+    optionGroups: tally.lines,
+    optionGroupsKnown: tally.hasKnownGroup,
     topOption: options.isEmpty ? null : options.first.name,
     optionsApply: optionsApply,
     basisText: basisText,
