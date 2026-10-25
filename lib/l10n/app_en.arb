@@ -1663,6 +1663,7 @@
   "partnerSettlementRefunds": "Refunds",
   "partnerSettlementNet": "Net sales",
   "partnerSettlementFeePending": "Contract terms coming soon",
+  "partnerSettlementRateMissing": "Commission rate not set",
   "partnerSettlementListTitle": "Bookings",
   "partnerSettlementEmpty": "No paid bookings received this month",
 

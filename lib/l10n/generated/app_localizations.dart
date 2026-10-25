@@ -7656,6 +7656,12 @@ abstract class AppLocalizations {
   /// **'계약 조건 연동 예정'**
   String get partnerSettlementFeePending;
 
+  /// No description provided for @partnerSettlementRateMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'수수료율 미입력'**
+  String get partnerSettlementRateMissing;
+
   /// No description provided for @partnerSettlementListTitle.
   ///
   /// In ko, this message translates to:

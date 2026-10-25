@@ -4054,6 +4054,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerSettlementFeePending => '계약 조건 연동 예정';
 
   @override
+  String get partnerSettlementRateMissing => '수수료율 미입력';
+
+  @override
   String get partnerSettlementListTitle => '예약 내역';
 
   @override

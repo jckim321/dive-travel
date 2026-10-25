@@ -25,6 +25,8 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
 
   late int _year;
   late int _month;
+  double? _ratePercent;
+  var _rateReady = false;
 
   @override
   void initState() {
@@ -32,6 +34,19 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
     final now = DateTime.now();
     _year = now.year;
     _month = now.month;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadRate());
+  }
+
+  Future<void> _loadRate() async {
+    final terms = await DiverStoreScope.of(context)
+        .getPartnerContractTerms(widget.shopId);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _ratePercent = terms?.commissionRatePercent;
+      _rateReady = true;
+    });
   }
 
   void _shiftMonth(int delta) {
@@ -82,6 +97,10 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
               bookings: store.shopBookings,
               year: _year,
               month: _month,
+            );
+            final fee = PartnerSettlementFee(
+              netSales: summary.netSales,
+              ratePercent: _rateReady ? _ratePercent : null,
             );
 
             return ListView(
@@ -145,11 +164,13 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
                         const Divider(height: 20, color: PartnerTheme.border),
                         _metricRow(
                           l10n.partnerFee,
-                          l10n.partnerSettlementFeePending,
+                          _feeText(l10n, fee.fee),
+                          key: const Key('partner-settlement-fee'),
                         ),
                         _metricRow(
                           l10n.partnerNet,
-                          l10n.partnerSettlementFeePending,
+                          _feeText(l10n, fee.payout),
+                          key: const Key('partner-settlement-payout'),
                         ),
                       ],
                     ),
@@ -214,8 +235,24 @@ class _PartnerSettlementScreenState extends State<PartnerSettlementScreen> {
     );
   }
 
-  Widget _metricRow(String label, String value, {bool emphasize = false}) {
+  String _feeText(AppLocalizations l10n, int? amount) {
+    if (!_rateReady) {
+      return l10n.partnerSettlementFeePending;
+    }
+    if (amount == null) {
+      return l10n.partnerSettlementRateMissing;
+    }
+    return '₩${_money.format(amount)}';
+  }
+
+  Widget _metricRow(
+    String label,
+    String value, {
+    bool emphasize = false,
+    Key? key,
+  }) {
     return Padding(
+      key: key,
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [

@@ -4158,6 +4158,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerSettlementFeePending => 'Contract terms coming soon';
 
   @override
+  String get partnerSettlementRateMissing => 'Commission rate not set';
+
+  @override
   String get partnerSettlementListTitle => 'Bookings';
 
   @override

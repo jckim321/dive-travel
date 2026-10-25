@@ -129,6 +129,19 @@ void main() {
       expect(feb.rows, isEmpty);
     });
 
+    test('fee is 12 percent of net and a missing rate does not compute', () {
+      final charged = const PartnerSettlementFee(
+        netSales: 100000,
+        ratePercent: 12,
+      );
+      expect(charged.fee, 12000);
+      expect(charged.payout, 88000);
+      final missing = const PartnerSettlementFee(netSales: 100000);
+      expect(missing.hasRate, isFalse);
+      expect(missing.fee, isNull);
+      expect(missing.payout, isNull);
+    });
+
     test('empty month is zeros', () {
       final sum = computePartnerSettlementMonth(
         bookings: const [],

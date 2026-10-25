@@ -2231,6 +2231,7 @@
   "partnerSettlementRefunds": "환불 금액",
   "partnerSettlementNet": "순매출",
   "partnerSettlementFeePending": "계약 조건 연동 예정",
+  "partnerSettlementRateMissing": "수수료율 미입력",
   "partnerSettlementListTitle": "예약 내역",
   "partnerSettlementEmpty": "이 달에 접수된 결제 완료 예약이 없어요",
 

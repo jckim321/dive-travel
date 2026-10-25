@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_overview_pane.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_sales_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_settlement_history_pane.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_stats_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_report_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
@@ -676,10 +677,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.settlement:
         return switch (_settlementSub) {
           _SettlementSub.pricing => const AdminPricingScreen(embedded: true),
-          _SettlementSub.historySoon => _AdminComingSoonPane(
-            title: l10n.adminSettlementSubHistory,
-            body: l10n.adminContractsComingSoon,
-          ),
+          _SettlementSub.historySoon => const AdminSettlementHistoryPane(),
         };
       case _AdminHub.sales:
         return AdminSalesScreen(

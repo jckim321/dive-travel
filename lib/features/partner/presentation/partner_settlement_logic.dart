@@ -33,6 +33,32 @@ class PartnerSettlementMonth {
   int get netSales => grossPaid - refundTotal;
 }
 
+/// Fee and payout from an existing net. A missing rate does not invent a fee.
+class PartnerSettlementFee {
+  const PartnerSettlementFee({required this.netSales, this.ratePercent});
+
+  final int netSales;
+  final double? ratePercent;
+
+  bool get hasRate => ratePercent != null;
+
+  int? get fee {
+    final rate = ratePercent;
+    if (rate == null) {
+      return null;
+    }
+    return (netSales * rate / 100).round();
+  }
+
+  int? get payout {
+    final charged = fee;
+    if (charged == null) {
+      return null;
+    }
+    return netSales - charged;
+  }
+}
+
 bool _wasPaid(TourBooking b) {
   return b.paymentStatus == PaymentStatus.captured ||
       b.paymentStatus == PaymentStatus.refunded;
