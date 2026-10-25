@@ -33,6 +33,7 @@ abstract class DiverRepository {
     required String password,
     String? displayName,
     String? loginId,
+    String? nationality,
   });
 
   Future<void> signOut();
@@ -40,7 +41,18 @@ abstract class DiverRepository {
   Future<void> sendPasswordReset(String email);
 
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
-  Future<void> ensureUserDocument(AppUser user, {String? loginId});
+  /// [nationality]가 있으면 nationality와 nationality_consent_at을 같이 씁니다.
+  Future<void> ensureUserDocument(
+    AppUser user, {
+    String? loginId,
+    String? nationality,
+  });
+
+  /// Saves a country code and the consent time together.
+  Future<void> setNationality({required String uid, required String code});
+
+  /// Removes nationality and nationality_consent_at together.
+  Future<void> clearNationality(String uid);
 
   /// Admin: promote member to partner (is_business + owned_shop_id + history).
   Future<void> promoteMemberToPartner({

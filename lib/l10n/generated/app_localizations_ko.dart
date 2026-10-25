@@ -1187,6 +1187,27 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authSignup => '회원가입';
 
   @override
+  String get authNationality => '국적(선택)';
+
+  @override
+  String get authNationalityNone => '선택 안 함';
+
+  @override
+  String get profileNationality => '국적';
+
+  @override
+  String get profileNationalityEmpty => '미입력';
+
+  @override
+  String get profileNationalitySave => '저장';
+
+  @override
+  String get profileNationalityClear => '지우기';
+
+  @override
+  String get profileNationalityNeedConsent => '국적을 저장하려면 동의가 필요해요';
+
+  @override
   String get authWelcome =>
       '아이디와 비밀번호로 가입하면 로그·같은배·예약을 바로 쓸 수 있습니다. 제휴 파트너는 관리자가 승격합니다.';
 

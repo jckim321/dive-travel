@@ -2298,6 +2298,48 @@ abstract class AppLocalizations {
   /// **'회원가입'**
   String get authSignup;
 
+  /// No description provided for @authNationality.
+  ///
+  /// In ko, this message translates to:
+  /// **'국적(선택)'**
+  String get authNationality;
+
+  /// No description provided for @authNationalityNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택 안 함'**
+  String get authNationalityNone;
+
+  /// No description provided for @profileNationality.
+  ///
+  /// In ko, this message translates to:
+  /// **'국적'**
+  String get profileNationality;
+
+  /// No description provided for @profileNationalityEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'미입력'**
+  String get profileNationalityEmpty;
+
+  /// No description provided for @profileNationalitySave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get profileNationalitySave;
+
+  /// No description provided for @profileNationalityClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get profileNationalityClear;
+
+  /// No description provided for @profileNationalityNeedConsent.
+  ///
+  /// In ko, this message translates to:
+  /// **'국적을 저장하려면 동의가 필요해요'**
+  String get profileNationalityNeedConsent;
+
   /// No description provided for @authWelcome.
   ///
   /// In ko, this message translates to:

@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/features/profile/presentation/nationality_field.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -17,6 +19,8 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   bool _isSignUp = false;
+  String? _nationality;
+  var _nationalityConsent = false;
   String? _error;
   String? _info;
 
@@ -61,12 +65,17 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() => _error = l10n.authErrorDisplayNameRequired);
         return;
       }
+      if (_nationality != null && !_nationalityConsent) {
+        setState(() => _error = l10n.profileNationalityNeedConsent);
+        return;
+      }
       try {
         await session.signUp(
           email: AuthIdentity.toAuthEmail(id),
           password: password,
           displayName: name,
           loginId: id,
+          nationality: _nationality,
         );
       } catch (error) {
         _handleAuthError(error);
@@ -189,6 +198,32 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          if (_isSignUp) ...[
+            NationalityField(
+              key: ValueKey('auth-nationality-${_nationality ?? ''}'),
+              fieldKey: const Key('auth-nationality'),
+              value: _nationality,
+              onChanged: (code) => setState(() {
+                _nationality = code;
+                if (code == null) {
+                  _nationalityConsent = false;
+                }
+              }),
+            ),
+            if (_nationality != null) ...[
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                key: const Key('auth-nationality-consent'),
+                contentPadding: EdgeInsets.zero,
+                value: _nationalityConsent,
+                onChanged: (value) => setState(
+                  () => _nationalityConsent = value ?? false,
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text(nationalityConsentKo),
+              ),
+            ],
+          ],
           TextField(
             key: const Key('auth-password'),
             controller: _passwordController,
@@ -234,6 +269,8 @@ class _AuthScreenState extends State<AuthScreen> {
           TextButton(
             onPressed: () => setState(() {
               _isSignUp = !_isSignUp;
+              _nationality = null;
+              _nationalityConsent = false;
               _error = null;
               _info = null;
             }),

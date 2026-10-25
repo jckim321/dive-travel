@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
@@ -93,6 +94,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required String password,
     String? displayName,
     String? loginId,
+    String? nationality,
   }) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -107,6 +109,7 @@ class FirestoreDiverRepository implements DiverRepository {
       email: email,
       displayName: displayName,
       loginId: loginId,
+      nationality: nationality,
     );
   }
 
@@ -115,6 +118,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required String email,
     required String? displayName,
     String? loginId,
+    String? nationality,
   }) async {
     final name = AppOwner.resolveDisplayName(
       email: user.email ?? email,
@@ -126,6 +130,7 @@ class FirestoreDiverRepository implements DiverRepository {
     await ensureUserDocument(
       AppUser(uid: refreshed.uid, email: refreshed.email, displayName: name),
       loginId: loginId,
+      nationality: nationality,
     );
   }
 
@@ -935,7 +940,11 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> ensureUserDocument(AppUser user, {String? loginId}) async {
+  Future<void> ensureUserDocument(
+    AppUser user, {
+    String? loginId,
+    String? nationality,
+  }) async {
     final ref = _userDoc(user.uid);
     final snapshot = await ref.get().timeout(const Duration(seconds: 8));
     final existingName = snapshot.data()?['display_name'] as String?;
@@ -953,6 +962,11 @@ class FirestoreDiverRepository implements DiverRepository {
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty) {
       payload['login_id'] = id;
+    }
+    final country = normalizeNationalityCode(nationality);
+    if (country != null) {
+      payload['nationality'] = country;
+      payload['nationality_consent_at'] = FieldValue.serverTimestamp();
     }
     // Do not auto-write is_admin / is_business here. Roles come from the
     // Firestore document (and owner-only session overlay for testing).
@@ -975,6 +989,31 @@ class FirestoreDiverRepository implements DiverRepository {
       payload['member_grade'] = MemberGrade.silver.firestoreValue;
     }
     await ref.set(payload, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setNationality({
+    required String uid,
+    required String code,
+  }) async {
+    final country = normalizeNationalityCode(code);
+    if (country == null) {
+      throw StateError('nationality');
+    }
+    await _userDoc(uid).set({
+      'nationality': country,
+      'nationality_consent_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> clearNationality(String uid) {
+    return _userDoc(uid).set({
+      'nationality': FieldValue.delete(),
+      'nationality_consent_at': FieldValue.delete(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   @override

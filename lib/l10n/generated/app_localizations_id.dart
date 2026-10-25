@@ -1197,6 +1197,27 @@ class AppLocalizationsId extends AppLocalizations {
   String get authSignup => 'Daftar';
 
   @override
+  String get authNationality => '국적(선택)';
+
+  @override
+  String get authNationalityNone => '선택 안 함';
+
+  @override
+  String get profileNationality => '국적';
+
+  @override
+  String get profileNationalityEmpty => '미입력';
+
+  @override
+  String get profileNationalitySave => '저장';
+
+  @override
+  String get profileNationalityClear => '지우기';
+
+  @override
+  String get profileNationalityNeedConsent => '국적을 저장하려면 동의가 필요해요';
+
+  @override
   String get authWelcome =>
       'Setelah daftar, log, Same Tide, dan booking bisa dipakai. Admin menyesuaikan tingkat sesuai aktivitas.';
 

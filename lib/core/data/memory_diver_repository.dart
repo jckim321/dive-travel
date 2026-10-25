@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
@@ -257,6 +258,7 @@ class MemoryDiverRepository implements DiverRepository {
     required String password,
     String? displayName,
     String? loginId,
+    String? nationality,
   }) async {
     await signIn(email: email, password: password);
     if (displayName != null && displayName.trim().isNotEmpty && _user != null) {
@@ -271,7 +273,11 @@ class MemoryDiverRepository implements DiverRepository {
     if (id.isNotEmpty && _user != null) {
       _loginIds[_user!.uid] = id;
     }
-    await ensureUserDocument(_user!, loginId: loginId);
+    await ensureUserDocument(
+      _user!,
+      loginId: loginId,
+      nationality: nationality,
+    );
   }
 
   @override
@@ -590,11 +596,23 @@ class MemoryDiverRepository implements DiverRepository {
     );
   }
 
+  String _nationality = '';
+  DateTime? _nationalityConsentAt;
+
   @override
-  Future<void> ensureUserDocument(AppUser user, {String? loginId}) async {
+  Future<void> ensureUserDocument(
+    AppUser user, {
+    String? loginId,
+    String? nationality,
+  }) async {
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty) {
       _loginIds[user.uid] = id;
+    }
+    final country = normalizeNationalityCode(nationality);
+    if (country != null) {
+      _nationality = country;
+      _nationalityConsentAt = DateTime.now().toUtc();
     }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
@@ -606,6 +624,53 @@ class MemoryDiverRepository implements DiverRepository {
       isBusiness: _resolvedBusiness,
       ownedShopId: _ownedShopId,
       memberGrade: _memberGrade,
+      nationality: _nationality,
+      nationalityConsentAt: _nationalityConsentAt,
+    );
+    _diverController.add(_snapshot);
+  }
+
+  @override
+  Future<void> setNationality({
+    required String uid,
+    required String code,
+  }) async {
+    if (_user?.uid != uid) {
+      throw StateError('Sign in required');
+    }
+    final country = normalizeNationalityCode(code);
+    if (country == null) {
+      throw StateError('nationality');
+    }
+    _nationality = country;
+    _nationalityConsentAt = DateTime.now().toUtc();
+    _snapshot = DiverSnapshot(
+      stats: _snapshot.stats.copyWith(
+        nationality: _nationality,
+        nationalityConsentAt: _nationalityConsentAt,
+      ),
+      regions: _snapshot.regions,
+      logs: _snapshot.logs,
+      favoriteShopIds: _snapshot.favoriteShopIds,
+    );
+    _diverController.add(_snapshot);
+  }
+
+  @override
+  Future<void> clearNationality(String uid) async {
+    if (_user?.uid != uid) {
+      throw StateError('Sign in required');
+    }
+    _nationality = '';
+    _nationalityConsentAt = null;
+    _snapshot = DiverSnapshot(
+      stats: _snapshot.stats.copyWith(
+        nationality: '',
+        clearNationalityConsentAt: true,
+      ),
+      regions: _snapshot.regions,
+      logs: _snapshot.logs,
+      favoriteShopIds: _snapshot.favoriteShopIds,
     );
     _diverController.add(_snapshot);
   }

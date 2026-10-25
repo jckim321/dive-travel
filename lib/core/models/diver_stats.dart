@@ -17,6 +17,8 @@ class DiverStats {
     this.gradeLocked = false,
     this.gradeCelebrationPending = false,
     this.gradeCelebrationTo,
+    this.nationality = '',
+    this.nationalityConsentAt,
   });
 
   final String displayName;
@@ -33,6 +35,8 @@ class DiverStats {
   final bool gradeLocked;
   final bool gradeCelebrationPending;
   final MemberGrade? gradeCelebrationTo;
+  final String nationality;
+  final DateTime? nationalityConsentAt;
 
   bool get isVerifiedPro => proStatus == ProVerificationStatus.approved;
   bool get isProPending => proStatus == ProVerificationStatus.pending;
@@ -112,7 +116,10 @@ class DiverStats {
     bool? gradeLocked,
     bool? gradeCelebrationPending,
     MemberGrade? gradeCelebrationTo,
+    String? nationality,
+    DateTime? nationalityConsentAt,
     bool clearCelebrationTo = false,
+    bool clearNationalityConsentAt = false,
     bool clearOwnedShopId = false,
   }) {
     return DiverStats(
@@ -135,6 +142,10 @@ class DiverStats {
       gradeCelebrationTo: clearCelebrationTo
           ? null
           : (gradeCelebrationTo ?? this.gradeCelebrationTo),
+      nationality: nationality ?? this.nationality,
+      nationalityConsentAt: clearNationalityConsentAt
+          ? null
+          : (nationalityConsentAt ?? this.nationalityConsentAt),
     );
   }
 }

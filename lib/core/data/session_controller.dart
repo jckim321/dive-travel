@@ -61,6 +61,7 @@ class SessionController extends ChangeNotifier {
     required String password,
     String? displayName,
     String? loginId,
+    String? nationality,
   }) {
     return _run(
       () => _repository.signUp(
@@ -68,6 +69,7 @@ class SessionController extends ChangeNotifier {
         password: password,
         displayName: displayName,
         loginId: loginId,
+        nationality: nationality,
       ),
     );
   }

@@ -899,6 +899,13 @@
     "description": "로그인 버튼입니다."
   },
   "authSignup": "회원가입",
+  "authNationality": "국적(선택)",
+  "authNationalityNone": "선택 안 함",
+  "profileNationality": "국적",
+  "profileNationalityEmpty": "미입력",
+  "profileNationalitySave": "저장",
+  "profileNationalityClear": "지우기",
+  "profileNationalityNeedConsent": "국적을 저장하려면 동의가 필요해요",
   "@authSignup": {
     "description": "회원가입 버튼입니다."
   },

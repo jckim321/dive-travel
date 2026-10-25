@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
@@ -7,6 +8,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
+import 'package:dive_travel_app/features/profile/presentation/nationality_field.dart';
 import 'package:dive_travel_app/features/profile/presentation/partner_application_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -60,6 +62,8 @@ class ProfileSettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              _NationalityCard(nationality: live.nationality),
               if (!live.isAdmin && !live.isBusiness) ...[
                 const SizedBox(height: 16),
                 _SettingsCard(
@@ -127,6 +131,170 @@ class ProfileSettingsScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _NationalityCard extends StatefulWidget {
+  const _NationalityCard({required this.nationality});
+
+  final String nationality;
+
+  @override
+  State<_NationalityCard> createState() => _NationalityCardState();
+}
+
+class _NationalityCardState extends State<_NationalityCard> {
+  String? _selected;
+  var _consent = false;
+  var _busy = false;
+  String? _notice;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = normalizeNationalityCode(widget.nationality);
+  }
+
+  @override
+  void didUpdateWidget(_NationalityCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.nationality != widget.nationality) {
+      _selected = normalizeNationalityCode(widget.nationality);
+      _consent = false;
+    }
+  }
+
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final code = _selected;
+    if (code == null || _busy) {
+      return;
+    }
+    if (!_consent) {
+      setState(() => _notice = l10n.profileNationalityNeedConsent);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _notice = null;
+    });
+    try {
+      await DiverStoreScope.of(context).setNationality(code);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _consent = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() => _notice = '$error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<void> _clear() async {
+    if (_busy || widget.nationality.isEmpty) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _notice = null;
+    });
+    try {
+      await DiverStoreScope.of(context).clearNationality();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _selected = null;
+        _consent = false;
+      });
+    } catch (error) {
+      if (mounted) {
+        setState(() => _notice = '$error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final saved = normalizeNationalityCode(widget.nationality);
+    return _SettingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.profileNationality,
+            key: const Key('profile-nationality'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            saved == null ? l10n.profileNationalityEmpty : nationalityNameKo(saved),
+            key: const Key('profile-nationality-current'),
+          ),
+          const SizedBox(height: 12),
+          NationalityField(
+            key: ValueKey('profile-nationality-${_selected ?? ''}'),
+            fieldKey: const Key('profile-nationality-field'),
+            value: _selected,
+            onChanged: (code) => setState(() {
+              _selected = code;
+              if (code == null) {
+                _consent = false;
+              }
+            }),
+          ),
+          if (_selected != null) ...[
+            CheckboxListTile(
+              key: const Key('profile-nationality-consent'),
+              contentPadding: EdgeInsets.zero,
+              value: _consent,
+              onChanged: _busy
+                  ? null
+                  : (value) => setState(() => _consent = value ?? false),
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text(nationalityConsentKo),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton(
+                key: const Key('profile-nationality-save'),
+                onPressed: _busy ? null : _save,
+                child: Text(l10n.profileNationalitySave),
+              ),
+            ),
+          ],
+          if (saved != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('profile-nationality-clear'),
+                onPressed: _busy ? null : _clear,
+                child: Text(l10n.profileNationalityClear),
+              ),
+            ),
+          ],
+          if (_notice != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _notice!,
+              key: const Key('profile-nationality-notice'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+        ],
       ),
     );
   }

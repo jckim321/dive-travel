@@ -1218,6 +1218,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignup => 'Sign up';
 
   @override
+  String get authNationality => 'Nationality (optional)';
+
+  @override
+  String get authNationalityNone => 'Skip';
+
+  @override
+  String get profileNationality => 'Nationality';
+
+  @override
+  String get profileNationalityEmpty => 'Not set';
+
+  @override
+  String get profileNationalitySave => 'Save';
+
+  @override
+  String get profileNationalityClear => 'Clear';
+
+  @override
+  String get profileNationalityNeedConsent =>
+      'Consent is required to save a nationality';
+
+  @override
   String get authWelcome =>
       'Sign up with a username and password to use logs, Same Tide, and bookings. Admins promote affiliate partners.';
 

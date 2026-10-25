@@ -1178,6 +1178,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignup => '注册';
 
   @override
+  String get authNationality => '국적(선택)';
+
+  @override
+  String get authNationalityNone => '선택 안 함';
+
+  @override
+  String get profileNationality => '국적';
+
+  @override
+  String get profileNationalityEmpty => '미입력';
+
+  @override
+  String get profileNationalitySave => '저장';
+
+  @override
+  String get profileNationalityClear => '지우기';
+
+  @override
+  String get profileNationalityNeedConsent => '국적을 저장하려면 동의가 필요해요';
+
+  @override
   String get authWelcome => '注册后即可使用日志、同船和预约。管理员会按活跃度调整等级。';
 
   @override

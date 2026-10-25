@@ -1400,6 +1400,22 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  Future<void> setNationality(String code) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    await _repository.setNationality(uid: uid, code: code);
+  }
+
+  Future<void> clearNationality() async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    await _repository.clearNationality(uid);
+  }
+
   Future<PartnerApplication?> myPartnerApplication() {
     final uid = _uid;
     if (uid == null || uid.isEmpty) {

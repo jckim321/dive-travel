@@ -1178,6 +1178,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authSignup => '新規登録';
 
   @override
+  String get authNationality => '국적(선택)';
+
+  @override
+  String get authNationalityNone => '선택 안 함';
+
+  @override
+  String get profileNationality => '국적';
+
+  @override
+  String get profileNationalityEmpty => '미입력';
+
+  @override
+  String get profileNationalitySave => '저장';
+
+  @override
+  String get profileNationalityClear => '지우기';
+
+  @override
+  String get profileNationalityNeedConsent => '국적을 저장하려면 동의가 필요해요';
+
+  @override
   String get authWelcome => '登録するとログ・同じ船・予約がすぐ使えます。等級は活動に応じて管理者が調整します。';
 
   @override

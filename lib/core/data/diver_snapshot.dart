@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -21,6 +22,8 @@ class DiverSnapshot {
     bool isBusiness = false,
     String? ownedShopId,
     MemberGrade memberGrade = MemberGrade.silver,
+    String nationality = '',
+    DateTime? nationalityConsentAt,
   }) {
     return DiverSnapshot(
       stats: DiverStats(
@@ -33,6 +36,8 @@ class DiverSnapshot {
         isBusiness: isBusiness,
         ownedShopId: ownedShopId,
         memberGrade: memberGrade,
+        nationality: nationality,
+        nationalityConsentAt: nationalityConsentAt,
       ),
       regions: const [],
       logs: const [],
@@ -72,6 +77,9 @@ class DiverSnapshot {
         isBusiness: _isBusinessOf(data),
         ownedShopId: data['owned_shop_id'] as String?,
         memberGrade: _memberGradeOf(data),
+        nationality: normalizeNationalityCode(data['nationality'] as String?) ??
+            '',
+        nationalityConsentAt: _readTime(data['nationality_consent_at']),
         logs: logs,
         favoriteShopIds: favoriteShopIds,
       );
@@ -98,6 +106,9 @@ class DiverSnapshot {
         gradeCelebrationTo: data['grade_celebration_to'] == null
             ? null
             : MemberGrade.parse(data['grade_celebration_to']),
+        nationality: normalizeNationalityCode(data['nationality'] as String?) ??
+            '',
+        nationalityConsentAt: _readTime(data['nationality_consent_at']),
       ),
       regions: regions,
       logs: logs,
@@ -115,6 +126,8 @@ class DiverSnapshot {
     bool isBusiness = false,
     String? ownedShopId,
     MemberGrade memberGrade = MemberGrade.silver,
+    String nationality = '',
+    DateTime? nationalityConsentAt,
     Set<String> favoriteShopIds = const {},
   }) {
     final grouped = <String, DiveRegion>{};
@@ -137,11 +150,30 @@ class DiverSnapshot {
         isBusiness: isBusiness,
         ownedShopId: ownedShopId,
         memberGrade: memberGrade,
+        nationality: nationality,
+        nationalityConsentAt: nationalityConsentAt,
       ),
       regions: regions,
       logs: logs,
       favoriteShopIds: favoriteShopIds,
     );
+  }
+
+  static DateTime? _readTime(dynamic value) {
+    if (value is DateTime) {
+      return value.toUtc();
+    }
+    if (value == null) {
+      return null;
+    }
+    try {
+      final dynamic clock = value;
+      final converted = clock.toDate();
+      if (converted is DateTime) {
+        return converted.toUtc();
+      }
+    } catch (_) {}
+    return null;
   }
 
   static MemberGrade _memberGradeOf(Map<String, dynamic> data) {
