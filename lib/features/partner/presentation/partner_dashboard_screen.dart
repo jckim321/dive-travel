@@ -97,7 +97,9 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                 children: [
                   _HomeHeader(
                     shopName: shopName,
-                    onShopInfo: () => _open(ResortDeskScreen(shopId: shopId)),
+                    onShopInfo: () => _open(
+                      ResortDeskScreen(shopId: shopId, partnerMode: true),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _QuickGrid(

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 
 const _kAmenityPresets = <String>[
@@ -186,22 +185,30 @@ class _NearbySpotDraft {
   }
 }
 
-InputDecoration _deskDeco({required String label, String? hint}) {
+InputDecoration _deskDeco(
+  BuildContext context, {
+  required String label,
+  String? hint,
+}) {
+  final scheme = Theme.of(context).colorScheme;
+  final dark = Theme.of(context).brightness == Brightness.dark;
   final border = OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
+    borderSide: BorderSide(
+      color: dark ? scheme.outline : const Color(0xFFBDBDBD),
+    ),
   );
   return InputDecoration(
     labelText: label,
     hintText: hint,
     floatingLabelBehavior: FloatingLabelBehavior.always,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: dark ? scheme.surface : Colors.white,
     border: border,
     enabledBorder: border,
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
+      borderSide: BorderSide(color: scheme.primary, width: 1.6),
     ),
   );
 }
@@ -231,7 +238,7 @@ class ResortDeskInfoSections extends StatelessWidget {
               TextField(
                 controller: draft.mapUrl,
                 maxLength: kMaxMapUrl,
-                decoration: _deskDeco(
+                decoration: _deskDeco(context, 
                   label: '구글·네이버·카카오 지도 링크',
                   hint: 'https://maps.google.com/...',
                 ),
@@ -241,7 +248,7 @@ class ResortDeskInfoSections extends StatelessWidget {
                 controller: draft.nearestHub,
                 maxLength: kMaxShortLine,
                 maxLines: 2,
-                decoration: _deskDeco(
+                decoration: _deskDeco(context, 
                   label: '가장 가까운 도시·공항',
                   hint: '예: 세부 막탄 공항에서 차량 1시간',
                 ),
@@ -257,7 +264,7 @@ class ResortDeskInfoSections extends StatelessWidget {
           child: Column(
             children: [
               for (var i = 0; i < draft.accessRoutes.length; i++) ...[
-                _accessCard(i),
+                _accessCard(context, i),
                 const SizedBox(height: 10),
               ],
               Align(
@@ -292,7 +299,7 @@ class ResortDeskInfoSections extends StatelessWidget {
                 controller: draft.featureBlurb,
                 maxLength: kMaxShortLine * 2,
                 maxLines: 3,
-                decoration: _deskDeco(
+                decoration: _deskDeco(context, 
                   label: '특징 소개',
                   hint: '소규모·하우스리프·한국어 안내 등',
                 ),
@@ -318,7 +325,7 @@ class ResortDeskInfoSections extends StatelessWidget {
                     child: TextField(
                       controller: draft.featureTagCustom,
                       maxLength: kMaxShortLine,
-                      decoration: _deskDeco(label: '태그 추가'),
+                      decoration: _deskDeco(context, label: '태그 추가'),
                       onSubmitted: (_) => _addFeatureTag(),
                     ),
                   ),
@@ -379,7 +386,7 @@ class ResortDeskInfoSections extends StatelessWidget {
                     child: TextField(
                       controller: draft.amenityCustom,
                       maxLength: kMaxShortLine,
-                      decoration: _deskDeco(label: '직접 추가'),
+                      decoration: _deskDeco(context, label: '직접 추가'),
                       onSubmitted: (_) => _addAmenity(),
                     ),
                   ),
@@ -400,7 +407,7 @@ class ResortDeskInfoSections extends StatelessWidget {
           child: Column(
             children: [
               for (var i = 0; i < draft.nearbySpots.length; i++) ...[
-                _spotCard(i),
+                _spotCard(context, i),
                 const SizedBox(height: 10),
               ],
               Align(
@@ -433,7 +440,7 @@ class ResortDeskInfoSections extends StatelessWidget {
               TextField(
                 controller: draft.localContact,
                 maxLength: kMaxShortLine,
-                decoration: _deskDeco(
+                decoration: _deskDeco(context, 
                   label: '현지 연락처 (저장만 · 상세 비공개)',
                   hint: '전화·WhatsApp 등',
                 ),
@@ -442,20 +449,20 @@ class ResortDeskInfoSections extends StatelessWidget {
               TextField(
                 controller: draft.checkIn,
                 maxLength: kMaxShortLine,
-                decoration: _deskDeco(label: '체크인', hint: '예: 14:00'),
+                decoration: _deskDeco(context, label: '체크인', hint: '예: 14:00'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: draft.checkOut,
                 maxLength: kMaxShortLine,
-                decoration: _deskDeco(label: '체크아웃', hint: '예: 11:00'),
+                decoration: _deskDeco(context, label: '체크아웃', hint: '예: 11:00'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: draft.businessHours,
                 maxLength: kMaxShortLine,
                 maxLines: 2,
-                decoration: _deskDeco(
+                decoration: _deskDeco(context, 
                   label: '영업시간',
                   hint: '예: 매일 08:00–18:00',
                 ),
@@ -497,7 +504,7 @@ class ResortDeskInfoSections extends StatelessWidget {
     onChanged();
   }
 
-  Widget _accessCard(int index) {
+  Widget _accessCard(BuildContext context, int index) {
     final route = draft.accessRoutes[index];
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -530,7 +537,7 @@ class ResortDeskInfoSections extends StatelessWidget {
             TextField(
               controller: route.from,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '출발지', hint: '예: 공항에서'),
+              decoration: _deskDeco(context, label: '출발지', hint: '예: 공항에서'),
               inputFormatters: [
                 LengthLimitingTextInputFormatter(kMaxShortLine),
               ],
@@ -559,20 +566,20 @@ class ResortDeskInfoSections extends StatelessWidget {
             TextField(
               controller: route.duration,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '걸리는 시간'),
+              decoration: _deskDeco(context, label: '걸리는 시간'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: route.cost,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '비용'),
+              decoration: _deskDeco(context, label: '비용'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: route.tips,
               maxLength: kMaxTipsBody,
               maxLines: 3,
-              decoration: _deskDeco(label: '자세한 안내와 팁'),
+              decoration: _deskDeco(context, label: '자세한 안내와 팁'),
             ),
           ],
         ),
@@ -580,7 +587,7 @@ class ResortDeskInfoSections extends StatelessWidget {
     );
   }
 
-  Widget _spotCard(int index) {
+  Widget _spotCard(BuildContext context, int index) {
     final spot = draft.nearbySpots[index];
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -612,19 +619,19 @@ class ResortDeskInfoSections extends StatelessWidget {
             TextField(
               controller: spot.name,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '장소 이름'),
+              decoration: _deskDeco(context, label: '장소 이름'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: spot.distance,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '리조트에서 거리'),
+              decoration: _deskDeco(context, label: '리조트에서 거리'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: spot.blurb,
               maxLength: kMaxShortLine,
-              decoration: _deskDeco(label: '한 줄 설명'),
+              decoration: _deskDeco(context, label: '한 줄 설명'),
             ),
           ],
         ),

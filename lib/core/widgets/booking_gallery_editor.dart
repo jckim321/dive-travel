@@ -453,27 +453,34 @@ class BookingFormSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stepRadius = borderRadius > 2 ? 6.0 : borderRadius;
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = dark ? scheme.surface : Colors.white;
+    final borderColor = dark ? scheme.outline : const Color(0xFFE7E7E7);
+    final dividerColor = dark ? scheme.outlineVariant : const Color(0xFFEEEEEE);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: const Color(0xFFE7E7E7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F0B1F33),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: borderColor),
+        boxShadow: dark
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Color(0x0F0B1F33),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Color(0xFFEEEEEE)),
+                bottom: BorderSide(color: dividerColor),
               ),
             ),
             child: Row(

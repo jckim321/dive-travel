@@ -2342,7 +2342,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => ResortDeskScreen(shopId: _shopId),
+                        builder: (_) => ResortDeskScreen(
+                          shopId: _shopId,
+                          partnerMode: true,
+                        ),
                       ),
                     );
                   },

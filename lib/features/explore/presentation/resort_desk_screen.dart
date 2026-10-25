@@ -18,14 +18,43 @@ import 'package:dive_travel_app/features/admin/presentation/admin_products_scree
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kMaxGallery = GalleryLimits.maxProductPhotos;
 
+class _DeskPalette {
+  const _DeskPalette(this.partnerMode);
+
+  final bool partnerMode;
+
+  Color get bg => partnerMode ? PartnerTheme.bg : AppTheme.canvas;
+  Color get surface => partnerMode ? PartnerTheme.card : Colors.white;
+  Color get primary => partnerMode ? PartnerTheme.accent : AppTheme.navy;
+  Color get onPrimary => partnerMode ? PartnerTheme.bg : Colors.white;
+  Color get muted => partnerMode ? PartnerTheme.textDim : AppTheme.muted;
+  Color get border =>
+      partnerMode ? PartnerTheme.border : const Color(0xFFE7E7E7);
+  Color get softFill =>
+      partnerMode ? PartnerTheme.bg : const Color(0xFFF7F9FB);
+  Color get softBorder =>
+      partnerMode ? PartnerTheme.border : const Color(0xFFE6EBEF);
+  Color get inputBorder =>
+      partnerMode ? PartnerTheme.borderStrong : const Color(0xFFBDBDBD);
+}
+
 class ResortDeskScreen extends StatefulWidget {
-  const ResortDeskScreen({super.key, required this.shopId});
+  const ResortDeskScreen({
+    super.key,
+    required this.shopId,
+    this.partnerMode = false,
+  });
 
   final String shopId;
+
+  /// Affiliate-partner stack: dark [PartnerTheme] chrome. Admin/explore stay light.
+  final bool partnerMode;
 
   @override
   State<ResortDeskScreen> createState() => _ResortDeskScreenState();
@@ -453,20 +482,32 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final palette = _DeskPalette(widget.partnerMode);
     final primary = _cachedPrimary ??
         _primaryProduct((_store ?? _storeRead(context)).liveStatsFor(widget.shopId));
 
-    return Scaffold(
-      backgroundColor: AppTheme.canvas,
+    final scaffold = Scaffold(
+      backgroundColor: palette.bg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: palette.surface,
+        foregroundColor: widget.partnerMode ? PartnerTheme.text : null,
         surfaceTintColor: Colors.transparent,
+        leading: widget.partnerMode ? const PartnerBackButton() : null,
         title: Text(l10n.exploreEditResort),
         actions: [
           TextButton.icon(
             onPressed: _openPreview,
-            icon: const Icon(Icons.visibility_outlined, size: 18),
-            label: const Text('미리보기'),
+            icon: Icon(
+              Icons.visibility_outlined,
+              size: 18,
+              color: widget.partnerMode ? PartnerTheme.accent : null,
+            ),
+            label: Text(
+              '미리보기',
+              style: TextStyle(
+                color: widget.partnerMode ? PartnerTheme.accent : null,
+              ),
+            ),
           ),
           const SizedBox(width: 4),
           Padding(
@@ -475,7 +516,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
               key: const Key('resort-save'),
               onPressed: _saving ? null : _saveProfile,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.navy,
+                backgroundColor: palette.primary,
+                foregroundColor: palette.onPrimary,
                 minimumSize: const Size(88, 40),
               ),
               child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
@@ -489,6 +531,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             builder: (context, constraints) {
               final wide = constraints.maxWidth >= 980;
               final main = _DeskMainColumn(
+                palette: palette,
                 hint: l10n.exploreDeskHint,
                 name: _name,
                 location: _location,
@@ -505,6 +548,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onOpenProductManagement: _openProductManagement,
               );
               final side = _DeskStickySidebar(
+                palette: palette,
                 saving: _saving,
                 onSave: _saveProfile,
                 onPreview: _openPreview,
@@ -553,7 +597,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             Center(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: const [
                     BoxShadow(
@@ -568,12 +612,15 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(color: AppTheme.navy),
+                      CircularProgressIndicator(color: palette.primary),
                       const SizedBox(height: 16),
                       Text(
                         l10n.exploreSaving,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
+                              color: widget.partnerMode
+                                  ? PartnerTheme.text
+                                  : null,
                             ),
                       ),
                     ],
@@ -585,29 +632,35 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         ],
       ),
     );
+
+    if (widget.partnerMode) {
+      return PartnerTheme.wrap(scaffold);
+    }
+    return scaffold;
   }
 }
 
 InputDecoration _deskInputDecoration({
+  required _DeskPalette palette,
   required String label,
   String? hint,
   bool required = false,
 }) {
   final border = OutlineInputBorder(
     borderRadius: BorderRadius.circular(4),
-    borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
+    borderSide: BorderSide(color: palette.inputBorder),
   );
   return InputDecoration(
     label: required ? _RequiredLabel(label) : Text(label),
     hintText: hint,
     filled: true,
-    fillColor: Colors.white,
+    fillColor: palette.surface,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: border,
     enabledBorder: border,
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(4),
-      borderSide: const BorderSide(color: AppTheme.navy, width: 1.6),
+      borderSide: BorderSide(color: palette.primary, width: 1.6),
     ),
   );
 }
@@ -638,11 +691,13 @@ class _RequiredLabel extends StatelessWidget {
 
 class _DeskStickySidebar extends StatelessWidget {
   const _DeskStickySidebar({
+    required this.palette,
     required this.saving,
     required this.onSave,
     required this.onPreview,
   });
 
+  final _DeskPalette palette;
   final bool saving;
   final VoidCallback onSave;
   final VoidCallback onPreview;
@@ -652,16 +707,18 @@ class _DeskStickySidebar extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE7E7E7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F0B1F33),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: palette.border),
+        boxShadow: palette.partnerMode
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Color(0x0F0B1F33),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
@@ -678,7 +735,8 @@ class _DeskStickySidebar extends StatelessWidget {
             FilledButton.icon(
               onPressed: saving ? null : onSave,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.navy,
+                backgroundColor: palette.primary,
+                foregroundColor: palette.onPrimary,
                 minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
@@ -692,8 +750,8 @@ class _DeskStickySidebar extends StatelessWidget {
               onPressed: onPreview,
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(44),
-                foregroundColor: AppTheme.navy,
-                side: const BorderSide(color: Color(0xFFBDBDBD)),
+                foregroundColor: palette.primary,
+                side: BorderSide(color: palette.inputBorder),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -714,7 +772,7 @@ class _DeskStickySidebar extends StatelessWidget {
             Text(
               '가격과 옵션은 상품 관리에서 수정하세요. 이 화면은 리조트 소개만 저장합니다.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.muted,
+                    color: palette.muted,
                     height: 1.35,
                   ),
             ),
@@ -727,6 +785,7 @@ class _DeskStickySidebar extends StatelessWidget {
 
 class _DeskMainColumn extends StatelessWidget {
   const _DeskMainColumn({
+    required this.palette,
     required this.hint,
     required this.name,
     required this.location,
@@ -743,6 +802,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.onOpenProductManagement,
   });
 
+  final _DeskPalette palette;
   final String hint;
   final TextEditingController name;
   final TextEditingController location;
@@ -767,7 +827,7 @@ class _DeskMainColumn extends StatelessWidget {
         Text(
           hint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.muted,
+                color: palette.muted,
               ),
         ),
         const SizedBox(height: 16),
@@ -780,6 +840,7 @@ class _DeskMainColumn extends StatelessWidget {
               TextField(
                 controller: name,
                 decoration: _deskInputDecoration(
+                  palette: palette,
                   label: l10n.partnerShopName,
                   required: true,
                 ),
@@ -788,6 +849,7 @@ class _DeskMainColumn extends StatelessWidget {
               TextField(
                 controller: location,
                 decoration: _deskInputDecoration(
+                  palette: palette,
                   label: l10n.partnerShopLocation,
                   required: true,
                 ),
@@ -796,6 +858,7 @@ class _DeskMainColumn extends StatelessWidget {
               TextField(
                 controller: address,
                 decoration: _deskInputDecoration(
+                  palette: palette,
                   label: l10n.exploreResortAddress,
                   hint: '국가·도시 예: 괌, 이집트 다합 (홈 지도는 로그 지역에 불이 켜집니다)',
                 ),
@@ -807,6 +870,7 @@ class _DeskMainColumn extends StatelessWidget {
                 maxLines: 5,
                 maxLength: kMaxIntroBody,
                 decoration: _deskInputDecoration(
+                  palette: palette,
                   label: l10n.exploreResortIntro,
                 ),
               ),
@@ -850,22 +914,25 @@ class _DeskMainColumn extends StatelessWidget {
             children: [
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9FB),
+                  color: palette.softFill,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE6EBEF)),
+                  border: Border.all(color: palette.softBorder),
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
                   child: Text(
                     '대표 상품명·가격 칸은 여기서 바꾸지 않습니다. '
                     '상품 관리에서 수정한 내용이 손님 화면에 반영됩니다.',
-                    style: TextStyle(color: AppTheme.muted, height: 1.35),
+                    style: TextStyle(color: palette.muted, height: 1.35),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
               RepaintBoundary(
-                child: _OptionAdminTable(options: primaryProduct.options),
+                child: _OptionAdminTable(
+                  palette: palette,
+                  options: primaryProduct.options,
+                ),
               ),
             ],
           ),
@@ -876,8 +943,12 @@ class _DeskMainColumn extends StatelessWidget {
 }
 
 class _OptionAdminTable extends StatelessWidget {
-  const _OptionAdminTable({required this.options});
+  const _OptionAdminTable({
+    required this.palette,
+    required this.options,
+  });
 
+  final _DeskPalette palette;
   final List<ShopProductOption> options;
 
   static final _price = NumberFormat('#,###');
@@ -888,21 +959,21 @@ class _OptionAdminTable extends StatelessWidget {
     if (options.isEmpty) {
       return DecoratedBox(
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FB),
+          color: palette.softFill,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE6EBEF)),
+          border: Border.all(color: palette.softBorder),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
           child: Column(
             children: [
-              const Icon(Icons.tune_outlined, color: AppTheme.muted),
+              Icon(Icons.tune_outlined, color: palette.muted),
               const SizedBox(height: 10),
               Text(
                 l10n.productFormOptionsHint,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.muted,
+                      color: palette.muted,
                     ),
               ),
               const SizedBox(height: 6),
@@ -910,7 +981,7 @@ class _OptionAdminTable extends StatelessWidget {
                 '상품 관리에서 옵션을 추가하세요.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.muted,
+                      color: palette.muted,
                     ),
               ),
             ],
@@ -922,15 +993,15 @@ class _OptionAdminTable extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE6EBEF)),
+        border: Border.all(color: palette.softBorder),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7F9FB),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+            decoration: BoxDecoration(
+              color: palette.softFill,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
             ),
             child: Row(
               children: [
@@ -939,7 +1010,7 @@ class _OptionAdminTable extends StatelessWidget {
                   child: Text(
                     '옵션명',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.muted,
+                          color: palette.muted,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -949,7 +1020,7 @@ class _OptionAdminTable extends StatelessWidget {
                   child: Text(
                     l10n.exploreConsumerPrice,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.muted,
+                          color: palette.muted,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -959,7 +1030,7 @@ class _OptionAdminTable extends StatelessWidget {
                   child: Text(
                     l10n.exploreProPrice,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.muted,
+                          color: palette.muted,
                           fontWeight: FontWeight.w700,
                         ),
                   ),
@@ -970,6 +1041,7 @@ class _OptionAdminTable extends StatelessWidget {
           for (var i = 0; i < options.length; i++) ...[
             if (i > 0) const Divider(height: 1),
             _OptionAdminRow(
+              palette: palette,
               option: options[i],
               price: _price,
             ),
@@ -982,17 +1054,19 @@ class _OptionAdminTable extends StatelessWidget {
 
 class _OptionAdminRow extends StatelessWidget {
   const _OptionAdminRow({
+    required this.palette,
     required this.option,
     required this.price,
   });
 
+  final _DeskPalette palette;
   final ShopProductOption option;
   final NumberFormat price;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: palette.surface,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Row(
@@ -1014,7 +1088,7 @@ class _OptionAdminRow extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.muted,
+                            color: palette.muted,
                           ),
                     ),
                   ],
