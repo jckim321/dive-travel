@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_overview_pane.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_sales_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_stats_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
@@ -653,10 +654,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               _go(_AdminHub.members, sub: _MembersSub.partners),
         );
       case _AdminHub.stats:
-        return _AdminComingSoonPane(
-          title: l10n.adminTabStats,
-          body: l10n.adminContractsComingSoon,
-        );
+        return const AdminStatsScreen();
       case _AdminHub.reports:
         return _AdminComingSoonPane(
           title: l10n.adminTabReports,

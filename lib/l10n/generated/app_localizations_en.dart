@@ -5307,6 +5307,117 @@ class AppLocalizationsEn extends AppLocalizations {
       'A row opens the contract vault, documents, or partner list.';
 
   @override
+  String get adminStatsPresetWeek => 'This week';
+
+  @override
+  String get adminStatsPresetMonth => 'This month';
+
+  @override
+  String get adminStatsPresetQuarter => '3 months';
+
+  @override
+  String get adminStatsPresetYear => 'This year';
+
+  @override
+  String get adminStatsFlow => 'Sales flow';
+
+  @override
+  String get adminStatsFlowHint => 'Daily, compared with last year';
+
+  @override
+  String get adminStatsWho => 'Who buys';
+
+  @override
+  String get adminStatsWhat => 'What sells';
+
+  @override
+  String get adminStatsResort => 'Resort rank';
+
+  @override
+  String get adminStatsOptions => 'Option pick rate';
+
+  @override
+  String get adminStatsOptionsHint => 'Grouping options would show more detail';
+
+  @override
+  String get adminStatsMost => 'Most picked option';
+
+  @override
+  String get adminStatsPartner => 'Partner results';
+
+  @override
+  String get adminStatsPartnerHint => 'Net sales × cancel rate';
+
+  @override
+  String get adminStatsCancel => 'Cancels and refunds';
+
+  @override
+  String get adminStatsCancelHint => 'Cancels by month';
+
+  @override
+  String get adminStatsTopCancel => 'Most cancelled products';
+
+  @override
+  String get adminStatsDiveStar => 'Dive Star';
+
+  @override
+  String get adminStatsDiveNote =>
+      'Pre-review uses the latest 50 applications.';
+
+  @override
+  String get adminStatsLead => 'When people book';
+
+  @override
+  String get adminStatsLeadHint => 'Days before departure';
+
+  @override
+  String get adminStatsLeadNote =>
+      'Bookings saved without a departure date can land in same-day.';
+
+  @override
+  String get adminStatsSeason => 'Season';
+
+  @override
+  String get adminStatsSeasonHint => 'Bookings by month';
+
+  @override
+  String get adminStatsGathering => 'Still collecting';
+
+  @override
+  String get adminStatsCountry => 'Country';
+
+  @override
+  String get adminStatsReturn => 'Returning';
+
+  @override
+  String get adminStatsBuyerNote =>
+      'Returning uses the current lifetime purchase count.';
+
+  @override
+  String get adminStatsGradeUnknown => 'No grade';
+
+  @override
+  String get adminStatsBasis => 'By receive date';
+
+  @override
+  String get adminStatsLead0 => 'Same day';
+
+  @override
+  String get adminStatsLead3 => '3 days';
+
+  @override
+  String get adminStatsLead7 => '7 days';
+
+  @override
+  String get adminStatsLead14 => '14 days';
+
+  @override
+  String get adminStatsLead30 => '30 days';
+
+  @override
+  String get adminStatsLead30p => '30+ days';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }

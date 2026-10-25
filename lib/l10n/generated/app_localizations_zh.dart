@@ -5157,6 +5157,114 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminSalesRowHint => '행을 누르면 계약 · 서류함 · 파트너 명단으로 이동합니다.';
 
   @override
+  String get adminStatsPresetWeek => '이번 주';
+
+  @override
+  String get adminStatsPresetMonth => '이번 달';
+
+  @override
+  String get adminStatsPresetQuarter => '3개월';
+
+  @override
+  String get adminStatsPresetYear => '올해';
+
+  @override
+  String get adminStatsFlow => '매출 흐름';
+
+  @override
+  String get adminStatsFlowHint => '일별 · 전년 동기 비교';
+
+  @override
+  String get adminStatsWho => '누가 사나';
+
+  @override
+  String get adminStatsWhat => '무엇이 팔리나';
+
+  @override
+  String get adminStatsResort => '리조트 순위';
+
+  @override
+  String get adminStatsOptions => '옵션별 선택 비율';
+
+  @override
+  String get adminStatsOptionsHint => '옵션을 그룹으로 나누면 더 자세히 볼 수 있어요';
+
+  @override
+  String get adminStatsMost => '가장 많이 선택한 옵션';
+
+  @override
+  String get adminStatsPartner => '파트너 성과';
+
+  @override
+  String get adminStatsPartnerHint => '순매출 × 취소율';
+
+  @override
+  String get adminStatsCancel => '취소·환불';
+
+  @override
+  String get adminStatsCancelHint => '월별 취소 건수';
+
+  @override
+  String get adminStatsTopCancel => '취소가 많은 상품';
+
+  @override
+  String get adminStatsDiveStar => '다이브스타';
+
+  @override
+  String get adminStatsDiveNote => '심사 전은 최근 신청 50건 기준입니다.';
+
+  @override
+  String get adminStatsLead => '예약 시점';
+
+  @override
+  String get adminStatsLeadHint => '출발 며칠 전에 예약하나';
+
+  @override
+  String get adminStatsLeadNote => '출발일이 비어 접수일로 저장된 건은 당일에 섞일 수 있습니다.';
+
+  @override
+  String get adminStatsSeason => '시즌';
+
+  @override
+  String get adminStatsSeasonHint => '월별 예약 수';
+
+  @override
+  String get adminStatsGathering => '데이터 모으는 중';
+
+  @override
+  String get adminStatsCountry => '국가';
+
+  @override
+  String get adminStatsReturn => '재구매';
+
+  @override
+  String get adminStatsBuyerNote => '재구매는 지금 누적 구매 수로 구분합니다.';
+
+  @override
+  String get adminStatsGradeUnknown => '등급 없음';
+
+  @override
+  String get adminStatsBasis => '접수일 기준 · 그래프 위에 마우스를 올리면 숫자가 나와요';
+
+  @override
+  String get adminStatsLead0 => '당일';
+
+  @override
+  String get adminStatsLead3 => '3일';
+
+  @override
+  String get adminStatsLead7 => '7일';
+
+  @override
+  String get adminStatsLead14 => '14일';
+
+  @override
+  String get adminStatsLead30 => '30일';
+
+  @override
+  String get adminStatsLead30p => '30일+';
+
+  @override
   String refundPolicyHint(int percent) {
     return '现在取消可退 $percent%';
   }

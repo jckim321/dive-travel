@@ -9750,6 +9750,222 @@ abstract class AppLocalizations {
   /// **'행을 누르면 계약 · 서류함 · 파트너 명단으로 이동합니다.'**
   String get adminSalesRowHint;
 
+  /// No description provided for @adminStatsPresetWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주'**
+  String get adminStatsPresetWeek;
+
+  /// No description provided for @adminStatsPresetMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달'**
+  String get adminStatsPresetMonth;
+
+  /// No description provided for @adminStatsPresetQuarter.
+  ///
+  /// In ko, this message translates to:
+  /// **'3개월'**
+  String get adminStatsPresetQuarter;
+
+  /// No description provided for @adminStatsPresetYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'올해'**
+  String get adminStatsPresetYear;
+
+  /// No description provided for @adminStatsFlow.
+  ///
+  /// In ko, this message translates to:
+  /// **'매출 흐름'**
+  String get adminStatsFlow;
+
+  /// No description provided for @adminStatsFlowHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'일별 · 전년 동기 비교'**
+  String get adminStatsFlowHint;
+
+  /// No description provided for @adminStatsWho.
+  ///
+  /// In ko, this message translates to:
+  /// **'누가 사나'**
+  String get adminStatsWho;
+
+  /// No description provided for @adminStatsWhat.
+  ///
+  /// In ko, this message translates to:
+  /// **'무엇이 팔리나'**
+  String get adminStatsWhat;
+
+  /// No description provided for @adminStatsResort.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 순위'**
+  String get adminStatsResort;
+
+  /// No description provided for @adminStatsOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션별 선택 비율'**
+  String get adminStatsOptions;
+
+  /// No description provided for @adminStatsOptionsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션을 그룹으로 나누면 더 자세히 볼 수 있어요'**
+  String get adminStatsOptionsHint;
+
+  /// No description provided for @adminStatsMost.
+  ///
+  /// In ko, this message translates to:
+  /// **'가장 많이 선택한 옵션'**
+  String get adminStatsMost;
+
+  /// No description provided for @adminStatsPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 성과'**
+  String get adminStatsPartner;
+
+  /// No description provided for @adminStatsPartnerHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'순매출 × 취소율'**
+  String get adminStatsPartnerHint;
+
+  /// No description provided for @adminStatsCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·환불'**
+  String get adminStatsCancel;
+
+  /// No description provided for @adminStatsCancelHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'월별 취소 건수'**
+  String get adminStatsCancelHint;
+
+  /// No description provided for @adminStatsTopCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소가 많은 상품'**
+  String get adminStatsTopCancel;
+
+  /// No description provided for @adminStatsDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타'**
+  String get adminStatsDiveStar;
+
+  /// No description provided for @adminStatsDiveNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 전은 최근 신청 50건 기준입니다.'**
+  String get adminStatsDiveNote;
+
+  /// No description provided for @adminStatsLead.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 시점'**
+  String get adminStatsLead;
+
+  /// No description provided for @adminStatsLeadHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 며칠 전에 예약하나'**
+  String get adminStatsLeadHint;
+
+  /// No description provided for @adminStatsLeadNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발일이 비어 접수일로 저장된 건은 당일에 섞일 수 있습니다.'**
+  String get adminStatsLeadNote;
+
+  /// No description provided for @adminStatsSeason.
+  ///
+  /// In ko, this message translates to:
+  /// **'시즌'**
+  String get adminStatsSeason;
+
+  /// No description provided for @adminStatsSeasonHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'월별 예약 수'**
+  String get adminStatsSeasonHint;
+
+  /// No description provided for @adminStatsGathering.
+  ///
+  /// In ko, this message translates to:
+  /// **'데이터 모으는 중'**
+  String get adminStatsGathering;
+
+  /// No description provided for @adminStatsCountry.
+  ///
+  /// In ko, this message translates to:
+  /// **'국가'**
+  String get adminStatsCountry;
+
+  /// No description provided for @adminStatsReturn.
+  ///
+  /// In ko, this message translates to:
+  /// **'재구매'**
+  String get adminStatsReturn;
+
+  /// No description provided for @adminStatsBuyerNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'재구매는 지금 누적 구매 수로 구분합니다.'**
+  String get adminStatsBuyerNote;
+
+  /// No description provided for @adminStatsGradeUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'등급 없음'**
+  String get adminStatsGradeUnknown;
+
+  /// No description provided for @adminStatsBasis.
+  ///
+  /// In ko, this message translates to:
+  /// **'접수일 기준 · 그래프 위에 마우스를 올리면 숫자가 나와요'**
+  String get adminStatsBasis;
+
+  /// No description provided for @adminStatsLead0.
+  ///
+  /// In ko, this message translates to:
+  /// **'당일'**
+  String get adminStatsLead0;
+
+  /// No description provided for @adminStatsLead3.
+  ///
+  /// In ko, this message translates to:
+  /// **'3일'**
+  String get adminStatsLead3;
+
+  /// No description provided for @adminStatsLead7.
+  ///
+  /// In ko, this message translates to:
+  /// **'7일'**
+  String get adminStatsLead7;
+
+  /// No description provided for @adminStatsLead14.
+  ///
+  /// In ko, this message translates to:
+  /// **'14일'**
+  String get adminStatsLead14;
+
+  /// No description provided for @adminStatsLead30.
+  ///
+  /// In ko, this message translates to:
+  /// **'30일'**
+  String get adminStatsLead30;
+
+  /// No description provided for @adminStatsLead30p.
+  ///
+  /// In ko, this message translates to:
+  /// **'30일+'**
+  String get adminStatsLead30p;
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:

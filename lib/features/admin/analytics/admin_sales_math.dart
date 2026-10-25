@@ -498,6 +498,26 @@ _Accum _accumulate(
   return acc;
 }
 
+/// Net sales for bookings received on [day] (local date).
+int adminSalesDayNet(List<TourBooking> bookings, DateTime day) {
+  final start = adminSalesDateOnly(day);
+  final end = start.add(const Duration(days: 1));
+  var net = 0;
+  for (final booking in bookings) {
+    if (booking.createdAt.isBefore(start) || !booking.createdAt.isBefore(end)) {
+      continue;
+    }
+    if (!adminSalesWasPaid(booking)) {
+      continue;
+    }
+    net += booking.price;
+    if (adminSalesIsCancelled(booking)) {
+      net -= booking.refundAmount;
+    }
+  }
+  return net;
+}
+
 /// A full calendar month's net must match partner settlement.
 int adminSalesNetForCalendarMonth({
   required List<TourBooking> bookings,
