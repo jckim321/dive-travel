@@ -2341,6 +2341,23 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> ackPartnerBooking({
+    required String shopId,
+    required String bookingId,
+  }) async {
+    final list = _shopBookings[shopId];
+    if (list == null) {
+      return;
+    }
+    final index = list.indexWhere((item) => item.id == bookingId);
+    if (index < 0) {
+      return;
+    }
+    list[index] = list[index].copyWith(partnerAckedAt: DateTime.now());
+    _shopBookingController.add(List<TourBooking>.from(list));
+  }
+
+  @override
   Future<void> cancelBookingsForWeather({
     required String shopId,
     required DateTime tourDate,

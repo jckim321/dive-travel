@@ -439,6 +439,12 @@ abstract class DiverRepository {
     required String bookingId,
   });
 
+  /// Partner read receipt only (`partner_acked_at` on shop booking doc).
+  Future<void> ackPartnerBooking({
+    required String shopId,
+    required String bookingId,
+  });
+
   Future<void> cancelBookingsForWeather({
     required String shopId,
     required DateTime tourDate,

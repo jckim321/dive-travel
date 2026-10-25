@@ -2259,6 +2259,17 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  /// Partner voucher 「확인했어요」 — shop doc read receipt only.
+  Future<void> ackPartnerBooking({
+    required String shopId,
+    required String bookingId,
+  }) {
+    return _repository.ackPartnerBooking(
+      shopId: shopId,
+      bookingId: bookingId,
+    );
+  }
+
   Future<void> cancelBookingsForWeather({
     required String shopId,
     required DateTime tourDate,

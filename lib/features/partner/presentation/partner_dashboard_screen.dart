@@ -4,13 +4,14 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_bookings_temp_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_vouchers_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerDashboardScreen extends StatefulWidget {
@@ -89,7 +90,10 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                       const PartnerProductMenuScreen(),
                     ),
                     onBookings: () =>
-                        _open(PartnerBookingsTempScreen(shopId: shopId)),
+                        _open(PartnerVouchersScreen(shopId: shopId)),
+                    bookingsBadge: partnerVoucherUnreadArrivedCount(
+                      store.shopBookings,
+                    ),
                     onStats: () => _open(
                       PartnerComingSoonScreen(title: l10n.partnerQuickStats),
                     ),
@@ -198,57 +202,58 @@ class _QuickGrid extends StatelessWidget {
   const _QuickGrid({
     required this.onProducts,
     required this.onBookings,
+    required this.bookingsBadge,
     required this.onStats,
     required this.onDocs,
   });
 
   final VoidCallback onProducts;
   final VoidCallback onBookings;
+  final int bookingsBadge;
   final VoidCallback onStats;
   final VoidCallback onDocs;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tiles = <(Key, String, IconData, VoidCallback)>[
-      (
-        const Key('partner-quick-products'),
-        l10n.partnerQuickProducts,
-        Icons.inventory_2_outlined,
-        onProducts,
-      ),
-      (
-        const Key('partner-quick-bookings'),
-        l10n.partnerQuickBookings,
-        Icons.confirmation_number_outlined,
-        onBookings,
-      ),
-      (
-        const Key('partner-quick-stats'),
-        l10n.partnerQuickStats,
-        Icons.bar_chart_outlined,
-        onStats,
-      ),
-      (
-        const Key('partner-quick-docs'),
-        l10n.partnerQuickDocs,
-        Icons.description_outlined,
-        onDocs,
-      ),
-    ];
     return Row(
       children: [
-        for (var i = 0; i < tiles.length; i++) ...[
-          if (i > 0) const SizedBox(width: 8),
-          Expanded(
-            child: _QuickTile(
-              key: tiles[i].$1,
-              label: tiles[i].$2,
-              icon: tiles[i].$3,
-              onTap: tiles[i].$4,
-            ),
+        Expanded(
+          child: _QuickTile(
+            key: const Key('partner-quick-products'),
+            label: l10n.partnerQuickProducts,
+            icon: Icons.inventory_2_outlined,
+            onTap: onProducts,
           ),
-        ],
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _QuickTile(
+            key: const Key('partner-quick-bookings'),
+            label: l10n.partnerQuickBookings,
+            icon: Icons.confirmation_number_outlined,
+            badgeCount: bookingsBadge,
+            onTap: onBookings,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _QuickTile(
+            key: const Key('partner-quick-stats'),
+            label: l10n.partnerQuickStats,
+            icon: Icons.bar_chart_outlined,
+            onTap: onStats,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _QuickTile(
+            key: const Key('partner-quick-docs'),
+            label: l10n.partnerQuickDocs,
+            icon: Icons.description_outlined,
+            onTap: onDocs,
+          ),
+        ),
       ],
     );
   }
@@ -260,11 +265,13 @@ class _QuickTile extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final String label;
   final IconData icon;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +289,36 @@ class _QuickTile extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, color: PartnerTheme.accent, size: 22),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: PartnerTheme.accent, size: 22),
+                  if (badgeCount > 0)
+                    Positioned(
+                      right: -8,
+                      top: -6,
+                      child: Container(
+                        key: const Key('partner-quick-bookings-badge'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: PartnerTheme.accent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          badgeCount > 9 ? '9+' : '$badgeCount',
+                          style: const TextStyle(
+                            color: PartnerTheme.bg,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 6),
               Text(
                 label,

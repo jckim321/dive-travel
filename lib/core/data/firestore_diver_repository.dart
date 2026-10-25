@@ -554,6 +554,9 @@ class FirestoreDiverRepository implements DiverRepository {
       quoteLines: BookingLine.listFrom(data['quote_lines']),
       seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
       seatOptionId: data['seat_option_id'] as String? ?? '',
+      partnerAckedAt: data['partner_acked_at'] == null
+          ? null
+          : _readDate(data['partner_acked_at']),
     );
   }
 
@@ -587,6 +590,8 @@ class FirestoreDiverRepository implements DiverRepository {
         'quote_lines': [
           for (final line in booking.quoteLines) line.toMap(),
         ],
+      if (booking.partnerAckedAt != null)
+        'partner_acked_at': Timestamp.fromDate(booking.partnerAckedAt!),
       'tour_date': Timestamp.fromDate(booking.scheduledFor),
       'created_at': Timestamp.fromDate(booking.createdAt),
       'updated_at': FieldValue.serverTimestamp(),
@@ -2724,6 +2729,25 @@ class FirestoreDiverRepository implements DiverRepository {
       );
     }
     return true;
+  }
+
+  @override
+  Future<void> ackPartnerBooking({
+    required String shopId,
+    required String bookingId,
+  }) async {
+    final shopRef = _shopBookings(shopId).doc(bookingId);
+    final snap = await shopRef.get();
+    if (!snap.exists) {
+      return;
+    }
+    await shopRef.set(
+      {
+        'partner_acked_at': FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   @override

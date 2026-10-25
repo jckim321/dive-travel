@@ -65,6 +65,7 @@ class TourBooking {
     this.quoteLines = const [],
     this.seatsHeld = 0,
     this.seatOptionId = '',
+    this.partnerAckedAt,
   });
 
   final String id;
@@ -98,6 +99,11 @@ class TourBooking {
   final int seatsHeld;
   /// Option used for seat inventory (may differ from display [optionId]).
   final String seatOptionId;
+
+  /// Partner 「확인했어요」 read receipt (shop booking doc only).
+  final DateTime? partnerAckedAt;
+
+  bool get partnerAcked => partnerAckedAt != null;
 
   DateTime get scheduledFor => tourDate ?? createdAt;
 
@@ -174,6 +180,8 @@ class TourBooking {
     DateTime? tourDate,
     int? seatsHeld,
     String? seatOptionId,
+    DateTime? partnerAckedAt,
+    bool clearPartnerAckedAt = false,
   }) {
     return TourBooking(
       id: id,
@@ -204,6 +212,9 @@ class TourBooking {
       quoteLines: quoteLines,
       seatsHeld: seatsHeld ?? this.seatsHeld,
       seatOptionId: seatOptionId ?? this.seatOptionId,
+      partnerAckedAt: clearPartnerAckedAt
+          ? null
+          : (partnerAckedAt ?? this.partnerAckedAt),
     );
   }
 

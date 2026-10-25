@@ -3312,6 +3312,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerQuickBookings => 'Booking vouchers';
 
   @override
+  String get partnerVouchersTitle => 'Reservation vouchers';
+
+  @override
+  String get partnerVouchersGuide =>
+      'New bookings show up here right away. You do not need to approve or confirm.';
+
+  @override
+  String get partnerVouchersEmpty => 'No vouchers in this list.';
+
+  @override
+  String partnerVoucherTabArrived(int count) {
+    return 'Arrived [$count]';
+  }
+
+  @override
+  String get partnerVoucherTabPast => 'Past';
+
+  @override
+  String partnerVoucherTabCancelled(int count) {
+    return 'Cancelled [$count]';
+  }
+
+  @override
+  String get partnerVoucherJustArrived => 'Just arrived';
+
+  @override
+  String get partnerVoucherStatusAwaiting => 'Awaiting confirm';
+
+  @override
+  String get partnerVoucherStatusConfirmed => 'Confirmed';
+
+  @override
+  String get partnerVoucherStatusCancelled => 'Cancelled';
+
+  @override
+  String partnerVoucherTitleLine(String id, String product) {
+    return 'Voucher $id · $product';
+  }
+
+  @override
+  String get partnerVoucherTourDate => 'Tour dates';
+
+  @override
+  String get partnerVoucherParty => 'Guests';
+
+  @override
+  String partnerVoucherPartyDetail(int divers, int nondivers) {
+    return 'Divers $divers · Non-divers $nondivers';
+  }
+
+  @override
+  String get partnerVoucherOptions => 'Options';
+
+  @override
+  String get partnerVoucherFoc => 'Instructor FOC';
+
+  @override
+  String get partnerVoucherGuestName => 'Guest';
+
+  @override
+  String get partnerVoucherGuestNameMissing => 'Guest name unavailable';
+
+  @override
+  String get partnerVoucherRequests => 'Requests';
+
+  @override
+  String get partnerVoucherNone => 'None';
+
+  @override
+  String partnerVoucherCreatedStamp(String time) {
+    return '$time · arrived';
+  }
+
+  @override
+  String get partnerVoucherAck => 'Got it';
+
+  @override
+  String get partnerVoucherSavePrint => 'Save / print voucher';
+
+  @override
+  String get partnerVoucherView => 'View voucher';
+
+  @override
+  String get partnerVoucherCopied =>
+      'Voucher text copied. Paste to save or print.';
+
+  @override
+  String get partnerVoucherTempConfirm => 'Confirm booking (temporary)';
+
+  @override
+  String partnerVoucherCancelCardBody(String product, String date, int divers) {
+    return '$product · $date · Guest cancelled · $divers divers';
+  }
+
+  @override
+  String get partnerVoucherCancelOpsNote =>
+      'Refunds and guest support are handled by ops.';
+
+  @override
+  String get partnerVoucherSettlementTitle => 'This month\'s settlement';
+
+  @override
+  String get partnerVoucherSettlementSub => 'View sales, fees, and payout';
+
+  @override
   String get partnerQuickStats => 'Stats';
 
   @override

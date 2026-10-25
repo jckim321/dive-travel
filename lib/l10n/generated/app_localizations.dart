@@ -6078,6 +6078,186 @@ abstract class AppLocalizations {
   /// **'예약 바우처'**
   String get partnerQuickBookings;
 
+  /// No description provided for @partnerVouchersTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 바우처'**
+  String get partnerVouchersTitle;
+
+  /// No description provided for @partnerVouchersGuide.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약이 들어오면 여기에 바로 나타나요. 승인하거나 확정할 필요는 없어요.'**
+  String get partnerVouchersGuide;
+
+  /// No description provided for @partnerVouchersEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 목록에 바우처가 없어요.'**
+  String get partnerVouchersEmpty;
+
+  /// No description provided for @partnerVoucherTabArrived.
+  ///
+  /// In ko, this message translates to:
+  /// **'도착 [{count}]'**
+  String partnerVoucherTabArrived(int count);
+
+  /// No description provided for @partnerVoucherTabPast.
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 예약'**
+  String get partnerVoucherTabPast;
+
+  /// No description provided for @partnerVoucherTabCancelled.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소 [{count}]'**
+  String partnerVoucherTabCancelled(int count);
+
+  /// No description provided for @partnerVoucherJustArrived.
+  ///
+  /// In ko, this message translates to:
+  /// **'방금 도착'**
+  String get partnerVoucherJustArrived;
+
+  /// No description provided for @partnerVoucherStatusAwaiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정 대기'**
+  String get partnerVoucherStatusAwaiting;
+
+  /// No description provided for @partnerVoucherStatusConfirmed.
+  ///
+  /// In ko, this message translates to:
+  /// **'확정됨'**
+  String get partnerVoucherStatusConfirmed;
+
+  /// No description provided for @partnerVoucherStatusCancelled.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get partnerVoucherStatusCancelled;
+
+  /// No description provided for @partnerVoucherTitleLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'바우처 {id} · {product}'**
+  String partnerVoucherTitleLine(String id, String product);
+
+  /// No description provided for @partnerVoucherTourDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'이용 날짜'**
+  String get partnerVoucherTourDate;
+
+  /// No description provided for @partnerVoucherParty.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원'**
+  String get partnerVoucherParty;
+
+  /// No description provided for @partnerVoucherPartyDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 {divers} · 비다이버 {nondivers}'**
+  String partnerVoucherPartyDetail(int divers, int nondivers);
+
+  /// No description provided for @partnerVoucherOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택 옵션'**
+  String get partnerVoucherOptions;
+
+  /// No description provided for @partnerVoucherFoc.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 FOC'**
+  String get partnerVoucherFoc;
+
+  /// No description provided for @partnerVoucherGuestName.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약자'**
+  String get partnerVoucherGuestName;
+
+  /// No description provided for @partnerVoucherGuestNameMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약자 이름 없음'**
+  String get partnerVoucherGuestNameMissing;
+
+  /// No description provided for @partnerVoucherRequests.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청 사항'**
+  String get partnerVoucherRequests;
+
+  /// No description provided for @partnerVoucherNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get partnerVoucherNone;
+
+  /// No description provided for @partnerVoucherCreatedStamp.
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} · 도착'**
+  String partnerVoucherCreatedStamp(String time);
+
+  /// No description provided for @partnerVoucherAck.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인했어요'**
+  String get partnerVoucherAck;
+
+  /// No description provided for @partnerVoucherSavePrint.
+  ///
+  /// In ko, this message translates to:
+  /// **'바우처 저장·인쇄'**
+  String get partnerVoucherSavePrint;
+
+  /// No description provided for @partnerVoucherView.
+  ///
+  /// In ko, this message translates to:
+  /// **'바우처 보기'**
+  String get partnerVoucherView;
+
+  /// No description provided for @partnerVoucherCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'바우처 내용을 복사했어요. 붙여넣어 저장·인쇄할 수 있어요.'**
+  String get partnerVoucherCopied;
+
+  /// No description provided for @partnerVoucherTempConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 확정(임시)'**
+  String get partnerVoucherTempConfirm;
+
+  /// No description provided for @partnerVoucherCancelCardBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{product} · {date} · 고객이 취소했어요 · 다이버 {divers}명'**
+  String partnerVoucherCancelCardBody(String product, String date, int divers);
+
+  /// No description provided for @partnerVoucherCancelOpsNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·환불 처리와 고객 문의는 운영팀이 맡아요.'**
+  String get partnerVoucherCancelOpsNote;
+
+  /// No description provided for @partnerVoucherSettlementTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 정산'**
+  String get partnerVoucherSettlementTitle;
+
+  /// No description provided for @partnerVoucherSettlementSub.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 매출 · 수수료 · 정산 예정 금액 보기'**
+  String get partnerVoucherSettlementSub;
+
   /// No description provided for @partnerQuickStats.
   ///
   /// In ko, this message translates to:

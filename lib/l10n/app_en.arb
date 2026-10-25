@@ -1275,6 +1275,64 @@
   },
   "partnerQuickProducts": "Products",
   "partnerQuickBookings": "Booking vouchers",
+  "partnerVouchersTitle": "Reservation vouchers",
+  "partnerVouchersGuide": "New bookings show up here right away. You do not need to approve or confirm.",
+  "partnerVouchersEmpty": "No vouchers in this list.",
+  "partnerVoucherTabArrived": "Arrived [{count}]",
+  "@partnerVoucherTabArrived": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherTabPast": "Past",
+  "partnerVoucherTabCancelled": "Cancelled [{count}]",
+  "@partnerVoucherTabCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherJustArrived": "Just arrived",
+  "partnerVoucherStatusAwaiting": "Awaiting confirm",
+  "partnerVoucherStatusConfirmed": "Confirmed",
+  "partnerVoucherStatusCancelled": "Cancelled",
+  "partnerVoucherTitleLine": "Voucher {id} · {product}",
+  "@partnerVoucherTitleLine": {
+    "placeholders": {
+      "id": { "type": "String" },
+      "product": { "type": "String" }
+    }
+  },
+  "partnerVoucherTourDate": "Tour dates",
+  "partnerVoucherParty": "Guests",
+  "partnerVoucherPartyDetail": "Divers {divers} · Non-divers {nondivers}",
+  "@partnerVoucherPartyDetail": {
+    "placeholders": {
+      "divers": { "type": "int" },
+      "nondivers": { "type": "int" }
+    }
+  },
+  "partnerVoucherOptions": "Options",
+  "partnerVoucherFoc": "Instructor FOC",
+  "partnerVoucherGuestName": "Guest",
+  "partnerVoucherGuestNameMissing": "Guest name unavailable",
+  "partnerVoucherRequests": "Requests",
+  "partnerVoucherNone": "None",
+  "partnerVoucherCreatedStamp": "{time} · arrived",
+  "@partnerVoucherCreatedStamp": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "partnerVoucherAck": "Got it",
+  "partnerVoucherSavePrint": "Save / print voucher",
+  "partnerVoucherView": "View voucher",
+  "partnerVoucherCopied": "Voucher text copied. Paste to save or print.",
+  "partnerVoucherTempConfirm": "Confirm booking (temporary)",
+  "partnerVoucherCancelCardBody": "{product} · {date} · Guest cancelled · {divers} divers",
+  "@partnerVoucherCancelCardBody": {
+    "placeholders": {
+      "product": { "type": "String" },
+      "date": { "type": "String" },
+      "divers": { "type": "int" }
+    }
+  },
+  "partnerVoucherCancelOpsNote": "Refunds and guest support are handled by ops.",
+  "partnerVoucherSettlementTitle": "This month's settlement",
+  "partnerVoucherSettlementSub": "View sales, fees, and payout",
   "partnerQuickStats": "Stats",
   "partnerQuickDocs": "Partnership docs",
   "partnerQuickSettlement": "Settlement",

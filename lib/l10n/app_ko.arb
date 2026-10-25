@@ -1864,6 +1864,64 @@
   },
   "partnerQuickProducts": "상품 관리",
   "partnerQuickBookings": "예약 바우처",
+  "partnerVouchersTitle": "예약 바우처",
+  "partnerVouchersGuide": "예약이 들어오면 여기에 바로 나타나요. 승인하거나 확정할 필요는 없어요.",
+  "partnerVouchersEmpty": "이 목록에 바우처가 없어요.",
+  "partnerVoucherTabArrived": "도착 [{count}]",
+  "@partnerVoucherTabArrived": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherTabPast": "지난 예약",
+  "partnerVoucherTabCancelled": "취소 [{count}]",
+  "@partnerVoucherTabCancelled": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherJustArrived": "방금 도착",
+  "partnerVoucherStatusAwaiting": "확정 대기",
+  "partnerVoucherStatusConfirmed": "확정됨",
+  "partnerVoucherStatusCancelled": "취소",
+  "partnerVoucherTitleLine": "바우처 {id} · {product}",
+  "@partnerVoucherTitleLine": {
+    "placeholders": {
+      "id": { "type": "String" },
+      "product": { "type": "String" }
+    }
+  },
+  "partnerVoucherTourDate": "이용 날짜",
+  "partnerVoucherParty": "인원",
+  "partnerVoucherPartyDetail": "다이버 {divers} · 비다이버 {nondivers}",
+  "@partnerVoucherPartyDetail": {
+    "placeholders": {
+      "divers": { "type": "int" },
+      "nondivers": { "type": "int" }
+    }
+  },
+  "partnerVoucherOptions": "선택 옵션",
+  "partnerVoucherFoc": "강사 FOC",
+  "partnerVoucherGuestName": "예약자",
+  "partnerVoucherGuestNameMissing": "예약자 이름 없음",
+  "partnerVoucherRequests": "요청 사항",
+  "partnerVoucherNone": "없음",
+  "partnerVoucherCreatedStamp": "{time} · 도착",
+  "@partnerVoucherCreatedStamp": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "partnerVoucherAck": "확인했어요",
+  "partnerVoucherSavePrint": "바우처 저장·인쇄",
+  "partnerVoucherView": "바우처 보기",
+  "partnerVoucherCopied": "바우처 내용을 복사했어요. 붙여넣어 저장·인쇄할 수 있어요.",
+  "partnerVoucherTempConfirm": "예약 확정(임시)",
+  "partnerVoucherCancelCardBody": "{product} · {date} · 고객이 취소했어요 · 다이버 {divers}명",
+  "@partnerVoucherCancelCardBody": {
+    "placeholders": {
+      "product": { "type": "String" },
+      "date": { "type": "String" },
+      "divers": { "type": "int" }
+    }
+  },
+  "partnerVoucherCancelOpsNote": "취소·환불 처리와 고객 문의는 운영팀이 맡아요.",
+  "partnerVoucherSettlementTitle": "이번 달 정산",
+  "partnerVoucherSettlementSub": "총 매출 · 수수료 · 정산 예정 금액 보기",
   "partnerQuickStats": "통계 보기",
   "partnerQuickDocs": "제휴 계약서",
   "partnerQuickSettlement": "매출 정산",

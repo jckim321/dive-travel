@@ -3222,6 +3222,108 @@ class AppLocalizationsKo extends AppLocalizations {
   String get partnerQuickBookings => '예약 바우처';
 
   @override
+  String get partnerVouchersTitle => '예약 바우처';
+
+  @override
+  String get partnerVouchersGuide => '예약이 들어오면 여기에 바로 나타나요. 승인하거나 확정할 필요는 없어요.';
+
+  @override
+  String get partnerVouchersEmpty => '이 목록에 바우처가 없어요.';
+
+  @override
+  String partnerVoucherTabArrived(int count) {
+    return '도착 [$count]';
+  }
+
+  @override
+  String get partnerVoucherTabPast => '지난 예약';
+
+  @override
+  String partnerVoucherTabCancelled(int count) {
+    return '취소 [$count]';
+  }
+
+  @override
+  String get partnerVoucherJustArrived => '방금 도착';
+
+  @override
+  String get partnerVoucherStatusAwaiting => '확정 대기';
+
+  @override
+  String get partnerVoucherStatusConfirmed => '확정됨';
+
+  @override
+  String get partnerVoucherStatusCancelled => '취소';
+
+  @override
+  String partnerVoucherTitleLine(String id, String product) {
+    return '바우처 $id · $product';
+  }
+
+  @override
+  String get partnerVoucherTourDate => '이용 날짜';
+
+  @override
+  String get partnerVoucherParty => '인원';
+
+  @override
+  String partnerVoucherPartyDetail(int divers, int nondivers) {
+    return '다이버 $divers · 비다이버 $nondivers';
+  }
+
+  @override
+  String get partnerVoucherOptions => '선택 옵션';
+
+  @override
+  String get partnerVoucherFoc => '강사 FOC';
+
+  @override
+  String get partnerVoucherGuestName => '예약자';
+
+  @override
+  String get partnerVoucherGuestNameMissing => '예약자 이름 없음';
+
+  @override
+  String get partnerVoucherRequests => '요청 사항';
+
+  @override
+  String get partnerVoucherNone => '없음';
+
+  @override
+  String partnerVoucherCreatedStamp(String time) {
+    return '$time · 도착';
+  }
+
+  @override
+  String get partnerVoucherAck => '확인했어요';
+
+  @override
+  String get partnerVoucherSavePrint => '바우처 저장·인쇄';
+
+  @override
+  String get partnerVoucherView => '바우처 보기';
+
+  @override
+  String get partnerVoucherCopied => '바우처 내용을 복사했어요. 붙여넣어 저장·인쇄할 수 있어요.';
+
+  @override
+  String get partnerVoucherTempConfirm => '예약 확정(임시)';
+
+  @override
+  String partnerVoucherCancelCardBody(String product, String date, int divers) {
+    return '$product · $date · 고객이 취소했어요 · 다이버 $divers명';
+  }
+
+  @override
+  String get partnerVoucherCancelOpsNote => '취소·환불 처리와 고객 문의는 운영팀이 맡아요.';
+
+  @override
+  String get partnerVoucherSettlementTitle => '이번 달 정산';
+
+  @override
+  String get partnerVoucherSettlementSub => '총 매출 · 수수료 · 정산 예정 금액 보기';
+
+  @override
   String get partnerQuickStats => '통계 보기';
 
   @override
