@@ -2924,6 +2924,111 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerProductsTitle => '상품 관리';
 
   @override
+  String get partnerProductMenuTitle => '상품 관리';
+
+  @override
+  String get partnerProductListTitle => '상품 목록';
+
+  @override
+  String get partnerProductMenuRegister => '상품 등록';
+
+  @override
+  String get partnerProductMenuRegisterSub => '새 상품을 올려요';
+
+  @override
+  String partnerProductMenuRegisterDrafting(int count) {
+    return '새 상품을 올려요 · 작성 중 $count개';
+  }
+
+  @override
+  String get partnerProductMenuList => '상품 목록';
+
+  @override
+  String get partnerProductMenuListSub => '고치거나 닫을 수 있어요';
+
+  @override
+  String partnerProductMenuListListed(int count) {
+    return '게시중 $count개 · 고치거나 닫을 수 있어요';
+  }
+
+  @override
+  String get partnerProductMenuSeats => '빈자리 열기';
+
+  @override
+  String get partnerProductMenuSeatsSub => '같은배 · 기본 상품만 열 수 있어요';
+
+  @override
+  String partnerProductMenuSeatsOpen(int count) {
+    return '같은배 · 기본 상품만 열 수 있어요 · 열린 자리 $count석';
+  }
+
+  @override
+  String get partnerProductMenuFocNote =>
+      '할인과 강사 FOC는 계약서 기준으로 앱이 알아서 적용해요.\n바꾸려면 운영팀과 협의해 주세요.';
+
+  @override
+  String get partnerProductBadgeBasic => '기본 상품';
+
+  @override
+  String get partnerProductClose => '닫기';
+
+  @override
+  String get partnerProductReopen => '다시 열기';
+
+  @override
+  String get partnerProductDiscard => '폐기';
+
+  @override
+  String get partnerProductContinueDraft => '이어서 작성';
+
+  @override
+  String get partnerProductDraftHiddenHint => '작성 중 상품은 고객 화면에 보이지 않아요.';
+
+  @override
+  String get partnerProductAddOptionIndividual => '+ 옵션 · 개별 상품 추가';
+
+  @override
+  String get partnerProductListFooter =>
+      '기본 상품 한 개 안에 개별 상품과 옵션이 모두 모여 있어요. 줄마다 바로 고치거나 폐기할 수 있어요.';
+
+  @override
+  String get partnerProductsEmptyH2 =>
+      '아직 등록한 상품이 없어요. 첫 상품을 올리면 고객 화면에 바로 보여요.';
+
+  @override
+  String get partnerProductsEmptyCtaH2 => '첫 상품 올리기';
+
+  @override
+  String get partnerProductCloseSeatTitle => '상품을 닫을까요?';
+
+  @override
+  String partnerProductCloseSeatBody(int count) {
+    return '열린 빈자리 $count석이 있어요. 닫으면 고객 화면에서 사라져요. 이미 들어온 예약과 진행 중인 결제는 그대로예요.';
+  }
+
+  @override
+  String get partnerProductDiscardConfirmTitle => '이 항목을 폐기할까요?';
+
+  @override
+  String get partnerProductDiscardConfirmBody =>
+      '목록에서 삭제됩니다. 예약·홀드가 있으면 삭제 대신 닫힙니다.';
+
+  @override
+  String get partnerProductDiscardClosedSnack => '예약·홀드가 있어 삭제 대신 닫았습니다.';
+
+  @override
+  String get partnerProductOptionClosedLabel => '닫힘';
+
+  @override
+  String get partnerOpenSeatsTitle => '빈자리 열기';
+
+  @override
+  String get partnerOpenSeatsEmpty => '게시 중인 기본 상품이 없어요. 먼저 상품을 게시해 주세요.';
+
+  @override
+  String get partnerOpenSeatsPickHint => '같은배에 열 기본 상품을 고르세요.';
+
+  @override
   String get partnerProductsGuide =>
       '저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.';
 

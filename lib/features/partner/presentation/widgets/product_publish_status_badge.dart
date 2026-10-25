@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Colored publish-status chip for partner product cards (작성 중 / 게시중 / 닫힘).
@@ -43,18 +44,18 @@ class ProductPublishStatusBadge extends StatelessWidget {
     return switch (kind) {
       PartnerPublishBadgeKind.drafting => (
           l10n.partnerProductBadgeDrafting,
-          const Color(0xFF4A5560),
-          const Color(0xFFE2E6EA),
+          PartnerTheme.badgeOrangeFg,
+          PartnerTheme.badgeOrangeBg,
         ),
       PartnerPublishBadgeKind.listed => (
           l10n.partnerProductBadgeListed,
-          const Color(0xFF0D5C3D),
-          const Color(0xFFC8E6D0),
+          PartnerTheme.badgeGreenFg,
+          PartnerTheme.badgeGreenBg,
         ),
       PartnerPublishBadgeKind.closed => (
           l10n.partnerProductBadgeClosed,
-          const Color(0xFF4A5560),
-          const Color(0xFFE2E6EA),
+          PartnerTheme.textDim,
+          PartnerTheme.borderStrong,
         ),
     };
   }

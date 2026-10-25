@@ -1,3 +1,5 @@
+import 'package:dive_travel_app/core/models/price_revision.dart'
+    show optionHasSeatCommitment;
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 /// Partner product list publish badge (H1a: no approval queue for partners).
@@ -144,4 +146,95 @@ bool _matchesPartnerFilter(
     PartnerProductStatusFilter.closed =>
       partnerPublishBadgeKind(product) == PartnerPublishBadgeKind.closed,
   };
+}
+
+/// Menu card: open same-boat seats across listed products (remaining).
+int partnerOpenSameBoatSeatTotal(Iterable<ShopProduct> products) {
+  var total = 0;
+  for (final product in products) {
+    if (!product.isListedPublicly) {
+      continue;
+    }
+    total += partnerSameBoatLiveSummary(product).seats;
+  }
+  return total;
+}
+
+/// Listed base products only (빈자리 열기 picker).
+List<ShopProduct> partnerListedBaseProducts(Iterable<ShopProduct> products) {
+  return [
+    for (final product in products)
+      if (product.isListedPublicly) product,
+  ];
+}
+
+/// Common add-ons (not nested under an individual SKU).
+List<ShopProductOption> partnerCommonAddons(ShopProduct product) {
+  return [
+    for (final option in product.options)
+      if (option.kind == ProductOptionKind.addon &&
+          option.parentOptionId.trim().isEmpty)
+        option,
+  ];
+}
+
+List<ShopProductOption> partnerIndividualOptions(ShopProduct product) {
+  return [
+    for (final option in product.options)
+      if (option.kind == ProductOptionKind.individual) option,
+  ];
+}
+
+/// True when close should warn about open seats or live holds.
+bool partnerNeedsCloseSeatWarning(
+  ShopProduct product, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  if (product.hasLiveSameBoatOffer) {
+    return true;
+  }
+  for (final hold in product.flagHolds) {
+    if (hold.expiresAt.isAfter(clock)) {
+      return true;
+    }
+  }
+  for (final option in product.options) {
+    for (final hold in option.flagHolds) {
+      if (hold.expiresAt.isAfter(clock)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Seat count shown in the close-confirm dialog.
+int partnerCloseWarningSeatCount(
+  ShopProduct product, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  var seats = partnerSameBoatLiveSummary(product).seats;
+  for (final hold in product.flagHolds) {
+    if (hold.expiresAt.isAfter(clock)) {
+      seats += hold.seats;
+    }
+  }
+  for (final option in product.options) {
+    for (final hold in option.flagHolds) {
+      if (hold.expiresAt.isAfter(clock)) {
+        seats += hold.seats;
+      }
+    }
+  }
+  return seats < 0 ? 0 : seats;
+}
+
+/// Whether discarding an option should close (bookable=false) instead of delete.
+bool partnerOptionDiscardBecomesClose(
+  ShopProductOption option, {
+  DateTime? now,
+}) {
+  return optionHasSeatCommitment(option, now: now);
 }

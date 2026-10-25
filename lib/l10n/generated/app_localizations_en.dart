@@ -3016,6 +3016,116 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductsTitle => 'Manage products';
 
   @override
+  String get partnerProductMenuTitle => 'Products';
+
+  @override
+  String get partnerProductListTitle => 'Product list';
+
+  @override
+  String get partnerProductMenuRegister => 'Register product';
+
+  @override
+  String get partnerProductMenuRegisterSub => 'List a new product';
+
+  @override
+  String partnerProductMenuRegisterDrafting(int count) {
+    return 'List a new product · $count drafting';
+  }
+
+  @override
+  String get partnerProductMenuList => 'Product list';
+
+  @override
+  String get partnerProductMenuListSub => 'Edit or close listings';
+
+  @override
+  String partnerProductMenuListListed(int count) {
+    return '$count listed · edit or close anytime';
+  }
+
+  @override
+  String get partnerProductMenuSeats => 'Open seats';
+
+  @override
+  String get partnerProductMenuSeatsSub => 'Same-boat · base products only';
+
+  @override
+  String partnerProductMenuSeatsOpen(int count) {
+    return 'Same-boat · base products only · $count seats open';
+  }
+
+  @override
+  String get partnerProductMenuFocNote =>
+      'Discounts and instructor FOC follow your contract automatically.\nAsk ops if you need changes.';
+
+  @override
+  String get partnerProductBadgeBasic => 'Base product';
+
+  @override
+  String get partnerProductClose => 'Close';
+
+  @override
+  String get partnerProductReopen => 'Reopen';
+
+  @override
+  String get partnerProductDiscard => 'Discard';
+
+  @override
+  String get partnerProductContinueDraft => 'Continue';
+
+  @override
+  String get partnerProductDraftHiddenHint =>
+      'Draft products are hidden from guests.';
+
+  @override
+  String get partnerProductAddOptionIndividual =>
+      '+ Add option or individual item';
+
+  @override
+  String get partnerProductListFooter =>
+      'Individuals and options live inside one base product. Edit or discard each row here.';
+
+  @override
+  String get partnerProductsEmptyH2 =>
+      'No products yet. Publish one and guests can see it right away.';
+
+  @override
+  String get partnerProductsEmptyCtaH2 => 'Publish your first product';
+
+  @override
+  String get partnerProductCloseSeatTitle => 'Close this product?';
+
+  @override
+  String partnerProductCloseSeatBody(int count) {
+    return '$count open seat(s) will leave the guest board. Existing bookings and in-progress checkouts stay.';
+  }
+
+  @override
+  String get partnerProductDiscardConfirmTitle => 'Discard this line?';
+
+  @override
+  String get partnerProductDiscardConfirmBody =>
+      'It will be removed. If it has bookings or holds, it will be closed instead.';
+
+  @override
+  String get partnerProductDiscardClosedSnack =>
+      'Closed instead of deleted because of bookings or holds.';
+
+  @override
+  String get partnerProductOptionClosedLabel => 'Closed';
+
+  @override
+  String get partnerOpenSeatsTitle => 'Open seats';
+
+  @override
+  String get partnerOpenSeatsEmpty =>
+      'No listed base products yet. Publish a product first.';
+
+  @override
+  String get partnerOpenSeatsPickHint =>
+      'Choose a base product to open on Same-boat.';
+
+  @override
   String get partnerProductsGuide =>
       'Saving publishes to Explore and Same-boat right away. Draft products can use temp save.';
 

@@ -5556,6 +5556,192 @@ abstract class AppLocalizations {
   /// **'상품 관리'**
   String get partnerProductsTitle;
 
+  /// No description provided for @partnerProductMenuTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 관리'**
+  String get partnerProductMenuTitle;
+
+  /// No description provided for @partnerProductListTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 목록'**
+  String get partnerProductListTitle;
+
+  /// No description provided for @partnerProductMenuRegister.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 등록'**
+  String get partnerProductMenuRegister;
+
+  /// No description provided for @partnerProductMenuRegisterSub.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 상품을 올려요'**
+  String get partnerProductMenuRegisterSub;
+
+  /// No description provided for @partnerProductMenuRegisterDrafting.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 상품을 올려요 · 작성 중 {count}개'**
+  String partnerProductMenuRegisterDrafting(int count);
+
+  /// No description provided for @partnerProductMenuList.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 목록'**
+  String get partnerProductMenuList;
+
+  /// No description provided for @partnerProductMenuListSub.
+  ///
+  /// In ko, this message translates to:
+  /// **'고치거나 닫을 수 있어요'**
+  String get partnerProductMenuListSub;
+
+  /// No description provided for @partnerProductMenuListListed.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시중 {count}개 · 고치거나 닫을 수 있어요'**
+  String partnerProductMenuListListed(int count);
+
+  /// No description provided for @partnerProductMenuSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 열기'**
+  String get partnerProductMenuSeats;
+
+  /// No description provided for @partnerProductMenuSeatsSub.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 · 기본 상품만 열 수 있어요'**
+  String get partnerProductMenuSeatsSub;
+
+  /// No description provided for @partnerProductMenuSeatsOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 · 기본 상품만 열 수 있어요 · 열린 자리 {count}석'**
+  String partnerProductMenuSeatsOpen(int count);
+
+  /// No description provided for @partnerProductMenuFocNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'할인과 강사 FOC는 계약서 기준으로 앱이 알아서 적용해요.\n바꾸려면 운영팀과 협의해 주세요.'**
+  String get partnerProductMenuFocNote;
+
+  /// No description provided for @partnerProductBadgeBasic.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 상품'**
+  String get partnerProductBadgeBasic;
+
+  /// No description provided for @partnerProductClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get partnerProductClose;
+
+  /// No description provided for @partnerProductReopen.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 열기'**
+  String get partnerProductReopen;
+
+  /// No description provided for @partnerProductDiscard.
+  ///
+  /// In ko, this message translates to:
+  /// **'폐기'**
+  String get partnerProductDiscard;
+
+  /// No description provided for @partnerProductContinueDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'이어서 작성'**
+  String get partnerProductContinueDraft;
+
+  /// No description provided for @partnerProductDraftHiddenHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'작성 중 상품은 고객 화면에 보이지 않아요.'**
+  String get partnerProductDraftHiddenHint;
+
+  /// No description provided for @partnerProductAddOptionIndividual.
+  ///
+  /// In ko, this message translates to:
+  /// **'+ 옵션 · 개별 상품 추가'**
+  String get partnerProductAddOptionIndividual;
+
+  /// No description provided for @partnerProductListFooter.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 상품 한 개 안에 개별 상품과 옵션이 모두 모여 있어요. 줄마다 바로 고치거나 폐기할 수 있어요.'**
+  String get partnerProductListFooter;
+
+  /// No description provided for @partnerProductsEmptyH2.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 등록한 상품이 없어요. 첫 상품을 올리면 고객 화면에 바로 보여요.'**
+  String get partnerProductsEmptyH2;
+
+  /// No description provided for @partnerProductsEmptyCtaH2.
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 상품 올리기'**
+  String get partnerProductsEmptyCtaH2;
+
+  /// No description provided for @partnerProductCloseSeatTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품을 닫을까요?'**
+  String get partnerProductCloseSeatTitle;
+
+  /// No description provided for @partnerProductCloseSeatBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'열린 빈자리 {count}석이 있어요. 닫으면 고객 화면에서 사라져요. 이미 들어온 예약과 진행 중인 결제는 그대로예요.'**
+  String partnerProductCloseSeatBody(int count);
+
+  /// No description provided for @partnerProductDiscardConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 항목을 폐기할까요?'**
+  String get partnerProductDiscardConfirmTitle;
+
+  /// No description provided for @partnerProductDiscardConfirmBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에서 삭제됩니다. 예약·홀드가 있으면 삭제 대신 닫힙니다.'**
+  String get partnerProductDiscardConfirmBody;
+
+  /// No description provided for @partnerProductDiscardClosedSnack.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약·홀드가 있어 삭제 대신 닫았습니다.'**
+  String get partnerProductDiscardClosedSnack;
+
+  /// No description provided for @partnerProductOptionClosedLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫힘'**
+  String get partnerProductOptionClosedLabel;
+
+  /// No description provided for @partnerOpenSeatsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 열기'**
+  String get partnerOpenSeatsTitle;
+
+  /// No description provided for @partnerOpenSeatsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시 중인 기본 상품이 없어요. 먼저 상품을 게시해 주세요.'**
+  String get partnerOpenSeatsEmpty;
+
+  /// No description provided for @partnerOpenSeatsPickHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배에 열 기본 상품을 고르세요.'**
+  String get partnerOpenSeatsPickHint;
+
   /// No description provided for @partnerProductsGuide.
   ///
   /// In ko, this message translates to:

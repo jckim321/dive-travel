@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/ops_product_workbench.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
 
 /// Shared entry for admin, partner, and diver-creator product registration.
 ///
@@ -14,6 +15,7 @@ class TravelProductRegistrationScreen extends StatelessWidget {
     this.creatorMode = false,
     this.existing,
     this.startEditing = false,
+    this.partnerFocus = PartnerFormFocus.none,
   });
 
   final String? lockedShopId;
@@ -27,6 +29,9 @@ class TravelProductRegistrationScreen extends StatelessWidget {
   /// Admin approval review keeps the default view mode (`false`).
   final bool startEditing;
 
+  /// Partner list deep-link into pricing section / add row (H2).
+  final PartnerFormFocus partnerFocus;
+
   /// Legacy id kept for callers that still reference "not in catalog" shops.
   static const notInListShopId = '__not_in_list__';
 
@@ -38,6 +43,7 @@ class TravelProductRegistrationScreen extends StatelessWidget {
       creatorMode: creatorMode,
       existing: existing,
       startEditing: startEditing,
+      partnerFocus: partnerFocus,
     );
   }
 }

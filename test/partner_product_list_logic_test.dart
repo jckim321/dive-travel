@@ -205,4 +205,106 @@ void main() {
       );
     });
   });
+
+  group('close warning + lines', () {
+    test('needs close warning for live same-boat or holds', () {
+      final now = DateTime(2026, 10, 1);
+      expect(
+        partnerNeedsCloseSeatWarning(_product(id: 'plain'), now: now),
+        isFalse,
+      );
+      expect(
+        partnerNeedsCloseSeatWarning(
+          _product(
+            id: 'live',
+            sameBoat: SameBoatStatus.approved,
+            openEmptySeats: true,
+            capacity: 5,
+            departure: DateTime(2026, 11, 1),
+          ),
+          now: now,
+        ),
+        isTrue,
+      );
+      expect(
+        partnerNeedsCloseSeatWarning(
+          ShopProduct(
+            id: 'hold',
+            shopId: 'shop-a',
+            name: 'hold',
+            consumerPrice: 1,
+            professionalPrice: 1,
+            active: true,
+            publishStatus: ProductPublishStatus.approved,
+            flagHolds: [
+              SeatHold(
+                seats: 2,
+                expiresAt: now.add(const Duration(hours: 1)),
+              ),
+            ],
+          ),
+          now: now,
+        ),
+        isTrue,
+      );
+    });
+
+    test('close warning seat count sums live + holds', () {
+      final now = DateTime(2026, 10, 1);
+      final product = ShopProduct(
+        id: 'sum',
+        shopId: 'shop-a',
+        name: 'sum',
+        consumerPrice: 1,
+        professionalPrice: 1,
+        active: true,
+        publishStatus: ProductPublishStatus.approved,
+        openEmptySeats: true,
+        sameBoatStatus: SameBoatStatus.approved,
+        capacity: 10,
+        bookedSeats: 2,
+        departureStart: DateTime(2026, 11, 1),
+        flagHolds: [
+          SeatHold(seats: 1, expiresAt: now.add(const Duration(hours: 1))),
+        ],
+      );
+      expect(partnerCloseWarningSeatCount(product, now: now), 9);
+    });
+
+    test('common addons exclude nested; individuals by kind', () {
+      final product = ShopProduct(
+        id: 'p',
+        shopId: 'shop-a',
+        name: 'p',
+        consumerPrice: 1,
+        professionalPrice: 1,
+        options: [
+          ShopProductOption(
+            id: 'ind',
+            name: '원데이',
+            kind: ProductOptionKind.individual,
+            consumerPrice: 1,
+            professionalPrice: 1,
+          ),
+          ShopProductOption(
+            id: 'add',
+            name: '픽업',
+            kind: ProductOptionKind.addon,
+            consumerPrice: 1,
+            professionalPrice: 1,
+          ),
+          ShopProductOption(
+            id: 'nested',
+            name: '중첩',
+            kind: ProductOptionKind.addon,
+            parentOptionId: 'ind',
+            consumerPrice: 1,
+            professionalPrice: 1,
+          ),
+        ],
+      );
+      expect(partnerIndividualOptions(product).single.id, 'ind');
+      expect(partnerCommonAddons(product).single.id, 'add');
+    });
+  });
 }

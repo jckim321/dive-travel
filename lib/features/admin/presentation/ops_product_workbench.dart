@@ -29,6 +29,7 @@ import 'package:dive_travel_app/features/admin/presentation/product_submit_check
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -41,6 +42,7 @@ class OpsProductWorkbench extends StatefulWidget {
     this.creatorMode = false,
     this.existing,
     this.startEditing = false,
+    this.partnerFocus = PartnerFormFocus.none,
   });
 
   final String? lockedShopId;
@@ -52,6 +54,9 @@ class OpsProductWorkbench extends StatefulWidget {
 
   /// Open in edit mode when revisiting an existing product (partner/admin edit).
   final bool startEditing;
+
+  /// Partner list deep-link (H2). Ignored when [partnerMode] is false.
+  final PartnerFormFocus partnerFocus;
 
   @override
   State<OpsProductWorkbench> createState() => _OpsProductWorkbenchState();
@@ -274,6 +279,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _partnerScrollController = ScrollController();
   final _nameFieldKey = GlobalKey();
   final _diverPriceFieldKey = GlobalKey();
+  final _partnerAddonsKey = GlobalKey();
+  final _partnerIndividualsKey = GlobalKey();
   ProductSaveIntent? _savingIntent;
   var _previewDiver = 1;
   var _previewNondiver = 0;
@@ -498,7 +505,31 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         return;
       }
       _baselineSignature = _formSignature();
+      _applyPartnerFocus();
     });
+  }
+
+  void _applyPartnerFocus() {
+    if (!widget.partnerMode) {
+      return;
+    }
+    switch (widget.partnerFocus) {
+      case PartnerFormFocus.none:
+        return;
+      case PartnerFormFocus.addAddon:
+        final line = _LineEditors(kind: ProductOptionKind.addon);
+        _listen(line.name);
+        _listen(line.consumer);
+        setState(() => _addons.add(line));
+        _scrollToPartnerKey(_partnerAddonsKey);
+      case PartnerFormFocus.addons:
+        _scrollToPartnerKey(_partnerAddonsKey);
+      case PartnerFormFocus.addIndividual:
+        _addIndividualTicket();
+        _scrollToPartnerKey(_partnerIndividualsKey);
+      case PartnerFormFocus.individuals:
+        _scrollToPartnerKey(_partnerIndividualsKey);
+    }
   }
 
   ShopProductOption? _existingOption(String id) {
@@ -2429,45 +2460,61 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ),
         ],
         const SizedBox(height: 14),
-        Text(
-          l10n.productFormSectionOptions,
-          style: const TextStyle(
-            color: PartnerTheme.text,
-            fontWeight: FontWeight.w700,
+        KeyedSubtree(
+          key: _partnerAddonsKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.productFormSectionOptions,
+                style: const TextStyle(
+                  color: PartnerTheme.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (var i = 0; i < _addons.length; i++) ...[
+                _partnerAddonRow(l10n, i),
+                const SizedBox(height: 8),
+              ],
+              OutlinedButton(
+                key: const Key('partner-form-add-option'),
+                onPressed: () {
+                  final line = _LineEditors(kind: ProductOptionKind.addon);
+                  _listen(line.name);
+                  _listen(line.consumer);
+                  setState(() => _addons.add(line));
+                },
+                child: Text(l10n.partnerFormAddOption),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < _addons.length; i++) ...[
-          _partnerAddonRow(l10n, i),
-          const SizedBox(height: 8),
-        ],
-        OutlinedButton(
-          key: const Key('partner-form-add-option'),
-          onPressed: () {
-            final line = _LineEditors(kind: ProductOptionKind.addon);
-            _listen(line.name);
-            _listen(line.consumer);
-            setState(() => _addons.add(line));
-          },
-          child: Text(l10n.partnerFormAddOption),
         ),
         const SizedBox(height: 16),
-        Text(
-          l10n.bookingEntryIndividuals,
-          style: const TextStyle(
-            color: PartnerTheme.text,
-            fontWeight: FontWeight.w700,
+        KeyedSubtree(
+          key: _partnerIndividualsKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.bookingEntryIndividuals,
+                style: const TextStyle(
+                  color: PartnerTheme.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (var i = 0; i < _individuals.length; i++) ...[
+                _partnerIndividualCard(l10n, i),
+                const SizedBox(height: 8),
+              ],
+              OutlinedButton(
+                key: const Key('partner-form-add-individual'),
+                onPressed: _addIndividualTicket,
+                child: Text(l10n.partnerFormAddIndividual),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        for (var i = 0; i < _individuals.length; i++) ...[
-          _partnerIndividualCard(l10n, i),
-          const SizedBox(height: 8),
-        ],
-        OutlinedButton(
-          key: const Key('partner-form-add-individual'),
-          onPressed: _addIndividualTicket,
-          child: Text(l10n.partnerFormAddIndividual),
         ),
         const SizedBox(height: 14),
         TextField(

@@ -43,6 +43,9 @@ class ShopProductSaveResult {
   final bool stagedPriceOrNewOptions;
 }
 
+/// Result of [DiverStore.discardPartnerOption].
+enum PartnerOptionDiscardResult { deleted, closed }
+
 class _GatedShopProduct {
   const _GatedShopProduct(this.product, this.stagedPriceOrNewOptions);
 
@@ -1970,14 +1973,106 @@ class DiverStore extends ChangeNotifier {
     required String shopId,
     required String productId,
   }) async {
-    final owned = _stats.ownedShopId;
+    final effective = stats;
+    final owned = effective.ownedShopId;
     final isOwnerPartner =
-        _stats.isBusiness && owned != null && owned == shopId;
+        effective.isBusiness && owned != null && owned == shopId;
     if (!_stats.isAdmin && !isOwnerPartner) {
       throw StateError('Not allowed to delete this shop product');
     }
     await _repository.deleteShopProduct(shopId: shopId, productId: productId);
     await refreshShopStat(shopId);
+  }
+
+  /// Partner close / reopen. Reloads latest so seat fields are not stale-overwritten.
+  Future<void> setPartnerProductActive({
+    required String shopId,
+    required String productId,
+    required bool active,
+  }) async {
+    final effective = stats;
+    final owned = effective.ownedShopId;
+    final isOwnerPartner =
+        effective.isBusiness && owned != null && owned == shopId;
+    if (!_stats.isAdmin && !isOwnerPartner) {
+      throw StateError('Not allowed to edit this shop product');
+    }
+    final latest = await _requireFreshShopProduct(shopId, productId);
+    await saveShopProduct(
+      shopId: shopId,
+      product: latest.copyWith(active: active),
+      intent: ProductSaveIntent.preserveListing,
+    );
+  }
+
+  /// Discard an option/individual line. Reloads latest; seat commitment → close.
+  ///
+  /// Returns `closed` when bookable was cleared instead of deleting.
+  Future<PartnerOptionDiscardResult> discardPartnerOption({
+    required String shopId,
+    required String productId,
+    required String optionId,
+    DateTime? now,
+  }) async {
+    final effective = stats;
+    final owned = effective.ownedShopId;
+    final isOwnerPartner =
+        effective.isBusiness && owned != null && owned == shopId;
+    if (!_stats.isAdmin && !isOwnerPartner) {
+      throw StateError('Not allowed to edit this shop product');
+    }
+    final latest = await _requireFreshShopProduct(shopId, productId);
+    ShopProductOption? target;
+    for (final option in latest.options) {
+      if (option.id == optionId) {
+        target = option;
+        break;
+      }
+    }
+    if (target == null) {
+      throw StateError('Option not found');
+    }
+    final clock = now ?? DateTime.now();
+    if (optionHasSeatCommitment(target, now: clock)) {
+      final nextOptions = [
+        for (final option in latest.options)
+          if (option.id == optionId)
+            option.copyWith(bookable: false)
+          else
+            option,
+      ];
+      await saveShopProduct(
+        shopId: shopId,
+        product: latest.copyWith(options: nextOptions),
+        intent: ProductSaveIntent.preserveListing,
+      );
+      return PartnerOptionDiscardResult.closed;
+    }
+    final nextOptions = [
+      for (final option in latest.options)
+        if (option.id != optionId && option.parentOptionId != optionId) option,
+    ];
+    await saveShopProduct(
+      shopId: shopId,
+      product: latest.copyWith(options: nextOptions),
+      intent: ProductSaveIntent.preserveListing,
+    );
+    return PartnerOptionDiscardResult.deleted;
+  }
+
+  Future<ShopProduct> _requireFreshShopProduct(
+    String shopId,
+    String productId,
+  ) async {
+    final refreshed = await refreshShopStat(shopId);
+    if (!refreshed) {
+      throw StateError('SHOP_STAT_REFRESH_FAILED');
+    }
+    final latest = _findShopProduct(shopId, productId);
+    if (latest == null) {
+      throw StateError('Product not found');
+    }
+    return latest;
   }
 
   /// TODO(a1-desk-save-timing): probe — remove after approve latency check.

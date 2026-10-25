@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
-import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_bookings_temp_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
-import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerDashboardScreen extends StatefulWidget {
@@ -83,12 +82,11 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                   _HomeHeader(
                     shopName: shopName,
                     onShopInfo: () => _open(ResortDeskScreen(shopId: shopId)),
-                    onSameBoat: () => _open(SameBoatSeatsHubScreen(shopId: shopId)),
                   ),
                   const SizedBox(height: 14),
                   _QuickGrid(
                     onProducts: () => _open(
-                      const AdminProductsScreen(partnerMode: true),
+                      const PartnerProductMenuScreen(),
                     ),
                     onBookings: () =>
                         _open(PartnerBookingsTempScreen(shopId: shopId)),
@@ -138,12 +136,10 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.shopName,
     required this.onShopInfo,
-    required this.onSameBoat,
   });
 
   final String shopName;
   final VoidCallback onShopInfo;
-  final VoidCallback onSameBoat;
 
   @override
   Widget build(BuildContext context) {
@@ -179,21 +175,6 @@ class _HomeHeader extends StatelessWidget {
           key: const Key('partner-home-shop-info'),
           onPressed: onShopInfo,
           child: Text(l10n.partnerHomeShopInfo),
-        ),
-        PopupMenuButton<String>(
-          key: const Key('partner-home-overflow'),
-          icon: const Icon(Icons.more_vert, color: PartnerTheme.text),
-          onSelected: (value) {
-            if (value == 'same_boat') {
-              onSameBoat();
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem<String>(
-              value: 'same_boat',
-              child: Text(l10n.partnerHomeMenuSameBoat),
-            ),
-          ],
         ),
       ],
     );

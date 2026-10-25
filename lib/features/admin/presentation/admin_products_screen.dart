@@ -13,7 +13,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.d
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_products_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 enum _ProductSourceFilter { all, partner, diy, special }
@@ -46,7 +46,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.partnerMode) {
-      return PartnerProductsScreen(embedded: widget.embedded);
+      return PartnerProductMenuScreen(embedded: widget.embedded);
     }
 
     final l10n = AppLocalizations.of(context);

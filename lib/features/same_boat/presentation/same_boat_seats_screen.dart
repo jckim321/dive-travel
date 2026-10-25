@@ -13,12 +13,16 @@ class SameBoatSeatsScreen extends StatefulWidget {
     super.key,
     required this.product,
     this.adminBypassApproval = false,
+    this.basePackageOnly = false,
   });
 
   final ShopProduct product;
 
   /// Admin curated/specials can publish straight to the board.
   final bool adminBypassApproval;
+
+  /// Partner open-seats path: hide option/individual slots; edit package only.
+  final bool basePackageOnly;
 
   @override
   State<SameBoatSeatsScreen> createState() => _SameBoatSeatsScreenState();
@@ -36,18 +40,21 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   void initState() {
     super.initState();
     final p = widget.product;
-    final slots = <SameBoatOptionSeatSlot>[
-      for (final o in p.options)
+    final slots = <SameBoatOptionSeatSlot>[];
+    if (!widget.basePackageOnly) {
+      for (final o in p.options) {
         if (o.kind == ProductOptionKind.individual ||
             o.kind == ProductOptionKind.basePackage ||
             o.openEmptySeats ||
-            o.sameBoatStatus != SameBoatStatus.closed)
-          SameBoatOptionSeatSlot(id: o.id, name: o.name),
-    ];
-    final seen = {for (final s in slots) s.id};
-    for (final o in p.options) {
-      if (o.kind == ProductOptionKind.individual && !seen.contains(o.id)) {
-        slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
+            o.sameBoatStatus != SameBoatStatus.closed) {
+          slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
+        }
+      }
+      final seen = {for (final s in slots) s.id};
+      for (final o in p.options) {
+        if (o.kind == ProductOptionKind.individual && !seen.contains(o.id)) {
+          slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
+        }
       }
     }
     _seats = SameBoatSeatOpenController(
