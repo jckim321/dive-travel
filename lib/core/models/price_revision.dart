@@ -319,6 +319,7 @@ ShopProductOption _mergeNonPrice(
     kind: draft.kind,
     guestRole: draft.guestRole,
     parentOptionId: draft.parentOptionId,
+    group: draft.group,
     // Keep live prices / seats / holds / same-boat inventory.
   );
 }

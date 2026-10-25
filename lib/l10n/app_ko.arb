@@ -1901,6 +1901,7 @@
   "productFormCancelHint": "출발 N일 전 규정 등",
   "productFormOptionsHint": "룸타입, 탱크 수, 장비, 트랜스퍼처럼 손님이 고르는 구성을 추가하세요.",
   "productFormOptionName": "옵션명",
+  "productFormOptionGroup": "그룹",
   "productFormOptionDesc": "옵션 설명",
   "productFormOptionConsumer": "옵션 소비자가",
   "productFormOptionPro": "옵션 강사 우대가",

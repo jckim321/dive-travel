@@ -1342,6 +1342,7 @@
   "productFormCancelHint": "Rules N days before departure",
   "productFormOptionsHint": "Add chooseable lines: room type, tanks, gear, transfer.",
   "productFormOptionName": "Option name",
+  "productFormOptionGroup": "Group",
   "productFormOptionDesc": "Option details",
   "productFormOptionConsumer": "Guest price",
   "productFormOptionPro": "Pro price",

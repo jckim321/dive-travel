@@ -3347,6 +3347,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormOptionName => 'Option name';
 
   @override
+  String get productFormOptionGroup => 'Group';
+
+  @override
   String get productFormOptionDesc => 'Option details';
 
   @override

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
+import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -72,6 +73,7 @@ class _LineEditors {
     String professional = '',
     this.kind = ProductOptionKind.addon,
     this.bookable = true,
+    this.group = '',
   }) : id = id ?? 'opt-${DateTime.now().microsecondsSinceEpoch}',
        name = TextEditingController(text: name),
        description = TextEditingController(text: description),
@@ -88,6 +90,7 @@ class _LineEditors {
   String? priceError;
   ProductOptionKind kind;
   bool bookable;
+  String group;
 
   void dispose() {
     name.dispose();
@@ -107,6 +110,7 @@ class _LineEditors {
       professionalPrice: parsePositivePrice(professional.text) ?? price,
       kind: kind,
       bookable: bookable,
+      group: normalizeOptionGroup(group),
     );
   }
 }
@@ -119,6 +123,7 @@ class _IndividualTicket {
     String includes = '',
     String excludes = '',
     this.bookable = true,
+    this.group = '',
   }) : id = id ?? 'ind-${DateTime.now().microsecondsSinceEpoch}',
        name = TextEditingController(text: name),
        consumer = TextEditingController(text: consumer),
@@ -146,6 +151,7 @@ class _IndividualTicket {
       includes: includes,
       excludes: excludes,
       bookable: option.bookable,
+      group: option.group,
     );
   }
 
@@ -162,6 +168,7 @@ class _IndividualTicket {
   DateTime? checkIn;
   int guests = 1;
   bool bookable;
+  String group;
   bool hasNondivers = false;
   int nondivers = 0;
   int children = 0;
@@ -209,6 +216,7 @@ class _IndividualTicket {
       professionalPrice: price,
       kind: ProductOptionKind.individual,
       bookable: bookable,
+      group: normalizeOptionGroup(group),
     );
   }
 
@@ -451,6 +459,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               : '',
           kind: option.kind,
           bookable: option.bookable,
+          group: option.group,
         ),
       );
     }
@@ -478,6 +487,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               : '',
           kind: ProductOptionKind.addon,
           bookable: option.bookable,
+          group: option.group,
         );
         _watchLine(line);
         _listen(line.consumer);
@@ -2561,6 +2571,35 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  Widget _optionGroupMenu({
+    required String id,
+    required String value,
+    required ValueChanged<String> onChanged,
+    required bool partner,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    return DropdownButtonFormField<String>(
+      key: Key('option-group-$id'),
+      initialValue: normalizeOptionGroup(value),
+      isExpanded: true,
+      decoration: partner
+          ? _partnerField(l10n.productFormOptionGroup)
+          : _bookingDense(l10n.productFormOptionGroup),
+      items: [
+        const DropdownMenuItem(
+          value: '',
+          child: Text(optionGroupUnsetLabel),
+        ),
+        for (final group in optionGroups)
+          DropdownMenuItem(
+            value: group.id,
+            child: Text(group.nameKo),
+          ),
+      ],
+      onChanged: (next) => onChanged(normalizeOptionGroup(next)),
+    );
+  }
+
   Widget _partnerAddonRow(AppLocalizations l10n, int index) {
     final draft = _addons[index];
     return Material(
@@ -2568,45 +2607,60 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       borderRadius: BorderRadius.circular(10),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              flex: 3,
-              child: TextField(
-                controller: draft.name,
-                style: const TextStyle(color: PartnerTheme.text),
-                decoration: _partnerField(l10n.productFormOptionName),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: TextField(
-                focusNode: draft.consumerFocus,
-                controller: draft.consumer,
-                keyboardType: TextInputType.number,
-                inputFormatters: _priceInputFormatters,
-                style: const TextStyle(color: PartnerTheme.text),
-                decoration: _partnerField(
-                  l10n.productFormOptionConsumer,
-                  errorText: draft.priceError,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: draft.name,
+                    style: const TextStyle(color: PartnerTheme.text),
+                    decoration: _partnerField(l10n.productFormOptionName),
+                  ),
                 ),
-                onChanged: (_) => setState(() => draft.priceError = null),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    focusNode: draft.consumerFocus,
+                    controller: draft.consumer,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: _priceInputFormatters,
+                    style: const TextStyle(color: PartnerTheme.text),
+                    decoration: _partnerField(
+                      l10n.productFormOptionConsumer,
+                      errorText: draft.priceError,
+                    ),
+                    onChanged: (_) => setState(() => draft.priceError = null),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    if (_closeOptionInsteadOfRemove(draft)) {
+                      setState(() {});
+                      return;
+                    }
+                    setState(() {
+                      draft.dispose();
+                      _addons.removeAt(index);
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: PartnerTheme.textDim,
+                  ),
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: () {
-                if (_closeOptionInsteadOfRemove(draft)) {
-                  setState(() {});
-                  return;
-                }
-                setState(() {
-                  draft.dispose();
-                  _addons.removeAt(index);
-                });
-              },
-              icon: const Icon(Icons.delete_outline, color: PartnerTheme.textDim),
+            const SizedBox(height: 8),
+            _optionGroupMenu(
+              id: draft.id,
+              value: draft.group,
+              partner: true,
+              onChanged: (next) => setState(() => draft.group = next),
             ),
           ],
         ),
@@ -2649,6 +2703,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               ],
             ),
             const SizedBox(height: 8),
+            _optionGroupMenu(
+              id: ticket.id,
+              value: ticket.group,
+              partner: true,
+              onChanged: (next) => setState(() => ticket.group = next),
+            ),
+            const SizedBox(height: 8),
             TextField(
               focusNode: ticket.consumerFocus,
               controller: ticket.consumer,
@@ -2674,43 +2735,56 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
             const SizedBox(height: 8),
             for (var j = 0; j < ticket.addons.length; j++) ...[
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: ticket.addons[j].name,
-                      style: const TextStyle(color: PartnerTheme.text),
-                      decoration: _partnerField(l10n.productFormOptionName),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: TextField(
-                      focusNode: ticket.addons[j].consumerFocus,
-                      controller: ticket.addons[j].consumer,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: _priceInputFormatters,
-                      style: const TextStyle(color: PartnerTheme.text),
-                      decoration: _partnerField(
-                        l10n.productFormOptionConsumer,
-                        errorText: ticket.addons[j].priceError,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: ticket.addons[j].name,
+                          style: const TextStyle(color: PartnerTheme.text),
+                          decoration: _partnerField(l10n.productFormOptionName),
+                        ),
                       ),
-                      onChanged: (_) =>
-                          setState(() => ticket.addons[j].priceError = null),
-                    ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: TextField(
+                          focusNode: ticket.addons[j].consumerFocus,
+                          controller: ticket.addons[j].consumer,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: _priceInputFormatters,
+                          style: const TextStyle(color: PartnerTheme.text),
+                          decoration: _partnerField(
+                            l10n.productFormOptionConsumer,
+                            errorText: ticket.addons[j].priceError,
+                          ),
+                          onChanged: (_) =>
+                              setState(() => ticket.addons[j].priceError = null),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            ticket.addons[j].dispose();
+                            ticket.addons.removeAt(j);
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.close,
+                          size: 18,
+                          color: PartnerTheme.textDim,
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        ticket.addons[j].dispose();
-                        ticket.addons.removeAt(j);
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.close,
-                      size: 18,
-                      color: PartnerTheme.textDim,
-                    ),
+                  const SizedBox(height: 6),
+                  _optionGroupMenu(
+                    id: ticket.addons[j].id,
+                    value: ticket.addons[j].group,
+                    partner: true,
+                    onChanged: (next) =>
+                        setState(() => ticket.addons[j].group = next),
                   ),
                 ],
               ),
@@ -4165,6 +4239,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 8),
+                  _optionGroupMenu(
+                    id: ticket.id,
+                    value: ticket.group,
+                    partner: false,
+                    onChanged: (next) => setState(() => ticket.group = next),
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Container(
@@ -4682,8 +4763,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         border: Border.all(color: const Color(0xFFE2E8EE)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(6, 4, 0, 4),
-        child: Row(
+        padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
           children: [
             Expanded(
               flex: 3,
@@ -4746,6 +4830,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       });
                     },
               icon: const Icon(Icons.close, size: 18),
+            ),
+          ],
+        ),
+            const SizedBox(height: 4),
+            _optionGroupMenu(
+              id: draft.id,
+              value: draft.group,
+              partner: false,
+              onChanged: (next) => setState(() => draft.group = next),
             ),
           ],
         ),

@@ -3249,6 +3249,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get productFormOptionName => '옵션명';
 
   @override
+  String get productFormOptionGroup => '그룹';
+
+  @override
   String get productFormOptionDesc => '옵션 설명';
 
   @override

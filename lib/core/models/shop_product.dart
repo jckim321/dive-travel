@@ -1,4 +1,5 @@
 import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 
 /// Explore-only vs home shelf placement for an approved product.
@@ -382,6 +383,7 @@ class ShopProductOption {
     this.sameBoatStatus = SameBoatStatus.closed,
     this.guestRating = 0,
     this.guestReviewCount = 0,
+    this.group = '',
   });
 
   factory ShopProductOption.fromMap(Map<String, dynamic> data) {
@@ -408,6 +410,7 @@ class ShopProductOption {
       ),
       guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
       guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
+      group: normalizeOptionGroup(data['group'] as String?),
     );
   }
 
@@ -433,6 +436,9 @@ class ShopProductOption {
   /// Denormalized guest averages (cards still use parent [ShopProduct]).
   final double guestRating;
   final int guestReviewCount;
+
+  /// Display bucket. Empty means unclassified. Does not change price or seats.
+  final String group;
 
   bool get listsOnSameBoat {
     return openEmptySeats &&
@@ -464,6 +470,7 @@ class ShopProductOption {
       if (parentOptionId.isNotEmpty) 'parent_option_id': parentOptionId,
       if (guestReviewCount > 0) 'guest_rating': guestRating,
       if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
+      if (group.isNotEmpty) 'group': group,
     };
   }
 
@@ -521,6 +528,7 @@ class ShopProductOption {
     SameBoatStatus? sameBoatStatus,
     double? guestRating,
     int? guestReviewCount,
+    String? group,
     bool clearDates = false,
   }) {
     return ShopProductOption(
@@ -544,6 +552,7 @@ class ShopProductOption {
       sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
       guestRating: guestRating ?? this.guestRating,
       guestReviewCount: guestReviewCount ?? this.guestReviewCount,
+      group: group ?? this.group,
     );
   }
 

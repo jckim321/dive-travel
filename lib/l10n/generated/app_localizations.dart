@@ -6174,6 +6174,12 @@ abstract class AppLocalizations {
   /// **'옵션명'**
   String get productFormOptionName;
 
+  /// No description provided for @productFormOptionGroup.
+  ///
+  /// In ko, this message translates to:
+  /// **'그룹'**
+  String get productFormOptionGroup;
+
   /// No description provided for @productFormOptionDesc.
   ///
   /// In ko, this message translates to:
