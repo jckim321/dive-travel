@@ -1134,6 +1134,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are already at the deepest grade, Platinum.';
 
   @override
+  String get profileGradeShownAsInstructor =>
+      'You are shown as Instructor. The stored grade stays as it is.';
+
+  @override
   String get profileCredentialsTitle => 'Certification & grade';
 
   @override
@@ -1467,7 +1471,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminGradeMixInstructorNote =>
-      'Instructors stay a separate role (is_instructor). A 5th grade chip waits on owner confirmation.';
+      'Certified instructors are shown as Instructor. The stored grade stays as it is.';
 
   @override
   String get adminMembersGradeAll => 'All';

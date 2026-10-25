@@ -2148,6 +2148,12 @@ abstract class AppLocalizations {
   /// **'이미 가장 깊은 등급, 플래티넘입니다.'**
   String get profileGradeDeepest;
 
+  /// No description provided for @profileGradeShownAsInstructor.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면에는 강사로 보입니다. 저장된 등급은 그대로입니다.'**
+  String get profileGradeShownAsInstructor;
+
   /// No description provided for @profileCredentialsTitle.
   ///
   /// In ko, this message translates to:
@@ -2775,7 +2781,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminGradeMixInstructorNote.
   ///
   /// In ko, this message translates to:
-  /// **'강사는 별도 역할(is_instructor)로 표시됩니다. 5단계 등급 칩은 사장님 확인 후 반영합니다.'**
+  /// **'강사 인증이 된 회원은 강사로 보입니다. 저장된 등급은 그대로입니다.'**
   String get adminGradeMixInstructorNote;
 
   /// No description provided for @adminMembersGradeAll.

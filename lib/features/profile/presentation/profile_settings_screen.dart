@@ -387,7 +387,10 @@ String _useGradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
 }
 
 String _nextGradeLine(AppLocalizations l10n, DiverStats stats) {
-  if (stats.isInstructor || stats.memberGrade == MemberGrade.platinum) {
+  if (stats.isInstructor) {
+    return l10n.profileGradeShownAsInstructor;
+  }
+  if (stats.memberGrade == MemberGrade.platinum) {
     return l10n.profileGradeDeepest;
   }
   final deficit = MemberGrade.deficitToNext(
@@ -422,6 +425,7 @@ class _GradeLadderState extends State<_GradeLadder>
     (ProfileDisplayGrade.gold, '🥇'),
     (ProfileDisplayGrade.diamond, '💎'),
     (ProfileDisplayGrade.platinum, '💠'),
+    (ProfileDisplayGrade.instructor, '🎓'),
   ];
 
   @override

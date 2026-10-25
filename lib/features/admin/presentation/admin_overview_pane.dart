@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
@@ -191,6 +192,13 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
       applications: _applications,
     );
     final live = latestLiveBookings(_liveByShop);
+    final gradeMix = _MemberGradeMix(
+      l10n: l10n,
+      counts: countDisplayGrades([
+        for (final member in store.members)
+          (grade: member.grade, isInstructor: member.isInstructor),
+      ]),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -244,6 +252,8 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
               const SizedBox(height: 16),
               queue,
               const SizedBox(height: 16),
+              gradeMix,
+              const SizedBox(height: 16),
               chart,
               const SizedBox(height: 16),
               liveCard,
@@ -279,6 +289,8 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
                       child: ListView(
                         children: [
                           queue,
+                          const SizedBox(height: 16),
+                          gradeMix,
                           const SizedBox(height: 16),
                           feed,
                         ],
@@ -1082,6 +1094,69 @@ String _percentPhrase(int now, int then, String label, String missing) {
   final pct = (((now - then) / then) * 100).round();
   final sign = pct > 0 ? '+' : '';
   return '$label $sign$pct%';
+}
+
+class _MemberGradeMix extends StatelessWidget {
+  const _MemberGradeMix({required this.l10n, required this.counts});
+
+  final AppLocalizations l10n;
+  final Map<ProfileDisplayGrade, int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = counts.values.fold<int>(0, (sum, value) => sum + value);
+    return Container(
+      key: const Key('admin-overview-grade-mix'),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: AdminConsoleTheme.surfaceHigh,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AdminConsoleTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.adminGradeMixTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          for (final grade in ProfileDisplayGrade.values)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                '${_mixLabel(l10n, grade)}  ${counts[grade] ?? 0}',
+                key: Key('admin-overview-grade-${grade.name}'),
+              ),
+            ),
+          const SizedBox(height: 6),
+          Text(
+            '$total',
+            key: const Key('admin-overview-grade-total'),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AdminConsoleTheme.aqua,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.adminGradeMixInstructorNote,
+            style: const TextStyle(fontSize: 12, color: AdminConsoleTheme.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _mixLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
+  return switch (grade) {
+    ProfileDisplayGrade.silver => l10n.memberGradeSilver,
+    ProfileDisplayGrade.gold => l10n.memberGradeGold,
+    ProfileDisplayGrade.diamond => l10n.memberGradeDiamond,
+    ProfileDisplayGrade.platinum => l10n.memberGradePlatinum,
+    ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
+  };
 }
 
 Color _deltaColor(int delta) {

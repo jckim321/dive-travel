@@ -205,7 +205,7 @@ Widget _flow(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
 }
 
 Widget _who(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
-  final grades = snapshot?.gradeCounts ?? const <MemberGrade, int>{};
+  final grades = snapshot?.gradeCounts ?? const <ProfileDisplayGrade, int>{};
   final maxGrade = grades.values.fold<int>(0, (max, value) => value > max ? value : max);
   return _card(
     title: '2 ${l10n.adminStatsWho}',
@@ -213,7 +213,7 @@ Widget _who(AppLocalizations l10n, AdminStatsSnapshot? snapshot) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final grade in MemberGrade.values)
+        for (final grade in ProfileDisplayGrade.values)
           _hBar(
             _gradeLabel(l10n, grade),
             grades[grade] ?? 0,
@@ -656,12 +656,13 @@ String _presetLabel(AppLocalizations l10n, AdminStatsPreset preset) {
   };
 }
 
-String _gradeLabel(AppLocalizations l10n, MemberGrade grade) {
+String _gradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
   return switch (grade) {
-    MemberGrade.silver => l10n.memberGradeSilver,
-    MemberGrade.gold => l10n.memberGradeGold,
-    MemberGrade.diamond => l10n.memberGradeDiamond,
-    MemberGrade.platinum => l10n.memberGradePlatinum,
+    ProfileDisplayGrade.silver => l10n.memberGradeSilver,
+    ProfileDisplayGrade.gold => l10n.memberGradeGold,
+    ProfileDisplayGrade.diamond => l10n.memberGradeDiamond,
+    ProfileDisplayGrade.platinum => l10n.memberGradePlatinum,
+    ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
   };
 }
 

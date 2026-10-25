@@ -1188,12 +1188,10 @@ class _OverviewPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final gradeCounts = <MemberGrade, int>{
-      for (final g in MemberGrade.valuesInOrder) g: 0,
-    };
-    for (final m in members) {
-      gradeCounts[m.grade] = (gradeCounts[m.grade] ?? 0) + 1;
-    }
+    final gradeCounts = countDisplayGrades([
+      for (final member in members)
+        (grade: member.grade, isInstructor: member.isInstructor),
+    ]);
     final conversionPct = (ops.conversionRate * 100).round();
 
     return ListView(
@@ -1386,10 +1384,8 @@ class _OverviewPane extends StatelessWidget {
         _GradeMixCard(
           counts: gradeCounts,
           labels: {
-            MemberGrade.silver: l10n.memberGradeSilver,
-            MemberGrade.gold: l10n.memberGradeGold,
-            MemberGrade.diamond: l10n.memberGradeDiamond,
-            MemberGrade.platinum: l10n.memberGradePlatinum,
+            for (final grade in ProfileDisplayGrade.values)
+              grade: _displayGradeLabel(l10n, grade),
           },
         ),
         const SizedBox(height: 8),
@@ -1526,7 +1522,13 @@ class _NearUpgradeTile extends StatelessWidget {
         title: Text(member.displayName),
         subtitle: Text(l10n.adminNearUpgradeHint(deficit.$1, deficit.$2)),
         trailing: Text(
-          memberGradeShort(l10n, member.grade),
+          _displayGradeLabel(
+            l10n,
+            ProfileDisplayGrade.fromMember(
+              grade: member.grade,
+              isInstructor: member.isInstructor,
+            ),
+          ),
           style: const TextStyle(
             fontWeight: FontWeight.w800,
             color: AdminConsoleTheme.aqua,
@@ -1535,6 +1537,16 @@ class _NearUpgradeTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _displayGradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
+  return switch (grade) {
+    ProfileDisplayGrade.silver => l10n.memberGradeSilver,
+    ProfileDisplayGrade.gold => l10n.memberGradeGold,
+    ProfileDisplayGrade.diamond => l10n.memberGradeDiamond,
+    ProfileDisplayGrade.platinum => l10n.memberGradePlatinum,
+    ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
+  };
 }
 
 String memberGradeShort(AppLocalizations l10n, MemberGrade grade) {
@@ -1784,18 +1796,19 @@ class _AttentionTile extends StatelessWidget {
 class _GradeMixCard extends StatelessWidget {
   const _GradeMixCard({required this.counts, required this.labels});
 
-  final Map<MemberGrade, int> counts;
-  final Map<MemberGrade, String> labels;
+  final Map<ProfileDisplayGrade, int> counts;
+  final Map<ProfileDisplayGrade, String> labels;
 
   @override
   Widget build(BuildContext context) {
     final total = counts.values.fold<int>(0, (a, b) => a + b);
     final max = counts.values.fold<int>(1, (a, b) => a > b ? a : b);
     const colors = {
-      MemberGrade.silver: AdminConsoleTheme.muted,
-      MemberGrade.gold: AdminConsoleTheme.ice,
-      MemberGrade.diamond: AdminConsoleTheme.amber,
-      MemberGrade.platinum: AdminConsoleTheme.aqua,
+      ProfileDisplayGrade.silver: AdminConsoleTheme.muted,
+      ProfileDisplayGrade.gold: AdminConsoleTheme.ice,
+      ProfileDisplayGrade.diamond: AdminConsoleTheme.amber,
+      ProfileDisplayGrade.platinum: AdminConsoleTheme.aqua,
+      ProfileDisplayGrade.instructor: AdminConsoleTheme.ice,
     };
 
     return Container(
@@ -1812,7 +1825,7 @@ class _GradeMixCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                for (final grade in MemberGrade.valuesInOrder) ...[
+                for (final grade in ProfileDisplayGrade.values) ...[
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -1858,7 +1871,7 @@ class _GradeMixCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              for (final grade in MemberGrade.valuesInOrder)
+              for (final grade in ProfileDisplayGrade.values)
                 Expanded(
                   child: Text(
                     labels[grade] ?? '',

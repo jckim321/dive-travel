@@ -18,6 +18,7 @@ enum _MemberGradeFilter {
   gold,
   diamond,
   platinum,
+  instructor,
 }
 
 class AdminMembersScreen extends StatefulWidget {
@@ -83,13 +84,15 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       case _MemberGradeFilter.needsAction:
         return pendingUids.contains(member.uid);
       case _MemberGradeFilter.silver:
-        return member.grade == MemberGrade.silver;
+        return !member.isInstructor && member.grade == MemberGrade.silver;
       case _MemberGradeFilter.gold:
-        return member.grade == MemberGrade.gold;
+        return !member.isInstructor && member.grade == MemberGrade.gold;
       case _MemberGradeFilter.diamond:
-        return member.grade == MemberGrade.diamond;
+        return !member.isInstructor && member.grade == MemberGrade.diamond;
       case _MemberGradeFilter.platinum:
-        return member.grade == MemberGrade.platinum;
+        return !member.isInstructor && member.grade == MemberGrade.platinum;
+      case _MemberGradeFilter.instructor:
+        return member.isInstructor;
     }
   }
 
@@ -236,6 +239,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                             _MemberGradeFilter.platinum,
                             memberGradeLabel(l10n, MemberGrade.platinum),
                           ),
+                          (
+                            _MemberGradeFilter.instructor,
+                            l10n.profileGradeInstructor,
+                          ),
                         ])
                           PopupMenuItem(
                             value: entry.$1,
@@ -248,17 +255,25 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                                 _MemberGradeFilter.gold,
                                 _MemberGradeFilter.diamond,
                                 _MemberGradeFilter.platinum,
+                                _MemberGradeFilter.instructor,
                               }.contains(_gradeFilter)
-                              ? memberGradeLabel(
-                                  l10n,
-                                  switch (_gradeFilter) {
-                                    _MemberGradeFilter.gold =>
-                                      MemberGrade.gold,
-                                    _MemberGradeFilter.diamond =>
+                              ? switch (_gradeFilter) {
+                                  _MemberGradeFilter.gold => memberGradeLabel(
+                                    l10n,
+                                    MemberGrade.gold,
+                                  ),
+                                  _MemberGradeFilter.diamond =>
+                                    memberGradeLabel(
+                                      l10n,
                                       MemberGrade.diamond,
-                                    _ => MemberGrade.platinum,
-                                  },
-                                )
+                                    ),
+                                  _MemberGradeFilter.instructor =>
+                                    l10n.profileGradeInstructor,
+                                  _ => memberGradeLabel(
+                                    l10n,
+                                    MemberGrade.platinum,
+                                  ),
+                                }
                               : l10n.adminFilterMore,
                         ),
                         avatar: const Icon(Icons.expand_more, size: 16),
@@ -351,6 +366,21 @@ class _MemberCard extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _displayGradeLabel(
+                l10n,
+                ProfileDisplayGrade.fromMember(
+                  grade: member.grade,
+                  isInstructor: member.isInstructor,
+                ),
+              ),
+              key: Key('admin-member-display-grade-${member.uid}'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AdminConsoleTheme.aqua,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (member.loginId.isNotEmpty) ...[
               const SizedBox(height: 4),
@@ -752,6 +782,16 @@ class _RoleBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+String _displayGradeLabel(AppLocalizations l10n, ProfileDisplayGrade grade) {
+  return switch (grade) {
+    ProfileDisplayGrade.silver => l10n.memberGradeSilver,
+    ProfileDisplayGrade.gold => l10n.memberGradeGold,
+    ProfileDisplayGrade.diamond => l10n.memberGradeDiamond,
+    ProfileDisplayGrade.platinum => l10n.memberGradePlatinum,
+    ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
+  };
 }
 
 String memberGradeLabel(AppLocalizations l10n, MemberGrade grade) {

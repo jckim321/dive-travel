@@ -135,3 +135,18 @@ enum ProfileDisplayGrade {
     );
   }
 }
+
+/// Screen buckets. An instructor is counted only as instructor.
+Map<ProfileDisplayGrade, int> countDisplayGrades(
+  Iterable<({MemberGrade grade, bool isInstructor})> people,
+) {
+  final counts = {for (final grade in ProfileDisplayGrade.values) grade: 0};
+  for (final person in people) {
+    final shown = ProfileDisplayGrade.fromMember(
+      grade: person.grade,
+      isInstructor: person.isInstructor,
+    );
+    counts[shown] = (counts[shown] ?? 0) + 1;
+  }
+  return counts;
+}

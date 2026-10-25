@@ -1107,6 +1107,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileGradeDeepest => '이미 가장 깊은 등급, 플래티넘입니다.';
 
   @override
+  String get profileGradeShownAsInstructor => '화면에는 강사로 보입니다. 저장된 등급은 그대로입니다.';
+
+  @override
   String get profileCredentialsTitle => '자격증 및 등급';
 
   @override
@@ -1434,7 +1437,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminGradeMixInstructorNote =>
-      '강사는 별도 역할(is_instructor)로 표시됩니다. 5단계 등급 칩은 사장님 확인 후 반영합니다.';
+      '강사 인증이 된 회원은 강사로 보입니다. 저장된 등급은 그대로입니다.';
 
   @override
   String get adminMembersGradeAll => '전체';

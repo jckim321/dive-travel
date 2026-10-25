@@ -50,7 +50,7 @@ class AdminStatsSnapshot {
   final List<int> dailyNet;
   final List<int> dailyYearAgoNet;
   final bool hasYearAgo;
-  final Map<MemberGrade, int> gradeCounts;
+  final Map<ProfileDisplayGrade, int> gradeCounts;
   final int gradeUnknown;
   final int newBuyers;
   final int returnBuyers;
@@ -177,7 +177,7 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
   );
 
   final membersByUid = {for (final member in members) member.uid: member};
-  final grades = {for (final grade in MemberGrade.values) grade: 0};
+  final grades = {for (final grade in ProfileDisplayGrade.values) grade: 0};
   var gradeUnknown = 0;
   var fresh = 0;
   var returning = 0;
@@ -200,7 +200,11 @@ AdminStatsSnapshot buildAdminStatsSnapshot({
     if (member == null) {
       gradeUnknown++;
     } else {
-      grades[member.grade] = (grades[member.grade] ?? 0) + 1;
+      final shown = ProfileDisplayGrade.fromMember(
+        grade: member.grade,
+        isInstructor: member.isInstructor,
+      );
+      grades[shown] = (grades[shown] ?? 0) + 1;
     }
     if (adminSalesWasPaid(booking)) {
       if (member == null) {

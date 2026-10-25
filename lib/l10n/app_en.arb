@@ -369,6 +369,7 @@
     }
   },
   "profileGradeDeepest": "You are already at the deepest grade, Platinum.",
+  "profileGradeShownAsInstructor": "You are shown as Instructor. The stored grade stays as it is.",
   "profileCredentialsTitle": "Certification & grade",
   "profileWorkModeTitle": "Work mode",
   "devRolesTitle": "Test role switcher",
@@ -474,7 +475,7 @@
   "adminSettlementSubPricing": "Discount & terms",
   "adminSettlementSubHistory": "Settlement history",
   "adminPostsCommunityShort": "Community posts",
-  "adminGradeMixInstructorNote": "Instructors stay a separate role (is_instructor). A 5th grade chip waits on owner confirmation.",
+  "adminGradeMixInstructorNote": "Certified instructors are shown as Instructor. The stored grade stays as it is.",
   "adminMembersGradeAll": "All",
   "adminMembersNeedsAction": "Needs action",
   "adminMembersNeedsActionHint": "{count} instructor approvals waiting — open Instructor review.",

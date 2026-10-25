@@ -90,7 +90,7 @@ void main() {
     expect(snap.sales.totals.net, 115000);
     expect(snap.returnBuyers, 1);
     expect(snap.newBuyers, 1);
-    expect(snap.gradeCounts[MemberGrade.gold], 1);
+    expect(snap.gradeCounts[ProfileDisplayGrade.gold], 1);
     expect(snap.topOption, '장비');
     expect(snap.options.map((item) => item.name), containsAll(['장비', '픽업']));
     expect(snap.leadCounts[2], 1);
@@ -162,5 +162,45 @@ void main() {
     final unknown = snap.countries.firstWhere((row) => row.code.isEmpty);
     expect(unknown.count, 3);
     expect(snap.countries.firstWhere((row) => row.code == 'KR').count, 1);
+  });
+
+  test('강사는 저장 등급이 아니라 강사 칸에만 세고 합계는 접수 건수와 같다', () {
+    final window = adminStatsWindow(preset: AdminStatsPreset.thisMonth, now: now);
+    final bookings = [
+      booking(id: 'silver', createdAt: DateTime(2026, 10, 2), price: 10000, uid: 'u-silver'),
+      booking(id: 'teach', createdAt: DateTime(2026, 10, 3), price: 20000, uid: 'u-teach'),
+      booking(id: 'gone', createdAt: DateTime(2026, 10, 4), price: 30000, uid: 'missing'),
+      booking(id: 'outside', createdAt: DateTime(2026, 9, 1), price: 40000, uid: 'u-teach'),
+    ];
+    final snap = buildAdminStatsSnapshot(
+      bookings: bookings,
+      window: window,
+      now: now,
+      catalog: const [],
+      members: const [
+        MemberAccount(
+          uid: 'u-silver',
+          email: 's@b.c',
+          displayName: '실버',
+          grade: MemberGrade.silver,
+        ),
+        MemberAccount(
+          uid: 'u-teach',
+          email: 't@b.c',
+          displayName: '강사',
+          grade: MemberGrade.platinum,
+          isInstructor: true,
+        ),
+      ],
+      shops: const [],
+      applications: const [],
+    );
+    final inWindow = bookings.where((item) => window.contains(item.createdAt)).length;
+    final shown = snap.gradeCounts.values.fold<int>(0, (sum, value) => sum + value);
+    expect(shown + snap.gradeUnknown, inWindow);
+    expect(snap.gradeCounts[ProfileDisplayGrade.silver], 1);
+    expect(snap.gradeCounts[ProfileDisplayGrade.platinum], 0);
+    expect(snap.gradeCounts[ProfileDisplayGrade.instructor], 1);
+    expect(snap.gradeUnknown, 1);
   });
 }

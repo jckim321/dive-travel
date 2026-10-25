@@ -113,4 +113,21 @@ void main() {
       ProfileDisplayGrade.instructor,
     );
   });
+
+  test('강사는 저장 등급 칸에서 빠지고 다섯 칸 합은 전체 인원과 같다', () {
+    final counts = countDisplayGrades(const [
+      (grade: MemberGrade.silver, isInstructor: true),
+      (grade: MemberGrade.platinum, isInstructor: true),
+      (grade: MemberGrade.gold, isInstructor: false),
+      (grade: MemberGrade.platinum, isInstructor: false),
+    ]);
+    expect(counts[ProfileDisplayGrade.silver], 0);
+    expect(counts[ProfileDisplayGrade.gold], 1);
+    expect(counts[ProfileDisplayGrade.diamond], 0);
+    expect(counts[ProfileDisplayGrade.platinum], 1);
+    expect(counts[ProfileDisplayGrade.instructor], 2);
+    final total = counts.values.fold<int>(0, (sum, value) => sum + value);
+    expect(total, 4);
+    expect(counts.length, ProfileDisplayGrade.values.length);
+  });
 }
