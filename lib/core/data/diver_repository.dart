@@ -18,6 +18,7 @@ import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 
 abstract class DiverRepository {
   Stream<AppUser?> authState();
@@ -55,6 +56,23 @@ abstract class DiverRepository {
 
   /// Creates a minimal shop doc and returns its id (admin partner promote).
   Future<String> createEmptyShop({required String name});
+
+  /// H9: admin trial-data counts (prefer Firestore count(), no full scans).
+  Future<TrialDataSnapshot> fetchTrialDataCounts({
+    required String actorUid,
+    required String actorEmail,
+  });
+
+  /// H9: selective trial-data deletion (skips protected rows).
+  Future<TrialDeleteResult> runTrialDataDeletion({
+    required TrialDeleteSelection selection,
+    required String confirmPhrase,
+    required bool backupAcknowledged,
+    required String actorUid,
+    required String actorName,
+    required String actorEmail,
+    void Function(TrialDeleteProgress progress)? onProgress,
+  });
 
   /// Profile fields only (no logs subcollection). Prefer [fetchDiveLogs] for logs.
   Stream<DiverSnapshot> watchDiver(String uid);

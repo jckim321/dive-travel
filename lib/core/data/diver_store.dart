@@ -27,6 +27,7 @@ import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
@@ -1136,6 +1137,47 @@ class DiverStore extends ChangeNotifier {
       actorName: _stats.displayName,
     );
     await refreshAdminInbox();
+  }
+
+  Future<TrialDataSnapshot> fetchTrialDataCounts() async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    return _repository.fetchTrialDataCounts(
+      actorUid: actorUid,
+      actorEmail: _email ?? '',
+    );
+  }
+
+  Future<TrialDeleteResult> runTrialDataDeletion({
+    required TrialDeleteSelection selection,
+    required String confirmPhrase,
+    required bool backupAcknowledged,
+    void Function(TrialDeleteProgress progress)? onProgress,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    final result = await _repository.runTrialDataDeletion(
+      selection: selection,
+      confirmPhrase: confirmPhrase,
+      backupAcknowledged: backupAcknowledged,
+      actorUid: actorUid,
+      actorName: _stats.displayName,
+      actorEmail: _email ?? '',
+      onProgress: onProgress,
+    );
+    await refreshAdminInbox();
+    await refreshShopStats();
+    return result;
   }
 
   Future<void> touchLastSeen() {

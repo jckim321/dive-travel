@@ -2352,6 +2352,111 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminDocsTitle => '문서·양식';
 
   @override
+  String get adminTrialDataTab => '시험 데이터 · 출시 전 제거';
+
+  @override
+  String get adminTrialDataTitle => '시험 데이터 점검·정리';
+
+  @override
+  String get adminTrialPrelaunchBanner =>
+      '출시 전 삭제 예정 기능 — 운영 데이터가 아닙니다. 백업 후 사용하세요.';
+
+  @override
+  String get adminTrialLimitsBody =>
+      '한계: Firebase Auth 로그인 계정은 앱에서 못 지웁니다(Console → Authentication → Users). users 문서만 지우면 같은 아이디로 다시 로그인할 때 빈 회원 문서가 생길 수 있으니, 시험 계정은 Firestore 삭제 후 Console에서 Auth도 지우세요. R2·Storage 사진 파일은 문서와 별개로 남을 수 있습니다. 서류함(partner_contracts)은 규칙상 앱 삭제 불가 — Console에서 수동 삭제하세요. 하위 컬렉션은 부모와 함께 자동 삭제되지 않습니다.';
+
+  @override
+  String get adminTrialRefresh => '건수 새로고침';
+
+  @override
+  String get adminTrialCountsTitle => '경로별 건수';
+
+  @override
+  String get adminTrialUnavailable => '앱에서 확인 불가';
+
+  @override
+  String get adminTrialCountError => '조회 실패';
+
+  @override
+  String get adminTrialFlagProtected => '보호';
+
+  @override
+  String get adminTrialFlagDeletable => '삭제 가능';
+
+  @override
+  String adminTrialJejuProtected(String name, String id) {
+    return '보호 샵: $name · id=$id (상품·예약·후기·서류함·소유 회원 포함)';
+  }
+
+  @override
+  String get adminTrialJejuMissing =>
+      '「제주 오렌지」 샵을 찾지 못했습니다. 보호 샵 없이 시험 삭제가 가능하니 주의하세요.';
+
+  @override
+  String get adminTrialJejuAmbiguous =>
+      '「제주 오렌지」와 비슷한 샵이 여러 개입니다. 목록을 확인한 뒤 Console에서 정리하고 다시 열어 주세요. 삭제를 잠갔습니다.';
+
+  @override
+  String get adminTrialDeleteTitle => '선택 삭제';
+
+  @override
+  String get adminTrialDeleteHint =>
+      '보호 항목은 체크할 수 없습니다. 실행 전 건수를 다시 읽고, 확인 문구를 정확히 입력하세요.';
+
+  @override
+  String get adminTrialBackupCheck => '백업(또는 Export)은 했습니다';
+
+  @override
+  String get adminTrialConfirmLabel => '확인 문구 입력';
+
+  @override
+  String get adminTrialConfirmMismatch => '확인 문구가 「삭제합니다」와 같지 않습니다.';
+
+  @override
+  String get adminTrialBackupRequired => '백업 확인에 체크해 주세요.';
+
+  @override
+  String get adminTrialRunDelete => '선택 항목 삭제 실행';
+
+  @override
+  String adminTrialResult(int ok, int fail) {
+    return '결과 · 성공 $ok · 실패 $fail';
+  }
+
+  @override
+  String get adminTrialSelOutbox => '파트너 메일 큐';
+
+  @override
+  String get adminTrialSelLoi => 'LOI 신청';
+
+  @override
+  String get adminTrialSelPosts => '커뮤니티 글·댓글';
+
+  @override
+  String get adminTrialSelReviews => '후기(제주 오렌지 제외)';
+
+  @override
+  String get adminTrialSelUserBookings => '회원 쪽 예약 복사본';
+
+  @override
+  String get adminTrialSelUserLogs => '회원 로그';
+
+  @override
+  String get adminTrialSelAssessments => '미확정 다이브스타 평가';
+
+  @override
+  String get adminTrialSelShopBookings => '시험 샵 예약';
+
+  @override
+  String get adminTrialSelProducts => '시험 샵 상품 배열 비우기';
+
+  @override
+  String get adminTrialSelShops => '시험 샵 문서 삭제(주인 해제→하위→샵)';
+
+  @override
+  String get adminTrialSelUsers => '시험 회원 문서(사장님·본인·제주오렌지 주인 제외)';
+
+  @override
   String get adminDocsHint =>
       '파트너에게 보낼 공개 안내서·신청서를 보관하고 공유합니다. 내부용 파일은 여기에 넣지 마세요.';
 

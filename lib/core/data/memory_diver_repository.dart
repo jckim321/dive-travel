@@ -26,6 +26,7 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 
 /// 위젯 테스트용 메모리 저장소. 프로덕션은 Firestore를 씁니다.
 class MemoryDiverRepository implements DiverRepository {
@@ -409,6 +410,172 @@ class MemoryDiverRepository implements DiverRepository {
   /// Test helper: role_history entries written by promote/demote.
   List<Map<String, dynamic>> roleHistoryFor(String uid) =>
       List<Map<String, dynamic>>.from(_roleHistory[uid] ?? const []);
+
+  /// Test helper: plant a shop name for Jeju Orange resolve.
+  void seedShopName(String shopId, String name) {
+    _createdShops[shopId] = name;
+  }
+
+  @override
+  Future<TrialDataSnapshot> fetchTrialDataCounts({
+    required String actorUid,
+    required String actorEmail,
+  }) async {
+    final exact = <({String id, String name})>[];
+    final similar = <({String id, String name})>[];
+    _createdShops.forEach((id, name) {
+      if (name == kJejuOrangeShopName) {
+        exact.add((id: id, name: name));
+      } else if (name.contains('제주') && name.contains('오렌지')) {
+        similar.add((id: id, name: name));
+      }
+    });
+    // Also treat default catalog hull as trial unless seeded orange.
+    JejuOrangeResolve jeju;
+    if (exact.length == 1) {
+      jeju = JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.exactOne,
+        shopId: exact.first.id,
+        shopName: exact.first.name,
+        candidates: [...exact, ...similar],
+      );
+    } else if (exact.length > 1 || similar.length > 1) {
+      jeju = JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.ambiguous,
+        candidates: [...exact, ...similar],
+      );
+    } else if (similar.length == 1) {
+      jeju = JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.ambiguous,
+        candidates: similar,
+      );
+    } else {
+      jeju = const JejuOrangeResolve(kind: JejuOrangeResolveKind.none);
+    }
+
+    final protected = <String>{actorUid};
+    for (final m in _members) {
+      if (AppOwner.isOwnerEmail(m.email) ||
+          m.email.toLowerCase() == actorEmail.trim().toLowerCase() ||
+          (jeju.protectedShopId != null &&
+              m.ownedShopId == jeju.protectedShopId)) {
+        protected.add(m.uid);
+      }
+    }
+
+    final rows = [
+      TrialCountRow(
+        bucket: TrialDataBucket.usersTotal,
+        label: '회원 전체',
+        pathHint: 'users',
+        status: TrialCountStatus.ok,
+        count: _members.length,
+        deletable: true,
+      ),
+      TrialCountRow(
+        bucket: TrialDataBucket.shops,
+        label: '샵',
+        pathHint: 'shops',
+        status: TrialCountStatus.ok,
+        count: _createdShops.length,
+        deletable: true,
+      ),
+      const TrialCountRow(
+        bucket: TrialDataBucket.shopProductsEmbedded,
+        label: '상품(임베디드)',
+        pathHint: 'shops/*/products[]',
+        status: TrialCountStatus.unavailable,
+        detail: '샵 문서 배열이라 count() 불가',
+      ),
+      const TrialCountRow(
+        bucket: TrialDataBucket.partnerContracts,
+        label: '서류함 계약',
+        pathHint: 'shops/*/partner_contracts',
+        status: TrialCountStatus.ok,
+        count: 0,
+        protected: true,
+        detail: '규칙상 삭제 불가',
+      ),
+      const TrialCountRow(
+        bucket: TrialDataBucket.settingsPricing,
+        label: 'settings/pricing',
+        pathHint: 'settings/pricing',
+        status: TrialCountStatus.unavailable,
+        protected: true,
+        detail: '앱에서 확인 불가',
+      ),
+    ];
+
+    return TrialDataSnapshot(
+      rows: rows,
+      jejuOrange: jeju,
+      protectedUserUids: protected,
+      fetchedAt: DateTime.now(),
+    );
+  }
+
+  @override
+  Future<TrialDeleteResult> runTrialDataDeletion({
+    required TrialDeleteSelection selection,
+    required String confirmPhrase,
+    required bool backupAcknowledged,
+    required String actorUid,
+    required String actorName,
+    required String actorEmail,
+    void Function(TrialDeleteProgress progress)? onProgress,
+  }) async {
+    if (confirmPhrase.trim() != kTrialDeleteConfirmPhrase) {
+      throw StateError('CONFIRM_MISMATCH');
+    }
+    if (!backupAcknowledged) {
+      throw StateError('BACKUP_REQUIRED');
+    }
+    if (!selection.anySelected) {
+      throw StateError('NOTHING_SELECTED');
+    }
+    final snap = await fetchTrialDataCounts(
+      actorUid: actorUid,
+      actorEmail: actorEmail,
+    );
+    if (snap.jejuOrange.blocksDeletion) {
+      throw StateError('JEJU_ORANGE_AMBIGUOUS');
+    }
+    onProgress?.call(
+      const TrialDeleteProgress(message: 'memory delete', done: 1, total: 1),
+    );
+    final notes = <String>[];
+    var success = 0;
+    if (selection.trialShops) {
+      final protected = snap.jejuOrange.protectedShopId;
+      final removeIds = [
+        for (final id in _createdShops.keys)
+          if (protected == null || id != protected) id,
+      ];
+      for (final id in removeIds) {
+        _createdShops.remove(id);
+        _shopStats.remove(id);
+        success += 1;
+        notes.add('샵 삭제 $id');
+      }
+    }
+    if (selection.trialUsers) {
+      final before = _members.length;
+      _members.removeWhere((m) => !snap.protectedUserUids.contains(m.uid));
+      success += before - _members.length;
+      notes.add(
+        'Auth 계정은 앱에서 못 지웁니다. Console → Authentication → Users에서 지우세요.',
+      );
+    }
+    if (!selection.anySelected) {
+      // unreachable
+    }
+    notes.add('서류함·확정 평가·R2·Auth는 남을 수 있습니다.');
+    return TrialDeleteResult(
+      successCount: success,
+      failureCount: 0,
+      notes: notes,
+    );
+  }
 
   @override
   Future<void> ensureUserDocument(AppUser user, {String? loginId}) async {

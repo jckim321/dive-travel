@@ -4470,6 +4470,198 @@ abstract class AppLocalizations {
   /// **'문서·양식'**
   String get adminDocsTitle;
 
+  /// No description provided for @adminTrialDataTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 데이터 · 출시 전 제거'**
+  String get adminTrialDataTab;
+
+  /// No description provided for @adminTrialDataTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 데이터 점검·정리'**
+  String get adminTrialDataTitle;
+
+  /// No description provided for @adminTrialPrelaunchBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'출시 전 삭제 예정 기능 — 운영 데이터가 아닙니다. 백업 후 사용하세요.'**
+  String get adminTrialPrelaunchBanner;
+
+  /// No description provided for @adminTrialLimitsBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'한계: Firebase Auth 로그인 계정은 앱에서 못 지웁니다(Console → Authentication → Users). users 문서만 지우면 같은 아이디로 다시 로그인할 때 빈 회원 문서가 생길 수 있으니, 시험 계정은 Firestore 삭제 후 Console에서 Auth도 지우세요. R2·Storage 사진 파일은 문서와 별개로 남을 수 있습니다. 서류함(partner_contracts)은 규칙상 앱 삭제 불가 — Console에서 수동 삭제하세요. 하위 컬렉션은 부모와 함께 자동 삭제되지 않습니다.'**
+  String get adminTrialLimitsBody;
+
+  /// No description provided for @adminTrialRefresh.
+  ///
+  /// In ko, this message translates to:
+  /// **'건수 새로고침'**
+  String get adminTrialRefresh;
+
+  /// No description provided for @adminTrialCountsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'경로별 건수'**
+  String get adminTrialCountsTitle;
+
+  /// No description provided for @adminTrialUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱에서 확인 불가'**
+  String get adminTrialUnavailable;
+
+  /// No description provided for @adminTrialCountError.
+  ///
+  /// In ko, this message translates to:
+  /// **'조회 실패'**
+  String get adminTrialCountError;
+
+  /// No description provided for @adminTrialFlagProtected.
+  ///
+  /// In ko, this message translates to:
+  /// **'보호'**
+  String get adminTrialFlagProtected;
+
+  /// No description provided for @adminTrialFlagDeletable.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제 가능'**
+  String get adminTrialFlagDeletable;
+
+  /// No description provided for @adminTrialJejuProtected.
+  ///
+  /// In ko, this message translates to:
+  /// **'보호 샵: {name} · id={id} (상품·예약·후기·서류함·소유 회원 포함)'**
+  String adminTrialJejuProtected(String name, String id);
+
+  /// No description provided for @adminTrialJejuMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'「제주 오렌지」 샵을 찾지 못했습니다. 보호 샵 없이 시험 삭제가 가능하니 주의하세요.'**
+  String get adminTrialJejuMissing;
+
+  /// No description provided for @adminTrialJejuAmbiguous.
+  ///
+  /// In ko, this message translates to:
+  /// **'「제주 오렌지」와 비슷한 샵이 여러 개입니다. 목록을 확인한 뒤 Console에서 정리하고 다시 열어 주세요. 삭제를 잠갔습니다.'**
+  String get adminTrialJejuAmbiguous;
+
+  /// No description provided for @adminTrialDeleteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택 삭제'**
+  String get adminTrialDeleteTitle;
+
+  /// No description provided for @adminTrialDeleteHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'보호 항목은 체크할 수 없습니다. 실행 전 건수를 다시 읽고, 확인 문구를 정확히 입력하세요.'**
+  String get adminTrialDeleteHint;
+
+  /// No description provided for @adminTrialBackupCheck.
+  ///
+  /// In ko, this message translates to:
+  /// **'백업(또는 Export)은 했습니다'**
+  String get adminTrialBackupCheck;
+
+  /// No description provided for @adminTrialConfirmLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 문구 입력'**
+  String get adminTrialConfirmLabel;
+
+  /// No description provided for @adminTrialConfirmMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 문구가 「삭제합니다」와 같지 않습니다.'**
+  String get adminTrialConfirmMismatch;
+
+  /// No description provided for @adminTrialBackupRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 확인에 체크해 주세요.'**
+  String get adminTrialBackupRequired;
+
+  /// No description provided for @adminTrialRunDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택 항목 삭제 실행'**
+  String get adminTrialRunDelete;
+
+  /// No description provided for @adminTrialResult.
+  ///
+  /// In ko, this message translates to:
+  /// **'결과 · 성공 {ok} · 실패 {fail}'**
+  String adminTrialResult(int ok, int fail);
+
+  /// No description provided for @adminTrialSelOutbox.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 메일 큐'**
+  String get adminTrialSelOutbox;
+
+  /// No description provided for @adminTrialSelLoi.
+  ///
+  /// In ko, this message translates to:
+  /// **'LOI 신청'**
+  String get adminTrialSelLoi;
+
+  /// No description provided for @adminTrialSelPosts.
+  ///
+  /// In ko, this message translates to:
+  /// **'커뮤니티 글·댓글'**
+  String get adminTrialSelPosts;
+
+  /// No description provided for @adminTrialSelReviews.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기(제주 오렌지 제외)'**
+  String get adminTrialSelReviews;
+
+  /// No description provided for @adminTrialSelUserBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 쪽 예약 복사본'**
+  String get adminTrialSelUserBookings;
+
+  /// No description provided for @adminTrialSelUserLogs.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 로그'**
+  String get adminTrialSelUserLogs;
+
+  /// No description provided for @adminTrialSelAssessments.
+  ///
+  /// In ko, this message translates to:
+  /// **'미확정 다이브스타 평가'**
+  String get adminTrialSelAssessments;
+
+  /// No description provided for @adminTrialSelShopBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 샵 예약'**
+  String get adminTrialSelShopBookings;
+
+  /// No description provided for @adminTrialSelProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 샵 상품 배열 비우기'**
+  String get adminTrialSelProducts;
+
+  /// No description provided for @adminTrialSelShops.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 샵 문서 삭제(주인 해제→하위→샵)'**
+  String get adminTrialSelShops;
+
+  /// No description provided for @adminTrialSelUsers.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 회원 문서(사장님·본인·제주오렌지 주인 제외)'**
+  String get adminTrialSelUsers;
+
   /// No description provided for @adminDocsHint.
   ///
   /// In ko, this message translates to:

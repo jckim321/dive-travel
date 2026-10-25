@@ -2426,6 +2426,114 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDocsTitle => 'Documents';
 
   @override
+  String get adminTrialDataTab => 'Trial data · remove before launch';
+
+  @override
+  String get adminTrialDataTitle => 'Trial data inspect & clean';
+
+  @override
+  String get adminTrialPrelaunchBanner =>
+      'Pre-launch cleanup tool — not production data. Back up first.';
+
+  @override
+  String get adminTrialLimitsBody =>
+      'Limits: Firebase Auth users cannot be deleted in-app (Console → Authentication → Users). Deleting only the Firestore users doc may recreate an empty profile on next login — delete Auth after Firestore for trial accounts. R2/Storage files may remain. partner_contracts cannot be deleted in-app (rules) — use Console. Subcollections are not auto-deleted with parents.';
+
+  @override
+  String get adminTrialRefresh => 'Refresh counts';
+
+  @override
+  String get adminTrialCountsTitle => 'Counts by path';
+
+  @override
+  String get adminTrialUnavailable => 'Not available in app';
+
+  @override
+  String get adminTrialCountError => 'Count failed';
+
+  @override
+  String get adminTrialFlagProtected => 'Protected';
+
+  @override
+  String get adminTrialFlagDeletable => 'Deletable';
+
+  @override
+  String adminTrialJejuProtected(String name, String id) {
+    return 'Protected shop: $name · id=$id (products, bookings, reviews, vault, owners)';
+  }
+
+  @override
+  String get adminTrialJejuMissing =>
+      '「제주 오렌지」 shop not found. Trial deletes have no shop protection — be careful.';
+
+  @override
+  String get adminTrialJejuAmbiguous =>
+      'Multiple shops look like 「제주 오렌지」. Review the list, clean in Console, reopen. Deletes are locked.';
+
+  @override
+  String get adminTrialDeleteTitle => 'Selective delete';
+
+  @override
+  String get adminTrialDeleteHint =>
+      'Protected rows cannot be checked. Counts are re-read before run; type the confirm phrase exactly.';
+
+  @override
+  String get adminTrialBackupCheck => 'I backed up (or exported) first';
+
+  @override
+  String get adminTrialConfirmLabel => 'Type confirm phrase';
+
+  @override
+  String get adminTrialConfirmMismatch =>
+      'Confirm phrase must be exactly 「삭제합니다」.';
+
+  @override
+  String get adminTrialBackupRequired => 'Check the backup acknowledgement.';
+
+  @override
+  String get adminTrialRunDelete => 'Run selected deletes';
+
+  @override
+  String adminTrialResult(int ok, int fail) {
+    return 'Result · ok $ok · fail $fail';
+  }
+
+  @override
+  String get adminTrialSelOutbox => 'Partner email outbox';
+
+  @override
+  String get adminTrialSelLoi => 'LOI applications';
+
+  @override
+  String get adminTrialSelPosts => 'Community posts & comments';
+
+  @override
+  String get adminTrialSelReviews => 'Reviews (except Jeju Orange)';
+
+  @override
+  String get adminTrialSelUserBookings => 'User booking copies';
+
+  @override
+  String get adminTrialSelUserLogs => 'User dive logs';
+
+  @override
+  String get adminTrialSelAssessments => 'Unconfirmed Dive Star assessments';
+
+  @override
+  String get adminTrialSelShopBookings => 'Trial shop bookings';
+
+  @override
+  String get adminTrialSelProducts => 'Clear trial shop products arrays';
+
+  @override
+  String get adminTrialSelShops =>
+      'Delete trial shops (demote owners → children → shop)';
+
+  @override
+  String get adminTrialSelUsers =>
+      'Trial user docs (except owner/self/Jeju Orange owners)';
+
+  @override
   String get adminDocsHint =>
       'Store public partner guides and forms for sharing. Do not put internal files here.';
 

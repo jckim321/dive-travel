@@ -938,6 +938,96 @@
     }
   },
   "adminDocsTitle": "Documents",
+  "adminTrialDataTab": "Trial data · remove before launch",
+  "adminTrialDataTitle": "Trial data inspect & clean",
+  "adminTrialPrelaunchBanner": "Pre-launch cleanup tool — not production data. Back up first.",
+  "adminTrialLimitsBody": "Limits: Firebase Auth users cannot be deleted in-app (Console → Authentication → Users). Deleting only the Firestore users doc may recreate an empty profile on next login — delete Auth after Firestore for trial accounts. R2/Storage files may remain. partner_contracts cannot be deleted in-app (rules) — use Console. Subcollections are not auto-deleted with parents.",
+  "adminTrialRefresh": "Refresh counts",
+  "adminTrialCountsTitle": "Counts by path",
+  "adminTrialUnavailable": "Not available in app",
+  "adminTrialCountError": "Count failed",
+  "adminTrialFlagProtected": "Protected",
+  "adminTrialFlagDeletable": "Deletable",
+  "adminTrialJejuProtected": "Protected shop: {name} · id={id} (products, bookings, reviews, vault, owners)",
+  "@adminTrialJejuProtected": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "id": {"type": "String"}
+    }
+  },
+  "adminTrialJejuMissing": "Jeju Orange shop not found. Trial deletes have no shop protection — be careful.",
+  "adminTrialJejuAmbiguous": "Multiple shops look like Jeju Orange. Review the list, clean in Console, reopen. Deletes are locked.",
+  "adminTrialDeleteTitle": "Selective delete",
+  "adminTrialDeleteHint": "Protected rows cannot be checked. Counts are re-read before run; type the confirm phrase exactly.",
+  "adminTrialBackupCheck": "I backed up (or exported) first",
+  "adminTrialConfirmLabel": "Type confirm phrase",
+  "adminTrialConfirmMismatch": "Confirm phrase must be exactly the Korean 삭제합니다.",
+  "adminTrialBackupRequired": "Check the backup acknowledgement.",
+  "adminTrialRunDelete": "Run selected deletes",
+  "adminTrialResult": "Result · ok {ok} · fail {fail}",
+  "@adminTrialResult": {
+    "placeholders": {
+      "ok": {"type": "int"},
+      "fail": {"type": "int"}
+    }
+  },
+  "adminTrialSelOutbox": "Partner email outbox",
+  "adminTrialSelLoi": "LOI applications",
+  "adminTrialSelPosts": "Community posts & comments",
+  "adminTrialSelReviews": "Reviews (except Jeju Orange)",
+  "adminTrialSelUserBookings": "User booking copies",
+  "adminTrialSelUserLogs": "User dive logs",
+  "adminTrialSelAssessments": "Unconfirmed Dive Star assessments",
+  "adminTrialSelShopBookings": "Trial shop bookings",
+  "adminTrialSelProducts": "Clear trial shop products arrays",
+  "adminTrialSelShops": "Delete trial shops (demote owners → children → shop)",
+  "adminTrialSelUsers": "Trial user docs (except owner/self/Jeju Orange owners)",
+
+  "adminTrialDataTab": "Trial data · remove before launch",
+  "adminTrialDataTitle": "Trial data inspect & clean",
+  "adminTrialPrelaunchBanner": "Pre-launch cleanup tool — not production data. Back up first.",
+  "adminTrialLimitsBody": "Limits: Firebase Auth users cannot be deleted in-app (Console → Authentication → Users). Deleting only the Firestore users doc may recreate an empty profile on next login — delete Auth after Firestore for trial accounts. R2/Storage files may remain. partner_contracts cannot be deleted in-app (rules) — use Console. Subcollections are not auto-deleted with parents.",
+  "adminTrialRefresh": "Refresh counts",
+  "adminTrialCountsTitle": "Counts by path",
+  "adminTrialUnavailable": "Not available in app",
+  "adminTrialCountError": "Count failed",
+  "adminTrialFlagProtected": "Protected",
+  "adminTrialFlagDeletable": "Deletable",
+  "adminTrialJejuProtected": "Protected shop: {name} · id={id} (products, bookings, reviews, vault, owners)",
+  "@adminTrialJejuProtected": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "id": {"type": "String"}
+    }
+  },
+  "adminTrialJejuMissing": "「제주 오렌지」 shop not found. Trial deletes have no shop protection — be careful.",
+  "adminTrialJejuAmbiguous": "Multiple shops look like 「제주 오렌지」. Review the list, clean in Console, reopen. Deletes are locked.",
+  "adminTrialDeleteTitle": "Selective delete",
+  "adminTrialDeleteHint": "Protected rows cannot be checked. Counts are re-read before run; type the confirm phrase exactly.",
+  "adminTrialBackupCheck": "I backed up (or exported) first",
+  "adminTrialConfirmLabel": "Type confirm phrase",
+  "adminTrialConfirmMismatch": "Confirm phrase must be exactly 「삭제합니다」.",
+  "adminTrialBackupRequired": "Check the backup acknowledgement.",
+  "adminTrialRunDelete": "Run selected deletes",
+  "adminTrialResult": "Result · ok {ok} · fail {fail}",
+  "@adminTrialResult": {
+    "placeholders": {
+      "ok": {"type": "int"},
+      "fail": {"type": "int"}
+    }
+  },
+  "adminTrialSelOutbox": "Partner email outbox",
+  "adminTrialSelLoi": "LOI applications",
+  "adminTrialSelPosts": "Community posts & comments",
+  "adminTrialSelReviews": "Reviews (except Jeju Orange)",
+  "adminTrialSelUserBookings": "User booking copies",
+  "adminTrialSelUserLogs": "User dive logs",
+  "adminTrialSelAssessments": "Unconfirmed Dive Star assessments",
+  "adminTrialSelShopBookings": "Trial shop bookings",
+  "adminTrialSelProducts": "Clear trial shop products arrays",
+  "adminTrialSelShops": "Delete trial shops (demote owners → children → shop)",
+  "adminTrialSelUsers": "Trial user docs (except owner/self/Jeju Orange owners)",
+
   "adminDocsHint": "Store public partner guides and forms for sharing. Do not put internal files here.",
   "adminDocsListSection": "Documents",
   "adminDocsEmpty": "No documents yet.",

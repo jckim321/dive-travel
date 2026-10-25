@@ -31,6 +31,7 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
@@ -264,6 +265,648 @@ class FirestoreDiverRepository implements DiverRepository {
       'updated_at': FieldValue.serverTimestamp(),
     });
     return shopId;
+  }
+
+  Future<int?> _countQuery(Query<Map<String, dynamic>> query) async {
+    try {
+      final agg = await query.count().get();
+      return agg.count;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<JejuOrangeResolve> _resolveJejuOrange() async {
+    final snap = await _shops.get();
+    final exact = <({String id, String name})>[];
+    final similar = <({String id, String name})>[];
+    for (final doc in snap.docs) {
+      final name = (doc.data()['name'] as String?)?.trim() ?? '';
+      if (name.isEmpty) {
+        continue;
+      }
+      if (name == kJejuOrangeShopName) {
+        exact.add((id: doc.id, name: name));
+      } else if (name.contains('제주') && name.contains('오렌지')) {
+        similar.add((id: doc.id, name: name));
+      }
+    }
+    if (exact.length == 1 && similar.isEmpty) {
+      return JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.exactOne,
+        shopId: exact.first.id,
+        shopName: exact.first.name,
+        candidates: exact,
+      );
+    }
+    if (exact.length == 1 && similar.isNotEmpty) {
+      // Exact match wins if only one exact; similar listed for awareness.
+      return JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.exactOne,
+        shopId: exact.first.id,
+        shopName: exact.first.name,
+        candidates: [...exact, ...similar],
+      );
+    }
+    if (exact.length > 1 || (exact.isEmpty && similar.length > 1)) {
+      return JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.ambiguous,
+        candidates: [...exact, ...similar],
+      );
+    }
+    if (exact.isEmpty && similar.length == 1) {
+      // Do not auto-protect similar-only; treat as ambiguous/list for safety.
+      return JejuOrangeResolve(
+        kind: JejuOrangeResolveKind.ambiguous,
+        candidates: similar,
+      );
+    }
+    return const JejuOrangeResolve(kind: JejuOrangeResolveKind.none);
+  }
+
+  @override
+  Future<TrialDataSnapshot> fetchTrialDataCounts({
+    required String actorUid,
+    required String actorEmail,
+  }) async {
+    final jeju = await _resolveJejuOrange();
+    final protectedShopId = jeju.protectedShopId;
+    final protectedUids = <String>{actorUid};
+    final usersSnap = await _users.get();
+    for (final doc in usersSnap.docs) {
+      final data = doc.data();
+      final email = (data['email'] as String?)?.trim().toLowerCase() ?? '';
+      final owned = (data['owned_shop_id'] as String?)?.trim() ?? '';
+      if (AppOwner.isOwnerEmail(email) ||
+          email == actorEmail.trim().toLowerCase() ||
+          (protectedShopId != null && owned == protectedShopId)) {
+        protectedUids.add(doc.id);
+      }
+    }
+
+    Future<TrialCountRow> row({
+      required TrialDataBucket bucket,
+      required String label,
+      required String pathHint,
+      required Future<int?> Function() count,
+      bool deletable = false,
+      bool protected = false,
+      String? unavailableReason,
+    }) async {
+      if (unavailableReason != null) {
+        return TrialCountRow(
+          bucket: bucket,
+          label: label,
+          pathHint: pathHint,
+          status: TrialCountStatus.unavailable,
+          detail: unavailableReason,
+          deletable: false,
+          protected: protected,
+        );
+      }
+      final value = await count();
+      if (value == null) {
+        return TrialCountRow(
+          bucket: bucket,
+          label: label,
+          pathHint: pathHint,
+          status: TrialCountStatus.error,
+          detail: 'count 실패',
+          deletable: deletable,
+          protected: protected,
+        );
+      }
+      return TrialCountRow(
+        bucket: bucket,
+        label: label,
+        pathHint: pathHint,
+        status: TrialCountStatus.ok,
+        count: value,
+        deletable: deletable && !protected,
+        protected: protected,
+      );
+    }
+
+    final totalUsers = await _countQuery(_users);
+    final adminUsers = await _countQuery(
+      _users.where('is_admin', isEqualTo: true),
+    );
+    final partnerUsers = await _countQuery(
+      _users.where('is_business', isEqualTo: true),
+    );
+    final diverGuess = (totalUsers != null &&
+            adminUsers != null &&
+            partnerUsers != null)
+        ? (totalUsers - adminUsers - partnerUsers).clamp(0, totalUsers)
+        : null;
+
+    final rows = <TrialCountRow>[
+      await row(
+        bucket: TrialDataBucket.usersTotal,
+        label: '회원 전체',
+        pathHint: 'users',
+        count: () async => totalUsers,
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.usersAdmin,
+        label: '관리자 회원',
+        pathHint: 'users where is_admin',
+        count: () async => adminUsers,
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.usersPartner,
+        label: '제휴파트너 회원',
+        pathHint: 'users where is_business',
+        count: () async => partnerUsers,
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.usersDiver,
+        label: '일반회원(추정)',
+        pathHint: 'users − admin − partner',
+        count: () async => diverGuess,
+        deletable: true,
+        detail: '관리자·파트너와 겹칠 수 있음',
+      ),
+      await row(
+        bucket: TrialDataBucket.shops,
+        label: '샵',
+        pathHint: 'shops',
+        count: () => _countQuery(_shops),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.shopProductsEmbedded,
+        label: '상품(임베디드)',
+        pathHint: 'shops/*/products[]',
+        count: () async => null,
+        unavailableReason: '샵 문서 배열이라 count() 불가',
+        protected: false,
+      ),
+      await row(
+        bucket: TrialDataBucket.shopBookings,
+        label: '샵 예약',
+        pathHint: 'shops/*/bookings',
+        count: () => _countQuery(_db.collectionGroup('bookings')),
+        deletable: true,
+        detail: 'collectionGroup(bookings) — 유저 예약과 합산될 수 있음',
+      ),
+      await row(
+        bucket: TrialDataBucket.userBookings,
+        label: '회원 예약 복사본',
+        pathHint: 'users/*/bookings',
+        count: () async => null,
+        unavailableReason: 'shop bookings와 CG 구분 어려움 — 삭제 시 유저 하위만',
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.shopReviews,
+        label: '샵 후기',
+        pathHint: 'shops/*/reviews',
+        count: () => _countQuery(_db.collectionGroup('reviews')),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.userReviews,
+        label: '회원 후기 복사본',
+        pathHint: 'users/*/reviews',
+        count: () async => null,
+        unavailableReason: 'shop reviews와 CG 구분 어려움',
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.partnerContracts,
+        label: '서류함 계약',
+        pathHint: 'shops/*/partner_contracts',
+        count: () => _countQuery(_db.collectionGroup('partner_contracts')),
+        protected: true,
+        detail: '규칙상 삭제 불가 — Console 수동',
+      ),
+      await row(
+        bucket: TrialDataBucket.partnerContractEvents,
+        label: '서류함 이벤트',
+        pathHint: '…/partner_contracts/*/events',
+        count: () async => null,
+        unavailableReason: '삭제 불가(규칙). Console 수동',
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.diveStarAssessments,
+        label: '다이브스타 평가',
+        pathHint: 'shops/*/dive_star_assessments',
+        count: () =>
+            _countQuery(_db.collectionGroup('dive_star_assessments')),
+        deletable: true,
+        detail: '미확정만 삭제 가능',
+      ),
+      await row(
+        bucket: TrialDataBucket.posts,
+        label: '커뮤니티 글',
+        pathHint: 'posts',
+        count: () => _countQuery(_posts),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.postComments,
+        label: '커뮤니티 댓글',
+        pathHint: 'posts/*/comments',
+        count: () => _countQuery(_db.collectionGroup('comments')),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.diveStarApplications,
+        label: 'LOI 신청',
+        pathHint: 'dive_star_applications',
+        count: () => _countQuery(_db.collection('dive_star_applications')),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.partnerEmailOutbox,
+        label: '파트너 메일 큐',
+        pathHint: 'partner_email_outbox',
+        count: () => _countQuery(_db.collection('partner_email_outbox')),
+        deletable: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.settingsPricing,
+        label: 'settings/pricing',
+        pathHint: 'settings/pricing',
+        count: () async => null,
+        unavailableReason: '규칙 match 없음 — 앱에서 확인 불가',
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.diveStarForms,
+        label: '심사 양식',
+        pathHint: 'dive_star_forms',
+        count: () => _countQuery(_db.collection('dive_star_forms')),
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.partnerDocuments,
+        label: '파트너 문서 메타',
+        pathHint: 'partner_documents',
+        count: () => _countQuery(_partnerDocuments),
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.documentShares,
+        label: '문서 공유',
+        pathHint: 'document_shares',
+        count: () => _countQuery(_db.collection('document_shares')),
+        protected: true,
+      ),
+      await row(
+        bucket: TrialDataBucket.partnerDocConfig,
+        label: '문서 설정',
+        pathHint: 'partner_doc_config',
+        count: () => _countQuery(_db.collection('partner_doc_config')),
+        protected: true,
+      ),
+    ];
+
+    return TrialDataSnapshot(
+      rows: rows,
+      jejuOrange: jeju,
+      protectedUserUids: protectedUids,
+      fetchedAt: DateTime.now(),
+    );
+  }
+
+  Future<void> _commitDeletes(
+    List<DocumentReference<Map<String, dynamic>>> refs,
+  ) async {
+    const chunk = 400;
+    for (var i = 0; i < refs.length; i += chunk) {
+      final batch = _db.batch();
+      final end = (i + chunk < refs.length) ? i + chunk : refs.length;
+      for (var j = i; j < end; j++) {
+        batch.delete(refs[j]);
+      }
+      await batch.commit();
+    }
+  }
+
+  Future<List<DocumentReference<Map<String, dynamic>>>> _listAllRefs(
+    Query<Map<String, dynamic>> query, {
+    bool Function(QueryDocumentSnapshot<Map<String, dynamic>> doc)? keep,
+  }) async {
+    final out = <DocumentReference<Map<String, dynamic>>>[];
+    Query<Map<String, dynamic>> q = query.limit(300);
+    QueryDocumentSnapshot<Map<String, dynamic>>? cursor;
+    while (true) {
+      final page = cursor == null
+          ? await q.get()
+          : await q.startAfterDocument(cursor).get();
+      if (page.docs.isEmpty) {
+        break;
+      }
+      for (final doc in page.docs) {
+        if (keep == null || keep(doc)) {
+          out.add(doc.reference);
+        }
+      }
+      cursor = page.docs.last;
+      if (page.docs.length < 300) {
+        break;
+      }
+    }
+    return out;
+  }
+
+  @override
+  Future<TrialDeleteResult> runTrialDataDeletion({
+    required TrialDeleteSelection selection,
+    required String confirmPhrase,
+    required bool backupAcknowledged,
+    required String actorUid,
+    required String actorName,
+    required String actorEmail,
+    void Function(TrialDeleteProgress progress)? onProgress,
+  }) async {
+    if (confirmPhrase.trim() != kTrialDeleteConfirmPhrase) {
+      throw StateError('CONFIRM_MISMATCH');
+    }
+    if (!backupAcknowledged) {
+      throw StateError('BACKUP_REQUIRED');
+    }
+    if (!selection.anySelected) {
+      throw StateError('NOTHING_SELECTED');
+    }
+
+    final snapshot = await fetchTrialDataCounts(
+      actorUid: actorUid,
+      actorEmail: actorEmail,
+    );
+    if (snapshot.jejuOrange.blocksDeletion) {
+      throw StateError('JEJU_ORANGE_AMBIGUOUS');
+    }
+    final protectedShop = snapshot.jejuOrange.protectedShopId;
+    final protectedUids = snapshot.protectedUserUids;
+    final notes = <String>[];
+    final failed = <String>[];
+    var success = 0;
+    var failure = 0;
+    var step = 0;
+    const totalSteps = 12;
+
+    void progress(String message) {
+      step += 1;
+      onProgress?.call(
+        TrialDeleteProgress(message: message, done: step, total: totalSteps),
+      );
+    }
+
+    Future<void> safeDeleteRefs(
+      List<DocumentReference<Map<String, dynamic>>> refs,
+      String label,
+    ) async {
+      if (refs.isEmpty) {
+        return;
+      }
+      try {
+        await _commitDeletes(refs);
+        success += refs.length;
+        notes.add('$label ${refs.length}건 삭제');
+      } catch (e) {
+        failure += refs.length;
+        failed.addAll(refs.map((r) => r.path));
+        notes.add('$label 실패: $e');
+      }
+    }
+
+    if (selection.partnerEmailOutbox) {
+      progress('메일 큐 삭제');
+      final refs = await _listAllRefs(_db.collection('partner_email_outbox'));
+      await safeDeleteRefs(refs, 'partner_email_outbox');
+    } else {
+      progress('메일 큐 건너뜀');
+    }
+
+    if (selection.diveStarApplications) {
+      progress('LOI 신청 삭제');
+      final refs = await _listAllRefs(_db.collection('dive_star_applications'));
+      await safeDeleteRefs(refs, 'dive_star_applications');
+    } else {
+      progress('LOI 건너뜀');
+    }
+
+    if (selection.postsAndComments) {
+      progress('커뮤니티 댓글·글 삭제');
+      final posts = await _posts.get();
+      final commentRefs = <DocumentReference<Map<String, dynamic>>>[];
+      final postRefs = <DocumentReference<Map<String, dynamic>>>[];
+      for (final post in posts.docs) {
+        final comments = await post.reference.collection('comments').get();
+        commentRefs.addAll(comments.docs.map((d) => d.reference));
+        postRefs.add(post.reference);
+      }
+      await safeDeleteRefs(commentRefs, 'comments');
+      await safeDeleteRefs(postRefs, 'posts');
+    } else {
+      progress('커뮤니티 건너뜀');
+    }
+
+    if (selection.reviews) {
+      progress('후기 삭제');
+      final shopReviewRefs = await _listAllRefs(
+        _db.collectionGroup('reviews'),
+        keep: (doc) {
+          final path = doc.reference.path;
+          if (protectedShop != null &&
+              path.startsWith('shops/$protectedShop/')) {
+            return false;
+          }
+          return path.contains('/reviews/');
+        },
+      );
+      await safeDeleteRefs(shopReviewRefs, 'reviews');
+    } else {
+      progress('후기 건너뜀');
+    }
+
+    if (selection.userBookings || selection.userLogs || selection.trialUsers) {
+      progress('회원 하위 정리');
+      final users = await _users.get();
+      for (final user in users.docs) {
+        if (protectedUids.contains(user.id)) {
+          continue;
+        }
+        if (selection.userBookings || selection.trialUsers) {
+          final bookings = await user.reference.collection('bookings').get();
+          await safeDeleteRefs(
+            bookings.docs.map((d) => d.reference).toList(),
+            'users/${user.id}/bookings',
+          );
+        }
+        if (selection.userLogs || selection.trialUsers) {
+          final logs = await user.reference.collection('logs').get();
+          await safeDeleteRefs(
+            logs.docs.map((d) => d.reference).toList(),
+            'users/${user.id}/logs',
+          );
+        }
+        if (selection.reviews || selection.trialUsers) {
+          final reviews = await user.reference.collection('reviews').get();
+          await safeDeleteRefs(
+            reviews.docs.map((d) => d.reference).toList(),
+            'users/${user.id}/reviews',
+          );
+        }
+      }
+    } else {
+      progress('회원 하위 건너뜀');
+    }
+
+    if (selection.unconfirmedAssessments) {
+      progress('미확정 평가 삭제');
+      final refs = await _listAllRefs(
+        _db.collectionGroup('dive_star_assessments'),
+        keep: (doc) {
+          if (protectedShop != null &&
+              doc.reference.path.startsWith('shops/$protectedShop/')) {
+            return false;
+          }
+          return doc.data()['confirmed'] != true;
+        },
+      );
+      await safeDeleteRefs(refs, 'dive_star_assessments(unconfirmed)');
+    } else {
+      progress('평가 건너뜀');
+    }
+
+    // Trial shops: bookings → clear products / delete shop
+    final shopDocs = await _shops.get();
+    final trialShops = [
+      for (final doc in shopDocs.docs)
+        if (protectedShop == null || doc.id != protectedShop) doc,
+    ];
+
+    if (selection.trialShopBookings || selection.trialShops) {
+      progress('시험 샵 예약 삭제');
+      for (final shop in trialShops) {
+        final bookings = await shop.reference.collection('bookings').get();
+        await safeDeleteRefs(
+          bookings.docs.map((d) => d.reference).toList(),
+          'shops/${shop.id}/bookings',
+        );
+      }
+    } else {
+      progress('샵 예약 건너뜀');
+    }
+
+    if (selection.clearTrialShopProducts && !selection.trialShops) {
+      progress('시험 샵 상품 비우기');
+      for (final shop in trialShops) {
+        try {
+          await shop.reference.set({
+            'products': <Map<String, dynamic>>[],
+            'updated_at': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+          success += 1;
+          notes.add('shops/${shop.id} products 비움');
+        } catch (e) {
+          failure += 1;
+          failed.add(shop.reference.path);
+          notes.add('products 비우기 실패 ${shop.id}: $e');
+        }
+      }
+    } else {
+      progress('상품 비우기 건너뜀');
+    }
+
+    if (selection.trialShops) {
+      progress('시험 샵 삭제(주인 해제→하위→샵)');
+      for (final shop in trialShops) {
+        // Demote owners first (unless protected user).
+        for (final user in (await _users.get()).docs) {
+          if (protectedUids.contains(user.id)) {
+            continue;
+          }
+          final owned =
+              (user.data()['owned_shop_id'] as String?)?.trim() ?? '';
+          if (owned != shop.id) {
+            continue;
+          }
+          try {
+            await demoteMemberFromPartner(
+              uid: user.id,
+              actorUid: actorUid,
+              actorName: actorName,
+            );
+            success += 1;
+            notes.add('파트너 해제 ${user.id} (샵 ${shop.id})');
+          } catch (e) {
+            failure += 1;
+            notes.add('파트너 해제 실패 ${user.id}: $e');
+          }
+        }
+        // Remaining deletable children
+        for (final sub in ['reviews', 'bookings', 'dive_star_assessments']) {
+          final kids = await shop.reference.collection(sub).get();
+          final refs = <DocumentReference<Map<String, dynamic>>>[];
+          for (final kid in kids.docs) {
+            if (sub == 'dive_star_assessments' &&
+                kid.data()['confirmed'] == true) {
+              notes.add('확정 평가 남김: ${kid.reference.path}');
+              continue;
+            }
+            refs.add(kid.reference);
+          }
+          await safeDeleteRefs(refs, 'shops/${shop.id}/$sub');
+        }
+        final contracts =
+            await shop.reference.collection('partner_contracts').get();
+        if (contracts.docs.isNotEmpty) {
+          notes.add(
+            '서류함 ${contracts.docs.length}건 남음(shops/${shop.id}) — Console에서 수동 삭제',
+          );
+        }
+        try {
+          await shop.reference.delete();
+          success += 1;
+          notes.add('샵 삭제 ${shop.id} (임베디드 상품 포함)');
+        } catch (e) {
+          failure += 1;
+          failed.add(shop.reference.path);
+          notes.add('샵 삭제 실패 ${shop.id}: $e');
+        }
+      }
+    } else {
+      progress('샵 삭제 건너뜀');
+    }
+
+    if (selection.trialUsers) {
+      progress('시험 회원 문서 삭제');
+      final users = await _users.get();
+      final refs = <DocumentReference<Map<String, dynamic>>>[];
+      for (final user in users.docs) {
+        if (protectedUids.contains(user.id)) {
+          continue;
+        }
+        refs.add(user.reference);
+      }
+      await safeDeleteRefs(refs, 'users(trial)');
+      notes.add(
+        'Auth 계정은 앱에서 못 지웁니다. Firebase Console → Authentication → Users에서 '
+        '지운 뒤, 같은 아이디로 로그인하면 빈 users 문서가 다시 생길 수 있습니다.',
+      );
+    } else {
+      progress('회원 문서 건너뜀');
+    }
+
+    notes.add(
+      '서류함(partner_contracts)·확정 평가·R2/Storage 파일·Auth는 앱 삭제 범위 밖일 수 있습니다.',
+    );
+
+    return TrialDeleteResult(
+      successCount: success,
+      failureCount: failure,
+      notes: notes,
+      failedIds: failed,
+    );
   }
 
   List<Map<String, dynamic>> _appendRoleHistory({

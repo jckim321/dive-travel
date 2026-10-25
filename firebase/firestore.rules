@@ -218,6 +218,8 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && diveStarGradeFieldsValid()
         && (isAdmin() || diveStarGradeFieldsUnchanged());
+      // H9: admin trial-data cleanup may remove shops.
+      allow delete: if isAdmin();
 
       match /reviews/{reviewId} {
         allow read: if isSignedIn();
@@ -255,6 +257,8 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
         allow update: if isAdmin() || ownsShop(shopId) ||
           (isSignedIn() && resource.data.uid == request.auth.uid);
+        // H9: admin trial-data cleanup may remove shop bookings.
+        allow delete: if isAdmin();
       }
 
       // Internal Dive Star audits — admin only; confirmed records are locked.
