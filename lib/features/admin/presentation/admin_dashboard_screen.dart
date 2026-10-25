@@ -10,6 +10,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_overview_pane.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_sales_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_stats_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_report_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
@@ -656,10 +657,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.stats:
         return const AdminStatsScreen();
       case _AdminHub.reports:
-        return _AdminComingSoonPane(
-          title: l10n.adminTabReports,
-          body: l10n.adminContractsComingSoon,
-        );
+        return const AdminReportScreen();
       case _AdminHub.tools:
         return const AdminTrialDataScreen(embedded: true);
     }

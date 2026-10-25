@@ -9966,6 +9966,168 @@ abstract class AppLocalizations {
   /// **'30일+'**
   String get adminStatsLead30p;
 
+  /// No description provided for @adminReportMake.
+  ///
+  /// In ko, this message translates to:
+  /// **'보고서 만들기'**
+  String get adminReportMake;
+
+  /// No description provided for @adminReportPrint.
+  ///
+  /// In ko, this message translates to:
+  /// **'인쇄 · PDF'**
+  String get adminReportPrint;
+
+  /// No description provided for @adminReportSettings.
+  ///
+  /// In ko, this message translates to:
+  /// **'보고서 설정'**
+  String get adminReportSettings;
+
+  /// No description provided for @adminReportPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'기간'**
+  String get adminReportPeriod;
+
+  /// No description provided for @adminReportPeriodMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'월'**
+  String get adminReportPeriodMonth;
+
+  /// No description provided for @adminReportPeriodQuarter.
+  ///
+  /// In ko, this message translates to:
+  /// **'분기'**
+  String get adminReportPeriodQuarter;
+
+  /// No description provided for @adminReportPeriodYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'연'**
+  String get adminReportPeriodYear;
+
+  /// No description provided for @adminReportPeriodCustom.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접'**
+  String get adminReportPeriodCustom;
+
+  /// No description provided for @adminReportCompare.
+  ///
+  /// In ko, this message translates to:
+  /// **'비교 기준'**
+  String get adminReportCompare;
+
+  /// No description provided for @adminReportCompareNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get adminReportCompareNone;
+
+  /// No description provided for @adminReportCategories.
+  ///
+  /// In ko, this message translates to:
+  /// **'카테고리'**
+  String get adminReportCategories;
+
+  /// No description provided for @adminReportPartners.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너'**
+  String get adminReportPartners;
+
+  /// No description provided for @adminReportProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'품목(상품)'**
+  String get adminReportProducts;
+
+  /// No description provided for @adminReportAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get adminReportAll;
+
+  /// No description provided for @adminReportInclude.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함할 내용'**
+  String get adminReportInclude;
+
+  /// No description provided for @adminReportSummary.
+  ///
+  /// In ko, this message translates to:
+  /// **'요약 숫자'**
+  String get adminReportSummary;
+
+  /// No description provided for @adminReportTrend.
+  ///
+  /// In ko, this message translates to:
+  /// **'매출 추이'**
+  String get adminReportTrend;
+
+  /// No description provided for @adminReportPartnerTable.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너별 표'**
+  String get adminReportPartnerTable;
+
+  /// No description provided for @adminReportProductRank.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 순위'**
+  String get adminReportProductRank;
+
+  /// No description provided for @adminReportOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션 선택 현황'**
+  String get adminReportOptions;
+
+  /// No description provided for @adminReportCancels.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·환불'**
+  String get adminReportCancels;
+
+  /// No description provided for @adminReportBasis.
+  ///
+  /// In ko, this message translates to:
+  /// **'계산 기준 설명'**
+  String get adminReportBasis;
+
+  /// No description provided for @adminReportEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'보고서 만들기를 누르면 미리보기가 채워집니다.'**
+  String get adminReportEmpty;
+
+  /// No description provided for @adminReportHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'경영보고서'**
+  String get adminReportHeading;
+
+  /// No description provided for @adminReportBasisBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'계산 기준: 접수일. 총 결제는 결제된 건 전체(이후 취소 포함)이고, 환불은 취소·기상취소의 환불액입니다. 순매출 = 총 결제 − 환불. 지금은 모의결제(SimPay) 기간입니다.'**
+  String get adminReportBasisBody;
+
+  /// No description provided for @adminReportFontLicense.
+  ///
+  /// In ko, this message translates to:
+  /// **'Noto Sans KR는 SIL Open Font License(OFL)입니다.'**
+  String get adminReportFontLicense;
+
+  /// No description provided for @adminReportPrinting.
+  ///
+  /// In ko, this message translates to:
+  /// **'PDF를 준비하고 있습니다.'**
+  String get adminReportPrinting;
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:

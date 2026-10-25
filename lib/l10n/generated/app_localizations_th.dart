@@ -5284,6 +5284,89 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminStatsLead30p => '30일+';
 
   @override
+  String get adminReportMake => '보고서 만들기';
+
+  @override
+  String get adminReportPrint => '인쇄 · PDF';
+
+  @override
+  String get adminReportSettings => '보고서 설정';
+
+  @override
+  String get adminReportPeriod => '기간';
+
+  @override
+  String get adminReportPeriodMonth => '월';
+
+  @override
+  String get adminReportPeriodQuarter => '분기';
+
+  @override
+  String get adminReportPeriodYear => '연';
+
+  @override
+  String get adminReportPeriodCustom => '직접';
+
+  @override
+  String get adminReportCompare => '비교 기준';
+
+  @override
+  String get adminReportCompareNone => '없음';
+
+  @override
+  String get adminReportCategories => '카테고리';
+
+  @override
+  String get adminReportPartners => '파트너';
+
+  @override
+  String get adminReportProducts => '품목(상품)';
+
+  @override
+  String get adminReportAll => '전체';
+
+  @override
+  String get adminReportInclude => '포함할 내용';
+
+  @override
+  String get adminReportSummary => '요약 숫자';
+
+  @override
+  String get adminReportTrend => '매출 추이';
+
+  @override
+  String get adminReportPartnerTable => '파트너별 표';
+
+  @override
+  String get adminReportProductRank => '상품 순위';
+
+  @override
+  String get adminReportOptions => '옵션 선택 현황';
+
+  @override
+  String get adminReportCancels => '취소·환불';
+
+  @override
+  String get adminReportBasis => '계산 기준 설명';
+
+  @override
+  String get adminReportEmpty => '보고서 만들기를 누르면 미리보기가 채워집니다.';
+
+  @override
+  String get adminReportHeading => '경영보고서';
+
+  @override
+  String get adminReportBasisBody =>
+      '계산 기준: 접수일. 총 결제는 결제된 건 전체(이후 취소 포함)이고, 환불은 취소·기상취소의 환불액입니다. 순매출 = 총 결제 − 환불. 지금은 모의결제(SimPay) 기간입니다.';
+
+  @override
+  String get adminReportFontLicense =>
+      'Noto Sans KR는 SIL Open Font License(OFL)입니다.';
+
+  @override
+  String get adminReportPrinting => 'PDF를 준비하고 있습니다.';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'ยกเลิกตอนนี้คืน $percent%';
   }

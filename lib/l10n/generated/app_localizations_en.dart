@@ -5418,6 +5418,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminStatsLead30p => '30+ days';
 
   @override
+  String get adminReportMake => 'Build report';
+
+  @override
+  String get adminReportPrint => 'Print · PDF';
+
+  @override
+  String get adminReportSettings => 'Report settings';
+
+  @override
+  String get adminReportPeriod => 'Period';
+
+  @override
+  String get adminReportPeriodMonth => 'Month';
+
+  @override
+  String get adminReportPeriodQuarter => 'Quarter';
+
+  @override
+  String get adminReportPeriodYear => 'Year';
+
+  @override
+  String get adminReportPeriodCustom => 'Custom';
+
+  @override
+  String get adminReportCompare => 'Compare';
+
+  @override
+  String get adminReportCompareNone => 'None';
+
+  @override
+  String get adminReportCategories => 'Categories';
+
+  @override
+  String get adminReportPartners => 'Partners';
+
+  @override
+  String get adminReportProducts => 'Products';
+
+  @override
+  String get adminReportAll => 'All';
+
+  @override
+  String get adminReportInclude => 'Include';
+
+  @override
+  String get adminReportSummary => 'Summary';
+
+  @override
+  String get adminReportTrend => 'Sales trend';
+
+  @override
+  String get adminReportPartnerTable => 'Partner table';
+
+  @override
+  String get adminReportProductRank => 'Product rank';
+
+  @override
+  String get adminReportOptions => 'Option picks';
+
+  @override
+  String get adminReportCancels => 'Cancels and refunds';
+
+  @override
+  String get adminReportBasis => 'How the numbers are calculated';
+
+  @override
+  String get adminReportEmpty => 'Press Build report to fill the preview.';
+
+  @override
+  String get adminReportHeading => 'Management report';
+
+  @override
+  String get adminReportBasisBody =>
+      'By receive date. Paid total includes later cancels. Refunds are cancel and weather-cancel amounts. Net = paid total − refunds. Payments are simulated (SimPay) for now.';
+
+  @override
+  String get adminReportFontLicense =>
+      'Noto Sans KR is under the SIL Open Font License (OFL).';
+
+  @override
+  String get adminReportPrinting => 'Preparing the PDF.';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }
