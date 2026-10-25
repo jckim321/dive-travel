@@ -89,7 +89,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('admin-menu-sales')));
     await tester.pumpAndSettle();
-    expect(find.text(l10n.adminContractsComingSoon), findsWidgets);
+    expect(find.byKey(const Key('admin-sales-kpi-gross')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('admin-menu-dive-star')));
     await tester.pumpAndSettle();
