@@ -28,6 +28,7 @@ abstract class DiverRepository {
     required String email,
     required String password,
     String? displayName,
+    String? loginId,
   });
 
   Future<void> signOut();
@@ -35,15 +36,25 @@ abstract class DiverRepository {
   Future<void> sendPasswordReset(String email);
 
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
-  Future<void> ensureUserDocument(AppUser user);
+  Future<void> ensureUserDocument(AppUser user, {String? loginId});
 
-  /// Owner test-role helper: updates business/owned_shop only; never clears is_admin.
-  Future<void> updateDevTestRole({
+  /// Admin: promote member to partner (is_business + owned_shop_id + history).
+  Future<void> promoteMemberToPartner({
     required String uid,
-    required bool isBusiness,
-    String? ownedShopId,
-    required String userRole,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
   });
+
+  /// Admin: demote partner back to diver (clears business flags + history).
+  Future<void> demoteMemberFromPartner({
+    required String uid,
+    required String actorUid,
+    required String actorName,
+  });
+
+  /// Creates a minimal shop doc and returns its id (admin partner promote).
+  Future<String> createEmptyShop({required String name});
 
   /// Profile fields only (no logs subcollection). Prefer [fetchDiveLogs] for logs.
   Stream<DiverSnapshot> watchDiver(String uid);

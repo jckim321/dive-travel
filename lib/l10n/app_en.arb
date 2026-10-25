@@ -395,18 +395,26 @@
   "metalCardDialogClose": "OK",
   "authLogin": "Log in",
   "authSignup": "Sign up",
-  "authWelcome": "After you sign up you can use logs, Same Tide, and bookings right away. An admin adjusts your grade based on activity.",
+  "authWelcome": "Sign up with a username and password to use logs, Same Tide, and bookings. Admins promote affiliate partners.",
   "authEmail": "Email",
+  "authLoginId": "Username",
+  "authLoginIdOrEmail": "Username or email",
+  "authLoginIdHint": "lowercase letters, digits, _ · 4–20 chars",
   "authPassword": "Password",
   "authPasswordHint": "At least 6 characters",
   "authDisplayName": "Name",
   "authNoAccount": "No account? Sign up",
   "authHaveAccount": "Already have an account? Log in",
   "authErrorInvalidEmail": "Enter a valid email address.",
-  "authErrorInvalidCredential": "That email is already registered. Sign in with the original password.",
+  "authErrorInvalidCredential": "Check your username (or email) and password.",
   "authResetPassword": "Send password reset email",
   "authResetPasswordSent": "Password reset email sent. Check your inbox.",
+  "authPasswordResetHiddenHint": "Password reset is hidden until launch. Contact an admin if you need help.",
   "authErrorEmailInUse": "That email is already registered.",
+  "authErrorLoginIdInUse": "That username is already taken.",
+  "authErrorLoginIdFormat": "Username must be 4–20 characters: lowercase letters, digits, or _.",
+  "authErrorLoginIdReserved": "That username is reserved.",
+  "authErrorDisplayNameRequired": "Enter your name.",
   "authErrorWeakPassword": "Password must be at least 6 characters.",
   "authErrorNetwork": "Check your network connection.",
   "authErrorGeneric": "Sign-in failed. Please try again.",
@@ -502,6 +510,50 @@
   "gradeCelebrationThanks": "Thanks",
   "adminMembersBadgeInstructor": "Instructor",
   "adminMembersBadgePartner": "Partner",
+  "adminMembersBadgeAdmin": "Admin",
+  "adminMembersLoginId": "Username · {id}",
+  "@adminMembersLoginId": {
+    "placeholders": {
+      "id": {"type": "String"}
+    }
+  },
+  "adminMembersRoleStatus": "Role · {kind} · user_role={role} · shop={shop}",
+  "@adminMembersRoleStatus": {
+    "placeholders": {
+      "kind": {"type": "String"},
+      "role": {"type": "String"},
+      "shop": {"type": "String"}
+    }
+  },
+  "adminMembersRoleAdmin": "App owner admin",
+  "adminMembersRolePartner": "Affiliate partner",
+  "adminMembersRoleDiver": "Member",
+  "adminMembersLeftoverPartnerHint": "Admin still has partner flags. Use Demote partner to clear them.",
+  "adminMembersPromotePartner": "Promote to partner",
+  "adminMembersDemotePartner": "Demote partner",
+  "adminMembersPromoteConfirm": "Promote {name} to affiliate partner. Pick an unowned shop or create one.",
+  "@adminMembersPromoteConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "adminMembersDemoteConfirm": "Demote {name}? Shop link {shop} will be cleared (the shop stays).",
+  "@adminMembersDemoteConfirm": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "shop": {"type": "String"}
+    }
+  },
+  "adminMembersPromotePickShop": "Link existing shop",
+  "adminMembersPromoteNewShop": "Create new shop",
+  "adminMembersNewShopName": "New shop name",
+  "adminMembersNoUnownedShops": "No unowned shops. Create a new one.",
+  "adminMembersAlreadyPartner": "This member is already a partner.",
+  "adminMembersShopOwned": "That shop already has an owner.",
+  "adminMembersPromoteDone": "Promoted to partner.",
+  "adminMembersDemoteDone": "Partner demoted.",
+  "adminMembersPromoteFailed": "Promotion failed.",
+  "adminMembersDemoteFailed": "Demotion failed.",
   "adminPartnerTierAll": "All",
   "adminPartnerTierReviewPending": "Pre-review",
   "adminPartnerTierStar1": "Dive Star 1",
@@ -600,7 +652,7 @@
   "adminQuickActions": "Quick actions",
   "adminMembersTitle": "Members",
   "adminMembersSubtitle": "Look up members and set Silver, Gold, Diamond, or Platinum grade.",
-  "adminMembersSearch": "Search name or email",
+  "adminMembersSearch": "Search name, username, email, or shop",
   "adminMembersEmpty": "No members match.",
   "adminMembersGrade": "Member grade",
   "adminMembersActivity": "{logs} logs · {regions} regions",

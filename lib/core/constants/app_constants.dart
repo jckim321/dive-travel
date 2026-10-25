@@ -7,10 +7,10 @@ abstract final class AppConstants {
   static const int masterLogTarget = 100;
   static const String adminPin = '9118';
 
-  /// Legacy session grants — keep false. Use owner-only「테스트 역할 전환」instead.
+  /// Legacy session grants — keep false (H8: real roles via Firestore only).
   static const bool grantAdminToCurrentSession = false;
 
-  /// Legacy session grants — keep false. Use owner-only「테스트 역할 전환」instead.
+  /// Legacy session grants — keep false (H8: promote partner in admin Members).
   static const bool grantBusinessToCurrentSession = false;
   static const String defaultPartnerShopId = 'bohol-hideout';
 

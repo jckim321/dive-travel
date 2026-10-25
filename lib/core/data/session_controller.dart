@@ -60,12 +60,14 @@ class SessionController extends ChangeNotifier {
     required String email,
     required String password,
     String? displayName,
+    String? loginId,
   }) {
     return _run(
       () => _repository.signUp(
         email: email,
         password: password,
         displayName: displayName,
+        loginId: loginId,
       ),
     );
   }

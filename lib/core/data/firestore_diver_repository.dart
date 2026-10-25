@@ -88,33 +88,29 @@ class FirestoreDiverRepository implements DiverRepository {
     required String email,
     required String password,
     String? displayName,
+    String? loginId,
   }) async {
-    try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
-      final user = credential.user;
-      if (user == null) {
-        return;
-      }
-      await _finishNewUser(user, email: email, displayName: displayName);
-    } on FirebaseAuthException catch (error) {
-      // 이메일 열거 보호가 켜져 있으면, 이미 가입된 주소로 회원가입할 때
-      // email-already-in-use 대신 invalid-credential이 온다.
-      if (error.code == 'email-already-in-use' ||
-          error.code == 'invalid-credential') {
-        await signIn(email: email, password: password);
-        return;
-      }
-      rethrow;
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      return;
     }
+    await _finishNewUser(
+      user,
+      email: email,
+      displayName: displayName,
+      loginId: loginId,
+    );
   }
 
   Future<void> _finishNewUser(
     User user, {
     required String email,
     required String? displayName,
+    String? loginId,
   }) async {
     final name = AppOwner.resolveDisplayName(
       email: user.email ?? email,
@@ -125,6 +121,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final refreshed = _auth.currentUser ?? user;
     await ensureUserDocument(
       AppUser(uid: refreshed.uid, email: refreshed.email, displayName: name),
+      loginId: loginId,
     );
   }
 
@@ -137,28 +134,160 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> signOut() => _auth.signOut();
 
   @override
-  Future<void> updateDevTestRole({
+  Future<void> promoteMemberToPartner({
     required String uid,
-    required bool isBusiness,
-    String? ownedShopId,
-    required String userRole,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
   }) async {
-    final ref = _db.collection('users').doc(uid);
-    final payload = <String, dynamic>{
-      'is_business': isBusiness,
-      'user_role': userRole,
-      'updated_at': FieldValue.serverTimestamp(),
-    };
-    if (isBusiness && ownedShopId != null && ownedShopId.isNotEmpty) {
-      payload['owned_shop_id'] = ownedShopId;
-    } else {
-      payload['owned_shop_id'] = FieldValue.delete();
+    final shop = shopId.trim();
+    if (shop.isEmpty) {
+      throw StateError('PARTNER_SHOP_REQUIRED');
     }
-    await ref.set(payload, SetOptions(merge: true));
+    final ref = _userDoc(uid);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? <String, dynamic>{};
+      final alreadyBusiness = data['is_business'] == true ||
+          data['isBusiness'] == true ||
+          ((data['owned_shop_id'] as String?)?.trim().isNotEmpty ?? false);
+      if (alreadyBusiness) {
+        throw StateError('ALREADY_PARTNER');
+      }
+      final history = _appendRoleHistory(
+        existing: data['role_history'],
+        entry: {
+          'at': Timestamp.now(),
+          'by_uid': actorUid,
+          'by_name': actorName,
+          'action': 'promote_partner',
+          'from': {
+            'is_business': false,
+            'user_role': data['user_role'] ?? 'diver',
+            'owned_shop_id': data['owned_shop_id'],
+          },
+          'to': {
+            'is_business': true,
+            'user_role': 'business',
+            'owned_shop_id': shop,
+          },
+          'shop_id': shop,
+        },
+      );
+      tx.set(
+        ref,
+        {
+          'is_business': true,
+          'user_role': 'business',
+          'owned_shop_id': shop,
+          'role_history': history,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    });
   }
 
   @override
-  Future<void> ensureUserDocument(AppUser user) async {
+  Future<void> demoteMemberFromPartner({
+    required String uid,
+    required String actorUid,
+    required String actorName,
+  }) async {
+    final ref = _userDoc(uid);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? <String, dynamic>{};
+      final wasBusiness = data['is_business'] == true ||
+          data['isBusiness'] == true ||
+          ((data['owned_shop_id'] as String?)?.trim().isNotEmpty ?? false);
+      if (!wasBusiness) {
+        throw StateError('NOT_PARTNER');
+      }
+      final previousShop =
+          (data['owned_shop_id'] as String?)?.trim() ??
+          (data['ownedShopId'] as String?)?.trim();
+      final history = _appendRoleHistory(
+        existing: data['role_history'],
+        entry: {
+          'at': Timestamp.now(),
+          'by_uid': actorUid,
+          'by_name': actorName,
+          'action': 'demote_partner',
+          'from': {
+            'is_business': true,
+            'user_role': data['user_role'] ?? 'business',
+            'owned_shop_id': previousShop,
+          },
+          'to': {
+            'is_business': false,
+            'user_role': 'diver',
+            'owned_shop_id': null,
+          },
+          'shop_id': previousShop,
+        },
+      );
+      tx.set(
+        ref,
+        {
+          'is_business': false,
+          'user_role': 'diver',
+          'owned_shop_id': FieldValue.delete(),
+          'role_history': history,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+  @override
+  Future<String> createEmptyShop({required String name}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw StateError('SHOP_NAME_REQUIRED');
+    }
+    final slug = trimmed
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final base = slug.isEmpty ? 'shop' : slug;
+    final shopId =
+        '$base-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+    await _shops.doc(shopId).set({
+      'name': trimmed,
+      'location': '',
+      'product_name': '',
+      'consumer_price': 0,
+      'professional_price': 0,
+      'created_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    });
+    return shopId;
+  }
+
+  List<Map<String, dynamic>> _appendRoleHistory({
+    required Object? existing,
+    required Map<String, dynamic> entry,
+  }) {
+    final list = <Map<String, dynamic>>[];
+    if (existing is List) {
+      for (final item in existing) {
+        if (item is Map) {
+          list.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
+    list.add(entry);
+    const maxEntries = 50;
+    if (list.length > maxEntries) {
+      return list.sublist(list.length - maxEntries);
+    }
+    return list;
+  }
+
+  @override
+  Future<void> ensureUserDocument(AppUser user, {String? loginId}) async {
     final ref = _userDoc(user.uid);
     final snapshot = await ref.get().timeout(const Duration(seconds: 8));
     final existingName = snapshot.data()?['display_name'] as String?;
@@ -173,6 +302,10 @@ class FirestoreDiverRepository implements DiverRepository {
       'display_name': displayName,
       'updated_at': FieldValue.serverTimestamp(),
     };
+    final id = (loginId ?? '').trim().toLowerCase();
+    if (id.isNotEmpty) {
+      payload['login_id'] = id;
+    }
     // Do not auto-write is_admin / is_business here. Roles come from the
     // Firestore document (and owner-only session overlay for testing).
     if (!snapshot.exists) {
@@ -1607,6 +1740,10 @@ class FirestoreDiverRepository implements DiverRepository {
       isInstructor: instructor,
       isBusiness: business,
       ownedShopId: owned,
+      userRole: (data['user_role'] as String?)?.trim().isNotEmpty == true
+          ? (data['user_role'] as String).trim()
+          : (business ? 'business' : 'diver'),
+      loginId: (data['login_id'] as String?)?.trim() ?? '',
       paidPurchaseCount: (data['paid_purchase_count'] as num?)?.toInt() ?? 0,
       reviewCount: (data['review_count'] as num?)?.toInt() ?? 0,
       gradeLocked: data['member_grade_locked'] == true,

@@ -1184,6 +1184,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authEmail => 'メール';
 
   @override
+  String get authLoginId => '아이디';
+
+  @override
+  String get authLoginIdOrEmail => '아이디 또는 이메일';
+
+  @override
+  String get authLoginIdHint => '영문 소문자·숫자·_ 4~20자';
+
+  @override
   String get authPassword => 'パスワード';
 
   @override
@@ -1211,7 +1220,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authResetPasswordSent => 'パスワード再設定メールを送りました。';
 
   @override
+  String get authPasswordResetHiddenHint =>
+      '출시 전까지 비밀번호 찾기는 제공하지 않습니다. 필요하면 관리자에게 문의해 주세요.';
+
+  @override
   String get authErrorEmailInUse => 'すでに登録されたメールです。';
+
+  @override
+  String get authErrorLoginIdInUse => '이미 사용 중인 아이디입니다.';
+
+  @override
+  String get authErrorLoginIdFormat => '아이디는 영문 소문자·숫자·_ 조합 4~20자여야 합니다.';
+
+  @override
+  String get authErrorLoginIdReserved => '사용할 수 없는 아이디입니다.';
+
+  @override
+  String get authErrorDisplayNameRequired => '이름을 입력해 주세요.';
 
   @override
   String get authErrorWeakPassword => 'パスワードは6文字以上にしてください。';
@@ -1412,6 +1437,78 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get adminMembersBadgePartner => '제휴';
+
+  @override
+  String get adminMembersBadgeAdmin => '관리자';
+
+  @override
+  String adminMembersLoginId(String id) {
+    return '아이디 · $id';
+  }
+
+  @override
+  String adminMembersRoleStatus(String kind, String role, String shop) {
+    return '역할 · $kind · user_role=$role · 샵=$shop';
+  }
+
+  @override
+  String get adminMembersRoleAdmin => '앱 대표관리자';
+
+  @override
+  String get adminMembersRolePartner => '제휴파트너';
+
+  @override
+  String get adminMembersRoleDiver => '일반회원';
+
+  @override
+  String get adminMembersLeftoverPartnerHint =>
+      '관리자인데 파트너 플래그가 남아 있습니다. 「파트너 해제」로 정리하세요.';
+
+  @override
+  String get adminMembersPromotePartner => '파트너로 승격';
+
+  @override
+  String get adminMembersDemotePartner => '파트너 해제';
+
+  @override
+  String adminMembersPromoteConfirm(String name) {
+    return '$name 님을 제휴파트너로 승격합니다. 연결할 샵을 고르거나 새 샵을 만드세요.';
+  }
+
+  @override
+  String adminMembersDemoteConfirm(String name, String shop) {
+    return '$name 님의 파트너를 해제할까요? (샵 $shop 연결이 끊깁니다. 샵 자체는 남습니다.)';
+  }
+
+  @override
+  String get adminMembersPromotePickShop => '기존 샵 연결';
+
+  @override
+  String get adminMembersPromoteNewShop => '새 샵 만들기';
+
+  @override
+  String get adminMembersNewShopName => '새 샵 이름';
+
+  @override
+  String get adminMembersNoUnownedShops => '주인이 없는 샵이 없습니다. 새 샵을 만드세요.';
+
+  @override
+  String get adminMembersAlreadyPartner => '이미 파트너인 회원입니다.';
+
+  @override
+  String get adminMembersShopOwned => '이미 주인이 있는 샵입니다.';
+
+  @override
+  String get adminMembersPromoteDone => '파트너로 승격했습니다.';
+
+  @override
+  String get adminMembersDemoteDone => '파트너를 해제했습니다.';
+
+  @override
+  String get adminMembersPromoteFailed => '승격에 실패했습니다.';
+
+  @override
+  String get adminMembersDemoteFailed => '파트너 해제에 실패했습니다.';
 
   @override
   String get adminPartnerTierAll => '전체';

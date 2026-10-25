@@ -23,7 +23,6 @@ import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
-import 'package:dive_travel_app/features/profile/presentation/owner_dev_role_quick_bar.dart';
 import 'package:dive_travel_app/features/profile/presentation/profile_settings_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -85,13 +84,6 @@ class ProfileScreen extends StatelessWidget {
                     onSettings: () => _openSettings(context),
                   ),
                 ),
-                // Phase-0: quick bar under the profile header for easy owner testing.
-                // Phase-2 My Page redesign will move this to the bottom of the list.
-                if (store.canUseDevRoles)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                    child: OwnerDevRoleQuickBar(showTrialCaption: true),
-                  ),
                 if (stats.gradeCelebrationPending)
                   _GradeCelebrationHost(
                     grade: stats.gradeCelebrationTo ?? stats.memberGrade,

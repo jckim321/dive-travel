@@ -2301,14 +2301,32 @@ abstract class AppLocalizations {
   /// No description provided for @authWelcome.
   ///
   /// In ko, this message translates to:
-  /// **'가입하면 로그, 같은배, 예약 등 기본 기능을 바로 쓸 수 있습니다. 등급은 활동에 따라 관리자가 조정합니다.'**
+  /// **'아이디와 비밀번호로 가입하면 로그·같은배·예약을 바로 쓸 수 있습니다. 제휴 파트너는 관리자가 승격합니다.'**
   String get authWelcome;
 
-  /// 로그인 이메일 필드입니다.
+  /// 레거시 이메일 라벨(호환).
   ///
   /// In ko, this message translates to:
   /// **'이메일'**
   String get authEmail;
+
+  /// 회원가입 아이디 필드입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디'**
+  String get authLoginId;
+
+  /// 로그인 입력란(아이디 또는 이메일).
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디 또는 이메일'**
+  String get authLoginIdOrEmail;
+
+  /// 아이디 형식 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'영문 소문자·숫자·_ 4~20자'**
+  String get authLoginIdHint;
 
   /// 로그인 비밀번호 필드입니다.
   ///
@@ -2346,10 +2364,10 @@ abstract class AppLocalizations {
   /// **'이메일 형식이 올바르지 않습니다.'**
   String get authErrorInvalidEmail;
 
-  /// 이미 가입된 계정인데 비밀번호가 다를 때 오류입니다.
+  /// 로그인 실패 통합 메시지입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이미 가입된 이메일입니다. 처음 만든 비밀번호로 로그인해 주세요.'**
+  /// **'아이디(또는 이메일)나 비밀번호를 확인해 주세요.'**
   String get authErrorInvalidCredential;
 
   /// 비밀번호 재설정 메일 발송 버튼입니다.
@@ -2364,11 +2382,41 @@ abstract class AppLocalizations {
   /// **'비밀번호 재설정 메일을 보냈습니다. Gmail 받은편지함을 확인하세요.'**
   String get authResetPasswordSent;
 
+  /// 비밀번호 찾기 숨김 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'출시 전까지 비밀번호 찾기는 제공하지 않습니다. 필요하면 관리자에게 문의해 주세요.'**
+  String get authPasswordResetHiddenHint;
+
   /// 중복 이메일 오류입니다.
   ///
   /// In ko, this message translates to:
   /// **'이미 가입된 이메일입니다.'**
   String get authErrorEmailInUse;
+
+  /// 아이디 중복 오류입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 사용 중인 아이디입니다.'**
+  String get authErrorLoginIdInUse;
+
+  /// 아이디 형식 오류입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디는 영문 소문자·숫자·_ 조합 4~20자여야 합니다.'**
+  String get authErrorLoginIdFormat;
+
+  /// 예약어 아이디 오류입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용할 수 없는 아이디입니다.'**
+  String get authErrorLoginIdReserved;
+
+  /// 표시 이름 필수 오류입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 입력해 주세요.'**
+  String get authErrorDisplayNameRequired;
 
   /// 약한 비밀번호 오류입니다.
   ///
@@ -2741,6 +2789,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'제휴'**
   String get adminMembersBadgePartner;
+
+  /// No description provided for @adminMembersBadgeAdmin.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자'**
+  String get adminMembersBadgeAdmin;
+
+  /// No description provided for @adminMembersLoginId.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디 · {id}'**
+  String adminMembersLoginId(String id);
+
+  /// No description provided for @adminMembersRoleStatus.
+  ///
+  /// In ko, this message translates to:
+  /// **'역할 · {kind} · user_role={role} · 샵={shop}'**
+  String adminMembersRoleStatus(String kind, String role, String shop);
+
+  /// No description provided for @adminMembersRoleAdmin.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 대표관리자'**
+  String get adminMembersRoleAdmin;
+
+  /// No description provided for @adminMembersRolePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴파트너'**
+  String get adminMembersRolePartner;
+
+  /// No description provided for @adminMembersRoleDiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'일반회원'**
+  String get adminMembersRoleDiver;
+
+  /// No description provided for @adminMembersLeftoverPartnerHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자인데 파트너 플래그가 남아 있습니다. 「파트너 해제」로 정리하세요.'**
+  String get adminMembersLeftoverPartnerHint;
+
+  /// No description provided for @adminMembersPromotePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너로 승격'**
+  String get adminMembersPromotePartner;
+
+  /// No description provided for @adminMembersDemotePartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 해제'**
+  String get adminMembersDemotePartner;
+
+  /// No description provided for @adminMembersPromoteConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 님을 제휴파트너로 승격합니다. 연결할 샵을 고르거나 새 샵을 만드세요.'**
+  String adminMembersPromoteConfirm(String name);
+
+  /// No description provided for @adminMembersDemoteConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 님의 파트너를 해제할까요? (샵 {shop} 연결이 끊깁니다. 샵 자체는 남습니다.)'**
+  String adminMembersDemoteConfirm(String name, String shop);
+
+  /// No description provided for @adminMembersPromotePickShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'기존 샵 연결'**
+  String get adminMembersPromotePickShop;
+
+  /// No description provided for @adminMembersPromoteNewShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 샵 만들기'**
+  String get adminMembersPromoteNewShop;
+
+  /// No description provided for @adminMembersNewShopName.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 샵 이름'**
+  String get adminMembersNewShopName;
+
+  /// No description provided for @adminMembersNoUnownedShops.
+  ///
+  /// In ko, this message translates to:
+  /// **'주인이 없는 샵이 없습니다. 새 샵을 만드세요.'**
+  String get adminMembersNoUnownedShops;
+
+  /// No description provided for @adminMembersAlreadyPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 파트너인 회원입니다.'**
+  String get adminMembersAlreadyPartner;
+
+  /// No description provided for @adminMembersShopOwned.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 주인이 있는 샵입니다.'**
+  String get adminMembersShopOwned;
+
+  /// No description provided for @adminMembersPromoteDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너로 승격했습니다.'**
+  String get adminMembersPromoteDone;
+
+  /// No description provided for @adminMembersDemoteDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너를 해제했습니다.'**
+  String get adminMembersDemoteDone;
+
+  /// No description provided for @adminMembersPromoteFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'승격에 실패했습니다.'**
+  String get adminMembersPromoteFailed;
+
+  /// No description provided for @adminMembersDemoteFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 해제에 실패했습니다.'**
+  String get adminMembersDemoteFailed;
 
   /// No description provided for @adminPartnerTierAll.
   ///
@@ -3153,7 +3327,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminMembersSearch.
   ///
   /// In ko, this message translates to:
-  /// **'이름 또는 이메일 검색'**
+  /// **'이름·아이디·이메일·샵 검색'**
   String get adminMembersSearch;
 
   /// No description provided for @adminMembersEmpty.

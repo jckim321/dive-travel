@@ -7,7 +7,6 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
-import 'package:dive_travel_app/features/profile/presentation/owner_dev_role_quick_bar.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -60,10 +59,6 @@ class ProfileSettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              if (store.canUseDevRoles) ...[
-                const SizedBox(height: 24),
-                const OwnerDevRoleQuickBar(),
-              ],
               if (live.isAdmin || live.isBusiness) ...[
                 const SizedBox(height: 24),
                 Text(

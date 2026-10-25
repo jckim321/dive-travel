@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
@@ -82,7 +83,9 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       for (final member in store.members)
         if ((needle.isEmpty ||
                 member.displayName.toLowerCase().contains(needle) ||
-                member.email.toLowerCase().contains(needle)) &&
+                member.email.toLowerCase().contains(needle) ||
+                member.loginId.toLowerCase().contains(needle) ||
+                member.ownedShopId.toLowerCase().contains(needle)) &&
             _matchesGrade(member, pendingUids))
           member,
     ];
@@ -246,6 +249,7 @@ class _MemberCard extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final theme = Theme.of(context);
     final suggested = member.suggestedGrade;
+    final leftoverHint = member.isAdmin && member.isBusiness;
 
     return Card(
       child: Padding(
@@ -261,6 +265,14 @@ class _MemberCard extends StatelessWidget {
                     style: theme.textTheme.titleMedium,
                   ),
                 ),
+                if (member.isAdmin)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: _RoleBadge(
+                      label: l10n.adminMembersBadgeAdmin,
+                      color: AdminConsoleTheme.aqua,
+                    ),
+                  ),
                 if (member.isInstructor)
                   Padding(
                     padding: const EdgeInsets.only(left: 6),
@@ -279,9 +291,39 @@ class _MemberCard extends StatelessWidget {
                   ),
               ],
             ),
+            if (member.loginId.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.adminMembersLoginId(member.loginId),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
             if (member.email.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(member.email, style: theme.textTheme.bodySmall),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              l10n.adminMembersRoleStatus(
+                member.isAdmin
+                    ? l10n.adminMembersRoleAdmin
+                    : (member.isBusiness
+                        ? l10n.adminMembersRolePartner
+                        : l10n.adminMembersRoleDiver),
+                member.userRole,
+                member.ownedShopId.isEmpty ? '—' : member.ownedShopId,
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+            if (leftoverHint) ...[
+              const SizedBox(height: 4),
+              Text(
+                l10n.adminMembersLeftoverPartnerHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AdminConsoleTheme.amber,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
             const SizedBox(height: 8),
             Text(
@@ -349,9 +391,271 @@ class _MemberCard extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                if (!member.isBusiness)
+                  FilledButton.tonal(
+                    key: Key('admin-member-promote-${member.uid}'),
+                    onPressed: () => _confirmPromote(context, store, member),
+                    child: Text(l10n.adminMembersPromotePartner),
+                  ),
+                if (member.isBusiness)
+                  OutlinedButton(
+                    key: Key('admin-member-demote-${member.uid}'),
+                    onPressed: () => _confirmDemote(context, store, member),
+                    child: Text(l10n.adminMembersDemotePartner),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _confirmPromote(
+    BuildContext context,
+    DiverStore store,
+    MemberAccount member,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    if (member.isBusiness) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminMembersAlreadyPartner)),
+      );
+      return;
+    }
+    final unowned = store.unownedPartnerShops;
+    final result = await showDialog<_PromoteChoice>(
+      context: context,
+      builder: (ctx) => _PromotePartnerDialog(
+        memberName: member.displayName,
+        unownedShops: unowned,
+      ),
+    );
+    if (result == null || !context.mounted) {
+      return;
+    }
+    try {
+      if (result.createNew) {
+        await store.promoteMemberToPartnerWithNewShop(
+          uid: member.uid,
+          shopName: result.newShopName!,
+        );
+      } else {
+        await store.promoteMemberToPartner(
+          uid: member.uid,
+          shopId: result.shopId!,
+        );
+      }
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminMembersPromoteDone)),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      final message = error.toString().contains('ALREADY_PARTNER')
+          ? l10n.adminMembersAlreadyPartner
+          : error.toString().contains('SHOP_ALREADY_OWNED')
+              ? l10n.adminMembersShopOwned
+              : l10n.adminMembersPromoteFailed;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
+  Future<void> _confirmDemote(
+    BuildContext context,
+    DiverStore store,
+    MemberAccount member,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.adminMembersDemotePartner),
+        content: Text(
+          l10n.adminMembersDemoteConfirm(
+            member.displayName,
+            member.ownedShopId.isEmpty ? '—' : member.ownedShopId,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.adminHqClose),
+          ),
+          FilledButton(
+            key: Key('admin-member-demote-confirm-${member.uid}'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.adminMembersDemotePartner),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) {
+      return;
+    }
+    try {
+      await store.demoteMemberFromPartner(member.uid);
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminMembersDemoteDone)),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminMembersDemoteFailed)),
+      );
+    }
+  }
+}
+
+class _PromoteChoice {
+  const _PromoteChoice.existing(this.shopId)
+      : createNew = false,
+        newShopName = null;
+
+  const _PromoteChoice.create(this.newShopName)
+      : createNew = true,
+        shopId = null;
+
+  final bool createNew;
+  final String? shopId;
+  final String? newShopName;
+}
+
+class _PromotePartnerDialog extends StatefulWidget {
+  const _PromotePartnerDialog({
+    required this.memberName,
+    required this.unownedShops,
+  });
+
+  final String memberName;
+  final List<DiveShop> unownedShops;
+
+  @override
+  State<_PromotePartnerDialog> createState() => _PromotePartnerDialogState();
+}
+
+class _PromotePartnerDialogState extends State<_PromotePartnerDialog> {
+  var _mode = 0; // 0 existing, 1 new
+  String? _shopId;
+  final _nameController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.unownedShops.isNotEmpty) {
+      _shopId = widget.unownedShops.first.id;
+    } else {
+      _mode = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.adminMembersPromotePartner),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.adminMembersPromoteConfirm(widget.memberName)),
+            const SizedBox(height: 12),
+            SegmentedButton<int>(
+              segments: [
+                ButtonSegment(
+                  value: 0,
+                  label: Text(l10n.adminMembersPromotePickShop),
+                  enabled: widget.unownedShops.isNotEmpty,
+                ),
+                ButtonSegment(
+                  value: 1,
+                  label: Text(l10n.adminMembersPromoteNewShop),
+                ),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (set) => setState(() => _mode = set.first),
+            ),
+            const SizedBox(height: 12),
+            if (_mode == 0) ...[
+              if (widget.unownedShops.isEmpty)
+                Text(l10n.adminMembersNoUnownedShops)
+              else
+                DropdownButtonFormField<String>(
+                  key: const Key('admin-promote-shop'),
+                  initialValue: _shopId,
+                  decoration: InputDecoration(
+                    labelText: l10n.adminMembersPromotePickShop,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    for (final shop in widget.unownedShops)
+                      DropdownMenuItem(
+                        value: shop.id,
+                        child: Text('${shop.name} (${shop.id})'),
+                      ),
+                  ],
+                  onChanged: (value) => setState(() => _shopId = value),
+                ),
+            ] else
+              TextField(
+                key: const Key('admin-promote-new-shop-name'),
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: l10n.adminMembersNewShopName,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.adminHqClose),
+        ),
+        FilledButton(
+          key: const Key('admin-promote-confirm'),
+          onPressed: () {
+            if (_mode == 0) {
+              final id = _shopId;
+              if (id == null || id.isEmpty) {
+                return;
+              }
+              Navigator.pop(context, _PromoteChoice.existing(id));
+              return;
+            }
+            final name = _nameController.text.trim();
+            if (name.isEmpty) {
+              return;
+            }
+            Navigator.pop(context, _PromoteChoice.create(name));
+          },
+          child: Text(l10n.adminMembersPromotePartner),
+        ),
+      ],
     );
   }
 }

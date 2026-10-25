@@ -441,7 +441,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     }
   }
 
-  /// Owner / admin (incl. DevRoles overlay) only — for temporary save probe.
+  /// Admin-only temporary save probe.
   bool _canSeeSaveProbe(DiverStore store) {
     final s = store.stats;
     return s.isAdmin ||

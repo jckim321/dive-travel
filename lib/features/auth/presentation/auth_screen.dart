@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -12,7 +13,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _emailController = TextEditingController();
+  final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   bool _isSignUp = false;
@@ -21,7 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _loginController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
     super.dispose();
@@ -31,6 +32,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final session = SessionScope.of(context);
     final l10n = AppLocalizations.of(context);
     final password = _passwordController.text;
+    final loginRaw = _loginController.text;
     setState(() {
       _error = null;
       _info = null;
@@ -39,51 +41,64 @@ class _AuthScreenState extends State<AuthScreen> {
       setState(() => _error = l10n.authErrorWeakPassword);
       return;
     }
-    try {
-      if (_isSignUp) {
-        await session.signUp(
-          email: _emailController.text,
-          password: password,
-          displayName: _nameController.text,
-        );
-      } else {
-        await session.signIn(
-          email: _emailController.text,
-          password: password,
-        );
-      }
-    } catch (error) {
-      debugPrint('Auth error: $error');
-      if (error is FirebaseAuthException) {
-        debugPrint('Auth code=${error.code} message=${error.message}');
-      }
-      if (!mounted) {
+
+    if (_isSignUp) {
+      final id = AuthIdentity.normalizeLoginId(loginRaw);
+      if (AuthIdentity.looksLikeEmail(loginRaw)) {
+        setState(() => _error = l10n.authErrorLoginIdFormat);
         return;
       }
-      setState(() => _error = _messageFor(error, AppLocalizations.of(context)));
+      if (AuthIdentity.isReservedLoginId(id)) {
+        setState(() => _error = l10n.authErrorLoginIdReserved);
+        return;
+      }
+      if (!AuthIdentity.isValidLoginId(id)) {
+        setState(() => _error = l10n.authErrorLoginIdFormat);
+        return;
+      }
+      final name = _nameController.text.trim();
+      if (name.isEmpty) {
+        setState(() => _error = l10n.authErrorDisplayNameRequired);
+        return;
+      }
+      try {
+        await session.signUp(
+          email: AuthIdentity.toAuthEmail(id),
+          password: password,
+          displayName: name,
+          loginId: id,
+        );
+      } catch (error) {
+        _handleAuthError(error);
+      }
+      return;
+    }
+
+    // Login: username or email (@ → pass through).
+    final authEmail = AuthIdentity.toAuthEmail(loginRaw);
+    if (!AuthIdentity.looksLikeEmail(loginRaw)) {
+      final id = AuthIdentity.normalizeLoginId(loginRaw);
+      if (!AuthIdentity.loginIdPattern.hasMatch(id)) {
+        setState(() => _error = l10n.authErrorLoginIdFormat);
+        return;
+      }
+    }
+    try {
+      await session.signIn(email: authEmail, password: password);
+    } catch (error) {
+      _handleAuthError(error);
     }
   }
 
-  Future<void> _resetPassword() async {
-    final session = SessionScope.of(context);
-    final l10n = AppLocalizations.of(context);
-    setState(() {
-      _error = null;
-      _info = null;
-    });
-    try {
-      await session.sendPasswordReset(_emailController.text);
-      if (!mounted) {
-        return;
-      }
-      setState(() => _info = l10n.authResetPasswordSent);
-    } catch (error) {
-      debugPrint('Password reset error: $error');
-      if (!mounted) {
-        return;
-      }
-      setState(() => _error = _messageFor(error, l10n));
+  void _handleAuthError(Object error) {
+    debugPrint('Auth error: $error');
+    if (error is FirebaseAuthException) {
+      debugPrint('Auth code=${error.code} message=${error.message}');
     }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _error = _messageFor(error, AppLocalizations.of(context)));
   }
 
   String _messageFor(Object error, AppLocalizations l10n) {
@@ -97,7 +112,7 @@ class _AuthScreenState extends State<AuthScreen> {
           return l10n.authErrorInvalidCredential;
         case 'email-already-in-use':
           if (_isSignUp) {
-            _isSignUp = false;
+            return l10n.authErrorLoginIdInUse;
           }
           return l10n.authErrorEmailInUse;
         case 'weak-password':
@@ -149,6 +164,7 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 24),
           if (_isSignUp) ...[
             TextField(
+              key: const Key('auth-display-name'),
               controller: _nameController,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
@@ -158,16 +174,23 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 12),
           ],
           TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
+            key: const Key('auth-login-id'),
+            controller: _loginController,
+            keyboardType: _isSignUp
+                ? TextInputType.text
+                : TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.email],
+            autofillHints: _isSignUp
+                ? const [AutofillHints.username]
+                : const [AutofillHints.username, AutofillHints.email],
             decoration: InputDecoration(
-              labelText: l10n.authEmail,
+              labelText: _isSignUp ? l10n.authLoginId : l10n.authLoginIdOrEmail,
+              hintText: _isSignUp ? l10n.authLoginIdHint : null,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const Key('auth-password'),
             controller: _passwordController,
             obscureText: true,
             textInputAction: TextInputAction.done,
@@ -191,8 +214,14 @@ class _AuthScreenState extends State<AuthScreen> {
               style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
           ],
+          const SizedBox(height: 16),
+          Text(
+            l10n.authPasswordResetHiddenHint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 24),
           FilledButton(
+            key: const Key('auth-submit'),
             onPressed: session.busy ? null : _submit,
             child: session.busy
                 ? const SizedBox(
@@ -203,11 +232,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 : Text(_isSignUp ? l10n.authSignup : l10n.authLogin),
           ),
           TextButton(
-            onPressed: session.busy ? null : _resetPassword,
-            child: Text(l10n.authResetPassword),
-          ),
-          TextButton(
-            onPressed: () => setState(() => _isSignUp = !_isSignUp),
+            onPressed: () => setState(() {
+              _isSignUp = !_isSignUp;
+              _error = null;
+              _info = null;
+            }),
             child: Text(_isSignUp ? l10n.authHaveAccount : l10n.authNoAccount),
           ),
         ],

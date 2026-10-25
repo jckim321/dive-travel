@@ -35,7 +35,6 @@ import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
-import 'package:dive_travel_app/core/dev/dev_roles.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
 /// Outcome flags from [DiverStore.saveShopProduct].
@@ -108,9 +107,6 @@ class DiverStore extends ChangeNotifier {
       _uid = user?.uid;
       _email = user?.email;
       _authDisplayName = user?.displayName;
-      if (user == null) {
-        _devRoleOverlay = null;
-      }
       _bindDiver(user);
     });
     _discountSubscription = _repository.watchInstructorDiscount().listen(
@@ -136,7 +132,6 @@ class DiverStore extends ChangeNotifier {
   String? _uid;
   String? _email;
   String? _authDisplayName;
-  DevRoleOverlay? _devRoleOverlay;
   var _shopStatsLoaded = false;
   var _shopStatsLoading = false;
   DateTime? _shopStatsFetchedAt;
@@ -178,26 +173,7 @@ class DiverStore extends ChangeNotifier {
   /// PIN unlock for admin console; cleared on sign-out.
   var _adminConsoleUnlocked = false;
 
-  DiverStats get stats {
-    // When DevRoles is off or this account cannot use them, ignore any leftover overlay.
-    if (!DevRoles.enabled || !DevRoles.canUse(_email)) {
-      return _stats;
-    }
-    final overlay = _devRoleOverlay;
-    if (overlay == null) {
-      return _stats;
-    }
-    return _stats.copyWith(
-      isAdmin: overlay.effectiveIsAdmin,
-      isBusiness: overlay.effectiveIsBusiness,
-      ownedShopId: overlay.effectiveOwnedShopId,
-      clearOwnedShopId: overlay.kind != DevRoleKind.partner,
-    );
-  }
-
-  DevRoleOverlay? get devRoleOverlay => _devRoleOverlay;
-
-  bool get canUseDevRoles => DevRoles.canUse(_email);
+  DiverStats get stats => _stats;
 
   String? get email => _email;
 
@@ -1079,6 +1055,89 @@ class DiverStore extends ChangeNotifier {
     await refreshAdminInbox();
   }
 
+  /// Shop ids already claimed via any member's [MemberAccount.ownedShopId].
+  Set<String> get claimedPartnerShopIds {
+    return {
+      for (final m in _members)
+        if (m.ownedShopId.trim().isNotEmpty) m.ownedShopId.trim(),
+    };
+  }
+
+  /// Resorts with no partner owner (eligible for promote).
+  List<DiveShop> get unownedPartnerShops {
+    final claimed = claimedPartnerShopIds;
+    return [
+      for (final shop in resortHulls)
+        if (!claimed.contains(shop.id)) shop,
+    ];
+  }
+
+  Future<void> promoteMemberToPartner({
+    required String uid,
+    required String shopId,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    MemberAccount? target;
+    for (final m in _members) {
+      if (m.uid == uid) {
+        target = m;
+        break;
+      }
+    }
+    if (target?.isBusiness == true) {
+      throw StateError('ALREADY_PARTNER');
+    }
+    final shop = shopId.trim();
+    if (shop.isEmpty) {
+      throw StateError('PARTNER_SHOP_REQUIRED');
+    }
+    if (claimedPartnerShopIds.contains(shop)) {
+      throw StateError('SHOP_ALREADY_OWNED');
+    }
+    await _repository.promoteMemberToPartner(
+      uid: uid,
+      shopId: shop,
+      actorUid: actorUid,
+      actorName: _stats.displayName,
+    );
+    await refreshAdminInbox();
+  }
+
+  Future<String> promoteMemberToPartnerWithNewShop({
+    required String uid,
+    required String shopName,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final shopId = await _repository.createEmptyShop(name: shopName);
+    await promoteMemberToPartner(uid: uid, shopId: shopId);
+    await refreshShopStats();
+    return shopId;
+  }
+
+  Future<void> demoteMemberFromPartner(String uid) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    await _repository.demoteMemberFromPartner(
+      uid: uid,
+      actorUid: actorUid,
+      actorName: _stats.displayName,
+    );
+    await refreshAdminInbox();
+  }
+
   Future<void> touchLastSeen() {
     final uid = _uid;
     if (uid == null || uid.isEmpty) {
@@ -1775,7 +1834,7 @@ class DiverStore extends ChangeNotifier {
     return out;
   }
 
-  /// Shop id used for partner UI + saves (DevRoles overlay, else Firestore).
+  /// Shop id used for partner UI + saves.
   String get partnerOwnedShopId =>
       stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
 
@@ -1792,8 +1851,7 @@ class DiverStore extends ChangeNotifier {
     ProductSaveIntent? intent,
   }) async {
     // Partners may only manage their own hull; divers may submit as creators;
-    // everyone else needs admin. Use overlay-aware [stats] so DevRoles shop
-    // matches list/form lockedShopId.
+    // everyone else needs admin.
     final effective = stats;
     final owned = effective.ownedShopId;
     final isOwnerPartner =
@@ -1833,8 +1891,6 @@ class DiverStore extends ChangeNotifier {
       creatorSubmission: creatorSubmission,
       creatorUid: creatorUid,
       intent: intent,
-      // DevRoles "partner" overlay: underlying account may still be admin —
-      // must go live, not pending (H1a/H1b).
       publishAsPartner: isOwnerPartner,
     );
 
@@ -2001,8 +2057,6 @@ class DiverStore extends ChangeNotifier {
       );
     }
 
-    // Overlay-aware: owner testing as partner must go live (not pending).
-    // Do not use raw [_stats.isAdmin] — that stays true under DevRoles partner.
     final adminPublisher = stats.isAdmin && !publishAsPartner;
 
     if (intent == null) {
@@ -2930,52 +2984,6 @@ class DiverStore extends ChangeNotifier {
     final effective = stats;
     _bindAdminInbox(effective.isAdmin);
     _bindPartnerInbox(effective.isBusiness, effective.ownedShopId);
-  }
-
-  /// Owner-only: overlay UI role; keeps Firestore `is_admin` true.
-  Future<void> applyDevRole({
-    required DevRoleKind kind,
-    String? ownedShopId,
-  }) async {
-    final uid = _uid;
-    if (uid == null || !DevRoles.canUse(_email)) {
-      throw StateError('Dev roles are owner-only');
-    }
-    if (kind == DevRoleKind.partner) {
-      final shop = (ownedShopId ?? '').trim();
-      if (shop.isEmpty) {
-        throw StateError('Partner role needs a shop id');
-      }
-      await _repository.updateDevTestRole(
-        uid: uid,
-        isBusiness: true,
-        ownedShopId: shop,
-        userRole: 'business',
-      );
-      _devRoleOverlay = DevRoleOverlay(kind: kind, ownedShopId: shop);
-      // Keep raw _stats aligned with overlay until the user-doc snapshot arrives.
-      _stats = _stats.copyWith(isBusiness: true, ownedShopId: shop);
-    } else {
-      await _repository.updateDevTestRole(
-        uid: uid,
-        isBusiness: false,
-        ownedShopId: null,
-        userRole: kind == DevRoleKind.admin ? 'admin' : 'diver',
-      );
-      _devRoleOverlay = DevRoleOverlay(kind: kind);
-      _stats = _stats.copyWith(isBusiness: false, clearOwnedShopId: true);
-    }
-    _rebindRoleInboxes();
-    notifyListeners();
-  }
-
-  void clearDevRoleOverlay() {
-    if (_devRoleOverlay == null) {
-      return;
-    }
-    _devRoleOverlay = null;
-    _rebindRoleInboxes();
-    notifyListeners();
   }
 
   void _bindAdminInbox(bool isAdmin) {

@@ -1219,10 +1219,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authWelcome =>
-      'After you sign up you can use logs, Same Tide, and bookings right away. An admin adjusts your grade based on activity.';
+      'Sign up with a username and password to use logs, Same Tide, and bookings. Admins promote affiliate partners.';
 
   @override
   String get authEmail => 'Email';
+
+  @override
+  String get authLoginId => 'Username';
+
+  @override
+  String get authLoginIdOrEmail => 'Username or email';
+
+  @override
+  String get authLoginIdHint => 'lowercase letters, digits, _ · 4–20 chars';
 
   @override
   String get authPassword => 'Password';
@@ -1244,7 +1253,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authErrorInvalidCredential =>
-      'That email is already registered. Sign in with the original password.';
+      'Check your username (or email) and password.';
 
   @override
   String get authResetPassword => 'Send password reset email';
@@ -1254,7 +1263,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Password reset email sent. Check your inbox.';
 
   @override
+  String get authPasswordResetHiddenHint =>
+      'Password reset is hidden until launch. Contact an admin if you need help.';
+
+  @override
   String get authErrorEmailInUse => 'That email is already registered.';
+
+  @override
+  String get authErrorLoginIdInUse => 'That username is already taken.';
+
+  @override
+  String get authErrorLoginIdFormat =>
+      'Username must be 4–20 characters: lowercase letters, digits, or _.';
+
+  @override
+  String get authErrorLoginIdReserved => 'That username is reserved.';
+
+  @override
+  String get authErrorDisplayNameRequired => 'Enter your name.';
 
   @override
   String get authErrorWeakPassword => 'Password must be at least 6 characters.';
@@ -1458,6 +1484,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminMembersBadgePartner => 'Partner';
+
+  @override
+  String get adminMembersBadgeAdmin => 'Admin';
+
+  @override
+  String adminMembersLoginId(String id) {
+    return 'Username · $id';
+  }
+
+  @override
+  String adminMembersRoleStatus(String kind, String role, String shop) {
+    return 'Role · $kind · user_role=$role · shop=$shop';
+  }
+
+  @override
+  String get adminMembersRoleAdmin => 'App owner admin';
+
+  @override
+  String get adminMembersRolePartner => 'Affiliate partner';
+
+  @override
+  String get adminMembersRoleDiver => 'Member';
+
+  @override
+  String get adminMembersLeftoverPartnerHint =>
+      'Admin still has partner flags. Use Demote partner to clear them.';
+
+  @override
+  String get adminMembersPromotePartner => 'Promote to partner';
+
+  @override
+  String get adminMembersDemotePartner => 'Demote partner';
+
+  @override
+  String adminMembersPromoteConfirm(String name) {
+    return 'Promote $name to affiliate partner. Pick an unowned shop or create one.';
+  }
+
+  @override
+  String adminMembersDemoteConfirm(String name, String shop) {
+    return 'Demote $name? Shop link $shop will be cleared (the shop stays).';
+  }
+
+  @override
+  String get adminMembersPromotePickShop => 'Link existing shop';
+
+  @override
+  String get adminMembersPromoteNewShop => 'Create new shop';
+
+  @override
+  String get adminMembersNewShopName => 'New shop name';
+
+  @override
+  String get adminMembersNoUnownedShops =>
+      'No unowned shops. Create a new one.';
+
+  @override
+  String get adminMembersAlreadyPartner => 'This member is already a partner.';
+
+  @override
+  String get adminMembersShopOwned => 'That shop already has an owner.';
+
+  @override
+  String get adminMembersPromoteDone => 'Promoted to partner.';
+
+  @override
+  String get adminMembersDemoteDone => 'Partner demoted.';
+
+  @override
+  String get adminMembersPromoteFailed => 'Promotion failed.';
+
+  @override
+  String get adminMembersDemoteFailed => 'Demotion failed.';
 
   @override
   String get adminPartnerTierAll => 'All';
@@ -1678,7 +1777,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Look up members and set Silver, Gold, Diamond, or Platinum grade.';
 
   @override
-  String get adminMembersSearch => 'Search name or email';
+  String get adminMembersSearch => 'Search name, username, email, or shop';
 
   @override
   String get adminMembersEmpty => 'No members match.';

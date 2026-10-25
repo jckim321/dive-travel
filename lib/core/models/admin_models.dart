@@ -201,6 +201,8 @@ class MemberAccount {
     this.isInstructor = false,
     this.isBusiness = false,
     this.ownedShopId = '',
+    this.userRole = 'diver',
+    this.loginId = '',
     this.paidPurchaseCount = 0,
     this.reviewCount = 0,
     this.gradeLocked = false,
@@ -218,6 +220,8 @@ class MemberAccount {
   final bool isInstructor;
   final bool isBusiness;
   final String ownedShopId;
+  final String userRole;
+  final String loginId;
   final int paidPurchaseCount;
   final int reviewCount;
   final bool gradeLocked;
@@ -233,11 +237,14 @@ class MemberAccount {
     MemberGrade? grade,
     bool? isBusiness,
     String? ownedShopId,
+    String? userRole,
+    String? loginId,
     int? paidPurchaseCount,
     int? reviewCount,
     bool? gradeLocked,
     DateTime? createdAt,
     DateTime? lastSeenAt,
+    bool clearOwnedShopId = false,
   }) {
     return MemberAccount(
       uid: uid,
@@ -249,7 +256,9 @@ class MemberAccount {
       isAdmin: isAdmin,
       isInstructor: isInstructor,
       isBusiness: isBusiness ?? this.isBusiness,
-      ownedShopId: ownedShopId ?? this.ownedShopId,
+      ownedShopId: clearOwnedShopId ? '' : (ownedShopId ?? this.ownedShopId),
+      userRole: userRole ?? this.userRole,
+      loginId: loginId ?? this.loginId,
       paidPurchaseCount: paidPurchaseCount ?? this.paidPurchaseCount,
       reviewCount: reviewCount ?? this.reviewCount,
       gradeLocked: gradeLocked ?? this.gradeLocked,

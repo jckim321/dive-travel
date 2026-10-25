@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
-import 'package:dive_travel_app/core/dev/dev_roles.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 void main() {
@@ -11,14 +10,12 @@ void main() {
 
   Future<DiverStore> partnerStore() async {
     final repo = MemoryDiverRepository.forTest(
-      isAdmin: true,
       isBusiness: true,
       ownedShopId: shopId,
     );
     final store = DiverStore(repo);
-    await repo.signIn(email: AppOwner.email, password: 'test');
+    await repo.signIn(email: 'partner@dive.local', password: 'test');
     await pumpEventQueue();
-    await store.applyDevRole(kind: DevRoleKind.partner, ownedShopId: shopId);
     return store;
   }
 

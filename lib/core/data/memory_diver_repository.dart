@@ -55,8 +55,9 @@ class MemoryDiverRepository implements DiverRepository {
     );
     repo._isInstructor = isInstructor;
     repo._isAdmin = isAdmin;
+    // H8: admin no longer implies partner — set isBusiness explicitly in tests.
     repo._isBusiness =
-        isBusiness || isAdmin || AppConstants.grantBusinessToCurrentSession;
+        isBusiness || AppConstants.grantBusinessToCurrentSession;
     repo._ownedShopId = ownedShopId ??
         (repo._isBusiness ? AppConstants.defaultPartnerShopId : null);
     repo._proStatus = isInstructor
@@ -241,8 +242,22 @@ class MemoryDiverRepository implements DiverRepository {
     required String email,
     required String password,
     String? displayName,
-  }) {
-    return signIn(email: email, password: password);
+    String? loginId,
+  }) async {
+    await signIn(email: email, password: password);
+    if (displayName != null && displayName.trim().isNotEmpty && _user != null) {
+      _user = AppUser(
+        uid: _user!.uid,
+        email: _user!.email,
+        displayName: displayName.trim(),
+      );
+      _authController.add(_user);
+    }
+    final id = (loginId ?? '').trim().toLowerCase();
+    if (id.isNotEmpty && _user != null) {
+      _loginIds[_user!.uid] = id;
+    }
+    await ensureUserDocument(_user!, loginId: loginId);
   }
 
   @override
@@ -254,29 +269,153 @@ class MemoryDiverRepository implements DiverRepository {
   @override
   Future<void> sendPasswordReset(String email) async {}
 
+  final _loginIds = <String, String>{};
+  final _roleHistory = <String, List<Map<String, dynamic>>>{};
+  final _createdShops = <String, String>{};
+
   @override
-  Future<void> updateDevTestRole({
+  Future<void> promoteMemberToPartner({
     required String uid,
-    required bool isBusiness,
-    String? ownedShopId,
-    required String userRole,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
   }) async {
-    _isBusiness = isBusiness;
-    _ownedShopId = isBusiness ? ownedShopId : null;
-    _snapshot = DiverSnapshot.empty(
-      displayName: _snapshot.stats.displayName,
-      isInstructor: _isInstructor,
-      proStatus: _proStatus,
-      isAdmin: _resolvedAdmin,
-      isBusiness: _resolvedBusiness,
-      ownedShopId: _ownedShopId,
-      memberGrade: _memberGrade,
-    );
-    _diverController.add(_snapshot);
+    final shop = shopId.trim();
+    if (shop.isEmpty) {
+      throw StateError('PARTNER_SHOP_REQUIRED');
+    }
+    final index = _members.indexWhere((m) => m.uid == uid);
+    final member = index >= 0 ? _members[index] : null;
+    final already = (member?.isBusiness ?? false) ||
+        (uid == _user?.uid && _isBusiness);
+    if (already) {
+      throw StateError('ALREADY_PARTNER');
+    }
+    if (uid == _user?.uid) {
+      _isBusiness = true;
+      _ownedShopId = shop;
+      _snapshot = DiverSnapshot.empty(
+        displayName: _snapshot.stats.displayName,
+        isInstructor: _isInstructor,
+        proStatus: _proStatus,
+        isAdmin: _resolvedAdmin,
+        isBusiness: true,
+        ownedShopId: shop,
+        memberGrade: _memberGrade,
+      );
+      _diverController.add(_snapshot);
+    }
+    final entry = <String, dynamic>{
+      'action': 'promote_partner',
+      'by_uid': actorUid,
+      'by_name': actorName,
+      'shop_id': shop,
+    };
+    _roleHistory.putIfAbsent(uid, () => []).add(entry);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(
+        isBusiness: true,
+        ownedShopId: shop,
+        userRole: 'business',
+      );
+    } else {
+      _members.add(
+        MemberAccount(
+          uid: uid,
+          email: '',
+          displayName: uid,
+          grade: MemberGrade.silver,
+          isBusiness: true,
+          ownedShopId: shop,
+          userRole: 'business',
+        ),
+      );
+    }
+    _membersController.add(List<MemberAccount>.from(_members));
   }
 
   @override
-  Future<void> ensureUserDocument(AppUser user) async {
+  Future<void> demoteMemberFromPartner({
+    required String uid,
+    required String actorUid,
+    required String actorName,
+  }) async {
+    final index = _members.indexWhere((m) => m.uid == uid);
+    final member = index >= 0 ? _members[index] : null;
+    final was = (member?.isBusiness ?? false) ||
+        (uid == _user?.uid && _isBusiness) ||
+        ((member?.ownedShopId ?? '').isNotEmpty);
+    if (!was) {
+      throw StateError('NOT_PARTNER');
+    }
+    final prevShop = member?.ownedShopId.isNotEmpty == true
+        ? member!.ownedShopId
+        : _ownedShopId;
+    if (uid == _user?.uid) {
+      _isBusiness = false;
+      _ownedShopId = null;
+      _snapshot = DiverSnapshot.empty(
+        displayName: _snapshot.stats.displayName,
+        isInstructor: _isInstructor,
+        proStatus: _proStatus,
+        isAdmin: _resolvedAdmin,
+        isBusiness: false,
+        ownedShopId: null,
+        memberGrade: _memberGrade,
+      );
+      _diverController.add(_snapshot);
+    }
+    _roleHistory.putIfAbsent(uid, () => []).add({
+      'action': 'demote_partner',
+      'by_uid': actorUid,
+      'by_name': actorName,
+      'shop_id': prevShop,
+    });
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(
+        isBusiness: false,
+        ownedShopId: '',
+        userRole: 'diver',
+        clearOwnedShopId: true,
+      );
+    }
+    _membersController.add(List<MemberAccount>.from(_members));
+  }
+
+  @override
+  Future<String> createEmptyShop({required String name}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw StateError('SHOP_NAME_REQUIRED');
+    }
+    final id =
+        'shop-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+    _createdShops[id] = trimmed;
+    _shopStats.putIfAbsent(
+      id,
+      () => ShopLiveStats(
+        shopId: id,
+        reviewCount: 0,
+        avgSafety: 0,
+        avgGuide: 0,
+        avgBoat: 0,
+        avgOverall: 0,
+        diveStar: 0,
+      ),
+    );
+    return id;
+  }
+
+  /// Test helper: role_history entries written by promote/demote.
+  List<Map<String, dynamic>> roleHistoryFor(String uid) =>
+      List<Map<String, dynamic>>.from(_roleHistory[uid] ?? const []);
+
+  @override
+  Future<void> ensureUserDocument(AppUser user, {String? loginId}) async {
+    final id = (loginId ?? '').trim().toLowerCase();
+    if (id.isNotEmpty) {
+      _loginIds[user.uid] = id;
+    }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
       isInstructor: _isInstructor,
