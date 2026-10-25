@@ -21,6 +21,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_products_scree
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_terms_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_applications_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_proposal_inbox_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_vault_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contracts_overview_screen.dart';
@@ -50,7 +51,7 @@ enum _AdminHub {
   tools,
 }
 
-enum _MembersSub { general, partners, instructors }
+enum _MembersSub { general, partners, instructors, applications }
 
 enum _DiveStarSub { applications, review, forms }
 
@@ -84,6 +85,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   _ToolsSub _toolsSub = _ToolsSub.trialData;
   String? _productsShopFilter;
   String? _contractsShopFilter;
+  String? _memberFocusUid;
+  var _memberFocusGen = 0;
 
   @override
   void initState() {
@@ -353,16 +356,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.members:
         return [
           _SubTabStrip(
-            labels: [l10n.adminMembersSubGeneral, l10n.adminMembersSubPartners],
-            keys: const [Key('admin-sub-divers'), Key('admin-sub-partners')],
+            labels: [
+              l10n.adminMembersSubGeneral,
+              l10n.adminMembersSubPartners,
+              l10n.partnerApplyTitle,
+            ],
+            keys: const [
+              Key('admin-sub-divers'),
+              Key('admin-sub-partners'),
+              Key('admin-sub-partner-applications'),
+            ],
             badges: [pending, plaque],
             selected: switch (_membersSub) {
               _MembersSub.partners => 1,
+              _MembersSub.applications => 2,
               _MembersSub.general || _MembersSub.instructors => 0,
             },
             onSelect: (i) => _go(
               _AdminHub.members,
-              sub: i == 1 ? _MembersSub.partners : _MembersSub.general,
+              sub: switch (i) {
+                1 => _MembersSub.partners,
+                2 => _MembersSub.applications,
+                _ => _MembersSub.general,
+              },
             ),
           ),
           if (_membersSub == _MembersSub.instructors)
@@ -562,16 +578,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               _go(_AdminHub.products, sub: _ProductsSub.catalog),
           onOpenProposals: () =>
               _go(_AdminHub.contracts, sub: _ContractsSub.inbox),
+          onOpenApplications: () =>
+              _go(_AdminHub.members, sub: _MembersSub.applications),
         );
       case _AdminHub.members:
         return switch (_membersSub) {
           _MembersSub.general => AdminMembersScreen(
             embedded: true,
+            focusUid: _memberFocusUid,
+            focusGeneration: _memberFocusGen,
             onOpenInstructors: () =>
                 _go(_AdminHub.members, sub: _MembersSub.instructors),
           ),
           _MembersSub.instructors => const AdminInstructorsScreen(
             embedded: true,
+          ),
+          _MembersSub.applications => AdminPartnerApplicationsScreen(
+            embedded: true,
+            onOpenMember: (uid) {
+              setState(() {
+                _memberFocusUid = uid;
+                _memberFocusGen++;
+                _hub = _AdminHub.members;
+                _membersSub = _MembersSub.general;
+              });
+            },
           ),
           _MembersSub.partners => AdminPartnersRosterScreen(
             embedded: true,

@@ -9564,6 +9564,12 @@ abstract class AppLocalizations {
   /// **'파트너 제안'**
   String get adminOverviewQueueProposal;
 
+  /// No description provided for @adminOverviewQueueApply.
+  ///
+  /// In ko, this message translates to:
+  /// **'승격 신청'**
+  String get adminOverviewQueueApply;
+
   /// No description provided for @adminOverviewQueueProducts.
   ///
   /// In ko, this message translates to:
@@ -10403,6 +10409,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'동의한 뒤에 보낼 수 있어요'**
   String get partnerApplyNeedConsent;
+
+  /// No description provided for @adminApplyEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'도착한 신청이 없어요.'**
+  String get adminApplyEmpty;
+
+  /// No description provided for @adminApplyNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 신청'**
+  String get adminApplyNew;
+
+  /// No description provided for @adminApplyHandled.
+  ///
+  /// In ko, this message translates to:
+  /// **'처리함'**
+  String get adminApplyHandled;
+
+  /// No description provided for @adminApplyMark.
+  ///
+  /// In ko, this message translates to:
+  /// **'처리함으로 표시'**
+  String get adminApplyMark;
+
+  /// No description provided for @adminApplyOpenMember.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 회원 보기'**
+  String get adminApplyOpenMember;
 
   /// No description provided for @refundPolicyHint.
   ///

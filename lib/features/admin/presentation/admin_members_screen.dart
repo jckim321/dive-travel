@@ -24,10 +24,14 @@ class AdminMembersScreen extends StatefulWidget {
     super.key,
     this.embedded = false,
     this.onOpenInstructors,
+    this.focusUid,
+    this.focusGeneration = 0,
   });
 
   final bool embedded;
   final VoidCallback? onOpenInstructors;
+  final String? focusUid;
+  final int focusGeneration;
 
   @override
   State<AdminMembersScreen> createState() => _AdminMembersScreenState();
@@ -40,12 +44,29 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   @override
   void initState() {
     super.initState();
+    _applyFocus(widget.focusUid);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
       unawaited(DiverStoreScope.of(context).ensureAdminInboxLoaded());
     });
+  }
+
+  @override
+  void didUpdateWidget(AdminMembersScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusGeneration != oldWidget.focusGeneration) {
+      _applyFocus(widget.focusUid);
+    }
+  }
+
+  void _applyFocus(String? uid) {
+    final focus = uid?.trim() ?? '';
+    if (focus.isEmpty) {
+      return;
+    }
+    _query.text = focus;
   }
 
   @override
@@ -85,6 +106,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 member.displayName.toLowerCase().contains(needle) ||
                 member.email.toLowerCase().contains(needle) ||
                 member.loginId.toLowerCase().contains(needle) ||
+                member.uid.toLowerCase().contains(needle) ||
                 member.ownedShopId.toLowerCase().contains(needle)) &&
             _matchesGrade(member, pendingUids))
           member,

@@ -5213,6 +5213,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminOverviewQueueProposal => 'Partner proposal';
 
   @override
+  String get adminOverviewQueueApply => 'Partner applications';
+
+  @override
   String get adminOverviewQueueProducts => 'Product check';
 
   @override
@@ -5640,6 +5643,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partnerApplyNeedConsent => 'Agree before sending';
+
+  @override
+  String get adminApplyEmpty => 'No applications yet.';
+
+  @override
+  String get adminApplyNew => 'New';
+
+  @override
+  String get adminApplyHandled => 'Handled';
+
+  @override
+  String get adminApplyMark => 'Mark handled';
+
+  @override
+  String get adminApplyOpenMember => 'View this member';
 
   @override
   String refundPolicyHint(int percent) {

@@ -5096,6 +5096,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminOverviewQueueProposal => '파트너 제안';
 
   @override
+  String get adminOverviewQueueApply => '승격 신청';
+
+  @override
   String get adminOverviewQueueProducts => '상품 검증';
 
   @override
@@ -5516,6 +5519,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get partnerApplyNeedConsent => '동의한 뒤에 보낼 수 있어요';
+
+  @override
+  String get adminApplyEmpty => '도착한 신청이 없어요.';
+
+  @override
+  String get adminApplyNew => '새 신청';
+
+  @override
+  String get adminApplyHandled => '처리함';
+
+  @override
+  String get adminApplyMark => '처리함으로 표시';
+
+  @override
+  String get adminApplyOpenMember => '이 회원 보기';
 
   @override
   String refundPolicyHint(int percent) {

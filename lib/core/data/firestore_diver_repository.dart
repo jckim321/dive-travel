@@ -3157,6 +3157,27 @@ class FirestoreDiverRepository implements DiverRepository {
     );
   }
 
+  @override
+  Future<List<PartnerApplication>> listPartnerApplications() async {
+    final snap = await _db.collection('partner_applications').get();
+    return [
+      for (final doc in snap.docs)
+        PartnerApplication.fromMap(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<void> markPartnerApplicationHandled({
+    required String applicantUid,
+    required String adminUid,
+  }) {
+    return _partnerApplication(applicantUid).update({
+      'status': PartnerApplicationStatus.handled.firestoreValue,
+      'handled_at': FieldValue.serverTimestamp(),
+      'handled_by_uid': adminUid,
+    });
+  }
+
   CollectionReference<Map<String, dynamic>> _partnerContracts(String shopId) =>
       _shops.doc(shopId).collection('partner_contracts');
 

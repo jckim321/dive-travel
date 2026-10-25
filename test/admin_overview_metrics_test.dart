@@ -229,6 +229,7 @@ void main() {
     addTearDown(store.dispose);
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     var openedProposals = false;
+    var openedApplications = false;
 
     await tester.pumpWidget(
       DiverStoreScope(
@@ -245,6 +246,7 @@ void main() {
               onOpenBookings: () {},
               onOpenProducts: () {},
               onOpenProposals: () => openedProposals = true,
+              onOpenApplications: () => openedApplications = true,
             ),
           ),
         ),
@@ -271,6 +273,17 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-overview-queue-proposal')));
     await tester.pump();
     expect(openedProposals, isTrue);
+    expect(find.text(l10n.adminOverviewQueueApply), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('admin-overview-queue-apply')),
+        matching: find.text('0'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('admin-overview-queue-apply')));
+    await tester.pump();
+    expect(openedApplications, isTrue);
     expect(find.byKey(const Key('admin-overview-queue-products')), findsNothing);
     expect(find.text(l10n.adminVisitsTitle), findsNothing);
     expect(find.text('파트너 승격'), findsNothing);

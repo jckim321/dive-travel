@@ -1440,6 +1440,21 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  Future<List<PartnerApplication>> loadPartnerApplications() {
+    return _repository.listPartnerApplications();
+  }
+
+  Future<void> markPartnerApplicationHandled(String applicantUid) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    await _repository.markPartnerApplicationHandled(
+      applicantUid: applicantUid,
+      adminUid: uid,
+    );
+  }
+
   /// Reads each shop's own proposal list. Does not use a collection group.
   Future<List<PartnerPromotion>> loadPartnerPromotionInbox({
     int perShop = 20,

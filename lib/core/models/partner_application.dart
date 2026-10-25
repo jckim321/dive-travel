@@ -123,6 +123,24 @@ void validatePartnerApplication({
   }
 }
 
+int countIncomingPartnerApplications(Iterable<PartnerApplication> rows) {
+  var count = 0;
+  for (final row in rows) {
+    if (row.status == PartnerApplicationStatus.incoming) {
+      count++;
+    }
+  }
+  return count;
+}
+
+List<PartnerApplication> sortPartnerApplicationsNewestFirst(
+  List<PartnerApplication> rows,
+) {
+  final copy = List<PartnerApplication>.from(rows);
+  copy.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return copy;
+}
+
 /// A link may be shown as text. It may be opened only when it is https.
 /// `javascript:` and every other scheme return null and must not be launched.
 Uri? partnerApplicationHttpsUri(String raw) {

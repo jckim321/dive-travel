@@ -2095,6 +2095,7 @@
   "adminOverviewQueueSign": "Awaiting signature",
   "adminOverviewQueueDiveStar": "Dive Star review",
   "adminOverviewQueueProposal": "Partner proposal",
+  "adminOverviewQueueApply": "Partner applications",
   "adminOverviewQueueProducts": "Product check",
   "adminOverviewComingSoon": "Not ready",
   "adminOverviewChart14": "Sales, last 14 days",
@@ -2235,5 +2236,10 @@
   "partnerApplyBadField": "Please fill in the fields",
   "partnerApplyBadLink": "Keep the link within 200 characters",
   "partnerApplyNeedConsent": "Agree before sending",
+  "adminApplyEmpty": "No applications yet.",
+  "adminApplyNew": "New",
+  "adminApplyHandled": "Handled",
+  "adminApplyMark": "Mark handled",
+  "adminApplyOpenMember": "View this member",
   "refundPolicyHint": "Cancel now for a {percent}% refund"
 }

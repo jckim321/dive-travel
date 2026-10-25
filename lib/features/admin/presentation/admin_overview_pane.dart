@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
+import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -26,6 +27,7 @@ class AdminOverviewPane extends StatefulWidget {
     required this.onOpenBookings,
     required this.onOpenProducts,
     required this.onOpenProposals,
+    required this.onOpenApplications,
   });
 
   final VoidCallback onOpenInstructors;
@@ -34,6 +36,7 @@ class AdminOverviewPane extends StatefulWidget {
   final VoidCallback onOpenBookings;
   final VoidCallback onOpenProducts;
   final VoidCallback onOpenProposals;
+  final VoidCallback onOpenApplications;
 
   @override
   State<AdminOverviewPane> createState() => _AdminOverviewPaneState();
@@ -46,6 +49,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
   List<PartnerContract> _contracts = const [];
   List<DiveStarApplication> _applications = const [];
   var _newProposals = 0;
+  var _newApplications = 0;
   var _loading = true;
   String? _error;
 
@@ -116,6 +120,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
       }
       final applications = await store.listDiveStarApplications();
       final proposals = await store.loadPartnerPromotionInbox();
+      final partnerApplications = await store.loadPartnerApplications();
       if (!mounted) {
         return;
       }
@@ -125,6 +130,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
         _contracts = contracts;
         _applications = applications;
         _newProposals = countIncomingPartnerPromotions(proposals);
+        _newApplications = countIncomingPartnerApplications(partnerApplications);
         _loading = false;
         _error = null;
       });
@@ -204,11 +210,13 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
           reviews: reviews,
           products: products,
           proposals: _newProposals,
+          applicationsWaiting: _newApplications,
           onOpenInstructors: widget.onOpenInstructors,
           onOpenContracts: widget.onOpenContracts,
           onOpenDiveStarReview: widget.onOpenDiveStarReview,
           onOpenProducts: widget.onOpenProducts,
           onOpenProposals: widget.onOpenProposals,
+          onOpenApplications: widget.onOpenApplications,
         );
         final chart = _ChartCard(
           title: wide ? l10n.adminOverviewChart30 : l10n.adminOverviewChart14,
@@ -500,11 +508,13 @@ class _QueueSection extends StatelessWidget {
     required this.reviews,
     required this.products,
     required this.proposals,
+    required this.applicationsWaiting,
     required this.onOpenInstructors,
     required this.onOpenContracts,
     required this.onOpenDiveStarReview,
     required this.onOpenProducts,
     required this.onOpenProposals,
+    required this.onOpenApplications,
   });
 
   final AppLocalizations l10n;
@@ -513,11 +523,13 @@ class _QueueSection extends StatelessWidget {
   final int reviews;
   final int products;
   final int proposals;
+  final int applicationsWaiting;
   final VoidCallback onOpenInstructors;
   final VoidCallback onOpenContracts;
   final VoidCallback onOpenDiveStarReview;
   final VoidCallback onOpenProducts;
   final VoidCallback onOpenProposals;
+  final VoidCallback onOpenApplications;
 
   @override
   Widget build(BuildContext context) {
@@ -549,6 +561,13 @@ class _QueueSection extends StatelessWidget {
         value: '$proposals',
         dim: proposals == 0,
         onTap: onOpenProposals,
+      ),
+      _QueueTile(
+        tileKey: const Key('admin-overview-queue-apply'),
+        label: l10n.adminOverviewQueueApply,
+        value: '$applicationsWaiting',
+        dim: applicationsWaiting == 0,
+        onTap: onOpenApplications,
       ),
       if (products >= 1)
         _QueueTile(

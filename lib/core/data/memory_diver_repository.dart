@@ -2409,6 +2409,40 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PartnerApplication>> listPartnerApplications() async {
+    return List<PartnerApplication>.from(_partnerApplications.values);
+  }
+
+  @override
+  Future<void> markPartnerApplicationHandled({
+    required String applicantUid,
+    required String adminUid,
+  }) async {
+    final current = _partnerApplications[applicantUid];
+    if (current == null) {
+      throw StateError('Application not found: $applicantUid');
+    }
+    if (current.status != PartnerApplicationStatus.incoming) {
+      throw StateError('Application already handled: $applicantUid');
+    }
+    _partnerApplications[applicantUid] = PartnerApplication(
+      applicantUid: current.applicantUid,
+      loginId: current.loginId,
+      shopName: current.shopName,
+      contactName: current.contactName,
+      phone: current.phone,
+      region: current.region,
+      intro: current.intro,
+      link: current.link,
+      consent: current.consent,
+      status: PartnerApplicationStatus.handled,
+      createdAt: current.createdAt,
+      handledAt: DateTime.now().toUtc(),
+      handledByUid: adminUid,
+    );
+  }
+
+  @override
   Future<PartnerContract> createPartnerContractDraft({
     required String shopId,
     required String adminUid,

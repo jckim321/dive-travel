@@ -354,6 +354,15 @@ abstract class DiverRepository {
   /// Own document only. Null when this person has not applied.
   Future<PartnerApplication?> getPartnerApplication(String applicantUid);
 
+  /// Admin list. No orderBy; the screen sorts by created time.
+  Future<List<PartnerApplication>> listPartnerApplications();
+
+  /// Admin only. `new` to `handled`. Does not delete the document.
+  Future<void> markPartnerApplicationHandled({
+    required String applicantUid,
+    required String adminUid,
+  });
+
   /// Creates `partner_applications/{applicantUid}`. Does not read it back.
   Future<PartnerApplication> createPartnerApplication({
     required String applicantUid,
