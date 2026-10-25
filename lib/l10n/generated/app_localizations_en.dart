@@ -5068,6 +5068,124 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get adminOverviewBasis =>
+      'By receive date · net = paid total − refunds';
+
+  @override
+  String get adminOverviewTodayBookings => 'Bookings today';
+
+  @override
+  String get adminOverviewTodayPaid => 'Paid today';
+
+  @override
+  String get adminOverviewTodayCancel => 'Cancels and refunds today';
+
+  @override
+  String get adminOverviewMonthSales => 'Sales this month';
+
+  @override
+  String get adminOverviewVsYesterday => 'vs yesterday';
+
+  @override
+  String get adminOverviewSameAsYesterday => 'Same as yesterday';
+
+  @override
+  String get adminOverviewVsMonth => 'vs last month';
+
+  @override
+  String get adminOverviewVsYear => 'vs last year';
+
+  @override
+  String get adminOverviewNoCompare => 'No comparison data';
+
+  @override
+  String get adminOverviewQueueTitle => 'Waiting';
+
+  @override
+  String get adminOverviewQueueCertify => 'Instructor check';
+
+  @override
+  String get adminOverviewQueueSign => 'Awaiting signature';
+
+  @override
+  String get adminOverviewQueueDiveStar => 'Dive Star review';
+
+  @override
+  String get adminOverviewQueueProposal => 'Partner proposal';
+
+  @override
+  String get adminOverviewQueueProducts => 'Product check';
+
+  @override
+  String get adminOverviewComingSoon => 'Not ready';
+
+  @override
+  String get adminOverviewChart14 => 'Sales, last 14 days';
+
+  @override
+  String get adminOverviewChart30 => 'Daily sales, last 30 days';
+
+  @override
+  String get adminOverviewPriorYear => 'Same days last year';
+
+  @override
+  String get adminOverviewLive => 'Bookings and payments';
+
+  @override
+  String get adminOverviewSeeAll => 'See all';
+
+  @override
+  String get adminOverviewLiveEmpty => 'No recent bookings.';
+
+  @override
+  String get adminOverviewActivity => 'Changes';
+
+  @override
+  String get adminOverviewActivityEmpty => 'No recent changes.';
+
+  @override
+  String get adminOverviewActivityGap =>
+      'Price changes, seat changes, and partner proposals are not ready.';
+
+  @override
+  String get adminOverviewPaid => 'Paid';
+
+  @override
+  String get adminOverviewCancelled => 'Cancelled';
+
+  @override
+  String get adminOverviewPartial => 'Partial refund';
+
+  @override
+  String get adminOverviewNoName => 'No name';
+
+  @override
+  String get adminOverviewJoin => 'Joined';
+
+  @override
+  String get adminOverviewRefund => 'Refund';
+
+  @override
+  String get adminOverviewSigned => 'Signed';
+
+  @override
+  String get adminOverviewApplied => 'Review request';
+
+  @override
+  String get adminOverviewCancelSpike =>
+      'Today\'s cancels are at least twice the 28-day daily average.';
+
+  @override
+  String get adminOverviewWeekDrop =>
+      'Partners whose sales this week are at least 30% below last week';
+
+  @override
+  String get adminOverviewMoreThanUsual => 'Higher than usual';
+
+  @override
+  String get adminOverviewCountUnit => '';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }

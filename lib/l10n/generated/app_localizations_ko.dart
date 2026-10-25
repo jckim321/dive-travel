@@ -4937,6 +4937,120 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get adminOverviewBasis => '접수일 기준 · 순매출 = 결제 총액 − 환불';
+
+  @override
+  String get adminOverviewTodayBookings => '오늘 예약';
+
+  @override
+  String get adminOverviewTodayPaid => '오늘 결제 금액';
+
+  @override
+  String get adminOverviewTodayCancel => '오늘 취소·환불';
+
+  @override
+  String get adminOverviewMonthSales => '이번 달 매출';
+
+  @override
+  String get adminOverviewVsYesterday => '어제보다';
+
+  @override
+  String get adminOverviewSameAsYesterday => '어제와 같음';
+
+  @override
+  String get adminOverviewVsMonth => '전월 대비';
+
+  @override
+  String get adminOverviewVsYear => '전년 동월 대비';
+
+  @override
+  String get adminOverviewNoCompare => '비교 데이터 없음';
+
+  @override
+  String get adminOverviewQueueTitle => '처리 대기';
+
+  @override
+  String get adminOverviewQueueCertify => '강사 인증';
+
+  @override
+  String get adminOverviewQueueSign => '서명 대기';
+
+  @override
+  String get adminOverviewQueueDiveStar => '다이브스타 심사';
+
+  @override
+  String get adminOverviewQueueProposal => '파트너 제안';
+
+  @override
+  String get adminOverviewQueueProducts => '상품 검증';
+
+  @override
+  String get adminOverviewComingSoon => '준비 중';
+
+  @override
+  String get adminOverviewChart14 => '최근 14일 매출';
+
+  @override
+  String get adminOverviewChart30 => '일별 매출 · 최근 30일';
+
+  @override
+  String get adminOverviewPriorYear => '전년 동기';
+
+  @override
+  String get adminOverviewLive => '예약 · 결제 실시간';
+
+  @override
+  String get adminOverviewSeeAll => '전체 보기';
+
+  @override
+  String get adminOverviewLiveEmpty => '최근 예약이 없습니다.';
+
+  @override
+  String get adminOverviewActivity => '변동사항';
+
+  @override
+  String get adminOverviewActivityEmpty => '최근 변동이 없습니다.';
+
+  @override
+  String get adminOverviewActivityGap => '가격 변경, 좌석 변경, 파트너 제안은 준비 중입니다.';
+
+  @override
+  String get adminOverviewPaid => '결제완료';
+
+  @override
+  String get adminOverviewCancelled => '취소';
+
+  @override
+  String get adminOverviewPartial => '부분환불';
+
+  @override
+  String get adminOverviewNoName => '이름 없음';
+
+  @override
+  String get adminOverviewJoin => '가입';
+
+  @override
+  String get adminOverviewRefund => '환불';
+
+  @override
+  String get adminOverviewSigned => '서명';
+
+  @override
+  String get adminOverviewApplied => '심사 신청';
+
+  @override
+  String get adminOverviewCancelSpike => '오늘 취소가 최근 28일 하루 평균의 2배 이상입니다.';
+
+  @override
+  String get adminOverviewWeekDrop => '이번 주 매출이 지난주보다 30% 이상 낮은 파트너';
+
+  @override
+  String get adminOverviewMoreThanUsual => '평소보다 많음';
+
+  @override
+  String get adminOverviewCountUnit => '건';
+
+  @override
   String refundPolicyHint(int percent) {
     return '지금 취소 시 환불 $percent%';
   }

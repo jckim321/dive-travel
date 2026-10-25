@@ -480,8 +480,28 @@ abstract class DiverRepository {
 
   Future<List<TourBooking>> fetchShopBookings(String shopId);
 
+  /// Shop bookings whose `created_at` is in `[start, end)`.
+  Future<List<TourBooking>> fetchShopBookingsCreatedBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  });
+
+  /// Shop bookings whose `cancelled_at` is in `[start, end)`.
+  Future<List<TourBooking>> fetchShopBookingsCancelledBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  });
+
   /// Partner/admin realtime; prefer [fetchShopBookings] for admin sales.
   Stream<List<TourBooking>> watchShopBookings(String shopId);
+
+  /// Newest [limit] shop bookings by `created_at`. Overview live list only.
+  Stream<List<TourBooking>> watchLatestShopBookings(
+    String shopId, {
+    int limit = 5,
+  });
 
   Future<bool> createBooking({
     required String uid,

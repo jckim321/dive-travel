@@ -2984,9 +2984,55 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<TourBooking>> fetchShopBookingsCreatedBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    return [
+      for (final booking in _shopBookings[shopId] ?? const <TourBooking>[])
+        if (!booking.createdAt.isBefore(start) && booking.createdAt.isBefore(end))
+          booking,
+    ];
+  }
+
+  @override
+  Future<List<TourBooking>> fetchShopBookingsCancelledBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    return [
+      for (final booking in _shopBookings[shopId] ?? const <TourBooking>[])
+        if (booking.cancelledAt != null &&
+            !booking.cancelledAt!.isBefore(start) &&
+            booking.cancelledAt!.isBefore(end))
+          booking,
+    ];
+  }
+
+  @override
   Stream<List<TourBooking>> watchShopBookings(String shopId) async* {
     yield List<TourBooking>.from(_shopBookings[shopId] ?? const []);
     yield* _shopBookingController.stream;
+  }
+
+  @override
+  Stream<List<TourBooking>> watchLatestShopBookings(
+    String shopId, {
+    int limit = 5,
+  }) async* {
+    List<TourBooking> top() {
+      final list = [...(_shopBookings[shopId] ?? const <TourBooking>[])];
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      if (list.length <= limit) {
+        return list;
+      }
+      return list.sublist(0, limit);
+    }
+
+    yield top();
+    yield* _shopBookingController.stream.map((_) => top());
   }
 
   @override
@@ -3014,6 +3060,7 @@ class MemoryDiverRepository implements DiverRepository {
                 : PaymentStatus.captured)
             : PaymentStatus.unpaid,
         seatsHeld: 0,
+        cancelledAt: DateTime.now(),
       );
       _restoreSeatsIfNeeded(booking);
       _bookings[index] = updated;
@@ -3104,6 +3151,7 @@ class MemoryDiverRepository implements DiverRepository {
               ? PaymentStatus.refunded
               : PaymentStatus.unpaid,
           seatsHeld: 0,
+          cancelledAt: DateTime.now(),
         );
         _replaceShopBooking(_bookings[i]);
       }

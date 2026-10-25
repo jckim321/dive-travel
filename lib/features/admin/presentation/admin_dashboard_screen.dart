@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_overview_pane.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
@@ -314,9 +315,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           child: _bodyFor(
                             l10n: l10n,
                             store: store,
-                            pending: pending,
-                            plaque: plaque,
-                            pendingProducts: pendingProducts,
                           ),
                         ),
                       ),
@@ -536,31 +534,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _bodyFor({
     required AppLocalizations l10n,
     required DiverStore store,
-    required int pending,
-    required int plaque,
-    required int pendingProducts,
   }) {
     switch (_hub) {
       case _AdminHub.overview:
-        return _OverviewPane(
-          onJump: _go,
-          memberCount: store.members.length,
-          pendingCertify: pending,
-          plaqueCount: plaque,
-          shopCount: store.shops.length,
-          pendingProducts: pendingProducts,
-          members: store.members,
-          salesByKind: store.salesThisMonthByKind(),
-          salesTotal: store.salesTotalThisMonth,
-          ops: store.adminOpsSnapshot(),
-          publicProductCount: [
-            for (final s in store.shops)
-              for (final p
-                  in (store.liveStatsFor(s.hullId)?.products ??
-                      store.liveStatsFor(s.id)?.products ??
-                      const []))
-                if (p.isListedPublicly) p,
-          ].length,
+        return AdminOverviewPane(
+          onOpenInstructors: () =>
+              _go(_AdminHub.members, sub: _MembersSub.instructors),
+          onOpenContracts: () =>
+              _go(_AdminHub.contracts, sub: _ContractsSub.vault),
+          onOpenDiveStarReview: () =>
+              _go(_AdminHub.diveStar, sub: _DiveStarSub.review),
+          onOpenBookings: () => _go(_AdminHub.bookings),
+          onOpenProducts: () =>
+              _go(_AdminHub.products, sub: _ProductsSub.catalog),
+          onComingSoon: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).adminOverviewComingSoon,
+                ),
+              ),
+            );
+          },
         );
       case _AdminHub.members:
         return switch (_membersSub) {
@@ -1119,6 +1114,13 @@ class _SubTabStrip extends StatelessWidget {
   }
 }
 
+/// Previous overview cards stay compiled for a later stats menu.
+/// Not mounted. Numbers still come from [DiverStore.adminOpsSnapshot]
+/// and [DiverStore.salesThisMonthByKind].
+Type get adminOverviewLegacyCardsType => _OverviewPane;
+
+/// Visits, new members, funnel, sales by kind, near-upgrade, product
+/// signals, grade mix, and quick actions. Kept off the overview.
 class _OverviewPane extends StatelessWidget {
   const _OverviewPane({
     required this.onJump,

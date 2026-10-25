@@ -134,7 +134,7 @@ class DiverStore extends ChangeNotifier {
   String? _email;
   String? _authDisplayName;
   var _shopStatsLoaded = false;
-  var _shopStatsLoading = false;
+  Future<void>? _shopStatsRefresh;
   DateTime? _shopStatsFetchedAt;
   List<GuestReview> _myReviews = const [];
   var _myReviewsLoaded = false;
@@ -148,7 +148,7 @@ class DiverStore extends ChangeNotifier {
   var _logsHasMore = false;
   Object? _logsCursor;
   var _adminInboxLoaded = false;
-  var _adminInboxLoading = false;
+  Future<void>? _adminInboxRefresh;
   var _salesLoaded = false;
   var _salesLoading = false;
 
@@ -2686,17 +2686,18 @@ class DiverStore extends ChangeNotifier {
     return null;
   }
 
-  Future<void> ensureShopStatsLoaded() async {
-    if (_shopStatsLoading) {
-      return;
+  Future<void> ensureShopStatsLoaded() {
+    final inflight = _shopStatsRefresh;
+    if (inflight != null) {
+      return inflight;
     }
     final fetchedAt = _shopStatsFetchedAt;
     if (_shopStatsLoaded &&
         fetchedAt != null &&
         DateTime.now().difference(fetchedAt) < shopStatsCacheTtl) {
-      return;
+      return Future<void>.value();
     }
-    await refreshShopStats();
+    return refreshShopStats();
   }
 
   /// Test helper: pretend the last shop-stats fetch happened [ago] ago.
@@ -2706,11 +2707,17 @@ class DiverStore extends ChangeNotifier {
     _shopStatsLoaded = true;
   }
 
-  Future<void> refreshShopStats() async {
-    if (_shopStatsLoading) {
-      return;
+  Future<void> refreshShopStats() {
+    final inflight = _shopStatsRefresh;
+    if (inflight != null) {
+      return inflight;
     }
-    _shopStatsLoading = true;
+    final run = _refreshShopStatsBody();
+    _shopStatsRefresh = run;
+    return run;
+  }
+
+  Future<void> _refreshShopStatsBody() async {
     try {
       final stats = await _repository.fetchShopStats();
       _shopStats = stats;
@@ -2722,7 +2729,7 @@ class DiverStore extends ChangeNotifier {
       debugPrint('샵 통계 로드 실패: $error');
       debugPrint('$stackTrace');
     } finally {
-      _shopStatsLoading = false;
+      _shopStatsRefresh = null;
     }
   }
 
@@ -2857,21 +2864,34 @@ class DiverStore extends ChangeNotifier {
     }
   }
 
-  Future<void> ensureAdminInboxLoaded() async {
+  Future<void> ensureAdminInboxLoaded() {
     if (!_stats.isAdmin) {
-      return;
+      return Future<void>.value();
     }
-    if (_adminInboxLoaded || _adminInboxLoading) {
-      return;
+    final inflight = _adminInboxRefresh;
+    if (inflight != null) {
+      return inflight;
     }
-    await refreshAdminInbox();
+    if (_adminInboxLoaded) {
+      return Future<void>.value();
+    }
+    return refreshAdminInbox();
   }
 
-  Future<void> refreshAdminInbox() async {
-    if (!_stats.isAdmin || _adminInboxLoading) {
-      return;
+  Future<void> refreshAdminInbox() {
+    if (!_stats.isAdmin) {
+      return Future<void>.value();
     }
-    _adminInboxLoading = true;
+    final inflight = _adminInboxRefresh;
+    if (inflight != null) {
+      return inflight;
+    }
+    final run = _refreshAdminInboxBody();
+    _adminInboxRefresh = run;
+    return run;
+  }
+
+  Future<void> _refreshAdminInboxBody() async {
     try {
       final pending = await _repository.fetchPendingInstructors();
       final members = await _repository.fetchMembers();
@@ -2883,8 +2903,41 @@ class DiverStore extends ChangeNotifier {
       debugPrint('관리자 인박스 로드 실패: $error');
       debugPrint('$stackTrace');
     } finally {
-      _adminInboxLoading = false;
+      _adminInboxRefresh = null;
     }
+  }
+
+  /// Range read for the admin overview. Does not fill the bookings menu cache.
+  Future<List<TourBooking>> fetchShopBookingsCreatedBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return _repository.fetchShopBookingsCreatedBetween(
+      shopId: shopId,
+      start: start,
+      end: end,
+    );
+  }
+
+  Future<List<TourBooking>> fetchShopBookingsCancelledBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return _repository.fetchShopBookingsCancelledBetween(
+      shopId: shopId,
+      start: start,
+      end: end,
+    );
+  }
+
+  /// Newest shop bookings. One listener per shop until a combined feed exists.
+  Stream<List<TourBooking>> watchLatestShopBookings(
+    String shopId, {
+    int limit = 5,
+  }) {
+    return _repository.watchLatestShopBookings(shopId, limit: limit);
   }
 
   Future<void> ensureSalesBookingsLoaded() async {

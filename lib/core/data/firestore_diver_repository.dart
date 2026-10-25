@@ -1338,6 +1338,9 @@ class FirestoreDiverRepository implements DiverRepository {
       partnerAckedAt: data['partner_acked_at'] == null
           ? null
           : _readDate(data['partner_acked_at']),
+      cancelledAt: data['cancelled_at'] == null
+          ? null
+          : _readDate(data['cancelled_at']),
     );
   }
 
@@ -1374,6 +1377,8 @@ class FirestoreDiverRepository implements DiverRepository {
         ],
       if (booking.partnerAckedAt != null)
         'partner_acked_at': Timestamp.fromDate(booking.partnerAckedAt!),
+      if (booking.cancelledAt != null)
+        'cancelled_at': Timestamp.fromDate(booking.cancelledAt!),
       'tour_date': Timestamp.fromDate(booking.scheduledFor),
       'created_at': Timestamp.fromDate(booking.createdAt),
       'updated_at': FieldValue.serverTimestamp(),
@@ -3742,9 +3747,71 @@ class FirestoreDiverRepository implements DiverRepository {
     return bookings;
   }
 
+  Future<List<TourBooking>> _shopBookingsInRange(
+    String shopId, {
+    required String field,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    final snapshot = await _shopBookings(shopId)
+        .where(field, isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where(field, isLessThan: Timestamp.fromDate(end))
+        .get();
+    return [
+      for (final doc in snapshot.docs) _toBooking(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<List<TourBooking>> fetchShopBookingsCreatedBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return _shopBookingsInRange(
+      shopId,
+      field: 'created_at',
+      start: start,
+      end: end,
+    );
+  }
+
+  @override
+  Future<List<TourBooking>> fetchShopBookingsCancelledBetween({
+    required String shopId,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    return _shopBookingsInRange(
+      shopId,
+      field: 'cancelled_at',
+      start: start,
+      end: end,
+    );
+  }
+
   @override
   Stream<List<TourBooking>> watchShopBookings(String shopId) {
     return _shopBookings(shopId).snapshots().map((snapshot) {
+      final bookings = [
+        for (final doc in snapshot.docs) _toBooking(doc.id, doc.data()),
+      ];
+      bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return bookings;
+    });
+  }
+
+  @override
+  Stream<List<TourBooking>> watchLatestShopBookings(
+    String shopId, {
+    int limit = 5,
+  }) {
+    final capped = limit < 1 ? 5 : limit;
+    return _shopBookings(shopId)
+        .orderBy('created_at', descending: true)
+        .limit(capped)
+        .snapshots()
+        .map((snapshot) {
       final bookings = [
         for (final doc in snapshot.docs) _toBooking(doc.id, doc.data()),
       ];

@@ -67,6 +67,7 @@ class TourBooking {
     this.seatOptionId = '',
     this.guestDisplayName = '',
     this.partnerAckedAt,
+    this.cancelledAt,
   });
 
   final String id;
@@ -107,6 +108,10 @@ class TourBooking {
 
   /// Partner 「확인했어요」 read receipt (shop booking doc only).
   final DateTime? partnerAckedAt;
+
+  /// When the shop copy was cancelled or weather-cancelled.
+  /// Read from the existing `cancelled_at` field. Overview uses this only.
+  final DateTime? cancelledAt;
 
   bool get partnerAcked => partnerAckedAt != null;
 
@@ -188,6 +193,8 @@ class TourBooking {
     String? guestDisplayName,
     DateTime? partnerAckedAt,
     bool clearPartnerAckedAt = false,
+    DateTime? cancelledAt,
+    bool clearCancelledAt = false,
   }) {
     return TourBooking(
       id: id,
@@ -222,6 +229,7 @@ class TourBooking {
       partnerAckedAt: clearPartnerAckedAt
           ? null
           : (partnerAckedAt ?? this.partnerAckedAt),
+      cancelledAt: clearCancelledAt ? null : (cancelledAt ?? this.cancelledAt),
     );
   }
 

@@ -9282,6 +9282,234 @@ abstract class AppLocalizations {
   /// **'다이버 {diver} · 비다이버 {nondiver} · 아동 {child} · 유아 {infant}'**
   String bookingPartySummary(int diver, int nondiver, int child, int infant);
 
+  /// No description provided for @adminOverviewBasis.
+  ///
+  /// In ko, this message translates to:
+  /// **'접수일 기준 · 순매출 = 결제 총액 − 환불'**
+  String get adminOverviewBasis;
+
+  /// No description provided for @adminOverviewTodayBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 예약'**
+  String get adminOverviewTodayBookings;
+
+  /// No description provided for @adminOverviewTodayPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 결제 금액'**
+  String get adminOverviewTodayPaid;
+
+  /// No description provided for @adminOverviewTodayCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 취소·환불'**
+  String get adminOverviewTodayCancel;
+
+  /// No description provided for @adminOverviewMonthSales.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달 매출'**
+  String get adminOverviewMonthSales;
+
+  /// No description provided for @adminOverviewVsYesterday.
+  ///
+  /// In ko, this message translates to:
+  /// **'어제보다'**
+  String get adminOverviewVsYesterday;
+
+  /// No description provided for @adminOverviewSameAsYesterday.
+  ///
+  /// In ko, this message translates to:
+  /// **'어제와 같음'**
+  String get adminOverviewSameAsYesterday;
+
+  /// No description provided for @adminOverviewVsMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'전월 대비'**
+  String get adminOverviewVsMonth;
+
+  /// No description provided for @adminOverviewVsYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'전년 동월 대비'**
+  String get adminOverviewVsYear;
+
+  /// No description provided for @adminOverviewNoCompare.
+  ///
+  /// In ko, this message translates to:
+  /// **'비교 데이터 없음'**
+  String get adminOverviewNoCompare;
+
+  /// No description provided for @adminOverviewQueueTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'처리 대기'**
+  String get adminOverviewQueueTitle;
+
+  /// No description provided for @adminOverviewQueueCertify.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 인증'**
+  String get adminOverviewQueueCertify;
+
+  /// No description provided for @adminOverviewQueueSign.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명 대기'**
+  String get adminOverviewQueueSign;
+
+  /// No description provided for @adminOverviewQueueDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타 심사'**
+  String get adminOverviewQueueDiveStar;
+
+  /// No description provided for @adminOverviewQueueProposal.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 제안'**
+  String get adminOverviewQueueProposal;
+
+  /// No description provided for @adminOverviewQueueProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 검증'**
+  String get adminOverviewQueueProducts;
+
+  /// No description provided for @adminOverviewComingSoon.
+  ///
+  /// In ko, this message translates to:
+  /// **'준비 중'**
+  String get adminOverviewComingSoon;
+
+  /// No description provided for @adminOverviewChart14.
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 14일 매출'**
+  String get adminOverviewChart14;
+
+  /// No description provided for @adminOverviewChart30.
+  ///
+  /// In ko, this message translates to:
+  /// **'일별 매출 · 최근 30일'**
+  String get adminOverviewChart30;
+
+  /// No description provided for @adminOverviewPriorYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'전년 동기'**
+  String get adminOverviewPriorYear;
+
+  /// No description provided for @adminOverviewLive.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 · 결제 실시간'**
+  String get adminOverviewLive;
+
+  /// No description provided for @adminOverviewSeeAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 보기'**
+  String get adminOverviewSeeAll;
+
+  /// No description provided for @adminOverviewLiveEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 예약이 없습니다.'**
+  String get adminOverviewLiveEmpty;
+
+  /// No description provided for @adminOverviewActivity.
+  ///
+  /// In ko, this message translates to:
+  /// **'변동사항'**
+  String get adminOverviewActivity;
+
+  /// No description provided for @adminOverviewActivityEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 변동이 없습니다.'**
+  String get adminOverviewActivityEmpty;
+
+  /// No description provided for @adminOverviewActivityGap.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격 변경, 좌석 변경, 파트너 제안은 준비 중입니다.'**
+  String get adminOverviewActivityGap;
+
+  /// No description provided for @adminOverviewPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제완료'**
+  String get adminOverviewPaid;
+
+  /// No description provided for @adminOverviewCancelled.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get adminOverviewCancelled;
+
+  /// No description provided for @adminOverviewPartial.
+  ///
+  /// In ko, this message translates to:
+  /// **'부분환불'**
+  String get adminOverviewPartial;
+
+  /// No description provided for @adminOverviewNoName.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 없음'**
+  String get adminOverviewNoName;
+
+  /// No description provided for @adminOverviewJoin.
+  ///
+  /// In ko, this message translates to:
+  /// **'가입'**
+  String get adminOverviewJoin;
+
+  /// No description provided for @adminOverviewRefund.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불'**
+  String get adminOverviewRefund;
+
+  /// No description provided for @adminOverviewSigned.
+  ///
+  /// In ko, this message translates to:
+  /// **'서명'**
+  String get adminOverviewSigned;
+
+  /// No description provided for @adminOverviewApplied.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 신청'**
+  String get adminOverviewApplied;
+
+  /// No description provided for @adminOverviewCancelSpike.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 취소가 최근 28일 하루 평균의 2배 이상입니다.'**
+  String get adminOverviewCancelSpike;
+
+  /// No description provided for @adminOverviewWeekDrop.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주 매출이 지난주보다 30% 이상 낮은 파트너'**
+  String get adminOverviewWeekDrop;
+
+  /// No description provided for @adminOverviewMoreThanUsual.
+  ///
+  /// In ko, this message translates to:
+  /// **'평소보다 많음'**
+  String get adminOverviewMoreThanUsual;
+
+  /// No description provided for @adminOverviewCountUnit.
+  ///
+  /// In ko, this message translates to:
+  /// **'건'**
+  String get adminOverviewCountUnit;
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:
