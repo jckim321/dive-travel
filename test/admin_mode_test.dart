@@ -70,6 +70,11 @@ void main() {
   });
 
   testWidgets('마이페이지에서 PIN 9118으로 관리자 대시보드에 들어간다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       DiveTravelApp(
         firebaseReady: true,
@@ -106,14 +111,18 @@ void main() {
     expect(find.text(l10n.adminDashboardTitle), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-shops')), findsOneWidget);
-    expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);
-    expect(find.byKey(const Key('admin-menu-posts')), findsOneWidget);
+    expect(find.byKey(const Key('admin-menu-settlement')), findsOneWidget);
+    expect(find.byKey(const Key('admin-nav-tools')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('admin-menu-members')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-sub-divers')), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-instructors')), findsOneWidget);
     expect(find.byKey(const Key('admin-sub-partners')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('admin-menu-settlement')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('admin-menu-pricing')), findsOneWidget);
 
     await tester.tap(find.text(l10n.adminHqClose));
     await tester.pumpAndSettle();

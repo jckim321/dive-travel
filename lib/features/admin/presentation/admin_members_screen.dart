@@ -113,7 +113,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                 color: AdminConsoleTheme.danger.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(12),
                 child: InkWell(
-                  key: const Key('admin-members-needs-action-banner'),
+                  key: const Key('admin-menu-instructors'),
                   onTap: widget.onOpenInstructors,
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
@@ -180,18 +180,6 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       _MemberGradeFilter.silver,
                       memberGradeLabel(l10n, MemberGrade.silver),
                     ),
-                    (
-                      _MemberGradeFilter.gold,
-                      memberGradeLabel(l10n, MemberGrade.gold),
-                    ),
-                    (
-                      _MemberGradeFilter.diamond,
-                      memberGradeLabel(l10n, MemberGrade.diamond),
-                    ),
-                    (
-                      _MemberGradeFilter.platinum,
-                      memberGradeLabel(l10n, MemberGrade.platinum),
-                    ),
                   ]) ...[
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -204,6 +192,56 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       ),
                     ),
                   ],
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: PopupMenuButton<_MemberGradeFilter>(
+                      key: const Key('admin-member-grade-more'),
+                      tooltip: l10n.adminFilterMore,
+                      onSelected: (value) =>
+                          setState(() => _gradeFilter = value),
+                      itemBuilder: (context) => [
+                        for (final entry in <(_MemberGradeFilter, String)>[
+                          (
+                            _MemberGradeFilter.gold,
+                            memberGradeLabel(l10n, MemberGrade.gold),
+                          ),
+                          (
+                            _MemberGradeFilter.diamond,
+                            memberGradeLabel(l10n, MemberGrade.diamond),
+                          ),
+                          (
+                            _MemberGradeFilter.platinum,
+                            memberGradeLabel(l10n, MemberGrade.platinum),
+                          ),
+                        ])
+                          PopupMenuItem(
+                            value: entry.$1,
+                            child: Text(entry.$2),
+                          ),
+                      ],
+                      child: Chip(
+                        label: Text(
+                          {
+                                _MemberGradeFilter.gold,
+                                _MemberGradeFilter.diamond,
+                                _MemberGradeFilter.platinum,
+                              }.contains(_gradeFilter)
+                              ? memberGradeLabel(
+                                  l10n,
+                                  switch (_gradeFilter) {
+                                    _MemberGradeFilter.gold =>
+                                      MemberGrade.gold,
+                                    _MemberGradeFilter.diamond =>
+                                      MemberGrade.diamond,
+                                    _ => MemberGrade.platinum,
+                                  },
+                                )
+                              : l10n.adminFilterMore,
+                        ),
+                        avatar: const Icon(Icons.expand_more, size: 16),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

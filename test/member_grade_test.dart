@@ -48,6 +48,11 @@ void main() {
   });
 
   testWidgets('관리자 대시보드에 회원 관리 메뉴가 있다', (tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
       DiveTravelApp(
         firebaseReady: true,

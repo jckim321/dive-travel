@@ -38,6 +38,13 @@ class AdminPartnersRosterScreen extends StatefulWidget {
 
 class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
   PartnerTierFilter _tier = PartnerTierFilter.all;
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   bool _matches(DiveShop shop, ShopLiveStats? stats) {
     final reviews = stats?.reviewCount ?? shop.reviewCount;
@@ -68,12 +75,17 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
       listenable: store,
       builder: (context, _) {
         final plaque = store.plaqueQueue;
+        final needle = _query.text.trim().toLowerCase();
         final filtered = [
           for (final shop in store.shops)
             if (_matches(
-              shop,
-              store.liveStatsFor(shop.hullId) ?? store.liveStatsFor(shop.id),
-            ))
+                  shop,
+                  store.liveStatsFor(shop.hullId) ?? store.liveStatsFor(shop.id),
+                ) &&
+                (needle.isEmpty ||
+                    shop.name.toLowerCase().contains(needle) ||
+                    shop.id.toLowerCase().contains(needle) ||
+                    shop.location.toLowerCase().contains(needle)))
               shop,
         ];
 
@@ -96,6 +108,20 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                 ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: TextField(
+                  key: const Key('admin-partners-search'),
+                  controller: _query,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: l10n.adminPartnersSearch,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -110,18 +136,6 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                           PartnerTierFilter.reviewPending,
                           l10n.adminPartnerTierReviewPending,
                         ),
-                        (
-                          PartnerTierFilter.star1,
-                          l10n.adminPartnerTierStar1,
-                        ),
-                        (
-                          PartnerTierFilter.star2,
-                          l10n.adminPartnerTierStar2,
-                        ),
-                        (
-                          PartnerTierFilter.star3,
-                          l10n.adminPartnerTierStar3,
-                        ),
                       ]) ...[
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
@@ -134,6 +148,49 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                           ),
                         ),
                       ],
+                      PopupMenuButton<PartnerTierFilter>(
+                        key: const Key('admin-partner-tier-more'),
+                        tooltip: l10n.adminFilterMore,
+                        onSelected: (value) => setState(() => _tier = value),
+                        itemBuilder: (context) => [
+                          for (final entry in <(PartnerTierFilter, String)>[
+                            (
+                              PartnerTierFilter.star1,
+                              l10n.adminPartnerTierStar1,
+                            ),
+                            (
+                              PartnerTierFilter.star2,
+                              l10n.adminPartnerTierStar2,
+                            ),
+                            (
+                              PartnerTierFilter.star3,
+                              l10n.adminPartnerTierStar3,
+                            ),
+                          ])
+                            PopupMenuItem(
+                              value: entry.$1,
+                              child: Text(entry.$2),
+                            ),
+                        ],
+                        child: Chip(
+                          label: Text(
+                            {
+                                  PartnerTierFilter.star1,
+                                  PartnerTierFilter.star2,
+                                  PartnerTierFilter.star3,
+                                }.contains(_tier)
+                                ? switch (_tier) {
+                                    PartnerTierFilter.star1 =>
+                                      l10n.adminPartnerTierStar1,
+                                    PartnerTierFilter.star2 =>
+                                      l10n.adminPartnerTierStar2,
+                                    _ => l10n.adminPartnerTierStar3,
+                                  }
+                                : l10n.adminFilterMore,
+                          ),
+                          avatar: const Icon(Icons.expand_more, size: 16),
+                        ),
+                      ),
                     ],
                   ),
                 ),

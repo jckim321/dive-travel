@@ -2550,6 +2550,72 @@ abstract class AppLocalizations {
   /// **'회원'**
   String get adminTabMembers;
 
+  /// No description provided for @adminTabDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브스타'**
+  String get adminTabDiveStar;
+
+  /// No description provided for @adminTabProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품관리'**
+  String get adminTabProducts;
+
+  /// No description provided for @adminTabBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약관리'**
+  String get adminTabBookings;
+
+  /// No description provided for @adminTabSettlement.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 정산'**
+  String get adminTabSettlement;
+
+  /// No description provided for @adminTabSales.
+  ///
+  /// In ko, this message translates to:
+  /// **'판매현황'**
+  String get adminTabSales;
+
+  /// No description provided for @adminTabStats.
+  ///
+  /// In ko, this message translates to:
+  /// **'통계'**
+  String get adminTabStats;
+
+  /// No description provided for @adminTabReports.
+  ///
+  /// In ko, this message translates to:
+  /// **'경영보고서'**
+  String get adminTabReports;
+
+  /// No description provided for @adminNavMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더보기'**
+  String get adminNavMore;
+
+  /// No description provided for @adminNavToolsSection.
+  ///
+  /// In ko, this message translates to:
+  /// **'도구'**
+  String get adminNavToolsSection;
+
+  /// No description provided for @adminFilterMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get adminFilterMore;
+
+  /// No description provided for @adminMembersSubGeneral.
+  ///
+  /// In ko, this message translates to:
+  /// **'일반회원'**
+  String get adminMembersSubGeneral;
+
   /// No description provided for @adminMembersSubDivers.
   ///
   /// In ko, this message translates to:
@@ -2567,6 +2633,90 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'제휴파트너'**
   String get adminMembersSubPartners;
+
+  /// No description provided for @adminPartnersSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너·샵 검색'**
+  String get adminPartnersSearch;
+
+  /// No description provided for @adminProductsSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 검색'**
+  String get adminProductsSearch;
+
+  /// No description provided for @adminProductSourceFilter.
+  ///
+  /// In ko, this message translates to:
+  /// **'출처'**
+  String get adminProductSourceFilter;
+
+  /// No description provided for @adminDiveStarSubApplications.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청'**
+  String get adminDiveStarSubApplications;
+
+  /// No description provided for @adminDiveStarSubReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사·등급'**
+  String get adminDiveStarSubReview;
+
+  /// No description provided for @adminDiveStarSubForms.
+  ///
+  /// In ko, this message translates to:
+  /// **'양식'**
+  String get adminDiveStarSubForms;
+
+  /// No description provided for @adminBookingsSubList.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약'**
+  String get adminBookingsSubList;
+
+  /// No description provided for @adminBookingsSubPayment.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 모니터링'**
+  String get adminBookingsSubPayment;
+
+  /// No description provided for @adminBookingsSubCustomers.
+  ///
+  /// In ko, this message translates to:
+  /// **'고객 조회'**
+  String get adminBookingsSubCustomers;
+
+  /// No description provided for @adminBookingsSubCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소·환불'**
+  String get adminBookingsSubCancel;
+
+  /// No description provided for @adminSettlementSubPricing.
+  ///
+  /// In ko, this message translates to:
+  /// **'할인 · 정산 조건'**
+  String get adminSettlementSubPricing;
+
+  /// No description provided for @adminSettlementSubHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'정산 내역'**
+  String get adminSettlementSubHistory;
+
+  /// No description provided for @adminPostsCommunityShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'커뮤니티 글'**
+  String get adminPostsCommunityShort;
+
+  /// No description provided for @adminGradeMixInstructorNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사는 별도 역할(is_instructor)로 표시됩니다. 5단계 등급 칩은 사장님 확인 후 반영합니다.'**
+  String get adminGradeMixInstructorNote;
 
   /// No description provided for @adminMembersGradeAll.
   ///
@@ -8097,7 +8247,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminBookingsTitle.
   ///
   /// In ko, this message translates to:
-  /// **'예약 확정'**
+  /// **'예약'**
   String get adminBookingsTitle;
 
   /// No description provided for @adminBookingsEmpty.

@@ -1354,6 +1354,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTabMembers => 'Members';
 
   @override
+  String get adminTabDiveStar => 'Dive Star';
+
+  @override
+  String get adminTabProducts => 'Products';
+
+  @override
+  String get adminTabBookings => 'Bookings';
+
+  @override
+  String get adminTabSettlement => 'Partner settlement';
+
+  @override
+  String get adminTabSales => 'Sales';
+
+  @override
+  String get adminTabStats => 'Stats';
+
+  @override
+  String get adminTabReports => 'Business reports';
+
+  @override
+  String get adminNavMore => 'More';
+
+  @override
+  String get adminNavToolsSection => 'Tools';
+
+  @override
+  String get adminFilterMore => 'More filters';
+
+  @override
+  String get adminMembersSubGeneral => 'Members';
+
+  @override
   String get adminMembersSubDivers => 'Divers';
 
   @override
@@ -1361,6 +1394,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminMembersSubPartners => 'Partners';
+
+  @override
+  String get adminPartnersSearch => 'Search partners / shops';
+
+  @override
+  String get adminProductsSearch => 'Search products';
+
+  @override
+  String get adminProductSourceFilter => 'Source';
+
+  @override
+  String get adminDiveStarSubApplications => 'Applications';
+
+  @override
+  String get adminDiveStarSubReview => 'Review & grade';
+
+  @override
+  String get adminDiveStarSubForms => 'Forms';
+
+  @override
+  String get adminBookingsSubList => 'Bookings';
+
+  @override
+  String get adminBookingsSubPayment => 'Payment monitoring';
+
+  @override
+  String get adminBookingsSubCustomers => 'Customer lookup';
+
+  @override
+  String get adminBookingsSubCancel => 'Cancel & refund';
+
+  @override
+  String get adminSettlementSubPricing => 'Discount & terms';
+
+  @override
+  String get adminSettlementSubHistory => 'Settlement history';
+
+  @override
+  String get adminPostsCommunityShort => 'Community posts';
+
+  @override
+  String get adminGradeMixInstructorNote =>
+      'Instructors stay a separate role (is_instructor). A 5th grade chip waits on owner confirmation.';
 
   @override
   String get adminMembersGradeAll => 'All';

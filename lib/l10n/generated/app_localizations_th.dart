@@ -1322,6 +1322,39 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminTabMembers => 'สมาชิก';
 
   @override
+  String get adminTabDiveStar => '다이브스타';
+
+  @override
+  String get adminTabProducts => '상품관리';
+
+  @override
+  String get adminTabBookings => '예약관리';
+
+  @override
+  String get adminTabSettlement => '파트너 정산';
+
+  @override
+  String get adminTabSales => '판매현황';
+
+  @override
+  String get adminTabStats => '통계';
+
+  @override
+  String get adminTabReports => '경영보고서';
+
+  @override
+  String get adminNavMore => '더보기';
+
+  @override
+  String get adminNavToolsSection => '도구';
+
+  @override
+  String get adminFilterMore => '더 보기';
+
+  @override
+  String get adminMembersSubGeneral => '일반회원';
+
+  @override
   String get adminMembersSubDivers => '다이버';
 
   @override
@@ -1329,6 +1362,49 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get adminMembersSubPartners => '제휴파트너';
+
+  @override
+  String get adminPartnersSearch => '파트너·샵 검색';
+
+  @override
+  String get adminProductsSearch => '상품 검색';
+
+  @override
+  String get adminProductSourceFilter => '출처';
+
+  @override
+  String get adminDiveStarSubApplications => '신청';
+
+  @override
+  String get adminDiveStarSubReview => '심사·등급';
+
+  @override
+  String get adminDiveStarSubForms => '양식';
+
+  @override
+  String get adminBookingsSubList => '예약';
+
+  @override
+  String get adminBookingsSubPayment => '결제 모니터링';
+
+  @override
+  String get adminBookingsSubCustomers => '고객 조회';
+
+  @override
+  String get adminBookingsSubCancel => '취소·환불';
+
+  @override
+  String get adminSettlementSubPricing => '할인 · 정산 조건';
+
+  @override
+  String get adminSettlementSubHistory => '정산 내역';
+
+  @override
+  String get adminPostsCommunityShort => '커뮤니티 글';
+
+  @override
+  String get adminGradeMixInstructorNote =>
+      '강사는 별도 역할(is_instructor)로 표시됩니다. 5단계 등급 칩은 사장님 확인 후 반영합니다.';
 
   @override
   String get adminMembersGradeAll => '전체';
@@ -4309,7 +4385,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get bookingCreatedAt => '요청일';
 
   @override
-  String get adminBookingsTitle => '예약 확정';
+  String get adminBookingsTitle => '예약';
 
   @override
   String get adminBookingsEmpty => '아직 집계할 예약이 없습니다.';

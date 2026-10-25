@@ -83,6 +83,7 @@ class SameBoatSeatsHubScreen extends StatefulWidget {
     this.adminBypassApproval = false,
     this.embedded = false,
     this.showSourceFilter = false,
+    this.compactFilters = false,
   });
 
   final String? shopId;
@@ -93,6 +94,9 @@ class SameBoatSeatsHubScreen extends StatefulWidget {
   /// Admin hub shows partner / DIY / curated source chips.
   final bool showSourceFilter;
 
+  /// Fewer status chips; source / rejected behind "more".
+  final bool compactFilters;
+
   @override
   State<SameBoatSeatsHubScreen> createState() => _SameBoatSeatsHubScreenState();
 }
@@ -100,6 +104,7 @@ class SameBoatSeatsHubScreen extends StatefulWidget {
 class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
   SameBoatHubStatusFilter _status = SameBoatHubStatusFilter.all;
   SameBoatHubSourceFilter _source = SameBoatHubSourceFilter.all;
+  bool _showMoreFilters = false;
   final _query = TextEditingController();
 
   @override
@@ -123,7 +128,7 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
           shopId: widget.shopId,
           creatorUid: widget.creatorUid,
           status: _status,
-          source: widget.showSourceFilter
+          source: (widget.showSourceFilter || widget.compactFilters)
               ? _source
               : SameBoatHubSourceFilter.all,
           query: _query.text,
@@ -167,10 +172,6 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
                   for (final entry in <(SameBoatHubStatusFilter, String)>[
                     (SameBoatHubStatusFilter.all, l10n.communityFilterAll),
                     (
-                      SameBoatHubStatusFilter.closed,
-                      l10n.adminSameBoatClosedBadge,
-                    ),
-                    (
                       SameBoatHubStatusFilter.pending,
                       l10n.adminSameBoatPendingBadge,
                     ),
@@ -179,9 +180,14 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
                       l10n.adminSameBoatLiveBadge,
                     ),
                     (
-                      SameBoatHubStatusFilter.rejected,
-                      l10n.adminSameBoatRejectedBadge,
+                      SameBoatHubStatusFilter.closed,
+                      l10n.adminSameBoatClosedBadge,
                     ),
+                    if (!widget.compactFilters)
+                      (
+                        SameBoatHubStatusFilter.rejected,
+                        l10n.adminSameBoatRejectedBadge,
+                      ),
                   ])
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -192,10 +198,61 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
                         onSelected: (_) => setState(() => _status = entry.$1),
                       ),
                     ),
+                  if (widget.compactFilters)
+                    TextButton(
+                      key: const Key('same-boat-hub-filter-more'),
+                      onPressed: () =>
+                          setState(() => _showMoreFilters = !_showMoreFilters),
+                      child: Text(l10n.adminFilterMore),
+                    ),
                 ],
               ),
             ),
-            if (widget.showSourceFilter) ...[
+            if (widget.compactFilters && _showMoreFilters) ...[
+              const SizedBox(height: 4),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      key: const Key('same-boat-hub-status-rejected'),
+                      label: Text(l10n.adminSameBoatRejectedBadge),
+                      selected: _status == SameBoatHubStatusFilter.rejected,
+                      onSelected: (_) => setState(
+                        () => _status = SameBoatHubStatusFilter.rejected,
+                      ),
+                    ),
+                    for (final entry in <(SameBoatHubSourceFilter, String)>[
+                      (SameBoatHubSourceFilter.all, l10n.adminProductSourceAll),
+                      (
+                        SameBoatHubSourceFilter.partner,
+                        l10n.adminProductSourcePartner,
+                      ),
+                      (
+                        SameBoatHubSourceFilter.diy,
+                        l10n.adminProductSourceDiy,
+                      ),
+                      (
+                        SameBoatHubSourceFilter.special,
+                        l10n.adminProductSourceSpecial,
+                      ),
+                    ])
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: FilterChip(
+                          key: Key('same-boat-hub-source-${entry.$1.name}'),
+                          label: Text(entry.$2),
+                          selected: _source == entry.$1,
+                          onSelected: (_) =>
+                              setState(() => _source = entry.$1),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            if (!widget.compactFilters && widget.showSourceFilter) ...[
               const SizedBox(height: 4),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,

@@ -42,6 +42,13 @@ class AdminProductsScreen extends StatefulWidget {
 class _AdminProductsScreenState extends State<AdminProductsScreen> {
   _ProductSourceFilter _source = _ProductSourceFilter.all;
   _ProductStatusFilter _status = _ProductStatusFilter.all;
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +65,19 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
         // partnerMode early-returns above; admin path only from here.
         final pending = store.pendingProductApprovals;
         final shopFilter = widget.filterShopId;
+        final needle = _query.text.trim().toLowerCase();
         final all = [
           for (final product in store.allShopProducts)
             if (shopFilter == null || product.shopId == shopFilter) product,
         ];
         final filtered = [
           for (final product in all)
-            if (_matchesSource(product) && _matchesStatus(product)) product,
+            if (_matchesSource(product) &&
+                _matchesStatus(product) &&
+                (needle.isEmpty ||
+                    product.name.toLowerCase().contains(needle) ||
+                    product.shopId.toLowerCase().contains(needle)))
+              product,
         ];
 
         final body = ListView(
@@ -145,29 +158,16 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
               ),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final entry in <(_ProductSourceFilter, String)>[
-                  (_ProductSourceFilter.all, l10n.adminProductSourceAll),
-                  (
-                    _ProductSourceFilter.partner,
-                    l10n.adminProductSourcePartner,
-                  ),
-                  (_ProductSourceFilter.diy, l10n.adminProductSourceDiy),
-                  (
-                    _ProductSourceFilter.special,
-                    l10n.adminProductSourceSpecial,
-                  ),
-                ])
-                  ChoiceChip(
-                    key: Key('admin-product-source-${entry.$1.name}'),
-                    label: Text(entry.$2),
-                    selected: _source == entry.$1,
-                    onSelected: (_) => setState(() => _source = entry.$1),
-                  ),
-              ],
+            TextField(
+              key: const Key('admin-products-search'),
+              controller: _query,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: l10n.adminProductsSearch,
+                border: const OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -188,7 +188,6 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                     _ProductStatusFilter.rejected,
                     l10n.productStatusRejected,
                   ),
-                  (_ProductStatusFilter.draft, l10n.productStatusDraft),
                 ])
                   FilterChip(
                     key: Key('admin-product-status-${entry.$1.name}'),
@@ -196,8 +195,75 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                     selected: _status == entry.$1,
                     onSelected: (_) => setState(() => _status = entry.$1),
                   ),
+                PopupMenuButton<Object>(
+                  key: const Key('admin-product-filter-more'),
+                  tooltip: l10n.adminFilterMore,
+                  onSelected: (value) {
+                    setState(() {
+                      if (value is _ProductStatusFilter) {
+                        _status = value;
+                      } else if (value is _ProductSourceFilter) {
+                        _source = value;
+                      }
+                    });
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: _ProductStatusFilter.draft,
+                      child: Text(l10n.productStatusDraft),
+                    ),
+                    const PopupMenuDivider(),
+                    for (final entry in <(_ProductSourceFilter, String)>[
+                      (
+                        _ProductSourceFilter.all,
+                        l10n.adminProductSourceAll,
+                      ),
+                      (
+                        _ProductSourceFilter.partner,
+                        l10n.adminProductSourcePartner,
+                      ),
+                      (
+                        _ProductSourceFilter.diy,
+                        l10n.adminProductSourceDiy,
+                      ),
+                      (
+                        _ProductSourceFilter.special,
+                        l10n.adminProductSourceSpecial,
+                      ),
+                    ])
+                      PopupMenuItem(
+                        value: entry.$1,
+                        child: Text(
+                          '${l10n.adminProductSourceFilter}: ${entry.$2}',
+                        ),
+                      ),
+                  ],
+                  child: Chip(
+                    label: Text(l10n.adminFilterMore),
+                    avatar: const Icon(Icons.expand_more, size: 16),
+                  ),
+                ),
               ],
             ),
+            if (_source != _ProductSourceFilter.all)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: InputChip(
+                  key: Key('admin-product-source-${_source.name}'),
+                  label: Text(
+                    switch (_source) {
+                      _ProductSourceFilter.partner =>
+                        l10n.adminProductSourcePartner,
+                      _ProductSourceFilter.diy => l10n.adminProductSourceDiy,
+                      _ProductSourceFilter.special =>
+                        l10n.adminProductSourceSpecial,
+                      _ProductSourceFilter.all => l10n.adminProductSourceAll,
+                    },
+                  ),
+                  onDeleted: () =>
+                      setState(() => _source = _ProductSourceFilter.all),
+                ),
+              ),
             const SizedBox(height: 12),
             for (final product in filtered) ...[
               Card(
