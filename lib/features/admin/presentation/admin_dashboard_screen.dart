@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_overview_pane.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_sales_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
@@ -643,9 +644,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         };
       case _AdminHub.sales:
-        return _AdminComingSoonPane(
-          title: l10n.adminTabSales,
-          body: l10n.adminContractsComingSoon,
+        return AdminSalesScreen(
+          ownedShopId: store.stats.ownedShopId,
+          onOpenContract: _openContractVault,
+          onOpenDocuments: () =>
+              _go(_AdminHub.contracts, sub: _ContractsSub.documents),
+          onOpenPartners: () =>
+              _go(_AdminHub.members, sub: _MembersSub.partners),
         );
       case _AdminHub.stats:
         return _AdminComingSoonPane(

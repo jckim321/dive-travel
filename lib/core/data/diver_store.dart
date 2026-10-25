@@ -151,6 +151,7 @@ class DiverStore extends ChangeNotifier {
   Future<void>? _adminInboxRefresh;
   var _salesLoaded = false;
   var _salesLoading = false;
+  final _analyticsCache = <String, List<_AnalyticsCacheSpan>>{};
 
   DiverStats _stats = const DiverStats(
     displayName: '다이버',
@@ -2932,6 +2933,51 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  /// Shop bookings with [createdAt] in `[start, end)`, cached when a wider
+  /// span for that shop is already loaded. Does not fill the bookings menu.
+  Future<List<TourBooking>> loadAdminAnalyticsBookings({
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    await ensureShopStatsLoaded();
+    final byId = <String, TourBooking>{};
+    for (final stats in _shopStats) {
+      final id = stats.shopId;
+      final spans = _analyticsCache[id];
+      _AnalyticsCacheSpan? hit;
+      if (spans != null) {
+        for (final span in spans) {
+          if (span.covers(start, end)) {
+            hit = span;
+            break;
+          }
+        }
+      }
+      final List<TourBooking> rows;
+      if (hit != null) {
+        rows = [
+          for (final booking in hit.bookings)
+            if (!booking.createdAt.isBefore(start) &&
+                booking.createdAt.isBefore(end))
+              booking,
+        ];
+      } else {
+        rows = await fetchShopBookingsCreatedBetween(
+          shopId: id,
+          start: start,
+          end: end,
+        );
+        _analyticsCache.putIfAbsent(id, () => []).add(
+          _AnalyticsCacheSpan(start, end, rows),
+        );
+      }
+      for (final booking in rows) {
+        byId['$id|${booking.id}'] = booking;
+      }
+    }
+    return byId.values.toList();
+  }
+
   /// Newest shop bookings. One listener per shop until a combined feed exists.
   Stream<List<TourBooking>> watchLatestShopBookings(
     String shopId, {
@@ -3128,6 +3174,17 @@ class DiverStore extends ChangeNotifier {
     _discountSubscription?.cancel();
     super.dispose();
   }
+}
+
+class _AnalyticsCacheSpan {
+  _AnalyticsCacheSpan(this.start, this.end, this.bookings);
+
+  final DateTime start;
+  final DateTime end;
+  final List<TourBooking> bookings;
+
+  bool covers(DateTime from, DateTime to) =>
+      !from.isBefore(start) && !to.isAfter(end);
 }
 
 class DiverStoreScope extends InheritedNotifier<DiverStore> {

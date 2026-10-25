@@ -5037,6 +5037,126 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminOverviewCountUnit => '건';
 
   @override
+  String get adminSalesGross => '총 결제';
+
+  @override
+  String get adminSalesRefund => '환불';
+
+  @override
+  String get adminSalesNet => '순매출';
+
+  @override
+  String get adminSalesAverage => '평균 결제액';
+
+  @override
+  String get adminSalesActivePartners => '활성 파트너';
+
+  @override
+  String get adminSalesActiveHint => '이 기간에 예약이 있음';
+
+  @override
+  String get adminSalesPresetToday => '오늘';
+
+  @override
+  String get adminSalesPresetWeek => '이번 주';
+
+  @override
+  String get adminSalesPresetMonth => '이번 달';
+
+  @override
+  String get adminSalesPresetQuarter => '3개월';
+
+  @override
+  String get adminSalesPresetCustom => '직접 지정';
+
+  @override
+  String get adminSalesComparePrev => '전월';
+
+  @override
+  String get adminSalesCompareYear => '전년 동기';
+
+  @override
+  String get adminSalesPartners => '파트너별 성과';
+
+  @override
+  String get adminSalesColRank => '#';
+
+  @override
+  String get adminSalesColPartner => '파트너';
+
+  @override
+  String get adminSalesColBookings => '예약';
+
+  @override
+  String get adminSalesColGross => '총액';
+
+  @override
+  String get adminSalesColRefund => '환불';
+
+  @override
+  String get adminSalesColNet => '순매출';
+
+  @override
+  String get adminSalesColDelta => '대비';
+
+  @override
+  String get adminSalesColCancel => '취소율';
+
+  @override
+  String get adminSalesColShare => '비중';
+
+  @override
+  String get adminSalesTotalRow => '합계';
+
+  @override
+  String get adminSalesCategory => '카테고리별 순매출 비중';
+
+  @override
+  String get adminSalesCatTour => '투어·리브어보드';
+
+  @override
+  String get adminSalesCatCourse => '교육';
+
+  @override
+  String get adminSalesCatFun => '체험 다이빙';
+
+  @override
+  String get adminSalesCatFlag => '갈은배';
+
+  @override
+  String get adminSalesCatUnknown => '분류 없음';
+
+  @override
+  String get adminSalesTop => '상품 순위 TOP 5';
+
+  @override
+  String get adminSalesBasis => '접수일 기준 · 순매출 = 총 결제 − 환불';
+
+  @override
+  String get adminSalesEmpty => '이 기간의 예약이 없습니다.';
+
+  @override
+  String get adminSalesClamped => '기간은 최대 12개월까지입니다.';
+
+  @override
+  String get adminSalesNew => '신규';
+
+  @override
+  String get adminSalesMine => '내 샵';
+
+  @override
+  String get adminSalesOpenContract => '계약 보관함';
+
+  @override
+  String get adminSalesOpenDocs => '서류함';
+
+  @override
+  String get adminSalesOpenPartners => '파트너 명단';
+
+  @override
+  String get adminSalesRowHint => '행을 누르면 계약 · 서류함 · 파트너 명단으로 이동합니다.';
+
+  @override
   String refundPolicyHint(int percent) {
     return '今キャンセルすると返金 $percent%';
   }

@@ -9510,6 +9510,246 @@ abstract class AppLocalizations {
   /// **'건'**
   String get adminOverviewCountUnit;
 
+  /// No description provided for @adminSalesGross.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 결제'**
+  String get adminSalesGross;
+
+  /// No description provided for @adminSalesRefund.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불'**
+  String get adminSalesRefund;
+
+  /// No description provided for @adminSalesNet.
+  ///
+  /// In ko, this message translates to:
+  /// **'순매출'**
+  String get adminSalesNet;
+
+  /// No description provided for @adminSalesAverage.
+  ///
+  /// In ko, this message translates to:
+  /// **'평균 결제액'**
+  String get adminSalesAverage;
+
+  /// No description provided for @adminSalesActivePartners.
+  ///
+  /// In ko, this message translates to:
+  /// **'활성 파트너'**
+  String get adminSalesActivePartners;
+
+  /// No description provided for @adminSalesActiveHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기간에 예약이 있음'**
+  String get adminSalesActiveHint;
+
+  /// No description provided for @adminSalesPresetToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get adminSalesPresetToday;
+
+  /// No description provided for @adminSalesPresetWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주'**
+  String get adminSalesPresetWeek;
+
+  /// No description provided for @adminSalesPresetMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달'**
+  String get adminSalesPresetMonth;
+
+  /// No description provided for @adminSalesPresetQuarter.
+  ///
+  /// In ko, this message translates to:
+  /// **'3개월'**
+  String get adminSalesPresetQuarter;
+
+  /// No description provided for @adminSalesPresetCustom.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접 지정'**
+  String get adminSalesPresetCustom;
+
+  /// No description provided for @adminSalesComparePrev.
+  ///
+  /// In ko, this message translates to:
+  /// **'전월'**
+  String get adminSalesComparePrev;
+
+  /// No description provided for @adminSalesCompareYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'전년 동기'**
+  String get adminSalesCompareYear;
+
+  /// No description provided for @adminSalesPartners.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너별 성과'**
+  String get adminSalesPartners;
+
+  /// No description provided for @adminSalesColRank.
+  ///
+  /// In ko, this message translates to:
+  /// **'#'**
+  String get adminSalesColRank;
+
+  /// No description provided for @adminSalesColPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너'**
+  String get adminSalesColPartner;
+
+  /// No description provided for @adminSalesColBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약'**
+  String get adminSalesColBookings;
+
+  /// No description provided for @adminSalesColGross.
+  ///
+  /// In ko, this message translates to:
+  /// **'총액'**
+  String get adminSalesColGross;
+
+  /// No description provided for @adminSalesColRefund.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불'**
+  String get adminSalesColRefund;
+
+  /// No description provided for @adminSalesColNet.
+  ///
+  /// In ko, this message translates to:
+  /// **'순매출'**
+  String get adminSalesColNet;
+
+  /// No description provided for @adminSalesColDelta.
+  ///
+  /// In ko, this message translates to:
+  /// **'대비'**
+  String get adminSalesColDelta;
+
+  /// No description provided for @adminSalesColCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소율'**
+  String get adminSalesColCancel;
+
+  /// No description provided for @adminSalesColShare.
+  ///
+  /// In ko, this message translates to:
+  /// **'비중'**
+  String get adminSalesColShare;
+
+  /// No description provided for @adminSalesTotalRow.
+  ///
+  /// In ko, this message translates to:
+  /// **'합계'**
+  String get adminSalesTotalRow;
+
+  /// No description provided for @adminSalesCategory.
+  ///
+  /// In ko, this message translates to:
+  /// **'카테고리별 순매출 비중'**
+  String get adminSalesCategory;
+
+  /// No description provided for @adminSalesCatTour.
+  ///
+  /// In ko, this message translates to:
+  /// **'투어·리브어보드'**
+  String get adminSalesCatTour;
+
+  /// No description provided for @adminSalesCatCourse.
+  ///
+  /// In ko, this message translates to:
+  /// **'교육'**
+  String get adminSalesCatCourse;
+
+  /// No description provided for @adminSalesCatFun.
+  ///
+  /// In ko, this message translates to:
+  /// **'체험 다이빙'**
+  String get adminSalesCatFun;
+
+  /// No description provided for @adminSalesCatFlag.
+  ///
+  /// In ko, this message translates to:
+  /// **'갈은배'**
+  String get adminSalesCatFlag;
+
+  /// No description provided for @adminSalesCatUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'분류 없음'**
+  String get adminSalesCatUnknown;
+
+  /// No description provided for @adminSalesTop.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 순위 TOP 5'**
+  String get adminSalesTop;
+
+  /// No description provided for @adminSalesBasis.
+  ///
+  /// In ko, this message translates to:
+  /// **'접수일 기준 · 순매출 = 총 결제 − 환불'**
+  String get adminSalesBasis;
+
+  /// No description provided for @adminSalesEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기간의 예약이 없습니다.'**
+  String get adminSalesEmpty;
+
+  /// No description provided for @adminSalesClamped.
+  ///
+  /// In ko, this message translates to:
+  /// **'기간은 최대 12개월까지입니다.'**
+  String get adminSalesClamped;
+
+  /// No description provided for @adminSalesNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'신규'**
+  String get adminSalesNew;
+
+  /// No description provided for @adminSalesMine.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 샵'**
+  String get adminSalesMine;
+
+  /// No description provided for @adminSalesOpenContract.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 보관함'**
+  String get adminSalesOpenContract;
+
+  /// No description provided for @adminSalesOpenDocs.
+  ///
+  /// In ko, this message translates to:
+  /// **'서류함'**
+  String get adminSalesOpenDocs;
+
+  /// No description provided for @adminSalesOpenPartners.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 명단'**
+  String get adminSalesOpenPartners;
+
+  /// No description provided for @adminSalesRowHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'행을 누르면 계약 · 서류함 · 파트너 명단으로 이동합니다.'**
+  String get adminSalesRowHint;
+
   /// No description provided for @refundPolicyHint.
   ///
   /// In ko, this message translates to:

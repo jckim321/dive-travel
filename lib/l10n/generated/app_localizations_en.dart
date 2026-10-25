@@ -5186,6 +5186,127 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminOverviewCountUnit => '';
 
   @override
+  String get adminSalesGross => 'Paid total';
+
+  @override
+  String get adminSalesRefund => 'Refunds';
+
+  @override
+  String get adminSalesNet => 'Net sales';
+
+  @override
+  String get adminSalesAverage => 'Average payment';
+
+  @override
+  String get adminSalesActivePartners => 'Active partners';
+
+  @override
+  String get adminSalesActiveHint => 'Has a booking in this period';
+
+  @override
+  String get adminSalesPresetToday => 'Today';
+
+  @override
+  String get adminSalesPresetWeek => 'This week';
+
+  @override
+  String get adminSalesPresetMonth => 'This month';
+
+  @override
+  String get adminSalesPresetQuarter => '3 months';
+
+  @override
+  String get adminSalesPresetCustom => 'Custom';
+
+  @override
+  String get adminSalesComparePrev => 'Prior period';
+
+  @override
+  String get adminSalesCompareYear => 'Last year';
+
+  @override
+  String get adminSalesPartners => 'Partner results';
+
+  @override
+  String get adminSalesColRank => '#';
+
+  @override
+  String get adminSalesColPartner => 'Partner';
+
+  @override
+  String get adminSalesColBookings => 'Bookings';
+
+  @override
+  String get adminSalesColGross => 'Gross';
+
+  @override
+  String get adminSalesColRefund => 'Refunds';
+
+  @override
+  String get adminSalesColNet => 'Net';
+
+  @override
+  String get adminSalesColDelta => 'Change';
+
+  @override
+  String get adminSalesColCancel => 'Cancel rate';
+
+  @override
+  String get adminSalesColShare => 'Share';
+
+  @override
+  String get adminSalesTotalRow => 'Total';
+
+  @override
+  String get adminSalesCategory => 'Net sales by category';
+
+  @override
+  String get adminSalesCatTour => 'Tours and liveaboards';
+
+  @override
+  String get adminSalesCatCourse => 'Courses';
+
+  @override
+  String get adminSalesCatFun => 'Fun dives';
+
+  @override
+  String get adminSalesCatFlag => 'Same boat';
+
+  @override
+  String get adminSalesCatUnknown => 'Unclassified';
+
+  @override
+  String get adminSalesTop => 'Top 5 products';
+
+  @override
+  String get adminSalesBasis => 'By receive date · net = paid total − refunds';
+
+  @override
+  String get adminSalesEmpty => 'No bookings in this period.';
+
+  @override
+  String get adminSalesClamped => 'The range is limited to 12 months.';
+
+  @override
+  String get adminSalesNew => 'New';
+
+  @override
+  String get adminSalesMine => 'My shop';
+
+  @override
+  String get adminSalesOpenContract => 'Contract vault';
+
+  @override
+  String get adminSalesOpenDocs => 'Documents';
+
+  @override
+  String get adminSalesOpenPartners => 'Partner list';
+
+  @override
+  String get adminSalesRowHint =>
+      'A row opens the contract vault, documents, or partner list.';
+
+  @override
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }
