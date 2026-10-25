@@ -3288,6 +3288,84 @@ abstract class AppLocalizations {
   /// **'끝나는 날은 시작하는 날과 같거나 이후여야 해요.'**
   String get adminTermsBadPeriod;
 
+  /// No description provided for @partnerPromoChip.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로모션'**
+  String get partnerPromoChip;
+
+  /// No description provided for @partnerPromoSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'보내기'**
+  String get partnerPromoSend;
+
+  /// No description provided for @partnerPromoSent.
+  ///
+  /// In ko, this message translates to:
+  /// **'보냈어요'**
+  String get partnerPromoSent;
+
+  /// No description provided for @partnerPromoNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 설명'**
+  String get partnerPromoNote;
+
+  /// No description provided for @partnerPromoKind.
+  ///
+  /// In ko, this message translates to:
+  /// **'종류'**
+  String get partnerPromoKind;
+
+  /// No description provided for @partnerPromoBadNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'설명을 1자에서 80자 사이로 적어 주세요.'**
+  String get partnerPromoBadNote;
+
+  /// No description provided for @partnerPromoBadPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'기간은 시작일부터 1년 안으로 적어 주세요.'**
+  String get partnerPromoBadPeriod;
+
+  /// No description provided for @partnerPromoBadKind.
+  ///
+  /// In ko, this message translates to:
+  /// **'종류를 골라 주세요.'**
+  String get partnerPromoBadKind;
+
+  /// No description provided for @partnerPromoBadDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜는 2026-10-01처럼 적어 주세요.'**
+  String get partnerPromoBadDay;
+
+  /// No description provided for @adminPromoNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 제안'**
+  String get adminPromoNew;
+
+  /// No description provided for @adminPromoHandled.
+  ///
+  /// In ko, this message translates to:
+  /// **'처리함'**
+  String get adminPromoHandled;
+
+  /// No description provided for @adminPromoMark.
+  ///
+  /// In ko, this message translates to:
+  /// **'처리함으로 표시'**
+  String get adminPromoMark;
+
+  /// No description provided for @adminPromoEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'도착한 제안이 없어요.'**
+  String get adminPromoEmpty;
+
   /// No description provided for @adminContractsComingSoon.
   ///
   /// In ko, this message translates to:

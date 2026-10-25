@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -322,6 +323,27 @@ abstract class DiverRepository {
     required String adminUid,
     required String actorName,
     required List<PartnerContractTermChange> changes,
+  });
+
+  /// One shop only. Returns at most [limit] rows, newest first.
+  Future<List<PartnerPromotion>> listPartnerPromotions(
+    String shopId, {
+    int limit = 20,
+  });
+
+  Future<PartnerPromotion> createPartnerPromotion({
+    required String shopId,
+    required String partnerUid,
+    required String kind,
+    required DateTime startsOn,
+    required DateTime endsOn,
+    required String note,
+  });
+
+  Future<void> markPartnerPromotionHandled({
+    required String shopId,
+    required String proposalId,
+    required String adminUid,
   });
 
   Future<PartnerContract> createPartnerContractDraft({

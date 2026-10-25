@@ -7,6 +7,7 @@ import 'package:dive_travel_app/features/partner/presentation/partner_back_butto
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_contract_sign_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_contract_terms_view.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_promotion_form.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -27,6 +28,7 @@ class _PartnerContractVaultScreenState
   Object? _error;
   List<PartnerContract> _docs = const [];
   var _showTerms = false;
+  var _showPromo = false;
   var _termsLoading = false;
   PartnerContractTerms? _terms;
 
@@ -105,6 +107,12 @@ class _PartnerContractVaultScreenState
                               selected: _showTerms,
                               onSelected: (_) => _toggleTerms(),
                             ),
+                            ChoiceChip(
+                              key: const Key('partner-promo-chip'),
+                              label: Text(l10n.partnerPromoChip),
+                              selected: _showPromo,
+                              onSelected: (_) => _togglePromo(),
+                            ),
                           ],
                         ),
                         if (_showTerms) ...[
@@ -113,6 +121,11 @@ class _PartnerContractVaultScreenState
                             const LinearProgressIndicator()
                           else
                             PartnerContractTermsReadout(terms: _terms),
+                          const SizedBox(height: 16),
+                        ],
+                        if (_showPromo) ...[
+                          const SizedBox(height: 12),
+                          PartnerPromotionForm(shopId: widget.shopId),
                           const SizedBox(height: 16),
                         ],
                         if (_docs.isEmpty)
@@ -169,6 +182,7 @@ class _PartnerContractVaultScreenState
     final store = DiverStoreScope.of(context);
     setState(() {
       _showTerms = true;
+      _showPromo = false;
       _termsLoading = true;
     });
     try {
@@ -186,6 +200,15 @@ class _PartnerContractVaultScreenState
       }
       setState(() => _termsLoading = false);
     }
+  }
+
+  void _togglePromo() {
+    setState(() {
+      _showPromo = !_showPromo;
+      if (_showPromo) {
+        _showTerms = false;
+      }
+    });
   }
 
   Future<void> _open(PartnerContract doc) async {

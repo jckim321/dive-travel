@@ -25,6 +25,7 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -3014,6 +3015,66 @@ class FirestoreDiverRepository implements DiverRepository {
       'changes': [for (final change in changes) change.toMap()],
     });
     await batch.commit();
+  }
+
+  CollectionReference<Map<String, dynamic>> _promotions(String shopId) =>
+      _shops.doc(shopId).collection('promotion_proposals');
+
+  @override
+  Future<List<PartnerPromotion>> listPartnerPromotions(
+    String shopId, {
+    int limit = 20,
+  }) async {
+    final snap = await _promotions(shopId)
+        .orderBy('created_at', descending: true)
+        .limit(limit)
+        .get();
+    return [
+      for (final doc in snap.docs) PartnerPromotion.fromMap(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<PartnerPromotion> createPartnerPromotion({
+    required String shopId,
+    required String partnerUid,
+    required String kind,
+    required DateTime startsOn,
+    required DateTime endsOn,
+    required String note,
+  }) async {
+    validatePartnerPromotion(
+      kind: kind,
+      startsOn: startsOn,
+      endsOn: endsOn,
+      note: note,
+    );
+    final ref = _promotions(shopId).doc();
+    await ref.set({
+      'shop_id': shopId,
+      'kind': kind,
+      'starts_on': DateTime(startsOn.year, startsOn.month, startsOn.day),
+      'ends_on': DateTime(endsOn.year, endsOn.month, endsOn.day),
+      'note': note.trim(),
+      'status': PartnerPromotionStatus.incoming.firestoreValue,
+      'created_at': FieldValue.serverTimestamp(),
+      'created_by_uid': partnerUid,
+    });
+    final snap = await ref.get();
+    return PartnerPromotion.fromMap(ref.id, snap.data() ?? {});
+  }
+
+  @override
+  Future<void> markPartnerPromotionHandled({
+    required String shopId,
+    required String proposalId,
+    required String adminUid,
+  }) {
+    return _promotions(shopId).doc(proposalId).update({
+      'status': PartnerPromotionStatus.handled.firestoreValue,
+      'handled_at': FieldValue.serverTimestamp(),
+      'handled_by_uid': adminUid,
+    });
   }
 
   CollectionReference<Map<String, dynamic>> _partnerContracts(String shopId) =>

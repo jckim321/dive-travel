@@ -416,6 +416,40 @@ service cloud.firestore {
           allow update, delete: if false;
         }
       }
+
+      // H4b promotion proposals. Partners create on their own shop only.
+      // Admins read per shop. No collection group and no delete.
+      match /promotion_proposals/{proposalId} {
+        allow read: if isAdmin();
+        allow create: if ownsShop(shopId)
+          && request.resource.data.keys().hasOnly([
+            'shop_id', 'kind', 'starts_on', 'ends_on', 'note',
+            'status', 'created_at', 'created_by_uid'
+          ])
+          && request.resource.data.shop_id == shopId
+          && request.resource.data.kind in [
+            'early_bird', 'price_off', 'same_boat', 'other'
+          ]
+          && request.resource.data.starts_on is timestamp
+          && request.resource.data.ends_on is timestamp
+          && request.resource.data.ends_on >= request.resource.data.starts_on
+          && request.resource.data.ends_on
+              < request.resource.data.starts_on + duration.value(366, 'd')
+          && request.resource.data.note is string
+          && request.resource.data.note.size() > 0
+          && request.resource.data.note.size() <= 80
+          && request.resource.data.status == 'new'
+          && request.resource.data.created_at == request.time
+          && request.resource.data.created_by_uid == request.auth.uid;
+        allow update: if isAdmin()
+          && resource.data.status == 'new'
+          && request.resource.data.status == 'handled'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'handled_at', 'handled_by_uid'])
+          && request.resource.data.handled_at == request.time
+          && request.resource.data.handled_by_uid == request.auth.uid;
+        allow delete: if false;
+      }
     }
 
     // Versioned audit forms (gates, areas, thresholds) — admin only.

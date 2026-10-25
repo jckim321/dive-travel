@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
@@ -112,8 +113,10 @@ class MemoryDiverRepository implements DiverRepository {
   final _partnerContractFiles = <String, List<int>>{};
   final _contractTerms = <String, PartnerContractTerms>{};
   final _contractTermRevisions = <String, List<PartnerContractTermRevision>>{};
+  final _promotions = <String, List<PartnerPromotion>>{};
   int _contractSequence = 0;
   int _contractTermRevisionSequence = 0;
+  int _promotionSequence = 0;
   int _contractEventSequence = 0;
   PartnerDocConfig? _partnerDocConfig;
   final _documentShares = <DocumentShareRecord>[];
@@ -2251,6 +2254,82 @@ class MemoryDiverRepository implements DiverRepository {
     );
     _contractTerms[shopId] = stored;
     _contractTermRevisions.putIfAbsent(shopId, () => []).add(revision);
+  }
+
+  @override
+  Future<List<PartnerPromotion>> listPartnerPromotions(
+    String shopId, {
+    int limit = 20,
+  }) async {
+    final rows = List<PartnerPromotion>.from(_promotions[shopId] ?? const []);
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (rows.length > limit) {
+      return rows.sublist(0, limit);
+    }
+    return rows;
+  }
+
+  @override
+  Future<PartnerPromotion> createPartnerPromotion({
+    required String shopId,
+    required String partnerUid,
+    required String kind,
+    required DateTime startsOn,
+    required DateTime endsOn,
+    required String note,
+  }) async {
+    validatePartnerPromotion(
+      kind: kind,
+      startsOn: startsOn,
+      endsOn: endsOn,
+      note: note,
+    );
+    final created = PartnerPromotion(
+      id: 'promo-${++_promotionSequence}',
+      shopId: shopId,
+      kind: kind,
+      startsOn: DateTime(startsOn.year, startsOn.month, startsOn.day),
+      endsOn: DateTime(endsOn.year, endsOn.month, endsOn.day),
+      note: note.trim(),
+      status: PartnerPromotionStatus.incoming,
+      createdAt: DateTime.now().toUtc(),
+      createdByUid: partnerUid,
+    );
+    _promotions.putIfAbsent(shopId, () => []).add(created);
+    return created;
+  }
+
+  @override
+  Future<void> markPartnerPromotionHandled({
+    required String shopId,
+    required String proposalId,
+    required String adminUid,
+  }) async {
+    final list = _promotions[shopId];
+    if (list == null) {
+      throw StateError('Proposal not found: $proposalId');
+    }
+    final index = list.indexWhere((item) => item.id == proposalId);
+    if (index < 0) {
+      throw StateError('Proposal not found: $proposalId');
+    }
+    final current = list[index];
+    if (current.status != PartnerPromotionStatus.incoming) {
+      throw StateError('Proposal already handled: $proposalId');
+    }
+    list[index] = PartnerPromotion(
+      id: current.id,
+      shopId: current.shopId,
+      kind: current.kind,
+      startsOn: current.startsOn,
+      endsOn: current.endsOn,
+      note: current.note,
+      status: PartnerPromotionStatus.handled,
+      createdAt: current.createdAt,
+      createdByUid: current.createdByUid,
+      handledAt: DateTime.now().toUtc(),
+      handledByUid: adminUid,
+    );
   }
 
   @override

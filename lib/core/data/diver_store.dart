@@ -23,6 +23,7 @@ import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
@@ -1373,6 +1374,54 @@ class DiverStore extends ChangeNotifier {
       adminUid: uid,
       actorName: name.isEmpty ? uid : name,
       changes: changes,
+    );
+  }
+
+  Future<void> sendPartnerPromotion({
+    required String shopId,
+    required String kind,
+    required DateTime startsOn,
+    required DateTime endsOn,
+    required String note,
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    await _repository.createPartnerPromotion(
+      shopId: shopId,
+      partnerUid: uid,
+      kind: kind,
+      startsOn: startsOn,
+      endsOn: endsOn,
+      note: note,
+    );
+  }
+
+  /// Reads each shop's own proposal list. Does not use a collection group.
+  Future<List<PartnerPromotion>> loadPartnerPromotionInbox({
+    int perShop = 20,
+  }) async {
+    final ids = <String>{for (final shop in shops) shop.hullId};
+    final batches = <List<PartnerPromotion>>[];
+    for (final id in ids) {
+      batches.add(await _repository.listPartnerPromotions(id, limit: perShop));
+    }
+    return mergePartnerPromotions(batches, perShop: perShop);
+  }
+
+  Future<void> markPartnerPromotionHandled({
+    required String shopId,
+    required String proposalId,
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    await _repository.markPartnerPromotionHandled(
+      shopId: shopId,
+      proposalId: proposalId,
+      adminUid: uid,
     );
   }
 

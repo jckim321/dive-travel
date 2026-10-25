@@ -21,6 +21,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_products_scree
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_terms_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_proposal_inbox_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_vault_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contracts_overview_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_trial_data_screen.dart';
@@ -57,7 +58,7 @@ enum _ProductsSub { catalog, seats, sameBoat, homeCuration }
 
 enum _BookingsSub { list, paymentSoon, customersSoon, cancelSoon }
 
-enum _ContractsSub { overview, vault, documents, terms }
+enum _ContractsSub { overview, vault, documents, terms, inbox }
 
 enum _SettlementSub { pricing, historySoon }
 
@@ -477,18 +478,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               l10n.adminContractsSubVault,
               l10n.adminDocsTitle,
               l10n.adminContractsSubTerms,
+              l10n.adminContractsSubInbox,
             ],
             keys: const [
               Key('admin-sub-contracts-overview'),
               Key('admin-sub-contracts-vault'),
               Key('admin-sub-documents'),
               Key('admin-sub-contracts-terms'),
+              Key('admin-sub-contracts-inbox'),
             ],
             selected: switch (_contractsSub) {
               _ContractsSub.overview => 0,
               _ContractsSub.vault => 1,
               _ContractsSub.documents => 2,
               _ContractsSub.terms => 3,
+              _ContractsSub.inbox => 4,
             },
             onSelect: (i) => _go(
               _AdminHub.contracts,
@@ -496,6 +500,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 1 => _ContractsSub.vault,
                 2 => _ContractsSub.documents,
                 3 => _ContractsSub.terms,
+                4 => _ContractsSub.inbox,
                 _ => _ContractsSub.overview,
               },
             ),
@@ -642,6 +647,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             embedded: true,
           ),
           _ContractsSub.terms => const AdminContractTermsScreen(embedded: true),
+          _ContractsSub.inbox => const AdminProposalInboxScreen(embedded: true),
         };
       case _AdminHub.settlement:
         return switch (_settlementSub) {

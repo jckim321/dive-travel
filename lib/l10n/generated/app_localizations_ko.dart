@@ -1710,6 +1710,45 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminTermsBadPeriod => '끝나는 날은 시작하는 날과 같거나 이후여야 해요.';
 
   @override
+  String get partnerPromoChip => '프로모션';
+
+  @override
+  String get partnerPromoSend => '보내기';
+
+  @override
+  String get partnerPromoSent => '보냈어요';
+
+  @override
+  String get partnerPromoNote => '한 줄 설명';
+
+  @override
+  String get partnerPromoKind => '종류';
+
+  @override
+  String get partnerPromoBadNote => '설명을 1자에서 80자 사이로 적어 주세요.';
+
+  @override
+  String get partnerPromoBadPeriod => '기간은 시작일부터 1년 안으로 적어 주세요.';
+
+  @override
+  String get partnerPromoBadKind => '종류를 골라 주세요.';
+
+  @override
+  String get partnerPromoBadDay => '날짜는 2026-10-01처럼 적어 주세요.';
+
+  @override
+  String get adminPromoNew => '새 제안';
+
+  @override
+  String get adminPromoHandled => '처리함';
+
+  @override
+  String get adminPromoMark => '처리함으로 표시';
+
+  @override
+  String get adminPromoEmpty => '도착한 제안이 없어요.';
+
+  @override
   String get adminContractsComingSoon => '준비 중';
 
   @override

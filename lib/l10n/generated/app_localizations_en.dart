@@ -1748,6 +1748,46 @@ class AppLocalizationsEn extends AppLocalizations {
       'The end date must be on or after the start date.';
 
   @override
+  String get partnerPromoChip => 'Promotion';
+
+  @override
+  String get partnerPromoSend => 'Send';
+
+  @override
+  String get partnerPromoSent => 'Sent';
+
+  @override
+  String get partnerPromoNote => 'One-line note';
+
+  @override
+  String get partnerPromoKind => 'Kind';
+
+  @override
+  String get partnerPromoBadNote => 'Write a note between 1 and 80 characters.';
+
+  @override
+  String get partnerPromoBadPeriod =>
+      'Keep the period within one year of the start date.';
+
+  @override
+  String get partnerPromoBadKind => 'Choose a kind.';
+
+  @override
+  String get partnerPromoBadDay => 'Enter a date like 2026-10-01.';
+
+  @override
+  String get adminPromoNew => 'New';
+
+  @override
+  String get adminPromoHandled => 'Handled';
+
+  @override
+  String get adminPromoMark => 'Mark handled';
+
+  @override
+  String get adminPromoEmpty => 'No proposals yet.';
+
+  @override
   String get adminContractsComingSoon => 'Coming soon';
 
   @override
