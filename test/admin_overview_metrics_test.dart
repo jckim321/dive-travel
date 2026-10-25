@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -227,6 +228,7 @@ void main() {
     final store = DiverStore(repo);
     addTearDown(store.dispose);
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    var openedProposals = false;
 
     await tester.pumpWidget(
       DiverStoreScope(
@@ -242,7 +244,7 @@ void main() {
               onOpenDiveStarReview: () {},
               onOpenBookings: () {},
               onOpenProducts: () {},
-              onComingSoon: () {},
+              onOpenProposals: () => openedProposals = true,
             ),
           ),
         ),
@@ -250,13 +252,25 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text(l10n.adminOverviewQueueCertify), findsOneWidget);
     expect(find.text(l10n.adminOverviewQueueSign), findsOneWidget);
     expect(find.text(l10n.adminOverviewQueueDiveStar), findsOneWidget);
     expect(find.text(l10n.adminOverviewQueueProposal), findsOneWidget);
-    expect(find.text(l10n.adminOverviewComingSoon), findsWidgets);
+    expect(find.text(l10n.adminOverviewComingSoon), findsNothing);
+    expect(find.text(l10n.adminOverviewActivityGap), findsOneWidget);
+    expect(find.textContaining('파트너 제안은 준비 중'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('admin-overview-queue-proposal')),
+        matching: find.text('0'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('admin-overview-queue-proposal')));
+    await tester.pump();
+    expect(openedProposals, isTrue);
     expect(find.byKey(const Key('admin-overview-queue-products')), findsNothing);
     expect(find.text(l10n.adminVisitsTitle), findsNothing);
     expect(find.text('파트너 승격'), findsNothing);

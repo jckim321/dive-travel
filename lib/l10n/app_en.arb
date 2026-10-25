@@ -2105,7 +2105,7 @@
   "adminOverviewLiveEmpty": "No recent bookings.",
   "adminOverviewActivity": "Changes",
   "adminOverviewActivityEmpty": "No recent changes.",
-  "adminOverviewActivityGap": "Price changes, seat changes, and partner proposals are not ready.",
+  "adminOverviewActivityGap": "Price changes and seat changes are not ready.",
   "adminOverviewPaid": "Paid",
   "adminOverviewCancelled": "Cancelled",
   "adminOverviewPartial": "Partial refund",

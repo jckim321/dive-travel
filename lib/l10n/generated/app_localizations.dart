@@ -9627,7 +9627,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminOverviewActivityGap.
   ///
   /// In ko, this message translates to:
-  /// **'가격 변경, 좌석 변경, 파트너 제안은 준비 중입니다.'**
+  /// **'가격 변경, 좌석 변경은 준비 중입니다.'**
   String get adminOverviewActivityGap;
 
   /// No description provided for @adminOverviewPaid.

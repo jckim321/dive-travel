@@ -105,6 +105,16 @@ class PartnerPromotion {
 }
 
 /// Newest first. Each shop may contribute at most [perShop] rows.
+int countIncomingPartnerPromotions(Iterable<PartnerPromotion> rows) {
+  var count = 0;
+  for (final row in rows) {
+    if (row.status == PartnerPromotionStatus.incoming) {
+      count++;
+    }
+  }
+  return count;
+}
+
 List<PartnerPromotion> mergePartnerPromotions(
   Iterable<List<PartnerPromotion>> batches, {
   int perShop = 20,

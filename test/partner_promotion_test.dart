@@ -33,6 +33,24 @@ void main() {
     );
   }
 
+  test('처리함은 새 제안 수에 들어가지 않는다', () {
+    final rows = [
+      row(id: 'a', shopId: 'shop-a', createdAt: DateTime.utc(2026, 1, 2)),
+      PartnerPromotion(
+        id: 'b',
+        shopId: 'shop-a',
+        kind: 'other',
+        startsOn: start,
+        endsOn: end,
+        note: '끝',
+        status: PartnerPromotionStatus.handled,
+        createdAt: DateTime.utc(2026, 1, 3),
+        createdByUid: 'partner-1',
+      ),
+    ];
+    expect(countIncomingPartnerPromotions(rows), 1);
+  });
+
   test('받은편지함은 샵별 최근 20건을 합쳐 화면에서 정렬한다', () {
     final older = row(
       id: 'old',

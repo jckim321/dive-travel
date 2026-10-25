@@ -560,15 +560,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           onOpenBookings: () => _go(_AdminHub.bookings),
           onOpenProducts: () =>
               _go(_AdminHub.products, sub: _ProductsSub.catalog),
-          onComingSoon: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context).adminOverviewComingSoon,
-                ),
-              ),
-            );
-          },
+          onOpenProposals: () =>
+              _go(_AdminHub.contracts, sub: _ContractsSub.inbox),
         );
       case _AdminHub.members:
         return switch (_membersSub) {

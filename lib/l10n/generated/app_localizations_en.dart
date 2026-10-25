@@ -5244,7 +5244,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminOverviewActivityGap =>
-      'Price changes, seat changes, and partner proposals are not ready.';
+      'Price changes and seat changes are not ready.';
 
   @override
   String get adminOverviewPaid => 'Paid';

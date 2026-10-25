@@ -5129,7 +5129,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminOverviewActivityEmpty => '최근 변동이 없습니다.';
 
   @override
-  String get adminOverviewActivityGap => '가격 변경, 좌석 변경, 파트너 제안은 준비 중입니다.';
+  String get adminOverviewActivityGap => '가격 변경, 좌석 변경은 준비 중입니다.';
 
   @override
   String get adminOverviewPaid => '결제완료';

@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/features/admin/overview/admin_overview_metrics.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
@@ -24,7 +25,7 @@ class AdminOverviewPane extends StatefulWidget {
     required this.onOpenDiveStarReview,
     required this.onOpenBookings,
     required this.onOpenProducts,
-    required this.onComingSoon,
+    required this.onOpenProposals,
   });
 
   final VoidCallback onOpenInstructors;
@@ -32,7 +33,7 @@ class AdminOverviewPane extends StatefulWidget {
   final VoidCallback onOpenDiveStarReview;
   final VoidCallback onOpenBookings;
   final VoidCallback onOpenProducts;
-  final VoidCallback onComingSoon;
+  final VoidCallback onOpenProposals;
 
   @override
   State<AdminOverviewPane> createState() => _AdminOverviewPaneState();
@@ -44,6 +45,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
   List<TourBooking> _bookings = const [];
   List<PartnerContract> _contracts = const [];
   List<DiveStarApplication> _applications = const [];
+  var _newProposals = 0;
   var _loading = true;
   String? _error;
 
@@ -113,6 +115,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
         contracts.addAll(await store.listPartnerContracts(id));
       }
       final applications = await store.listDiveStarApplications();
+      final proposals = await store.loadPartnerPromotionInbox();
       if (!mounted) {
         return;
       }
@@ -121,6 +124,7 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
         _bookings = mergeOverviewBookings(batches);
         _contracts = contracts;
         _applications = applications;
+        _newProposals = countIncomingPartnerPromotions(proposals);
         _loading = false;
         _error = null;
       });
@@ -199,11 +203,12 @@ class _AdminOverviewPaneState extends State<AdminOverviewPane> {
           awaiting: awaiting,
           reviews: reviews,
           products: products,
+          proposals: _newProposals,
           onOpenInstructors: widget.onOpenInstructors,
           onOpenContracts: widget.onOpenContracts,
           onOpenDiveStarReview: widget.onOpenDiveStarReview,
           onOpenProducts: widget.onOpenProducts,
-          onComingSoon: widget.onComingSoon,
+          onOpenProposals: widget.onOpenProposals,
         );
         final chart = _ChartCard(
           title: wide ? l10n.adminOverviewChart30 : l10n.adminOverviewChart14,
@@ -494,11 +499,12 @@ class _QueueSection extends StatelessWidget {
     required this.awaiting,
     required this.reviews,
     required this.products,
+    required this.proposals,
     required this.onOpenInstructors,
     required this.onOpenContracts,
     required this.onOpenDiveStarReview,
     required this.onOpenProducts,
-    required this.onComingSoon,
+    required this.onOpenProposals,
   });
 
   final AppLocalizations l10n;
@@ -506,11 +512,12 @@ class _QueueSection extends StatelessWidget {
   final int awaiting;
   final int reviews;
   final int products;
+  final int proposals;
   final VoidCallback onOpenInstructors;
   final VoidCallback onOpenContracts;
   final VoidCallback onOpenDiveStarReview;
   final VoidCallback onOpenProducts;
-  final VoidCallback onComingSoon;
+  final VoidCallback onOpenProposals;
 
   @override
   Widget build(BuildContext context) {
@@ -539,9 +546,9 @@ class _QueueSection extends StatelessWidget {
       _QueueTile(
         tileKey: const Key('admin-overview-queue-proposal'),
         label: l10n.adminOverviewQueueProposal,
-        value: l10n.adminOverviewComingSoon,
-        dim: true,
-        onTap: onComingSoon,
+        value: '$proposals',
+        dim: proposals == 0,
+        onTap: onOpenProposals,
       ),
       if (products >= 1)
         _QueueTile(
