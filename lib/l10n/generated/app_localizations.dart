@@ -6624,6 +6624,270 @@ abstract class AppLocalizations {
   /// **'정산 예정'**
   String get partnerNet;
 
+  /// No description provided for @partnerStatsPeriodWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주'**
+  String get partnerStatsPeriodWeek;
+
+  /// No description provided for @partnerStatsPeriodMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달'**
+  String get partnerStatsPeriodMonth;
+
+  /// No description provided for @partnerStatsPeriodThreeMonths.
+  ///
+  /// In ko, this message translates to:
+  /// **'3개월'**
+  String get partnerStatsPeriodThreeMonths;
+
+  /// No description provided for @partnerStatsAnchorVisit.
+  ///
+  /// In ko, this message translates to:
+  /// **'방문'**
+  String get partnerStatsAnchorVisit;
+
+  /// No description provided for @partnerStatsAnchorAudience.
+  ///
+  /// In ko, this message translates to:
+  /// **'방문자'**
+  String get partnerStatsAnchorAudience;
+
+  /// No description provided for @partnerStatsAnchorDwell.
+  ///
+  /// In ko, this message translates to:
+  /// **'체류'**
+  String get partnerStatsAnchorDwell;
+
+  /// No description provided for @partnerStatsAnchorStrike.
+  ///
+  /// In ko, this message translates to:
+  /// **'스트라이크율'**
+  String get partnerStatsAnchorStrike;
+
+  /// No description provided for @partnerStatsAnchorResult.
+  ///
+  /// In ko, this message translates to:
+  /// **'결과'**
+  String get partnerStatsAnchorResult;
+
+  /// No description provided for @partnerStatsCatInApp.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 안에서 일어난 일'**
+  String get partnerStatsCatInApp;
+
+  /// No description provided for @partnerStatsCatResults.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약으로 이어진 결과'**
+  String get partnerStatsCatResults;
+
+  /// No description provided for @partnerStatsSecVisit.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 방문'**
+  String get partnerStatsSecVisit;
+
+  /// No description provided for @partnerStatsSecAudience.
+  ///
+  /// In ko, this message translates to:
+  /// **'누가 보고 가나요'**
+  String get partnerStatsSecAudience;
+
+  /// No description provided for @partnerStatsSecDwell.
+  ///
+  /// In ko, this message translates to:
+  /// **'얼마나 머무나요'**
+  String get partnerStatsSecDwell;
+
+  /// No description provided for @partnerStatsSecStrike.
+  ///
+  /// In ko, this message translates to:
+  /// **'스트라이크율'**
+  String get partnerStatsSecStrike;
+
+  /// No description provided for @partnerStatsSecJourney.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 여정'**
+  String get partnerStatsSecJourney;
+
+  /// No description provided for @partnerStatsSecProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품별 예약'**
+  String get partnerStatsSecProducts;
+
+  /// No description provided for @partnerStatsSecPromo.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로모션 효과'**
+  String get partnerStatsSecPromo;
+
+  /// No description provided for @partnerStatsKpiAppVisits.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 방문'**
+  String get partnerStatsKpiAppVisits;
+
+  /// No description provided for @partnerStatsKpiProductViews.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 상품을 본 사람'**
+  String get partnerStatsKpiProductViews;
+
+  /// No description provided for @partnerStatsCmpAppAvg.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 평균'**
+  String get partnerStatsCmpAppAvg;
+
+  /// No description provided for @partnerStatsCmpPeers.
+  ///
+  /// In ko, this message translates to:
+  /// **'동종 샵'**
+  String get partnerStatsCmpPeers;
+
+  /// No description provided for @partnerStatsFunnelDetail.
+  ///
+  /// In ko, this message translates to:
+  /// **'상세 조회'**
+  String get partnerStatsFunnelDetail;
+
+  /// No description provided for @partnerStatsFunnelInterest.
+  ///
+  /// In ko, this message translates to:
+  /// **'관심'**
+  String get partnerStatsFunnelInterest;
+
+  /// No description provided for @partnerStatsFunnelAttempt.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 시도'**
+  String get partnerStatsFunnelAttempt;
+
+  /// No description provided for @partnerStatsFunnelPaid.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 완료'**
+  String get partnerStatsFunnelPaid;
+
+  /// No description provided for @partnerStatsCollecting.
+  ///
+  /// In ko, this message translates to:
+  /// **'데이터 모으는 중'**
+  String get partnerStatsCollecting;
+
+  /// No description provided for @partnerStatsProductsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기간에 집계할 예약이 없어요'**
+  String get partnerStatsProductsEmpty;
+
+  /// No description provided for @partnerStatsColProduct.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품'**
+  String get partnerStatsColProduct;
+
+  /// No description provided for @partnerStatsColBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약'**
+  String get partnerStatsColBookings;
+
+  /// No description provided for @partnerStatsColGuests.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원'**
+  String get partnerStatsColGuests;
+
+  /// No description provided for @partnerStatsColChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'전기간 대비'**
+  String get partnerStatsColChange;
+
+  /// No description provided for @partnerStatsPrivacyNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'개인을 식별할 수 없는 집계만 보여 줍니다.'**
+  String get partnerStatsPrivacyNote;
+
+  /// No description provided for @partnerSettlementSimPayNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금은 모의결제(SimPay) 기준 금액입니다. 실결제 연동 후 정산액이 확정됩니다.'**
+  String get partnerSettlementSimPayNote;
+
+  /// No description provided for @partnerSettlementMonthLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'{year}년 {month}월'**
+  String partnerSettlementMonthLabel(int year, int month);
+
+  /// No description provided for @partnerSettlementByReceiveDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 접수일 기준'**
+  String get partnerSettlementByReceiveDate;
+
+  /// No description provided for @partnerSettlementValidCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'유효 예약'**
+  String get partnerSettlementValidCount;
+
+  /// No description provided for @partnerSettlementCancelledCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소 건수'**
+  String get partnerSettlementCancelledCount;
+
+  /// No description provided for @partnerSettlementCountValue.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}건'**
+  String partnerSettlementCountValue(int count);
+
+  /// No description provided for @partnerSettlementGross.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 예약금액'**
+  String get partnerSettlementGross;
+
+  /// No description provided for @partnerSettlementRefunds.
+  ///
+  /// In ko, this message translates to:
+  /// **'환불 금액'**
+  String get partnerSettlementRefunds;
+
+  /// No description provided for @partnerSettlementNet.
+  ///
+  /// In ko, this message translates to:
+  /// **'순매출'**
+  String get partnerSettlementNet;
+
+  /// No description provided for @partnerSettlementFeePending.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 조건 연동 예정'**
+  String get partnerSettlementFeePending;
+
+  /// No description provided for @partnerSettlementListTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 내역'**
+  String get partnerSettlementListTitle;
+
+  /// No description provided for @partnerSettlementEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 달에 접수된 결제 완료 예약이 없어요'**
+  String get partnerSettlementEmpty;
+
   /// No description provided for @partnerBookingsTitle.
   ///
   /// In ko, this message translates to:

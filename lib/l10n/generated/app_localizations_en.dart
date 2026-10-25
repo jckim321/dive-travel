@@ -3606,6 +3606,144 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerNet => 'Net payout';
 
   @override
+  String get partnerStatsPeriodWeek => 'This week';
+
+  @override
+  String get partnerStatsPeriodMonth => 'This month';
+
+  @override
+  String get partnerStatsPeriodThreeMonths => '3 months';
+
+  @override
+  String get partnerStatsAnchorVisit => 'Visits';
+
+  @override
+  String get partnerStatsAnchorAudience => 'Audience';
+
+  @override
+  String get partnerStatsAnchorDwell => 'Dwell';
+
+  @override
+  String get partnerStatsAnchorStrike => 'Strike rate';
+
+  @override
+  String get partnerStatsAnchorResult => 'Results';
+
+  @override
+  String get partnerStatsCatInApp => 'What happened in the app';
+
+  @override
+  String get partnerStatsCatResults => 'What led to bookings';
+
+  @override
+  String get partnerStatsSecVisit => 'App visits';
+
+  @override
+  String get partnerStatsSecAudience => 'Who\'s looking';
+
+  @override
+  String get partnerStatsSecDwell => 'How long they stay';
+
+  @override
+  String get partnerStatsSecStrike => 'Strike rate';
+
+  @override
+  String get partnerStatsSecJourney => 'Diver journey';
+
+  @override
+  String get partnerStatsSecProducts => 'Bookings by product';
+
+  @override
+  String get partnerStatsSecPromo => 'Promotion impact';
+
+  @override
+  String get partnerStatsKpiAppVisits => 'App visits';
+
+  @override
+  String get partnerStatsKpiProductViews => 'Product viewers';
+
+  @override
+  String get partnerStatsCmpAppAvg => 'App average';
+
+  @override
+  String get partnerStatsCmpPeers => 'Similar shops';
+
+  @override
+  String get partnerStatsFunnelDetail => 'Detail views';
+
+  @override
+  String get partnerStatsFunnelInterest => 'Interest';
+
+  @override
+  String get partnerStatsFunnelAttempt => 'Booking attempts';
+
+  @override
+  String get partnerStatsFunnelPaid => 'Paid';
+
+  @override
+  String get partnerStatsCollecting => 'Collecting data';
+
+  @override
+  String get partnerStatsProductsEmpty => 'No bookings in this period';
+
+  @override
+  String get partnerStatsColProduct => 'Product';
+
+  @override
+  String get partnerStatsColBookings => 'Bookings';
+
+  @override
+  String get partnerStatsColGuests => 'Guests';
+
+  @override
+  String get partnerStatsColChange => 'vs prior';
+
+  @override
+  String get partnerStatsPrivacyNote =>
+      'Only non-identifying aggregates are shown.';
+
+  @override
+  String get partnerSettlementSimPayNote =>
+      'Amounts are based on mock payments (SimPay). Final settlement is set after real payments connect.';
+
+  @override
+  String partnerSettlementMonthLabel(int year, int month) {
+    return '$year.$month';
+  }
+
+  @override
+  String get partnerSettlementByReceiveDate => 'By booking receive date';
+
+  @override
+  String get partnerSettlementValidCount => 'Valid bookings';
+
+  @override
+  String get partnerSettlementCancelledCount => 'Cancellations';
+
+  @override
+  String partnerSettlementCountValue(int count) {
+    return '$count';
+  }
+
+  @override
+  String get partnerSettlementGross => 'Gross bookings';
+
+  @override
+  String get partnerSettlementRefunds => 'Refunds';
+
+  @override
+  String get partnerSettlementNet => 'Net sales';
+
+  @override
+  String get partnerSettlementFeePending => 'Contract terms coming soon';
+
+  @override
+  String get partnerSettlementListTitle => 'Bookings';
+
+  @override
+  String get partnerSettlementEmpty => 'No paid bookings received this month';
+
+  @override
   String get partnerBookingsTitle => 'Live bookings';
 
   @override

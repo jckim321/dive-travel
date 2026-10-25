@@ -4,11 +4,12 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_settlement_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_stats_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_vouchers_screen.dart';
@@ -108,9 +109,7 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                     bookingsBadge: partnerVoucherUnreadArrivedCount(
                       store.shopBookings,
                     ),
-                    onStats: () => _open(
-                      PartnerComingSoonScreen(title: l10n.partnerQuickStats),
-                    ),
+                    onStats: () => _open(PartnerStatsScreen(shopId: shopId)),
                     onDocs: () => _open(const PartnerDocumentsScreen()),
                     docsBadge: _docsBadge,
                   ),
@@ -126,9 +125,7 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                     child: FilledButton(
                       key: const Key('partner-home-settlement'),
                       onPressed: () => _open(
-                        PartnerComingSoonScreen(
-                          title: l10n.partnerQuickSettlement,
-                        ),
+                        PartnerSettlementScreen(shopId: shopId),
                       ),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),

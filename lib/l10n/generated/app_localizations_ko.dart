@@ -3509,6 +3509,143 @@ class AppLocalizationsKo extends AppLocalizations {
   String get partnerNet => '정산 예정';
 
   @override
+  String get partnerStatsPeriodWeek => '이번 주';
+
+  @override
+  String get partnerStatsPeriodMonth => '이번 달';
+
+  @override
+  String get partnerStatsPeriodThreeMonths => '3개월';
+
+  @override
+  String get partnerStatsAnchorVisit => '방문';
+
+  @override
+  String get partnerStatsAnchorAudience => '방문자';
+
+  @override
+  String get partnerStatsAnchorDwell => '체류';
+
+  @override
+  String get partnerStatsAnchorStrike => '스트라이크율';
+
+  @override
+  String get partnerStatsAnchorResult => '결과';
+
+  @override
+  String get partnerStatsCatInApp => '앱 안에서 일어난 일';
+
+  @override
+  String get partnerStatsCatResults => '예약으로 이어진 결과';
+
+  @override
+  String get partnerStatsSecVisit => '앱 방문';
+
+  @override
+  String get partnerStatsSecAudience => '누가 보고 가나요';
+
+  @override
+  String get partnerStatsSecDwell => '얼마나 머무나요';
+
+  @override
+  String get partnerStatsSecStrike => '스트라이크율';
+
+  @override
+  String get partnerStatsSecJourney => '다이버 여정';
+
+  @override
+  String get partnerStatsSecProducts => '상품별 예약';
+
+  @override
+  String get partnerStatsSecPromo => '프로모션 효과';
+
+  @override
+  String get partnerStatsKpiAppVisits => '앱 방문';
+
+  @override
+  String get partnerStatsKpiProductViews => '내 상품을 본 사람';
+
+  @override
+  String get partnerStatsCmpAppAvg => '앱 평균';
+
+  @override
+  String get partnerStatsCmpPeers => '동종 샵';
+
+  @override
+  String get partnerStatsFunnelDetail => '상세 조회';
+
+  @override
+  String get partnerStatsFunnelInterest => '관심';
+
+  @override
+  String get partnerStatsFunnelAttempt => '예약 시도';
+
+  @override
+  String get partnerStatsFunnelPaid => '결제 완료';
+
+  @override
+  String get partnerStatsCollecting => '데이터 모으는 중';
+
+  @override
+  String get partnerStatsProductsEmpty => '이 기간에 집계할 예약이 없어요';
+
+  @override
+  String get partnerStatsColProduct => '상품';
+
+  @override
+  String get partnerStatsColBookings => '예약';
+
+  @override
+  String get partnerStatsColGuests => '인원';
+
+  @override
+  String get partnerStatsColChange => '전기간 대비';
+
+  @override
+  String get partnerStatsPrivacyNote => '개인을 식별할 수 없는 집계만 보여 줍니다.';
+
+  @override
+  String get partnerSettlementSimPayNote =>
+      '지금은 모의결제(SimPay) 기준 금액입니다. 실결제 연동 후 정산액이 확정됩니다.';
+
+  @override
+  String partnerSettlementMonthLabel(int year, int month) {
+    return '$year년 $month월';
+  }
+
+  @override
+  String get partnerSettlementByReceiveDate => '예약 접수일 기준';
+
+  @override
+  String get partnerSettlementValidCount => '유효 예약';
+
+  @override
+  String get partnerSettlementCancelledCount => '취소 건수';
+
+  @override
+  String partnerSettlementCountValue(int count) {
+    return '$count건';
+  }
+
+  @override
+  String get partnerSettlementGross => '총 예약금액';
+
+  @override
+  String get partnerSettlementRefunds => '환불 금액';
+
+  @override
+  String get partnerSettlementNet => '순매출';
+
+  @override
+  String get partnerSettlementFeePending => '계약 조건 연동 예정';
+
+  @override
+  String get partnerSettlementListTitle => '예약 내역';
+
+  @override
+  String get partnerSettlementEmpty => '이 달에 접수된 결제 완료 예약이 없어요';
+
+  @override
   String get partnerBookingsTitle => '실시간 예약 현황';
 
   @override

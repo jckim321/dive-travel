@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_coming_soon_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_settlement_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -139,8 +139,8 @@ class _PartnerVouchersScreenState extends State<PartnerVouchersScreen> {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => PartnerComingSoonScreen(
-                          title: l10n.partnerQuickSettlement,
+                        builder: (_) => PartnerSettlementScreen(
+                          shopId: widget.shopId,
                         ),
                       ),
                     ),
