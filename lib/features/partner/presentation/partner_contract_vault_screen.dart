@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
+import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_contract_sign_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_contract_terms_view.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -24,6 +26,9 @@ class _PartnerContractVaultScreenState
   var _loading = true;
   Object? _error;
   List<PartnerContract> _docs = const [];
+  var _showTerms = false;
+  var _termsLoading = false;
+  PartnerContractTerms? _terms;
 
   @override
   void initState() {
@@ -91,6 +96,25 @@ class _PartnerContractVaultScreenState
                       key: const Key('partner-contract-vault'),
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                       children: [
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            ChoiceChip(
+                              key: const Key('partner-terms-chip'),
+                              label: Text(l10n.adminContractsSubTerms),
+                              selected: _showTerms,
+                              onSelected: (_) => _toggleTerms(),
+                            ),
+                          ],
+                        ),
+                        if (_showTerms) ...[
+                          const SizedBox(height: 12),
+                          if (_termsLoading)
+                            const LinearProgressIndicator()
+                          else
+                            PartnerContractTermsReadout(terms: _terms),
+                          const SizedBox(height: 16),
+                        ],
                         if (_docs.isEmpty)
                           Text(
                             l10n.partnerVaultEmpty,
@@ -135,6 +159,33 @@ class _PartnerContractVaultScreenState
                   ),
       ),
     );
+  }
+
+  Future<void> _toggleTerms() async {
+    if (_showTerms) {
+      setState(() => _showTerms = false);
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    setState(() {
+      _showTerms = true;
+      _termsLoading = true;
+    });
+    try {
+      final terms = await store.getPartnerContractTerms(widget.shopId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _terms = terms;
+        _termsLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _termsLoading = false);
+    }
   }
 
   Future<void> _open(PartnerContract doc) async {

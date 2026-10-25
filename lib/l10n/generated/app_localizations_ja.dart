@@ -1641,6 +1641,63 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminContractsSubInbox => '제안 받은편지함';
 
   @override
+  String get adminTermsMissing => '미입력';
+
+  @override
+  String get adminTermsCommission => '수수료율';
+
+  @override
+  String get adminTermsParty => '인원 할인';
+
+  @override
+  String get adminTermsSeason => '계절 가격할인';
+
+  @override
+  String get adminTermsFoc => '강사 FOC';
+
+  @override
+  String get adminTermsFocPay => '유료 인원';
+
+  @override
+  String get adminTermsFocFree => '무료 인원';
+
+  @override
+  String get adminTermsPeriod => '계약 기간';
+
+  @override
+  String get adminTermsFrom => '시작일';
+
+  @override
+  String get adminTermsUntil => '종료일';
+
+  @override
+  String get adminTermsClear => '지우기';
+
+  @override
+  String get adminTermsSave => '저장';
+
+  @override
+  String get adminTermsSaved => '저장했어요';
+
+  @override
+  String get adminTermsUnchanged => '바뀐 게 없어요';
+
+  @override
+  String get adminTermsHistory => '변경 이력';
+
+  @override
+  String get adminTermsHistoryEmpty => '아직 변경 이력이 없어요.';
+
+  @override
+  String get adminTermsBadNumber => '숫자를 허용 범위 안에서 적어 주세요.';
+
+  @override
+  String get adminTermsFocPair => '강사 FOC는 10+1처럼 둘 다 적거나 둘 다 비워 주세요.';
+
+  @override
+  String get adminTermsBadPeriod => '끝나는 날은 시작하는 날과 같거나 이후여야 해요.';
+
+  @override
   String get adminContractsComingSoon => '준비 중';
 
   @override

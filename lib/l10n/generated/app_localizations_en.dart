@@ -1689,6 +1689,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminContractsSubInbox => 'Proposal inbox';
 
   @override
+  String get adminTermsMissing => 'Not entered';
+
+  @override
+  String get adminTermsCommission => 'Commission rate';
+
+  @override
+  String get adminTermsParty => 'Group discount';
+
+  @override
+  String get adminTermsSeason => 'Seasonal discount';
+
+  @override
+  String get adminTermsFoc => 'Instructor FOC';
+
+  @override
+  String get adminTermsFocPay => 'Paid guests';
+
+  @override
+  String get adminTermsFocFree => 'Free guests';
+
+  @override
+  String get adminTermsPeriod => 'Contract period';
+
+  @override
+  String get adminTermsFrom => 'Start';
+
+  @override
+  String get adminTermsUntil => 'End';
+
+  @override
+  String get adminTermsClear => 'Clear';
+
+  @override
+  String get adminTermsSave => 'Save';
+
+  @override
+  String get adminTermsSaved => 'Saved';
+
+  @override
+  String get adminTermsUnchanged => 'Nothing changed';
+
+  @override
+  String get adminTermsHistory => 'Change history';
+
+  @override
+  String get adminTermsHistoryEmpty => 'No changes yet.';
+
+  @override
+  String get adminTermsBadNumber => 'Enter a number inside the allowed range.';
+
+  @override
+  String get adminTermsFocPair =>
+      'Enter both FOC numbers, like 10+1, or leave both empty.';
+
+  @override
+  String get adminTermsBadPeriod =>
+      'The end date must be on or after the start date.';
+
+  @override
   String get adminContractsComingSoon => 'Coming soon';
 
   @override

@@ -22,6 +22,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
@@ -1336,6 +1337,42 @@ class DiverStore extends ChangeNotifier {
     return _repository.updatePartnerDocumentStatus(
       documentId: documentId,
       status: status,
+    );
+  }
+
+  Future<PartnerContractTerms?> getPartnerContractTerms(String shopId) {
+    return _repository.getPartnerContractTerms(shopId);
+  }
+
+  Future<List<PartnerContractTermRevision>> listPartnerContractTermRevisions(
+    String shopId,
+  ) {
+    return _repository.listPartnerContractTermRevisions(shopId);
+  }
+
+  /// Saves terms and one history line together. Refuses an empty diff.
+  Future<void> savePartnerContractTerms({
+    required String shopId,
+    required PartnerContractTerms next,
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    final current =
+        await _repository.getPartnerContractTerms(shopId) ??
+            PartnerContractTerms.empty;
+    final changes = diffPartnerContractTerms(current, next);
+    if (changes.isEmpty) {
+      throw const PartnerContractTermsUnchanged();
+    }
+    final name = _stats.displayName.trim();
+    await _repository.savePartnerContractTerms(
+      shopId: shopId,
+      next: next,
+      adminUid: uid,
+      actorName: name.isEmpty ? uid : name,
+      changes: changes,
     );
   }
 

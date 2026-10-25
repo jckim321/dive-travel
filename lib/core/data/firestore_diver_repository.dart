@@ -24,6 +24,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
@@ -2954,6 +2955,65 @@ class FirestoreDiverRepository implements DiverRepository {
       'status': status.firestoreValue,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  DocumentReference<Map<String, dynamic>> _contractTerms(String shopId) =>
+      _shops.doc(shopId).collection('contract_terms').doc('current');
+
+  CollectionReference<Map<String, dynamic>> _contractTermRevisions(
+    String shopId,
+  ) =>
+      _contractTerms(shopId).collection('revisions');
+
+  @override
+  Future<PartnerContractTerms?> getPartnerContractTerms(String shopId) async {
+    final snap = await _contractTerms(shopId).get();
+    if (!snap.exists) {
+      return null;
+    }
+    return PartnerContractTerms.fromMap(snap.data());
+  }
+
+  @override
+  Future<List<PartnerContractTermRevision>> listPartnerContractTermRevisions(
+    String shopId,
+  ) async {
+    final snap = await _contractTermRevisions(shopId)
+        .orderBy('at', descending: true)
+        .limit(50)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        PartnerContractTermRevision.fromMap(doc.id, doc.data()),
+    ];
+  }
+
+  @override
+  Future<void> savePartnerContractTerms({
+    required String shopId,
+    required PartnerContractTerms next,
+    required String adminUid,
+    required String actorName,
+    required List<PartnerContractTermChange> changes,
+  }) async {
+    if (changes.isEmpty) {
+      throw const PartnerContractTermsUnchanged();
+    }
+    final terms = _contractTerms(shopId);
+    final revision = _contractTermRevisions(shopId).doc();
+    final batch = _db.batch();
+    batch.set(terms, {
+      ...next.toValueMap(),
+      PartnerContractTermFields.updatedAt: FieldValue.serverTimestamp(),
+      PartnerContractTermFields.updatedByUid: adminUid,
+    });
+    batch.set(revision, {
+      'at': FieldValue.serverTimestamp(),
+      'uid': adminUid,
+      'actor_name': actorName.trim(),
+      'changes': [for (final change in changes) change.toMap()],
+    });
+    await batch.commit();
   }
 
   CollectionReference<Map<String, dynamic>> _partnerContracts(String shopId) =>

@@ -3174,6 +3174,120 @@ abstract class AppLocalizations {
   /// **'제안 받은편지함'**
   String get adminContractsSubInbox;
 
+  /// No description provided for @adminTermsMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'미입력'**
+  String get adminTermsMissing;
+
+  /// No description provided for @adminTermsCommission.
+  ///
+  /// In ko, this message translates to:
+  /// **'수수료율'**
+  String get adminTermsCommission;
+
+  /// No description provided for @adminTermsParty.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원 할인'**
+  String get adminTermsParty;
+
+  /// No description provided for @adminTermsSeason.
+  ///
+  /// In ko, this message translates to:
+  /// **'계절 가격할인'**
+  String get adminTermsSeason;
+
+  /// No description provided for @adminTermsFoc.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 FOC'**
+  String get adminTermsFoc;
+
+  /// No description provided for @adminTermsFocPay.
+  ///
+  /// In ko, this message translates to:
+  /// **'유료 인원'**
+  String get adminTermsFocPay;
+
+  /// No description provided for @adminTermsFocFree.
+  ///
+  /// In ko, this message translates to:
+  /// **'무료 인원'**
+  String get adminTermsFocFree;
+
+  /// No description provided for @adminTermsPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약 기간'**
+  String get adminTermsPeriod;
+
+  /// No description provided for @adminTermsFrom.
+  ///
+  /// In ko, this message translates to:
+  /// **'시작일'**
+  String get adminTermsFrom;
+
+  /// No description provided for @adminTermsUntil.
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일'**
+  String get adminTermsUntil;
+
+  /// No description provided for @adminTermsClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get adminTermsClear;
+
+  /// No description provided for @adminTermsSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get adminTermsSave;
+
+  /// No description provided for @adminTermsSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장했어요'**
+  String get adminTermsSaved;
+
+  /// No description provided for @adminTermsUnchanged.
+  ///
+  /// In ko, this message translates to:
+  /// **'바뀐 게 없어요'**
+  String get adminTermsUnchanged;
+
+  /// No description provided for @adminTermsHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경 이력'**
+  String get adminTermsHistory;
+
+  /// No description provided for @adminTermsHistoryEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 변경 이력이 없어요.'**
+  String get adminTermsHistoryEmpty;
+
+  /// No description provided for @adminTermsBadNumber.
+  ///
+  /// In ko, this message translates to:
+  /// **'숫자를 허용 범위 안에서 적어 주세요.'**
+  String get adminTermsBadNumber;
+
+  /// No description provided for @adminTermsFocPair.
+  ///
+  /// In ko, this message translates to:
+  /// **'강사 FOC는 10+1처럼 둘 다 적거나 둘 다 비워 주세요.'**
+  String get adminTermsFocPair;
+
+  /// No description provided for @adminTermsBadPeriod.
+  ///
+  /// In ko, this message translates to:
+  /// **'끝나는 날은 시작하는 날과 같거나 이후여야 해요.'**
+  String get adminTermsBadPeriod;
+
   /// No description provided for @adminContractsComingSoon.
   ///
   /// In ko, this message translates to:

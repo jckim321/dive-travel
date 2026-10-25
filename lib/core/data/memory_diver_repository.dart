@@ -18,6 +18,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
@@ -109,7 +110,10 @@ class MemoryDiverRepository implements DiverRepository {
   final _partnerContracts = <String, List<PartnerContract>>{};
   final _partnerContractEvents = <String, List<PartnerContractEvent>>{};
   final _partnerContractFiles = <String, List<int>>{};
+  final _contractTerms = <String, PartnerContractTerms>{};
+  final _contractTermRevisions = <String, List<PartnerContractTermRevision>>{};
   int _contractSequence = 0;
+  int _contractTermRevisionSequence = 0;
   int _contractEventSequence = 0;
   PartnerDocConfig? _partnerDocConfig;
   final _documentShares = <DocumentShareRecord>[];
@@ -2197,6 +2201,56 @@ class MemoryDiverRepository implements DiverRepository {
     return List<PartnerContractEvent>.from(
       _partnerContractEvents[_eventKey(shopId, contractId)] ?? const [],
     );
+  }
+
+  @override
+  Future<PartnerContractTerms?> getPartnerContractTerms(String shopId) async {
+    return _contractTerms[shopId];
+  }
+
+  @override
+  Future<List<PartnerContractTermRevision>> listPartnerContractTermRevisions(
+    String shopId,
+  ) async {
+    final list = List<PartnerContractTermRevision>.from(
+      _contractTermRevisions[shopId] ?? const [],
+    );
+    list.sort((a, b) => b.at.compareTo(a.at));
+    return list;
+  }
+
+  @override
+  Future<void> savePartnerContractTerms({
+    required String shopId,
+    required PartnerContractTerms next,
+    required String adminUid,
+    required String actorName,
+    required List<PartnerContractTermChange> changes,
+  }) async {
+    if (changes.isEmpty) {
+      throw const PartnerContractTermsUnchanged();
+    }
+    final now = DateTime.now().toUtc();
+    final stored = PartnerContractTerms(
+      commissionRatePercent: next.commissionRatePercent,
+      partyDiscountPercent: next.partyDiscountPercent,
+      seasonDiscountPercent: next.seasonDiscountPercent,
+      instructorFocPay: next.instructorFocPay,
+      instructorFocFree: next.instructorFocFree,
+      validFrom: next.validFrom,
+      validUntil: next.validUntil,
+      updatedAt: now,
+      updatedByUid: adminUid,
+    );
+    final revision = PartnerContractTermRevision(
+      id: 'ctr-${++_contractTermRevisionSequence}',
+      at: now,
+      uid: adminUid,
+      actorName: actorName.trim(),
+      changes: List<PartnerContractTermChange>.from(changes),
+    );
+    _contractTerms[shopId] = stored;
+    _contractTermRevisions.putIfAbsent(shopId, () => []).add(revision);
   }
 
   @override

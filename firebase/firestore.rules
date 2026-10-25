@@ -351,6 +351,71 @@ service cloud.firestore {
           allow update, delete: if false;
         }
       }
+
+      // H4a contract terms. Admin writes the current values and one
+      // revision in the same batch. Partners may read only their shop.
+      match /contract_terms/{termId} {
+        allow read: if termId == 'current'
+          && (isAdmin() || ownsShop(shopId));
+        allow create, update: if isAdmin()
+          && termId == 'current'
+          && request.resource.data.keys().hasOnly([
+            'commission_rate_percent',
+            'party_discount_percent',
+            'season_discount_percent',
+            'instructor_foc_pay',
+            'instructor_foc_free',
+            'valid_from',
+            'valid_until',
+            'updated_at',
+            'updated_by_uid'
+          ])
+          && request.resource.data.updated_by_uid == request.auth.uid
+          && request.resource.data.updated_at == request.time
+          && (!('commission_rate_percent' in request.resource.data)
+              || (request.resource.data.commission_rate_percent is number
+                  && request.resource.data.commission_rate_percent >= 0
+                  && request.resource.data.commission_rate_percent <= 100))
+          && (!('party_discount_percent' in request.resource.data)
+              || (request.resource.data.party_discount_percent is number
+                  && request.resource.data.party_discount_percent >= 0
+                  && request.resource.data.party_discount_percent <= 100))
+          && (!('season_discount_percent' in request.resource.data)
+              || (request.resource.data.season_discount_percent is number
+                  && request.resource.data.season_discount_percent >= 0
+                  && request.resource.data.season_discount_percent <= 100))
+          && (!('instructor_foc_pay' in request.resource.data)
+              || (request.resource.data.instructor_foc_pay is int
+                  && request.resource.data.instructor_foc_pay >= 1
+                  && request.resource.data.instructor_foc_pay <= 100))
+          && (!('instructor_foc_free' in request.resource.data)
+              || (request.resource.data.instructor_foc_free is int
+                  && request.resource.data.instructor_foc_free >= 0
+                  && request.resource.data.instructor_foc_free <= 100))
+          && (!('valid_from' in request.resource.data)
+              || request.resource.data.valid_from is timestamp)
+          && (!('valid_until' in request.resource.data)
+              || request.resource.data.valid_until is timestamp)
+          && (!('valid_from' in request.resource.data)
+              || !('valid_until' in request.resource.data)
+              || request.resource.data.valid_until
+                  >= request.resource.data.valid_from);
+        allow delete: if false;
+
+        match /revisions/{revId} {
+          allow read: if isAdmin();
+          allow create: if isAdmin()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.at == request.time
+            && request.resource.data.actor_name is string
+            && request.resource.data.actor_name.size() > 0
+            && request.resource.data.actor_name.size() <= 80
+            && request.resource.data.changes is list
+            && request.resource.data.changes.size() > 0
+            && request.resource.data.changes.size() <= 8;
+          allow update, delete: if false;
+        }
+      }
     }
 
     // Versioned audit forms (gates, areas, thresholds) — admin only.

@@ -14,6 +14,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -304,6 +305,23 @@ abstract class DiverRepository {
   Future<List<PartnerContractEvent>> listPartnerContractEvents({
     required String shopId,
     required String contractId,
+  });
+
+  /// Null when the shop has no saved terms. Does not create a document.
+  Future<PartnerContractTerms?> getPartnerContractTerms(String shopId);
+
+  Future<List<PartnerContractTermRevision>> listPartnerContractTermRevisions(
+    String shopId,
+  );
+
+  /// Writes the current terms and one revision together.
+  /// Throws [PartnerContractTermsUnchanged] when [changes] is empty.
+  Future<void> savePartnerContractTerms({
+    required String shopId,
+    required PartnerContractTerms next,
+    required String adminUid,
+    required String actorName,
+    required List<PartnerContractTermChange> changes,
   });
 
   Future<PartnerContract> createPartnerContractDraft({
