@@ -352,6 +352,7 @@ class FirestoreDiverRepository implements DiverRepository {
       bool deletable = false,
       bool protected = false,
       String? unavailableReason,
+      String? detail,
     }) async {
       if (unavailableReason != null) {
         return TrialCountRow(
@@ -371,7 +372,7 @@ class FirestoreDiverRepository implements DiverRepository {
           label: label,
           pathHint: pathHint,
           status: TrialCountStatus.error,
-          detail: 'count 실패',
+          detail: detail ?? 'count 실패',
           deletable: deletable,
           protected: protected,
         );
@@ -382,6 +383,7 @@ class FirestoreDiverRepository implements DiverRepository {
         pathHint: pathHint,
         status: TrialCountStatus.ok,
         count: value,
+        detail: detail,
         deletable: deletable && !protected,
         protected: protected,
       );
