@@ -3126,6 +3126,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose a base product to open on Same-boat.';
 
   @override
+  String get partnerSeatsOpenHint =>
+      'Set departure, seats, and flag deadline — guests see it on Same-boat right away.';
+
+  @override
+  String get partnerSeatsOpenButton => 'Open seats';
+
+  @override
+  String get partnerSeatsOpenedSnack =>
+      'Opened. Guests can see it on Same-boat right away.';
+
+  @override
+  String get partnerExit => 'Exit';
+
+  @override
   String get partnerProductsGuide =>
       'Saving publishes to Explore and Same-boat right away. Draft products can use temp save.';
 
@@ -3151,7 +3165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get partnerProductSameBoatPending => 'Same-boat pending approval';
+  String get partnerProductSameBoatPending => 'Same-boat processing';
 
   @override
   String partnerProductSameBoatLive(int seats, String date) {
@@ -4309,7 +4323,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get briefSameBoatPartnerHint =>
-      'Same-boat leftover seats open from product management after approval.';
+      'Open same-boat leftover seats from product management after you publish.';
 
   @override
   String get briefTempSaveNeedPhoto => 'Add at least one photo.';

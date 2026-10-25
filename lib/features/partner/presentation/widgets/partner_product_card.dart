@@ -140,6 +140,7 @@ class PartnerProductCard extends StatelessWidget {
                                 SameBoatSeatsScreen(
                                   product: product,
                                   basePackageOnly: true,
+                                  partnerLiveCopy: true,
                                 ),
                               ),
                             ),

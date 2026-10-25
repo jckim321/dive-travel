@@ -9,6 +9,8 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star_loi_pdf.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerLoiFormScreen extends StatefulWidget {
@@ -145,8 +147,12 @@ class _PartnerLoiFormScreenState extends State<PartnerLoiFormScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.partnerLoiTitle)),
+    return PartnerTheme.wrap(
+      Scaffold(
+      appBar: AppBar(
+        leading: const PartnerBackButton(),
+        title: Text(l10n.partnerLoiTitle),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
@@ -244,6 +250,7 @@ class _PartnerLoiFormScreenState extends State<PartnerLoiFormScreen> {
                 : Text(l10n.partnerLoiSubmit),
           ),
         ],
+      ),
       ),
     );
   }

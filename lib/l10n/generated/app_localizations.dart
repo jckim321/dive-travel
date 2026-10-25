@@ -5742,6 +5742,30 @@ abstract class AppLocalizations {
   /// **'같은배에 열 기본 상품을 고르세요.'**
   String get partnerOpenSeatsPickHint;
 
+  /// No description provided for @partnerSeatsOpenHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발일·좌석 수·깃발 마감을 넣고 열면 고객 같은배 화면에 바로 보여요.'**
+  String get partnerSeatsOpenHint;
+
+  /// No description provided for @partnerSeatsOpenButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 열기'**
+  String get partnerSeatsOpenButton;
+
+  /// No description provided for @partnerSeatsOpenedSnack.
+  ///
+  /// In ko, this message translates to:
+  /// **'열렸어요. 고객 같은배 화면에 바로 보여요.'**
+  String get partnerSeatsOpenedSnack;
+
+  /// No description provided for @partnerExit.
+  ///
+  /// In ko, this message translates to:
+  /// **'나가기'**
+  String get partnerExit;
+
   /// No description provided for @partnerProductsGuide.
   ///
   /// In ko, this message translates to:
@@ -5787,7 +5811,7 @@ abstract class AppLocalizations {
   /// No description provided for @partnerProductSameBoatPending.
   ///
   /// In ko, this message translates to:
-  /// **'같은배 승인 대기'**
+  /// **'같은배 처리 중'**
   String get partnerProductSameBoatPending;
 
   /// No description provided for @partnerProductSameBoatLive.
@@ -7893,7 +7917,7 @@ abstract class AppLocalizations {
   /// No description provided for @briefSameBoatPartnerHint.
   ///
   /// In ko, this message translates to:
-  /// **'같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.'**
+  /// **'같은배 빈자리는 상품을 게시한 뒤, 상품 관리에서 바로 열 수 있어요.'**
   String get briefSameBoatPartnerHint;
 
   /// No description provided for @briefTempSaveNeedPhoto.

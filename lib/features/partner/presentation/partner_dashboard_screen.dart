@@ -147,6 +147,19 @@ class _HomeHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        IconButton(
+          key: const Key('partner-home-exit'),
+          icon: const Icon(
+            Icons.chevron_left,
+            color: PartnerTheme.text,
+            size: 28,
+          ),
+          tooltip: l10n.partnerExit,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          visualDensity: VisualDensity.compact,
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

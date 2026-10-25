@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -14,7 +15,10 @@ class PartnerComingSoonScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return PartnerTheme.wrap(
       Scaffold(
-        appBar: AppBar(title: Text(title)),
+        appBar: AppBar(
+          leading: const PartnerBackButton(),
+          title: Text(title),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),

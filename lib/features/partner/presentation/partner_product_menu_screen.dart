@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_open_seats_picker_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_products_screen.dart';
@@ -23,7 +24,10 @@ class PartnerProductMenuScreen extends StatelessWidget {
       Scaffold(
         appBar: embedded
             ? null
-            : AppBar(title: Text(l10n.partnerProductMenuTitle)),
+            : AppBar(
+                leading: const PartnerBackButton(),
+                title: Text(l10n.partnerProductMenuTitle),
+              ),
         body: SafeArea(
           child: ListenableBuilder(
             listenable: store,

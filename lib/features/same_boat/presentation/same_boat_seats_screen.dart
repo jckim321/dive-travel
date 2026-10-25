@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Creator UI: open leftover seats on a product (base package and/or individual SKUs).
 /// Submits as [SameBoatStatus.pending] for admin approval before the board goes live.
+///
+/// Partner path ([partnerLiveCopy]): goes live immediately; partner-only copy.
 class SameBoatSeatsScreen extends StatefulWidget {
   const SameBoatSeatsScreen({
     super.key,
     required this.product,
     this.adminBypassApproval = false,
     this.basePackageOnly = false,
+    this.partnerLiveCopy = false,
   });
 
   final ShopProduct product;
@@ -23,6 +27,9 @@ class SameBoatSeatsScreen extends StatefulWidget {
 
   /// Partner open-seats path: hide option/individual slots; edit package only.
   final bool basePackageOnly;
+
+  /// Partner H1a copy (빈자리 열기) instead of approval-request strings.
+  final bool partnerLiveCopy;
 
   @override
   State<SameBoatSeatsScreen> createState() => _SameBoatSeatsScreenState();
@@ -93,8 +100,14 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     }
 
     setState(() => _saving = true);
-    final next = _seats.applyToProduct(widget.product);
     try {
+      final base = widget.partnerLiveCopy
+          ? await store.requireFreshShopProduct(
+              shopId: widget.product.shopId,
+              productId: widget.product.id,
+            )
+          : widget.product;
+      final next = _seats.applyToProduct(base);
       await store.saveShopProduct(
         shopId: next.shopId,
         product: next,
@@ -104,9 +117,11 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.adminBypassApproval
-                ? l10n.sameBoatSeatsPublished
-                : l10n.sameBoatSeatsSubmitted,
+            widget.partnerLiveCopy
+                ? l10n.partnerSeatsOpenedSnack
+                : widget.adminBypassApproval
+                    ? l10n.sameBoatSeatsPublished
+                    : l10n.sameBoatSeatsSubmitted,
           ),
         ),
       );
@@ -123,13 +138,19 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
+    final partnerCopy = widget.partnerLiveCopy;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.sameBoatSeatsTitle)),
+      appBar: AppBar(
+        leading: partnerCopy ? const PartnerBackButton() : null,
+        title: Text(
+          partnerCopy ? l10n.partnerOpenSeatsTitle : l10n.sameBoatSeatsTitle,
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
           Text(
-            l10n.sameBoatSeatsHint,
+            partnerCopy ? l10n.partnerSeatsOpenHint : l10n.sameBoatSeatsHint,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
@@ -155,9 +176,11 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
             child: Text(
               waiting
                   ? l10n.sameBoatSeatsWaiting
-                  : widget.adminBypassApproval
-                      ? l10n.sameBoatSeatsPublish
-                      : l10n.sameBoatSeatsSubmit,
+                  : partnerCopy
+                      ? l10n.partnerSeatsOpenButton
+                      : widget.adminBypassApproval
+                          ? l10n.sameBoatSeatsPublish
+                          : l10n.sameBoatSeatsSubmit,
             ),
           ),
         ],

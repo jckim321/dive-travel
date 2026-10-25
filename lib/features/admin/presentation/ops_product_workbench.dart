@@ -29,6 +29,7 @@ import 'package:dive_travel_app/features/admin/presentation/product_submit_check
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
@@ -1954,6 +1955,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         backgroundColor: PartnerTheme.bg,
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
+          leading: PartnerBackButton(onPressed: () => unawaited(_handleSystemBack())),
           title: Text(l10n.briefTitle),
           actions: [
             if (_editing && _canTempSave)

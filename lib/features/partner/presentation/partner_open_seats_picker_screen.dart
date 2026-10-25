@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
@@ -23,7 +24,10 @@ class PartnerOpenSeatsPickerScreen extends StatelessWidget {
 
     return PartnerTheme.wrap(
       Scaffold(
-        appBar: AppBar(title: Text(l10n.partnerOpenSeatsTitle)),
+        appBar: AppBar(
+          leading: const PartnerBackButton(),
+          title: Text(l10n.partnerOpenSeatsTitle),
+        ),
         body: ListenableBuilder(
           listenable: store,
           builder: (context, _) {
@@ -77,6 +81,7 @@ class PartnerOpenSeatsPickerScreen extends StatelessWidget {
           SameBoatSeatsScreen(
             product: product,
             basePackageOnly: true,
+            partnerLiveCopy: true,
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -22,7 +23,10 @@ class PartnerBookingsTempScreen extends StatelessWidget {
 
     return PartnerTheme.wrap(
       Scaffold(
-        appBar: AppBar(title: Text(l10n.partnerQuickBookings)),
+        appBar: AppBar(
+          leading: const PartnerBackButton(),
+          title: Text(l10n.partnerQuickBookings),
+        ),
         body: ListenableBuilder(
           listenable: store,
           builder: (context, _) {

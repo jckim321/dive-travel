@@ -3057,6 +3057,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get partnerOpenSeatsPickHint => '같은배에 열 기본 상품을 고르세요.';
 
   @override
+  String get partnerSeatsOpenHint => '출발일·좌석 수·깃발 마감을 넣고 열면 고객 같은배 화면에 바로 보여요.';
+
+  @override
+  String get partnerSeatsOpenButton => '빈자리 열기';
+
+  @override
+  String get partnerSeatsOpenedSnack => '열렸어요. 고객 같은배 화면에 바로 보여요.';
+
+  @override
+  String get partnerExit => '나가기';
+
+  @override
   String get partnerProductsGuide =>
       '저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.';
 
@@ -3081,7 +3093,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get partnerProductSameBoatPending => '같은배 승인 대기';
+  String get partnerProductSameBoatPending => '같은배 처리 중';
 
   @override
   String partnerProductSameBoatLive(int seats, String date) {
@@ -4212,7 +4224,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get briefShopInfoOpen => '리조트 소개 열기';
 
   @override
-  String get briefSameBoatPartnerHint => '같은배 빈자리는 상품이 승인된 뒤, 상품 관리에서 열 수 있어요.';
+  String get briefSameBoatPartnerHint =>
+      '같은배 빈자리는 상품을 게시한 뒤, 상품 관리에서 바로 열 수 있어요.';
 
   @override
   String get briefTempSaveNeedPhoto => '사진을 한 장 이상 넣어 주세요.';

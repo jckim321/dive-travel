@@ -9,7 +9,9 @@ import 'package:dive_travel_app/core/data/dive_star_loi_pdf.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_loi_form_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Partner-facing list of approved public documents + LOI status.
@@ -86,8 +88,12 @@ class _PartnerDocumentsScreenState extends State<PartnerDocumentsScreen> {
     final channels =
         _config?.channelsForCountry(shop?.country ?? '') ?? const <String>[];
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.partnerDocsTitle)),
+    return PartnerTheme.wrap(
+      Scaffold(
+      appBar: AppBar(
+        leading: const PartnerBackButton(),
+        title: Text(l10n.partnerDocsTitle),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -199,6 +205,7 @@ class _PartnerDocumentsScreenState extends State<PartnerDocumentsScreen> {
                       ],
                   ],
                 ),
+      ),
     );
   }
 }
@@ -249,8 +256,12 @@ class _PartnerDocumentViewerPageState extends State<PartnerDocumentViewerPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final doc = widget.document;
-    return Scaffold(
-      appBar: AppBar(title: Text(doc.title)),
+    return PartnerTheme.wrap(
+      Scaffold(
+      appBar: AppBar(
+        leading: const PartnerBackButton(),
+        title: Text(doc.title),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
@@ -299,6 +310,7 @@ class _PartnerDocumentViewerPageState extends State<PartnerDocumentViewerPage> {
             ],
           ),
         ],
+      ),
       ),
     );
   }

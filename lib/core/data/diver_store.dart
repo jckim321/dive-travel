@@ -43,6 +43,49 @@ class ShopProductSaveResult {
   final bool stagedPriceOrNewOptions;
 }
 
+/// Merge readable cover/gallery URLs from [hydratedCovers] onto [current].
+///
+/// Only shop `coverUrl` / `galleryUrls` and each product's `coverUrl` are
+/// taken from the hydrated snapshot. Seat inventory, same-boat flags, and
+/// every other product/shop field keep the **current** values.
+@visibleForTesting
+List<ShopLiveStats> mergeHydratedShopCovers({
+  required List<ShopLiveStats> current,
+  required List<ShopLiveStats> hydratedCovers,
+}) {
+  final byId = {for (final item in hydratedCovers) item.shopId: item};
+  return [
+    for (final item in current)
+      if (byId.containsKey(item.shopId))
+        mergeShopCoverUrls(current: item, hydrated: byId[item.shopId]!)
+      else
+        item,
+  ];
+}
+
+@visibleForTesting
+ShopLiveStats mergeShopCoverUrls({
+  required ShopLiveStats current,
+  required ShopLiveStats hydrated,
+}) {
+  final productCovers = <String, String>{
+    for (final product in hydrated.products)
+      if (product.coverUrl.isNotEmpty) product.id: product.coverUrl,
+  };
+  return current.copyWith(
+    coverUrl: hydrated.coverUrl ?? current.coverUrl,
+    galleryUrls:
+        hydrated.galleryUrls.isEmpty ? current.galleryUrls : hydrated.galleryUrls,
+    products: [
+      for (final product in current.products)
+        if (productCovers.containsKey(product.id))
+          product.copyWith(coverUrl: productCovers[product.id]!)
+        else
+          product,
+    ],
+  );
+}
+
 /// Result of [DiverStore.discardPartnerOption].
 enum PartnerOptionDiscardResult { deleted, closed }
 
@@ -2060,6 +2103,13 @@ class DiverStore extends ChangeNotifier {
     return PartnerOptionDiscardResult.deleted;
   }
 
+  /// Reloads one shop then returns the product (partner close / seats open).
+  Future<ShopProduct> requireFreshShopProduct({
+    required String shopId,
+    required String productId,
+  }) =>
+      _requireFreshShopProduct(shopId, productId);
+
   Future<ShopProduct> _requireFreshShopProduct(
     String shopId,
     String productId,
@@ -2286,6 +2336,11 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  /// Call sites: [refreshShopStats], [refreshShopStat].
+  ///
+  /// Resolves readable cover/gallery URLs, then **merges URLs only** into the
+  /// current [_shopStats] via [mergeHydratedShopCovers] so seat / same-boat /
+  /// active fields are never rolled back by a stale hydrate snapshot.
   Future<void> _hydrateShopCovers(List<ShopLiveStats> stats) async {
     if (!R2Config.isReady || stats.isEmpty) {
       return;
@@ -2298,11 +2353,10 @@ class DiverStore extends ChangeNotifier {
       if (gen != _shopCoverHydrateGen) {
         return;
       }
-      final byId = {for (final item in hydrated) item.shopId: item};
-      _shopStats = [
-        for (final item in _shopStats) byId.remove(item.shopId) ?? item,
-        ...byId.values,
-      ];
+      _shopStats = mergeHydratedShopCovers(
+        current: _shopStats,
+        hydratedCovers: hydrated,
+      );
       notifyListeners();
     } catch (error) {
       debugPrint('R2 cover hydrate failed: $error');

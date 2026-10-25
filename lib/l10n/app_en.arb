@@ -1205,6 +1205,10 @@
   "partnerOpenSeatsTitle": "Open seats",
   "partnerOpenSeatsEmpty": "No listed base products yet. Publish a product first.",
   "partnerOpenSeatsPickHint": "Choose a base product to open on Same-boat.",
+  "partnerSeatsOpenHint": "Set departure, seats, and flag deadline — guests see it on Same-boat right away.",
+  "partnerSeatsOpenButton": "Open seats",
+  "partnerSeatsOpenedSnack": "Opened. Guests can see it on Same-boat right away.",
+  "partnerExit": "Exit",
   "partnerProductsGuide": "Saving publishes to Explore and Same-boat right away. Draft products can use temp save.",
   "partnerProductFilterAll": "All",
   "partnerProductsEmptyReason": "No products yet.",
@@ -1217,7 +1221,7 @@
       "price": { "type": "String" }
     }
   },
-  "partnerProductSameBoatPending": "Same-boat pending approval",
+  "partnerProductSameBoatPending": "Same-boat processing",
   "partnerProductSameBoatLive": "{seats} seats open · departs {date}",
   "@partnerProductSameBoatLive": {
     "placeholders": {
@@ -1675,7 +1679,7 @@
   "briefShopInfoTitle": "Shop & resort info",
   "briefShopInfoBody": "Name, location, and intro are managed on the resort desk.",
   "briefShopInfoOpen": "Open resort desk",
-  "briefSameBoatPartnerHint": "Same-boat leftover seats open from product management after approval.",
+  "briefSameBoatPartnerHint": "Open same-boat leftover seats from product management after you publish.",
   "briefTempSaveNeedPhoto": "Add at least one photo.",
   "briefTempSaveNeedPrice": "Enter a base price greater than 0.",
   "briefLeaveTitle": "Leave without saving?",
