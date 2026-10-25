@@ -1414,6 +1414,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminDiveStarSubForms => 'Forms';
 
   @override
+  String get adminDiveStarReviewSearch => 'Search shop name';
+
+  @override
+  String get adminDiveStarReviewPending => 'Awaiting review';
+
+  @override
+  String get adminDiveStarReviewEmpty => 'No partners match.';
+
+  @override
   String get adminBookingsSubList => 'Bookings';
 
   @override

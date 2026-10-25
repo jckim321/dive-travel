@@ -94,8 +94,8 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-menu-dive-star')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-sub-dive-star-apps')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsOneWidget);
     expect(find.byKey(const Key('admin-sub-dive-star-forms')), findsOneWidget);
-    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsNothing);
     expect(find.text(l10n.adminShopMonitor), findsNothing);
 
     expect(find.text(l10n.weatherAdminTitle), findsNothing);
@@ -160,6 +160,6 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-more-dive-star')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-sub-dive-star-apps')), findsOneWidget);
-    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsNothing);
+    expect(find.byKey(const Key('admin-sub-dive-star-review')), findsOneWidget);
   });
 }

@@ -1367,6 +1367,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminDiveStarSubForms => '양식';
 
   @override
+  String get adminDiveStarReviewSearch => '샵 이름 검색';
+
+  @override
+  String get adminDiveStarReviewPending => '심사 대기';
+
+  @override
+  String get adminDiveStarReviewEmpty => '조건에 맞는 파트너가 없습니다.';
+
+  @override
   String get adminBookingsSubList => '예약';
 
   @override

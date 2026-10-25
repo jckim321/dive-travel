@@ -2670,6 +2670,24 @@ abstract class AppLocalizations {
   /// **'양식'**
   String get adminDiveStarSubForms;
 
+  /// No description provided for @adminDiveStarReviewSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 이름 검색'**
+  String get adminDiveStarReviewSearch;
+
+  /// No description provided for @adminDiveStarReviewPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'심사 대기'**
+  String get adminDiveStarReviewPending;
+
+  /// No description provided for @adminDiveStarReviewEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건에 맞는 파트너가 없습니다.'**
+  String get adminDiveStarReviewEmpty;
+
   /// No description provided for @adminBookingsSubList.
   ///
   /// In ko, this message translates to:

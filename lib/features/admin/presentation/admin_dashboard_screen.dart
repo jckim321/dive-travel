@@ -20,6 +20,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_contract_vault
 import 'package:dive_travel_app/features/admin/presentation/admin_contracts_overview_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_trial_data_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_applications_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_review_list_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_form_import_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_hub_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -45,7 +46,7 @@ enum _AdminHub {
 
 enum _MembersSub { general, partners, instructors }
 
-enum _DiveStarSub { applications, forms }
+enum _DiveStarSub { applications, review, forms }
 
 enum _ProductsSub { catalog, seats, sameBoat, homeCuration }
 
@@ -378,19 +379,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _SubTabStrip(
             labels: [
               l10n.adminDiveStarSubApplications,
+              l10n.adminDiveStarSubReview,
               l10n.adminDiveStarSubForms,
             ],
             keys: const [
               Key('admin-sub-dive-star-apps'),
+              Key('admin-sub-dive-star-review'),
               Key('admin-sub-dive-star-forms'),
             ],
             selected: switch (_diveStarSub) {
-              _DiveStarSub.forms => 1,
-              _ => 0,
+              _DiveStarSub.review => 1,
+              _DiveStarSub.forms => 2,
+              _DiveStarSub.applications => 0,
             },
             onSelect: (i) => _go(
               _AdminHub.diveStar,
-              sub: i == 1 ? _DiveStarSub.forms : _DiveStarSub.applications,
+              sub: switch (i) {
+                1 => _DiveStarSub.review,
+                2 => _DiveStarSub.forms,
+                _ => _DiveStarSub.applications,
+              },
             ),
           ),
         ];
@@ -572,6 +580,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case _AdminHub.diveStar:
         return switch (_diveStarSub) {
           _DiveStarSub.applications => const AdminDiveStarApplicationsScreen(
+            embedded: true,
+          ),
+          _DiveStarSub.review => const AdminDiveStarReviewListScreen(
             embedded: true,
           ),
           _DiveStarSub.forms => const AdminDiveStarFormImportScreen(
