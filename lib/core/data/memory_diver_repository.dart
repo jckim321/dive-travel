@@ -29,6 +29,7 @@ import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -99,6 +100,7 @@ class MemoryDiverRepository implements DiverRepository {
   MemberGrade _memberGrade = MemberGrade.silver;
   final _shopStats = <String, ShopLiveStats>{};
   final _productChanges = <String, List<ProductChangeRecord>>{};
+  final _dailyStats = <String, Map<String, ShopDayStats>>{};
   final _shopReviews = <String, List<GuestReview>>{};
   /// Running shop sums for accurate edit/delete (mirrors Firestore sum_*).
   final _shopReviewSums = <String, List<double>>{};
@@ -3254,6 +3256,105 @@ class MemoryDiverRepository implements DiverRepository {
     if (rows.length > 12) {
       return rows.sublist(0, 12);
     }
+    return rows;
+  }
+
+  @override
+  Future<bool> recordShopDay({
+    required String shopId,
+    required DateTime now,
+    bool visit = false,
+    bool productView = false,
+  }) async {
+    if (!visit && !productView) {
+      return false;
+    }
+    final dayId = shopDayId(now);
+    final days = _dailyStats.putIfAbsent(shopId, () => {});
+    final current = days[dayId];
+    if (current == null) {
+      final created = ShopDayStats(
+        dayId: dayId,
+        visits: visit ? 1 : 0,
+        productViews: productView ? 1 : 0,
+        dwellSeconds: 0,
+      );
+      if (!dailyStatsCreateAllowed(
+        dayId: dayId,
+        visits: created.visits,
+        productViews: created.productViews,
+        dwellSeconds: created.dwellSeconds,
+      )) {
+        return false;
+      }
+      days[dayId] = created;
+      return true;
+    }
+    final next = ShopDayStats(
+      dayId: dayId,
+      visits: current.visits + (visit ? 1 : 0),
+      productViews: current.productViews + (productView ? 1 : 0),
+      dwellSeconds: current.dwellSeconds,
+    );
+    if (!dailyStatsUpdateAllowed(
+      exists: true,
+      visits: current.visits,
+      productViews: current.productViews,
+      dwellSeconds: current.dwellSeconds,
+      nextVisits: next.visits,
+      nextProductViews: next.productViews,
+      nextDwellSeconds: next.dwellSeconds,
+    )) {
+      return false;
+    }
+    days[dayId] = next;
+    return true;
+  }
+
+  @override
+  Future<bool> recordShopDwell({
+    required String shopId,
+    required DateTime now,
+    required int seconds,
+  }) async {
+    final dayId = shopDayId(now);
+    final current = _dailyStats[shopId]?[dayId];
+    if (current == null) {
+      return false;
+    }
+    final delta = cappedDwellDelta(seconds);
+    if (delta == 0) {
+      return true;
+    }
+    final nextDwell = current.dwellSeconds + delta;
+    if (!dailyStatsUpdateAllowed(
+      exists: true,
+      visits: current.visits,
+      productViews: current.productViews,
+      dwellSeconds: current.dwellSeconds,
+      nextVisits: current.visits,
+      nextProductViews: current.productViews,
+      nextDwellSeconds: nextDwell,
+    )) {
+      return false;
+    }
+    _dailyStats[shopId]![dayId] = ShopDayStats(
+      dayId: dayId,
+      visits: current.visits,
+      productViews: current.productViews,
+      dwellSeconds: nextDwell,
+    );
+    return true;
+  }
+
+  @override
+  Future<List<ShopDayStats>> listShopDailyStats(String shopId) async {
+    final days = _dailyStats[shopId];
+    if (days == null) {
+      return const [];
+    }
+    final rows = days.values.toList()
+      ..sort((a, b) => a.dayId.compareTo(b.dayId));
     return rows;
   }
 

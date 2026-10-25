@@ -4161,6 +4161,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerSettlementRateMissing => 'Commission rate not set';
 
   @override
+  String partnerStatsDwellLine(int total, int average) {
+    return 'Total $total min · average $average min';
+  }
+
+  @override
+  String get partnerStatsStrikeNoViews => 'No product views';
+
+  @override
   String get partnerSettlementListTitle => 'Bookings';
 
   @override

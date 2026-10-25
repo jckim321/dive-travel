@@ -7662,6 +7662,18 @@ abstract class AppLocalizations {
   /// **'수수료율 미입력'**
   String get partnerSettlementRateMissing;
 
+  /// No description provided for @partnerStatsDwellLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'총 {total}분 · 평균 {average}분'**
+  String partnerStatsDwellLine(int total, int average);
+
+  /// No description provided for @partnerStatsStrikeNoViews.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 조회가 없습니다'**
+  String get partnerStatsStrikeNoViews;
+
   /// No description provided for @partnerSettlementListTitle.
   ///
   /// In ko, this message translates to:

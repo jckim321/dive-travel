@@ -4039,6 +4039,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerSettlementRateMissing => '수수료율 미입력';
 
   @override
+  String partnerStatsDwellLine(int total, int average) {
+    return '총 $total분 · 평균 $average분';
+  }
+
+  @override
+  String get partnerStatsStrikeNoViews => '상품 조회가 없습니다';
+
+  @override
   String get partnerSettlementListTitle => '예약 내역';
 
   @override

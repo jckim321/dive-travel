@@ -20,6 +20,7 @@ import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -539,6 +540,24 @@ abstract class DiverRepository {
   });
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId);
+
+  /// Creates the day document on the first hit, then increments by at most one.
+  Future<bool> recordShopDay({
+    required String shopId,
+    required DateTime now,
+    bool visit = false,
+    bool productView = false,
+  });
+
+  /// Adds dwell only when today's document already exists.
+  /// Returns false, and writes nothing, when the document is missing.
+  Future<bool> recordShopDwell({
+    required String shopId,
+    required DateTime now,
+    required int seconds,
+  });
+
+  Future<List<ShopDayStats>> listShopDailyStats(String shopId);
 
   Future<void> deleteShopProduct({
     required String shopId,

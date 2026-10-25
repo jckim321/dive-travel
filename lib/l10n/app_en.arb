@@ -1664,6 +1664,14 @@
   "partnerSettlementNet": "Net sales",
   "partnerSettlementFeePending": "Contract terms coming soon",
   "partnerSettlementRateMissing": "Commission rate not set",
+  "partnerStatsDwellLine": "Total {total} min · average {average} min",
+  "@partnerStatsDwellLine": {
+    "placeholders": {
+      "total": {"type": "int"},
+      "average": {"type": "int"}
+    }
+  },
+  "partnerStatsStrikeNoViews": "No product views",
   "partnerSettlementListTitle": "Bookings",
   "partnerSettlementEmpty": "No paid bookings received this month",
 

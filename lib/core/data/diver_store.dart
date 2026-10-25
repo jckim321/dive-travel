@@ -38,6 +38,7 @@ import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
@@ -1503,6 +1504,36 @@ class DiverStore extends ChangeNotifier {
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId) {
     return _repository.listProductChanges(shopId);
+  }
+
+  Future<bool> recordShopDay({
+    required String shopId,
+    required DateTime now,
+    bool visit = false,
+    bool productView = false,
+  }) {
+    return _repository.recordShopDay(
+      shopId: shopId,
+      now: now,
+      visit: visit,
+      productView: productView,
+    );
+  }
+
+  Future<bool> recordShopDwell({
+    required String shopId,
+    required DateTime now,
+    required int seconds,
+  }) {
+    return _repository.recordShopDwell(
+      shopId: shopId,
+      now: now,
+      seconds: seconds,
+    );
+  }
+
+  Future<List<ShopDayStats>> listShopDailyStats(String shopId) {
+    return _repository.listShopDailyStats(shopId);
   }
 
   Future<List<PartnerContract>> listPartnerContracts(

@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_option_groups.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_sales_math.dart';
 import 'package:dive_travel_app/features/admin/analytics/admin_stats_math.dart';
@@ -22,6 +23,7 @@ class AdminStatsScreen extends StatefulWidget {
 class _AdminStatsScreenState extends State<AdminStatsScreen> {
   AdminStatsPreset _preset = AdminStatsPreset.thisMonth;
   AdminStatsSnapshot? _snapshot;
+  ShopCounterWindow? _counters;
   var _loading = true;
   String? _error;
 
@@ -45,6 +47,16 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
       final bookings = await store.loadAdminAnalyticsBookings(
         start: load.start,
         end: load.end,
+      );
+      final days = <ShopDayStats>[];
+      for (final stats in store.shopStats) {
+        days.addAll(await store.listShopDailyStats(stats.shopId));
+      }
+      final counters = sumShopCounters(
+        days: days,
+        start: window.start,
+        end: window.end,
+        bookings: bookings,
       );
       final applications = await store.listDiveStarApplications();
       if (!mounted) {
@@ -86,6 +98,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
           applications: applications,
           optionCatalog: optionCatalog,
         );
+        _counters = counters;
         _loading = false;
       });
     } catch (error) {
@@ -97,6 +110,41 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
         _error = '$error';
       });
     }
+  }
+
+  Widget _counterCard(AppLocalizations l10n, ShopCounterWindow counters) {
+    final dwellMinutes = (counters.dwellSeconds / 60).round();
+    final averageMinutes = counters.averageDwellSeconds == null
+        ? 0
+        : (counters.averageDwellSeconds! / 60).round();
+    final strike = counters.strikeRate;
+    return Container(
+      key: const Key('admin-stats-counters'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AdminConsoleTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AdminConsoleTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${l10n.partnerStatsKpiAppVisits}  ${counters.visits}'),
+          const SizedBox(height: 4),
+          Text('${l10n.partnerStatsKpiProductViews}  ${counters.productViews}'),
+          const SizedBox(height: 4),
+          Text(l10n.partnerStatsDwellLine(dwellMinutes, averageMinutes)),
+          const SizedBox(height: 4),
+          Text(
+            strike == null
+                ? l10n.partnerStatsStrikeNoViews
+                : '${l10n.partnerStatsSecStrike}  ${(strike * 100).round()}%',
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -146,6 +194,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                 child: Text(_error!, style: const TextStyle(color: AdminConsoleTheme.danger)),
               ),
             const SizedBox(height: 12),
+            if (_counters != null) _counterCard(l10n, _counters!),
             Wrap(
               spacing: gap,
               runSpacing: gap,

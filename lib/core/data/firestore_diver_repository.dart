@@ -34,6 +34,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -3966,6 +3967,124 @@ class FirestoreDiverRepository implements DiverRepository {
     if (rows.length > 12) {
       return rows.sublist(0, 12);
     }
+    return rows;
+  }
+
+  DocumentReference<Map<String, dynamic>> _dailyStatsDoc(
+    String shopId,
+    DateTime now,
+  ) =>
+      _shops.doc(shopId).collection('daily_stats').doc(shopDayId(now));
+
+  @override
+  Future<bool> recordShopDay({
+    required String shopId,
+    required DateTime now,
+    bool visit = false,
+    bool productView = false,
+  }) async {
+    if (!visit && !productView) {
+      return false;
+    }
+    final ref = _dailyStatsDoc(shopId, now);
+    return _db.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+      if (!snap.exists) {
+        final created = ShopDayStats(
+          dayId: ref.id,
+          visits: visit ? 1 : 0,
+          productViews: productView ? 1 : 0,
+          dwellSeconds: 0,
+        );
+        if (!dailyStatsCreateAllowed(
+          dayId: created.dayId,
+          visits: created.visits,
+          productViews: created.productViews,
+          dwellSeconds: created.dwellSeconds,
+        )) {
+          return false;
+        }
+        transaction.set(ref, created.toMap());
+        return true;
+      }
+      final data = snap.data() ?? const <String, dynamic>{};
+      final visits = (data['visits'] as num?)?.toInt() ?? 0;
+      final views = (data['product_views'] as num?)?.toInt() ?? 0;
+      final dwell = (data['dwell_seconds'] as num?)?.toInt() ?? 0;
+      final nextVisits = visits + (visit ? 1 : 0);
+      final nextViews = views + (productView ? 1 : 0);
+      if (!dailyStatsUpdateAllowed(
+        exists: true,
+        visits: visits,
+        productViews: views,
+        dwellSeconds: dwell,
+        nextVisits: nextVisits,
+        nextProductViews: nextViews,
+        nextDwellSeconds: dwell,
+      )) {
+        return false;
+      }
+      transaction.update(ref, {
+        'visits': nextVisits,
+        'product_views': nextViews,
+      });
+      return true;
+    });
+  }
+
+  @override
+  Future<bool> recordShopDwell({
+    required String shopId,
+    required DateTime now,
+    required int seconds,
+  }) async {
+    final delta = cappedDwellDelta(seconds);
+    if (delta == 0) {
+      return true;
+    }
+    final ref = _dailyStatsDoc(shopId, now);
+    return _db.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+      if (!snap.exists) {
+        return false;
+      }
+      final data = snap.data() ?? const <String, dynamic>{};
+      final visits = (data['visits'] as num?)?.toInt() ?? 0;
+      final views = (data['product_views'] as num?)?.toInt() ?? 0;
+      final dwell = (data['dwell_seconds'] as num?)?.toInt() ?? 0;
+      final nextDwell = dwell + delta;
+      if (!dailyStatsUpdateAllowed(
+        exists: true,
+        visits: visits,
+        productViews: views,
+        dwellSeconds: dwell,
+        nextVisits: visits,
+        nextProductViews: views,
+        nextDwellSeconds: nextDwell,
+      )) {
+        return false;
+      }
+      transaction.update(ref, {'dwell_seconds': nextDwell});
+      return true;
+    });
+  }
+
+  @override
+  Future<List<ShopDayStats>> listShopDailyStats(String shopId) async {
+    final snap = await _shops.doc(shopId).collection('daily_stats').get();
+    final rows = <ShopDayStats>[];
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      rows.add(
+        ShopDayStats(
+          dayId: doc.id,
+          visits: (data['visits'] as num?)?.toInt() ?? 0,
+          productViews: (data['product_views'] as num?)?.toInt() ?? 0,
+          dwellSeconds: (data['dwell_seconds'] as num?)?.toInt() ?? 0,
+        ),
+      );
+    }
+    rows.sort((a, b) => a.dayId.compareTo(b.dayId));
     return rows;
   }
 

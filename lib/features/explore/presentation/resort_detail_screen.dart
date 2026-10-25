@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -43,6 +45,9 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
   DiverStore? _store;
   var _listening = false;
   int _contentSig = 0;
+  var _visitStarted = false;
+  var _visitReady = false;
+  DateTime? _visitAt;
 
   DiverStore _storeRead(BuildContext context) {
     final scope = context.getInheritedWidgetOfExactType<DiverStoreScope>();
@@ -104,6 +109,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     if (!_listening) {
       _listening = true;
       store.addListener(_onStoreTick);
+      _beginVisit(store);
       final listings = store.listingsOnHull(widget.hullId);
       if (listings.isNotEmpty) {
         final hull = listings.first;
@@ -117,8 +123,41 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     }
   }
 
+  void _beginVisit(DiverStore store) {
+    if (_visitStarted) {
+      return;
+    }
+    _visitStarted = true;
+    final shopId = widget.hullId.split('--').first;
+    if (shopId.isEmpty) {
+      return;
+    }
+    unawaited(() async {
+      final ok = await store.recordShopDay(
+        shopId: shopId,
+        now: DateTime.now(),
+        visit: true,
+      );
+      _visitReady = ok;
+      _visitAt = DateTime.now();
+    }());
+  }
+
   @override
   void dispose() {
+    final store = _store;
+    final at = _visitAt;
+    if (_visitReady && store != null && at != null) {
+      final shopId = widget.hullId.split('--').first;
+      final seconds = DateTime.now().difference(at).inSeconds;
+      unawaited(
+        store.recordShopDwell(
+          shopId: shopId,
+          now: DateTime.now(),
+          seconds: seconds,
+        ),
+      );
+    }
     if (_listening) {
       _store?.removeListener(_onStoreTick);
       _listening = false;
@@ -599,6 +638,13 @@ List<Widget> _productBoxes({
             .where((offer) => offer.product.id == product.id)
             .length,
         onBook: (presetOptionId) {
+          unawaited(
+            store.recordShopDay(
+              shopId: hull.hullId,
+              now: DateTime.now(),
+              productView: true,
+            ),
+          );
           showTourCheckoutSheet(
             context: context,
             shop: shop,

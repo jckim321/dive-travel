@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_chart_shells.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_stats_logic.dart';
@@ -26,6 +27,22 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
   final _keyDwell = GlobalKey();
   final _keyStrike = GlobalKey();
   final _keyResult = GlobalKey();
+  List<ShopDayStats> _days = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDays());
+  }
+
+  Future<void> _loadDays() async {
+    final days = await DiverStoreScope.of(context)
+        .listShopDailyStats(widget.shopId);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _days = days);
+  }
 
   void _scrollTo(GlobalKey key) {
     final ctx = key.currentContext;
@@ -64,6 +81,21 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
               bookings: store.shopBookings,
               period: _period,
             );
+            final now = DateTime.now();
+            final start = partnerStatsPeriodStart(_period, now);
+            final end = DateTime(now.year, now.month, now.day)
+                .add(const Duration(days: 1));
+            final counters = sumShopCounters(
+              days: _days,
+              start: start,
+              end: end,
+              bookings: store.shopBookings,
+            );
+            final dwellMinutes = (counters.dwellSeconds / 60).round();
+            final averageMinutes = counters.averageDwellSeconds == null
+                ? 0
+                : (counters.averageDwellSeconds! / 60).round();
+            final strike = counters.strikeRate;
 
             return ListView(
               key: const Key('partner-stats'),
@@ -94,26 +126,22 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: _KpiShell(label: l10n.partnerStatsKpiAppVisits),
+                            child: _KpiShell(
+                              label: l10n.partnerStatsKpiAppVisits,
+                              value: '${counters.visits}',
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: _KpiShell(
                               label: l10n.partnerStatsKpiProductViews,
+                              value: '${counters.productViews}',
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       const PartnerLineChartShell(),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.partnerStatsCollecting,
-                        style: const TextStyle(
-                          color: PartnerTheme.textDim,
-                          fontSize: 12,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -146,7 +174,8 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
                       const PartnerHorizontalBarsShell(withAvgLine: true),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.partnerStatsCollecting,
+                        l10n.partnerStatsDwellLine(dwellMinutes, averageMinutes),
+                        key: const Key('partner-stats-dwell'),
                         style: const TextStyle(
                           color: PartnerTheme.textDim,
                           fontSize: 12,
@@ -177,10 +206,14 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.partnerStatsCollecting,
+                        strike == null
+                            ? l10n.partnerStatsStrikeNoViews
+                            : '${(strike * 100).round()}%',
+                        key: const Key('partner-stats-strike'),
                         style: const TextStyle(
-                          color: PartnerTheme.textDim,
-                          fontSize: 12,
+                          color: PartnerTheme.text,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -457,9 +490,10 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _KpiShell extends StatelessWidget {
-  const _KpiShell({required this.label});
+  const _KpiShell({required this.label, this.value});
 
   final String label;
+  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -483,10 +517,11 @@ class _KpiShell extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            AppLocalizations.of(context).partnerStatsCollecting,
-            style: const TextStyle(
-              color: PartnerTheme.textDim,
-              fontSize: 12,
+            value ?? AppLocalizations.of(context).partnerStatsCollecting,
+            style: TextStyle(
+              color: value == null ? PartnerTheme.textDim : PartnerTheme.text,
+              fontSize: value == null ? 12 : 18,
+              fontWeight: value == null ? FontWeight.w500 : FontWeight.w800,
             ),
           ),
         ],
