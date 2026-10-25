@@ -5,6 +5,7 @@ import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
 import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -154,8 +155,15 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
     final l10n = await loadKo();
+
+    // H8: partner auto-opens home — return to MainShell for explore edit path.
+    final partnerHome = find.byType(PartnerDashboardScreen);
+    if (partnerHome.evaluate().isNotEmpty) {
+      Navigator.of(tester.element(partnerHome)).pop();
+      await tester.pumpAndSettle();
+    }
 
     await tester.tap(find.text(l10n.navExplore));
     await tester.pumpAndSettle();

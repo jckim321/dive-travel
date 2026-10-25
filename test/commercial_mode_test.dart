@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -191,9 +192,17 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
     final l10n = await loadKo();
 
+    // H8: partner accounts auto-open PartnerDashboard after sign-in.
+    expect(find.byType(PartnerDashboardScreen), findsOneWidget);
+    expect(find.byKey(const Key('partner-quick-products')), findsOneWidget);
+    expect(find.text(l10n.partnerQuickProducts), findsOneWidget);
+
+    // Settings still exposes partner entry after leaving partner home.
+    Navigator.of(tester.element(find.byType(PartnerDashboardScreen))).pop();
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.navProfile));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-profile-settings')));
@@ -206,11 +215,6 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('open-partner-mode')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('open-partner-mode')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('open-partner-mode')));
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.partnerTitle), findsWidgets);
-    expect(find.byKey(const Key('partner-quick-products')), findsOneWidget);
-    expect(find.text(l10n.partnerQuickProducts), findsOneWidget);
   });
 
   testWidgets('같은배 탭은 빈자리를 연 상품이 없으면 탐색으로 안내한다', (tester) async {
