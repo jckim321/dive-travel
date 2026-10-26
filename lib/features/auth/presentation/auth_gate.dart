@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/device_pin_controller.dart';
+import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dashboard_screen.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_screen.dart';
 import 'package:dive_travel_app/features/auth/presentation/device_pin_dialogs.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
@@ -20,8 +22,15 @@ class AuthGate extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    // Guests browse the shell. Sign-in stays a sheet over the current screen.
-    return const _SignedInHome();
+    return AnimatedBuilder(
+      animation: guestBrowse,
+      builder: (context, _) {
+        if (!session.isSignedIn && !guestBrowse.browsing) {
+          return const AuthScreen(showBrowseLink: true);
+        }
+        return const _SignedInHome();
+      },
+    );
   }
 }
 
@@ -36,7 +45,6 @@ class _SignedInHomeState extends State<_SignedInHome> {
   DiverStore? _store;
   DevicePinController? _pins;
   String? _openedForUid;
-  /// After the first settled profile load; restored sessions skip auto-open.
   var _staffRoutePrimed = false;
 
   @override
@@ -64,8 +72,6 @@ class _SignedInHomeState extends State<_SignedInHome> {
     super.dispose();
   }
 
-  /// After a fresh staff sign-in (and device PIN if set), open HQ / partner.
-  /// Cold start with an already-signed-in session stays on the customer shell.
   void _maybeOpenStaffConsole() {
     if (!mounted) {
       return;
@@ -91,7 +97,6 @@ class _SignedInHomeState extends State<_SignedInHome> {
     }
     if (!_staffRoutePrimed) {
       _staffRoutePrimed = true;
-      // Admin cold start stays on the customer shell; partners still auto-open (H8).
       if (live.isAdmin) {
         _openedForUid = uid;
         return;
@@ -135,7 +140,6 @@ class _SignedInHomeState extends State<_SignedInHome> {
     final uid = store.uid;
     final live = store.stats;
     final staff = live.isAdmin || live.isBusiness;
-    // While prefs load, show the shell; switch to unlock once ready.
     if (pins.ready &&
         pins.needsUnlock(uid: uid, isStaff: staff) &&
         uid != null &&

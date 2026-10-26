@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
@@ -267,6 +269,11 @@ class MemoryDiverRepository implements DiverRepository {
     String? displayName,
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool marketingOptIn = false,
   }) async {
     await signIn(email: email, password: password);
     if (displayName != null && displayName.trim().isNotEmpty && _user != null) {
@@ -285,6 +292,11 @@ class MemoryDiverRepository implements DiverRepository {
       _user!,
       loginId: loginId,
       nationality: nationality,
+      birthDate: birthDate,
+      phone: phone,
+      termsAccepted: termsAccepted,
+      privacyAccepted: privacyAccepted,
+      marketingOptIn: marketingOptIn,
     );
   }
 
@@ -606,12 +618,24 @@ class MemoryDiverRepository implements DiverRepository {
 
   String _nationality = '';
   DateTime? _nationalityConsentAt;
+  String _birthDate = '';
+  String _phone = '';
+  final _consentByUid = <String, Map<String, Object?>>{};
+
+  /// Test helper: last consent payload written for [uid].
+  @visibleForTesting
+  Map<String, Object?>? debugConsentFor(String uid) => _consentByUid[uid];
 
   @override
   Future<void> ensureUserDocument(
     AppUser user, {
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool? termsAccepted,
+    bool? privacyAccepted,
+    bool? marketingOptIn,
   }) async {
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty) {
@@ -621,6 +645,31 @@ class MemoryDiverRepository implements DiverRepository {
     if (country != null) {
       _nationality = country;
       _nationalityConsentAt = DateTime.now().toUtc();
+    }
+    final birth = (birthDate ?? '').trim();
+    if (birth.isNotEmpty) {
+      _birthDate = birth;
+    }
+    final contact = (phone ?? '').trim();
+    if (contact.isNotEmpty) {
+      _phone = contact;
+    }
+    final now = DateTime.now().toUtc();
+    final consent = Map<String, Object?>.from(_consentByUid[user.uid] ?? {});
+    if (termsAccepted == true) {
+      consent['consent_terms'] = true;
+      consent['consent_terms_at'] = now;
+    }
+    if (privacyAccepted == true) {
+      consent['consent_privacy'] = true;
+      consent['consent_privacy_at'] = now;
+    }
+    if (marketingOptIn != null) {
+      consent['consent_marketing'] = marketingOptIn;
+      consent['consent_marketing_at'] = now;
+    }
+    if (consent.isNotEmpty) {
+      _consentByUid[user.uid] = consent;
     }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
@@ -634,6 +683,8 @@ class MemoryDiverRepository implements DiverRepository {
       memberGrade: _memberGrade,
       nationality: _nationality,
       nationalityConsentAt: _nationalityConsentAt,
+      birthDate: _birthDate,
+      phone: _phone,
     );
     _diverController.add(_snapshot);
   }

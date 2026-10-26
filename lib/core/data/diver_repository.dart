@@ -36,6 +36,11 @@ abstract class DiverRepository {
     String? displayName,
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool marketingOptIn = false,
   });
 
   Future<void> signOut();
@@ -44,10 +49,16 @@ abstract class DiverRepository {
 
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
   /// [nationality]가 있으면 nationality와 nationality_consent_at을 같이 씁니다.
+  /// Optional profile / consent fields are merged onto the same users doc.
   Future<void> ensureUserDocument(
     AppUser user, {
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool? termsAccepted,
+    bool? privacyAccepted,
+    bool? marketingOptIn,
   });
 
   /// Saves a country code and the consent time together.

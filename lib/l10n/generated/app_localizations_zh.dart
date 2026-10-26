@@ -1223,10 +1223,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authIdRuleHint => '한글·영문·숫자·_ 가능';
 
   @override
+  String get authIdRuleHintLong => '앱에서 보이는 이름 · 한글·영문·숫자 모두 가능';
+
+  @override
+  String get authIdFieldHint => '아이디를 입력하세요';
+
+  @override
+  String get authIdExampleHint => '예: 바다거북';
+
+  @override
   String get authPasswordRuleHint => '6자 이상';
 
   @override
+  String get authPasswordFieldHint => '비밀번호를 입력하세요';
+
+  @override
   String get authKeepSignedIn => '이 기기에서는 계속 로그인해 두기';
+
+  @override
+  String get authKeepSignedInShort => '로그인 상태 유지';
+
+  @override
+  String get authWelcomeBanner => '다이브 트래블에 오신 것을 환영합니다';
+
+  @override
+  String get authBrowseFirst => '먼저 둘러보기';
+
+  @override
+  String get authFooterCheer => '다이브 트래블은 당신의 다음 바다를 응원합니다';
+
+  @override
+  String get authFooterContact => '문의 | help@divetravel.com';
+
+  @override
+  String get authSignupHeroBody => '30초면 끝나요. 필요한 것만 받을게요.';
+
+  @override
+  String get authSignupMoreAbout => '나를 더 소개하기 (선택)';
+
+  @override
+  String get authSignupMoreAboutHint => '이름·생년월일·연락처·국적 · 결제 때 자동으로 채워져요';
+
+  @override
+  String get authSignupLegalName => '이름';
+
+  @override
+  String get authSignupLegalNameHint => '결제·예약에 쓸 이름';
+
+  @override
+  String get authSignupBirthDate => '생년월일';
+
+  @override
+  String get authSignupPhone => '연락처';
+
+  @override
+  String get authSignupPhoneHint => '휴대폰 번호';
+
+  @override
+  String get authConsentAll => '모두 동의하기';
+
+  @override
+  String get authConsentTerms => '이용약관 동의 (필수)';
+
+  @override
+  String get authConsentPrivacy => '개인정보 수집·이용 동의 (필수)';
+
+  @override
+  String get authConsentMarketing => '이벤트·소식 알림 받기 (선택)';
+
+  @override
+  String get authTermsView => '보기';
+
+  @override
+  String get authTermsClose => '닫기';
+
+  @override
+  String get authSignupAndBrowse => '가입하고 여행 둘러보기';
+
+  @override
+  String get authHaveAccountPrompt => '이미 계정이 있나요?';
+
+  @override
+  String get authErrorTermsRequired => '필수 약관에 동의해 주세요.';
 
   @override
   String get authStart => '시작하기';

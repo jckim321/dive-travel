@@ -2388,17 +2388,173 @@ abstract class AppLocalizations {
   /// **'한글·영문·숫자·_ 가능'**
   String get authIdRuleHint;
 
+  /// No description provided for @authIdRuleHintLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱에서 보이는 이름 · 한글·영문·숫자 모두 가능'**
+  String get authIdRuleHintLong;
+
+  /// No description provided for @authIdFieldHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디를 입력하세요'**
+  String get authIdFieldHint;
+
+  /// No description provided for @authIdExampleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 바다거북'**
+  String get authIdExampleHint;
+
   /// No description provided for @authPasswordRuleHint.
   ///
   /// In ko, this message translates to:
   /// **'6자 이상'**
   String get authPasswordRuleHint;
 
+  /// No description provided for @authPasswordFieldHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 입력하세요'**
+  String get authPasswordFieldHint;
+
   /// No description provided for @authKeepSignedIn.
   ///
   /// In ko, this message translates to:
   /// **'이 기기에서는 계속 로그인해 두기'**
   String get authKeepSignedIn;
+
+  /// No description provided for @authKeepSignedInShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인 상태 유지'**
+  String get authKeepSignedInShort;
+
+  /// No description provided for @authWelcomeBanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브 트래블에 오신 것을 환영합니다'**
+  String get authWelcomeBanner;
+
+  /// No description provided for @authBrowseFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 둘러보기'**
+  String get authBrowseFirst;
+
+  /// No description provided for @authFooterCheer.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브 트래블은 당신의 다음 바다를 응원합니다'**
+  String get authFooterCheer;
+
+  /// No description provided for @authFooterContact.
+  ///
+  /// In ko, this message translates to:
+  /// **'문의 | help@divetravel.com'**
+  String get authFooterContact;
+
+  /// No description provided for @authSignupHeroBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'30초면 끝나요. 필요한 것만 받을게요.'**
+  String get authSignupHeroBody;
+
+  /// No description provided for @authSignupMoreAbout.
+  ///
+  /// In ko, this message translates to:
+  /// **'나를 더 소개하기 (선택)'**
+  String get authSignupMoreAbout;
+
+  /// No description provided for @authSignupMoreAboutHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름·생년월일·연락처·국적 · 결제 때 자동으로 채워져요'**
+  String get authSignupMoreAboutHint;
+
+  /// No description provided for @authSignupLegalName.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get authSignupLegalName;
+
+  /// No description provided for @authSignupLegalNameHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제·예약에 쓸 이름'**
+  String get authSignupLegalNameHint;
+
+  /// No description provided for @authSignupBirthDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'생년월일'**
+  String get authSignupBirthDate;
+
+  /// No description provided for @authSignupPhone.
+  ///
+  /// In ko, this message translates to:
+  /// **'연락처'**
+  String get authSignupPhone;
+
+  /// No description provided for @authSignupPhoneHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'휴대폰 번호'**
+  String get authSignupPhoneHint;
+
+  /// No description provided for @authConsentAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 동의하기'**
+  String get authConsentAll;
+
+  /// No description provided for @authConsentTerms.
+  ///
+  /// In ko, this message translates to:
+  /// **'이용약관 동의 (필수)'**
+  String get authConsentTerms;
+
+  /// No description provided for @authConsentPrivacy.
+  ///
+  /// In ko, this message translates to:
+  /// **'개인정보 수집·이용 동의 (필수)'**
+  String get authConsentPrivacy;
+
+  /// No description provided for @authConsentMarketing.
+  ///
+  /// In ko, this message translates to:
+  /// **'이벤트·소식 알림 받기 (선택)'**
+  String get authConsentMarketing;
+
+  /// No description provided for @authTermsView.
+  ///
+  /// In ko, this message translates to:
+  /// **'보기'**
+  String get authTermsView;
+
+  /// No description provided for @authTermsClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get authTermsClose;
+
+  /// No description provided for @authSignupAndBrowse.
+  ///
+  /// In ko, this message translates to:
+  /// **'가입하고 여행 둘러보기'**
+  String get authSignupAndBrowse;
+
+  /// No description provided for @authHaveAccountPrompt.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 계정이 있나요?'**
+  String get authHaveAccountPrompt;
+
+  /// No description provided for @authErrorTermsRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'필수 약관에 동의해 주세요.'**
+  String get authErrorTermsRequired;
 
   /// No description provided for @authStart.
   ///

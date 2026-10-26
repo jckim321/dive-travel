@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
@@ -13,13 +14,20 @@ void main() {
 
   setUp(() {
     previous = deviceKnownMember;
+    guestBrowse.reset();
   });
 
   tearDown(() {
     deviceKnownMember = previous;
+    guestBrowse.reset();
   });
 
   testWidgets('새 방문자는 전체 로그인 화면으로 이어진다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     deviceKnownMember = MemoryKnownMemberStore();
     final repo = MemoryDiverRepository();
     final session = SessionController(repo);
@@ -45,15 +53,28 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
     expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
-    expect(find.text(l10n.authFirstVisit), findsOneWidget);
-    await tester.tap(find.byKey(const Key('auth-choose-signup')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text(l10n.authWelcomeBack), findsWidgets);
 
-    await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
-    await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
-    await tester.tap(find.byKey(const Key('auth-submit')));
-    for (var i = 0; i < 40; i++) {
+    await tester.tap(find.byKey(const Key('auth-tab-signup')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byKey(const Key('auth-signup-screen')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('auth-signup-login-id')),
+      '바다',
+    );
+    await tester.enterText(
+      find.byKey(const Key('auth-signup-password')),
+      'secret12',
+    );
+    await tester.ensureVisible(find.byKey(const Key('auth-consent-terms')));
+    await tester.tap(find.byKey(const Key('auth-consent-terms')));
+    await tester.ensureVisible(find.byKey(const Key('auth-consent-privacy')));
+    await tester.tap(find.byKey(const Key('auth-consent-privacy')));
+    await tester.ensureVisible(find.byKey(const Key('auth-signup-submit')));
+    await tester.tap(find.byKey(const Key('auth-signup-submit')));
+    for (var i = 0; i < 50; i++) {
       await tester.pump(const Duration(milliseconds: 50));
       if (session.isSignedIn &&
           find.byKey(const Key('auth-full-screen')).evaluate().isEmpty) {
@@ -93,7 +114,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('auth-sign-in-sheet')), findsOneWidget);
     expect(find.byKey(const Key('auth-full-screen')), findsNothing);
-    expect(find.text(l10n.authWelcomeBack), findsOneWidget);
+    expect(find.text(l10n.authWelcomeBack), findsWidgets);
 
     await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
     await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/auth/presentation/signup_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Id + password submitted from [AuthCredentialsForm].
@@ -19,15 +20,13 @@ class AuthCredentials {
   final bool signUp;
   final String nameTag;
   final String password;
-
-  /// True keeps the session after the browser closes.
   final bool keepSignedIn;
   final String authEmail;
   final String displayName;
   final String loginId;
 }
 
-/// Sign-up / sign-in fields shared by the auth page and login sheet.
+/// Compact returning-device sheet: login fields; 「처음이에요」 opens [SignupScreen].
 class AuthCredentialsForm extends StatefulWidget {
   const AuthCredentialsForm({
     super.key,
@@ -35,15 +34,13 @@ class AuthCredentialsForm extends StatefulWidget {
     this.busy = false,
     this.errorText,
     this.onSignUpChanged,
-    this.initialSignUp = true,
+    this.initialSignUp = false,
   });
 
   final Future<void> Function(AuthCredentials credentials) onSubmit;
   final bool busy;
   final String? errorText;
   final ValueChanged<bool>? onSignUpChanged;
-
-  /// True opens 「처음이에요」; false opens 「다시 왔어요」.
   final bool initialSignUp;
 
   @override
@@ -53,15 +50,15 @@ class AuthCredentialsForm extends StatefulWidget {
 class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
   final _nameTag = TextEditingController();
   final _password = TextEditingController();
-  late var _signUp = widget.initialSignUp;
   var _keepSignedIn = true;
+  var _obscure = true;
   String? _localError;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onSignUpChanged?.call(_signUp);
+      widget.onSignUpChanged?.call(false);
     });
   }
 
@@ -72,13 +69,13 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
     super.dispose();
   }
 
-  void _setSignUp(bool signUp) {
-    if (_signUp == signUp) return;
-    setState(() {
-      _signUp = signUp;
-      _localError = null;
-    });
-    widget.onSignUpChanged?.call(signUp);
+  Future<void> _openSignup() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => const SignupScreen()),
+    );
+    if (ok == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   Future<void> _submit() async {
@@ -87,7 +84,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
     final password = _password.text;
     setState(() => _localError = null);
 
-    final issue = AuthIdentity.nameTagIssue(nameTag, allowEmail: !_signUp);
+    final issue = AuthIdentity.nameTagIssue(nameTag, allowEmail: true);
     if (issue != null) {
       setState(() => _localError = _issueMessage(l10n, issue));
       return;
@@ -100,7 +97,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
     final trimmed = nameTag.trim();
     await widget.onSubmit(
       AuthCredentials(
-        signUp: _signUp,
+        signUp: false,
         nameTag: trimmed,
         password: password,
         keepSignedIn: _keepSignedIn,
@@ -124,22 +121,27 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
     }
   }
 
-  InputDecoration _fieldDecoration(String label) {
+  InputDecoration _fieldDecoration({
+    required String label,
+    required String hint,
+    required IconData prefix,
+    Widget? suffix,
+  }) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFFD5DBE0)),
+    );
     return InputDecoration(
       labelText: label,
+      hintText: hint,
       filled: true,
-      fillColor: AppTheme.seaMist,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-        borderSide: const BorderSide(color: AppTheme.oceanLight, width: 1.2),
+      fillColor: Colors.white,
+      prefixIcon: Icon(prefix, color: AppTheme.muted, size: 22),
+      suffixIcon: suffix,
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: AppTheme.oceanLight, width: 1.4),
       ),
     );
   }
@@ -148,11 +150,6 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final error = _localError ?? widget.errorText;
-    final hintStyle = TextStyle(
-      fontSize: 12,
-      height: 1.3,
-      color: AppTheme.muted.withValues(alpha: 0.95),
-    );
     return Column(
       key: const Key('auth-credentials-form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,67 +159,52 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
             _AuthTab(
               key: const Key('auth-tab-signup'),
               label: l10n.authFirstVisit,
-              selected: _signUp,
-              onTap: () => _setSignUp(true),
+              selected: false,
+              onTap: _openSignup,
             ),
             const SizedBox(width: 22),
             _AuthTab(
               key: const Key('auth-tab-login'),
               label: l10n.authWelcomeBack,
-              selected: !_signUp,
-              onTap: () => _setSignUp(false),
+              selected: true,
+              onTap: () {},
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          child: _ModeIntro(
-            key: ValueKey(_signUp),
-            title: _signUp
-                ? l10n.authSignupPanelTitle
-                : l10n.authLoginPanelTitle,
-            body: _signUp
-                ? l10n.authSignupPanelBody
-                : l10n.authLoginPanelBody,
-          ),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         TextField(
           key: const Key('auth-login-id'),
           controller: _nameTag,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.username],
-          decoration: _fieldDecoration(l10n.authNameTag),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 4, top: 6),
-          child: Text(
-            l10n.authIdRuleHint,
-            key: const Key('auth-id-rule-hint'),
-            style: hintStyle,
+          decoration: _fieldDecoration(
+            label: l10n.authNameTag,
+            hint: l10n.authIdFieldHint,
+            prefix: Icons.person_outline,
           ),
         ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('auth-password'),
           controller: _password,
-          obscureText: true,
+          obscureText: _obscure,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
-          decoration: _fieldDecoration(l10n.authPassword),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 4, top: 6),
-          child: Text(
-            l10n.authPasswordRuleHint,
-            key: const Key('auth-password-rule-hint'),
-            style: hintStyle,
+          decoration: _fieldDecoration(
+            label: l10n.authPassword,
+            hint: l10n.authPasswordFieldHint,
+            prefix: Icons.lock_outline,
+            suffix: IconButton(
+              onPressed: () => setState(() => _obscure = !_obscure),
+              icon: Icon(
+                _obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: AppTheme.muted,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 4),
         CheckboxListTile(
           key: const Key('auth-keep-signed-in'),
           contentPadding: EdgeInsets.zero,
@@ -232,19 +214,18 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
               : (value) => setState(() => _keepSignedIn = value ?? true),
           controlAffinity: ListTileControlAffinity.leading,
           title: Text(
-            l10n.authKeepSignedIn,
+            l10n.authKeepSignedInShort,
             style: const TextStyle(fontSize: 14),
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: 4),
           Text(
             error,
             key: const Key('auth-error'),
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
+          const SizedBox(height: 8),
         ],
-        const SizedBox(height: 12),
         FilledButton(
           key: const Key('auth-submit'),
           onPressed: widget.busy ? null : _submit,
@@ -252,7 +233,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
             backgroundColor: AppTheme.navy,
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: widget.busy
@@ -261,53 +242,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(_signUp ? l10n.authSignup : l10n.authLogin),
-        ),
-        if (!_signUp) ...[
-          const SizedBox(height: 14),
-          Text(
-            l10n.authForgotPasswordNote,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ModeIntro extends StatelessWidget {
-  const _ModeIntro({
-    super.key,
-    required this.title,
-    required this.body,
-  });
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            height: 1.2,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.navy,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          body,
-          style: const TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: AppTheme.muted,
-          ),
+              : Text(l10n.authLogin),
         ),
       ],
     );

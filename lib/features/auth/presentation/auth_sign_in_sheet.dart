@@ -40,7 +40,10 @@ Future<bool> ensureSignedIn(BuildContext context) async {
 
   final signedIn = await Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
-      builder: (_) => const AuthScreen(popOnSuccess: true),
+      builder: (_) => const AuthScreen(
+        popOnSuccess: true,
+        showBrowseLink: false,
+      ),
     ),
   );
   return signedIn == true && session.isSignedIn;

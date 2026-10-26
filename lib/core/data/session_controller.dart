@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 
@@ -62,6 +63,11 @@ class SessionController extends ChangeNotifier {
     String? displayName,
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool marketingOptIn = false,
   }) {
     return _run(
       () => _repository.signUp(
@@ -70,11 +76,19 @@ class SessionController extends ChangeNotifier {
         displayName: displayName,
         loginId: loginId,
         nationality: nationality,
+        birthDate: birthDate,
+        phone: phone,
+        termsAccepted: termsAccepted,
+        privacyAccepted: privacyAccepted,
+        marketingOptIn: marketingOptIn,
       ),
     );
   }
 
-  Future<void> signOut() => _repository.signOut();
+  Future<void> signOut() async {
+    guestBrowse.clear();
+    await _repository.signOut();
+  }
 
   Future<void> sendPasswordReset(String email) {
     return _run(() => _repository.sendPasswordReset(email));

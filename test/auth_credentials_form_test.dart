@@ -7,7 +7,7 @@ import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
-  testWidgets('아이디 폼은 계속 로그인이 기본이고 기존 아이디 매핑을 유지한다', (
+  testWidgets('아이디 폼은 로그인 탭이 기본이고 기존 아이디 매핑을 유지한다', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
@@ -28,8 +28,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.authFirstVisit), findsOneWidget);
-    expect(find.text(l10n.authSignupPanelTitle), findsWidgets);
+    expect(find.text(l10n.authWelcomeBack), findsWidgets);
     expect(find.byKey(const Key('auth-submit')), findsOneWidget);
     expect(
       tester
@@ -50,7 +49,7 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-submit')));
     await tester.pump();
     expect(submitted, isNotNull);
-    expect(submitted!.signUp, isTrue);
+    expect(submitted!.signUp, isFalse);
     expect(submitted!.keepSignedIn, isFalse);
     expect(submitted!.loginId, 'jong_01');
     expect(
@@ -59,8 +58,8 @@ void main() {
     );
 
     submitted = null;
-    await tester.tap(find.byKey(const Key('auth-tab-login')));
     await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
     await tester.tap(find.byKey(const Key('auth-submit')));
     await tester.pump();
     expect(submitted!.signUp, isFalse);

@@ -1266,10 +1266,90 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authIdRuleHint => 'Korean, English, digits, or _';
 
   @override
+  String get authIdRuleHintLong =>
+      'Shown in the app · Korean, English, or digits';
+
+  @override
+  String get authIdFieldHint => 'Enter your ID';
+
+  @override
+  String get authIdExampleHint => 'e.g. sea_turtle';
+
+  @override
   String get authPasswordRuleHint => 'At least 6 characters';
 
   @override
+  String get authPasswordFieldHint => 'Enter your password';
+
+  @override
   String get authKeepSignedIn => 'Stay signed in on this device';
+
+  @override
+  String get authKeepSignedInShort => 'Keep me signed in';
+
+  @override
+  String get authWelcomeBanner => 'Welcome to Dive Travel';
+
+  @override
+  String get authBrowseFirst => 'Browse first';
+
+  @override
+  String get authFooterCheer => 'Dive Travel cheers for your next ocean';
+
+  @override
+  String get authFooterContact => 'Help | help@divetravel.com';
+
+  @override
+  String get authSignupHeroBody => 'About 30 seconds. Only what we need.';
+
+  @override
+  String get authSignupMoreAbout => 'Tell us more (optional)';
+
+  @override
+  String get authSignupMoreAboutHint =>
+      'Name, birthday, contact, nationality — autofill at checkout';
+
+  @override
+  String get authSignupLegalName => 'Name';
+
+  @override
+  String get authSignupLegalNameHint => 'Name for booking and payment';
+
+  @override
+  String get authSignupBirthDate => 'Birthday';
+
+  @override
+  String get authSignupPhone => 'Contact';
+
+  @override
+  String get authSignupPhoneHint => 'Mobile number';
+
+  @override
+  String get authConsentAll => 'Agree to all';
+
+  @override
+  String get authConsentTerms => 'Terms of use (required)';
+
+  @override
+  String get authConsentPrivacy => 'Privacy collection & use (required)';
+
+  @override
+  String get authConsentMarketing => 'Event & news alerts (optional)';
+
+  @override
+  String get authTermsView => 'View';
+
+  @override
+  String get authTermsClose => 'Close';
+
+  @override
+  String get authSignupAndBrowse => 'Sign up and browse trips';
+
+  @override
+  String get authHaveAccountPrompt => 'Already have an account?';
+
+  @override
+  String get authErrorTermsRequired => 'Please accept the required terms.';
 
   @override
   String get authStart => 'Get started';

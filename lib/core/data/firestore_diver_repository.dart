@@ -97,6 +97,11 @@ class FirestoreDiverRepository implements DiverRepository {
     String? displayName,
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool marketingOptIn = false,
   }) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -112,6 +117,11 @@ class FirestoreDiverRepository implements DiverRepository {
       displayName: displayName,
       loginId: loginId,
       nationality: nationality,
+      birthDate: birthDate,
+      phone: phone,
+      termsAccepted: termsAccepted,
+      privacyAccepted: privacyAccepted,
+      marketingOptIn: marketingOptIn,
     );
   }
 
@@ -121,6 +131,11 @@ class FirestoreDiverRepository implements DiverRepository {
     required String? displayName,
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
+    bool marketingOptIn = false,
   }) async {
     final name = AppOwner.resolveDisplayName(
       email: user.email ?? email,
@@ -133,6 +148,11 @@ class FirestoreDiverRepository implements DiverRepository {
       AppUser(uid: refreshed.uid, email: refreshed.email, displayName: name),
       loginId: loginId,
       nationality: nationality,
+      birthDate: birthDate,
+      phone: phone,
+      termsAccepted: termsAccepted,
+      privacyAccepted: privacyAccepted,
+      marketingOptIn: marketingOptIn,
     );
   }
 
@@ -946,6 +966,11 @@ class FirestoreDiverRepository implements DiverRepository {
     AppUser user, {
     String? loginId,
     String? nationality,
+    String? birthDate,
+    String? phone,
+    bool? termsAccepted,
+    bool? privacyAccepted,
+    bool? marketingOptIn,
   }) async {
     final ref = _userDoc(user.uid);
     final snapshot = await ref.get().timeout(const Duration(seconds: 8));
@@ -969,6 +994,26 @@ class FirestoreDiverRepository implements DiverRepository {
     if (country != null) {
       payload['nationality'] = country;
       payload['nationality_consent_at'] = FieldValue.serverTimestamp();
+    }
+    final birth = (birthDate ?? '').trim();
+    if (birth.isNotEmpty) {
+      payload['birth_date'] = birth;
+    }
+    final contact = (phone ?? '').trim();
+    if (contact.isNotEmpty) {
+      payload['phone'] = contact;
+    }
+    if (termsAccepted == true) {
+      payload['consent_terms'] = true;
+      payload['consent_terms_at'] = FieldValue.serverTimestamp();
+    }
+    if (privacyAccepted == true) {
+      payload['consent_privacy'] = true;
+      payload['consent_privacy_at'] = FieldValue.serverTimestamp();
+    }
+    if (marketingOptIn != null) {
+      payload['consent_marketing'] = marketingOptIn;
+      payload['consent_marketing_at'] = FieldValue.serverTimestamp();
     }
     // Do not auto-write is_admin / is_business here. Roles come from the
     // Firestore document (and owner-only session overlay for testing).
