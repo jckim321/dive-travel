@@ -10,7 +10,7 @@ void main() {
     expect(AppConstants.grantBusinessToCurrentSession, isFalse);
   });
 
-  test('same-boat statusWhenOpen goes live; legacy pending stays for partner', () {
+  test('same-boat open writes approved; partner cannot move hidden or rejected', () {
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
         isAdmin: false,
@@ -20,22 +20,29 @@ void main() {
     );
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
-        isAdmin: true,
-        previous: SameBoatStatus.closed,
+        isAdmin: false,
+        previous: SameBoatStatus.pending,
       ),
       SameBoatStatus.approved,
     );
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
         isAdmin: false,
-        previous: SameBoatStatus.pending,
+        previous: SameBoatStatus.rejected,
       ),
-      SameBoatStatus.pending,
+      SameBoatStatus.rejected,
+    );
+    expect(
+      SameBoatSeatOpenLogic.statusWhenClosed(
+        isAdmin: false,
+        previous: SameBoatStatus.hidden,
+      ),
+      SameBoatStatus.hidden,
     );
     expect(
       SameBoatSeatOpenLogic.statusWhenOpen(
         isAdmin: true,
-        previous: SameBoatStatus.pending,
+        previous: SameBoatStatus.hidden,
       ),
       SameBoatStatus.approved,
     );

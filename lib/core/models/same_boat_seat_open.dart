@@ -63,17 +63,67 @@ abstract final class SameBoatSeatOpenLogic {
     return left < 0 ? 0 : left;
   }
 
-  /// Open seats go live immediately (H1a). Legacy `pending` rows stay pending
-  /// until an admin approves/rejects them in the monitor.
+  /// Opening writes [SameBoatStatus.approved] immediately.
+  /// A partner cannot change [SameBoatStatus.hidden] or [SameBoatStatus.rejected].
   static SameBoatStatus statusWhenOpen({
     required bool isAdmin,
     required SameBoatStatus previous,
   }) {
-    if (previous == SameBoatStatus.pending) {
-      // Do not auto-approve an in-flight legacy request on re-save.
-      return isAdmin ? SameBoatStatus.approved : SameBoatStatus.pending;
+    if (!isAdmin && previous.isPartnerLocked) {
+      return previous;
     }
     return SameBoatStatus.approved;
+  }
+
+  /// Closing writes [SameBoatStatus.closed], except a partner-locked status.
+  static SameBoatStatus statusWhenClosed({
+    required bool isAdmin,
+    required SameBoatStatus previous,
+  }) {
+    if (!isAdmin && previous.isPartnerLocked) {
+      return previous;
+    }
+    return SameBoatStatus.closed;
+  }
+
+  /// First open stamps the time. Later saves keep the stored instant.
+  static DateTime? openedAtWhenSaving({
+    required SameBoatStatus next,
+    required DateTime? existing,
+    required DateTime now,
+  }) {
+    if (next != SameBoatStatus.approved) {
+      return existing;
+    }
+    return existing ?? now;
+  }
+
+  /// Departure day already passed, or every seat is booked.
+  /// Does not read analytics events and does not write status.
+  static bool isFinishedListing({
+    required DateTime? departure,
+    required int capacity,
+    required int booked,
+    required DateTime now,
+  }) {
+    if (capacity > 0 && booked >= capacity) {
+      return true;
+    }
+    if (departure == null) {
+      return false;
+    }
+    final start = DateTime(departure.year, departure.month, departure.day);
+    final today = DateTime(now.year, now.month, now.day);
+    return start.isBefore(today);
+  }
+
+  /// Schedule edits use the product's own booked seats and flag holds.
+  static bool scheduleLocked({
+    required int booked,
+    required List<SeatHold> holds,
+    required DateTime now,
+  }) {
+    return booked > 0 || liveHoldSeats(holds, now) > 0;
   }
 
   /// Product- or option-level seat open fields required for board / approve.

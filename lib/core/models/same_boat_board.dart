@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
 class SameBoatOffer {
@@ -46,17 +47,11 @@ class SameBoatOffer {
     return total;
   }
 
-  DateTime? get sameBoatSortAt {
-    final start = departureStart;
-    final flag = flagClosesAt;
-    if (start == null) {
-      return flag;
-    }
-    if (flag == null) {
-      return start;
-    }
-    return start.isBefore(flag) ? start : flag;
-  }
+  DateTime? get openedAt =>
+      option?.sameBoatOpenedAt ?? product.sameBoatOpenedAt;
+
+  DateTime? get listSortAt =>
+      openedAt ?? product.submittedAt ?? departureStart;
 }
 
 enum SameBoatFilter { all, lastCall, departing }
@@ -64,16 +59,26 @@ enum SameBoatFilter { all, lastCall, departing }
 abstract final class SameBoatBoard {
   static const window = Duration(days: 14);
 
-  static List<ShopProduct> sorted(Iterable<ShopProduct> products) {
+  static List<ShopProduct> sorted(
+    Iterable<ShopProduct> products, {
+    DateTime? now,
+  }) {
+    final clock = now ?? DateTime.now();
     final listed = [
       for (final product in products)
-        if (product.listsOnSameBoat) product,
+        if (product.listsOnSameBoat &&
+            !SameBoatSeatOpenLogic.isFinishedListing(
+              departure: product.departureStart,
+              capacity: product.capacity,
+              booked: product.bookedSeats,
+              now: clock,
+            ))
+          product,
     ];
-    listed.sort((a, b) {
-      final aAt = a.sameBoatSortAt ?? DateTime.utc(9999);
-      final bAt = b.sameBoatSortAt ?? DateTime.utc(9999);
-      return aAt.compareTo(bAt);
-    });
+    listed.sort((a, b) => _newestFirst(
+      a.sameBoatOpenedAt ?? a.submittedAt ?? a.departureStart,
+      b.sameBoatOpenedAt ?? b.submittedAt ?? b.departureStart,
+    ));
     return listed;
   }
 
@@ -93,7 +98,11 @@ abstract final class SameBoatBoard {
     return !start.isAfter(now.add(window));
   }
 
-  static List<SameBoatOffer> offers(Iterable<ShopProduct> products) {
+  static List<SameBoatOffer> offers(
+    Iterable<ShopProduct> products, {
+    DateTime? now,
+  }) {
+    final clock = now ?? DateTime.now();
     final listed = <SameBoatOffer>[];
     for (final product in products) {
       if (!product.isListedPublicly) {
@@ -101,20 +110,44 @@ abstract final class SameBoatBoard {
       }
       // Product-level and option-level can both list at once.
       if (product.listsOnSameBoat) {
-        listed.add(SameBoatOffer(product: product));
+        final offer = SameBoatOffer(product: product);
+        if (!_finished(offer, clock)) {
+          listed.add(offer);
+        }
       }
       for (final option in product.options) {
         if (option.listsOnSameBoat) {
-          listed.add(SameBoatOffer(product: product, option: option));
+          final offer = SameBoatOffer(product: product, option: option);
+          if (!_finished(offer, clock)) {
+            listed.add(offer);
+          }
         }
       }
     }
-    listed.sort((a, b) {
-      final aAt = a.sameBoatSortAt ?? DateTime.utc(9999);
-      final bAt = b.sameBoatSortAt ?? DateTime.utc(9999);
-      return aAt.compareTo(bAt);
-    });
+    listed.sort((a, b) => _newestFirst(a.listSortAt, b.listSortAt));
     return listed;
+  }
+
+  static bool _finished(SameBoatOffer offer, DateTime now) {
+    return SameBoatSeatOpenLogic.isFinishedListing(
+      departure: offer.departureStart,
+      capacity: offer.capacity,
+      booked: offer.bookedSeats,
+      now: now,
+    );
+  }
+
+  static int _newestFirst(DateTime? a, DateTime? b) {
+    if (a == null && b == null) {
+      return 0;
+    }
+    if (a == null) {
+      return 1;
+    }
+    if (b == null) {
+      return -1;
+    }
+    return b.compareTo(a);
   }
 
   static List<SameBoatOffer> filteredOffers(
@@ -122,7 +155,7 @@ abstract final class SameBoatBoard {
     SameBoatFilter filter,
     DateTime now,
   ) {
-    final listed = offers(products);
+    final listed = offers(products, now: now);
     return switch (filter) {
       SameBoatFilter.all => listed,
       SameBoatFilter.lastCall => [

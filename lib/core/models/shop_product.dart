@@ -112,7 +112,8 @@ enum SameBoatStatus {
   closed,
   pending,
   approved,
-  rejected;
+  rejected,
+  hidden;
 
   static SameBoatStatus parse(dynamic value, {bool openEmptySeats = false}) {
     switch (value) {
@@ -122,6 +123,8 @@ enum SameBoatStatus {
         return SameBoatStatus.approved;
       case 'rejected':
         return SameBoatStatus.rejected;
+      case 'hidden':
+        return SameBoatStatus.hidden;
       case 'closed':
         return SameBoatStatus.closed;
       default:
@@ -142,11 +145,20 @@ enum SameBoatStatus {
         return 'approved';
       case SameBoatStatus.rejected:
         return 'rejected';
+      case SameBoatStatus.hidden:
+        return 'hidden';
     }
   }
 
-  bool get isBoardLive => this == SameBoatStatus.approved;
+  /// Open on the board. Pending is legacy and reads as already open.
+  bool get isBoardLive =>
+      this == SameBoatStatus.approved || this == SameBoatStatus.pending;
+
   bool get isPendingReview => this == SameBoatStatus.pending;
+
+  /// Partner saves must not rewrite these.
+  bool get isPartnerLocked =>
+      this == SameBoatStatus.rejected || this == SameBoatStatus.hidden;
 }
 
 /// Where a saved product should sit after the writer finishes the brief.
@@ -405,6 +417,7 @@ class ShopProductOption {
     this.flagClosesAt,
     this.parentOptionId = '',
     this.sameBoatStatus = SameBoatStatus.closed,
+    this.sameBoatOpenedAt,
     this.guestRating = 0,
     this.guestReviewCount = 0,
     this.group = '',
@@ -432,6 +445,7 @@ class ShopProductOption {
         data['same_boat_status'],
         openEmptySeats: open,
       ),
+      sameBoatOpenedAt: _optionTime(data['same_boat_opened_at']),
       guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
       guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
       group: normalizeOptionGroup(data['group'] as String?),
@@ -456,6 +470,9 @@ class ShopProductOption {
   /// When set, this addon belongs to an individual SKU (not the base package).
   final String parentOptionId;
   final SameBoatStatus sameBoatStatus;
+
+  /// Set once when this option first opens. Missing on older docs.
+  final DateTime? sameBoatOpenedAt;
 
   /// Denormalized guest averages (cards still use parent [ShopProduct]).
   final double guestRating;
@@ -491,6 +508,8 @@ class ShopProductOption {
         'departure_start': departureStart!.toIso8601String(),
       if (flagClosesAt != null)
         'flag_closes_at': flagClosesAt!.toIso8601String(),
+      if (sameBoatOpenedAt != null)
+        'same_boat_opened_at': sameBoatOpenedAt!.toIso8601String(),
       if (parentOptionId.isNotEmpty) 'parent_option_id': parentOptionId,
       if (guestReviewCount > 0) 'guest_rating': guestRating,
       if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
@@ -550,6 +569,7 @@ class ShopProductOption {
     DateTime? flagClosesAt,
     String? parentOptionId,
     SameBoatStatus? sameBoatStatus,
+    DateTime? sameBoatOpenedAt,
     double? guestRating,
     int? guestReviewCount,
     String? group,
@@ -574,6 +594,7 @@ class ShopProductOption {
       flagClosesAt: clearDates ? null : (flagClosesAt ?? this.flagClosesAt),
       parentOptionId: parentOptionId ?? this.parentOptionId,
       sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
+      sameBoatOpenedAt: sameBoatOpenedAt ?? this.sameBoatOpenedAt,
       guestRating: guestRating ?? this.guestRating,
       guestReviewCount: guestReviewCount ?? this.guestReviewCount,
       group: group ?? this.group,
@@ -645,6 +666,7 @@ class ShopProduct {
     this.departureStart,
     this.flagClosesAt,
     this.sameBoatStatus = SameBoatStatus.closed,
+    this.sameBoatOpenedAt,
     this.listingKind = ProductListingKind.exploreOnly,
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
@@ -719,6 +741,7 @@ class ShopProduct {
         data['same_boat_status'],
         openEmptySeats: data['open_empty_seats'] == true,
       ),
+      sameBoatOpenedAt: _readTime(data['same_boat_opened_at']),
       listingKind: ProductListingKind.parse(data['listing_kind']),
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
@@ -771,6 +794,9 @@ class ShopProduct {
   final DateTime? departureStart;
   final DateTime? flagClosesAt;
   final SameBoatStatus sameBoatStatus;
+
+  /// Set once when this product first opens leftover seats.
+  final DateTime? sameBoatOpenedAt;
   final ProductListingKind listingKind;
   final ProductPublishStatus publishStatus;
   final DateTime? submittedAt;
@@ -1406,6 +1432,7 @@ class ShopProduct {
     Object? departureStart = _unset,
     Object? flagClosesAt = _unset,
     SameBoatStatus? sameBoatStatus,
+    DateTime? sameBoatOpenedAt,
     ProductListingKind? listingKind,
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
@@ -1461,6 +1488,7 @@ class ShopProduct {
           ? this.flagClosesAt
           : flagClosesAt as DateTime?,
       sameBoatStatus: sameBoatStatus ?? this.sameBoatStatus,
+      sameBoatOpenedAt: sameBoatOpenedAt ?? this.sameBoatOpenedAt,
       listingKind: listingKind ?? this.listingKind,
       publishStatus: publishStatus ?? this.publishStatus,
       submittedAt: submittedAt ?? this.submittedAt,
@@ -1608,6 +1636,8 @@ class ShopProduct {
         'departure_start': departureStart!.toIso8601String(),
       if (flagClosesAt != null)
         'flag_closes_at': flagClosesAt!.toIso8601String(),
+      if (sameBoatOpenedAt != null)
+        'same_boat_opened_at': sameBoatOpenedAt!.toIso8601String(),
       'listing_kind': listingKind.firestoreValue,
       'publish_status': publishStatus.firestoreValue,
       if (submittedAt != null) 'submitted_at': submittedAt!.toIso8601String(),

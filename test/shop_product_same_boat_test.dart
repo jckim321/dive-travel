@@ -28,6 +28,14 @@ void main() {
     expect(product.copyWith(active: false).listsOnSameBoat, isFalse);
     expect(
       product.copyWith(sameBoatStatus: SameBoatStatus.pending).listsOnSameBoat,
+      isTrue,
+    );
+    expect(
+      product.copyWith(sameBoatStatus: SameBoatStatus.rejected).listsOnSameBoat,
+      isFalse,
+    );
+    expect(
+      product.copyWith(sameBoatStatus: SameBoatStatus.hidden).listsOnSameBoat,
       isFalse,
     );
   });
@@ -43,6 +51,7 @@ void main() {
       professionalPrice: 1,
       openEmptySeats: true,
       sameBoatStatus: SameBoatStatus.approved,
+      sameBoatOpenedAt: DateTime.utc(2026, 10, 27, 1),
       capacity: 6,
       departureStart: departure,
       flagClosesAt: flag,
@@ -53,6 +62,7 @@ void main() {
     expect(loaded.departureStart, departure);
     expect(loaded.flagClosesAt, flag);
     expect(loaded.sameBoatStatus, SameBoatStatus.approved);
+    expect(loaded.sameBoatOpenedAt, DateTime.utc(2026, 10, 27, 1));
     expect(loaded.listsOnSameBoat, isTrue);
   });
 

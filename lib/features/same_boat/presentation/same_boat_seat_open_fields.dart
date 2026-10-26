@@ -21,6 +21,7 @@ class SameBoatSeatOpenController {
     required List<SameBoatOptionSeatSlot> optionSlots,
     required this.isAdmin,
     DateTime? packageDeparture,
+    this.now,
   }) {
     final p = existing;
     _packageWasOpen = p != null &&
@@ -45,6 +46,11 @@ class SameBoatSeatOpenController {
 
   bool isAdmin;
 
+  /// Clock for the schedule lock. Tests pass a fixed time.
+  final DateTime? now;
+
+  DateTime get _now => now ?? DateTime.now();
+
   late bool openPackage;
   late final TextEditingController packageCapacity;
   late final TextEditingController packageBooked;
@@ -66,16 +72,24 @@ class SameBoatSeatOpenController {
 
   SameBoatStatus get packageStatus => _packageStatus;
 
-  /// After approved, non-admins cannot edit capacity / departure / flag close.
-  bool get packageScheduleLocked =>
-      _packageStatus == SameBoatStatus.approved && !isAdmin;
+  /// Locked when this product already has a booking or a live flag.
+  /// Counts come from the product document, not analytics.
+  bool get packageScheduleLocked => SameBoatSeatOpenLogic.scheduleLocked(
+        booked: _existingPackageBooked,
+        holds: _existingPackageHolds,
+        now: _now,
+      );
 
   bool optionScheduleLocked(String id) {
     final draft = options[id];
     if (draft == null) {
       return false;
     }
-    return draft.existingStatus == SameBoatStatus.approved && !isAdmin;
+    return SameBoatSeatOpenLogic.scheduleLocked(
+      booked: draft.existingBooked,
+      holds: draft.existingHolds,
+      now: _now,
+    );
   }
 
   void syncPackageDeparture(DateTime? value) {
@@ -197,7 +211,11 @@ class SameBoatSeatOpenController {
     final nextOptions = <ShopProductOption>[
       for (final option in base.options)
         if (options.containsKey(option.id))
-          options[option.id]!.apply(option, isAdmin: isAdmin)
+          options[option.id]!.apply(
+            option,
+            isAdmin: isAdmin,
+            now: _now,
+          )
         else
           option,
     ];
@@ -213,7 +231,10 @@ class SameBoatSeatOpenController {
             isAdmin: isAdmin,
             previous: _packageStatus,
           )
-        : SameBoatStatus.closed;
+        : SameBoatSeatOpenLogic.statusWhenClosed(
+            isAdmin: isAdmin,
+            previous: _packageStatus,
+          );
     return base.copyWith(
       openEmptySeats: openPackage,
       capacity: openPackage ? packageCap : base.capacity,
@@ -222,6 +243,11 @@ class SameBoatSeatOpenController {
       departureStart: openPackage ? packageDeparture : base.departureStart,
       flagClosesAt: openPackage ? packageFlagClose : base.flagClosesAt,
       sameBoatStatus: status,
+      sameBoatOpenedAt: SameBoatSeatOpenLogic.openedAtWhenSaving(
+        next: status,
+        existing: base.sameBoatOpenedAt,
+        now: _now,
+      ),
       options: nextOptions,
     );
   }
@@ -292,6 +318,7 @@ class SameBoatOptionSeatDraft {
   ShopProductOption apply(
     ShopProductOption base, {
     required bool isAdmin,
+    DateTime? now,
   }) {
     final cap = int.tryParse(capacity.text.trim()) ?? 0;
     final nextBooked = SameBoatSeatOpenLogic.resolveBookedSeats(
@@ -305,7 +332,10 @@ class SameBoatOptionSeatDraft {
             isAdmin: isAdmin,
             previous: existingStatus,
           )
-        : SameBoatStatus.closed;
+        : SameBoatSeatOpenLogic.statusWhenClosed(
+            isAdmin: isAdmin,
+            previous: existingStatus,
+          );
     return base.copyWith(
       openEmptySeats: open,
       capacity: open ? cap : base.capacity,
@@ -314,6 +344,11 @@ class SameBoatOptionSeatDraft {
       departureStart: open ? departure : base.departureStart,
       flagClosesAt: open ? flagClose : base.flagClosesAt,
       sameBoatStatus: status,
+      sameBoatOpenedAt: SameBoatSeatOpenLogic.openedAtWhenSaving(
+        next: status,
+        existing: base.sameBoatOpenedAt,
+        now: now ?? DateTime.now(),
+      ),
     );
   }
 }

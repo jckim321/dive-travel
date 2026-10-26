@@ -36,7 +36,7 @@ ShopProduct _base({
 }
 
 void main() {
-  test('10 + pre-booked 4 → meter black 4 + open 6; pending hidden', () {
+  test('10 + pre-booked 4 → meter black 4 + open 6; pending is listed', () {
     final pending = _base(
       open: true,
       status: SameBoatStatus.pending,
@@ -44,8 +44,8 @@ void main() {
       booked: 4,
       flag: DateTime(2026, 10, 28),
     );
-    expect(pending.listsOnSameBoat, isFalse);
-    expect(SameBoatBoard.offers([pending]), isEmpty);
+    expect(pending.listsOnSameBoat, isTrue);
+    expect(SameBoatBoard.offers([pending], now: DateTime(2026, 10, 20)), isNotEmpty);
 
     final live = pending.copyWith(sameBoatStatus: SameBoatStatus.approved);
     expect(live.listsOnSameBoat, isTrue);
@@ -141,8 +141,9 @@ void main() {
     controller.dispose();
   });
 
-  test('(c) after approved, non-admin schedule fields are locked', () {
-    final existing = _base(
+  test('(c) schedule lock follows booked seats and live flags', () {
+    final now = DateTime(2026, 10, 27, 12);
+    final booked = _base(
       open: true,
       status: SameBoatStatus.approved,
       capacity: 10,
@@ -150,21 +151,75 @@ void main() {
       flag: DateTime(2026, 10, 28),
     );
     final partner = SameBoatSeatOpenController(
-      existing: existing,
+      existing: booked,
       optionSlots: const [],
       isAdmin: false,
+      now: now,
     );
-    expect(partner.packageScheduleLocked, isTrue);
-    expect(partner.packageWasAlreadyOpen, isTrue);
-
     final admin = SameBoatSeatOpenController(
-      existing: existing,
+      existing: booked,
       optionSlots: const [],
       isAdmin: true,
+      now: now,
     );
-    expect(admin.packageScheduleLocked, isFalse);
+    expect(partner.packageScheduleLocked, isTrue);
+    expect(admin.packageScheduleLocked, isTrue);
     partner.dispose();
     admin.dispose();
+
+    final clear = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+    );
+    final unlocked = SameBoatSeatOpenController(
+      existing: clear,
+      optionSlots: const [],
+      isAdmin: false,
+      now: now,
+    );
+    expect(unlocked.packageScheduleLocked, isFalse);
+    unlocked.dispose();
+
+    final liveHold = SeatHold(
+      seats: 1,
+      expiresAt: DateTime(2026, 10, 28),
+      uid: 'u1',
+    );
+    final held = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      holds: [liveHold],
+    );
+    final lockedByFlag = SameBoatSeatOpenController(
+      existing: held,
+      optionSlots: const [],
+      isAdmin: false,
+      now: now,
+    );
+    expect(lockedByFlag.packageScheduleLocked, isTrue);
+    lockedByFlag.dispose();
+
+    final expired = SeatHold(
+      seats: 1,
+      expiresAt: DateTime(2026, 10, 26),
+      uid: 'u1',
+    );
+    final stale = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      holds: [expired],
+    );
+    final unlockedFlag = SameBoatSeatOpenController(
+      existing: stale,
+      optionSlots: const [],
+      isAdmin: false,
+      now: now,
+    );
+    expect(unlockedFlag.packageScheduleLocked, isFalse);
+    unlockedFlag.dispose();
   });
 
   test('(d) general simPayNotice unchanged; same-boat key is separate', () {

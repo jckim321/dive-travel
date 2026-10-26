@@ -8,6 +8,9 @@ ShopProduct _trip({
   required bool open,
   DateTime? departure,
   DateTime? flag,
+  DateTime? opened,
+  int capacity = 3,
+  int booked = 0,
 }) {
   return ShopProduct(
     id: id,
@@ -17,33 +20,74 @@ ShopProduct _trip({
     professionalPrice: 1,
     openEmptySeats: open,
     sameBoatStatus: open ? SameBoatStatus.approved : SameBoatStatus.closed,
-    capacity: open ? 3 : 0,
+    sameBoatOpenedAt: opened,
+    capacity: open ? capacity : 0,
+    bookedSeats: booked,
     departureStart: departure,
     flagClosesAt: flag,
   );
 }
 
 void main() {
-  test('board keeps only opted-in products and sorts by the sooner date', () {
-    final soonFlag = _trip(
-      id: 'flag',
+  test('board lists open seats newest first and skips closed', () {
+    final older = _trip(
+      id: 'older',
       open: true,
       departure: DateTime(2026, 12, 20),
-      flag: DateTime(2026, 11, 2),
+      opened: DateTime(2026, 10, 1),
     );
-    final soonDepart = _trip(
-      id: 'depart',
+    final newer = _trip(
+      id: 'newer',
       open: true,
       departure: DateTime(2026, 11, 10),
-      flag: DateTime(2026, 12, 1),
+      opened: DateTime(2026, 10, 20),
     );
     final closed = _trip(
       id: 'explore',
       open: false,
       departure: DateTime(2026, 11, 1),
     );
-    final listed = SameBoatBoard.sorted([closed, soonDepart, soonFlag]);
-    expect([for (final item in listed) item.id], ['flag', 'depart']);
+    final listed = SameBoatBoard.sorted([closed, older, newer]);
+    expect([for (final item in listed) item.id], ['newer', 'older']);
+  });
+
+  test('past departure and sold-out leave the list without a status write', () {
+    final now = DateTime(2026, 10, 27, 9);
+    final past = _trip(
+      id: 'past',
+      open: true,
+      departure: DateTime(2026, 10, 26),
+      opened: DateTime(2026, 10, 1),
+    );
+    final today = _trip(
+      id: 'today',
+      open: true,
+      departure: DateTime(2026, 10, 27),
+      opened: DateTime(2026, 10, 2),
+    );
+    final sold = _trip(
+      id: 'sold',
+      open: true,
+      departure: DateTime(2026, 12, 1),
+      opened: DateTime(2026, 10, 3),
+      capacity: 3,
+      booked: 3,
+    );
+    final open = _trip(
+      id: 'open',
+      open: true,
+      departure: DateTime(2026, 12, 1),
+      opened: DateTime(2026, 10, 4),
+      capacity: 4,
+      booked: 1,
+    );
+    final listed = SameBoatBoard.offers(
+      [past, today, sold, open],
+      now: now,
+    );
+    expect([for (final item in listed) item.product.id], ['open', 'today']);
+    expect(past.sameBoatStatus, SameBoatStatus.approved);
+    expect(sold.sameBoatStatus, SameBoatStatus.approved);
   });
 
   test('last-call filter uses the flag window', () {

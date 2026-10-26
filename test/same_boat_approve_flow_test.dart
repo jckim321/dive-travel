@@ -107,7 +107,8 @@ void main() {
     expect(next.hasLiveSameBoatOffer, isTrue);
   });
 
-  test('legacy pending re-save stays pending for partner (admin can still approve)', () {
+  test('legacy pending re-save opens immediately and stamps opened_at once', () {
+    final clock = DateTime(2026, 10, 27, 8);
     final pending = _product(
       open: true,
       status: SameBoatStatus.pending,
@@ -119,12 +120,74 @@ void main() {
       existing: pending,
       optionSlots: const [],
       isAdmin: false,
+      now: clock,
     );
     controller.openPackage = true;
     controller.packageCapacity.text = '10';
     final next = controller.applyToProduct(pending);
     controller.dispose();
-    expect(next.sameBoatStatus, SameBoatStatus.pending);
+    expect(next.sameBoatStatus, SameBoatStatus.approved);
+    expect(next.sameBoatOpenedAt, clock);
+
+    final again = SameBoatSeatOpenController(
+      existing: next,
+      optionSlots: const [],
+      isAdmin: false,
+      now: clock.add(const Duration(hours: 3)),
+    );
+    again.openPackage = true;
+    again.packageCapacity.text = '10';
+    final second = again.applyToProduct(next);
+    again.dispose();
+    expect(second.sameBoatOpenedAt, clock);
+  });
+
+  test('partner save keeps hidden and rejected', () {
+    for (final status in [SameBoatStatus.rejected, SameBoatStatus.hidden]) {
+      final locked = _product(
+        open: true,
+        status: status,
+        capacity: 10,
+        departure: departure,
+      );
+      final open = SameBoatSeatOpenController(
+        existing: locked,
+        optionSlots: const [],
+        isAdmin: false,
+      );
+      open.openPackage = true;
+      open.packageCapacity.text = '10';
+      final stillOpen = open.applyToProduct(locked);
+      open.dispose();
+      expect(stillOpen.sameBoatStatus, status);
+
+      final shut = SameBoatSeatOpenController(
+        existing: locked,
+        optionSlots: const [],
+        isAdmin: false,
+      );
+      shut.openPackage = false;
+      final stillShut = shut.applyToProduct(locked);
+      shut.dispose();
+      expect(stillShut.sameBoatStatus, status);
+    }
+
+    final hidden = _product(
+      open: true,
+      status: SameBoatStatus.hidden,
+      capacity: 10,
+      departure: departure,
+    );
+    final admin = SameBoatSeatOpenController(
+      existing: hidden,
+      optionSlots: const [],
+      isAdmin: true,
+    );
+    admin.openPackage = true;
+    admin.packageCapacity.text = '10';
+    final reopened = admin.applyToProduct(hidden);
+    admin.dispose();
+    expect(reopened.sameBoatStatus, SameBoatStatus.approved);
   });
 
   test('blocksPartnerRequest while pending or live', () {

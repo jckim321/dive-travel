@@ -9,9 +9,7 @@ import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_o
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Creator UI: open leftover seats on a product (base package and/or individual SKUs).
-/// Submits as [SameBoatStatus.pending] for admin approval before the board goes live.
-///
-/// Partner path ([partnerLiveCopy]): goes live immediately; partner-only copy.
+/// An open seat is listed immediately. Hidden and rejected seats keep their status.
 class SameBoatSeatsScreen extends StatefulWidget {
   const SameBoatSeatsScreen({
     super.key,
