@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
@@ -8,7 +9,18 @@ import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.da
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
-  testWidgets('로그인 시트 뒤에 누르던 동작이 이어진다', (tester) async {
+  late KnownMemberStore previous;
+
+  setUp(() {
+    previous = deviceKnownMember;
+  });
+
+  tearDown(() {
+    deviceKnownMember = previous;
+  });
+
+  testWidgets('새 방문자는 전체 로그인 화면으로 이어진다', (tester) async {
+    deviceKnownMember = MemoryKnownMemberStore();
     final repo = MemoryDiverRepository();
     final session = SessionController(repo);
     addTearDown(session.dispose);
@@ -29,8 +41,56 @@ void main() {
 
     expect(find.text('waiting'), findsOneWidget);
     await tester.tap(find.byKey(const Key('gated-action')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
+    expect(find.text(l10n.authFirstVisit), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
+    await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
+    await tester.tap(find.byKey(const Key('auth-submit')));
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (session.isSignedIn &&
+          find.byKey(const Key('auth-full-screen')).evaluate().isEmpty) {
+        break;
+      }
+    }
+
+    expect(session.isSignedIn, isTrue);
+    expect(find.byKey(const Key('auth-full-screen')), findsNothing);
+    expect(find.text('continued'), findsOneWidget);
+    expect(await deviceKnownMember.isKnown(), isTrue);
+  });
+
+  testWidgets('이미 가입한 기기는 간단 로그인 시트 뒤에 누르던 동작이 이어진다', (
+    tester,
+  ) async {
+    deviceKnownMember = MemoryKnownMemberStore(known: true);
+    final repo = MemoryDiverRepository();
+    final session = SessionController(repo);
+    addTearDown(session.dispose);
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+
+    await tester.pumpWidget(
+      SessionScope(
+        session: session,
+        child: MaterialApp(
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const _GateProbe(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('gated-action')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('auth-credentials-form')), findsOneWidget);
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsOneWidget);
+    expect(find.byKey(const Key('auth-full-screen')), findsNothing);
+    expect(find.text(l10n.authWelcomeBack), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
     await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
@@ -40,7 +100,6 @@ void main() {
     expect(find.text('continued'), findsOneWidget);
     expect(find.byKey(const Key('auth-credentials-form')), findsNothing);
     expect(session.isSignedIn, isTrue);
-    expect(find.text(l10n.authStart), findsNothing);
   });
 }
 

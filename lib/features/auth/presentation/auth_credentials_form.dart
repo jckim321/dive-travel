@@ -35,12 +35,16 @@ class AuthCredentialsForm extends StatefulWidget {
     this.busy = false,
     this.errorText,
     this.onSignUpChanged,
+    this.initialSignUp = true,
   });
 
   final Future<void> Function(AuthCredentials credentials) onSubmit;
   final bool busy;
   final String? errorText;
   final ValueChanged<bool>? onSignUpChanged;
+
+  /// True opens 「처음이에요」; false opens 「다시 왔어요」.
+  final bool initialSignUp;
 
   @override
   State<AuthCredentialsForm> createState() => _AuthCredentialsFormState();
@@ -49,9 +53,17 @@ class AuthCredentialsForm extends StatefulWidget {
 class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
   final _nameTag = TextEditingController();
   final _password = TextEditingController();
-  var _signUp = true;
+  late var _signUp = widget.initialSignUp;
   var _keepSignedIn = true;
   String? _localError;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onSignUpChanged?.call(_signUp);
+    });
+  }
 
   @override
   void dispose() {

@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -61,14 +62,23 @@ Future<void> applyKeepSignedIn(bool keepSignedIn) async {
 }
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({
+    super.key,
+    this.popOnSuccess = false,
+    this.initialSignUp = true,
+  });
+
+  /// When true (gated first visit), pop with `true` after a successful auth.
+  final bool popOnSuccess;
+
+  final bool initialSignUp;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  var _signUp = true;
+  late var _signUp = widget.initialSignUp;
   String? _error;
 
   Future<void> _submit(AuthCredentials credentials) async {
@@ -88,6 +98,11 @@ class _AuthScreenState extends State<AuthScreen> {
           email: credentials.authEmail,
           password: credentials.password,
         );
+      }
+      await deviceKnownMember.markKnown();
+      if (!mounted) return;
+      if (widget.popOnSuccess) {
+        Navigator.of(context).pop(true);
       }
     } catch (error) {
       _handleAuthError(error);
@@ -114,6 +129,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final l10n = AppLocalizations.of(context);
     final session = SessionScope.of(context);
     return Scaffold(
+      key: const Key('auth-full-screen'),
       backgroundColor: const Color(0xFF0C5EA6),
       body: Stack(
         fit: StackFit.expand,
@@ -126,6 +142,15 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
                   children: [
+                    if (widget.popOnSuccess)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          key: const Key('auth-full-close'),
+                          onPressed: () => Navigator.of(context).maybePop(false),
+                          icon: const Icon(Icons.close, color: Colors.white),
+                        ),
+                      ),
                     _AuthHero(signUp: _signUp),
                     const SizedBox(height: 16),
                     Material(
@@ -137,6 +162,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: AuthCredentialsForm(
                           busy: session.busy,
                           errorText: _error,
+                          initialSignUp: widget.initialSignUp,
                           onSignUpChanged: (signUp) => setState(() {
                             _signUp = signUp;
                             _error = null;
