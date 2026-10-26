@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/auth/device_pin_controller.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_dashboard_screen.dart';
 import 'package:dive_travel_app/features/auth/presentation/device_pin_dialogs.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
@@ -41,27 +42,28 @@ class _SignedInHomeState extends State<_SignedInHome> {
     super.didChangeDependencies();
     final store = DiverStoreScope.of(context);
     if (!identical(_store, store)) {
-      _store?.removeListener(_maybeOpenPartner);
+      _store?.removeListener(_maybeOpenStaffConsole);
       _store = store;
-      _store!.addListener(_maybeOpenPartner);
+      _store!.addListener(_maybeOpenStaffConsole);
     }
     final pins = DevicePinScope.of(context);
     if (!identical(_pins, pins)) {
-      _pins?.removeListener(_maybeOpenPartner);
+      _pins?.removeListener(_maybeOpenStaffConsole);
       _pins = pins;
-      _pins!.addListener(_maybeOpenPartner);
+      _pins!.addListener(_maybeOpenStaffConsole);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenPartner());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOpenStaffConsole());
   }
 
   @override
   void dispose() {
-    _store?.removeListener(_maybeOpenPartner);
-    _pins?.removeListener(_maybeOpenPartner);
+    _store?.removeListener(_maybeOpenStaffConsole);
+    _pins?.removeListener(_maybeOpenStaffConsole);
     super.dispose();
   }
 
-  void _maybeOpenPartner() {
+  /// After staff sign-in (and device PIN if set), open HQ / partner console.
+  void _maybeOpenStaffConsole() {
     if (!mounted) {
       return;
     }
@@ -83,14 +85,21 @@ class _SignedInHomeState extends State<_SignedInHome> {
     if (pins.needsUnlock(uid: uid, isStaff: staff)) {
       return;
     }
-    // Admin always stays on customer shell (even if leftover is_business).
-    if (live.isAdmin || !live.isBusiness) {
+    if (!staff) {
       return;
     }
     if (_openedForUid == uid) {
       return;
     }
     _openedForUid = uid;
+    if (live.isAdmin) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const AdminDashboardScreen(),
+        ),
+      );
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => const PartnerDashboardScreen(),

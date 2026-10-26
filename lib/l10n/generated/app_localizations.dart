@@ -2343,20 +2343,32 @@ abstract class AppLocalizations {
   /// No description provided for @authHeroSignupHint.
   ///
   /// In ko, this message translates to:
-  /// **'지금은 이름표와 비밀번호만 있으면 돼요'**
+  /// **'아이디와 비밀번호만 있으면 시작할 수 있어요'**
   String get authHeroSignupHint;
 
   /// No description provided for @authHeroLoginHint.
   ///
   /// In ko, this message translates to:
-  /// **'이름표와 비밀번호로 다시 들어와요'**
+  /// **'아이디와 비밀번호로 다시 들어와요'**
   String get authHeroLoginHint;
 
   /// No description provided for @authNameTag.
   ///
   /// In ko, this message translates to:
-  /// **'이름표 (한글·영문·숫자 모두 가능)'**
+  /// **'아이디'**
   String get authNameTag;
+
+  /// No description provided for @authIdRuleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'한글·영문·숫자·_ 가능'**
+  String get authIdRuleHint;
+
+  /// No description provided for @authPasswordRuleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'6자 이상'**
+  String get authPasswordRuleHint;
 
   /// No description provided for @authKeepSignedIn.
   ///
@@ -2385,13 +2397,13 @@ abstract class AppLocalizations {
   /// No description provided for @authErrorNameTagRequired.
   ///
   /// In ko, this message translates to:
-  /// **'이름표를 적어 주세요.'**
+  /// **'아이디를 적어 주세요.'**
   String get authErrorNameTagRequired;
 
   /// No description provided for @authErrorNameTagTooLong.
   ///
   /// In ko, this message translates to:
-  /// **'이름표가 너무 길어요. 조금 짧게 적어 주세요.'**
+  /// **'아이디가 너무 길어요. 조금 짧게 적어 주세요.'**
   String get authErrorNameTagTooLong;
 
   /// No description provided for @authNationality.
@@ -2535,19 +2547,19 @@ abstract class AppLocalizations {
   /// 아이디 중복 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이 이름표는 이미 쓰이고 있어요. 다른 이름표를 골라 주세요.'**
+  /// **'이 아이디는 이미 쓰이고 있어요. 다른 아이디를 골라 주세요.'**
   String get authErrorLoginIdInUse;
 
   /// 아이디 형식 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이름표는 한글, 영문, 숫자만 쓸 수 있어요.'**
+  /// **'아이디는 한글, 영문, 숫자, _만 쓸 수 있어요.'**
   String get authErrorLoginIdFormat;
 
   /// 예약어 아이디 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이 이름표는 쓸 수 없어요. 다른 이름표를 골라 주세요.'**
+  /// **'이 아이디는 쓸 수 없어요. 다른 아이디를 골라 주세요.'**
   String get authErrorLoginIdReserved;
 
   /// 표시 이름 필수 오류입니다.
@@ -2697,7 +2709,7 @@ abstract class AppLocalizations {
   /// No description provided for @devicePinLockedOut.
   ///
   /// In ko, this message translates to:
-  /// **'핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.'**
+  /// **'핀을 5번 틀려 지웠습니다. 아이디와 비밀번호로 다시 로그인해 주세요.'**
   String get devicePinLockedOut;
 
   /// No description provided for @devicePinSettingsTitle.

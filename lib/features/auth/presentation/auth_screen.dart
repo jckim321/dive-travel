@@ -1,11 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -130,281 +129,195 @@ class _AuthScreenState extends State<AuthScreen> {
     final session = SessionScope.of(context);
     return Scaffold(
       key: const Key('auth-full-screen'),
-      backgroundColor: const Color(0xFF0C5EA6),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const _LoginBackdrop(),
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
-                  children: [
-                    if (widget.popOnSuccess)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          key: const Key('auth-full-close'),
-                          onPressed: () => Navigator.of(context).maybePop(false),
-                          icon: const Icon(Icons.close, color: Colors.white),
-                        ),
-                      ),
-                    _AuthHero(signUp: _signUp),
-                    const SizedBox(height: 16),
-                    Material(
-                      color: Colors.white,
-                      elevation: 0,
-                      borderRadius: BorderRadius.circular(28),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
-                        child: AuthCredentialsForm(
-                          busy: session.busy,
-                          errorText: _error,
-                          initialSignUp: widget.initialSignUp,
-                          onSignUpChanged: (signUp) => setState(() {
-                            _signUp = signUp;
-                            _error = null;
-                          }),
-                          onSubmit: _submit,
-                        ),
+      backgroundColor: AppTheme.seaMist,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFE8F4F8),
+              AppTheme.seaMist,
+              Color(0xFFF2F7FA),
+            ],
+            stops: [0, 0.45, 1],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                children: [
+                  if (widget.popOnSuccess)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        key: const Key('auth-full-close'),
+                        onPressed: () =>
+                            Navigator.of(context).maybePop(false),
+                        icon: const Icon(Icons.close, color: AppTheme.navy),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF6D8),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        child: Text(
-                          l10n.authTrialNote,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF8A6A12),
-                          ),
-                        ),
+                  _BrandWordmark(
+                    subtitle: _signUp
+                        ? l10n.authHeroSignupHint
+                        : l10n.authHeroLoginHint,
+                  ),
+                  const SizedBox(height: 20),
+                  Material(
+                    color: Colors.white,
+                    elevation: 0,
+                    shadowColor: const Color(0x140B1F33),
+                    borderRadius: BorderRadius.circular(AppTheme.radius),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                      child: AuthCredentialsForm(
+                        busy: session.busy,
+                        errorText: _error,
+                        initialSignUp: widget.initialSignUp,
+                        onSignUpChanged: (signUp) => setState(() {
+                          _signUp = signUp;
+                          _error = null;
+                        }),
+                        onSubmit: _submit,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.authTrialNote,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.35,
+                      color: AppTheme.muted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AuthHero extends StatelessWidget {
-  const _AuthHero({required this.signUp});
-
-  final bool signUp;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A9BB3), Color(0xFF3FCFC8)],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 28, 22, 26),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'DIVE TRAVEL',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                letterSpacing: 1.4,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              l10n.authHeroTitle,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                height: 1.25,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              signUp ? l10n.authHeroSignupHint : l10n.authHeroLoginHint,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-            ),
-          ],
         ),
       ),
     );
   }
 }
 
-const _loginBg = AssetImage('assets/images/login_bg.webp');
+/// Two-line brand mark with a one-shot entrance (fade + rise, gold rule expand).
+class _BrandWordmark extends StatefulWidget {
+  const _BrandWordmark({required this.subtitle});
 
-class _LoginBackdrop extends StatefulWidget {
-  const _LoginBackdrop();
+  final String subtitle;
 
   @override
-  State<_LoginBackdrop> createState() => _LoginBackdropState();
+  State<_BrandWordmark> createState() => _BrandWordmarkState();
 }
 
-class _LoginBackdropState extends State<_LoginBackdrop>
+class _BrandWordmarkState extends State<_BrandWordmark>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _motion;
+  late final AnimationController _entrance;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _rule;
 
   @override
   void initState() {
     super.initState();
-    _motion = AnimationController(
+    _entrance = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 42),
+      duration: const Duration(milliseconds: 720),
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      precacheImage(_loginBg, context);
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _syncMotion();
+    _fade = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0, 0.55, curve: Curves.easeOut),
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _entrance,
+        curve: const Interval(0, 0.6, curve: Curves.easeOutCubic),
+      ),
+    );
+    _rule = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0.35, 1, curve: Curves.easeOutCubic),
+    );
+    _entrance.forward();
   }
 
   @override
   void dispose() {
-    _motion.dispose();
+    _entrance.dispose();
     super.dispose();
-  }
-
-  void _syncMotion() {
-    final route = ModalRoute.of(context);
-    final visible =
-        TickerMode.valuesOf(context).enabled && (route == null || route.isCurrent);
-    if (visible) {
-      if (!_motion.isAnimating) _motion.repeat();
-    } else if (_motion.isAnimating) {
-      _motion.stop(canceled: false);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Stack(
-        fit: StackFit.expand,
+    return AnimatedBuilder(
+      animation: _entrance,
+      builder: (context, child) {
+        return FadeTransition(
+          opacity: _fade,
+          child: SlideTransition(
+            position: _slide,
+            child: child,
+          ),
+        );
+      },
+      child: Column(
         children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF49C4F2),
-                  Color(0xFF1B86D0),
-                  Color(0xFF0C5EA6),
-                  Color(0xFF08487C),
-                ],
-                stops: [0, 0.28, 0.62, 1],
-              ),
+          const Text(
+            'DIVE',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.navy,
+              fontSize: 34,
+              height: 1.05,
+              letterSpacing: 10,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          ClipRect(
-            child: AnimatedBuilder(
-              animation: _motion,
-              builder: (context, child) {
-                final wave = math.sin(_motion.value * math.pi * 2);
-                return Transform.translate(
-                  offset: Offset(wave * 8, -wave * 6),
-                  child: Transform.scale(
-                    scale: 1.1 + wave * 0.025,
-                    child: child,
-                  ),
-                );
-              },
-              child: Image(
-                image: _loginBg,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                gaplessPlayback: true,
-                frameBuilder: (context, child, frame, _) {
-                  return AnimatedOpacity(
-                    opacity: frame == null ? 0 : 1,
-                    duration: const Duration(milliseconds: 700),
-                    curve: Curves.easeOut,
-                    child: child,
-                  );
-                },
-              ),
+          const SizedBox(height: 4),
+          const Text(
+            'TRAVEL',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.navy,
+              fontSize: 28,
+              height: 1.05,
+              letterSpacing: 8,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          CustomPaint(
-            painter: _RisingBubblesPainter(repaint: _motion),
-            child: const SizedBox.expand(),
+          const SizedBox(height: 14),
+          AnimatedBuilder(
+            animation: _rule,
+            builder: (context, _) {
+              return Center(
+                child: SizedBox(
+                  width: 72 * _rule.value.clamp(0.0, 1.0),
+                  height: 2,
+                  child: const ColoredBox(color: AppTheme.gold),
+                ),
+              );
+            },
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x00061A2C),
-                  Color(0x00061A2C),
-                  Color(0x59061A2C),
-                  Color(0xC2061A2C),
-                ],
-                stops: [0, 0.45, 0.74, 1],
-              ),
+          const SizedBox(height: 14),
+          Text(
+            widget.subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppTheme.muted,
+              fontSize: 14,
+              height: 1.4,
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _RisingBubblesPainter extends CustomPainter {
-  _RisingBubblesPainter({required this.repaint}) : super(repaint: repaint);
-
-  final Animation<double> repaint;
-
-  static const _bubbles = <(double, double, double, double)>[
-    (0.16, 0.05, 5, 0.72),
-    (0.38, 0.41, 3.5, 0.9),
-    (0.62, 0.18, 6, 0.64),
-    (0.78, 0.63, 4, 0.8),
-    (0.9, 0.3, 3, 1),
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0x47FFFFFF);
-    final t = repaint.value;
-    for (final (x, phase, radius, speed) in _bubbles) {
-      final progress = (t * speed + phase) % 1;
-      final y = size.height * (1.08 - progress * 1.25);
-      final drift = math.sin((progress + phase) * math.pi * 2) * 6;
-      canvas.drawCircle(Offset(size.width * x + drift, y), radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RisingBubblesPainter oldDelegate) => false;
 }

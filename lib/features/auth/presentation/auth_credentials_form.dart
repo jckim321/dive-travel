@@ -4,7 +4,7 @@ import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Name tag + password submitted from [AuthCredentialsForm].
+/// Id + password submitted from [AuthCredentialsForm].
 class AuthCredentials {
   const AuthCredentials({
     required this.signUp,
@@ -27,7 +27,7 @@ class AuthCredentials {
   final String loginId;
 }
 
-/// Sign-up / sign-in fields shared by the auth page and a future login sheet.
+/// Sign-up / sign-in fields shared by the auth page and login sheet.
 class AuthCredentialsForm extends StatefulWidget {
   const AuthCredentialsForm({
     super.key,
@@ -128,6 +128,11 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final error = _localError ?? widget.errorText;
+    final hintStyle = TextStyle(
+      fontSize: 12,
+      height: 1.3,
+      color: AppTheme.muted.withValues(alpha: 0.95),
+    );
     return Column(
       key: const Key('auth-credentials-form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,6 +166,14 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
             fillColor: Colors.white,
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, top: 6),
+          child: Text(
+            l10n.authIdRuleHint,
+            key: const Key('auth-id-rule-hint'),
+            style: hintStyle,
+          ),
+        ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('auth-password'),
@@ -170,9 +183,16 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             labelText: l10n.authPassword,
-            hintText: l10n.authPasswordHint,
             filled: true,
             fillColor: Colors.white,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, top: 6),
+          child: Text(
+            l10n.authPasswordRuleHint,
+            key: const Key('auth-password-rule-hint'),
+            style: hintStyle,
           ),
         ),
         const SizedBox(height: 4),
@@ -214,7 +234,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(l10n.authStart),
+              : Text(_signUp ? l10n.authStart : l10n.authLogin),
         ),
         const SizedBox(height: 14),
         Text(
@@ -249,7 +269,7 @@ class _AuthTab extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: selected ? AppTheme.navy : Colors.transparent,
+                color: selected ? AppTheme.gold : Colors.transparent,
                 width: 2,
               ),
             ),

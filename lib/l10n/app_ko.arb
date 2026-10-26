@@ -906,15 +906,17 @@
   "authFirstVisit": "처음이에요",
   "authWelcomeBack": "다시 왔어요",
   "authHeroTitle": "다이빙 여행,\n같이 가요",
-  "authHeroSignupHint": "지금은 이름표와 비밀번호만 있으면 돼요",
-  "authHeroLoginHint": "이름표와 비밀번호로 다시 들어와요",
-  "authNameTag": "이름표 (한글·영문·숫자 모두 가능)",
+  "authHeroSignupHint": "아이디와 비밀번호만 있으면 시작할 수 있어요",
+  "authHeroLoginHint": "아이디와 비밀번호로 다시 들어와요",
+  "authNameTag": "아이디",
+  "authIdRuleHint": "한글·영문·숫자·_ 가능",
+  "authPasswordRuleHint": "6자 이상",
   "authKeepSignedIn": "이 기기에서는 계속 로그인해 두기",
   "authStart": "시작하기",
   "authForgotPasswordNote": "비밀번호를 잊었다면 → 「운영팀에 알려 주세요」 (출시 전 임시)",
   "authTrialNote": "출시 전 시험용 · 가입과 로그인을 한 화면에서, 입력은 두 칸",
-  "authErrorNameTagRequired": "이름표를 적어 주세요.",
-  "authErrorNameTagTooLong": "이름표가 너무 길어요. 조금 짧게 적어 주세요.",
+  "authErrorNameTagRequired": "아이디를 적어 주세요.",
+  "authErrorNameTagTooLong": "아이디가 너무 길어요. 조금 짧게 적어 주세요.",
   "authNationality": "국적(선택)",
   "authNationalityNone": "선택 안 함",
   "profileNationality": "국적",
@@ -986,15 +988,15 @@
   "@authErrorEmailInUse": {
     "description": "중복 이메일 오류입니다."
   },
-  "authErrorLoginIdInUse": "이 이름표는 이미 쓰이고 있어요. 다른 이름표를 골라 주세요.",
+  "authErrorLoginIdInUse": "이 아이디는 이미 쓰이고 있어요. 다른 아이디를 골라 주세요.",
   "@authErrorLoginIdInUse": {
     "description": "아이디 중복 오류입니다."
   },
-  "authErrorLoginIdFormat": "이름표는 한글, 영문, 숫자만 쓸 수 있어요.",
+  "authErrorLoginIdFormat": "아이디는 한글, 영문, 숫자, _만 쓸 수 있어요.",
   "@authErrorLoginIdFormat": {
     "description": "아이디 형식 오류입니다."
   },
-  "authErrorLoginIdReserved": "이 이름표는 쓸 수 없어요. 다른 이름표를 골라 주세요.",
+  "authErrorLoginIdReserved": "이 아이디는 쓸 수 없어요. 다른 아이디를 골라 주세요.",
   "@authErrorLoginIdReserved": {
     "description": "예약어 아이디 오류입니다."
   },
@@ -1068,7 +1070,7 @@
       }
     }
   },
-  "devicePinLockedOut": "핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.",
+  "devicePinLockedOut": "핀을 5번 틀려 지웠습니다. 아이디와 비밀번호로 다시 로그인해 주세요.",
   "devicePinSettingsTitle": "기기 핀",
   "devicePinSettingsSet": "기기 핀 정하기",
   "devicePinSettingsChange": "기기 핀 바꾸기",

@@ -1199,13 +1199,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authHeroTitle => '다이빙 여행,\n같이 가요';
 
   @override
-  String get authHeroSignupHint => '지금은 이름표와 비밀번호만 있으면 돼요';
+  String get authHeroSignupHint => '아이디와 비밀번호만 있으면 시작할 수 있어요';
 
   @override
-  String get authHeroLoginHint => '이름표와 비밀번호로 다시 들어와요';
+  String get authHeroLoginHint => '아이디와 비밀번호로 다시 들어와요';
 
   @override
-  String get authNameTag => '이름표 (한글·영문·숫자 모두 가능)';
+  String get authNameTag => '아이디';
+
+  @override
+  String get authIdRuleHint => '한글·영문·숫자·_ 가능';
+
+  @override
+  String get authPasswordRuleHint => '6자 이상';
 
   @override
   String get authKeepSignedIn => '이 기기에서는 계속 로그인해 두기';
@@ -1220,10 +1226,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authTrialNote => '출시 전 시험용 · 가입과 로그인을 한 화면에서, 입력은 두 칸';
 
   @override
-  String get authErrorNameTagRequired => '이름표를 적어 주세요.';
+  String get authErrorNameTagRequired => '아이디를 적어 주세요.';
 
   @override
-  String get authErrorNameTagTooLong => '이름표가 너무 길어요. 조금 짧게 적어 주세요.';
+  String get authErrorNameTagTooLong => '아이디가 너무 길어요. 조금 짧게 적어 주세요.';
 
   @override
   String get authNationality => '국적(선택)';
@@ -1296,13 +1302,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authErrorEmailInUse => '该邮箱已注册。';
 
   @override
-  String get authErrorLoginIdInUse => '이 이름표는 이미 쓰이고 있어요. 다른 이름표를 골라 주세요.';
+  String get authErrorLoginIdInUse => '이 아이디는 이미 쓰이고 있어요. 다른 아이디를 골라 주세요.';
 
   @override
-  String get authErrorLoginIdFormat => '이름표는 한글, 영문, 숫자만 쓸 수 있어요.';
+  String get authErrorLoginIdFormat => '아이디는 한글, 영문, 숫자, _만 쓸 수 있어요.';
 
   @override
-  String get authErrorLoginIdReserved => '이 이름표는 쓸 수 없어요. 다른 이름표를 골라 주세요.';
+  String get authErrorLoginIdReserved => '이 아이디는 쓸 수 없어요. 다른 아이디를 골라 주세요.';
 
   @override
   String get authErrorDisplayNameRequired => '이름을 입력해 주세요.';
@@ -1381,7 +1387,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get devicePinLockedOut => '핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.';
+  String get devicePinLockedOut => '핀을 5번 틀려 지웠습니다. 아이디와 비밀번호로 다시 로그인해 주세요.';
 
   @override
   String get devicePinSettingsTitle => '기기 핀';

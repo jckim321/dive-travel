@@ -7,7 +7,7 @@ import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
-  testWidgets('이름표 폼은 계속 로그인이 기본이고 기존 아이디 매핑을 유지한다', (
+  testWidgets('아이디 폼은 계속 로그인이 기본이고 기존 아이디 매핑을 유지한다', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));

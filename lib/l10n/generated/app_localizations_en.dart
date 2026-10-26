@@ -1241,14 +1241,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authHeroSignupHint =>
-      'A name tag and a password are enough for now';
+      'An ID and password are enough to get started';
 
   @override
-  String get authHeroLoginHint =>
-      'Come back in with your name tag and password';
+  String get authHeroLoginHint => 'Come back in with your ID and password';
 
   @override
-  String get authNameTag => 'Name tag (Korean, English, or digits)';
+  String get authNameTag => 'ID';
+
+  @override
+  String get authIdRuleHint => 'Korean, English, digits, or _';
+
+  @override
+  String get authPasswordRuleHint => 'At least 6 characters';
 
   @override
   String get authKeepSignedIn => 'Stay signed in on this device';
@@ -1265,11 +1270,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pre-launch trial · sign-up and sign-in on one screen, two fields';
 
   @override
-  String get authErrorNameTagRequired => 'Enter a name tag.';
+  String get authErrorNameTagRequired => 'Enter an ID.';
 
   @override
   String get authErrorNameTagTooLong =>
-      'That name tag is too long. Try a shorter one.';
+      'That ID is too long. Try a shorter one.';
 
   @override
   String get authNationality => 'Nationality (optional)';
@@ -1347,15 +1352,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authErrorLoginIdInUse =>
-      'That name tag is already taken. Pick another one.';
+      'That ID is already taken. Pick another one.';
 
   @override
   String get authErrorLoginIdFormat =>
-      'Use only Korean, English letters, or digits in a name tag.';
+      'ID can only use Korean, English letters, digits, or _.';
 
   @override
   String get authErrorLoginIdReserved =>
-      'That name tag can\'t be used. Pick another one.';
+      'That ID can\'t be used. Pick another one.';
 
   @override
   String get authErrorDisplayNameRequired => 'Enter your name.';
@@ -1439,7 +1444,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get devicePinLockedOut =>
-      'PIN cleared after 5 wrong tries. Sign in again with your name tag and password.';
+      'PIN cleared after 5 wrong tries. Sign in again with your ID and password.';
 
   @override
   String get devicePinSettingsTitle => 'Device PIN';
