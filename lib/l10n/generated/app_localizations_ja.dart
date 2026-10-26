@@ -4104,7 +4104,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityTideKicker => '출발 보드';
 
   @override
-  String get communityTideHeadline => '이미 나가는 배의 남은 자리';
+  String get communityTideHeadline => '같은배 동승하기';
 
   @override
   String get communityTideBody =>

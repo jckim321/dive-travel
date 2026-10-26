@@ -7791,7 +7791,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityTideHeadline.
   ///
   /// In ko, this message translates to:
-  /// **'이미 나가는 배의 남은 자리'**
+  /// **'같은배 동승하기'**
   String get communityTideHeadline;
 
   /// No description provided for @communityTideBody.
