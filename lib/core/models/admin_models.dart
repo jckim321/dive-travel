@@ -240,6 +240,25 @@ class MemberAccount {
 
   bool get missingProfile => displayName.trim().isEmpty;
 
+  /// 목록에 쓸 아이디. `login_id`가 없으면 이메일 앞부분.
+  String get listHandle {
+    final login = loginId.trim();
+    if (login.isNotEmpty) {
+      return login;
+    }
+    final mail = email.trim();
+    if (mail.isEmpty) {
+      return '';
+    }
+    final at = mail.indexOf('@');
+    return (at <= 0 ? mail : mail.substring(0, at)).trim();
+  }
+
+  bool get nameIsPlaceholder {
+    final name = displayName.trim();
+    return name.isEmpty || name == '다이버';
+  }
+
   MemberGrade get suggestedGrade => MemberGrade.fromActivity(
         paidPurchases: paidPurchaseCount,
         reviews: reviewCount,
@@ -290,6 +309,40 @@ class MemberAccount {
       withdrawnAt: clearWithdrawn ? null : (withdrawnAt ?? this.withdrawnAt),
     );
   }
+}
+
+/// 최근 로그인 시각이 있는 회원이 앞이고, 없으면 가입 시각이 늦은 순.
+int compareMembersByRecentLogin(MemberAccount a, MemberAccount b) {
+  final aSeen = a.lastSeenAt;
+  final bSeen = b.lastSeenAt;
+  if (aSeen != null || bSeen != null) {
+    if (aSeen == null) {
+      return 1;
+    }
+    if (bSeen == null) {
+      return -1;
+    }
+    final bySeen = bSeen.compareTo(aSeen);
+    if (bySeen != 0) {
+      return bySeen;
+    }
+  } else {
+    final aCreated = a.createdAt;
+    final bCreated = b.createdAt;
+    if (aCreated == null && bCreated != null) {
+      return 1;
+    }
+    if (aCreated != null && bCreated == null) {
+      return -1;
+    }
+    if (aCreated != null && bCreated != null) {
+      final byCreated = bCreated.compareTo(aCreated);
+      if (byCreated != 0) {
+        return byCreated;
+      }
+    }
+  }
+  return a.uid.compareTo(b.uid);
 }
 
 class AdminOpsSnapshot {

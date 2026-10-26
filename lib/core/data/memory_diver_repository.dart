@@ -1772,7 +1772,7 @@ class MemoryDiverRepository implements DiverRepository {
   @override
   Future<List<MemberAccount>> fetchMembers() async {
     final members = List<MemberAccount>.from(_members);
-    members.sort((a, b) => a.displayName.compareTo(b.displayName));
+    members.sort(compareMembersByRecentLogin);
     final delay = debugDelayFetchMembers;
     if (delay != null) {
       await delay();

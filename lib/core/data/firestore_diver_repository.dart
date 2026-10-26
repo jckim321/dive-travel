@@ -2581,7 +2581,7 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<List<MemberAccount>> fetchMembers() async {
     final snapshot = await _users.get();
     final members = [for (final doc in snapshot.docs) _toMemberAccount(doc)];
-    members.sort((a, b) => a.displayName.compareTo(b.displayName));
+    members.sort(compareMembersByRecentLogin);
     return members;
   }
 
@@ -2589,7 +2589,7 @@ class FirestoreDiverRepository implements DiverRepository {
   Stream<List<MemberAccount>> watchMembers() {
     return _users.snapshots().map((snapshot) {
       final members = [for (final doc in snapshot.docs) _toMemberAccount(doc)];
-      members.sort((a, b) => a.displayName.compareTo(b.displayName));
+      members.sort(compareMembersByRecentLogin);
       return members;
     });
   }

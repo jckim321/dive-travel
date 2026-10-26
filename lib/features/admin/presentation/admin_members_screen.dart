@@ -91,7 +91,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         final visible = [
           for (final member in all)
             if (_inFilter(member) && _matchesQuery(member, q)) member,
-        ];
+        ]..sort(compareMembersByRecentLogin);
         final missing = [for (final m in visible) if (m.missingProfile) m];
         return Material(
           color: AdminConsoleTheme.bg,
@@ -137,7 +137,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       onChanged: (_) => setState(() {}),
                       style: const TextStyle(color: AdminConsoleTheme.text),
                       decoration: InputDecoration(
-                        hintText: '이름·아이디로 찾기',
+                        hintText: '이름·아이디·이메일로 찾기',
                         hintStyle: const TextStyle(color: AdminConsoleTheme.muted),
                         prefixIcon: const Icon(Icons.search, color: AdminConsoleTheme.muted),
                         filled: true,
@@ -219,6 +219,8 @@ bool _matchesQuery(MemberAccount member, String q) {
   if (q.isEmpty) return true;
   return member.displayName.toLowerCase().contains(q) ||
       member.loginId.toLowerCase().contains(q) ||
+      member.listHandle.toLowerCase().contains(q) ||
+      member.email.toLowerCase().contains(q) ||
       member.uid.toLowerCase().contains(q);
 }
 
@@ -406,9 +408,13 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final initial = member.displayName.trim().isEmpty
-        ? '?'
-        : member.displayName.trim().characters.first;
+    final handle = member.listHandle;
+    final placeholder = member.nameIsPlaceholder;
+    final title = placeholder
+        ? (handle.isEmpty ? '(이름 없음)' : handle)
+        : member.displayName.trim();
+    final initial = title == '(이름 없음)' ? '?' : title.characters.first;
+    final showHandle = !placeholder && handle.isNotEmpty;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -427,9 +433,29 @@ class _MemberRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        member.displayName.trim().isEmpty ? '(이름 없음)' : member.displayName,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            key: Key('admin-member-name-${member.uid}'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                          ),
+                          if (showHandle)
+                            Text(
+                              handle,
+                              key: Key('admin-member-login-${member.uid}'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AdminConsoleTheme.muted,
+                                fontSize: 11,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (member.isBusiness)
