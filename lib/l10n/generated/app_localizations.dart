@@ -8217,7 +8217,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityBoardListHint.
   ///
   /// In ko, this message translates to:
-  /// **'출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
+  /// **'새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
   String get communityBoardListHint;
 
   /// No description provided for @communitySameBoatResults.
@@ -8591,6 +8591,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'출발'**
   String get communityFilterDeparting;
+
+  /// No description provided for @sameBoatSearchWhen.
+  ///
+  /// In ko, this message translates to:
+  /// **'언제'**
+  String get sameBoatSearchWhen;
+
+  /// No description provided for @sameBoatSearchWhere.
+  ///
+  /// In ko, this message translates to:
+  /// **'어디'**
+  String get sameBoatSearchWhere;
+
+  /// No description provided for @sameBoatSearchParty.
+  ///
+  /// In ko, this message translates to:
+  /// **'몇 명'**
+  String get sameBoatSearchParty;
+
+  /// No description provided for @sameBoatSearchBudget.
+  ///
+  /// In ko, this message translates to:
+  /// **'예산'**
+  String get sameBoatSearchBudget;
+
+  /// No description provided for @sameBoatSearchMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get sameBoatSearchMore;
+
+  /// No description provided for @sameBoatSearchThisMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 달'**
+  String get sameBoatSearchThisMonth;
+
+  /// No description provided for @sameBoatSearchNextMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 달'**
+  String get sameBoatSearchNextMonth;
+
+  /// No description provided for @sameBoatSearchThreeMonths.
+  ///
+  /// In ko, this message translates to:
+  /// **'3개월 이내'**
+  String get sameBoatSearchThreeMonths;
+
+  /// No description provided for @sameBoatSearchPartyCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}명'**
+  String sameBoatSearchPartyCount(int count);
+
+  /// No description provided for @sameBoatSearchPartyFivePlus.
+  ///
+  /// In ko, this message translates to:
+  /// **'5명+'**
+  String get sameBoatSearchPartyFivePlus;
+
+  /// No description provided for @sameBoatSearchBudget50.
+  ///
+  /// In ko, this message translates to:
+  /// **'50만 이하'**
+  String get sameBoatSearchBudget50;
+
+  /// No description provided for @sameBoatSearchBudget100.
+  ///
+  /// In ko, this message translates to:
+  /// **'100만 이하'**
+  String get sameBoatSearchBudget100;
+
+  /// No description provided for @sameBoatSearchBudget200.
+  ///
+  /// In ko, this message translates to:
+  /// **'200만 이하'**
+  String get sameBoatSearchBudget200;
+
+  /// No description provided for @sameBoatSearchBudgetAny.
+  ///
+  /// In ko, this message translates to:
+  /// **'제한 없음'**
+  String get sameBoatSearchBudgetAny;
+
+  /// No description provided for @sameBoatSearchLastCall.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감 임박'**
+  String get sameBoatSearchLastCall;
+
+  /// No description provided for @sameBoatSearchDeparting.
+  ///
+  /// In ko, this message translates to:
+  /// **'곧 출발'**
+  String get sameBoatSearchDeparting;
+
+  /// No description provided for @sameBoatSearchReset.
+  ///
+  /// In ko, this message translates to:
+  /// **'초기화'**
+  String get sameBoatSearchReset;
+
+  /// No description provided for @sameBoatSearchApply.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 {count}개 보기'**
+  String sameBoatSearchApply(int count);
+
+  /// No description provided for @sameBoatSearchOpenCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 {count}개'**
+  String sameBoatSearchOpenCount(int count);
+
+  /// No description provided for @sameBoatSearchSortNewest.
+  ///
+  /// In ko, this message translates to:
+  /// **'새로 올라온 순'**
+  String get sameBoatSearchSortNewest;
+
+  /// No description provided for @sameBoatSearchAllSeats.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 빈자리'**
+  String get sameBoatSearchAllSeats;
 
   /// No description provided for @communityTakeSeat.
   ///

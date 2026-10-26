@@ -4459,7 +4459,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityBoardListHint =>
-      'Sorted by the sooner of departure and flag deadline. Take a leftover seat to book.';
+      'Newest open seats first. Take a leftover seat to book.';
 
   @override
   String get communitySameBoatResults => 'Finished seats';
@@ -4668,6 +4668,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityFilterDeparting => 'Departing';
+
+  @override
+  String get sameBoatSearchWhen => 'When';
+
+  @override
+  String get sameBoatSearchWhere => 'Where';
+
+  @override
+  String get sameBoatSearchParty => 'Party';
+
+  @override
+  String get sameBoatSearchBudget => 'Budget';
+
+  @override
+  String get sameBoatSearchMore => 'More';
+
+  @override
+  String get sameBoatSearchThisMonth => 'This month';
+
+  @override
+  String get sameBoatSearchNextMonth => 'Next month';
+
+  @override
+  String get sameBoatSearchThreeMonths => 'Within 3 months';
+
+  @override
+  String sameBoatSearchPartyCount(int count) {
+    return '$count';
+  }
+
+  @override
+  String get sameBoatSearchPartyFivePlus => '5+';
+
+  @override
+  String get sameBoatSearchBudget50 => 'Up to 500k';
+
+  @override
+  String get sameBoatSearchBudget100 => 'Up to 1M';
+
+  @override
+  String get sameBoatSearchBudget200 => 'Up to 2M';
+
+  @override
+  String get sameBoatSearchBudgetAny => 'Any budget';
+
+  @override
+  String get sameBoatSearchLastCall => 'Last call';
+
+  @override
+  String get sameBoatSearchDeparting => 'Departing soon';
+
+  @override
+  String get sameBoatSearchReset => 'Reset';
+
+  @override
+  String sameBoatSearchApply(int count) {
+    return 'Show $count seats';
+  }
+
+  @override
+  String sameBoatSearchOpenCount(int count) {
+    return '$count open';
+  }
+
+  @override
+  String get sameBoatSearchSortNewest => 'Newest first';
+
+  @override
+  String get sameBoatSearchAllSeats => 'All open seats';
 
   @override
   String get communityTakeSeat => 'Take a seat';

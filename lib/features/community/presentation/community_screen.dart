@@ -1,21 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
+import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
-
-enum _TideFilter { all, lastCall, departing }
 
 class _DesignPreview {
   const _DesignPreview({required this.offer, required this.shopName});
@@ -125,7 +127,27 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  _TideFilter _filter = _TideFilter.all;
+  var _search = const SameBoatSearch();
+  var _searchOpen = true;
+
+  bool _onBoardScroll(ScrollNotification notice) {
+    if (notice.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notice.metrics.pixels <= 8) {
+      if (!_searchOpen) {
+        setState(() => _searchOpen = true);
+      }
+      return false;
+    }
+    if (notice is UserScrollNotification &&
+        notice.direction == ScrollDirection.reverse &&
+        notice.metrics.pixels > 48 &&
+        _searchOpen) {
+      setState(() => _searchOpen = false);
+    }
+    return false;
+  }
 
   @override
   void initState() {
@@ -150,13 +172,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
       listenable: store,
       builder: (context, _) {
         final now = DateTime.now();
-        final filter = switch (_filter) {
-          _TideFilter.all => SameBoatFilter.all,
-          _TideFilter.lastCall => SameBoatFilter.lastCall,
-          _TideFilter.departing => SameBoatFilter.departing,
-        };
-        final offers = store.sameBoatOffers(filter, now: now);
         final all = store.sameBoatOffers(SameBoatFilter.all, now: now);
+        final offers = _search.apply(
+          all,
+          now: now,
+          priceOf: _perPersonPrice,
+          placeOf: (offer) => _placeFor(store, offer),
+        );
         final results = store.sameBoatResults(now: now);
         final lastCallCount = store
             .sameBoatOffers(SameBoatFilter.lastCall, now: now)
@@ -165,6 +187,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           0,
           (sum, offer) => sum + offer.remainingSeatsAt(now),
         );
+        final regions = _regionChoices(all, store);
 
         return Scaffold(
           backgroundColor: AppTheme.canvas,
@@ -177,100 +200,151 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   store.refreshCommunityPosts(),
                 ]);
               },
-              child: ListView(
-              key: const Key('tide-board'),
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 108),
-              children: [
-                _TideHeader(
-                  openSeats: openSeats,
-                  departureCount: all.length,
-                  lastCallCount: lastCallCount,
-                ),
-                if (lastCallCount > 0) ...[
-                  const SizedBox(height: 14),
-                  _UrgentStrip(
-                    count: lastCallCount,
-                    onTap: () => setState(() => _filter = _TideFilter.lastCall),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                _TideSegmentFilter(
-                  value: _filter,
-                  onChanged: (next) => setState(() => _filter = next),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  l10n.communityBoardList,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.communityBoardListHint,
-                  style: theme.textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                if (openSeats < 1) ...[
-                  Text(
-                    l10n.communityDesignPreview,
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  for (final entry in _designPreviews(now)) ...[
-                    _SeatCard(
-                      offer: entry.offer,
-                      shopName: entry.shopName,
-                      onOpen: () => _showDesignPreviewFlagHint(context),
-                      onTake: () => _showDesignPreviewFlagHint(context),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ] else if (offers.isEmpty)
-                  AppCard(
-                    child: Text(
-                      l10n.communityEmpty,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  )
-                else
-                  for (var i = 0; i < offers.length; i++) ...[
-                    _SeatCard(
-                      offer: offers[i],
-                      shop: _shopForProduct(store, offers[i].product),
-                      shopName: store.shopLabelFor(offers[i].product.shopId),
-                      onOpen: () => _openOfferDetail(
-                        context,
-                        offers[i],
-                        shop: _shopForProduct(store, offers[i].product),
-                        shopName: store.shopLabelFor(offers[i].product.shopId),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: _onBoardScroll,
+                child: CustomScrollView(
+                  key: const Key('tide-board'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _TideHeader(
+                              openSeats: openSeats,
+                              departureCount: all.length,
+                              lastCallCount: lastCallCount,
+                            ),
+                            if (lastCallCount > 0) ...[
+                              const SizedBox(height: 14),
+                              _UrgentStrip(
+                                count: lastCallCount,
+                                onTap: () => setState(() {
+                                  _search = _search.copyWith(lastCall: true);
+                                  _searchOpen = true;
+                                }),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       ),
-                      onTake: () => _takeSeat(context, store, offers[i]),
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                if (results.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.communitySameBoatResults,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  for (final offer in results) ...[
-                    _ResultCard(
-                      offer: offer,
-                      shopName: store.shopLabelFor(offer.product.shopId),
-                      now: now,
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: SameBoatSearchSliver(
+                        height: _searchOpen ? 112 : 48,
+                        child: SameBoatSearchBar(
+                          search: _search,
+                          expanded: _searchOpen,
+                          resultCount: offers.length,
+                          regions: regions,
+                          countFor: (draft) => draft
+                              .apply(
+                                all,
+                                now: now,
+                                priceOf: _perPersonPrice,
+                                placeOf: (offer) => _placeFor(store, offer),
+                              )
+                              .length,
+                          onChanged: (next) => setState(() => _search = next),
+                          onExpand: () => setState(() => _searchOpen = true),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 108),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          Text(
+                            l10n.communityBoardList,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.communityBoardListHint,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 12),
+                          if (openSeats < 1) ...[
+                            Text(
+                              l10n.communityDesignPreview,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            for (final entry in _designPreviews(now)) ...[
+                              _SeatCard(
+                                offer: entry.offer,
+                                shopName: entry.shopName,
+                                onOpen: () =>
+                                    _showDesignPreviewFlagHint(context),
+                                onTake: () =>
+                                    _showDesignPreviewFlagHint(context),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ] else if (offers.isEmpty)
+                            AppCard(
+                              child: Text(
+                                l10n.communityEmpty,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            )
+                          else
+                            for (var i = 0; i < offers.length; i++) ...[
+                              _SeatCard(
+                                offer: offers[i],
+                                shop: _shopForProduct(store, offers[i].product),
+                                shopName: store.shopLabelFor(
+                                  offers[i].product.shopId,
+                                ),
+                                onOpen: () => _openOfferDetail(
+                                  context,
+                                  offers[i],
+                                  shop: _shopForProduct(
+                                    store,
+                                    offers[i].product,
+                                  ),
+                                  shopName: store.shopLabelFor(
+                                    offers[i].product.shopId,
+                                  ),
+                                ),
+                                onTake: () =>
+                                    _takeSeat(context, store, offers[i]),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          if (results.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.communitySameBoatResults,
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            for (final offer in results) ...[
+                              _ResultCard(
+                                offer: offer,
+                                shopName: store.shopLabelFor(
+                                  offer.product.shopId,
+                                ),
+                                now: now,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.communityHostMileage,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ]),
+                      ),
+                    ),
                   ],
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  l10n.communityHostMileage,
-                  style: theme.textTheme.bodySmall,
                 ),
-              ],
-            ),
+              ),
             ),
           ),
         );
@@ -527,6 +601,49 @@ class _CommunityScreenState extends State<CommunityScreen> {
       flagPayBy: payBy,
     );
   }
+}
+
+SameBoatPlace _placeFor(DiverStore store, SameBoatOffer offer) {
+  final shop = _shopForProduct(store, offer.product);
+  return SameBoatPlace(
+    continent: offer.product.continent,
+    location: shop?.location ?? '',
+    country: shop?.country ?? '',
+    sites: [
+      ...shop?.sites ?? const [],
+      if (shop != null && shop.continent.isNotEmpty) shop.continent,
+    ],
+  );
+}
+
+List<SameBoatRegionChoice> _regionChoices(
+  List<SameBoatOffer> offers,
+  DiverStore store,
+) {
+  final choices = <SameBoatRegionChoice>[];
+  for (final region in RegionCatalog.known) {
+    var count = 0;
+    for (final offer in offers) {
+      if (placeHitsRegion(region, _placeFor(store, offer))) {
+        count++;
+      }
+    }
+    choices.add(
+      SameBoatRegionChoice(
+        id: region.id,
+        name: region.name,
+        count: count,
+      ),
+    );
+  }
+  choices.sort((a, b) {
+    final byCount = b.count.compareTo(a.count);
+    if (byCount != 0) {
+      return byCount;
+    }
+    return a.name.compareTo(b.name);
+  });
+  return choices;
 }
 
 ShopProduct? _freshProduct(DiverStore store, ShopProduct product) {
@@ -1615,80 +1732,33 @@ class _UrgentStrip extends StatelessWidget {
   }
 }
 
-class _TideSegmentFilter extends StatelessWidget {
-  const _TideSegmentFilter({
-    required this.value,
-    required this.onChanged,
-  });
+class SameBoatSearchSliver extends SliverPersistentHeaderDelegate {
+  SameBoatSearchSliver({required this.height, required this.child});
 
-  final _TideFilter value;
-  final ValueChanged<_TideFilter> onChanged;
+  final double height;
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE8EBEE)),
-      ),
-      child: Row(
-        children: [
-          for (final entry in [
-            (_TideFilter.all, l10n.communityFilterAll),
-            (_TideFilter.lastCall, l10n.communityFilterLastCall),
-            (_TideFilter.departing, l10n.communityFilterDeparting),
-          ])
-            Expanded(
-              child: _SegmentCell(
-                label: entry.$2,
-                selected: value == entry.$1,
-                onTap: () => onChanged(entry.$1),
-              ),
-            ),
-        ],
-      ),
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: AppTheme.canvas,
+      child: SizedBox(height: height, child: child),
     );
   }
-}
-
-class _SegmentCell extends StatelessWidget {
-  const _SegmentCell({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? AppTheme.navy : Colors.transparent,
-      borderRadius: BorderRadius.circular(11),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(11),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: selected ? Colors.white : AppTheme.muted,
-            ),
-          ),
-        ),
-      ),
-    );
+  bool shouldRebuild(SameBoatSearchSliver oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }
 

@@ -2346,7 +2346,7 @@
     }
   },
   "communityBoardList": "출발 명부",
-  "communityBoardListHint": "출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.",
+  "communityBoardListHint": "새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.",
   "communitySameBoatResults": "종료된 빈자리",
   "communitySameBoatResultDeparted": "출발 종료",
   "communitySameBoatResultSoldOut": "매진",
@@ -2439,6 +2439,36 @@
   "communityFilterSolo": "싱글",
   "communityFilterShop": "샵",
   "communityFilterDeparting": "출발",
+  "sameBoatSearchWhen": "언제",
+  "sameBoatSearchWhere": "어디",
+  "sameBoatSearchParty": "몇 명",
+  "sameBoatSearchBudget": "예산",
+  "sameBoatSearchMore": "더 보기",
+  "sameBoatSearchThisMonth": "이번 달",
+  "sameBoatSearchNextMonth": "다음 달",
+  "sameBoatSearchThreeMonths": "3개월 이내",
+  "sameBoatSearchPartyCount": "{count}명",
+  "@sameBoatSearchPartyCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchPartyFivePlus": "5명+",
+  "sameBoatSearchBudget50": "50만 이하",
+  "sameBoatSearchBudget100": "100만 이하",
+  "sameBoatSearchBudget200": "200만 이하",
+  "sameBoatSearchBudgetAny": "제한 없음",
+  "sameBoatSearchLastCall": "마감 임박",
+  "sameBoatSearchDeparting": "곧 출발",
+  "sameBoatSearchReset": "초기화",
+  "sameBoatSearchApply": "빈자리 {count}개 보기",
+  "@sameBoatSearchApply": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchOpenCount": "빈자리 {count}개",
+  "@sameBoatSearchOpenCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchSortNewest": "새로 올라온 순",
+  "sameBoatSearchAllSeats": "전체 빈자리",
   "communityTakeSeat": "자리 잡기",
   "communityFlagHoldAsk": "선택한 인원만큼 {deadline}까지 좌석이 잠겨 선예약 우선권이 생깁니다(가확정·주황). 그 안에 결제하면 확정(검정)되고, 마감이 지나면 자리가 다시 열립니다.",
   "@communityFlagHoldAsk": {

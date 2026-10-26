@@ -1775,7 +1775,7 @@
     }
   },
   "communityBoardList": "Departure board",
-  "communityBoardListHint": "Sorted by the sooner of departure and flag deadline. Take a leftover seat to book.",
+  "communityBoardListHint": "Newest open seats first. Take a leftover seat to book.",
   "communitySameBoatResults": "Finished seats",
   "communitySameBoatResultDeparted": "Departed",
   "communitySameBoatResultSoldOut": "Sold out",
@@ -1863,6 +1863,36 @@
   "communityFilterSolo": "Solo",
   "communityFilterShop": "Shop",
   "communityFilterDeparting": "Departing",
+  "sameBoatSearchWhen": "When",
+  "sameBoatSearchWhere": "Where",
+  "sameBoatSearchParty": "Party",
+  "sameBoatSearchBudget": "Budget",
+  "sameBoatSearchMore": "More",
+  "sameBoatSearchThisMonth": "This month",
+  "sameBoatSearchNextMonth": "Next month",
+  "sameBoatSearchThreeMonths": "Within 3 months",
+  "sameBoatSearchPartyCount": "{count}",
+  "@sameBoatSearchPartyCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchPartyFivePlus": "5+",
+  "sameBoatSearchBudget50": "Up to 500k",
+  "sameBoatSearchBudget100": "Up to 1M",
+  "sameBoatSearchBudget200": "Up to 2M",
+  "sameBoatSearchBudgetAny": "Any budget",
+  "sameBoatSearchLastCall": "Last call",
+  "sameBoatSearchDeparting": "Departing soon",
+  "sameBoatSearchReset": "Reset",
+  "sameBoatSearchApply": "Show {count} seats",
+  "@sameBoatSearchApply": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchOpenCount": "{count} open",
+  "@sameBoatSearchOpenCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "sameBoatSearchSortNewest": "Newest first",
+  "sameBoatSearchAllSeats": "All open seats",
   "communityTakeSeat": "Take a seat",
   "communityFlagHoldAsk": "Planting a flag locks your chosen seats until {deadline} (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.",
   "@communityFlagHoldAsk": {

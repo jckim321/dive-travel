@@ -4341,8 +4341,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityBoardList => '출발 명부';
 
   @override
-  String get communityBoardListHint =>
-      '출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
+  String get communityBoardListHint => '새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
 
   @override
   String get communitySameBoatResults => '종료된 빈자리';
@@ -4544,6 +4543,75 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get communityFilterDeparting => '출발';
+
+  @override
+  String get sameBoatSearchWhen => '언제';
+
+  @override
+  String get sameBoatSearchWhere => '어디';
+
+  @override
+  String get sameBoatSearchParty => '몇 명';
+
+  @override
+  String get sameBoatSearchBudget => '예산';
+
+  @override
+  String get sameBoatSearchMore => '더 보기';
+
+  @override
+  String get sameBoatSearchThisMonth => '이번 달';
+
+  @override
+  String get sameBoatSearchNextMonth => '다음 달';
+
+  @override
+  String get sameBoatSearchThreeMonths => '3개월 이내';
+
+  @override
+  String sameBoatSearchPartyCount(int count) {
+    return '$count명';
+  }
+
+  @override
+  String get sameBoatSearchPartyFivePlus => '5명+';
+
+  @override
+  String get sameBoatSearchBudget50 => '50만 이하';
+
+  @override
+  String get sameBoatSearchBudget100 => '100만 이하';
+
+  @override
+  String get sameBoatSearchBudget200 => '200만 이하';
+
+  @override
+  String get sameBoatSearchBudgetAny => '제한 없음';
+
+  @override
+  String get sameBoatSearchLastCall => '마감 임박';
+
+  @override
+  String get sameBoatSearchDeparting => '곧 출발';
+
+  @override
+  String get sameBoatSearchReset => '초기화';
+
+  @override
+  String sameBoatSearchApply(int count) {
+    return '빈자리 $count개 보기';
+  }
+
+  @override
+  String sameBoatSearchOpenCount(int count) {
+    return '빈자리 $count개';
+  }
+
+  @override
+  String get sameBoatSearchSortNewest => '새로 올라온 순';
+
+  @override
+  String get sameBoatSearchAllSeats => '전체 빈자리';
 
   @override
   String get communityTakeSeat => '자리 잡기';
