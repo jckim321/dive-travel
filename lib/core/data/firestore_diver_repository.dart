@@ -4728,25 +4728,29 @@ class FirestoreDiverRepository implements DiverRepository {
       await ref.update({field: FieldValue.increment(1)});
       return true;
     } on FirebaseException catch (error, stackTrace) {
-      if (error.code != 'not-found') {
+      // A missing document is not `not-found`. The update rule reads
+      // resource.data, that value is null, and Firestore returns
+      // permission-denied. Create is still allowed.
+      if (error.code != 'not-found' && error.code != 'permission-denied') {
         _logSeatFailure('day update', ref.path, error, stackTrace);
         return false;
       }
-    }
-    final wrote = await _createWithoutRead(
-      ref,
-      Map<String, dynamic>.from(seatDayCreate(field)),
-    );
-    if (wrote == _SeatWrite.created) {
-      return true;
-    }
-    if (wrote != _SeatWrite.duplicate) {
-      return false;
-    }
-    try {
-      await ref.update({field: FieldValue.increment(1)});
-      return true;
-    } on FirebaseException catch (error, stackTrace) {
+      final wrote = await _createWithoutRead(
+        ref,
+        Map<String, dynamic>.from(seatDayCreate(field)),
+      );
+      if (wrote == _SeatWrite.created) {
+        return true;
+      }
+      if (wrote == _SeatWrite.duplicate && error.code == 'not-found') {
+        try {
+          await ref.update({field: FieldValue.increment(1)});
+          return true;
+        } on FirebaseException catch (retry, retryStack) {
+          _logSeatFailure('day update', ref.path, retry, retryStack);
+          return false;
+        }
+      }
       _logSeatFailure('day update', ref.path, error, stackTrace);
       return false;
     }

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import {
   assertFails,
@@ -145,5 +146,27 @@ describe('seat life analytics', () => {
     );
     await assertFails(customer.doc('seat_daily/2026-10-27').get());
     await assertFails(customer.collection('seat_daily').get());
+  });
+
+  it('rejects increment on a missing day, then a non-admin create sets flags to 1', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc('users/customer-1').set({
+        is_admin: false,
+      });
+    });
+    const customer = testEnv.authenticatedContext('customer-1').firestore();
+    const admin = testEnv.authenticatedContext('admin-1').firestore();
+
+    await assertFails(
+      customer.doc('seat_daily/2026-10-27').update({
+        flags: firebase.firestore.FieldValue.increment(1),
+      }),
+    );
+    await assertSucceeds(
+      customer.doc('seat_daily/2026-10-27').set(day('flags')),
+    );
+    const snap = await admin.doc('seat_daily/2026-10-27').get();
+    assert.equal(snap.exists, true);
+    assert.equal(snap.data().flags, 1);
   });
 });
