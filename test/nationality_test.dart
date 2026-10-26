@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
+import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -59,7 +60,11 @@ void main() {
     expect(changed.stats.nationalityConsentAt, isNotNull);
   });
 
-  testWidgets('로그인 없이도 홈이 열리고 국적 동의를 묻지 않는다', (tester) async {
+  testWidgets('첫 화면은 로그인 게이트이고, 둘러보면 홈이 열리며 국적 동의는 묻지 않는다', (
+    tester,
+  ) async {
+    guestBrowse.reset();
+    addTearDown(guestBrowse.reset);
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -74,6 +79,14 @@ void main() {
     await tester.pump();
     await tester.pump();
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+
+    expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
+    expect(find.text(l10n.navHome), findsNothing);
+    expect(find.text(nationalityConsentKo), findsNothing);
+
+    await tester.tap(find.byKey(const Key('auth-browse-first')));
+    await tester.pump();
+    await tester.pump();
 
     expect(find.text(l10n.navHome), findsOneWidget);
     expect(find.byKey(const Key('auth-credentials-form')), findsNothing);
