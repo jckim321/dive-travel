@@ -1407,6 +1407,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPinWrong => 'Incorrect PIN.';
 
   @override
+  String get devicePinSetupTitle => 'Set device PIN';
+
+  @override
+  String get devicePinSetupBody =>
+      'A 4-digit PIN for this device only. It is never sent to the server.';
+
+  @override
+  String get devicePinUnlockTitle => 'Unlock with device PIN';
+
+  @override
+  String get devicePinUnlockBody =>
+      'You stay signed in. Enter your 4-digit device PIN to unlock.';
+
+  @override
+  String get devicePinHint => '4 digits';
+
+  @override
+  String get devicePinConfirmHint => 'Enter again';
+
+  @override
+  String get devicePinSave => 'Save';
+
+  @override
+  String get devicePinMismatch => 'The two PINs do not match.';
+
+  @override
+  String devicePinWrong(int remain) {
+    return 'Incorrect PIN. $remain tries left.';
+  }
+
+  @override
+  String get devicePinLockedOut =>
+      'PIN cleared after 5 wrong tries. Sign in again with your name tag and password.';
+
+  @override
+  String get devicePinSettingsTitle => 'Device PIN';
+
+  @override
+  String get devicePinSettingsSet => 'Set device PIN';
+
+  @override
+  String get devicePinSettingsChange => 'Change device PIN';
+
+  @override
+  String get devicePinSettingsHint =>
+      'Unlock this device with a PIN when you reopen the app.';
+
+  @override
   String get adminAccessDenied => 'This account does not have admin access.';
 
   @override

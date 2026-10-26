@@ -6,9 +6,11 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/core/auth/device_pin_controller.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
+import 'package:dive_travel_app/features/auth/presentation/device_pin_dialogs.dart';
 import 'package:dive_travel_app/features/profile/presentation/nationality_field.dart';
 import 'package:dive_travel_app/features/profile/presentation/partner_application_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
@@ -22,13 +24,14 @@ class ProfileSettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final session = SessionScope.of(context);
+    final pins = DevicePinScope.of(context);
     final email = session.user?.email ?? '';
 
     return Scaffold(
       backgroundColor: AppTheme.seaMist,
       appBar: AppBar(title: Text(l10n.profileSettingsTitle)),
       body: ListenableBuilder(
-        listenable: store,
+        listenable: Listenable.merge([store, pins]),
         builder: (context, _) {
           final live = store.stats;
           final liveGrade = ProfileDisplayGrade.fromMember(
@@ -109,6 +112,27 @@ class ProfileSettingsScreen extends StatelessWidget {
                           onTap: () => openPartnerMode(context),
                         ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.devicePinSettingsTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                _SettingsCard(
+                  child: _SettingsAction(
+                    key: const Key('device-pin-settings'),
+                    icon: Icons.pin_outlined,
+                    title: pins.hasPin && pins.pinnedUid == store.uid
+                        ? l10n.devicePinSettingsChange
+                        : l10n.devicePinSettingsSet,
+                    subtitle: l10n.devicePinSettingsHint,
+                    onTap: () async {
+                      final uid = store.uid ?? session.user?.uid ?? '';
+                      if (uid.isEmpty) return;
+                      await showDevicePinSetupDialog(context, uid: uid);
+                    },
                   ),
                 ),
               ],
@@ -376,10 +400,12 @@ class _SettingsAction extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.onTap,
+    this.subtitle,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback onTap;
 
   @override
@@ -388,6 +414,7 @@ class _SettingsAction extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon, color: AppTheme.ocean),
       title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle!),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );

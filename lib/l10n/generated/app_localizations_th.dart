@@ -1366,6 +1366,50 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPinWrong => 'PIN ไม่ถูกต้อง';
 
   @override
+  String get devicePinSetupTitle => '기기 핀 정하기';
+
+  @override
+  String get devicePinSetupBody => '이 기기에서만 쓰는 4자리 핀입니다. 서버에는 저장되지 않습니다.';
+
+  @override
+  String get devicePinUnlockTitle => '기기 핀 잠금 해제';
+
+  @override
+  String get devicePinUnlockBody => '계정은 로그인된 상태입니다. 핀 4자리로 잠금을 풀어 주세요.';
+
+  @override
+  String get devicePinHint => '4자리 숫자';
+
+  @override
+  String get devicePinConfirmHint => '한 번 더 입력';
+
+  @override
+  String get devicePinSave => '저장';
+
+  @override
+  String get devicePinMismatch => '두 번 입력한 핀이 서로 다릅니다.';
+
+  @override
+  String devicePinWrong(int remain) {
+    return '핀이 올바르지 않습니다. $remain번 남았습니다.';
+  }
+
+  @override
+  String get devicePinLockedOut => '핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.';
+
+  @override
+  String get devicePinSettingsTitle => '기기 핀';
+
+  @override
+  String get devicePinSettingsSet => '기기 핀 정하기';
+
+  @override
+  String get devicePinSettingsChange => '기기 핀 바꾸기';
+
+  @override
+  String get devicePinSettingsHint => '앱을 다시 열 때 이 기기의 핀으로 잠금을 풉니다.';
+
+  @override
   String get adminAccessDenied => 'บัญชีนี้ไม่มีสิทธิ์ผู้ดูแล';
 
   @override

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
-import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+import 'support/device_pin_test_helpers.dart';
 
 void main() {
   test('활동 AND 조건으로 등급이 정해진다', () {
@@ -57,6 +59,7 @@ void main() {
       DiveTravelApp(
         firebaseReady: true,
         repository: MemoryDiverRepository.forTest(isAdmin: true),
+        devicePinStore: MemoryDevicePinStore(),
       ),
     );
     await tester.pump();
@@ -76,12 +79,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-admin-mode')));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('admin-pin-field')),
-      AppConstants.adminPin,
-    );
-    await tester.tap(find.byKey(const Key('admin-pin-submit')));
-    await tester.pumpAndSettle();
+    await completeDevicePinIfAsked(tester);
 
     expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);
     await tester.tap(find.byKey(const Key('admin-menu-members')));

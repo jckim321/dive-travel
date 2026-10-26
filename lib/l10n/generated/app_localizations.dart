@@ -2640,6 +2640,90 @@ abstract class AppLocalizations {
   /// **'PIN이 올바르지 않습니다.'**
   String get adminPinWrong;
 
+  /// 제휴파트너·관리자가 이 기기용 4자리 핀을 처음 정할 때 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 핀 정하기'**
+  String get devicePinSetupTitle;
+
+  /// No description provided for @devicePinSetupBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기에서만 쓰는 4자리 핀입니다. 서버에는 저장되지 않습니다.'**
+  String get devicePinSetupBody;
+
+  /// No description provided for @devicePinUnlockTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 핀 잠금 해제'**
+  String get devicePinUnlockTitle;
+
+  /// No description provided for @devicePinUnlockBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정은 로그인된 상태입니다. 핀 4자리로 잠금을 풀어 주세요.'**
+  String get devicePinUnlockBody;
+
+  /// No description provided for @devicePinHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'4자리 숫자'**
+  String get devicePinHint;
+
+  /// No description provided for @devicePinConfirmHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번 더 입력'**
+  String get devicePinConfirmHint;
+
+  /// No description provided for @devicePinSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get devicePinSave;
+
+  /// No description provided for @devicePinMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'두 번 입력한 핀이 서로 다릅니다.'**
+  String get devicePinMismatch;
+
+  /// No description provided for @devicePinWrong.
+  ///
+  /// In ko, this message translates to:
+  /// **'핀이 올바르지 않습니다. {remain}번 남았습니다.'**
+  String devicePinWrong(int remain);
+
+  /// No description provided for @devicePinLockedOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.'**
+  String get devicePinLockedOut;
+
+  /// No description provided for @devicePinSettingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 핀'**
+  String get devicePinSettingsTitle;
+
+  /// No description provided for @devicePinSettingsSet.
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 핀 정하기'**
+  String get devicePinSettingsSet;
+
+  /// No description provided for @devicePinSettingsChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 핀 바꾸기'**
+  String get devicePinSettingsChange;
+
+  /// No description provided for @devicePinSettingsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 다시 열 때 이 기기의 핀으로 잠금을 풉니다.'**
+  String get devicePinSettingsHint;
+
   /// No description provided for @adminAccessDenied.
   ///
   /// In ko, this message translates to:

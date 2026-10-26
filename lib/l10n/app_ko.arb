@@ -1049,6 +1049,30 @@
   "adminPinHint": "4자리 PIN",
   "adminPinConfirm": "입장",
   "adminPinWrong": "PIN이 올바르지 않습니다.",
+  "devicePinSetupTitle": "기기 핀 정하기",
+  "@devicePinSetupTitle": {
+    "description": "제휴파트너·관리자가 이 기기용 4자리 핀을 처음 정할 때 제목입니다."
+  },
+  "devicePinSetupBody": "이 기기에서만 쓰는 4자리 핀입니다. 서버에는 저장되지 않습니다.",
+  "devicePinUnlockTitle": "기기 핀 잠금 해제",
+  "devicePinUnlockBody": "계정은 로그인된 상태입니다. 핀 4자리로 잠금을 풀어 주세요.",
+  "devicePinHint": "4자리 숫자",
+  "devicePinConfirmHint": "한 번 더 입력",
+  "devicePinSave": "저장",
+  "devicePinMismatch": "두 번 입력한 핀이 서로 다릅니다.",
+  "devicePinWrong": "핀이 올바르지 않습니다. {remain}번 남았습니다.",
+  "@devicePinWrong": {
+    "placeholders": {
+      "remain": {
+        "type": "int"
+      }
+    }
+  },
+  "devicePinLockedOut": "핀을 5번 틀려 지웠습니다. 이름표와 비밀번호로 다시 로그인해 주세요.",
+  "devicePinSettingsTitle": "기기 핀",
+  "devicePinSettingsSet": "기기 핀 정하기",
+  "devicePinSettingsChange": "기기 핀 바꾸기",
+  "devicePinSettingsHint": "앱을 다시 열 때 이 기기의 핀으로 잠금을 풉니다.",
   "adminAccessDenied": "관리자 권한이 없는 계정입니다.",
   "adminDashboardTitle": "관리자 대시보드",
   "adminDashboardSubtitle": "전 세계 강사 인증, Dive Star 샵, 게시글을 한곳에서 통제합니다.",

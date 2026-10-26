@@ -5,7 +5,6 @@ abstract final class AppConstants {
   static const String appName = '다이브 트래블';
   static const Locale defaultLocale = Locale('ko');
   static const int masterLogTarget = 100;
-  static const String adminPin = '9118';
 
   /// Legacy session grants — keep false (H8: real roles via Firestore only).
   static const bool grantAdminToCurrentSession = false;

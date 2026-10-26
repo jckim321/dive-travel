@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:dive_travel_app/core/auth/device_pin_controller.dart';
+import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -16,10 +20,14 @@ class DiveTravelApp extends StatefulWidget {
     super.key,
     this.firebaseReady = false,
     this.repository,
+    this.devicePinStore,
   });
 
   final bool firebaseReady;
   final DiverRepository? repository;
+
+  /// Injected in tests; production uses [PrefsDevicePinStore].
+  final DevicePinStore? devicePinStore;
 
   @override
   State<DiveTravelApp> createState() => _DiveTravelAppState();
@@ -28,6 +36,7 @@ class DiveTravelApp extends StatefulWidget {
 class _DiveTravelAppState extends State<DiveTravelApp> {
   SessionController? _session;
   DiverStore? _store;
+  DevicePinController? _pins;
 
   @override
   void initState() {
@@ -38,11 +47,21 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
   @override
   void didUpdateWidget(covariant DiveTravelApp oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.repository != widget.repository) {
-      _session?.dispose();
-      _store?.dispose();
+    if (oldWidget.repository != widget.repository ||
+        oldWidget.devicePinStore != widget.devicePinStore) {
+      _tearDown();
       _bindRepository(widget.repository);
     }
+  }
+
+  void _tearDown() {
+    _session?.removeListener(_onSession);
+    _session?.dispose();
+    _store?.dispose();
+    _pins?.dispose();
+    _session = null;
+    _store = null;
+    _pins = null;
   }
 
   void _bindRepository(DiverRepository? repository) {
@@ -51,16 +70,31 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
     if (resolved == null) {
       _session = null;
       _store = null;
+      _pins = null;
       return;
     }
     _session = SessionController(resolved);
     _store = DiverStore(resolved);
+    _pins = DevicePinController(widget.devicePinStore ?? PrefsDevicePinStore());
+    _session!.addListener(_onSession);
+    unawaited(_pins!.load().then((_) {
+      if (!mounted) return;
+      unawaited(_pins!.syncAuthUid(_session?.user?.uid));
+    }));
+  }
+
+  void _onSession() {
+    final pins = _pins;
+    final session = _session;
+    if (pins == null || session == null) {
+      return;
+    }
+    unawaited(pins.syncAuthUid(session.user?.uid));
   }
 
   @override
   void dispose() {
-    _session?.dispose();
-    _store?.dispose();
+    _tearDown();
     super.dispose();
   }
 
@@ -68,7 +102,8 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
   Widget build(BuildContext context) {
     final session = _session;
     final store = _store;
-    if (session == null || store == null) {
+    final pins = _pins;
+    if (session == null || store == null || pins == null) {
       return _localizedApp(home: const FirebaseSetupScreen());
     }
 
@@ -76,7 +111,10 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
       session: session,
       child: DiverStoreScope(
         store: store,
-        child: _localizedApp(home: const AuthGate()),
+        child: DevicePinScope(
+          controller: pins,
+          child: _localizedApp(home: const AuthGate()),
+        ),
       ),
     );
   }

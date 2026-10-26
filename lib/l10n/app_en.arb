@@ -452,6 +452,27 @@
   "adminPinHint": "4-digit PIN",
   "adminPinConfirm": "Enter",
   "adminPinWrong": "Incorrect PIN.",
+  "devicePinSetupTitle": "Set device PIN",
+  "devicePinSetupBody": "A 4-digit PIN for this device only. It is never sent to the server.",
+  "devicePinUnlockTitle": "Unlock with device PIN",
+  "devicePinUnlockBody": "You stay signed in. Enter your 4-digit device PIN to unlock.",
+  "devicePinHint": "4 digits",
+  "devicePinConfirmHint": "Enter again",
+  "devicePinSave": "Save",
+  "devicePinMismatch": "The two PINs do not match.",
+  "devicePinWrong": "Incorrect PIN. {remain} tries left.",
+  "@devicePinWrong": {
+    "placeholders": {
+      "remain": {
+        "type": "int"
+      }
+    }
+  },
+  "devicePinLockedOut": "PIN cleared after 5 wrong tries. Sign in again with your name tag and password.",
+  "devicePinSettingsTitle": "Device PIN",
+  "devicePinSettingsSet": "Set device PIN",
+  "devicePinSettingsChange": "Change device PIN",
+  "devicePinSettingsHint": "Unlock this device with a PIN when you reopen the app.",
   "adminAccessDenied": "This account does not have admin access.",
   "adminDashboardTitle": "Admin dashboard",
   "adminDashboardSubtitle": "Control instructor verification, Dive Star shops, and listings in one place.",

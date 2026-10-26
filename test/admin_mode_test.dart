@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
-import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+import 'support/device_pin_test_helpers.dart';
 
 void main() {
   Future<AppLocalizations> loadKo() {
@@ -69,7 +71,7 @@ void main() {
     );
   });
 
-  testWidgets('마이페이지에서 PIN 9118으로 관리자 대시보드에 들어간다', (tester) async {
+  testWidgets('마이페이지에서 기기 핀으로 관리자 대시보드에 들어간다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -79,6 +81,7 @@ void main() {
       DiveTravelApp(
         firebaseReady: true,
         repository: MemoryDiverRepository.forTest(isAdmin: true),
+        devicePinStore: MemoryDevicePinStore(),
       ),
     );
     await tester.pump();
@@ -100,13 +103,7 @@ void main() {
     expect(find.byKey(const Key('open-admin-mode')), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-admin-mode')));
     await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('admin-pin-field')),
-      AppConstants.adminPin,
-    );
-    await tester.tap(find.byKey(const Key('admin-pin-submit')));
-    await tester.pumpAndSettle();
+    await completeDevicePinIfAsked(tester);
 
     expect(find.text(l10n.adminHqTitle), findsOneWidget);
     expect(find.byKey(const Key('admin-menu-members')), findsOneWidget);

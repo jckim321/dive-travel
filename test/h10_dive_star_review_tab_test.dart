@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
-import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+import 'support/device_pin_test_helpers.dart';
 
 void main() {
   Future<AppLocalizations> loadKo() {
@@ -27,14 +29,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('open-admin-mode')));
     await tester.tap(find.byKey(const Key('open-admin-mode')));
     await tester.pumpAndSettle();
-    if (find.byKey(const Key('admin-pin-field')).evaluate().isNotEmpty) {
-      await tester.enterText(
-        find.byKey(const Key('admin-pin-field')),
-        AppConstants.adminPin,
-      );
-      await tester.tap(find.byKey(const Key('admin-pin-submit')));
-      await tester.pumpAndSettle();
-    }
+    await completeDevicePinIfAsked(tester);
   }
 
   testWidgets('review tab lists Jeju Orange and opens the audit', (
@@ -75,7 +70,11 @@ void main() {
     );
 
     await tester.pumpWidget(
-      DiveTravelApp(firebaseReady: true, repository: repo),
+      DiveTravelApp(
+        firebaseReady: true,
+        repository: repo,
+        devicePinStore: MemoryDevicePinStore(),
+      ),
     );
     await tester.pump();
     await tester.pump();
