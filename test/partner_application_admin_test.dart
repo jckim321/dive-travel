@@ -195,9 +195,10 @@ void main() {
       find.byKey(const Key('admin-members-search')),
     );
     expect(field.controller?.text, 'pending-instructor');
-    await tester.ensureVisible(
-      find.byKey(const Key('admin-member-promote-pending-instructor')),
+    await tester.tap(
+      find.byKey(const Key('admin-member-menu-pending-instructor')),
     );
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('admin-member-promote-pending-instructor')),
       findsOneWidget,

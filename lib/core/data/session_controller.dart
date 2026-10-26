@@ -54,7 +54,10 @@ class SessionController extends ChangeNotifier {
     required String email,
     required String password,
   }) {
-    return _run(() => _repository.signIn(email: email, password: password));
+    return _run(() async {
+      await _repository.signIn(email: email, password: password);
+      await _ensureProfileAndGate();
+    });
   }
 
   Future<void> signUp({
@@ -96,13 +99,29 @@ class SessionController extends ChangeNotifier {
 
   Future<void> _syncProfile(AppUser user) async {
     try {
-      await _repository.ensureUserDocument(user).timeout(
-        const Duration(seconds: 8),
-      );
+      await _ensureProfileAndGate();
     } catch (error) {
       _error = error.toString();
       notifyListeners();
     }
+  }
+
+  /// 로그인·세션 복원마다 users 문서를 만들고, 차단·탈퇴면 바로 로그아웃합니다.
+  Future<void> _ensureProfileAndGate() async {
+    final user = await _repository.currentAuthUser();
+    if (user == null) {
+      return;
+    }
+    await _repository.ensureUserDocument(user).timeout(
+      const Duration(seconds: 8),
+    );
+    if (!await _repository.isLoginBlocked(user.uid)) {
+      return;
+    }
+    await signOut();
+    _error = 'ACCOUNT_CLOSED';
+    notifyListeners();
+    throw StateError('ACCOUNT_CLOSED');
   }
 
   Future<void> _run(Future<void> Function() action) async {

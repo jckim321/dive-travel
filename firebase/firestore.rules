@@ -19,6 +19,16 @@ service cloud.firestore {
         && userDoc().is_admin == true;
     }
 
+    // Missing fields on old users docs must not deny everyone.
+    function accountClosed() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (
+          userDoc().get('account_blocked', false) == true
+          || userDoc().get('withdrawn_at', false) != false
+        );
+    }
+
     function isBusiness() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
@@ -122,6 +132,9 @@ service cloud.firestore {
           || request.resource.data.member_grade == 'silver')
         && (!('member_grade_locked' in request.resource.data)
           || request.resource.data.member_grade_locked == false)
+        && (!('account_blocked' in request.resource.data)
+          || request.resource.data.account_blocked == false)
+        && !('withdrawn_at' in request.resource.data)
         && !('isAdmin' in request.resource.data)
         && !('isBusiness' in request.resource.data)
         && !('ownedShopId' in request.resource.data);
@@ -133,22 +146,26 @@ service cloud.firestore {
       allow create: if isOwner(userId) && userCreatePrivilegeOk();
       allow update: if isAdmin() || (
         isOwner(userId)
+        && !accountClosed()
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['is_admin', 'is_business', 'member_grade', 'user_role', 'owned_shop_id'])
+            .hasAny(['is_admin', 'is_business', 'member_grade', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at'])
       );
       allow delete: if isOwner(userId) || isAdmin();
 
       match /logs/{logId} {
-        allow get, list, create, update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if isAdmin() || (isOwner(userId) && !accountClosed());
       }
 
       match /bookings/{bookingId} {
-        allow get, list, create, update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if isAdmin() || (isOwner(userId) && !accountClosed());
       }
 
       match /reviews/{reviewId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId)
+          && !accountClosed()
           && request.resource.data.uid == request.auth.uid
           && scoreInRange(request.resource.data.safety)
           && scoreInRange(request.resource.data.guide)
@@ -159,6 +176,7 @@ service cloud.firestore {
           && request.resource.data.booking_id is string
           && request.resource.data.booking_id.size() > 0;
         allow update: if isOwner(userId)
+          && !accountClosed()
           && resource.data.uid == request.auth.uid
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.shop_id == resource.data.shop_id
@@ -177,6 +195,7 @@ service cloud.firestore {
           && reviewCommentOk()
           && reviewDetailsOk();
         allow delete: if (isOwner(userId)
+            && !accountClosed()
             && resource.data.uid == request.auth.uid)
           || isAdmin();
       }

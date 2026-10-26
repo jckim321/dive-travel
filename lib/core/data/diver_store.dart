@@ -1067,6 +1067,53 @@ class DiverStore extends ChangeNotifier {
     await refreshAdminInbox();
   }
 
+  Future<void> setMemberAdmin({
+    required String uid,
+    required bool admin,
+  }) async {
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    await _repository.setMemberAdmin(
+      uid: uid,
+      admin: admin,
+      actorUid: actorUid,
+    );
+    await refreshAdminInbox();
+  }
+
+  Future<void> setAccountBlocked({
+    required String uid,
+    required bool blocked,
+  }) async {
+    await _repository.setAccountBlocked(uid: uid, blocked: blocked);
+    await refreshAdminInbox();
+  }
+
+  Future<void> withdrawMember(String uid) async {
+    await _repository.withdrawMember(uid);
+    await refreshAdminInbox();
+  }
+
+  Future<void> ensureMemberProfile(MemberAccount member) async {
+    final email = member.email.trim();
+    final fallback = email.contains('@') ? email.split('@').first : email;
+    await _repository.ensureUserDocument(
+      AppUser(
+        uid: member.uid,
+        email: member.email,
+        displayName: fallback.isEmpty ? member.uid : fallback,
+      ),
+    );
+    await refreshAdminInbox();
+  }
+
+  Future<void> rejectInstructor(String uid) async {
+    await _repository.rejectInstructor(uid);
+    await refreshAdminInbox();
+  }
+
   Future<void> unlockMemberGrade(String uid) async {
     await _repository.unlockMemberGrade(uid);
     await refreshAdminInbox();
@@ -1210,11 +1257,6 @@ class DiverStore extends ChangeNotifier {
       return Future.value();
     }
     return _repository.clearGradeCelebration(uid);
-  }
-
-  Future<void> rejectInstructor(String uid) async {
-    await _repository.rejectInstructor(uid);
-    await refreshAdminInbox();
   }
 
   Future<void> setPlaqueStatus({

@@ -165,6 +165,20 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> signOut() => _auth.signOut();
 
   @override
+  Future<AppUser?> currentAuthUser() async {
+    final user = _auth.currentUser;
+    return user == null ? null : _toAppUser(user);
+  }
+
+  @override
+  Future<bool> isLoginBlocked(String uid) async {
+    final snap = await _userDoc(uid).get();
+    if (!snap.exists) return false;
+    final data = snap.data() ?? {};
+    return data['account_blocked'] == true || data['withdrawn_at'] != null;
+  }
+
+  @override
   Future<void> promoteMemberToPartner({
     required String uid,
     required String shopId,
@@ -974,7 +988,13 @@ class FirestoreDiverRepository implements DiverRepository {
   }) async {
     final ref = _userDoc(user.uid);
     final snapshot = await ref.get().timeout(const Duration(seconds: 8));
-    final existingName = snapshot.data()?['display_name'] as String?;
+    final existing = snapshot.data();
+    if (snapshot.exists &&
+        (existing?['account_blocked'] == true ||
+            existing?['withdrawn_at'] != null)) {
+      return;
+    }
+    final existingName = existing?['display_name'] as String?;
     final displayName = (existingName != null && existingName.trim().isNotEmpty)
         ? existingName.trim()
         : AppOwner.resolveDisplayName(
@@ -1031,8 +1051,8 @@ class FirestoreDiverRepository implements DiverRepository {
         'region_log_counts': <String, int>{},
         'created_at': FieldValue.serverTimestamp(),
       });
-    } else if (snapshot.data()?['member_grade'] == null &&
-        snapshot.data()?['memberGrade'] == null) {
+    } else if (existing?['member_grade'] == null &&
+        existing?['memberGrade'] == null) {
       payload['member_grade'] = MemberGrade.silver.firestoreValue;
     }
     await ref.set(payload, SetOptions(merge: true));
@@ -2506,6 +2526,11 @@ class FirestoreDiverRepository implements DiverRepository {
       paidPurchaseCount: (data['paid_purchase_count'] as num?)?.toInt() ?? 0,
       reviewCount: (data['review_count'] as num?)?.toInt() ?? 0,
       gradeLocked: data['member_grade_locked'] == true,
+      phone: (data['phone'] as String?)?.trim() ?? '',
+      accountBlocked: data['account_blocked'] == true,
+      withdrawnAt: data['withdrawn_at'] is Timestamp
+          ? (data['withdrawn_at'] as Timestamp).toDate()
+          : null,
       createdAt: createdAt,
       lastSeenAt: lastSeenAt,
       nationality: normalizeNationalityCode(data['nationality'] as String?) ??
@@ -2567,6 +2592,51 @@ class FirestoreDiverRepository implements DiverRepository {
       members.sort((a, b) => a.displayName.compareTo(b.displayName));
       return members;
     });
+  }
+
+  @override
+  Future<void> setMemberAdmin({
+    required String uid,
+    required bool admin,
+    required String actorUid,
+  }) async {
+    if (!admin && actorUid == uid) {
+      throw StateError('ADMIN_SELF');
+    }
+    final doc = await _userDoc(uid).get();
+    final currently = doc.data()?['is_admin'] == true;
+    if (!admin && currently) {
+      final admins = await _users.where('is_admin', isEqualTo: true).limit(2).get();
+      if (admins.docs.length <= 1) {
+        throw StateError('ADMIN_LAST');
+      }
+    }
+    await _userDoc(uid).set({
+      'is_admin': admin,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setAccountBlocked({
+    required String uid,
+    required bool blocked,
+  }) {
+    return _userDoc(uid).set({
+      'account_blocked': blocked,
+      'blocked_at': blocked ? FieldValue.serverTimestamp() : FieldValue.delete(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> withdrawMember(String uid) {
+    return _userDoc(uid).set({
+      'withdrawn_at': FieldValue.serverTimestamp(),
+      'display_name': '',
+      'phone': FieldValue.delete(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   @override

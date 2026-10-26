@@ -307,6 +307,18 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<AppUser?> currentAuthUser() async => _user;
+
+  final _blocked = <String, bool>{};
+  final _withdrawnAt = <String, DateTime>{};
+  final _phones = <String, String>{};
+
+  @override
+  Future<bool> isLoginBlocked(String uid) async {
+    return _blocked[uid] == true || _withdrawnAt.containsKey(uid);
+  }
+
+  @override
   Future<void> sendPasswordReset(String email) async {}
 
   final _loginIds = <String, String>{};
@@ -670,6 +682,33 @@ class MemoryDiverRepository implements DiverRepository {
     }
     if (consent.isNotEmpty) {
       _consentByUid[user.uid] = consent;
+    }
+    final closed = _blocked[user.uid] == true || _withdrawnAt.containsKey(user.uid);
+    final name = closed
+        ? ''
+        : (user.displayName ?? user.email?.split('@').first ?? '다이버');
+    if (!closed && contact.isNotEmpty) {
+      _phones[user.uid] = contact;
+    }
+    final index = _members.indexWhere((m) => m.uid == user.uid);
+    if (index < 0) {
+      _members.add(
+        MemberAccount(
+          uid: user.uid,
+          email: user.email ?? '',
+          displayName: name,
+          grade: MemberGrade.silver,
+          isAdmin: false,
+          isInstructor: false,
+          isBusiness: false,
+          ownedShopId: '',
+          loginId: _loginIds[user.uid] ?? '',
+          phone: closed ? '' : (_phones[user.uid] ?? ''),
+          accountBlocked: _blocked[user.uid] == true,
+          withdrawnAt: _withdrawnAt[user.uid],
+        ),
+      );
+      _membersController.add(List<MemberAccount>.from(_members));
     }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
@@ -1776,6 +1815,62 @@ class MemoryDiverRepository implements DiverRepository {
         favoriteShopIds: _snapshot.favoriteShopIds,
       );
       _emitSnapshot();
+    }
+  }
+
+  @override
+  Future<void> setMemberAdmin({
+    required String uid,
+    required bool admin,
+    required String actorUid,
+  }) async {
+    if (!admin && actorUid == uid) {
+      throw StateError('ADMIN_SELF');
+    }
+    final index = _members.indexWhere((m) => m.uid == uid);
+    final currently = index >= 0 && _members[index].isAdmin;
+    final adminCount = _members.where((m) => m.isAdmin).length;
+    if (!admin && currently && adminCount <= 1) {
+      throw StateError('ADMIN_LAST');
+    }
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(isAdmin: admin);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+    if (_user?.uid == uid) {
+      _isAdmin = admin;
+    }
+  }
+
+  @override
+  Future<void> setAccountBlocked({
+    required String uid,
+    required bool blocked,
+  }) async {
+    if (blocked) {
+      _blocked[uid] = true;
+    } else {
+      _blocked.remove(uid);
+    }
+    final index = _members.indexWhere((m) => m.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(accountBlocked: blocked);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+  }
+
+  @override
+  Future<void> withdrawMember(String uid) async {
+    _withdrawnAt[uid] = DateTime.now().toUtc();
+    _phones.remove(uid);
+    final index = _members.indexWhere((m) => m.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(
+        displayName: '',
+        phone: '',
+        withdrawnAt: _withdrawnAt[uid],
+      );
+      _membersController.add(List<MemberAccount>.from(_members));
     }
   }
 

@@ -45,6 +45,12 @@ abstract class DiverRepository {
 
   Future<void> signOut();
 
+  /// Auth 세션의 현재 사용자. 없으면 null.
+  Future<AppUser?> currentAuthUser();
+
+  /// 차단 또는 탈퇴 처리된 계정.
+  Future<bool> isLoginBlocked(String uid);
+
   Future<void> sendPasswordReset(String email);
 
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
@@ -233,6 +239,21 @@ abstract class DiverRepository {
     required String uid,
     required MemberGrade grade,
   });
+
+  /// 관리자 지정/해제. 본인 해제와 마지막 관리자 해제는 거절합니다.
+  Future<void> setMemberAdmin({
+    required String uid,
+    required bool admin,
+    required String actorUid,
+  });
+
+  Future<void> setAccountBlocked({
+    required String uid,
+    required bool blocked,
+  });
+
+  /// 이름·연락처를 지우고 탈퇴 시각을 남깁니다. 예약 문서는 유지합니다.
+  Future<void> withdrawMember(String uid);
 
   Future<void> unlockMemberGrade(String uid);
 

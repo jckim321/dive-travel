@@ -209,6 +209,9 @@ class MemberAccount {
     this.createdAt,
     this.lastSeenAt,
     this.nationality = '',
+    this.phone = '',
+    this.accountBlocked = false,
+    this.withdrawnAt,
   });
 
   final String uid;
@@ -229,6 +232,13 @@ class MemberAccount {
   final DateTime? createdAt;
   final DateTime? lastSeenAt;
   final String nationality;
+  final String phone;
+  final bool accountBlocked;
+  final DateTime? withdrawnAt;
+
+  bool get loginBlocked => accountBlocked || withdrawnAt != null;
+
+  bool get missingProfile => displayName.trim().isEmpty;
 
   MemberGrade get suggestedGrade => MemberGrade.fromActivity(
         paidPurchases: paidPurchaseCount,
@@ -247,17 +257,24 @@ class MemberAccount {
     DateTime? createdAt,
     DateTime? lastSeenAt,
     String? nationality,
+    String? displayName,
+    bool? isAdmin,
+    bool? isInstructor,
+    String? phone,
+    bool? accountBlocked,
+    DateTime? withdrawnAt,
+    bool clearWithdrawn = false,
     bool clearOwnedShopId = false,
   }) {
     return MemberAccount(
       uid: uid,
       email: email,
-      displayName: displayName,
+      displayName: displayName ?? this.displayName,
       grade: grade ?? this.grade,
       totalLogCount: totalLogCount,
       uniqueRegionsCount: uniqueRegionsCount,
-      isAdmin: isAdmin,
-      isInstructor: isInstructor,
+      isAdmin: isAdmin ?? this.isAdmin,
+      isInstructor: isInstructor ?? this.isInstructor,
       isBusiness: isBusiness ?? this.isBusiness,
       ownedShopId: clearOwnedShopId ? '' : (ownedShopId ?? this.ownedShopId),
       userRole: userRole ?? this.userRole,
@@ -268,6 +285,9 @@ class MemberAccount {
       createdAt: createdAt ?? this.createdAt,
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
       nationality: nationality ?? this.nationality,
+      phone: phone ?? this.phone,
+      accountBlocked: accountBlocked ?? this.accountBlocked,
+      withdrawnAt: clearWithdrawn ? null : (withdrawnAt ?? this.withdrawnAt),
     );
   }
 }

@@ -67,13 +67,21 @@ void main() {
     expect(find.byKey(const Key('admin-sub-partners')), findsOneWidget);
     expect(find.byKey(const Key('admin-members-search')), findsOneWidget);
 
-    // H8: promote control still on member cards after menu reshape.
-    final promote = find.byKey(
-      const Key('admin-member-promote-pending-instructor'),
-    );
-    await tester.ensureVisible(promote);
-    expect(promote, findsOneWidget);
     expect(find.textContaining('역할'), findsWidgets);
+    await tester.ensureVisible(
+      find.byKey(const Key('admin-member-menu-pending-instructor')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('admin-member-menu-pending-instructor')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('admin-member-promote-pending-instructor')),
+      findsOneWidget,
+    );
+    Navigator.of(
+      tester.element(find.byKey(const Key('admin-member-promote-pending-instructor'))),
+    ).pop();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('admin-menu-settlement')));
     await tester.pumpAndSettle();
