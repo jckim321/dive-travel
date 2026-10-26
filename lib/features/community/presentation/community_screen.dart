@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
+import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -208,7 +209,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
-                if (all.isEmpty) ...[
+                if (openSeats < 1) ...[
                   Text(
                     l10n.communityDesignPreview,
                     style: theme.textTheme.bodySmall,
@@ -218,18 +219,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     _SeatCard(
                       offer: entry.offer,
                       shopName: entry.shopName,
-                      onOpen: () => _openOfferDetail(
-                        context,
-                        entry.offer,
-                        shopName: entry.shopName,
-                      ),
-                      onTake: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(l10n.communityDesignPreviewFlag),
-                          ),
-                        );
-                      },
+                      onOpen: () => _showDesignPreviewFlagHint(context),
+                      onTake: () => _showDesignPreviewFlagHint(context),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -267,6 +258,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showDesignPreviewFlagHint(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.communityDesignPreviewFlag)),
     );
   }
 
@@ -478,9 +476,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
     int? lockedPartySize,
     DateTime? flagPayBy,
   }) async {
-    final product = offer.product;
+    final product = _freshProduct(store, offer.product) ?? offer.product;
     final shop = _shopForProduct(store, product);
     if (shop == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).communitySeatsShort)),
+        );
+      }
       return;
     }
     var party = lockedPartySize ?? 1;
@@ -509,6 +512,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 }
 
+ShopProduct? _freshProduct(DiverStore store, ShopProduct product) {
+  final hullId = product.shopId.split('--').first;
+  final stats = store.liveStatsFor(hullId);
+  if (stats == null) {
+    return null;
+  }
+  for (final item in stats.products) {
+    if (item.id == product.id) {
+      return item;
+    }
+  }
+  return null;
+}
+
 DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
   final hullId = product.shopId.split('--').first;
   final listings = store.listingsOnHull(hullId);
@@ -525,6 +542,39 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
         hull = shop;
         break;
       }
+    }
+  }
+  if (hull == null) {
+    final stats = store.liveStatsFor(hullId);
+    if (stats != null) {
+      hull = DiveShop(
+        id: hullId,
+        name: (stats.name?.trim().isNotEmpty == true)
+            ? stats.name!.trim()
+            : store.shopLabelFor(hullId),
+        location: stats.location?.trim() ?? '',
+        country: stats.country?.trim() ?? '',
+        continent: (stats.continent?.trim().isNotEmpty == true)
+            ? stats.continent!.trim()
+            : ContinentId.asia,
+        sites: const [],
+        productName: product.name,
+        stars: stats.diveStar,
+        rating: stats.avgOverall,
+        reviewCount: stats.reviewCount,
+        amenities: stats.amenities,
+        consumerPrice: product.consumerPrice,
+        professionalPrice: product.professionalPrice,
+        coverUrl: product.coverUrl.isNotEmpty
+            ? product.coverUrl
+            : (stats.coverUrl ?? ''),
+        galleryUrls: product.photoUrls.isNotEmpty
+            ? product.photoUrls
+            : stats.galleryUrls,
+        intro: stats.intro ?? '',
+        address: stats.address ?? '',
+        blurb: product.blurb,
+      );
     }
   }
   if (hull == null) {

@@ -115,7 +115,12 @@ class ProfileSettingsScreen extends StatelessWidget {
               const SizedBox(height: 28),
               OutlinedButton.icon(
                 key: const Key('profile-sign-out'),
-                onPressed: () => session.signOut(),
+                onPressed: () async {
+                  final nav = Navigator.of(context);
+                  await session.signOut();
+                  if (!context.mounted) return;
+                  nav.popUntil((route) => route.isFirst);
+                },
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: Text(l10n.profileSignOut),
                 style: OutlinedButton.styleFrom(

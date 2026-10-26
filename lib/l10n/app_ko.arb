@@ -2429,7 +2429,11 @@
   "communityPickShop": "탈 샵",
   "communityEmpty": "빈자리를 연 상품이 없습니다. 일반 상품은 탐색에서 봅니다.",
   "communityDesignPreview": "디자인 확인용",
-  "communityDesignPreviewFlag": "확인용 카드라 자리는 잡지 않습니다.",
+  "communityDesignPreviewFlag": "샘플 카드예요. 제휴파트너가 빈자리를 열면 여기서 깃발을 꽂을 수 있어요",
+  "profileGuestLoginPrompt": "로그인하고 내 여행을 확인해요",
+  "@profileGuestLoginPrompt": {
+    "description": "비로그인 마이페이지에서 로그인을 권하는 카드 문구입니다."
+  },
   "communityKindShop": "샵 크루",
   "communityKindSolo": "싱글쉐어",
   "communityKindLast": "마감",

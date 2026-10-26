@@ -4611,7 +4611,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityDesignPreviewFlag =>
-      'This preview card does not hold a seat.';
+      'This is a sample card. When a partner opens empty seats, you can plant a flag here.';
+
+  @override
+  String get profileGuestLoginPrompt => 'Sign in to see your trips';
 
   @override
   String get communityKindShop => 'Shop crew';

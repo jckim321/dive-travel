@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/bilingual_rotator.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -72,7 +73,14 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
               isSignedIn: session.isSignedIn,
               onAdmin: () => openAdminMode(context),
               onPartner: () => openPartnerMode(context),
-              onAuth: session.isSignedIn ? () => session.signOut() : null,
+              onAuth: () async {
+                if (session.isSignedIn) {
+                  await session.signOut();
+                  return;
+                }
+                if (!context.mounted) return;
+                await ensureSignedIn(context);
+              },
               signOutLabel: l10n.profileSignOut,
               loginLabel: l10n.authLogin,
               adminTooltip: l10n.adminMode,
@@ -201,7 +209,7 @@ class _OrangeTopBar extends StatelessWidget {
   final bool isSignedIn;
   final VoidCallback onAdmin;
   final VoidCallback onPartner;
-  final VoidCallback? onAuth;
+  final VoidCallback onAuth;
   final String signOutLabel;
   final String loginLabel;
   final String adminTooltip;

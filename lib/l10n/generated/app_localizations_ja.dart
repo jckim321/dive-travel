@@ -4468,7 +4468,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityDesignPreview => '디자인 확인용';
 
   @override
-  String get communityDesignPreviewFlag => '확인용 카드라 자리는 잡지 않습니다.';
+  String get communityDesignPreviewFlag =>
+      '샘플 카드예요. 제휴파트너가 빈자리를 열면 여기서 깃발을 꽂을 수 있어요';
+
+  @override
+  String get profileGuestLoginPrompt => '로그인하고 내 여행을 확인해요';
 
   @override
   String get communityKindShop => '샵 크루';

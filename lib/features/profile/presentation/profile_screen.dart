@@ -13,8 +13,10 @@ import 'package:dive_travel_app/core/theme/century_tank_colors.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
+import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -33,12 +35,57 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    final session = SessionScope.of(context);
 
     return Scaffold(
       backgroundColor: AppTheme.canvas,
       body: ListenableBuilder(
-        listenable: store,
+        listenable: Listenable.merge([store, session]),
         builder: (context, _) {
+          if (!session.isSignedIn) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
+                child: Column(
+                  key: const Key('profile-guest-login'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              l10n.profileGuestLoginPrompt,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            FilledButton(
+                              key: const Key('profile-guest-login-button'),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size.fromHeight(52),
+                                backgroundColor: AppTheme.navy,
+                              ),
+                              onPressed: () => ensureSignedIn(context),
+                              child: Text(l10n.authLogin),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           final stats = store.stats;
           final crafted = store.craftedProductsFor(store.uid ?? '');
           final favorites = store.favoriteShops;

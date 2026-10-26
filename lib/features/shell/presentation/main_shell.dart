@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_screen.dart';
@@ -23,6 +24,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final _tabIndex = ValueNotifier<int>(0);
   DiverStore? _store;
+  var _wasSignedIn = false;
   final _seenNotices = <String>{};
 
   void goToTab(int index) {
@@ -106,6 +108,13 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final signedIn = SessionScope.of(context).isSignedIn;
+    if (_wasSignedIn && !signedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) goToTab(0);
+      });
+    }
+    _wasSignedIn = signedIn;
 
     return ValueListenableBuilder<int>(
       valueListenable: _tabIndex,

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -116,5 +117,85 @@ void main() {
       '1',
     );
     expect(find.text(l10n.communityFlagPartyTotal('₩100,000')), findsOneWidget);
+  });
+
+  testWidgets('깃발 꽂고 결제하러 가기는 깃발 심은 뒤 결제 화면까지 이어진다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest();
+    final now = DateTime.now();
+    await repo.saveShopProduct(
+      shopId: 'seat-shop',
+      product: ShopProduct(
+        id: 'seat-prod',
+        shopId: 'seat-shop',
+        name: '시트 시험 상품',
+        consumerPrice: 100000,
+        professionalPrice: 80000,
+        openEmptySeats: true,
+        capacity: 4,
+        bookedSeats: 1,
+        sameBoatStatus: SameBoatStatus.approved,
+        departureStart: now.add(const Duration(days: 10)),
+        flagClosesAt: now.add(const Duration(days: 3)),
+      ),
+    );
+
+    await tester.pumpWidget(
+      DiveTravelApp(firebaseReady: true, repository: repo),
+    );
+    await tester.pump();
+    await tester.pump();
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    await tester.tap(find.text(l10n.navCommunity));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.communityDesignPreview), findsNothing);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('same-boat-flag-seat-prod-')),
+    );
+    await tester.tap(find.byKey(const Key('same-boat-flag-seat-prod-')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('same-boat-plant-pay')));
+    await tester.pumpAndSettle();
+    expect(find.byType(TourCheckoutSheet), findsOneWidget);
+    expect(
+      find.byKey(const Key('checkout-review-cta')).evaluate().isNotEmpty ||
+          find.byKey(const Key('checkout-pay-same-boat')).evaluate().isNotEmpty ||
+          find.byKey(const Key('explore-checkout-pay')).evaluate().isNotEmpty,
+      isTrue,
+    );
+  });
+
+  testWidgets('빈자리가 없으면 샘플 카드만 보이고 깃발은 안내만 한다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      DiveTravelApp(
+        firebaseReady: true,
+        repository: MemoryDiverRepository.forTest(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    await tester.tap(find.text(l10n.navCommunity));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.communityDesignPreview), findsOneWidget);
+    expect(find.text(l10n.communityFlagButton), findsWidgets);
+    await tester.tap(find.text(l10n.communityFlagButton).first);
+    await tester.pump();
+    expect(find.text(l10n.communityDesignPreviewFlag), findsOneWidget);
+    expect(find.byKey(const Key('same-boat-flag-sheet')), findsNothing);
   });
 }

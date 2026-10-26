@@ -8451,8 +8451,14 @@ abstract class AppLocalizations {
   /// No description provided for @communityDesignPreviewFlag.
   ///
   /// In ko, this message translates to:
-  /// **'확인용 카드라 자리는 잡지 않습니다.'**
+  /// **'샘플 카드예요. 제휴파트너가 빈자리를 열면 여기서 깃발을 꽂을 수 있어요'**
   String get communityDesignPreviewFlag;
+
+  /// 비로그인 마이페이지에서 로그인을 권하는 카드 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인하고 내 여행을 확인해요'**
+  String get profileGuestLoginPrompt;
 
   /// No description provided for @communityKindShop.
   ///
