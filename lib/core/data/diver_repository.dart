@@ -629,6 +629,8 @@ abstract class DiverRepository {
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
     String guestDisplayName = '',
+    String guestBirthDate = '',
+    String guestContact = '',
   });
 
   Future<SeatFlagPlant> plantSeatFlag({

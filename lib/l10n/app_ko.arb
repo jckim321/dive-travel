@@ -378,6 +378,9 @@
   "optionBookAddon": "이 구성 더해 예약",
   "optionBookIndividual": "이 구성만 예약",
   "explorePay": "결제하기",
+  "checkoutGuestName": "예약자 이름",
+  "checkoutGuestBirth": "생년월일",
+  "checkoutGuestContact": "연락처",
   "@explorePay": {
     "description": "체크아웃의 결제(예약 요청) 버튼입니다."
   },

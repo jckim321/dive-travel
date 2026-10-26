@@ -24,6 +24,8 @@ class DiverSnapshot {
     MemberGrade memberGrade = MemberGrade.silver,
     String nationality = '',
     DateTime? nationalityConsentAt,
+    String birthDate = '',
+    String phone = '',
   }) {
     return DiverSnapshot(
       stats: DiverStats(
@@ -38,6 +40,8 @@ class DiverSnapshot {
         memberGrade: memberGrade,
         nationality: nationality,
         nationalityConsentAt: nationalityConsentAt,
+        birthDate: birthDate,
+        phone: phone,
       ),
       regions: const [],
       logs: const [],
@@ -62,6 +66,11 @@ class DiverSnapshot {
       for (final name in visited)
         RegionCatalog.resolve(name, (counts[name] as num?)?.toInt() ?? 1),
     ];
+    final birthDate = _birthOf(data['birth_date']);
+    final phone = ((data['phone'] as String?) ??
+            (data['contact_phone'] as String?) ??
+            '')
+        .trim();
     final favoriteShopIds = {
       for (final value
           in (data['favorite_shop_ids'] as List<dynamic>? ?? const []))
@@ -80,6 +89,8 @@ class DiverSnapshot {
         nationality: normalizeNationalityCode(data['nationality'] as String?) ??
             '',
         nationalityConsentAt: _readTime(data['nationality_consent_at']),
+        birthDate: birthDate,
+        phone: phone,
         logs: logs,
         favoriteShopIds: favoriteShopIds,
       );
@@ -109,6 +120,8 @@ class DiverSnapshot {
         nationality: normalizeNationalityCode(data['nationality'] as String?) ??
             '',
         nationalityConsentAt: _readTime(data['nationality_consent_at']),
+        birthDate: birthDate,
+        phone: phone,
       ),
       regions: regions,
       logs: logs,
@@ -128,6 +141,8 @@ class DiverSnapshot {
     MemberGrade memberGrade = MemberGrade.silver,
     String nationality = '',
     DateTime? nationalityConsentAt,
+    String birthDate = '',
+    String phone = '',
     Set<String> favoriteShopIds = const {},
   }) {
     final grouped = <String, DiveRegion>{};
@@ -152,11 +167,23 @@ class DiverSnapshot {
         memberGrade: memberGrade,
         nationality: nationality,
         nationalityConsentAt: nationalityConsentAt,
+        birthDate: birthDate,
+        phone: phone,
       ),
       regions: regions,
       logs: logs,
       favoriteShopIds: favoriteShopIds,
     );
+  }
+
+  static String _birthOf(dynamic value) {
+    if (value is String) return value.trim();
+    final time = _readTime(value);
+    if (time == null) return '';
+    final local = time.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '${local.year}-$month-$day';
   }
 
   static DateTime? _readTime(dynamic value) {

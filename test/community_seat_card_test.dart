@@ -65,6 +65,8 @@ void main() {
     await tester.tap(find.byKey(const Key('same-boat-seat-prod-')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('same-boat-detail')), findsOneWidget);
+    expect(find.byKey(const Key('same-boat-detail-plant-pay')), findsOneWidget);
+    expect(find.text(l10n.communityFlagPlantAndPay), findsOneWidget);
     expect(find.text(l10n.communityFlagPayByShortened), findsNothing);
     expect(find.textContaining('결제 기한:'), findsOneWidget);
 
@@ -89,6 +91,21 @@ void main() {
     await tester.tap(find.byKey(const Key('same-boat-see-product')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('same-boat-detail')), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('same-boat-detail-party-count'))).data,
+      '2',
+    );
+
+    await tester.tap(find.byKey(const Key('same-boat-detail-party-minus')));
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('same-boat-detail-party-count'))).data,
+      '1',
+    );
+    expect(
+      find.text(l10n.communityFlagPartyTotal('₩100,000')),
+      findsWidgets,
+    );
 
     await tester.tap(find.byKey(const Key('same-boat-detail-close')));
     await tester.pumpAndSettle();
@@ -96,7 +113,8 @@ void main() {
     expect(find.byKey(const Key('same-boat-party-count')), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(const Key('same-boat-party-count'))).data,
-      '2',
+      '1',
     );
+    expect(find.text(l10n.communityFlagPartyTotal('₩100,000')), findsOneWidget);
   });
 }

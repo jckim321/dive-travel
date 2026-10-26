@@ -918,6 +918,24 @@ abstract class AppLocalizations {
   /// **'결제하기'**
   String get explorePay;
 
+  /// No description provided for @checkoutGuestName.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약자 이름'**
+  String get checkoutGuestName;
+
+  /// No description provided for @checkoutGuestBirth.
+  ///
+  /// In ko, this message translates to:
+  /// **'생년월일'**
+  String get checkoutGuestBirth;
+
+  /// No description provided for @checkoutGuestContact.
+  ///
+  /// In ko, this message translates to:
+  /// **'연락처'**
+  String get checkoutGuestContact;
+
   /// No description provided for @simPayTitle.
   ///
   /// In ko, this message translates to:

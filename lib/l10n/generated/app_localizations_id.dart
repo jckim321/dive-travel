@@ -447,6 +447,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get explorePay => 'Minta kursi';
 
   @override
+  String get checkoutGuestName => '예약자 이름';
+
+  @override
+  String get checkoutGuestBirth => '생년월일';
+
+  @override
+  String get checkoutGuestContact => '연락처';
+
+  @override
   String get simPayTitle => '예약 요청 확인';
 
   @override

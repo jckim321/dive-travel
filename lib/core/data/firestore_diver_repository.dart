@@ -1379,6 +1379,8 @@ class FirestoreDiverRepository implements DiverRepository {
       seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
       seatOptionId: data['seat_option_id'] as String? ?? '',
       guestDisplayName: data['guest_display_name'] as String? ?? '',
+      guestBirthDate: data['guest_birth_date'] as String? ?? '',
+      guestContact: data['guest_contact'] as String? ?? '',
       partnerAckedAt: data['partner_acked_at'] == null
           ? null
           : _readDate(data['partner_acked_at']),
@@ -1388,7 +1390,10 @@ class FirestoreDiverRepository implements DiverRepository {
     );
   }
 
-  Map<String, dynamic> _bookingPayload(TourBooking booking) {
+  Map<String, dynamic> _bookingPayload(
+    TourBooking booking, {
+    bool includeGuestPrivate = false,
+  }) {
     return {
       'uid': booking.uid,
       'shop_id': booking.shopId,
@@ -1415,6 +1420,10 @@ class FirestoreDiverRepository implements DiverRepository {
       'seats_held': booking.seatsHeld,
       'seat_option_id': booking.seatOptionId,
       'guest_display_name': booking.guestDisplayName,
+      if (includeGuestPrivate && booking.guestBirthDate.isNotEmpty)
+        'guest_birth_date': booking.guestBirthDate,
+      if (includeGuestPrivate && booking.guestContact.isNotEmpty)
+        'guest_contact': booking.guestContact,
       if (booking.quoteLines.isNotEmpty)
         'quote_lines': [
           for (final line in booking.quoteLines) line.toMap(),
@@ -1463,6 +1472,8 @@ class FirestoreDiverRepository implements DiverRepository {
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
     String guestDisplayName = '',
+    String guestBirthDate = '',
+    String guestContact = '',
   }) async {
     final hullId = shopId.split('--').first;
     final now = DateTime.now();
@@ -1569,12 +1580,19 @@ class FirestoreDiverRepository implements DiverRepository {
           seatsHeld: seatsHeld,
           seatOptionId: seatKey,
           guestDisplayName: guestDisplayName.trim(),
+          guestBirthDate: guestBirthDate.trim(),
+          guestContact: guestContact.trim(),
         );
-        final payload = _bookingPayload(booking);
-        payload['created_at'] = FieldValue.serverTimestamp();
-        // Dual write inside txn — bump runs only after both commits succeed.
-        transaction.set(userBookingRef, payload);
-        transaction.set(shopBookingRef, payload);
+        final userPayload = _bookingPayload(
+          booking,
+          includeGuestPrivate: true,
+        );
+        final shopPayload = _bookingPayload(booking);
+        userPayload['created_at'] = FieldValue.serverTimestamp();
+        shopPayload['created_at'] = FieldValue.serverTimestamp();
+        // User doc keeps name, birth, and contact. Shop doc keeps the name only.
+        transaction.set(userBookingRef, userPayload);
+        transaction.set(shopBookingRef, shopPayload);
         return true;
       });
       if (ok &&

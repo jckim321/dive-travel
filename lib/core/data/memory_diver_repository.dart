@@ -52,6 +52,8 @@ class MemoryDiverRepository implements DiverRepository {
     bool isAdmin = false,
     bool isBusiness = false,
     String? ownedShopId,
+    String birthDate = '',
+    String phone = '',
   }) {
     final repo = MemoryDiverRepository(
       user: const AppUser(
@@ -80,6 +82,8 @@ class MemoryDiverRepository implements DiverRepository {
       isBusiness: repo._resolvedBusiness,
       ownedShopId: repo._ownedShopId,
       memberGrade: repo._memberGrade,
+      birthDate: birthDate,
+      phone: phone,
     );
     return repo;
   }
@@ -889,6 +893,8 @@ class MemoryDiverRepository implements DiverRepository {
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
     String guestDisplayName = '',
+    String guestBirthDate = '',
+    String guestContact = '',
   }) {
     return _runTxn(() async {
       final hullId = shopId.split('--').first;
@@ -966,8 +972,10 @@ class MemoryDiverRepository implements DiverRepository {
         seatsHeld: seatsHeld,
         seatOptionId: seatKey,
         guestDisplayName: guestDisplayName.trim(),
+        guestBirthDate: guestBirthDate.trim(),
+        guestContact: guestContact.trim(),
       );
-      // Dual write: user copy then shop copy. Bump only after both succeed.
+      // Dual write: user copy keeps contact. Shop copy keeps the name only.
       _bookings.insert(0, booking);
       if (debugFailBeforeShopBookingWrite) {
         debugFailBeforeShopBookingWrite = false;
@@ -975,7 +983,10 @@ class MemoryDiverRepository implements DiverRepository {
         _bookingController.add(List<TourBooking>.from(_bookings));
         return false;
       }
-      _shopBookings.putIfAbsent(booking.shopId, () => []).insert(0, booking);
+      _shopBookings.putIfAbsent(booking.shopId, () => []).insert(
+            0,
+            booking.copyWith(guestBirthDate: '', guestContact: ''),
+          );
       _bookingController.add(List<TourBooking>.from(_bookings));
       _shopBookingController.add(
         List<TourBooking>.from(_shopBookings[booking.shopId] ?? const []),
@@ -3547,7 +3558,10 @@ class MemoryDiverRepository implements DiverRepository {
     list[shopIndex] = updated;
     final userIndex = _bookings.indexWhere((item) => item.id == bookingId);
     if (userIndex >= 0) {
-      _bookings[userIndex] = updated;
+      _bookings[userIndex] = _bookings[userIndex].copyWith(
+        status: BookingStatus.confirmed,
+        paymentStatus: PaymentStatus.captured,
+      );
     } else {
       _bookings.insert(0, updated);
     }
@@ -3628,12 +3642,13 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   void _replaceShopBooking(TourBooking booking) {
+    final visible = booking.copyWith(guestBirthDate: '', guestContact: '');
     final list = _shopBookings.putIfAbsent(booking.shopId, () => []);
     final index = list.indexWhere((item) => item.id == booking.id);
     if (index >= 0) {
-      list[index] = booking;
+      list[index] = visible;
     } else {
-      list.insert(0, booking);
+      list.insert(0, visible);
     }
   }
 

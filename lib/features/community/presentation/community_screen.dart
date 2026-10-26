@@ -328,6 +328,67 @@ class _CommunityScreenState extends State<CommunityScreen> {
     if (partySize == null || partySize <= 0 || !context.mounted) {
       return;
     }
+    await _plantThenPay(context, store, offer, partySize);
+  }
+
+  Future<void> _openOfferDetail(
+    BuildContext context,
+    SameBoatOffer offer, {
+    DiveShop? shop,
+    String shopName = '',
+  }) async {
+    final store = DiverStoreScope.of(context);
+    final now = DateTime.now();
+    final open = offer.remainingSeatsAt(now);
+    final product = offer.product;
+    final resolvedShop = shop ?? _shopForProduct(store, product);
+    final professional =
+        resolvedShop != null && store.quoteFor(resolvedShop).isProfessional;
+    final seats = await Navigator.of(context).push<int>(
+      MaterialPageRoute<int>(
+        builder: (_) => _SameBoatDetailPage(
+          offer: offer,
+          shop: resolvedShop,
+          shopName: shopName,
+          open: open,
+          totalFor: (count) => BookingQuote.compute(
+            product: product,
+            professional: professional,
+            divers: count,
+            nondivers: 0,
+            children: 0,
+            infants: 0,
+            bookPackage: offer.optionId.isEmpty,
+            selectedOptionIds:
+                offer.optionId.isEmpty ? const {} : {offer.optionId},
+          ).total,
+        ),
+      ),
+    );
+    if (seats == null || seats <= 0 || !context.mounted) {
+      return;
+    }
+    await _plantThenPay(context, store, offer, seats);
+  }
+
+  Future<void> _plantThenPay(
+    BuildContext context,
+    DiverStore store,
+    SameBoatOffer offer,
+    int partySize,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final product = offer.product;
+    if (store.uid == null || store.uid!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.communityNeedSignIn)),
+      );
+      return;
+    }
+    final now = DateTime.now();
+    final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
+    final shop = _shopForProduct(store, product);
+    final professional = shop != null && store.quoteFor(shop).isProfessional;
     final lockedPrice = BookingQuote.compute(
       product: product,
       professional: professional,
@@ -475,23 +536,6 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
     return null;
   }
   return store.listingCardForProduct(hull, product);
-}
-
-void _openOfferDetail(
-  BuildContext context,
-  SameBoatOffer offer, {
-  DiveShop? shop,
-  String shopName = '',
-}) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => _SameBoatDetailPage(
-        offer: offer,
-        shop: shop,
-        shopName: shopName,
-      ),
-    ),
-  );
 }
 
 class _SeatCard extends StatelessWidget {
@@ -889,7 +933,27 @@ class _FlagPlantSheet extends StatefulWidget {
 }
 
 class _FlagPlantSheetState extends State<_FlagPlantSheet> {
-  var _seats = 1;
+  late final ValueNotifier<int> _party;
+
+  @override
+  void initState() {
+    super.initState();
+    _party = ValueNotifier(1);
+    _party.addListener(_onParty);
+  }
+
+  void _onParty() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _party.removeListener(_onParty);
+    _party.dispose();
+    super.dispose();
+  }
+
+  int get _seats => _party.value;
 
   @override
   Widget build(BuildContext context) {
@@ -956,9 +1020,7 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
           Row(
             children: [
               IconButton(
-                onPressed: _seats <= 1
-                    ? null
-                    : () => setState(() => _seats -= 1),
+                onPressed: _seats <= 1 ? null : () => _party.value = _seats - 1,
                 icon: const Icon(Icons.remove),
               ),
               Text(
@@ -969,7 +1031,7 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
               IconButton(
                 onPressed: _seats >= widget.open
                     ? null
-                    : () => setState(() => _seats += 1),
+                    : () => _party.value = _seats + 1,
                 icon: const Icon(Icons.add),
               ),
               const Spacer(),
@@ -997,16 +1059,22 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
           ),
           TextButton(
             key: const Key('same-boat-see-product'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
+            onPressed: () async {
+              final chosen = await Navigator.of(context).push<int>(
+                MaterialPageRoute<int>(
                   builder: (_) => _SameBoatDetailPage(
                     offer: widget.offer,
                     shop: widget.shop,
                     shopName: widget.shopName,
+                    open: widget.open,
+                    totalFor: widget.totalFor,
+                    party: _party,
                   ),
                 ),
               );
+              if (chosen != null && mounted) {
+                Navigator.pop(context, chosen);
+              }
             },
             child: Text(l10n.communitySeeProduct),
           ),
@@ -1017,26 +1085,71 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
   }
 }
 
-class _SameBoatDetailPage extends StatelessWidget {
+class _SameBoatDetailPage extends StatefulWidget {
   const _SameBoatDetailPage({
     required this.offer,
     required this.shopName,
+    required this.open,
+    required this.totalFor,
     this.shop,
+    this.party,
   });
 
   final SameBoatOffer offer;
   final DiveShop? shop;
   final String shopName;
+  final int open;
+  final int Function(int seats) totalFor;
+
+  /// Shared with the flag sheet when the detail is opened from it.
+  final ValueNotifier<int>? party;
+
+  @override
+  State<_SameBoatDetailPage> createState() => _SameBoatDetailPageState();
+}
+
+class _SameBoatDetailPageState extends State<_SameBoatDetailPage> {
+  late final ValueNotifier<int> _party;
+  late final bool _ownsParty;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsParty = widget.party == null;
+    _party = widget.party ?? ValueNotifier(1);
+    _party.addListener(_onParty);
+  }
+
+  void _onParty() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _party.removeListener(_onParty);
+    if (_ownsParty) _party.dispose();
+    super.dispose();
+  }
+
+  void _setSeats(int next) {
+    final cap = widget.open < 1 ? 1 : widget.open;
+    _party.value = next.clamp(1, cap);
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final offer = widget.offer;
+    final shop = widget.shop;
+    final shopName = widget.shopName;
     final now = DateTime.now();
     final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
     final deadline = DateFormat('yyyy.MM.dd HH:mm').format(until);
     final shortened = offer.flagClosesAt != null &&
         offer.flagClosesAt!.isBefore(now.add(const Duration(hours: 24)));
     final intro = _offerIntro(offer);
+    final seats = _party.value;
+    final total = widget.totalFor(seats);
     return Scaffold(
       key: const Key('same-boat-detail'),
       appBar: AppBar(
@@ -1068,9 +1181,9 @@ class _SameBoatDetailPage extends StatelessWidget {
             ),
           if (shopName.isNotEmpty)
             Text(shopName, style: const TextStyle(color: AppTheme.muted)),
-          if (shop != null && shop!.showsDiveStarBadge)
+          if (shop != null && shop.showsDiveStarBadge)
             Text(
-              shop!.isDiveStarCertified
+              shop.isDiveStarCertified
                   ? l10n.exploreDiveStarCertified
                   : l10n.exploreDiveStarRenewalNeeded,
             ),
@@ -1091,6 +1204,64 @@ class _SameBoatDetailPage extends StatelessWidget {
           const SizedBox(height: 16),
           _FlagDeadlineNote(deadline: deadline, shortened: shortened),
         ],
+      ),
+      bottomNavigationBar: Material(
+        elevation: 12,
+        color: Colors.white,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 16, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      key: const Key('same-boat-detail-party-minus'),
+                      onPressed: seats <= 1 ? null : () => _setSeats(seats - 1),
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Text(
+                      '$seats',
+                      key: const Key('same-boat-detail-party-count'),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    IconButton(
+                      key: const Key('same-boat-detail-party-plus'),
+                      onPressed: widget.open < 1 || seats >= widget.open
+                          ? null
+                          : () => _setSeats(seats + 1),
+                      icon: const Icon(Icons.add),
+                    ),
+                    const Spacer(),
+                    Text(
+                      l10n.communityFlagPartyTotal(_won(total)),
+                      key: const Key('same-boat-detail-party-total'),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    key: const Key('same-boat-detail-plant-pay'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFE07A1F),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: widget.open < 1
+                        ? null
+                        : () => Navigator.pop(context, seats),
+                    child: Text(l10n.communityFlagPlantAndPay),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

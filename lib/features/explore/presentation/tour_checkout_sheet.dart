@@ -81,6 +81,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   var _bookPackage = true;
   final _selected = <String>{};
   var _paying = false;
+  var _guestSeeded = false;
+  final _guestName = TextEditingController();
+  final _guestBirth = TextEditingController();
+  final _guestContact = TextEditingController();
 
   bool get _hasProduct => widget.product != null;
 
@@ -134,6 +138,34 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       _qtyInfant = 0;
     }
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_guestSeeded) return;
+    final store = DiverStoreScope.of(context);
+    if (store.uid == null || store.loading) return;
+    _guestSeeded = true;
+    final name = store.profileGuestName;
+    if (name.isNotEmpty) _guestName.text = name;
+    final birth = store.stats.birthDate.trim();
+    if (birth.isNotEmpty) _guestBirth.text = birth;
+    final contact = store.stats.phone.trim();
+    if (contact.isNotEmpty) _guestContact.text = contact;
+  }
+
+  @override
+  void dispose() {
+    _guestName.dispose();
+    _guestBirth.dispose();
+    _guestContact.dispose();
+    super.dispose();
+  }
+
+  bool get _guestReady =>
+      _guestName.text.trim().isNotEmpty &&
+      _guestBirth.text.trim().isNotEmpty &&
+      _guestContact.text.trim().isNotEmpty;
 
   bool get _partyLocked =>
       widget.fromFlag && widget.lockedPartySize > 0;
@@ -289,7 +321,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   Future<void> _pay() async {
-    if (_paying) {
+    if (_paying || !_guestReady) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -372,6 +404,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         // Paid SimPay checkout: auto-confirm; defaults stay requested/unpaid elsewhere.
         status: BookingStatus.confirmed,
         paymentStatus: PaymentStatus.captured,
+        guestDisplayName: _guestName.text,
+        guestBirthDate: _guestBirth.text,
+        guestContact: _guestContact.text,
       );
       if (!mounted) {
         return;
@@ -699,7 +734,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             color: Colors.white,
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + bottom),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _guestIdentityFields(l10n),
+                  const SizedBox(height: 8),
+                  Row(
                 children: [
                   Expanded(
                     child: Column(
@@ -745,7 +785,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   if (!_workbench)
                     FilledButton(
                       key: const Key('explore-checkout-pay'),
-                      onPressed: _pay,
+                      onPressed: _guestReady ? _pay : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppTheme.navy,
                         padding: const EdgeInsets.symmetric(
@@ -759,10 +799,52 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     _workbenchFooter(l10n),
                 ],
               ),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _guestIdentityFields(AppLocalizations l10n) {
+    return Column(
+      children: [
+        TextField(
+          key: const Key('checkout-guest-name'),
+          controller: _guestName,
+          onChanged: (_) => setState(() {}),
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: l10n.checkoutGuestName,
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('checkout-guest-birth'),
+          controller: _guestBirth,
+          onChanged: (_) => setState(() {}),
+          keyboardType: TextInputType.datetime,
+          decoration: InputDecoration(
+            labelText: l10n.checkoutGuestBirth,
+            hintText: 'YYYY-MM-DD',
+            isDense: true,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('checkout-guest-contact'),
+          controller: _guestContact,
+          onChanged: (_) => setState(() {}),
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+            labelText: l10n.checkoutGuestContact,
+            isDense: true,
+          ),
+        ),
+      ],
     );
   }
 
@@ -791,7 +873,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         Expanded(
           child: FilledButton(
             key: Key(sameBoat ? 'checkout-pay-same-boat' : 'checkout-confirm'),
-            onPressed: _pay,
+            onPressed: _guestReady ? _pay : null,
             style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
             child: Text(
               sameBoat ? l10n.explorePay : l10n.checkoutConfirm,

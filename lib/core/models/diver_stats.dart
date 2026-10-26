@@ -19,6 +19,8 @@ class DiverStats {
     this.gradeCelebrationTo,
     this.nationality = '',
     this.nationalityConsentAt,
+    this.birthDate = '',
+    this.phone = '',
   });
 
   final String displayName;
@@ -37,6 +39,12 @@ class DiverStats {
   final MemberGrade? gradeCelebrationTo;
   final String nationality;
   final DateTime? nationalityConsentAt;
+
+  /// Profile birth date (`yyyy-MM-dd`) when the user document has one.
+  final String birthDate;
+
+  /// Profile phone when the user document has one.
+  final String phone;
 
   bool get isVerifiedPro => proStatus == ProVerificationStatus.approved;
   bool get isProPending => proStatus == ProVerificationStatus.pending;
@@ -118,6 +126,8 @@ class DiverStats {
     MemberGrade? gradeCelebrationTo,
     String? nationality,
     DateTime? nationalityConsentAt,
+    String? birthDate,
+    String? phone,
     bool clearCelebrationTo = false,
     bool clearNationalityConsentAt = false,
     bool clearOwnedShopId = false,
@@ -146,6 +156,8 @@ class DiverStats {
       nationalityConsentAt: clearNationalityConsentAt
           ? null
           : (nationalityConsentAt ?? this.nationalityConsentAt),
+      birthDate: birthDate ?? this.birthDate,
+      phone: phone ?? this.phone,
     );
   }
 }

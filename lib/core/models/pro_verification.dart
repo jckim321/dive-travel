@@ -66,6 +66,8 @@ class TourBooking {
     this.seatsHeld = 0,
     this.seatOptionId = '',
     this.guestDisplayName = '',
+    this.guestBirthDate = '',
+    this.guestContact = '',
     this.partnerAckedAt,
     this.cancelledAt,
   });
@@ -105,6 +107,12 @@ class TourBooking {
   /// Snapshot of the guest's profile/login display name at booking time.
   /// Empty when unset — partners show 「예약자 이름 없음」. Never email local-part.
   final String guestDisplayName;
+
+  /// Booker's own booking only. Shop copies and vouchers stay empty.
+  final String guestBirthDate;
+
+  /// Booker's own booking only. Shop copies and vouchers stay empty.
+  final String guestContact;
 
   /// Partner 「확인했어요」 read receipt (shop booking doc only).
   final DateTime? partnerAckedAt;
@@ -191,6 +199,8 @@ class TourBooking {
     int? seatsHeld,
     String? seatOptionId,
     String? guestDisplayName,
+    String? guestBirthDate,
+    String? guestContact,
     DateTime? partnerAckedAt,
     bool clearPartnerAckedAt = false,
     DateTime? cancelledAt,
@@ -226,6 +236,8 @@ class TourBooking {
       seatsHeld: seatsHeld ?? this.seatsHeld,
       seatOptionId: seatOptionId ?? this.seatOptionId,
       guestDisplayName: guestDisplayName ?? this.guestDisplayName,
+      guestBirthDate: guestBirthDate ?? this.guestBirthDate,
+      guestContact: guestContact ?? this.guestContact,
       partnerAckedAt: clearPartnerAckedAt
           ? null
           : (partnerAckedAt ?? this.partnerAckedAt),

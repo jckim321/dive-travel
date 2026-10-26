@@ -809,6 +809,9 @@ class DiverStore extends ChangeNotifier {
     List<BookingLine> quoteLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
+    String? guestDisplayName,
+    String guestBirthDate = '',
+    String guestContact = '',
   }) async {
     final uid = _uid;
     if (uid == null) {
@@ -836,13 +839,17 @@ class DiverStore extends ChangeNotifier {
       quoteLines: quoteLines,
       status: status,
       paymentStatus: paymentStatus,
-      guestDisplayName: _resolveGuestDisplayName(),
+      guestDisplayName: (guestDisplayName ?? _resolveGuestDisplayName()).trim(),
+      guestBirthDate: guestBirthDate.trim(),
+      guestContact: guestContact.trim(),
     );
     unawaited(refreshShopStat(hull));
     return saved;
   }
 
   /// Profile/login display name only; never invents from email local-part.
+  String get profileGuestName => _resolveGuestDisplayName();
+
   String _resolveGuestDisplayName() {
     return resolveGuestDisplayName(
       authDisplayName: _authDisplayName,

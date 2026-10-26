@@ -451,6 +451,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get explorePay => 'Pay';
 
   @override
+  String get checkoutGuestName => 'Booker name';
+
+  @override
+  String get checkoutGuestBirth => 'Date of birth';
+
+  @override
+  String get checkoutGuestContact => 'Contact';
+
+  @override
   String get simPayTitle => 'Confirm booking request';
 
   @override
