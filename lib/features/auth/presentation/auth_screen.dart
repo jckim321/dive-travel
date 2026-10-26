@@ -77,8 +77,25 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  /// First landing: brand + 처음이에요 / 다시 왔어요. Then credentials panel.
+  var _showCredentials = false;
   late var _signUp = widget.initialSignUp;
   String? _error;
+
+  void _openCredentials({required bool signUp}) {
+    setState(() {
+      _showCredentials = true;
+      _signUp = signUp;
+      _error = null;
+    });
+  }
+
+  void _backToChooser() {
+    setState(() {
+      _showCredentials = false;
+      _error = null;
+    });
+  }
 
   Future<void> _submit(AuthCredentials credentials) async {
     final session = SessionScope.of(context);
@@ -150,41 +167,58 @@ class _AuthScreenState extends State<AuthScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                 children: [
-                  if (widget.popOnSuccess)
+                  if (widget.popOnSuccess || _showCredentials)
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        key: const Key('auth-full-close'),
-                        onPressed: () =>
-                            Navigator.of(context).maybePop(false),
-                        icon: const Icon(Icons.close, color: AppTheme.navy),
+                        key: _showCredentials
+                            ? const Key('auth-form-back')
+                            : const Key('auth-full-close'),
+                        onPressed: _showCredentials
+                            ? _backToChooser
+                            : () => Navigator.of(context).maybePop(false),
+                        icon: Icon(
+                          _showCredentials
+                              ? Icons.arrow_back
+                              : Icons.close,
+                          color: AppTheme.navy,
+                        ),
                       ),
                     ),
                   _BrandWordmark(
-                    subtitle: _signUp
-                        ? l10n.authHeroSignupHint
-                        : l10n.authHeroLoginHint,
+                    subtitle: _showCredentials
+                        ? (_signUp
+                            ? l10n.authHeroSignupHint
+                            : l10n.authHeroLoginHint)
+                        : l10n.authHeroTitle,
                   ),
-                  const SizedBox(height: 20),
-                  Material(
-                    color: Colors.white,
-                    elevation: 0,
-                    shadowColor: const Color(0x140B1F33),
-                    borderRadius: BorderRadius.circular(AppTheme.radius),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
-                      child: AuthCredentialsForm(
-                        busy: session.busy,
-                        errorText: _error,
-                        initialSignUp: widget.initialSignUp,
-                        onSignUpChanged: (signUp) => setState(() {
-                          _signUp = signUp;
-                          _error = null;
-                        }),
-                        onSubmit: _submit,
+                  const SizedBox(height: 28),
+                  if (!_showCredentials)
+                    _AuthChooser(
+                      onFirstVisit: () => _openCredentials(signUp: true),
+                      onWelcomeBack: () => _openCredentials(signUp: false),
+                    )
+                  else
+                    Material(
+                      color: Colors.white,
+                      elevation: 0,
+                      shadowColor: const Color(0x140B1F33),
+                      borderRadius: BorderRadius.circular(AppTheme.radius),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                        child: AuthCredentialsForm(
+                          key: ValueKey<bool>(_signUp),
+                          busy: session.busy,
+                          errorText: _error,
+                          initialSignUp: _signUp,
+                          onSignUpChanged: (signUp) => setState(() {
+                            _signUp = signUp;
+                            _error = null;
+                          }),
+                          onSubmit: _submit,
+                        ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 14),
                   Text(
                     l10n.authTrialNote,
@@ -201,6 +235,52 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AuthChooser extends StatelessWidget {
+  const _AuthChooser({
+    required this.onFirstVisit,
+    required this.onWelcomeBack,
+  });
+
+  final VoidCallback onFirstVisit;
+  final VoidCallback onWelcomeBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          key: const Key('auth-choose-signup'),
+          onPressed: onFirstVisit,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppTheme.navy,
+            minimumSize: const Size.fromHeight(54),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Text(l10n.authFirstVisit),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          key: const Key('auth-choose-login'),
+          onPressed: onWelcomeBack,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.navy,
+            side: const BorderSide(color: AppTheme.navy, width: 1.2),
+            minimumSize: const Size.fromHeight(54),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Text(l10n.authWelcomeBack),
+        ),
+      ],
     );
   }
 }

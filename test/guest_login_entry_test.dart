@@ -61,6 +61,8 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-guest-login-button')));
     await pumpFrames();
     expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('auth-choose-signup')));
+    await pumpFrames();
 
     await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
     await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');

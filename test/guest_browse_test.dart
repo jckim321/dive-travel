@@ -46,6 +46,9 @@ void main() {
     expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
     expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
     expect(find.text(l10n.authFirstVisit), findsOneWidget);
+    await tester.tap(find.byKey(const Key('auth-choose-signup')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
 
     await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
     await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
