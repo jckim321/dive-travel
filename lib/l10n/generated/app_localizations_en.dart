@@ -1247,6 +1247,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authHeroLoginHint => 'Come back in with your ID and password';
 
   @override
+  String get authSignupPanelTitle => 'Sign up';
+
+  @override
+  String get authSignupPanelBody =>
+      'Use logs, Same Tide, and bookings right away';
+
+  @override
+  String get authLoginPanelTitle => 'Log in';
+
+  @override
+  String get authLoginPanelBody => 'Pick up where you left your trip';
+
+  @override
   String get authNameTag => 'ID';
 
   @override

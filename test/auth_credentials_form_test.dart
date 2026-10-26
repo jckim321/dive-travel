@@ -29,7 +29,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.authFirstVisit), findsOneWidget);
-    expect(find.text(l10n.authStart), findsOneWidget);
+    expect(find.text(l10n.authSignupPanelTitle), findsWidgets);
+    expect(find.byKey(const Key('auth-submit')), findsOneWidget);
     expect(
       tester
           .widget<CheckboxListTile>(find.byKey(const Key('auth-keep-signed-in')))

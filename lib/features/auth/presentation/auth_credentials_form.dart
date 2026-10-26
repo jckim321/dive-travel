@@ -124,6 +124,26 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
     }
   }
 
+  InputDecoration _fieldDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: AppTheme.seaMist,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
+        borderSide: const BorderSide(color: AppTheme.oceanLight, width: 1.2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -154,17 +174,28 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: _ModeIntro(
+            key: ValueKey(_signUp),
+            title: _signUp
+                ? l10n.authSignupPanelTitle
+                : l10n.authLoginPanelTitle,
+            body: _signUp
+                ? l10n.authSignupPanelBody
+                : l10n.authLoginPanelBody,
+          ),
+        ),
+        const SizedBox(height: 16),
         TextField(
           key: const Key('auth-login-id'),
           controller: _nameTag,
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.username],
-          decoration: InputDecoration(
-            labelText: l10n.authNameTag,
-            filled: true,
-            fillColor: Colors.white,
-          ),
+          decoration: _fieldDecoration(l10n.authNameTag),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 4, top: 6),
@@ -181,11 +212,7 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
           obscureText: true,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
-          decoration: InputDecoration(
-            labelText: l10n.authPassword,
-            filled: true,
-            fillColor: Colors.white,
-          ),
+          decoration: _fieldDecoration(l10n.authPassword),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 4, top: 6),
@@ -234,13 +261,53 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(_signUp ? l10n.authStart : l10n.authLogin),
+              : Text(_signUp ? l10n.authSignup : l10n.authLogin),
         ),
-        const SizedBox(height: 14),
+        if (!_signUp) ...[
+          const SizedBox(height: 14),
+          Text(
+            l10n.authForgotPasswordNote,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ModeIntro extends StatelessWidget {
+  const _ModeIntro({
+    super.key,
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Text(
-          l10n.authForgotPasswordNote,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            height: 1.2,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.navy,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          body,
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: AppTheme.muted,
+          ),
         ),
       ],
     );

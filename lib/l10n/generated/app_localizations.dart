@@ -2352,6 +2352,30 @@ abstract class AppLocalizations {
   /// **'아이디와 비밀번호로 다시 들어와요'**
   String get authHeroLoginHint;
 
+  /// No description provided for @authSignupPanelTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원가입'**
+  String get authSignupPanelTitle;
+
+  /// No description provided for @authSignupPanelBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그·같은배·예약을 바로 쓸 수 있어요'**
+  String get authSignupPanelBody;
+
+  /// No description provided for @authLoginPanelTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인'**
+  String get authLoginPanelTitle;
+
+  /// No description provided for @authLoginPanelBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장해 둔 여정으로 다시 들어와요'**
+  String get authLoginPanelBody;
+
   /// No description provided for @authNameTag.
   ///
   /// In ko, this message translates to:

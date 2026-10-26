@@ -1224,6 +1224,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get authHeroLoginHint => '아이디와 비밀번호로 다시 들어와요';
 
   @override
+  String get authSignupPanelTitle => '회원가입';
+
+  @override
+  String get authSignupPanelBody => '로그·같은배·예약을 바로 쓸 수 있어요';
+
+  @override
+  String get authLoginPanelTitle => '로그인';
+
+  @override
+  String get authLoginPanelBody => '저장해 둔 여정으로 다시 들어와요';
+
+  @override
   String get authNameTag => '아이디';
 
   @override
