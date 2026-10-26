@@ -111,15 +111,12 @@ class _SignedInHomeState extends State<_SignedInHome> {
   Widget build(BuildContext context) {
     final store = DiverStoreScope.of(context);
     final pins = DevicePinScope.of(context);
-    if (!pins.ready) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
     final uid = store.uid;
     final live = store.stats;
     final staff = live.isAdmin || live.isBusiness;
-    if (pins.needsUnlock(uid: uid, isStaff: staff) &&
+    // While prefs load, show the shell; switch to unlock once ready.
+    if (pins.ready &&
+        pins.needsUnlock(uid: uid, isStaff: staff) &&
         uid != null &&
         uid.isNotEmpty) {
       return DevicePinUnlockPage(

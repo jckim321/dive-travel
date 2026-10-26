@@ -47,9 +47,14 @@ class DevicePinController extends ChangeNotifier {
   }
 
   Future<void> load() async {
-    _record = await _store.read();
-    _ready = true;
-    notifyListeners();
+    try {
+      _record = await _store.read();
+    } catch (_) {
+      _record = null;
+    } finally {
+      _ready = true;
+      notifyListeners();
+    }
   }
 
   /// Call when auth uid changes. Clears the PIN on logout or account switch.

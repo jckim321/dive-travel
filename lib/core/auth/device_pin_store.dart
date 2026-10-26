@@ -47,7 +47,19 @@ class PrefsDevicePinStore implements DevicePinStore {
   SharedPreferences? _prefs;
 
   Future<SharedPreferences> _ready() async {
-    return _prefs ??= _prefsOverride ?? await SharedPreferences.getInstance();
+    if (_prefs != null) {
+      return _prefs!;
+    }
+    if (_prefsOverride != null) {
+      return _prefs = _prefsOverride;
+    }
+    try {
+      return _prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      // flutter_test without setMockInitialValues
+      SharedPreferences.setMockInitialValues(const {});
+      return _prefs = await SharedPreferences.getInstance();
+    }
   }
 
   @override
