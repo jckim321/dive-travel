@@ -91,9 +91,11 @@ class _SignedInHomeState extends State<_SignedInHome> {
     }
     if (!_staffRoutePrimed) {
       _staffRoutePrimed = true;
-      // Restored session: remember uid so we do not push a console over tests/home.
-      _openedForUid = uid;
-      return;
+      // Admin cold start stays on the customer shell; partners still auto-open (H8).
+      if (live.isAdmin) {
+        _openedForUid = uid;
+        return;
+      }
     }
     if (!staff) {
       return;
