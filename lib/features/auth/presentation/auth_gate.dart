@@ -36,6 +36,8 @@ class _SignedInHomeState extends State<_SignedInHome> {
   DiverStore? _store;
   DevicePinController? _pins;
   String? _openedForUid;
+  /// After the first settled profile load; restored sessions skip auto-open.
+  var _staffRoutePrimed = false;
 
   @override
   void didChangeDependencies() {
@@ -62,7 +64,8 @@ class _SignedInHomeState extends State<_SignedInHome> {
     super.dispose();
   }
 
-  /// After staff sign-in (and device PIN if set), open HQ / partner console.
+  /// After a fresh staff sign-in (and device PIN if set), open HQ / partner.
+  /// Cold start with an already-signed-in session stays on the customer shell.
   void _maybeOpenStaffConsole() {
     if (!mounted) {
       return;
@@ -71,18 +74,25 @@ class _SignedInHomeState extends State<_SignedInHome> {
     if (store == null) {
       return;
     }
+    if (store.loading) {
+      return;
+    }
     final pins = DevicePinScope.of(context);
     final uid = store.uid;
     if (uid == null || uid.isEmpty) {
       _openedForUid = null;
-      return;
-    }
-    if (store.loading) {
+      _staffRoutePrimed = true;
       return;
     }
     final live = store.stats;
     final staff = live.isAdmin || live.isBusiness;
     if (pins.needsUnlock(uid: uid, isStaff: staff)) {
+      return;
+    }
+    if (!_staffRoutePrimed) {
+      _staffRoutePrimed = true;
+      // Restored session: remember uid so we do not push a console over tests/home.
+      _openedForUid = uid;
       return;
     }
     if (!staff) {
