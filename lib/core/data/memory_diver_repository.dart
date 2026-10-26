@@ -116,6 +116,12 @@ class MemoryDiverRepository implements DiverRepository {
 
   /// Test-only pause before a nationality save or clear finishes.
   Future<void> Function()? debugDelayNationalityWrite;
+
+  /// Test-only pause before [saveShopProduct] writes.
+  Future<void> Function()? debugDelayShopProductSave;
+
+  /// When set for this shop, [fetchShopStat] returns it instead of storage.
+  ShopLiveStats? debugFetchShopStatOverride;
   bool _isInstructor = false;
   bool _isAdmin = false;
   bool _isBusiness = false;
@@ -1014,7 +1020,12 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Future<ShopLiveStats?> fetchShopStat(String shopId) async {
-    return _shopStats[shopId.trim()];
+    final override = debugFetchShopStatOverride;
+    final id = shopId.trim();
+    if (override != null && override.shopId == id) {
+      return override;
+    }
+    return _shopStats[id];
   }
 
   @override
@@ -3389,6 +3400,10 @@ class MemoryDiverRepository implements DiverRepository {
     List<ShopGallerySlot>? gallery,
     bool clearAbsentFormFields = false,
   }) async {
+    final delay = debugDelayShopProductSave;
+    if (delay != null) {
+      await delay();
+    }
     final current = _shopStats[shopId];
     final ShopProduct saved;
     Uint8List? coverBytes;

@@ -2651,11 +2651,23 @@ class DiverStore extends ChangeNotifier {
       throw StateError('Product not found');
     }
     final next = SameBoatSeatOpenLogic.applyAdminStatus(current, status);
-    await saveShopProduct(
-      shopId: shopId,
-      product: next,
-      intent: ProductSaveIntent.preserveListing,
-    );
+    // Show the new row before the write. A failed write puts the old row back.
+    _upsertLocalShopProduct(shopId, next);
+    try {
+      await saveShopProduct(
+        shopId: shopId,
+        product: next,
+        intent: ProductSaveIntent.preserveListing,
+      );
+    } catch (error) {
+      // Refresh can fail after the write landed. Keep the open row then.
+      if (error is StateError && error.message == 'SHOP_STAT_REFRESH_FAILED') {
+        _upsertLocalShopProduct(shopId, next);
+      } else {
+        _upsertLocalShopProduct(shopId, current);
+      }
+      rethrow;
+    }
     if (status == SameBoatStatus.approved) {
       unawaited(_recordSeatOpens(next));
     }
