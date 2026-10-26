@@ -4,6 +4,49 @@ import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+String sameBoatSearchSummary({
+  required SameBoatSearch search,
+  required AppLocalizations l10n,
+  required List<SameBoatRegionChoice> regions,
+}) {
+  if (!search.hasActiveFilter) {
+    return l10n.sameBoatSearchAllSeats;
+  }
+  final names = <String>[];
+  for (final id in search.regionIds) {
+    for (final region in regions) {
+      if (region.id == id) {
+        names.add(region.name);
+        break;
+      }
+    }
+  }
+  final parts = <String>[
+    if (search.when != SameBoatWhen.any)
+      switch (search.when) {
+        SameBoatWhen.any => l10n.sameBoatSearchWhen,
+        SameBoatWhen.thisMonth => l10n.sameBoatSearchThisMonth,
+        SameBoatWhen.nextMonth => l10n.sameBoatSearchNextMonth,
+        SameBoatWhen.withinThreeMonths => l10n.sameBoatSearchThreeMonths,
+      },
+    if (names.isNotEmpty) names.join(', '),
+    if (search.party != null)
+      search.party! >= SameBoatSearch.partyFivePlus
+          ? l10n.sameBoatSearchPartyFivePlus
+          : l10n.sameBoatSearchPartyCount(search.party!),
+    if (search.budgetMax != null)
+      switch (search.budgetMax) {
+        SameBoatSearch.budget50 => l10n.sameBoatSearchBudget50,
+        SameBoatSearch.budget100 => l10n.sameBoatSearchBudget100,
+        SameBoatSearch.budget200 => l10n.sameBoatSearchBudget200,
+        _ => l10n.sameBoatSearchBudget,
+      },
+    if (search.lastCall) l10n.sameBoatSearchLastCall,
+    if (search.departingSoon) l10n.sameBoatSearchDeparting,
+  ];
+  return parts.join(' · ');
+}
+
 class SameBoatRegionChoice {
   const SameBoatRegionChoice({
     required this.id,
@@ -142,18 +185,7 @@ class SameBoatSearchBar extends StatelessWidget {
   }
 
   String _summary(AppLocalizations l10n) {
-    if (!search.hasActiveFilter) {
-      return l10n.sameBoatSearchAllSeats;
-    }
-    final parts = <String>[
-      if (search.when != SameBoatWhen.any) _whenLabel(l10n),
-      if (search.regionIds.isNotEmpty) _whereLabel(l10n),
-      if (search.party != null) _partyLabel(l10n),
-      if (search.budgetMax != null) _budgetLabel(l10n),
-      if (search.lastCall) l10n.sameBoatSearchLastCall,
-      if (search.departingSoon) l10n.sameBoatSearchDeparting,
-    ];
-    return parts.join(' · ');
+    return sameBoatSearchSummary(search: search, l10n: l10n, regions: regions);
   }
 
   String _whenLabel(AppLocalizations l10n) {

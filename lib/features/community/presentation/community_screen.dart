@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
+import 'package:dive_travel_app/features/community/presentation/same_boat_empty_search.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -286,11 +287,24 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               const SizedBox(height: 12),
                             ],
                           ] else if (offers.isEmpty)
-                            AppCard(
-                              child: Text(
-                                l10n.communityEmpty,
-                                style: theme.textTheme.bodyMedium,
+                            SameBoatEmptySearch(
+                              summary: sameBoatSearchSummary(
+                                search: _search,
+                                l10n: l10n,
+                                regions: regions,
                               ),
+                              alreadySaved: store.seatAlerts.any(
+                                (alert) => alert.sameConditions(_search),
+                              ),
+                              canWiden: _search.widen() != null,
+                              onSave: () => _saveSeatAlert(context, store),
+                              onWiden: () {
+                                final next = _search.widen();
+                                if (next == null) {
+                                  return;
+                                }
+                                setState(() => _search = next);
+                              },
                             )
                           else
                             for (var i = 0; i < offers.length; i++) ...[
@@ -453,6 +467,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
     await _plantThenPay(context, store, offer, seats);
+  }
+
+  Future<void> _saveSeatAlert(BuildContext context, DiverStore store) async {
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!context.mounted || store.uid == null || store.uid!.isEmpty) {
+      return;
+    }
+    await store.saveSeatAlert(_search);
   }
 
   Future<void> _plantThenPay(

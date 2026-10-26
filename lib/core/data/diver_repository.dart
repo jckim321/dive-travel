@@ -19,6 +19,7 @@ import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
+import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
@@ -81,6 +82,12 @@ abstract class DiverRepository {
 
   /// Removes nationality and nationality_consent_at together.
   Future<void> clearNationality(String uid);
+
+  /// Replaces the signed-in member's seat_alerts array. No messages are sent.
+  Future<void> saveSeatAlerts({
+    required String uid,
+    required List<SameBoatAlert> alerts,
+  });
 
   /// Admin: promote member to partner (is_business + owned_shop_id + history).
   Future<void> promoteMemberToPartner({

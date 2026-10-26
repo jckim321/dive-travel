@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
@@ -1110,6 +1111,17 @@ class FirestoreDiverRepository implements DiverRepository {
     return _userDoc(uid).set({
       'nationality': FieldValue.delete(),
       'nationality_consent_at': FieldValue.delete(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> saveSeatAlerts({
+    required String uid,
+    required List<SameBoatAlert> alerts,
+  }) {
+    return _userDoc(uid).set({
+      'seat_alerts': [for (final alert in alerts) alert.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

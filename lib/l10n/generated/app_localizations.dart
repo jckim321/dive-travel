@@ -8718,6 +8718,36 @@ abstract class AppLocalizations {
   /// **'전체 빈자리'**
   String get sameBoatSearchAllSeats;
 
+  /// No description provided for @sameBoatEmptyTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건에 맞는 빈자리가 아직 없어요'**
+  String get sameBoatEmptyTitle;
+
+  /// No description provided for @sameBoatEmptySave.
+  ///
+  /// In ko, this message translates to:
+  /// **'알림 저장'**
+  String get sameBoatEmptySave;
+
+  /// No description provided for @sameBoatEmptySaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 저장됨'**
+  String get sameBoatEmptySaved;
+
+  /// No description provided for @sameBoatEmptyWiden.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건 넓히기'**
+  String get sameBoatEmptyWiden;
+
+  /// No description provided for @sameBoatEmptyWidenHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이렇게 바꾸면 있어요'**
+  String get sameBoatEmptyWidenHint;
+
   /// No description provided for @communityTakeSeat.
   ///
   /// In ko, this message translates to:

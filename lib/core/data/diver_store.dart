@@ -34,7 +34,9 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
+import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
@@ -173,6 +175,7 @@ class DiverStore extends ChangeNotifier {
     isInstructor: false,
   );
   List<DiveRegion> _regions = const [];
+  List<SameBoatAlert> _seatAlerts = const [];
   List<DiveLog> _logs = const [];
   List<ShopLiveStats> _shopStats = const [];
   List<TourBooking> _bookings = const [];
@@ -244,6 +247,37 @@ class DiverStore extends ChangeNotifier {
       filter,
       now ?? DateTime.now(),
     );
+  }
+
+  List<SameBoatAlert> get seatAlerts => List.unmodifiable(_seatAlerts);
+
+  /// Stores the current zero-result search on the member document.
+  /// Does not send a message. Returns [SeatAlertWrite.alreadySaved] when the
+  /// five conditions are already in the list.
+  Future<SeatAlertWrite> saveSeatAlert(SameBoatSearch search) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    final update = appendSeatAlert(
+      existing: _seatAlerts,
+      search: search,
+      now: DateTime.now(),
+    );
+    if (update.result == SeatAlertWrite.alreadySaved) {
+      return SeatAlertWrite.alreadySaved;
+    }
+    final previous = _seatAlerts;
+    _seatAlerts = update.alerts;
+    notifyListeners();
+    try {
+      await _repository.saveSeatAlerts(uid: uid, alerts: update.alerts);
+    } catch (error) {
+      _seatAlerts = previous;
+      notifyListeners();
+      rethrow;
+    }
+    return SeatAlertWrite.saved;
   }
 
   List<SameBoatOffer> sameBoatResults({DateTime? now}) {
@@ -3443,6 +3477,7 @@ class DiverStore extends ChangeNotifier {
         isInstructor: false,
       );
       _regions = const [];
+      _seatAlerts = const [];
       _logs = const [];
       _favoriteShopIds.clear();
       _shopStats = const [];
@@ -3494,6 +3529,7 @@ class DiverStore extends ChangeNotifier {
             _loadingTimeout?.cancel();
             _stats = snapshot.stats;
             _regions = snapshot.regions;
+            _seatAlerts = snapshot.seatAlerts;
             // Logs stay on-demand via [refreshLogs]; do not clear local cache.
             _favoriteShopIds
               ..clear()

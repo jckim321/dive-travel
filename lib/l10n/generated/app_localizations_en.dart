@@ -4739,6 +4739,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatSearchAllSeats => 'All open seats';
 
   @override
+  String get sameBoatEmptyTitle => 'No open seats match these filters yet';
+
+  @override
+  String get sameBoatEmptySave => 'Save alert';
+
+  @override
+  String get sameBoatEmptySaved => 'Already saved';
+
+  @override
+  String get sameBoatEmptyWiden => 'Widen filters';
+
+  @override
+  String get sameBoatEmptyWidenHint => 'Try one step wider';
+
+  @override
   String get communityTakeSeat => 'Take a seat';
 
   @override

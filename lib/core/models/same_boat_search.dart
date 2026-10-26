@@ -5,6 +5,26 @@ import 'package:dive_travel_app/core/models/same_boat_board.dart';
 /// When a departure must fall. [any] does not filter.
 enum SameBoatWhen { any, thisMonth, nextMonth, withinThreeMonths }
 
+extension SameBoatWhenStorage on SameBoatWhen {
+  String get firestoreValue {
+    return switch (this) {
+      SameBoatWhen.any => 'any',
+      SameBoatWhen.thisMonth => 'this_month',
+      SameBoatWhen.nextMonth => 'next_month',
+      SameBoatWhen.withinThreeMonths => 'within_three_months',
+    };
+  }
+
+  static SameBoatWhen parse(dynamic value) {
+    return switch (value) {
+      'this_month' => SameBoatWhen.thisMonth,
+      'next_month' => SameBoatWhen.nextMonth,
+      'within_three_months' => SameBoatWhen.withinThreeMonths,
+      _ => SameBoatWhen.any,
+    };
+  }
+}
+
 /// Place strings already stored on the product and shop. Not free text.
 class SameBoatPlace {
   const SameBoatPlace({
@@ -54,6 +74,37 @@ class SameBoatSearch {
       budgetMax != null ||
       lastCall ||
       departingSoon;
+
+  /// Drops one active condition: budget, party, when, where, then more.
+  /// Null when every condition is already open.
+  SameBoatSearch? widen() {
+    if (budgetMax != null) {
+      return copyWith(clearBudget: true);
+    }
+    if (party != null) {
+      return copyWith(clearParty: true);
+    }
+    if (when != SameBoatWhen.any) {
+      return copyWith(when: SameBoatWhen.any);
+    }
+    if (regionIds.isNotEmpty) {
+      return copyWith(regionIds: const {});
+    }
+    if (lastCall || departingSoon) {
+      return copyWith(lastCall: false, departingSoon: false);
+    }
+    return null;
+  }
+
+  bool sameConditions(SameBoatSearch other) {
+    return when == other.when &&
+        party == other.party &&
+        budgetMax == other.budgetMax &&
+        lastCall == other.lastCall &&
+        departingSoon == other.departingSoon &&
+        regionIds.length == other.regionIds.length &&
+        regionIds.containsAll(other.regionIds);
+  }
 
   SameBoatSearch copyWith({
     SameBoatWhen? when,

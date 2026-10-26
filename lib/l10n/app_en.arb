@@ -1893,6 +1893,11 @@
   },
   "sameBoatSearchSortNewest": "Newest first",
   "sameBoatSearchAllSeats": "All open seats",
+  "sameBoatEmptyTitle": "No open seats match these filters yet",
+  "sameBoatEmptySave": "Save alert",
+  "sameBoatEmptySaved": "Already saved",
+  "sameBoatEmptyWiden": "Widen filters",
+  "sameBoatEmptyWidenHint": "Try one step wider",
   "communityTakeSeat": "Take a seat",
   "communityFlagHoldAsk": "Planting a flag locks your chosen seats until {deadline} (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.",
   "@communityFlagHoldAsk": {

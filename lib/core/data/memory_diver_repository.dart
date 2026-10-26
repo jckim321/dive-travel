@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
@@ -662,6 +663,7 @@ class MemoryDiverRepository implements DiverRepository {
 
   String _nationality = '';
   DateTime? _nationalityConsentAt;
+  List<SameBoatAlert> _seatAlerts = const [];
   String _birthDate = '';
   String _phone = '';
   final _consentByUid = <String, Map<String, Object?>>{};
@@ -853,6 +855,18 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> saveSeatAlerts({
+    required String uid,
+    required List<SameBoatAlert> alerts,
+  }) async {
+    if (_user?.uid != uid) {
+      throw StateError('Sign in required');
+    }
+    _seatAlerts = List<SameBoatAlert>.from(alerts);
+    _diverController.add(_snapshot);
+  }
+
+  @override
   Stream<DiverSnapshot> watchDiver(String uid) async* {
     // Profile stream — strip logs so callers mirror Firestore on-demand logs.
     yield DiverSnapshot(
@@ -860,6 +874,7 @@ class MemoryDiverRepository implements DiverRepository {
       regions: _snapshot.regions,
       logs: const [],
       favoriteShopIds: _snapshot.favoriteShopIds,
+      seatAlerts: _seatAlerts,
     );
     yield* _diverController.stream.map(
       (snap) => DiverSnapshot(
@@ -867,6 +882,7 @@ class MemoryDiverRepository implements DiverRepository {
         regions: snap.regions,
         logs: const [],
         favoriteShopIds: snap.favoriteShopIds,
+        seatAlerts: _seatAlerts,
       ),
     );
   }

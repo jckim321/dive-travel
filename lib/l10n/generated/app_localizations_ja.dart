@@ -4596,6 +4596,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sameBoatSearchAllSeats => '전체 빈자리';
 
   @override
+  String get sameBoatEmptyTitle => '조건에 맞는 빈자리가 아직 없어요';
+
+  @override
+  String get sameBoatEmptySave => '알림 저장';
+
+  @override
+  String get sameBoatEmptySaved => '이미 저장됨';
+
+  @override
+  String get sameBoatEmptyWiden => '조건 넓히기';
+
+  @override
+  String get sameBoatEmptyWidenHint => '이렇게 바꾸면 있어요';
+
+  @override
   String get communityTakeSeat => '자리 잡기';
 
   @override

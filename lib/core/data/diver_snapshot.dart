@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/diver_stats.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 
 class DiverSnapshot {
   const DiverSnapshot({
@@ -12,6 +13,7 @@ class DiverSnapshot {
     required this.regions,
     required this.logs,
     this.favoriteShopIds = const {},
+    this.seatAlerts = const [],
   });
 
   factory DiverSnapshot.empty({
@@ -76,6 +78,7 @@ class DiverSnapshot {
           in (data['favorite_shop_ids'] as List<dynamic>? ?? const []))
         if (value is String && value.trim().isNotEmpty) value.trim(),
     };
+    final seatAlerts = SameBoatAlert.listFrom(data['seat_alerts']);
 
     if (regions.isEmpty && logs.isNotEmpty) {
       return DiverSnapshot.fromLogs(
@@ -93,6 +96,7 @@ class DiverSnapshot {
         phone: phone,
         logs: logs,
         favoriteShopIds: favoriteShopIds,
+        seatAlerts: seatAlerts,
       );
     }
 
@@ -126,6 +130,7 @@ class DiverSnapshot {
       regions: regions,
       logs: logs,
       favoriteShopIds: favoriteShopIds,
+      seatAlerts: seatAlerts,
     );
   }
 
@@ -144,6 +149,7 @@ class DiverSnapshot {
     String birthDate = '',
     String phone = '',
     Set<String> favoriteShopIds = const {},
+    List<SameBoatAlert> seatAlerts = const [],
   }) {
     final grouped = <String, DiveRegion>{};
     for (final log in logs) {
@@ -173,6 +179,7 @@ class DiverSnapshot {
       regions: regions,
       logs: logs,
       favoriteShopIds: favoriteShopIds,
+      seatAlerts: seatAlerts,
     );
   }
 
@@ -230,4 +237,5 @@ class DiverSnapshot {
   final List<DiveRegion> regions;
   final List<DiveLog> logs;
   final Set<String> favoriteShopIds;
+  final List<SameBoatAlert> seatAlerts;
 }
