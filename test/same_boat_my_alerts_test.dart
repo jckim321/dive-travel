@@ -27,7 +27,7 @@ void main() {
       l10n: l10n,
       now: DateTime(2026, 10, 27),
     );
-    expect(line, '11월 · 팔라우 · 2명 · 100만 이하');
+    expect(line, '언제 11월 · 어디 팔라우 · 몇 명 2명 · 예산 100만 이하');
   });
 
   testWidgets('마이 배지는 맞는 열린 자리가 있을 때만 보이고, 줄은 그 조건으로 같은배를 연다', (
@@ -127,9 +127,16 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('seat-alert-match')));
     await tester.pump();
 
-    expect(find.text('$monthLabel · 팔라우 · 2명 · 100만 이하'), findsOneWidget);
-    expect(find.text('빈자리 1개'), findsOneWidget);
-    expect(find.text('아직 없어요'), findsOneWidget);
+    expect(
+      find.text('언제 $monthLabel · 어디 팔라우 · 몇 명 2명 · 예산 100만 이하'),
+      findsOneWidget,
+    );
+    expect(find.text('맞는 빈자리 1개'), findsOneWidget);
+    expect(find.text('맞는 빈자리 없음 · 자리가 나면 표시돼요'), findsOneWidget);
+    expect(
+      find.text('저장한 조건에 맞는 빈자리가 생기면 여기와 마이 탭에 표시돼요'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('seat-alert-match')));
     await tester.pump();

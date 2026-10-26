@@ -48,20 +48,27 @@ String sameBoatSearchSummary({
   return parts.join(' · ');
 }
 
-/// One line for a saved alert, such as 「11월 · 팔라우 · 2명 · 100만 이하」.
+/// One line for a saved alert, such as 「어디 고조 · 몇 명 2명」.
 String sameBoatAlertSummary({
   required SameBoatSearch search,
   required AppLocalizations l10n,
   required DateTime now,
 }) {
-  final parts = <String>[
-    if (search.when == SameBoatWhen.thisMonth)
-      _alertMonth(l10n, now.month)
-    else if (search.when == SameBoatWhen.nextMonth)
-      _alertMonth(l10n, DateTime(now.year, now.month + 1).month)
-    else if (search.when == SameBoatWhen.withinThreeMonths)
-      l10n.sameBoatSearchThreeMonths,
-  ];
+  final parts = <String>[];
+  if (search.when == SameBoatWhen.thisMonth) {
+    parts.add(_labeled(l10n.sameBoatSearchWhen, _alertMonth(l10n, now.month)));
+  } else if (search.when == SameBoatWhen.nextMonth) {
+    parts.add(
+      _labeled(
+        l10n.sameBoatSearchWhen,
+        _alertMonth(l10n, DateTime(now.year, now.month + 1).month),
+      ),
+    );
+  } else if (search.when == SameBoatWhen.withinThreeMonths) {
+    parts.add(
+      _labeled(l10n.sameBoatSearchWhen, l10n.sameBoatSearchThreeMonths),
+    );
+  }
   final names = <String>[];
   final ids = search.regionIds.toList()..sort();
   for (final id in ids) {
@@ -73,36 +80,45 @@ String sameBoatAlertSummary({
     }
   }
   if (names.isNotEmpty) {
-    parts.add(names.join(', '));
+    parts.add(_labeled(l10n.sameBoatSearchWhere, names.join(', ')));
   }
   if (search.party != null) {
     parts.add(
-      search.party! >= SameBoatSearch.partyFivePlus
-          ? l10n.sameBoatSearchPartyFivePlus
-          : l10n.sameBoatSearchPartyCount(search.party!),
+      _labeled(
+        l10n.sameBoatSearchParty,
+        search.party! >= SameBoatSearch.partyFivePlus
+            ? l10n.sameBoatSearchPartyFivePlus
+            : l10n.sameBoatSearchPartyCount(search.party!),
+      ),
     );
   }
   if (search.budgetMax != null) {
     parts.add(
-      switch (search.budgetMax) {
-        SameBoatSearch.budget50 => l10n.sameBoatSearchBudget50,
-        SameBoatSearch.budget100 => l10n.sameBoatSearchBudget100,
-        SameBoatSearch.budget200 => l10n.sameBoatSearchBudget200,
-        _ => l10n.sameBoatSearchBudget,
-      },
+      _labeled(
+        l10n.sameBoatSearchBudget,
+        switch (search.budgetMax) {
+          SameBoatSearch.budget50 => l10n.sameBoatSearchBudget50,
+          SameBoatSearch.budget100 => l10n.sameBoatSearchBudget100,
+          SameBoatSearch.budget200 => l10n.sameBoatSearchBudget200,
+          _ => l10n.sameBoatSearchBudget,
+        },
+      ),
     );
   }
-  if (search.lastCall) {
-    parts.add(l10n.sameBoatSearchLastCall);
-  }
-  if (search.departingSoon) {
-    parts.add(l10n.sameBoatSearchDeparting);
+  final more = <String>[
+    if (search.lastCall) l10n.sameBoatSearchLastCall,
+    if (search.departingSoon) l10n.sameBoatSearchDeparting,
+  ];
+  if (more.isNotEmpty) {
+    parts.add(_labeled(l10n.sameBoatSearchMore, more.join(', ')));
   }
   if (parts.isEmpty) {
     return l10n.sameBoatSearchAllSeats;
   }
   return parts.join(' · ');
 }
+
+String _labeled(String name, String value) => '$name $value';
 
 String _alertMonth(AppLocalizations l10n, int month) {
   if (l10n.localeName == 'ko') {

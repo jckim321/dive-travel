@@ -2484,8 +2484,13 @@
   "sameBoatUnlockWhere": "어디",
   "sameBoatUnlockMore": "더 보기",
   "mySeatAlertsTitle": "내 알림",
+  "mySeatAlertsHint": "저장한 조건에 맞는 빈자리가 생기면 여기와 마이 탭에 표시돼요",
   "mySeatAlertsEmpty": "저장한 알림이 없어요",
-  "sameBoatAlertNone": "아직 없어요",
+  "sameBoatAlertNone": "맞는 빈자리 없음 · 자리가 나면 표시돼요",
+  "sameBoatAlertMatchCount": "맞는 빈자리 {count}개",
+  "@sameBoatAlertMatchCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "sameBoatAlertMonth": "{month}월",
   "@sameBoatAlertMonth": {
     "placeholders": { "month": { "type": "int" } }

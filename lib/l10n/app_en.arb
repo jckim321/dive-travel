@@ -1908,8 +1908,13 @@
   "sameBoatUnlockWhere": "place",
   "sameBoatUnlockMore": "extra",
   "mySeatAlertsTitle": "My alerts",
+  "mySeatAlertsHint": "When an open seat matches a saved filter, it shows here and on the My tab.",
   "mySeatAlertsEmpty": "No saved alerts",
-  "sameBoatAlertNone": "None yet",
+  "sameBoatAlertNone": "No matching seats · shown when one opens",
+  "sameBoatAlertMatchCount": "{count} matching seats",
+  "@sameBoatAlertMatchCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "sameBoatAlertMonth": "{month}",
   "@sameBoatAlertMonth": {
     "placeholders": { "month": { "type": "int" } }

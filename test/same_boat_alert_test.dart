@@ -255,6 +255,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('팔라우 빈자리'), findsNothing);
+    expect(find.text('예산 50만 이하'), findsOneWidget);
     expect(find.byKey(const Key('same-boat-alert-save')), findsOneWidget);
     expect(find.byKey(const Key('same-boat-widen')), findsOneWidget);
     expect(repo.debugSeatDemands, hasLength(1));

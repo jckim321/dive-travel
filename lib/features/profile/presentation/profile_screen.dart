@@ -170,6 +170,13 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.mySeatAlertsTitle),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.mySeatAlertsHint,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.muted,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       _SeatAlertsBox(store: store, now: now),
                       const SizedBox(height: 28),
@@ -856,7 +863,7 @@ class _SeatAlertsBox extends StatelessWidget {
     if (count == 0) {
       return l10n.sameBoatAlertNone;
     }
-    return l10n.sameBoatSearchOpenCount(count);
+    return l10n.sameBoatAlertMatchCount(count);
   }
 }
 

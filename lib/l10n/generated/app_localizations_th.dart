@@ -4652,10 +4652,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get mySeatAlertsTitle => '내 알림';
 
   @override
+  String get mySeatAlertsHint => '저장한 조건에 맞는 빈자리가 생기면 여기와 마이 탭에 표시돼요';
+
+  @override
   String get mySeatAlertsEmpty => '저장한 알림이 없어요';
 
   @override
-  String get sameBoatAlertNone => '아직 없어요';
+  String get sameBoatAlertNone => '맞는 빈자리 없음 · 자리가 나면 표시돼요';
+
+  @override
+  String sameBoatAlertMatchCount(int count) {
+    return '맞는 빈자리 $count개';
+  }
 
   @override
   String sameBoatAlertMonth(int month) {

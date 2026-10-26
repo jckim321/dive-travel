@@ -8790,6 +8790,12 @@ abstract class AppLocalizations {
   /// **'내 알림'**
   String get mySeatAlertsTitle;
 
+  /// No description provided for @mySeatAlertsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 조건에 맞는 빈자리가 생기면 여기와 마이 탭에 표시돼요'**
+  String get mySeatAlertsHint;
+
   /// No description provided for @mySeatAlertsEmpty.
   ///
   /// In ko, this message translates to:
@@ -8799,8 +8805,14 @@ abstract class AppLocalizations {
   /// No description provided for @sameBoatAlertNone.
   ///
   /// In ko, this message translates to:
-  /// **'아직 없어요'**
+  /// **'맞는 빈자리 없음 · 자리가 나면 표시돼요'**
   String get sameBoatAlertNone;
+
+  /// No description provided for @sameBoatAlertMatchCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'맞는 빈자리 {count}개'**
+  String sameBoatAlertMatchCount(int count);
 
   /// No description provided for @sameBoatAlertMonth.
   ///

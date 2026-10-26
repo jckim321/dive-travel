@@ -341,10 +341,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             ],
                           ] else if (offers.isEmpty)
                             SameBoatEmptySearch(
-                              summary: sameBoatSearchSummary(
+                              summary: sameBoatAlertSummary(
                                 search: _search,
                                 l10n: l10n,
-                                regions: regions,
+                                now: now,
                               ),
                               alreadySaved: store.seatAlerts.any(
                                 (alert) => alert.sameConditions(_search),

@@ -4777,10 +4777,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mySeatAlertsTitle => 'My alerts';
 
   @override
+  String get mySeatAlertsHint =>
+      'When an open seat matches a saved filter, it shows here and on the My tab.';
+
+  @override
   String get mySeatAlertsEmpty => 'No saved alerts';
 
   @override
-  String get sameBoatAlertNone => 'None yet';
+  String get sameBoatAlertNone => 'No matching seats · shown when one opens';
+
+  @override
+  String sameBoatAlertMatchCount(int count) {
+    return '$count matching seats';
+  }
 
   @override
   String sameBoatAlertMonth(int month) {
