@@ -119,6 +119,50 @@ describe('users/{userId} create privilege lock', () => {
     );
   });
 
+  it('allows owner delete when the account is open', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('users').doc('uid-a').set(
+        appSignupPayload(),
+      );
+    });
+    const db = testEnv.authenticatedContext('uid-a').firestore();
+    await assertSucceeds(db.collection('users').doc('uid-a').delete());
+  });
+
+  it('denies owner delete when blocked or withdrawn', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const users = context.firestore().collection('users');
+      await users.doc('blocked').set(
+        appSignupPayload({ account_blocked: true }),
+      );
+      await users.doc('withdrawn').set(
+        appSignupPayload({ withdrawn_at: new Date('2026-01-01T00:00:00Z') }),
+      );
+    });
+    await assertFails(
+      testEnv.authenticatedContext('blocked').firestore()
+        .collection('users').doc('blocked').delete(),
+    );
+    await assertFails(
+      testEnv.authenticatedContext('withdrawn').firestore()
+        .collection('users').doc('withdrawn').delete(),
+    );
+  });
+
+  it('allows admin to delete a closed account', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const users = context.firestore().collection('users');
+      await users.doc('admin-1').set(
+        appSignupPayload({ email: 'admin@example.com', is_admin: true }),
+      );
+      await users.doc('blocked').set(
+        appSignupPayload({ account_blocked: true }),
+      );
+    });
+    const db = testEnv.authenticatedContext('admin-1').firestore();
+    await assertSucceeds(db.collection('users').doc('blocked').delete());
+  });
+
   it('denies create with camelCase isAdmin', async () => {
     const db = testEnv.authenticatedContext('uid-a').firestore();
     await assertFails(

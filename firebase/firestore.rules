@@ -150,7 +150,7 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['is_admin', 'is_business', 'member_grade', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at'])
       );
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin() || (isOwner(userId) && !accountClosed());
 
       match /logs/{logId} {
         allow get, list: if isOwner(userId) || isAdmin();
