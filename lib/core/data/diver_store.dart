@@ -3274,6 +3274,8 @@ class DiverStore extends ChangeNotifier {
       _loadingTimeout?.cancel();
       _loading = false;
       notifyListeners();
+      // Catalog only. users, bookings, and logs stay unsubscribed until sign-in.
+      unawaited(refreshShopStats());
       return;
     }
 

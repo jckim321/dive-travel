@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/app_card.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -276,12 +277,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
   ) async {
     final l10n = AppLocalizations.of(context);
     final product = offer.product;
-    if (store.uid == null || store.uid!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.communityNeedSignIn)),
-      );
-      return;
-    }
     final now = DateTime.now();
     final open = offer.remainingSeatsAt(now);
     if (open <= 0) {
@@ -379,10 +374,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
   ) async {
     final l10n = AppLocalizations.of(context);
     final product = offer.product;
-    if (store.uid == null || store.uid!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.communityNeedSignIn)),
-      );
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!context.mounted || store.uid == null || store.uid!.isEmpty) {
       return;
     }
     final now = DateTime.now();

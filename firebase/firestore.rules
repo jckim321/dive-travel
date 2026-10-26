@@ -209,7 +209,7 @@ service cloud.firestore {
     }
 
     match /shops/{shopId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       // Grade fields: admin only. Other shop fields (avg_*, products, plaque…):
       // signed-in users may update when grade keys are unchanged (review path).
       allow create: if isSignedIn()
@@ -222,7 +222,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /reviews/{reviewId} {
-        allow read: if isSignedIn();
+        allow read: if true;
         allow create: if validShopReviewCreate(shopId);
         allow update: if isSignedIn()
           && resource.data.uid == request.auth.uid

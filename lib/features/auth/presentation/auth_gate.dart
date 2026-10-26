@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
-import 'package:dive_travel_app/features/auth/presentation/auth_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 
@@ -17,10 +16,7 @@ class AuthGate extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    if (!session.isSignedIn) {
-      return const AuthScreen();
-    }
-    // Admin stays on MainShell; partner auto-opens PartnerDashboard (H8).
+    // Guests browse the shell. Sign-in stays a sheet over the current screen.
     return const _SignedInHome();
   }
 }

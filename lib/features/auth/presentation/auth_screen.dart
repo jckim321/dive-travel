@@ -6,6 +6,49 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+String authFailureMessage(
+  Object error,
+  AppLocalizations l10n, {
+  required bool signUp,
+}) {
+  if (error is FirebaseAuthException) {
+    switch (error.code) {
+      case 'invalid-email':
+        return l10n.authErrorInvalidEmail;
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return l10n.authErrorInvalidCredential;
+      case 'email-already-in-use':
+        if (signUp) return l10n.authErrorLoginIdInUse;
+        return l10n.authErrorEmailInUse;
+      case 'weak-password':
+        return l10n.authErrorWeakPassword;
+      case 'operation-not-allowed':
+        return l10n.authErrorOperationNotAllowed;
+      case 'unauthorized-domain':
+      case 'app-not-authorized':
+      case 'invalid-api-key':
+      case 'api-key-not-valid.-please-pass-a-valid-api-key.':
+        return l10n.authErrorGeneric;
+      case 'network-request-failed':
+        return l10n.authErrorNetwork;
+    }
+    return '${l10n.authErrorGeneric} (${error.code})';
+  }
+  if (error is FirebaseException) {
+    switch (error.code) {
+      case 'permission-denied':
+      case 'not-found':
+      case 'unavailable':
+      case 'failed-precondition':
+      case 'unimplemented':
+        return l10n.authErrorFirestore;
+    }
+  }
+  return l10n.authErrorGeneric;
+}
+
 /// Checked box: keep the Firebase session after the browser closes.
 /// Cleared box: end it when the browser session ends. No-op off the web.
 Future<void> applyKeepSignedIn(bool keepSignedIn) async {
@@ -55,46 +98,13 @@ class _AuthScreenState extends State<AuthScreen> {
       debugPrint('Auth code=${error.code} message=${error.message}');
     }
     if (!mounted) return;
-    setState(() => _error = _messageFor(error, AppLocalizations.of(context)));
-  }
-
-  String _messageFor(Object error, AppLocalizations l10n) {
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'invalid-email':
-          return l10n.authErrorInvalidEmail;
-        case 'user-not-found':
-        case 'wrong-password':
-        case 'invalid-credential':
-          return l10n.authErrorInvalidCredential;
-        case 'email-already-in-use':
-          if (_signUp) return l10n.authErrorLoginIdInUse;
-          return l10n.authErrorEmailInUse;
-        case 'weak-password':
-          return l10n.authErrorWeakPassword;
-        case 'operation-not-allowed':
-          return l10n.authErrorOperationNotAllowed;
-        case 'unauthorized-domain':
-        case 'app-not-authorized':
-        case 'invalid-api-key':
-        case 'api-key-not-valid.-please-pass-a-valid-api-key.':
-          return l10n.authErrorGeneric;
-        case 'network-request-failed':
-          return l10n.authErrorNetwork;
-      }
-      return '${l10n.authErrorGeneric} (${error.code})';
-    }
-    if (error is FirebaseException) {
-      switch (error.code) {
-        case 'permission-denied':
-        case 'not-found':
-        case 'unavailable':
-        case 'failed-precondition':
-        case 'unimplemented':
-          return l10n.authErrorFirestore;
-      }
-    }
-    return l10n.authErrorGeneric;
+    setState(
+      () => _error = authFailureMessage(
+        error,
+        AppLocalizations.of(context),
+        signUp: _signUp,
+      ),
+    );
   }
 
   @override

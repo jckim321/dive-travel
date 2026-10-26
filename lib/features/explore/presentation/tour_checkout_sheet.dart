@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> showTourCheckoutSheet({
@@ -326,10 +327,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    if (store.uid == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.checkoutSignInRequired)),
-      );
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!mounted || store.uid == null) {
       return;
     }
     final quote = widget.quote;
@@ -494,8 +495,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                   ? 0
                                   : shop.stars,
                               onClose: () => Navigator.of(context).pop(),
-                              onFavorite: () =>
-                                  store.toggleFavoriteShop(widget.shop.id),
+                              onFavorite: () async {
+                                if (!await ensureSignedIn(context)) return;
+                                if (!context.mounted) return;
+                                await store.toggleFavoriteShop(widget.shop.id);
+                              },
                             ),
                           ),
                         ),

@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class HomeStayCard extends StatelessWidget {
@@ -81,7 +82,11 @@ class HomeStayCard extends StatelessWidget {
                             saved ? const Color(0xFFE11D48) : AppTheme.navy,
                         minimumSize: const Size(32, 32),
                       ),
-                      onPressed: () => store.toggleFavoriteShop(shop.id),
+                      onPressed: () async {
+                        if (!await ensureSignedIn(context)) return;
+                        if (!context.mounted) return;
+                        await store.toggleFavoriteShop(shop.id);
+                      },
                       icon: Icon(
                         saved ? Icons.favorite : Icons.favorite_border,
                         size: 16,

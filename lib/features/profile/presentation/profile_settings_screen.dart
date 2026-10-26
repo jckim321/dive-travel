@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/profile/presentation/nationality_field.dart';
 import 'package:dive_travel_app/features/profile/presentation/partner_application_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
@@ -176,6 +177,12 @@ class _NationalityCardState extends State<_NationalityCard> {
       setState(() => _notice = l10n.profileNationalityNeedConsent);
       return;
     }
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _busy = true;
       _notice = null;
@@ -199,6 +206,12 @@ class _NationalityCardState extends State<_NationalityCard> {
 
   Future<void> _clear() async {
     if (_busy || widget.nationality.isEmpty) {
+      return;
+    }
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     setState(() {

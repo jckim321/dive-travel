@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class AddLogScreen extends StatefulWidget {
@@ -138,6 +139,12 @@ class _AddLogScreenState extends State<AddLogScreen> {
     final site = _siteController.text.trim();
     final l10n = AppLocalizations.of(context);
     if (site.isEmpty || _saving) {
+      return;
+    }
+    if (!await ensureSignedIn(context)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     if (_photo != null && !R2Config.isReady) {

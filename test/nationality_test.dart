@@ -59,7 +59,7 @@ void main() {
     expect(changed.stats.nationalityConsentAt, isNotNull);
   });
 
-  testWidgets('가입 화면은 이름표와 비밀번호만 받고 국적 동의를 묻지 않는다', (tester) async {
+  testWidgets('로그인 없이도 홈이 열리고 국적 동의를 묻지 않는다', (tester) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -71,18 +71,12 @@ void main() {
         repository: MemoryDiverRepository(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump();
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
 
-    expect(find.text(l10n.authFirstVisit), findsOneWidget);
-    expect(find.byKey(const Key('auth-nationality')), findsNothing);
+    expect(find.text(l10n.navHome), findsOneWidget);
+    expect(find.byKey(const Key('auth-credentials-form')), findsNothing);
     expect(find.text(nationalityConsentKo), findsNothing);
-
-    await tester.enterText(find.byKey(const Key('auth-login-id')), '바다');
-    await tester.enterText(find.byKey(const Key('auth-password')), 'secret12');
-    await tester.tap(find.byKey(const Key('auth-submit')));
-    await tester.pumpAndSettle();
-    expect(find.text(l10n.profileNationalityNeedConsent), findsNothing);
-    expect(find.byKey(const Key('auth-submit')), findsNothing);
   });
 }
