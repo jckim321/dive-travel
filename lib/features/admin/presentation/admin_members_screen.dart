@@ -69,10 +69,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   bool _inFilter(MemberAccount member) {
     return switch (_filter) {
       _MemberFilter.all => true,
-      _MemberFilter.silver => member.grade == MemberGrade.silver,
-      _MemberFilter.gold => member.grade == MemberGrade.gold,
-      _MemberFilter.diamond => member.grade == MemberGrade.diamond,
-      _MemberFilter.platinum => member.grade == MemberGrade.platinum,
+      _MemberFilter.silver => _isStoredGrade(member, MemberGrade.silver),
+      _MemberFilter.gold => _isStoredGrade(member, MemberGrade.gold),
+      _MemberFilter.diamond => _isStoredGrade(member, MemberGrade.diamond),
+      _MemberFilter.platinum => _isStoredGrade(member, MemberGrade.platinum),
       _MemberFilter.instructor => member.isInstructor,
       _MemberFilter.partner => member.isBusiness,
       _MemberFilter.admin => member.isAdmin,
@@ -211,6 +211,10 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   }
 }
 
+bool _isStoredGrade(MemberAccount member, MemberGrade grade) {
+  return !member.isInstructor && member.grade == grade;
+}
+
 bool _matchesQuery(MemberAccount member, String q) {
   if (q.isEmpty) return true;
   return member.displayName.toLowerCase().contains(q) ||
@@ -296,13 +300,16 @@ class _CountGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final counts = countDisplayGrades([
+      for (final member in members) (grade: member.grade, isInstructor: member.isInstructor),
+    ]);
     final cards = <_StatSpec>[
       _StatSpec(_MemberFilter.all, '전체', Icons.circle_outlined, Colors.white, members.length),
-      _StatSpec(_MemberFilter.silver, '실버', Icons.diamond_outlined, const Color(0xFFD5DEE8), members.where((m) => m.grade == MemberGrade.silver).length),
-      _StatSpec(_MemberFilter.gold, '골드', Icons.diamond, const Color(0xFFE2B15A), members.where((m) => m.grade == MemberGrade.gold).length),
-      _StatSpec(_MemberFilter.diamond, '다이아몬드', Icons.diamond_outlined, const Color(0xFF7EC8FF), members.where((m) => m.grade == MemberGrade.diamond).length),
-      _StatSpec(_MemberFilter.platinum, '플래티넘', Icons.diamond_outlined, const Color(0xFFC9B6FF), members.where((m) => m.grade == MemberGrade.platinum).length),
-      _StatSpec(_MemberFilter.instructor, '강사', Icons.school_outlined, const Color(0xFF7DDEA0), members.where((m) => m.isInstructor).length),
+      _StatSpec(_MemberFilter.silver, '실버', Icons.diamond_outlined, const Color(0xFFD5DEE8), counts[ProfileDisplayGrade.silver] ?? 0),
+      _StatSpec(_MemberFilter.gold, '골드', Icons.diamond, const Color(0xFFE2B15A), counts[ProfileDisplayGrade.gold] ?? 0),
+      _StatSpec(_MemberFilter.diamond, '다이아몬드', Icons.diamond_outlined, const Color(0xFF7EC8FF), counts[ProfileDisplayGrade.diamond] ?? 0),
+      _StatSpec(_MemberFilter.platinum, '플래티넘', Icons.diamond_outlined, const Color(0xFFC9B6FF), counts[ProfileDisplayGrade.platinum] ?? 0),
+      _StatSpec(_MemberFilter.instructor, '강사', Icons.school_outlined, const Color(0xFF7DDEA0), counts[ProfileDisplayGrade.instructor] ?? 0),
       _StatSpec(_MemberFilter.partner, '제휴파트너', Icons.storefront_outlined, AdminConsoleTheme.aqua, members.where((m) => m.isBusiness).length),
       _StatSpec(_MemberFilter.admin, '관리자', Icons.favorite_border, const Color(0xFFFFB15A), members.where((m) => m.isAdmin).length),
     ];
@@ -425,6 +432,18 @@ class _MemberRow extends StatelessWidget {
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                       ),
                     ),
+                    if (member.isBusiness)
+                      _RoleBadge(
+                        label: '제휴파트너',
+                        color: AdminConsoleTheme.aqua,
+                        badgeKey: Key('admin-member-badge-partner-${member.uid}'),
+                      ),
+                    if (member.isAdmin)
+                      _RoleBadge(
+                        label: '관리자',
+                        color: const Color(0xFFFFB15A),
+                        badgeKey: Key('admin-member-badge-admin-${member.uid}'),
+                      ),
                     if (member.loginBlocked)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -485,15 +504,21 @@ class _RoleMenu extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: Text(memberGradeLabel(l10n, grade), style: TextStyle(color: grade == MemberGrade.gold ? const Color(0xFFE2B15A) : AdminConsoleTheme.ice))),
-                if (member.grade == grade) const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
+                if (!member.isInstructor && member.grade == grade) const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
               ],
             ),
           ),
-        const PopupMenuItem(enabled: false, child: Text('역할', style: TextStyle(color: AdminConsoleTheme.muted, fontSize: 12))),
         PopupMenuItem(
+          key: Key('admin-member-grade-instructor-${member.uid}'),
           value: const _MenuChoice.instructor(),
-          child: Text(member.isInstructor ? '강사 해제' : '강사', style: const TextStyle(color: Color(0xFF7DDEA0))),
+          child: Row(
+            children: [
+              const Expanded(child: Text('강사', style: TextStyle(color: Color(0xFF7DDEA0)))),
+              if (member.isInstructor) const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
+            ],
+          ),
         ),
+        const PopupMenuItem(enabled: false, child: Text('역할', style: TextStyle(color: AdminConsoleTheme.muted, fontSize: 12))),
         PopupMenuItem(
           key: Key('admin-member-promote-${member.uid}'),
           value: const _MenuChoice.partner(),
@@ -525,7 +550,11 @@ class _RoleMenu extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(memberGradeLabel(l10n, member.grade), style: const TextStyle(color: Colors.white, fontSize: 12)),
+            Text(
+              memberShownGradeLabel(l10n, member),
+              key: Key('admin-member-shown-grade-${member.uid}'),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
             const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
           ],
         ),
@@ -539,7 +568,13 @@ class _RoleMenu extends StatelessWidget {
     try {
       switch (choice.kind) {
         case _ChoiceKind.grade:
-          await store.setMemberGrade(uid: member.uid, grade: choice.grade!);
+          final next = choice.grade!;
+          if (member.isInstructor) {
+            await store.rejectInstructor(member.uid);
+          }
+          if (!member.isInstructor || next != member.grade) {
+            await store.setMemberGrade(uid: member.uid, grade: next);
+          }
         case _ChoiceKind.instructor:
           if (member.isInstructor) {
             await store.rejectInstructor(member.uid);
@@ -704,7 +739,7 @@ class AdminMemberDetailScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Text(memberGradeLabel(AppLocalizations.of(context), shown.grade), style: const TextStyle(color: Color(0xFFE2B15A))),
+                            Text(memberShownGradeLabel(AppLocalizations.of(context), shown), style: const TextStyle(color: Color(0xFFE2B15A))),
                           ],
                         ),
                       ),
@@ -963,6 +998,42 @@ class _PromotePartnerDialogState extends State<_PromotePartnerDialog> {
           child: Text(l10n.adminMembersPromotePartner),
         ),
       ],
+    );
+  }
+}
+
+String memberShownGradeLabel(AppLocalizations l10n, MemberAccount member) {
+  if (member.isInstructor) {
+    return l10n.profileGradeInstructor;
+  }
+  return memberGradeLabel(l10n, member.grade);
+}
+
+class _RoleBadge extends StatelessWidget {
+  const _RoleBadge({
+    required this.label,
+    required this.color,
+    required this.badgeKey,
+  });
+
+  final String label;
+  final Color color;
+  final Key badgeKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Container(
+        key: badgeKey,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color),
+        ),
+        child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+      ),
     );
   }
 }
