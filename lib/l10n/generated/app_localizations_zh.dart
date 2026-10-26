@@ -2231,6 +2231,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminSameBoatEmpty => '열린 빈자리 상품이 없습니다.';
 
   @override
+  String get adminSameBoatHide => '숨김';
+
+  @override
+  String get adminSameBoatReopen => '다시 열기';
+
+  @override
+  String get adminSameBoatHiddenTitle => '숨긴 자리';
+
+  @override
+  String get adminSameBoatHiddenEmpty => '숨긴 빈자리가 없습니다.';
+
+  @override
   String get sameBoatSeatsTitle => '빈자리 열기';
 
   @override
@@ -4313,6 +4325,18 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get communityBoardListHint =>
       '출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
+
+  @override
+  String get communitySameBoatResults => '종료된 빈자리';
+
+  @override
+  String get communitySameBoatResultDeparted => '출발 종료';
+
+  @override
+  String get communitySameBoatResultSoldOut => '매진';
+
+  @override
+  String get communitySameBoatResultClosed => '마감';
 
   @override
   String get communityViewSeats => '자리 보기';

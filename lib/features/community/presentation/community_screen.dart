@@ -157,6 +157,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         };
         final offers = store.sameBoatOffers(filter, now: now);
         final all = store.sameBoatOffers(SameBoatFilter.all, now: now);
+        final results = store.sameBoatResults(now: now);
         final lastCallCount = store
             .sameBoatOffers(SameBoatFilter.lastCall, now: now)
             .length;
@@ -247,6 +248,22 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
+                if (results.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.communitySameBoatResults,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  for (final offer in results) ...[
+                    _ResultCard(
+                      offer: offer,
+                      shopName: store.shopLabelFor(offer.product.shopId),
+                      now: now,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
                 const SizedBox(height: 8),
                 Text(
                   l10n.communityHostMileage,
@@ -581,6 +598,92 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
     return null;
   }
   return store.listingCardForProduct(hull, product);
+}
+
+class _ResultCard extends StatelessWidget {
+  const _ResultCard({
+    required this.offer,
+    required this.shopName,
+    required this.now,
+  });
+
+  final SameBoatOffer offer;
+  final String shopName;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final product = offer.product;
+    final dayFmt = DateFormat('yyyy.MM.dd');
+    final departure = offer.departureStart;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _resultReason(l10n, offer, now),
+            key: Key('same-boat-result-${product.id}-${offer.optionId}'),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.muted,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            product.name,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.navy,
+            ),
+          ),
+          if (offer.optionName.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              offer.optionName,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.navy,
+              ),
+            ),
+          ],
+          if (shopName.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              shopName,
+              style: const TextStyle(fontSize: 12, color: AppTheme.muted),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            [
+              if (departure != null) dayFmt.format(departure),
+              '${offer.bookedSeats}/${offer.capacity}',
+            ].join(' · '),
+            style: const TextStyle(fontSize: 12, color: AppTheme.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _resultReason(AppLocalizations l10n, SameBoatOffer offer, DateTime now) {
+  final departure = offer.departureStart;
+  if (departure != null) {
+    final start = DateTime(departure.year, departure.month, departure.day);
+    final today = DateTime(now.year, now.month, now.day);
+    if (start.isBefore(today)) {
+      return l10n.communitySameBoatResultDeparted;
+    }
+  }
+  if (offer.capacity > 0 && offer.bookedSeats >= offer.capacity) {
+    return l10n.communitySameBoatResultSoldOut;
+  }
+  return l10n.communitySameBoatResultClosed;
 }
 
 class _SeatCard extends StatelessWidget {

@@ -4308,6 +4308,30 @@ abstract class AppLocalizations {
   /// **'열린 빈자리 상품이 없습니다.'**
   String get adminSameBoatEmpty;
 
+  /// No description provided for @adminSameBoatHide.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨김'**
+  String get adminSameBoatHide;
+
+  /// No description provided for @adminSameBoatReopen.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 열기'**
+  String get adminSameBoatReopen;
+
+  /// No description provided for @adminSameBoatHiddenTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨긴 자리'**
+  String get adminSameBoatHiddenTitle;
+
+  /// No description provided for @adminSameBoatHiddenEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'숨긴 빈자리가 없습니다.'**
+  String get adminSameBoatHiddenEmpty;
+
   /// No description provided for @sameBoatSeatsTitle.
   ///
   /// In ko, this message translates to:
@@ -8195,6 +8219,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'출발일과 깃발 마감 중 더 빠른 날 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
   String get communityBoardListHint;
+
+  /// No description provided for @communitySameBoatResults.
+  ///
+  /// In ko, this message translates to:
+  /// **'종료된 빈자리'**
+  String get communitySameBoatResults;
+
+  /// No description provided for @communitySameBoatResultDeparted.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 종료'**
+  String get communitySameBoatResultDeparted;
+
+  /// No description provided for @communitySameBoatResultSoldOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'매진'**
+  String get communitySameBoatResultSoldOut;
+
+  /// No description provided for @communitySameBoatResultClosed.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감'**
+  String get communitySameBoatResultClosed;
 
   /// No description provided for @communityViewSeats.
   ///

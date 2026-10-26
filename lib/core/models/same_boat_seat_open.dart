@@ -117,6 +117,41 @@ abstract final class SameBoatSeatOpenLogic {
     return start.isBefore(today);
   }
 
+  /// Admin hide / reopen. Seat counts, flags, and the open switch stay as stored.
+  static ShopProduct applyAdminStatus(
+    ShopProduct current,
+    SameBoatStatus status,
+  ) {
+    final closing = status == SameBoatStatus.closed;
+    return current.copyWith(
+      sameBoatStatus: status,
+      openEmptySeats: closing ? false : current.openEmptySeats,
+      options: [
+        for (final option in current.options)
+          if (_optionFollowsAdminStatus(option, status))
+            option.copyWith(
+              sameBoatStatus: status,
+              openEmptySeats: closing ? false : option.openEmptySeats,
+            )
+          else
+            option,
+      ],
+    );
+  }
+
+  static bool _optionFollowsAdminStatus(
+    ShopProductOption option,
+    SameBoatStatus status,
+  ) {
+    if (status == SameBoatStatus.approved &&
+        option.sameBoatStatus.isPartnerLocked) {
+      return true;
+    }
+    return option.sameBoatStatus.isPendingReview ||
+        option.openEmptySeats ||
+        option.sameBoatStatus.isBoardLive;
+  }
+
   /// Schedule edits use the product's own booked seats and flag holds.
   static bool scheduleLocked({
     required int booked,

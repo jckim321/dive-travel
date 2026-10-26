@@ -2302,6 +2302,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSameBoatEmpty => 'No products with open leftover seats.';
 
   @override
+  String get adminSameBoatHide => 'Hide';
+
+  @override
+  String get adminSameBoatReopen => 'Reopen';
+
+  @override
+  String get adminSameBoatHiddenTitle => 'Hidden seats';
+
+  @override
+  String get adminSameBoatHiddenEmpty => 'No hidden leftover seats.';
+
+  @override
   String get sameBoatSeatsTitle => 'Open leftover seats';
 
   @override
@@ -4448,6 +4460,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get communityBoardListHint =>
       'Sorted by the sooner of departure and flag deadline. Take a leftover seat to book.';
+
+  @override
+  String get communitySameBoatResults => 'Finished seats';
+
+  @override
+  String get communitySameBoatResultDeparted => 'Departed';
+
+  @override
+  String get communitySameBoatResultSoldOut => 'Sold out';
+
+  @override
+  String get communitySameBoatResultClosed => 'Closed';
 
   @override
   String get communityViewSeats => 'View seats';

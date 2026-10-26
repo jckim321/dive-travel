@@ -111,4 +111,84 @@ void main() {
     );
     expect([for (final item in listed) item.id], ['close']);
   });
+
+  test('results keep departed, sold-out, and closed seats', () {
+    final now = DateTime(2026, 10, 27, 9);
+    ShopProduct seat({
+      required String id,
+      required SameBoatStatus status,
+      required DateTime departure,
+      DateTime? opened,
+      int booked = 0,
+      int capacity = 4,
+      bool open = true,
+    }) {
+      return ShopProduct(
+        id: id,
+        shopId: 's',
+        name: id,
+        consumerPrice: 1,
+        professionalPrice: 1,
+        openEmptySeats: open,
+        sameBoatStatus: status,
+        sameBoatOpenedAt: opened,
+        capacity: capacity,
+        bookedSeats: booked,
+        departureStart: departure,
+      );
+    }
+
+    final past = seat(
+      id: 'past',
+      status: SameBoatStatus.approved,
+      departure: DateTime(2026, 10, 26),
+      opened: DateTime(2026, 10, 1),
+    );
+    final sold = seat(
+      id: 'sold',
+      status: SameBoatStatus.approved,
+      departure: DateTime(2026, 12, 1),
+      opened: DateTime(2026, 10, 3),
+      booked: 4,
+    );
+    final closed = seat(
+      id: 'closed',
+      status: SameBoatStatus.closed,
+      departure: DateTime(2026, 12, 1),
+      opened: DateTime(2026, 10, 4),
+      open: false,
+    );
+    final today = seat(
+      id: 'today',
+      status: SameBoatStatus.approved,
+      departure: DateTime(2026, 10, 27),
+      opened: DateTime(2026, 10, 5),
+    );
+    final hidden = seat(
+      id: 'hidden',
+      status: SameBoatStatus.hidden,
+      departure: DateTime(2026, 10, 20),
+      opened: DateTime(2026, 10, 2),
+    );
+    final rejected = seat(
+      id: 'rejected',
+      status: SameBoatStatus.rejected,
+      departure: DateTime(2026, 10, 20),
+      opened: DateTime(2026, 10, 6),
+    );
+    final never = seat(
+      id: 'never',
+      status: SameBoatStatus.closed,
+      departure: DateTime(2026, 12, 1),
+      open: false,
+    );
+    final listed = SameBoatBoard.results(
+      [past, sold, closed, today, hidden, rejected, never],
+      now: now,
+    );
+    expect(
+      [for (final item in listed) item.product.id],
+      ['closed', 'sold', 'past'],
+    );
+  });
 }

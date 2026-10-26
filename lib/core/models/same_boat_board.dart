@@ -128,6 +128,76 @@ abstract final class SameBoatBoard {
     return listed;
   }
 
+  /// Finished seats kept under the live board. Hidden and rejected stay off.
+  static List<SameBoatOffer> results(
+    Iterable<ShopProduct> products, {
+    DateTime? now,
+  }) {
+    final clock = now ?? DateTime.now();
+    final listed = <SameBoatOffer>[];
+    for (final product in products) {
+      if (!product.isListedPublicly) {
+        continue;
+      }
+      if (_isResult(
+        status: product.sameBoatStatus,
+        openEmptySeats: product.openEmptySeats,
+        openedAt: product.sameBoatOpenedAt,
+        capacity: product.capacity,
+        booked: product.bookedSeats,
+        departure: product.departureStart,
+        now: clock,
+      )) {
+        listed.add(SameBoatOffer(product: product));
+      }
+      for (final option in product.options) {
+        if (_isResult(
+          status: option.sameBoatStatus,
+          openEmptySeats: option.openEmptySeats,
+          openedAt: option.sameBoatOpenedAt,
+          capacity: option.capacity,
+          booked: option.bookedSeats,
+          departure: option.departureStart,
+          now: clock,
+        )) {
+          listed.add(SameBoatOffer(product: product, option: option));
+        }
+      }
+    }
+    listed.sort((a, b) => _newestFirst(a.listSortAt, b.listSortAt));
+    return listed;
+  }
+
+  static bool _isResult({
+    required SameBoatStatus status,
+    required bool openEmptySeats,
+    required DateTime? openedAt,
+    required int capacity,
+    required int booked,
+    required DateTime? departure,
+    required DateTime now,
+  }) {
+    if (status == SameBoatStatus.hidden || status == SameBoatStatus.rejected) {
+      return false;
+    }
+    if (capacity <= 0 || departure == null) {
+      return false;
+    }
+    final wasOpened = openEmptySeats || openedAt != null || booked > 0;
+    if (!wasOpened) {
+      return false;
+    }
+    if (status == SameBoatStatus.closed) {
+      return true;
+    }
+    return SameBoatSeatOpenLogic.isFinishedListing(
+      departure: departure,
+      capacity: capacity,
+      booked: booked,
+      now: now,
+    );
+  }
+
   static bool _finished(SameBoatOffer offer, DateTime now) {
     return SameBoatSeatOpenLogic.isFinishedListing(
       departure: offer.departureStart,

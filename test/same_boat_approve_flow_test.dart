@@ -296,4 +296,61 @@ void main() {
     );
     expect(listed.map((p) => p.id), ['p1']);
   });
+
+  test('admin hide and reopen keep bookings, flags, and the open switch', () {
+    final hold = SeatHold(
+      seats: 2,
+      expiresAt: DateTime(2026, 11, 2),
+      uid: 'u1',
+    );
+    final cabin = _option(
+      id: 'cabin',
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 2,
+      booked: 1,
+      departure: departure,
+    );
+    final idle = _option(id: 'idle');
+    final live = _product(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      booked: 4,
+      departure: departure,
+      options: [cabin, idle],
+    ).copyWith(flagHolds: [hold]);
+
+    final hidden = SameBoatSeatOpenLogic.applyAdminStatus(
+      live,
+      SameBoatStatus.hidden,
+    );
+    expect(hidden.sameBoatStatus, SameBoatStatus.hidden);
+    expect(hidden.openEmptySeats, isTrue);
+    expect(hidden.bookedSeats, 4);
+    expect(hidden.flagHolds.single.uid, 'u1');
+    expect(hidden.options[0].sameBoatStatus, SameBoatStatus.hidden);
+    expect(hidden.options[0].bookedSeats, 1);
+    expect(hidden.options[0].openEmptySeats, isTrue);
+    expect(hidden.options[1].sameBoatStatus, SameBoatStatus.closed);
+
+    final rejected = live.copyWith(
+      sameBoatStatus: SameBoatStatus.rejected,
+      options: [
+        cabin.copyWith(sameBoatStatus: SameBoatStatus.rejected),
+        idle,
+      ],
+    );
+    final reopened = SameBoatSeatOpenLogic.applyAdminStatus(
+      rejected,
+      SameBoatStatus.approved,
+    );
+    expect(reopened.sameBoatStatus, SameBoatStatus.approved);
+    expect(reopened.openEmptySeats, isTrue);
+    expect(reopened.bookedSeats, 4);
+    expect(reopened.flagHolds.single.seats, 2);
+    expect(reopened.options[0].sameBoatStatus, SameBoatStatus.approved);
+    expect(reopened.options[0].bookedSeats, 1);
+    expect(reopened.options[1].sameBoatStatus, SameBoatStatus.closed);
+  });
 }

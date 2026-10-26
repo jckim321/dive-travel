@@ -35,6 +35,7 @@ import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
@@ -238,11 +239,22 @@ class DiverStore extends ChangeNotifier {
   ];
 
   List<SameBoatOffer> sameBoatOffers(SameBoatFilter filter, {DateTime? now}) {
-    final all = <ShopProduct>[
+    return SameBoatBoard.filteredOffers(
+      _sameBoatProducts(),
+      filter,
+      now ?? DateTime.now(),
+    );
+  }
+
+  List<SameBoatOffer> sameBoatResults({DateTime? now}) {
+    return SameBoatBoard.results(_sameBoatProducts(), now: now ?? DateTime.now());
+  }
+
+  List<ShopProduct> _sameBoatProducts() {
+    return [
       for (final stats in _shopStats)
         for (final product in stats.products) product,
     ];
-    return SameBoatBoard.filteredOffers(all, filter, now ?? DateTime.now());
   }
 
   List<SameBoatOffer> myLiveFlags({DateTime? now}) {
@@ -2638,25 +2650,7 @@ class DiverStore extends ChangeNotifier {
     if (current == null) {
       throw StateError('Product not found');
     }
-    final next = current.copyWith(
-      sameBoatStatus: status,
-      openEmptySeats: status == SameBoatStatus.closed
-          ? false
-          : current.openEmptySeats,
-      options: [
-        for (final option in current.options)
-          if (option.sameBoatStatus.isPendingReview ||
-              option.openEmptySeats ||
-              option.sameBoatStatus.isBoardLive)
-            option.copyWith(
-              sameBoatStatus: status,
-              openEmptySeats:
-                  status == SameBoatStatus.closed ? false : option.openEmptySeats,
-            )
-          else
-            option,
-      ],
-    );
+    final next = SameBoatSeatOpenLogic.applyAdminStatus(current, status);
     await saveShopProduct(
       shopId: shopId,
       product: next,
