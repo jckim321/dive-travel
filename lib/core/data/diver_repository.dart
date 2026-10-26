@@ -768,4 +768,10 @@ abstract class DiverRepository {
 
   /// Admin read of every seat event. Top-level collection.
   Future<List<SeatLifeEvent>> listSeatEvents();
+
+  /// Admin read of events whose `at` is in `[from, to)`. Never the whole log.
+  Future<List<SeatLifeEvent>> listSeatEventsBetween({
+    required DateTime from,
+    required DateTime to,
+  });
 }

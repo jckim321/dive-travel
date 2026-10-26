@@ -2191,6 +2191,60 @@ class AppLocalizationsJa extends AppLocalizations {
   String get adminSameBoatTab => '같은배 모니터';
 
   @override
+  String get adminSameBoatBriefTab => '같은배 브리프';
+
+  @override
+  String get seatBriefToday => '오늘';
+
+  @override
+  String get seatBriefSeven => '7일';
+
+  @override
+  String get seatBriefThirty => '30일';
+
+  @override
+  String get seatBriefYear => '올해';
+
+  @override
+  String get seatBriefCustom => '직접';
+
+  @override
+  String get seatBriefCompare => '지난 기간과 비교';
+
+  @override
+  String get seatBriefFunnelTitle => '자리가 팔리기까지 · 깔때기';
+
+  @override
+  String get seatBriefOpens => '열린 자리';
+
+  @override
+  String get seatBriefViews => '조회';
+
+  @override
+  String get seatBriefFlags => '깃발';
+
+  @override
+  String get seatBriefPays => '결제';
+
+  @override
+  String seatBriefViewsPerOpen(int count) {
+    return '열림 → 조회 자리당 $count회';
+  }
+
+  @override
+  String seatBriefFlagRate(int percent) {
+    return '조회 → 깃발 $percent%';
+  }
+
+  @override
+  String seatBriefPayRate(int percent) {
+    return '깃발 → 결제 $percent%';
+  }
+
+  @override
+  String get seatBriefBeforeRecording => '기록 시작일 이전은 예약 기준';
+
+  @override
   String get adminSameBoatTitle => '같은배 · 빈자리 모니터';
 
   @override

@@ -19,6 +19,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen
 import 'package:dive_travel_app/features/admin/presentation/admin_home_curation_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_documents_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_brief_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_bookings_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_contract_terms_screen.dart';
@@ -56,7 +57,7 @@ enum _MembersSub { general, partners, instructors, applications }
 
 enum _DiveStarSub { applications, review, forms }
 
-enum _ProductsSub { catalog, seats, sameBoat, homeCuration }
+enum _ProductsSub { catalog, seats, sameBoat, brief, homeCuration }
 
 enum _BookingsSub { list, paymentSoon, customersSoon, cancelSoon }
 
@@ -435,27 +436,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               l10n.adminProductsTab,
               l10n.adminSameBoatApplyTab,
               l10n.adminSameBoatTab,
+              l10n.adminSameBoatBriefTab,
               l10n.adminHomeCurationTab,
             ],
             keys: const [
               Key('admin-sub-products'),
               Key('admin-sub-seats-apply'),
               Key('admin-sub-same-boat'),
+              Key('admin-sub-same-boat-brief'),
               Key('admin-sub-home-curation'),
             ],
-            badges: [pendingProducts, 0, 0, 0],
+            badges: [pendingProducts, 0, 0, 0, 0],
             selected: switch (_productsSub) {
               _ProductsSub.catalog => 0,
               _ProductsSub.seats => 1,
               _ProductsSub.sameBoat => 2,
-              _ProductsSub.homeCuration => 3,
+              _ProductsSub.brief => 3,
+              _ProductsSub.homeCuration => 4,
             },
             onSelect: (i) => _go(
               _AdminHub.products,
               sub: switch (i) {
                 1 => _ProductsSub.seats,
                 2 => _ProductsSub.sameBoat,
-                3 => _ProductsSub.homeCuration,
+                3 => _ProductsSub.brief,
+                4 => _ProductsSub.homeCuration,
                 _ => _ProductsSub.catalog,
               },
             ),
@@ -644,6 +649,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _ProductsSub.sameBoat => const AdminSameBoatMonitorScreen(
             embedded: true,
           ),
+          _ProductsSub.brief => const AdminSameBoatBriefScreen(),
           _ProductsSub.homeCuration => const AdminHomeCurationScreen(
             embedded: true,
           ),

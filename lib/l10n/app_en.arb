@@ -821,6 +821,31 @@
   "adminProductsSubtitle": "New products appear on Explore by newest first. Home placement is chosen in Home curation.",
   "adminProductsTab": "Products",
   "adminSameBoatTab": "Same-boat monitor",
+  "adminSameBoatBriefTab": "Same-boat brief",
+  "seatBriefToday": "Today",
+  "seatBriefSeven": "7 days",
+  "seatBriefThirty": "30 days",
+  "seatBriefYear": "This year",
+  "seatBriefCustom": "Custom",
+  "seatBriefCompare": "Compare with the previous period",
+  "seatBriefFunnelTitle": "Open to paid",
+  "seatBriefOpens": "Open seats",
+  "seatBriefViews": "Views",
+  "seatBriefFlags": "Flags",
+  "seatBriefPays": "Paid",
+  "seatBriefViewsPerOpen": "Open → view, {count} per seat",
+  "@seatBriefViewsPerOpen": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "seatBriefFlagRate": "View → flag {percent}%",
+  "@seatBriefFlagRate": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefPayRate": "Flag → paid {percent}%",
+  "@seatBriefPayRate": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefBeforeRecording": "Before recording started, counts come from bookings",
   "adminSameBoatTitle": "Same-boat · open seats",
   "adminSameBoatHint": "Only seats opened by product registrants. Flag planting is not done here.",
   "adminSameBoatApproveHint": "Approving a leftover-seat request publishes it to Same-boat. A planted flag locks the seat until the pay deadline.",

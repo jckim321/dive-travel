@@ -2261,6 +2261,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSameBoatTab => 'Same-boat monitor';
 
   @override
+  String get adminSameBoatBriefTab => 'Same-boat brief';
+
+  @override
+  String get seatBriefToday => 'Today';
+
+  @override
+  String get seatBriefSeven => '7 days';
+
+  @override
+  String get seatBriefThirty => '30 days';
+
+  @override
+  String get seatBriefYear => 'This year';
+
+  @override
+  String get seatBriefCustom => 'Custom';
+
+  @override
+  String get seatBriefCompare => 'Compare with the previous period';
+
+  @override
+  String get seatBriefFunnelTitle => 'Open to paid';
+
+  @override
+  String get seatBriefOpens => 'Open seats';
+
+  @override
+  String get seatBriefViews => 'Views';
+
+  @override
+  String get seatBriefFlags => 'Flags';
+
+  @override
+  String get seatBriefPays => 'Paid';
+
+  @override
+  String seatBriefViewsPerOpen(int count) {
+    return 'Open → view, $count per seat';
+  }
+
+  @override
+  String seatBriefFlagRate(int percent) {
+    return 'View → flag $percent%';
+  }
+
+  @override
+  String seatBriefPayRate(int percent) {
+    return 'Flag → paid $percent%';
+  }
+
+  @override
+  String get seatBriefBeforeRecording =>
+      'Before recording started, counts come from bookings';
+
+  @override
   String get adminSameBoatTitle => 'Same-boat · open seats';
 
   @override

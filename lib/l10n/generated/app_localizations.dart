@@ -4230,6 +4230,102 @@ abstract class AppLocalizations {
   /// **'같은배 모니터'**
   String get adminSameBoatTab;
 
+  /// No description provided for @adminSameBoatBriefTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 브리프'**
+  String get adminSameBoatBriefTab;
+
+  /// No description provided for @seatBriefToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get seatBriefToday;
+
+  /// No description provided for @seatBriefSeven.
+  ///
+  /// In ko, this message translates to:
+  /// **'7일'**
+  String get seatBriefSeven;
+
+  /// No description provided for @seatBriefThirty.
+  ///
+  /// In ko, this message translates to:
+  /// **'30일'**
+  String get seatBriefThirty;
+
+  /// No description provided for @seatBriefYear.
+  ///
+  /// In ko, this message translates to:
+  /// **'올해'**
+  String get seatBriefYear;
+
+  /// No description provided for @seatBriefCustom.
+  ///
+  /// In ko, this message translates to:
+  /// **'직접'**
+  String get seatBriefCustom;
+
+  /// No description provided for @seatBriefCompare.
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 기간과 비교'**
+  String get seatBriefCompare;
+
+  /// No description provided for @seatBriefFunnelTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리가 팔리기까지 · 깔때기'**
+  String get seatBriefFunnelTitle;
+
+  /// No description provided for @seatBriefOpens.
+  ///
+  /// In ko, this message translates to:
+  /// **'열린 자리'**
+  String get seatBriefOpens;
+
+  /// No description provided for @seatBriefViews.
+  ///
+  /// In ko, this message translates to:
+  /// **'조회'**
+  String get seatBriefViews;
+
+  /// No description provided for @seatBriefFlags.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발'**
+  String get seatBriefFlags;
+
+  /// No description provided for @seatBriefPays.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제'**
+  String get seatBriefPays;
+
+  /// No description provided for @seatBriefViewsPerOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'열림 → 조회 자리당 {count}회'**
+  String seatBriefViewsPerOpen(int count);
+
+  /// No description provided for @seatBriefFlagRate.
+  ///
+  /// In ko, this message translates to:
+  /// **'조회 → 깃발 {percent}%'**
+  String seatBriefFlagRate(int percent);
+
+  /// No description provided for @seatBriefPayRate.
+  ///
+  /// In ko, this message translates to:
+  /// **'깃발 → 결제 {percent}%'**
+  String seatBriefPayRate(int percent);
+
+  /// No description provided for @seatBriefBeforeRecording.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 시작일 이전은 예약 기준'**
+  String get seatBriefBeforeRecording;
+
   /// No description provided for @adminSameBoatTitle.
   ///
   /// In ko, this message translates to:

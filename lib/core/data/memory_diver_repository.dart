@@ -4082,6 +4082,29 @@ class MemoryDiverRepository implements DiverRepository {
     return rows;
   }
 
+  final debugSeatEventQueries = <(DateTime, DateTime)>[];
+
+  @override
+  Future<List<SeatLifeEvent>> listSeatEventsBetween({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    debugSeatEventQueries.add((from, to));
+    final rows = <SeatLifeEvent>[];
+    for (final entry in _seatEvents.entries) {
+      final parsed = SeatLifeEvent.fromMap(
+        entry.key,
+        Map<String, dynamic>.from(entry.value),
+      );
+      if (parsed != null &&
+          !parsed.at.isBefore(from) &&
+          parsed.at.isBefore(to)) {
+        rows.add(parsed);
+      }
+    }
+    return rows;
+  }
+
   void dispose() {
     _authController.close();
     _diverController.close();

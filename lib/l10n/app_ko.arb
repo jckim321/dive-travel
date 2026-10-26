@@ -1427,6 +1427,31 @@
   "adminProductsSubtitle": "등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.",
   "adminProductsTab": "상품",
   "adminSameBoatTab": "같은배 모니터",
+  "adminSameBoatBriefTab": "같은배 브리프",
+  "seatBriefToday": "오늘",
+  "seatBriefSeven": "7일",
+  "seatBriefThirty": "30일",
+  "seatBriefYear": "올해",
+  "seatBriefCustom": "직접",
+  "seatBriefCompare": "지난 기간과 비교",
+  "seatBriefFunnelTitle": "자리가 팔리기까지 · 깔때기",
+  "seatBriefOpens": "열린 자리",
+  "seatBriefViews": "조회",
+  "seatBriefFlags": "깃발",
+  "seatBriefPays": "결제",
+  "seatBriefViewsPerOpen": "열림 → 조회 자리당 {count}회",
+  "@seatBriefViewsPerOpen": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "seatBriefFlagRate": "조회 → 깃발 {percent}%",
+  "@seatBriefFlagRate": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefPayRate": "깃발 → 결제 {percent}%",
+  "@seatBriefPayRate": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefBeforeRecording": "기록 시작일 이전은 예약 기준",
   "adminSameBoatTitle": "같은배 · 빈자리 모니터",
   "adminSameBoatHint": "등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.",
   "adminSameBoatApproveHint": "빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.",

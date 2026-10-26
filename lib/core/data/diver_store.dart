@@ -3711,6 +3711,14 @@ class DiverStore extends ChangeNotifier {
     }
   }
 
+  /// Events in `[from, to)` only. Does not read the rest of the log.
+  Future<List<SeatLifeEvent>> seatEventsBetween({
+    required DateTime from,
+    required DateTime to,
+  }) {
+    return _repository.listSeatEventsBetween(from: from, to: to);
+  }
+
   /// Expired holds and passed departures. Running twice writes the same line.
   Future<void> sweepSeatLives() async {
     final actor = _uid;
