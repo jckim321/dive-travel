@@ -20,6 +20,7 @@ import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -744,4 +745,16 @@ abstract class DiverRepository {
     required String body,
     required String language,
   });
+
+  /// Create-only. False when the id already exists or the shape is rejected.
+  Future<bool> createSeatEvent(SeatLifeEvent event);
+
+  /// Grow one daily counter by 1. False when the step is not exactly +1.
+  Future<bool> bumpSeatDay({required String dayId, required String field});
+
+  /// Admin summary. Skips the write when the stored line is already the same.
+  Future<void> saveSeatOutcome(SeatOutcome outcome);
+
+  /// Admin read of every seat event. Top-level collection.
+  Future<List<SeatLifeEvent>> listSeatEvents();
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -42,6 +44,7 @@ class AdminSameBoatMonitorScreen extends StatelessWidget {
           key: const Key('admin-same-boat-monitor'),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
+            const _SeatLifeSweepOnce(),
             Text(
               l10n.adminSameBoatApproveHint,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -104,6 +107,60 @@ class AdminSameBoatMonitorScreen extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _SeatLifeSweepOnce extends StatefulWidget {
+  const _SeatLifeSweepOnce();
+
+  @override
+  State<_SeatLifeSweepOnce> createState() => _SeatLifeSweepOnceState();
+}
+
+class _SeatLifeSweepOnceState extends State<_SeatLifeSweepOnce> {
+  var _done = false;
+  var _listening = false;
+  var _scheduled = false;
+  DiverStore? _store;
+
+  @override
+  void dispose() {
+    _store?.removeListener(_whenReady);
+    super.dispose();
+  }
+
+  void _whenReady() {
+    if (!mounted || _done) {
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    _store = store;
+    if (!store.stats.isAdmin) {
+      _done = true;
+      return;
+    }
+    if (!store.shopStatsLoaded) {
+      if (!_listening) {
+        _listening = true;
+        store.addListener(_whenReady);
+      }
+      return;
+    }
+    _done = true;
+    if (_listening) {
+      store.removeListener(_whenReady);
+      _listening = false;
+    }
+    unawaited(store.sweepSeatLives());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_done && !_scheduled) {
+      _scheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _whenReady());
+    }
+    return const SizedBox.shrink();
   }
 }
 

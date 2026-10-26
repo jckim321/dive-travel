@@ -1156,6 +1156,8 @@ class _SameBoatDetailPage extends StatefulWidget {
 class _SameBoatDetailPageState extends State<_SameBoatDetailPage> {
   late final ValueNotifier<int> _party;
   late final bool _ownsParty;
+  DiverStore? _seatStore;
+  var _seatWatchArmed = false;
 
   @override
   void initState() {
@@ -1165,12 +1167,37 @@ class _SameBoatDetailPageState extends State<_SameBoatDetailPage> {
     _party.addListener(_onParty);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final store = DiverStoreScope.of(context);
+    _seatStore = store;
+    if (_seatWatchArmed) {
+      return;
+    }
+    _seatWatchArmed = true;
+    final offer = widget.offer;
+    final optionPrice = offer.option?.consumerPrice ?? 0;
+    store.watchSeatView(
+      shopId: offer.product.shopId,
+      productId: offer.product.id,
+      optionId: offer.optionId,
+      region: widget.shop?.country ?? '',
+      resort: widget.shop?.name.isNotEmpty == true
+          ? widget.shop!.name
+          : widget.shopName,
+      departure: offer.departureStart,
+      price: optionPrice > 0 ? optionPrice : offer.product.consumerPrice,
+    );
+  }
+
   void _onParty() {
     if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _seatStore?.flushSeatViews(leaving: true);
     _party.removeListener(_onParty);
     if (_ownsParty) _party.dispose();
     super.dispose();

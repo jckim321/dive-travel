@@ -628,6 +628,156 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    function seatEventCreateOk() {
+      return request.resource.data.keys().hasOnly([
+          'kind', 'seat_id', 'shop_id', 'product_id', 'option_id',
+          'region', 'resort', 'departure', 'price', 'party_size',
+          'member_grade', 'user_key', 'at', 'nationality', 'close_reason'
+        ])
+        && request.resource.data.kind in [
+          'open', 'view', 'flag', 'expire', 'pay', 'cancel', 'close'
+        ]
+        && request.resource.data.seat_id is string
+        && request.resource.data.seat_id.size() > 0
+        && request.resource.data.seat_id.size() <= 200
+        && request.resource.data.shop_id is string
+        && request.resource.data.shop_id.size() <= 120
+        && request.resource.data.product_id is string
+        && request.resource.data.product_id.size() > 0
+        && request.resource.data.product_id.size() <= 120
+        && request.resource.data.option_id is string
+        && request.resource.data.option_id.size() <= 120
+        && request.resource.data.region is string
+        && request.resource.data.region.size() <= 80
+        && request.resource.data.resort is string
+        && request.resource.data.resort.size() <= 120
+        && request.resource.data.departure is string
+        && (
+          request.resource.data.departure == ''
+          || request.resource.data.departure.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        )
+        && request.resource.data.price is int
+        && request.resource.data.price >= 0
+        && request.resource.data.party_size is int
+        && request.resource.data.party_size >= 0
+        && request.resource.data.member_grade in [
+          '', 'silver', 'gold', 'diamond', 'platinum'
+        ]
+        && request.resource.data.user_key is string
+        && request.resource.data.user_key.matches('^[0-9a-f]{64}$')
+        && request.resource.data.at is timestamp
+        && request.resource.data.at > request.time - duration.value(5, 'm')
+        && request.resource.data.at < request.time + duration.value(2, 'm')
+        && (
+          !request.resource.data.keys().hasAny(['nationality'])
+          || (
+            request.resource.data.nationality is string
+            && request.resource.data.nationality.size() >= 2
+            && request.resource.data.nationality.size() <= 8
+          )
+        )
+        && (
+          !request.resource.data.keys().hasAny(['close_reason'])
+          || request.resource.data.close_reason in ['sold_out', 'departed']
+        );
+    }
+
+    function seatDayCreateOk() {
+      return request.resource.data.keys().hasOnly([
+          'opens', 'views', 'flags', 'expires', 'pays', 'cancels', 'closes'
+        ])
+        && request.resource.data.opens is int
+        && request.resource.data.opens >= 0
+        && request.resource.data.opens <= 1
+        && request.resource.data.views is int
+        && request.resource.data.views >= 0
+        && request.resource.data.views <= 1
+        && request.resource.data.flags is int
+        && request.resource.data.flags >= 0
+        && request.resource.data.flags <= 1
+        && request.resource.data.expires is int
+        && request.resource.data.expires >= 0
+        && request.resource.data.expires <= 1
+        && request.resource.data.pays is int
+        && request.resource.data.pays >= 0
+        && request.resource.data.pays <= 1
+        && request.resource.data.cancels is int
+        && request.resource.data.cancels >= 0
+        && request.resource.data.cancels <= 1
+        && request.resource.data.closes is int
+        && request.resource.data.closes >= 0
+        && request.resource.data.closes <= 1
+        && request.resource.data.opens
+          + request.resource.data.views
+          + request.resource.data.flags
+          + request.resource.data.expires
+          + request.resource.data.pays
+          + request.resource.data.cancels
+          + request.resource.data.closes == 1;
+    }
+
+    function seatDayPlus(field) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([field])
+        && request.resource.data[field] == resource.data[field] + 1;
+    }
+
+    function seatOutcomeOk() {
+      return request.resource.data.keys().hasOnly([
+          'seat_id', 'shop_id', 'opened_on', 'first_flag_minutes',
+          'close_minutes', 'fill_rate', 'pay_rate', 'expire_count',
+          'close_reason'
+        ])
+        && request.resource.data.seat_id is string
+        && request.resource.data.shop_id is string
+        && request.resource.data.opened_on is string
+        && request.resource.data.first_flag_minutes is int
+        && request.resource.data.close_minutes is int
+        && request.resource.data.fill_rate is int
+        && request.resource.data.fill_rate >= 0
+        && request.resource.data.fill_rate <= 100
+        && request.resource.data.pay_rate is int
+        && request.resource.data.pay_rate >= 0
+        && request.resource.data.pay_rate <= 100
+        && request.resource.data.expire_count is int
+        && request.resource.data.expire_count >= 0
+        && (
+          request.resource.data.close_reason == ''
+          || request.resource.data.close_reason == 'sold_out'
+          || request.resource.data.close_reason == 'departed'
+        );
+    }
+
+    // Same-boat analytics. Customers create an event or add 1 to a day counter.
+    // Admins read every seat from these top-level collections.
+    match /seat_events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && seatEventCreateOk();
+      allow update, delete: if false;
+    }
+
+    match /seat_daily/{dayId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+        && dayId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && seatDayCreateOk();
+      allow update: if isSignedIn() && (
+        seatDayPlus('opens')
+        || seatDayPlus('views')
+        || seatDayPlus('flags')
+        || seatDayPlus('expires')
+        || seatDayPlus('pays')
+        || seatDayPlus('cancels')
+        || seatDayPlus('closes')
+      );
+      allow delete: if false;
+    }
+
+    match /seat_outcomes/{seatId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && seatOutcomeOk();
+      allow delete: if false;
+    }
+
     match /posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();

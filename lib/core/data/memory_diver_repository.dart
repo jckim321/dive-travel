@@ -33,6 +33,7 @@ import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -124,6 +125,10 @@ class MemoryDiverRepository implements DiverRepository {
   final _shopStats = <String, ShopLiveStats>{};
   final _productChanges = <String, List<ProductChangeRecord>>{};
   final _dailyStats = <String, Map<String, ShopDayStats>>{};
+  final _seatEvents = <String, Map<String, Object?>>{};
+  final _seatDays = <String, Map<String, int>>{};
+  final _seatOutcomes = <String, Map<String, Object?>>{};
+  int debugSeatOutcomeWrites = 0;
   final _shopReviews = <String, List<GuestReview>>{};
   /// Running shop sums for accurate edit/delete (mirrors Firestore sum_*).
   final _shopReviewSums = <String, List<double>>{};
@@ -3963,6 +3968,73 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> saveInstructorDiscount(InstructorDiscount discount) async {
     _discount = discount;
     _discountController.add(discount);
+  }
+
+  @override
+  Future<bool> createSeatEvent(SeatLifeEvent event) async {
+    if (_seatEvents.containsKey(event.id) || !event.withinShape) {
+      return false;
+    }
+    _seatEvents[event.id] = event.toStoredMap();
+    return true;
+  }
+
+  @override
+  Future<bool> bumpSeatDay({
+    required String dayId,
+    required String field,
+  }) async {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dayId) ||
+        !seatDayFields.contains(field)) {
+      return false;
+    }
+    final current = _seatDays[dayId];
+    if (current == null) {
+      final created = seatDayCreate(field);
+      if (!seatDayCreateAllowed(created)) {
+        return false;
+      }
+      _seatDays[dayId] = created;
+      return true;
+    }
+    final next = Map<String, int>.from(current);
+    next[field] = (current[field] ?? 0) + 1;
+    if (!seatDayPlusOneAllowed(current, next)) {
+      return false;
+    }
+    _seatDays[dayId] = next;
+    return true;
+  }
+
+  Map<String, int>? debugSeatDay(String dayId) => _seatDays[dayId];
+
+  @override
+  Future<void> saveSeatOutcome(SeatOutcome outcome) async {
+    final data = outcome.toMap();
+    if (!seatOutcomeAllowed(data)) {
+      return;
+    }
+    final existing = _seatOutcomes[outcome.seatId];
+    if (existing != null && sameSeatMap(existing, data)) {
+      return;
+    }
+    _seatOutcomes[outcome.seatId] = data;
+    debugSeatOutcomeWrites += 1;
+  }
+
+  @override
+  Future<List<SeatLifeEvent>> listSeatEvents() async {
+    final rows = <SeatLifeEvent>[];
+    for (final entry in _seatEvents.entries) {
+      final parsed = SeatLifeEvent.fromMap(
+        entry.key,
+        Map<String, dynamic>.from(entry.value),
+      );
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    return rows;
   }
 
   void dispose() {

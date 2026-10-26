@@ -37,6 +37,7 @@ import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
+import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -4693,5 +4694,94 @@ class FirestoreDiverRepository implements DiverRepository {
       ...discount.toMap(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  CollectionReference<Map<String, dynamic>> get _seatEvents =>
+      _db.collection('seat_events');
+
+  @override
+  Future<bool> createSeatEvent(SeatLifeEvent event) async {
+    if (!event.withinShape) {
+      return false;
+    }
+    final data = Map<String, dynamic>.from(event.toStoredMap());
+    data['at'] = Timestamp.fromDate(event.at.toUtc());
+    final ref = _seatEvents.doc(event.id);
+    return _db.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+      if (snap.exists) {
+        return false;
+      }
+      transaction.set(ref, data);
+      return true;
+    });
+  }
+
+  @override
+  Future<bool> bumpSeatDay({
+    required String dayId,
+    required String field,
+  }) async {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dayId) ||
+        !seatDayFields.contains(field)) {
+      return false;
+    }
+    final ref = _db.collection('seat_daily').doc(dayId);
+    return _db.runTransaction((transaction) async {
+      final snap = await transaction.get(ref);
+      if (!snap.exists) {
+        final created = seatDayCreate(field);
+        if (!seatDayCreateAllowed(created)) {
+          return false;
+        }
+        transaction.set(ref, Map<String, dynamic>.from(created));
+        return true;
+      }
+      final raw = snap.data() ?? {};
+      final current = {
+        for (final name in seatDayFields)
+          name: (raw[name] as num?)?.toInt() ?? 0,
+      };
+      final next = Map<String, int>.from(current);
+      next[field] = current[field]! + 1;
+      if (!seatDayPlusOneAllowed(current, next)) {
+        return false;
+      }
+      transaction.update(ref, {field: next[field]});
+      return true;
+    });
+  }
+
+  @override
+  Future<void> saveSeatOutcome(SeatOutcome outcome) async {
+    final data = Map<String, dynamic>.from(outcome.toMap());
+    if (!seatOutcomeAllowed(data)) {
+      return;
+    }
+    final ref = _db.collection('seat_outcomes').doc(outcome.seatId);
+    final snap = await ref.get();
+    final existing = snap.data();
+    if (existing != null && sameSeatMap(existing, data)) {
+      return;
+    }
+    await ref.set(data);
+  }
+
+  @override
+  Future<List<SeatLifeEvent>> listSeatEvents() async {
+    final snap = await _seatEvents.get();
+    final rows = <SeatLifeEvent>[];
+    for (final doc in snap.docs) {
+      final data = Map<String, dynamic>.from(doc.data());
+      final at = data['at'];
+      if (at is Timestamp) {
+        data['at'] = at.toDate().toUtc().toIso8601String();
+      }
+      final parsed = SeatLifeEvent.fromMap(doc.id, data);
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    return rows;
   }
 }

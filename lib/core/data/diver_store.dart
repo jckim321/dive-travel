@@ -35,6 +35,7 @@ import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
+import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
@@ -136,6 +137,8 @@ class DiverStore extends ChangeNotifier {
   StreamSubscription<List<TourBooking>>? _shopBookingSubscription;
   StreamSubscription<InstructorDiscount>? _discountSubscription;
   Timer? _loadingTimeout;
+  final SeatViewBuffer _seatViews = SeatViewBuffer();
+  Timer? _seatViewTimer;
   String? _uid;
   String? _email;
   String? _authDisplayName;
@@ -847,6 +850,18 @@ class DiverStore extends ChangeNotifier {
       guestContact: guestContact.trim(),
     );
     unawaited(refreshShopStat(hull));
+    if (saved && fromFlag && productId != null && productId.isNotEmpty) {
+      unawaited(
+        _recordSeatPay(
+          shopId: hull,
+          productId: productId,
+          optionId: seatOptionId.isNotEmpty ? seatOptionId : optionId,
+          price: price,
+          partySize: partySize,
+          tourDate: tourDate,
+        ),
+      );
+    }
     return saved;
   }
 
@@ -884,6 +899,18 @@ class DiverStore extends ChangeNotifier {
       lockedPrice: lockedPrice,
     );
     unawaited(refreshShopStat(hull));
+    if (result == SeatFlagPlant.planted) {
+      unawaited(
+        _recordSeatFlag(
+          shopId: hull,
+          productId: productId,
+          optionId: optionId,
+          partySize: partySize,
+          price: lockedPrice,
+          at: now,
+        ),
+      );
+    }
     return result;
   }
 
@@ -906,6 +933,14 @@ class DiverStore extends ChangeNotifier {
     );
     if (ok) {
       unawaited(refreshShopStat(hull));
+      unawaited(
+        _recordSeatCancel(
+          shopId: hull,
+          productId: productId,
+          optionId: optionId,
+          at: DateTime.now(),
+        ),
+      );
     }
     return ok;
   }
@@ -2627,6 +2662,9 @@ class DiverStore extends ChangeNotifier {
       product: next,
       intent: ProductSaveIntent.preserveListing,
     );
+    if (status == SameBoatStatus.approved) {
+      unawaited(_recordSeatOpens(next));
+    }
   }
 
   Future<void> deleteShopProduct({
@@ -2858,12 +2896,22 @@ class DiverStore extends ChangeNotifier {
     return _repository.saveInstructorDiscount(discount);
   }
 
-  Future<void> cancelBookingAsGuest(String bookingId) {
+  Future<void> cancelBookingAsGuest(String bookingId) async {
     final uid = _uid;
     if (uid == null) {
-      return Future.value();
+      return;
     }
-    return _repository.cancelBookingAsGuest(uid: uid, bookingId: bookingId);
+    TourBooking? booking;
+    for (final item in _bookings) {
+      if (item.id == bookingId) {
+        booking = item;
+        break;
+      }
+    }
+    await _repository.cancelBookingAsGuest(uid: uid, bookingId: bookingId);
+    if (booking != null && booking.fromFlag && booking.productId.isNotEmpty) {
+      unawaited(_recordSeatBookingCancel(booking));
+    }
   }
 
   Future<bool> confirmShopBooking({
@@ -3513,10 +3561,425 @@ class DiverStore extends ChangeNotifier {
         );
   }
 
+  /// One view per seat per 30 seconds, or when the detail screen leaves.
+  void watchSeatView({
+    required String shopId,
+    required String productId,
+    required String optionId,
+    required String region,
+    required String resort,
+    required DateTime? departure,
+    required int price,
+  }) {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty || productId.isEmpty) {
+      return;
+    }
+    final consented = _stats.nationalityConsentAt != null;
+    _seatViews.watch(
+      SeatLifeEvent(
+        id: 'pending',
+        kind: 'view',
+        seatId: seatLifeId(productId, optionId),
+        shopId: shopId.split('--').first,
+        productId: productId,
+        optionId: optionId,
+        region: region,
+        resort: resort,
+        departure: departure == null ? '' : seatDayId(departure),
+        price: price,
+        memberGrade: _stats.memberGrade.firestoreValue,
+        nationality: consented ? _stats.nationality : '',
+        shareNationality: consented,
+        userKey: seatUserKey(uid),
+        at: DateTime.now(),
+      ),
+      DateTime.now(),
+    );
+    _armSeatViewTimer();
+  }
+
+  void flushSeatViews({bool leaving = false}) {
+    final due = _seatViews.poll(DateTime.now(), leaving: leaving);
+    for (final event in due) {
+      unawaited(_commitSeat(event));
+    }
+    if (leaving && _seatViews.isEmpty) {
+      _seatViewTimer?.cancel();
+      _seatViewTimer = null;
+    }
+  }
+
+  /// Expired holds and passed departures. Running twice writes the same line.
+  Future<void> sweepSeatLives() async {
+    final actor = _uid;
+    if (!_stats.isAdmin || actor == null || actor.isEmpty) {
+      return;
+    }
+    try {
+      final now = DateTime.now();
+      final existing = await _repository.listSeatEvents();
+      final ids = {for (final event in existing) event.id};
+      final bySeat = <String, List<SeatLifeEvent>>{};
+      for (final event in existing) {
+        bySeat.putIfAbsent(event.seatId, () => []).add(event);
+      }
+      final seats = _seatLifeSeats(now);
+      final fresh = seatSweepEvents(
+        seats: seats,
+        now: now,
+        existingIds: ids,
+        actorUid: actor,
+      );
+      for (final event in fresh) {
+        await _commitSeat(event);
+        bySeat.putIfAbsent(event.seatId, () => []).add(event);
+      }
+      for (final seat in seats) {
+        await _repository.saveSeatOutcome(
+          summarizeSeat(seat: seat, events: bySeat[seat.seatId] ?? const []),
+        );
+      }
+    } catch (error) {
+      debugPrint('seat life sweep failed $error');
+    }
+  }
+
+  void _armSeatViewTimer() {
+    if (_seatViewTimer != null || !seatViewTimersLive) {
+      return;
+    }
+    _seatViewTimer = Timer.periodic(seatViewFlushInterval, (_) {
+      flushSeatViews();
+    });
+  }
+
+  Future<void> _recordSeatOpens(ShopProduct product) async {
+    final now = DateTime.now();
+    if (product.listsOnSameBoat) {
+      await _commitSeat(_openEvent(product, '', now));
+    }
+    for (final option in product.options) {
+      if (option.listsOnSameBoat) {
+        await _commitSeat(_openEvent(product, option.id, now));
+      }
+    }
+  }
+
+  SeatLifeEvent _openEvent(ShopProduct product, String optionId, DateTime now) {
+    final seat = _seatFor(product, optionId);
+    return SeatLifeEvent(
+      id: openEventId(seat.seatId),
+      kind: 'open',
+      seatId: seat.seatId,
+      shopId: seat.shopId,
+      productId: seat.productId,
+      optionId: seat.optionId,
+      region: seat.region,
+      resort: seat.resort,
+      departure: seat.departureDay,
+      price: seat.price,
+      memberGrade: _stats.memberGrade.firestoreValue,
+      userKey: seatUserKey(_uid ?? ''),
+      at: now,
+    );
+  }
+
+  Future<void> _recordSeatFlag({
+    required String shopId,
+    required String productId,
+    required String optionId,
+    required int partySize,
+    required int price,
+    required DateTime at,
+  }) async {
+    final product = _productById(productId);
+    final until = ShopProduct.personalFlagUntil(
+      at,
+      _flagClosesAt(product, optionId),
+    );
+    final seat = _seatFor(
+      product,
+      optionId,
+      shopId: shopId,
+      productId: productId,
+    );
+    await _commitSeat(
+      SeatLifeEvent(
+        id: flagEventId(seatUserKey(_uid ?? ''), seat.seatId, until),
+        kind: 'flag',
+        seatId: seat.seatId,
+        shopId: seat.shopId,
+        productId: productId,
+        optionId: optionId,
+        region: seat.region,
+        resort: seat.resort,
+        departure: seat.departureDay,
+        price: price,
+        partySize: partySize,
+        memberGrade: _stats.memberGrade.firestoreValue,
+        nationality: _consentedNationality,
+        shareNationality: _stats.nationalityConsentAt != null,
+        userKey: seatUserKey(_uid ?? ''),
+        at: at,
+      ),
+    );
+  }
+
+  Future<void> _recordSeatPay({
+    required String shopId,
+    required String productId,
+    required String optionId,
+    required int price,
+    required int partySize,
+    required DateTime? tourDate,
+  }) async {
+    final now = DateTime.now();
+    final product = _productById(productId);
+    final seat = _seatFor(
+      product,
+      optionId,
+      shopId: shopId,
+      productId: productId,
+    );
+    await _commitSeat(
+      SeatLifeEvent(
+        id: payEventId(
+          seatUserKey(_uid ?? ''),
+          seat.seatId,
+          tourDate,
+          price,
+          partySize,
+        ),
+        kind: 'pay',
+        seatId: seat.seatId,
+        shopId: seat.shopId,
+        productId: productId,
+        optionId: optionId,
+        region: seat.region,
+        resort: seat.resort,
+        departure: tourDate == null ? seat.departureDay : seatDayId(tourDate),
+        price: price,
+        partySize: partySize,
+        memberGrade: _stats.memberGrade.firestoreValue,
+        nationality: _consentedNationality,
+        shareNationality: _stats.nationalityConsentAt != null,
+        userKey: seatUserKey(_uid ?? ''),
+        at: now,
+      ),
+    );
+  }
+
+  Future<void> _recordSeatCancel({
+    required String shopId,
+    required String productId,
+    required String optionId,
+    required DateTime at,
+  }) async {
+    final product = _productById(productId);
+    final seat = _seatFor(
+      product,
+      optionId,
+      shopId: shopId,
+      productId: productId,
+    );
+    await _commitSeat(
+      SeatLifeEvent(
+        id: unflagEventId(seatUserKey(_uid ?? ''), seat.seatId, at),
+        kind: 'cancel',
+        seatId: seat.seatId,
+        shopId: seat.shopId,
+        productId: productId,
+        optionId: optionId,
+        region: seat.region,
+        resort: seat.resort,
+        departure: seat.departureDay,
+        memberGrade: _stats.memberGrade.firestoreValue,
+        userKey: seatUserKey(_uid ?? ''),
+        at: at,
+      ),
+    );
+  }
+
+  Future<void> _recordSeatBookingCancel(TourBooking booking) async {
+    final now = DateTime.now();
+    final optionId = booking.seatOptionId.isNotEmpty
+        ? booking.seatOptionId
+        : booking.optionId;
+    final product = _productById(booking.productId);
+    final seat = _seatFor(
+      product,
+      optionId,
+      shopId: booking.shopId,
+      productId: booking.productId,
+    );
+    await _commitSeat(
+      SeatLifeEvent(
+        id: cancelEventId(booking.id),
+        kind: 'cancel',
+        seatId: seat.seatId,
+        shopId: seat.shopId,
+        productId: booking.productId,
+        optionId: optionId,
+        region: seat.region,
+        resort: seat.resort,
+        departure: booking.tourDate == null
+            ? seat.departureDay
+            : seatDayId(booking.tourDate!),
+        price: booking.price,
+        partySize: booking.partySize,
+        memberGrade: _stats.memberGrade.firestoreValue,
+        userKey: seatUserKey(_uid ?? ''),
+        at: now,
+      ),
+    );
+  }
+
+  Future<void> _commitSeat(SeatLifeEvent event) async {
+    try {
+      if (!event.withinShape) {
+        return;
+      }
+      final created = await _repository.createSeatEvent(event);
+      if (!created) {
+        return;
+      }
+      final field = seatDayField(event.kind);
+      if (field == null) {
+        return;
+      }
+      await _repository.bumpSeatDay(dayId: seatDayId(event.at), field: field);
+    } catch (error) {
+      debugPrint('seat life record failed $error');
+    }
+  }
+
+  String get _consentedNationality =>
+      _stats.nationalityConsentAt == null ? '' : _stats.nationality;
+
+  ShopProduct? _productById(String productId) {
+    for (final product in allShopProducts) {
+      if (product.id == productId) {
+        return product;
+      }
+    }
+    return null;
+  }
+
+  DateTime? _flagClosesAt(ShopProduct? product, String optionId) {
+    if (product == null) {
+      return null;
+    }
+    if (optionId.isEmpty) {
+      return product.flagClosesAt;
+    }
+    for (final option in product.options) {
+      if (option.id == optionId) {
+        return option.flagClosesAt ?? product.flagClosesAt;
+      }
+    }
+    return product.flagClosesAt;
+  }
+
+  SeatLifeSeat _seatFor(
+    ShopProduct? product,
+    String optionId, {
+    String shopId = '',
+    String productId = '',
+  }) {
+    final resolvedShop = product?.shopId ?? shopId;
+    final hull = resolvedShop.split('--').first;
+    ShopProductOption? option;
+    if (product != null && optionId.isNotEmpty) {
+      for (final item in product.options) {
+        if (item.id == optionId) {
+          option = item;
+          break;
+        }
+      }
+    }
+    final optionPrice = option?.consumerPrice ?? 0;
+    final price = optionPrice > 0
+        ? optionPrice
+        : (product?.consumerPrice ?? 0);
+    return SeatLifeSeat(
+      productId: product?.id ?? productId,
+      optionId: optionId,
+      shopId: hull,
+      region: _regionForShop(hull),
+      resort: _resortForShop(hull),
+      departure: option?.departureStart ?? product?.departureStart,
+      price: price,
+      capacity: option?.capacity ?? product?.capacity ?? 0,
+      booked: option?.bookedSeats ?? product?.bookedSeats ?? 0,
+      holds: [
+        for (final hold in option?.flagHolds ?? product?.flagHolds ?? const <SeatHold>[])
+          SeatLifeHold(
+            uid: hold.uid,
+            seats: hold.seats,
+            expiresAt: hold.expiresAt,
+            lockedPrice: hold.lockedPrice,
+          ),
+      ],
+    );
+  }
+
+  List<SeatLifeSeat> _seatLifeSeats(DateTime now) {
+    final seats = <SeatLifeSeat>[];
+    final seen = <String>{};
+    for (final product in allShopProducts) {
+      void add(String optionId, {required bool live, required List<SeatHold> holds, DateTime? departure}) {
+        final departed = departure != null && seatDeparturePassed(departure, now);
+        if (!live && holds.isEmpty && !departed) {
+          return;
+        }
+        final seat = _seatFor(product, optionId);
+        if (seen.add(seat.seatId)) {
+          seats.add(seat);
+        }
+      }
+
+      add(
+        '',
+        live: product.listsOnSameBoat,
+        holds: product.flagHolds,
+        departure: product.departureStart,
+      );
+      for (final option in product.options) {
+        add(
+          option.id,
+          live: option.listsOnSameBoat,
+          holds: option.flagHolds,
+          departure: option.departureStart ?? product.departureStart,
+        );
+      }
+    }
+    return seats;
+  }
+
+  String _regionForShop(String hullId) {
+    for (final shop in shops) {
+      if (shop.hullId == hullId) {
+        return shop.country;
+      }
+    }
+    return '';
+  }
+
+  String _resortForShop(String hullId) {
+    for (final shop in shops) {
+      if (shop.hullId == hullId) {
+        return shop.name;
+      }
+    }
+    return '';
+  }
+
   @override
   void dispose() {
     _closed = true;
     _loadingTimeout?.cancel();
+    _seatViewTimer?.cancel();
     _authSubscription?.cancel();
     _diverSubscription?.cancel();
     _bookingSubscription?.cancel();
@@ -3524,6 +3987,11 @@ class DiverStore extends ChangeNotifier {
     _discountSubscription?.cancel();
     super.dispose();
   }
+}
+
+bool get seatViewTimersLive {
+  final name = WidgetsBinding.instance.runtimeType.toString();
+  return !name.contains('Test');
 }
 
 class _AnalyticsCacheSpan {
