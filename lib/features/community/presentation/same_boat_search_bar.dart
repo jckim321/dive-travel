@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -45,6 +46,83 @@ String sameBoatSearchSummary({
     if (search.departingSoon) l10n.sameBoatSearchDeparting,
   ];
   return parts.join(' · ');
+}
+
+/// One line for a saved alert, such as 「11월 · 팔라우 · 2명 · 100만 이하」.
+String sameBoatAlertSummary({
+  required SameBoatSearch search,
+  required AppLocalizations l10n,
+  required DateTime now,
+}) {
+  final parts = <String>[
+    if (search.when == SameBoatWhen.thisMonth)
+      _alertMonth(l10n, now.month)
+    else if (search.when == SameBoatWhen.nextMonth)
+      _alertMonth(l10n, DateTime(now.year, now.month + 1).month)
+    else if (search.when == SameBoatWhen.withinThreeMonths)
+      l10n.sameBoatSearchThreeMonths,
+  ];
+  final names = <String>[];
+  final ids = search.regionIds.toList()..sort();
+  for (final id in ids) {
+    for (final region in RegionCatalog.known) {
+      if (region.id == id) {
+        names.add(region.name);
+        break;
+      }
+    }
+  }
+  if (names.isNotEmpty) {
+    parts.add(names.join(', '));
+  }
+  if (search.party != null) {
+    parts.add(
+      search.party! >= SameBoatSearch.partyFivePlus
+          ? l10n.sameBoatSearchPartyFivePlus
+          : l10n.sameBoatSearchPartyCount(search.party!),
+    );
+  }
+  if (search.budgetMax != null) {
+    parts.add(
+      switch (search.budgetMax) {
+        SameBoatSearch.budget50 => l10n.sameBoatSearchBudget50,
+        SameBoatSearch.budget100 => l10n.sameBoatSearchBudget100,
+        SameBoatSearch.budget200 => l10n.sameBoatSearchBudget200,
+        _ => l10n.sameBoatSearchBudget,
+      },
+    );
+  }
+  if (search.lastCall) {
+    parts.add(l10n.sameBoatSearchLastCall);
+  }
+  if (search.departingSoon) {
+    parts.add(l10n.sameBoatSearchDeparting);
+  }
+  if (parts.isEmpty) {
+    return l10n.sameBoatSearchAllSeats;
+  }
+  return parts.join(' · ');
+}
+
+String _alertMonth(AppLocalizations l10n, int month) {
+  if (l10n.localeName == 'ko') {
+    return l10n.sameBoatAlertMonth(month);
+  }
+  const names = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return names[month - 1];
 }
 
 class SameBoatRegionChoice {

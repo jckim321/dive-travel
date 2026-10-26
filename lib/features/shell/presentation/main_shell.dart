@@ -116,10 +116,15 @@ class _MainShellState extends State<MainShell> {
     }
     _wasSignedIn = signedIn;
 
+    final store = DiverStoreScope.of(context);
     return ValueListenableBuilder<int>(
       valueListenable: _tabIndex,
       builder: (context, index, _) {
-        return Scaffold(
+        return ListenableBuilder(
+          listenable: store,
+          builder: (context, _) {
+            final alertBadge = sameBoatAlertsHaveOpenSeat(store);
+            return Scaffold(
           body: IndexedStack(
             index: index,
             children: [
@@ -155,14 +160,28 @@ class _MainShellState extends State<MainShell> {
                 label: l10n.navLogbook,
               ),
               NavigationDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person_outline),
+                icon: _profileIcon(Icons.person_outline, alertBadge),
+                selectedIcon: _profileIcon(Icons.person, alertBadge),
                 label: l10n.navProfile,
               ),
             ],
           ),
         );
+          },
+        );
       },
     );
   }
+}
+
+Widget _profileIcon(IconData icon, bool badge) {
+  final child = Icon(icon);
+  if (!badge) {
+    return child;
+  }
+  return Badge(
+    key: const Key('my-tab-alert-badge'),
+    backgroundColor: Color(0xFFE23D3D),
+    child: child,
+  );
 }

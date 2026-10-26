@@ -4774,6 +4774,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatUnlockMore => 'extra';
 
   @override
+  String get mySeatAlertsTitle => 'My alerts';
+
+  @override
+  String get mySeatAlertsEmpty => 'No saved alerts';
+
+  @override
+  String get sameBoatAlertNone => 'None yet';
+
+  @override
+  String sameBoatAlertMonth(int month) {
+    return '$month';
+  }
+
+  @override
   String get communityTakeSeat => 'Take a seat';
 
   @override

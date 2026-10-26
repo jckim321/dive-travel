@@ -2483,6 +2483,13 @@
   "sameBoatUnlockWhen": "언제",
   "sameBoatUnlockWhere": "어디",
   "sameBoatUnlockMore": "더 보기",
+  "mySeatAlertsTitle": "내 알림",
+  "mySeatAlertsEmpty": "저장한 알림이 없어요",
+  "sameBoatAlertNone": "아직 없어요",
+  "sameBoatAlertMonth": "{month}월",
+  "@sameBoatAlertMonth": {
+    "placeholders": { "month": { "type": "int" } }
+  },
   "communityTakeSeat": "자리 잡기",
   "communityFlagHoldAsk": "선택한 인원만큼 {deadline}까지 좌석이 잠겨 선예약 우선권이 생깁니다(가확정·주황). 그 안에 결제하면 확정(검정)되고, 마감이 지나면 자리가 다시 열립니다.",
   "@communityFlagHoldAsk": {

@@ -281,6 +281,31 @@ class DiverStore extends ChangeNotifier {
     return SeatAlertWrite.saved;
   }
 
+  /// Drops one saved search from the member document. Does not send a message.
+  Future<void> removeSeatAlert(String id) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      throw StateError('Sign in required');
+    }
+    final previous = _seatAlerts;
+    final next = [
+      for (final alert in previous)
+        if (alert.id != id) alert,
+    ];
+    if (next.length == previous.length) {
+      return;
+    }
+    _seatAlerts = next;
+    notifyListeners();
+    try {
+      await _repository.saveSeatAlerts(uid: uid, alerts: next);
+    } catch (error) {
+      _seatAlerts = previous;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   final _seatDemandSent = <String>{};
 
   /// Records an unmet search. Failures stay off the screen.

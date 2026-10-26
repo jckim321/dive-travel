@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
@@ -25,7 +26,10 @@ import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
+import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
+import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
 import 'package:dive_travel_app/features/profile/presentation/profile_settings_screen.dart';
+import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -164,6 +168,10 @@ class ProfileScreen extends StatelessWidget {
                         onCancel: (offer) =>
                             _cancelFlag(context, store, offer),
                       ),
+                      const SizedBox(height: 28),
+                      _OceanSectionTitle(title: l10n.mySeatAlertsTitle),
+                      const SizedBox(height: 12),
+                      _SeatAlertsBox(store: store, now: now),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(
                         title: l10n.profileWishlistTitle,
@@ -784,6 +792,73 @@ class _Line extends StatelessWidget {
   }
 }
 
+
+class _SeatAlertsBox extends StatelessWidget {
+  const _SeatAlertsBox({required this.store, required this.now});
+
+  final DiverStore store;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final alerts = [...store.seatAlerts]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (alerts.isEmpty) {
+      return _HintOrList(
+        plate: 1,
+        empty: l10n.mySeatAlertsEmpty,
+        children: const [],
+      );
+    }
+    return _LightPanel(
+      plate: 1,
+      child: Column(
+        children: [
+          for (final alert in alerts) ...[
+            if (alert != alerts.first) const Divider(height: 1),
+            ListTile(
+              key: Key('seat-alert-${alert.id}'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                sameBoatAlertSummary(
+                  search: alert.search,
+                  l10n: l10n,
+                  now: now,
+                ),
+              ),
+              subtitle: Text(_matchLabel(l10n, alert.search)),
+              trailing: IconButton(
+                key: Key('seat-alert-delete-${alert.id}'),
+                icon: const Icon(Icons.close),
+                onPressed: () async {
+                  try {
+                    await store.removeSeatAlert(alert.id);
+                  } catch (error, stackTrace) {
+                    debugPrint('seat alert delete failed $error');
+                    debugPrint('$stackTrace');
+                  }
+                },
+              ),
+              onTap: () {
+                CommunityScreen.openSavedSearch(alert.search);
+                MainShell.goToTab(context, 2);
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _matchLabel(AppLocalizations l10n, SameBoatSearch search) {
+    final count = sameBoatAlertMatchCount(store, search, now: now);
+    if (count == 0) {
+      return l10n.sameBoatAlertNone;
+    }
+    return l10n.sameBoatSearchOpenCount(count);
+  }
+}
 
 class _OceanSectionTitle extends StatelessWidget {
   const _OceanSectionTitle({required this.title, this.count});

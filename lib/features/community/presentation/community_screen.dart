@@ -124,6 +124,14 @@ List<_DesignPreview> _designPreviews(DateTime now) {
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
+  static final savedSearch = ValueNotifier<SameBoatSearch?>(null);
+
+  /// Applies [search] on the same-boat list. The shell switches tabs.
+  static void openSavedSearch(SameBoatSearch search) {
+    savedSearch.value = null;
+    savedSearch.value = search;
+  }
+
   @override
   State<CommunityScreen> createState() => _CommunityScreenState();
 }
@@ -157,6 +165,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   void initState() {
     super.initState();
+    CommunityScreen.savedSearch.addListener(_onSavedSearch);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -164,6 +173,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
       final store = DiverStoreScope.of(context);
       unawaited(store.ensureShopStatsLoaded());
       unawaited(store.ensureCommunityPostsLoaded());
+    });
+  }
+
+  @override
+  void dispose() {
+    CommunityScreen.savedSearch.removeListener(_onSavedSearch);
+    super.dispose();
+  }
+
+  void _onSavedSearch() {
+    final next = CommunityScreen.savedSearch.value;
+    if (next == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _search = next;
+      _searchOpen = true;
+      _unlockNotice = null;
+      _unlockPending = null;
     });
   }
 
@@ -1156,6 +1184,33 @@ String _offerIntro(SameBoatOffer offer) {
     return offer.product.blurb.trim();
   }
   return offer.product.detail.trim();
+}
+
+int sameBoatAlertMatchCount(
+  DiverStore store,
+  SameBoatSearch search, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  return search
+      .apply(
+        store.sameBoatOffers(SameBoatFilter.all, now: clock),
+        now: clock,
+        priceOf: _perPersonPrice,
+        placeOf: (offer) => _placeFor(store, offer),
+      )
+      .length;
+}
+
+/// True when a saved condition matches an open seat already on this device.
+bool sameBoatAlertsHaveOpenSeat(DiverStore store, {DateTime? now}) {
+  final clock = now ?? DateTime.now();
+  for (final alert in store.seatAlerts) {
+    if (sameBoatAlertMatchCount(store, alert.search, now: clock) > 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 int _perPersonPrice(SameBoatOffer offer) {

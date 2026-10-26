@@ -4649,6 +4649,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sameBoatUnlockMore => '더 보기';
 
   @override
+  String get mySeatAlertsTitle => '내 알림';
+
+  @override
+  String get mySeatAlertsEmpty => '저장한 알림이 없어요';
+
+  @override
+  String get sameBoatAlertNone => '아직 없어요';
+
+  @override
+  String sameBoatAlertMonth(int month) {
+    return '$month월';
+  }
+
+  @override
   String get communityTakeSeat => '자리 잡기';
 
   @override

@@ -8784,6 +8784,30 @@ abstract class AppLocalizations {
   /// **'더 보기'**
   String get sameBoatUnlockMore;
 
+  /// No description provided for @mySeatAlertsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 알림'**
+  String get mySeatAlertsTitle;
+
+  /// No description provided for @mySeatAlertsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 알림이 없어요'**
+  String get mySeatAlertsEmpty;
+
+  /// No description provided for @sameBoatAlertNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 없어요'**
+  String get sameBoatAlertNone;
+
+  /// No description provided for @sameBoatAlertMonth.
+  ///
+  /// In ko, this message translates to:
+  /// **'{month}월'**
+  String sameBoatAlertMonth(int month);
+
   /// No description provided for @communityTakeSeat.
   ///
   /// In ko, this message translates to:

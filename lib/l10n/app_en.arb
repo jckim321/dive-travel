@@ -1907,6 +1907,13 @@
   "sameBoatUnlockWhen": "dates",
   "sameBoatUnlockWhere": "place",
   "sameBoatUnlockMore": "extra",
+  "mySeatAlertsTitle": "My alerts",
+  "mySeatAlertsEmpty": "No saved alerts",
+  "sameBoatAlertNone": "None yet",
+  "sameBoatAlertMonth": "{month}",
+  "@sameBoatAlertMonth": {
+    "placeholders": { "month": { "type": "int" } }
+  },
   "communityTakeSeat": "Take a seat",
   "communityFlagHoldAsk": "Planting a flag locks your chosen seats until {deadline} (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.",
   "@communityFlagHoldAsk": {
