@@ -1720,6 +1720,11 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> approveInstructor(String uid) async {
     _pending.removeWhere((item) => item.uid == uid);
     _pendingController.add(List<PendingInstructor>.from(_pending));
+    final index = _members.indexWhere((member) => member.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(isInstructor: true);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
     if (_user?.uid == uid) {
       _isInstructor = true;
       _proStatus = ProVerificationStatus.approved;
@@ -1740,6 +1745,11 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> rejectInstructor(String uid) async {
     _pending.removeWhere((item) => item.uid == uid);
     _pendingController.add(List<PendingInstructor>.from(_pending));
+    final index = _members.indexWhere((member) => member.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(isInstructor: false);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
     if (_user?.uid == uid) {
       _isInstructor = false;
       _proStatus = ProVerificationStatus.rejected;
@@ -1756,10 +1766,17 @@ class MemoryDiverRepository implements DiverRepository {
     }
   }
 
+  /// Test-only pause after the member list is copied, before it is returned.
+  Future<void> Function()? debugDelayFetchMembers;
+
   @override
   Future<List<MemberAccount>> fetchMembers() async {
     final members = List<MemberAccount>.from(_members);
     members.sort((a, b) => a.displayName.compareTo(b.displayName));
+    final delay = debugDelayFetchMembers;
+    if (delay != null) {
+      await delay();
+    }
     return members;
   }
 

@@ -155,6 +155,9 @@ class DiverStore extends ChangeNotifier {
   Object? _logsCursor;
   var _adminInboxLoaded = false;
   Future<void>? _adminInboxRefresh;
+  Future<void>? _adminInboxNext;
+  var _adminInboxStale = false;
+  var _closed = false;
   var _salesLoaded = false;
   var _salesLoading = false;
   final _analyticsCache = <String, List<_AnalyticsCacheSpan>>{};
@@ -1054,46 +1057,115 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  Future<void> approveInstructor(String uid) async {
-    await _repository.approveInstructor(uid);
-    await refreshAdminInbox();
+  Future<void> approveInstructor(String uid) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(isInstructor: true),
+      write: () => _repository.approveInstructor(uid),
+    );
   }
 
   Future<void> setMemberGrade({
     required String uid,
     required MemberGrade grade,
-  }) async {
-    await _repository.setMemberGrade(uid: uid, grade: grade);
-    await refreshAdminInbox();
+  }) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(grade: grade, gradeLocked: true),
+      write: () => _repository.setMemberGrade(uid: uid, grade: grade),
+    );
   }
 
   Future<void> setMemberAdmin({
     required String uid,
     required bool admin,
-  }) async {
+  }) {
     final actorUid = _uid;
     if (actorUid == null || actorUid.isEmpty) {
       throw StateError('Signed-in admin required');
     }
-    await _repository.setMemberAdmin(
+    return _commitMemberChange(
       uid: uid,
-      admin: admin,
-      actorUid: actorUid,
+      patch: (member) => member.copyWith(isAdmin: admin),
+      write: () => _repository.setMemberAdmin(
+        uid: uid,
+        admin: admin,
+        actorUid: actorUid,
+      ),
     );
-    await refreshAdminInbox();
   }
 
   Future<void> setAccountBlocked({
     required String uid,
     required bool blocked,
-  }) async {
-    await _repository.setAccountBlocked(uid: uid, blocked: blocked);
-    await refreshAdminInbox();
+  }) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(accountBlocked: blocked),
+      write: () => _repository.setAccountBlocked(uid: uid, blocked: blocked),
+    );
   }
 
-  Future<void> withdrawMember(String uid) async {
-    await _repository.withdrawMember(uid);
-    await refreshAdminInbox();
+  Future<void> withdrawMember(String uid) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(
+        displayName: '',
+        phone: '',
+        withdrawnAt: DateTime.now().toUtc(),
+      ),
+      write: () => _repository.withdrawMember(uid),
+    );
+  }
+
+  /// Patches one list row immediately, then refreshes in the background.
+  /// A failed write restores that row.
+  Future<void> _commitMemberChange({
+    required String uid,
+    required MemberAccount Function(MemberAccount member) patch,
+    required Future<void> Function() write,
+  }) async {
+    final previous = _memberByUid(uid);
+    _markAdminInboxStale();
+    if (previous != null) {
+      _replaceMember(patch(previous));
+    }
+    try {
+      await write();
+      unawaited(refreshAdminInbox());
+    } catch (error) {
+      if (previous != null) {
+        _replaceMember(previous);
+      }
+      unawaited(refreshAdminInbox());
+      rethrow;
+    }
+  }
+
+  MemberAccount? _memberByUid(String uid) {
+    for (final member in _members) {
+      if (member.uid == uid) {
+        return member;
+      }
+    }
+    return null;
+  }
+
+  void _replaceMember(MemberAccount member) {
+    if (_closed) {
+      return;
+    }
+    _members = [
+      for (final item in _members)
+        if (item.uid == member.uid) member else item,
+    ];
+    notifyListeners();
+  }
+
+  void _markAdminInboxStale() {
+    if (_adminInboxRefresh != null) {
+      _adminInboxStale = true;
+    }
   }
 
   Future<void> ensureMemberProfile(MemberAccount member) async {
@@ -1109,9 +1181,12 @@ class DiverStore extends ChangeNotifier {
     await refreshAdminInbox();
   }
 
-  Future<void> rejectInstructor(String uid) async {
-    await _repository.rejectInstructor(uid);
-    await refreshAdminInbox();
+  Future<void> rejectInstructor(String uid) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(isInstructor: false),
+      write: () => _repository.rejectInstructor(uid),
+    );
   }
 
   Future<void> unlockMemberGrade(String uid) async {
@@ -1164,13 +1239,20 @@ class DiverStore extends ChangeNotifier {
     if (claimedPartnerShopIds.contains(shop)) {
       throw StateError('SHOP_ALREADY_OWNED');
     }
-    await _repository.promoteMemberToPartner(
+    await _commitMemberChange(
       uid: uid,
-      shopId: shop,
-      actorUid: actorUid,
-      actorName: _stats.displayName,
+      patch: (member) => member.copyWith(
+        isBusiness: true,
+        ownedShopId: shop,
+        userRole: 'business',
+      ),
+      write: () => _repository.promoteMemberToPartner(
+        uid: uid,
+        shopId: shop,
+        actorUid: actorUid,
+        actorName: _stats.displayName,
+      ),
     );
-    await refreshAdminInbox();
   }
 
   Future<String> promoteMemberToPartnerWithNewShop({
@@ -1194,12 +1276,19 @@ class DiverStore extends ChangeNotifier {
     if (actorUid == null || actorUid.isEmpty) {
       throw StateError('Signed-in admin required');
     }
-    await _repository.demoteMemberFromPartner(
+    await _commitMemberChange(
       uid: uid,
-      actorUid: actorUid,
-      actorName: _stats.displayName,
+      patch: (member) => member.copyWith(
+        isBusiness: false,
+        userRole: 'diver',
+        clearOwnedShopId: true,
+      ),
+      write: () => _repository.demoteMemberFromPartner(
+        uid: uid,
+        actorUid: actorUid,
+        actorName: _stats.displayName,
+      ),
     );
-    await refreshAdminInbox();
   }
 
   Future<TrialDataSnapshot> fetchTrialDataCounts() async {
@@ -3120,6 +3209,9 @@ class DiverStore extends ChangeNotifier {
     }
     final inflight = _adminInboxRefresh;
     if (inflight != null) {
+      if (_adminInboxStale) {
+        return refreshAdminInbox();
+      }
       return inflight;
     }
     if (_adminInboxLoaded) {
@@ -3134,7 +3226,11 @@ class DiverStore extends ChangeNotifier {
     }
     final inflight = _adminInboxRefresh;
     if (inflight != null) {
-      return inflight;
+      _adminInboxStale = true;
+      return _adminInboxNext ??= inflight.then((_) {
+        _adminInboxNext = null;
+        return refreshAdminInbox();
+      });
     }
     final run = _refreshAdminInboxBody();
     _adminInboxRefresh = run;
@@ -3142,9 +3238,13 @@ class DiverStore extends ChangeNotifier {
   }
 
   Future<void> _refreshAdminInboxBody() async {
+    _adminInboxStale = false;
     try {
       final pending = await _repository.fetchPendingInstructors();
       final members = await _repository.fetchMembers();
+      if (_adminInboxStale || _closed) {
+        return;
+      }
       _pendingInstructors = pending;
       _members = members;
       _adminInboxLoaded = true;
@@ -3417,6 +3517,7 @@ class DiverStore extends ChangeNotifier {
 
   @override
   void dispose() {
+    _closed = true;
     _loadingTimeout?.cancel();
     _authSubscription?.cancel();
     _diverSubscription?.cancel();

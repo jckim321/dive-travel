@@ -406,37 +406,48 @@ class _MemberRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: _avatarColor(member.uid),
-            child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: InkWell(
               key: Key('admin-member-open-${member.uid}'),
               onTap: onOpen,
-              child: Text(
-                member.displayName.trim().isEmpty ? '(이름 없음)' : member.displayName,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 52),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: _avatarColor(member.uid),
+                      child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        member.displayName.trim().isEmpty ? '(이름 없음)' : member.displayName,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    if (member.loginBlocked)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4A2430),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AdminConsoleTheme.danger),
+                        ),
+                        child: Text(
+                          member.withdrawnAt != null ? '탈퇴' : '차단됨',
+                          key: Key('admin-member-blocked-${member.uid}'),
+                          style: const TextStyle(color: AdminConsoleTheme.danger, fontSize: 12),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-          if (member.loginBlocked)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4A2430),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AdminConsoleTheme.danger),
-              ),
-              child: Text(
-                member.withdrawnAt != null ? '탈퇴' : '차단됨',
-                key: Key('admin-member-blocked-${member.uid}'),
-                style: const TextStyle(color: AdminConsoleTheme.danger, fontSize: 12),
-              ),
-            )
-          else
+          if (!member.loginBlocked) ...[
+            const SizedBox(width: 8),
             _RoleMenu(member: member, l10n: l10n),
+          ],
         ],
       ),
     );
@@ -717,7 +728,21 @@ class AdminMemberDetailScreen extends StatelessWidget {
                         title: shown.accountBlocked ? '차단 해제' : '차단하기',
                         subtitle: '로그인을 막아요. 언제든 풀 수 있어요.',
                         color: const Color(0xFFE2B15A),
-                        onTap: () => store.setAccountBlocked(uid: shown.uid, blocked: !shown.accountBlocked),
+                        onTap: () async {
+                          try {
+                            await store.setAccountBlocked(
+                              uid: shown.uid,
+                              blocked: !shown.accountBlocked,
+                            );
+                          } catch (_) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('반영하지 못해서 이전 상태로 되돌렸어요.'),
+                              ),
+                            );
+                          }
+                        },
                       ),
                       _actionTile(
                         key: Key('admin-member-withdraw-${shown.uid}'),
@@ -743,7 +768,18 @@ class AdminMemberDetailScreen extends StatelessWidget {
                                     ],
                                   ),
                                 );
-                                if (ok == true) await store.withdrawMember(shown.uid);
+                                if (ok == true) {
+                                  try {
+                                    await store.withdrawMember(shown.uid);
+                                  } catch (_) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('반영하지 못해서 이전 상태로 되돌렸어요.'),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                       ),
                       _actionTile(
