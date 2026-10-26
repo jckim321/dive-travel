@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'dart:async';
+
 import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
+import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
+import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/features/profile/presentation/profile_settings_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -91,5 +96,72 @@ void main() {
     expect(find.text(l10n.navHome), findsOneWidget);
     expect(find.byKey(const Key('auth-credentials-form')), findsNothing);
     expect(find.text(nationalityConsentKo), findsNothing);
+  });
+
+  testWidgets('국적 저장과 삭제는 스낵바로 알리고, 저장 중에는 버튼에 로딩이 있다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest();
+    final store = DiverStore(repo);
+    final session = SessionController(repo);
+    addTearDown(store.dispose);
+    addTearDown(session.dispose);
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: SessionScope(
+          session: session,
+          child: MaterialApp(
+            locale: const Locale('ko'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const ProfileSettingsScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('profile-nationality-field')));
+    await tester.tap(find.byKey(const Key('profile-nationality-field')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('대한민국 (KR)').last);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('profile-nationality-save')));
+    await tester.tap(find.byKey(const Key('profile-nationality-save')));
+    await tester.pump();
+    expect(find.byKey(const Key('profile-nationality-notice')), findsOneWidget);
+    expect(find.text(l10n.profileNationalityNeedConsent), findsOneWidget);
+    expect(find.text('국적을 저장했어요'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('profile-nationality-consent')));
+    await tester.pump();
+
+    final gate = Completer<void>();
+    repo.debugDelayNationalityWrite = () => gate.future;
+    await tester.tap(find.byKey(const Key('profile-nationality-save')));
+    await tester.pump();
+    expect(find.byKey(const Key('profile-nationality-saving')), findsOneWidget);
+
+    gate.complete();
+    repo.debugDelayNationalityWrite = null;
+    await tester.pumpAndSettle();
+    expect(find.text('국적을 저장했어요'), findsOneWidget);
+    expect(find.byKey(const Key('profile-nationality-saving')), findsNothing);
+    expect(find.text('대한민국'), findsWidgets);
+
+    ScaffoldMessenger.of(tester.element(find.byType(Scaffold))).hideCurrentSnackBar();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('profile-nationality-clear')));
+    await tester.tap(find.byKey(const Key('profile-nationality-clear')));
+    await tester.pumpAndSettle();
+    expect(find.text('국적을 지웠어요'), findsOneWidget);
   });
 }

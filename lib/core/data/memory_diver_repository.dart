@@ -112,6 +112,9 @@ class MemoryDiverRepository implements DiverRepository {
 
   /// Last admin repair field map, without timestamps.
   Map<String, Object?>? debugLastRepair;
+
+  /// Test-only pause before a nationality save or clear finishes.
+  Future<void> Function()? debugDelayNationalityWrite;
   bool _isInstructor = false;
   bool _isAdmin = false;
   bool _isBusiness = false;
@@ -797,6 +800,10 @@ class MemoryDiverRepository implements DiverRepository {
     if (country == null) {
       throw StateError('nationality');
     }
+    final delay = debugDelayNationalityWrite;
+    if (delay != null) {
+      await delay();
+    }
     _nationality = country;
     _nationalityConsentAt = DateTime.now().toUtc();
     _snapshot = DiverSnapshot(
@@ -815,6 +822,10 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> clearNationality(String uid) async {
     if (_user?.uid != uid) {
       throw StateError('Sign in required');
+    }
+    final delay = debugDelayNationalityWrite;
+    if (delay != null) {
+      await delay();
     }
     _nationality = '';
     _nationalityConsentAt = null;

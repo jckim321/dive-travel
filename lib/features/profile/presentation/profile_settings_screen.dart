@@ -184,6 +184,7 @@ class _NationalityCardState extends State<_NationalityCard> {
   String? _selected;
   var _consent = false;
   var _busy = false;
+  var _saving = false;
   String? _notice;
 
   @override
@@ -219,6 +220,7 @@ class _NationalityCardState extends State<_NationalityCard> {
     }
     setState(() {
       _busy = true;
+      _saving = true;
       _notice = null;
     });
     try {
@@ -227,13 +229,19 @@ class _NationalityCardState extends State<_NationalityCard> {
         return;
       }
       setState(() => _consent = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('국적을 저장했어요')),
+      );
     } catch (error) {
       if (mounted) {
         setState(() => _notice = '$error');
       }
     } finally {
       if (mounted) {
-        setState(() => _busy = false);
+        setState(() {
+          _busy = false;
+          _saving = false;
+        });
       }
     }
   }
@@ -261,6 +269,9 @@ class _NationalityCardState extends State<_NationalityCard> {
         _selected = null;
         _consent = false;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('국적을 지웠어요')),
+      );
     } catch (error) {
       if (mounted) {
         setState(() => _notice = '$error');
@@ -318,7 +329,14 @@ class _NationalityCardState extends State<_NationalityCard> {
               child: FilledButton(
                 key: const Key('profile-nationality-save'),
                 onPressed: _busy ? null : _save,
-                child: Text(l10n.profileNationalitySave),
+                child: _saving
+                    ? const SizedBox(
+                        key: Key('profile-nationality-saving'),
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.profileNationalitySave),
               ),
             ),
           ],
