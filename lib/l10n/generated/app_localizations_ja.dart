@@ -4611,6 +4611,26 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sameBoatEmptyWidenHint => '이렇게 바꾸면 있어요';
 
   @override
+  String sameBoatUnlockLine(String name) {
+    return '$name 조건을 빼고 보여드려요';
+  }
+
+  @override
+  String get sameBoatUnlockBudget => '예산';
+
+  @override
+  String get sameBoatUnlockParty => '인원';
+
+  @override
+  String get sameBoatUnlockWhen => '언제';
+
+  @override
+  String get sameBoatUnlockWhere => '어디';
+
+  @override
+  String get sameBoatUnlockMore => '더 보기';
+
+  @override
   String get communityTakeSeat => '자리 잡기';
 
   @override

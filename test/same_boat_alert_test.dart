@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_empty_search.dart';
@@ -93,6 +94,35 @@ void main() {
     expect(capped.alerts, hasLength(SameBoatAlert.limit));
     expect(capped.alerts.first.id, 'old-1');
     expect(capped.alerts.last.id, 'newest');
+  });
+
+  test('demand id is the member hash, day, and conditions', () {
+    final at = DateTime(2026, 10, 27, 9);
+    final left = SeatDemand.forSearch(
+      uid: 'member-1',
+      at: at,
+      search: const SameBoatSearch(
+        regionIds: {'cebu', 'palau'},
+        party: 2,
+        budgetMax: SameBoatSearch.budget50,
+      ),
+    );
+    final right = SeatDemand.forSearch(
+      uid: 'member-1',
+      at: at,
+      unlockBy: SeatUnlock.budget,
+      search: const SameBoatSearch(
+        regionIds: {'palau', 'cebu'},
+        party: 2,
+        budgetMax: SameBoatSearch.budget50,
+      ),
+    );
+    expect(left.id, right.id);
+    expect(left.withinShape, isTrue);
+    expect(right.toMap()['unlock_by'], 'budget');
+    expect(right.toMap().containsKey('email'), isFalse);
+    expect(right.toMap().containsKey('phone'), isFalse);
+    expect(seatUnlockOf(left.search), SeatUnlock.budget);
   });
 
   test('회원 문서에 조건을 저장하고 같은 조건은 이미 저장됨이다', () async {
@@ -227,11 +257,20 @@ void main() {
     expect(find.text('팔라우 빈자리'), findsNothing);
     expect(find.byKey(const Key('same-boat-alert-save')), findsOneWidget);
     expect(find.byKey(const Key('same-boat-widen')), findsOneWidget);
+    expect(repo.debugSeatDemands, hasLength(1));
+    expect(repo.debugSeatDemands.single.containsKey('unlock_by'), isFalse);
 
     await tester.tap(find.byKey(const Key('same-boat-widen')));
+    await tester.pump();
+    await tester.pump();
     await tester.pump();
 
     expect(find.text('팔라우 빈자리'), findsWidgets);
     expect(find.byKey(const Key('same-boat-alert-save')), findsNothing);
+    expect(find.text('예산 조건을 빼고 보여드려요'), findsOneWidget);
+    expect(
+      repo.debugSeatDemands.map((row) => row['unlock_by']).toSet(),
+      {null, 'budget'},
+    );
   });
 }

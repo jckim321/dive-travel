@@ -37,6 +37,7 @@ import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
@@ -278,6 +279,39 @@ class DiverStore extends ChangeNotifier {
       rethrow;
     }
     return SeatAlertWrite.saved;
+  }
+
+  final _seatDemandSent = <String>{};
+
+  /// Records an unmet search. Failures stay off the screen.
+  Future<void> recordSeatDemand(
+    SameBoatSearch search, {
+    SeatUnlock? unlockBy,
+    DateTime? now,
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return;
+    }
+    try {
+      final demand = SeatDemand.forSearch(
+        uid: uid,
+        search: search,
+        at: now ?? DateTime.now(),
+        unlockBy: unlockBy,
+      );
+      if (!demand.withinShape) {
+        debugPrint('seat demand rejected ${demand.id}');
+        return;
+      }
+      if (!_seatDemandSent.add(demand.id)) {
+        return;
+      }
+      await _repository.createSeatDemand(demand);
+    } catch (error, stackTrace) {
+      debugPrint('seat demand failed $error');
+      debugPrint('$stackTrace');
+    }
   }
 
   List<SameBoatOffer> sameBoatResults({DateTime? now}) {

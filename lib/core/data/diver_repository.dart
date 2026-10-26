@@ -22,6 +22,7 @@ import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -752,6 +753,9 @@ abstract class DiverRepository {
     required String body,
     required String language,
   });
+
+  /// Create-only unmet search. False when that id already exists.
+  Future<bool> createSeatDemand(SeatDemand demand);
 
   /// Create-only. False when the id already exists or the shape is rejected.
   Future<bool> createSeatEvent(SeatLifeEvent event);

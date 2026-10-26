@@ -1898,6 +1898,15 @@
   "sameBoatEmptySaved": "Already saved",
   "sameBoatEmptyWiden": "Widen filters",
   "sameBoatEmptyWidenHint": "Try one step wider",
+  "sameBoatUnlockLine": "Showing seats without the {name} filter",
+  "@sameBoatUnlockLine": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "sameBoatUnlockBudget": "budget",
+  "sameBoatUnlockParty": "party size",
+  "sameBoatUnlockWhen": "dates",
+  "sameBoatUnlockWhere": "place",
+  "sameBoatUnlockMore": "extra",
   "communityTakeSeat": "Take a seat",
   "communityFlagHoldAsk": "Planting a flag locks your chosen seats until {deadline} (provisional / orange) with first-holder priority. Pay to confirm (navy); if the deadline passes, the seats open again.",
   "@communityFlagHoldAsk": {

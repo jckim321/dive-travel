@@ -2474,6 +2474,15 @@
   "sameBoatEmptySaved": "이미 저장됨",
   "sameBoatEmptyWiden": "조건 넓히기",
   "sameBoatEmptyWidenHint": "이렇게 바꾸면 있어요",
+  "sameBoatUnlockLine": "{name} 조건을 빼고 보여드려요",
+  "@sameBoatUnlockLine": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "sameBoatUnlockBudget": "예산",
+  "sameBoatUnlockParty": "인원",
+  "sameBoatUnlockWhen": "언제",
+  "sameBoatUnlockWhere": "어디",
+  "sameBoatUnlockMore": "더 보기",
   "communityTakeSeat": "자리 잡기",
   "communityFlagHoldAsk": "선택한 인원만큼 {deadline}까지 좌석이 잠겨 선예약 우선권이 생깁니다(가확정·주황). 그 안에 결제하면 확정(검정)되고, 마감이 지나면 자리가 다시 열립니다.",
   "@communityFlagHoldAsk": {

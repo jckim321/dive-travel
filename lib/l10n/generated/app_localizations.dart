@@ -8748,6 +8748,42 @@ abstract class AppLocalizations {
   /// **'이렇게 바꾸면 있어요'**
   String get sameBoatEmptyWidenHint;
 
+  /// No description provided for @sameBoatUnlockLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 조건을 빼고 보여드려요'**
+  String sameBoatUnlockLine(String name);
+
+  /// No description provided for @sameBoatUnlockBudget.
+  ///
+  /// In ko, this message translates to:
+  /// **'예산'**
+  String get sameBoatUnlockBudget;
+
+  /// No description provided for @sameBoatUnlockParty.
+  ///
+  /// In ko, this message translates to:
+  /// **'인원'**
+  String get sameBoatUnlockParty;
+
+  /// No description provided for @sameBoatUnlockWhen.
+  ///
+  /// In ko, this message translates to:
+  /// **'언제'**
+  String get sameBoatUnlockWhen;
+
+  /// No description provided for @sameBoatUnlockWhere.
+  ///
+  /// In ko, this message translates to:
+  /// **'어디'**
+  String get sameBoatUnlockWhere;
+
+  /// No description provided for @sameBoatUnlockMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get sameBoatUnlockMore;
+
   /// No description provided for @communityTakeSeat.
   ///
   /// In ko, this message translates to:

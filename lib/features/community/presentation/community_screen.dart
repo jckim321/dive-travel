@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -130,6 +131,9 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   var _search = const SameBoatSearch();
   var _searchOpen = true;
+  SeatUnlock? _unlockNotice;
+  SeatUnlock? _unlockPending;
+  final _demandQueued = <String>{};
 
   bool _onBoardScroll(ScrollNotification notice) {
     if (notice.metrics.axis != Axis.vertical) {
@@ -189,6 +193,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
           (sum, offer) => sum + offer.remainingSeatsAt(now),
         );
         final regions = _regionChoices(all, store);
+        _noteSeatDemand(
+          store,
+          zero: openSeats >= 1 && offers.isEmpty && _search.hasActiveFilter,
+          found: offers.isNotEmpty,
+        );
 
         return Scaffold(
           backgroundColor: AppTheme.canvas,
@@ -250,7 +259,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 placeOf: (offer) => _placeFor(store, offer),
                               )
                               .length,
-                          onChanged: (next) => setState(() => _search = next),
+                          onChanged: (next) => setState(() {
+                            _search = next;
+                            _unlockNotice = null;
+                            _unlockPending = null;
+                          }),
                           onExpand: () => setState(() => _searchOpen = true),
                         ),
                       ),
@@ -268,6 +281,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             l10n.communityBoardListHint,
                             style: theme.textTheme.bodySmall,
                           ),
+                          if (_unlockNotice != null && offers.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.sameBoatUnlockLine(
+                                _unlockName(l10n, _unlockNotice!),
+                              ),
+                              key: const Key('same-boat-unlock-line'),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           if (openSeats < 1) ...[
                             Text(
@@ -299,11 +324,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                               canWiden: _search.widen() != null,
                               onSave: () => _saveSeatAlert(context, store),
                               onWiden: () {
+                                final removed = seatUnlockOf(_search);
                                 final next = _search.widen();
-                                if (next == null) {
+                                if (next == null || removed == null) {
                                   return;
                                 }
-                                setState(() => _search = next);
+                                setState(() {
+                                  _search = next;
+                                  _unlockPending = removed;
+                                  _unlockNotice = null;
+                                });
                               },
                             )
                           else
@@ -467,6 +497,77 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
     await _plantThenPay(context, store, offer, seats);
+  }
+
+  void _noteSeatDemand(
+    DiverStore store, {
+    required bool zero,
+    required bool found,
+  }) {
+    final uid = store.uid;
+    if (uid == null || uid.isEmpty) {
+      return;
+    }
+    if (_unlockPending != null) {
+      final pending = _unlockPending!;
+      final search = _search;
+      _queueDemand('unlock-${pending.name}-${_demandKey(search)}', () {
+        if (_unlockPending != pending) {
+          return;
+        }
+        setState(() {
+          _unlockPending = null;
+          if (found) {
+            _unlockNotice = pending;
+          }
+        });
+        if (found) {
+          unawaited(store.recordSeatDemand(search, unlockBy: pending));
+        }
+      });
+      return;
+    }
+    if (!zero) {
+      return;
+    }
+    final search = _search;
+    _queueDemand('zero-${_demandKey(search)}', () {
+      unawaited(store.recordSeatDemand(search));
+    });
+  }
+
+  void _queueDemand(String ticket, VoidCallback action) {
+    if (!_demandQueued.add(ticket)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      action();
+    });
+  }
+
+  String _demandKey(SameBoatSearch search) {
+    final regions = search.regionIds.toList()..sort();
+    return [
+      search.when.name,
+      regions.join(','),
+      '${search.party ?? 0}',
+      '${search.budgetMax ?? 0}',
+      search.lastCall,
+      search.departingSoon,
+    ].join('|');
+  }
+
+  String _unlockName(AppLocalizations l10n, SeatUnlock unlock) {
+    return switch (unlock) {
+      SeatUnlock.budget => l10n.sameBoatUnlockBudget,
+      SeatUnlock.party => l10n.sameBoatUnlockParty,
+      SeatUnlock.when => l10n.sameBoatUnlockWhen,
+      SeatUnlock.where => l10n.sameBoatUnlockWhere,
+      SeatUnlock.more => l10n.sameBoatUnlockMore,
+    };
   }
 
   Future<void> _saveSeatAlert(BuildContext context, DiverStore store) async {

@@ -17,6 +17,7 @@ import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
@@ -4714,6 +4715,20 @@ class FirestoreDiverRepository implements DiverRepository {
       _db.collection('seat_events');
 
   @override
+  Future<bool> createSeatDemand(SeatDemand demand) async {
+    if (!demand.withinShape) {
+      debugPrint('seat demand rejected ${demand.id}');
+      return false;
+    }
+    final wrote = await _createWithoutRead(
+      _db.collection('seat_demand').doc(demand.id),
+      Map<String, dynamic>.from(demand.toMap()),
+      label: 'seat demand',
+    );
+    return wrote == _SeatWrite.created;
+  }
+
+  @override
   Future<bool> createSeatEvent(SeatLifeEvent event) async {
     if (!event.withinShape) {
       debugPrint('seat life event rejected ${event.id}');
@@ -4768,15 +4783,15 @@ class FirestoreDiverRepository implements DiverRepository {
     }
   }
 
-  /// Create at a fixed id. No read. An existing document is a duplicate.
   Future<_SeatWrite> _createWithoutRead(
     DocumentReference<Map<String, dynamic>> ref,
-    Map<String, dynamic> data,
-  ) async {
+    Map<String, dynamic> data, {
+    String label = 'seat life',
+  }) async {
     final projectId = _db.app.options.projectId;
     final token = await _auth.currentUser?.getIdToken();
     if (token == null || token.isEmpty) {
-      debugPrint('seat life create failed (signed out) ${ref.path}');
+      debugPrint('$label create failed (signed out) ${ref.path}');
       return _SeatWrite.failed;
     }
     final uri = Uri.parse(
@@ -4798,15 +4813,16 @@ class FirestoreDiverRepository implements DiverRepository {
       }
       if (response.statusCode == 409 ||
           response.body.contains('ALREADY_EXISTS')) {
-        debugPrint('seat life duplicate ${ref.path}');
+        debugPrint('$label duplicate ${ref.path}');
         return _SeatWrite.duplicate;
       }
       debugPrint(
-        'seat life create failed ${response.statusCode} ${ref.path} ${response.body}',
+        '$label create failed ${response.statusCode} ${ref.path} ${response.body}',
       );
       return _SeatWrite.failed;
     } catch (error, stackTrace) {
-      _logSeatFailure('create', ref.path, error, stackTrace);
+      debugPrint('$label create failed ${ref.path} $error');
+      debugPrint('$stackTrace');
       return _SeatWrite.failed;
     }
   }

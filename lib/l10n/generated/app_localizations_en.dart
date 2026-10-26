@@ -4754,6 +4754,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatEmptyWidenHint => 'Try one step wider';
 
   @override
+  String sameBoatUnlockLine(String name) {
+    return 'Showing seats without the $name filter';
+  }
+
+  @override
+  String get sameBoatUnlockBudget => 'budget';
+
+  @override
+  String get sameBoatUnlockParty => 'party size';
+
+  @override
+  String get sameBoatUnlockWhen => 'dates';
+
+  @override
+  String get sameBoatUnlockWhere => 'place';
+
+  @override
+  String get sameBoatUnlockMore => 'extra';
+
+  @override
   String get communityTakeSeat => 'Take a seat';
 
   @override

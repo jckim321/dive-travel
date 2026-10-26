@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
@@ -133,6 +134,7 @@ class MemoryDiverRepository implements DiverRepository {
   final _productChanges = <String, List<ProductChangeRecord>>{};
   final _dailyStats = <String, Map<String, ShopDayStats>>{};
   final _seatEvents = <String, Map<String, Object?>>{};
+  final _seatDemands = <String, Map<String, Object>>{};
   final _seatDays = <String, Map<String, int>>{};
   final _seatOutcomes = <String, Map<String, Object?>>{};
   int debugSeatOutcomeWrites = 0;
@@ -3999,6 +4001,18 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> saveInstructorDiscount(InstructorDiscount discount) async {
     _discount = discount;
     _discountController.add(discount);
+  }
+
+  List<Map<String, Object>> get debugSeatDemands =>
+      _seatDemands.values.toList();
+
+  @override
+  Future<bool> createSeatDemand(SeatDemand demand) async {
+    if (!demand.withinShape || _seatDemands.containsKey(demand.id)) {
+      return false;
+    }
+    _seatDemands[demand.id] = demand.toMap();
+    return true;
   }
 
   @override

@@ -682,6 +682,57 @@ service cloud.firestore {
         );
     }
 
+    function seatDemandCreateOk(demandId) {
+      return demandId.matches('^[0-9a-f]{64}_[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9a-f]{64}$')
+        && demandId.matches(
+          '^' + request.resource.data.user_key + '_'
+          + request.resource.data.day + '_[0-9a-f]{64}$'
+        )
+        && (
+          request.resource.data.keys().hasOnly([
+            'user_key', 'day', 'when', 'region_ids', 'party', 'budget_max',
+            'last_call', 'departing_soon', 'at'
+          ])
+          || request.resource.data.keys().hasOnly([
+            'user_key', 'day', 'when', 'region_ids', 'party', 'budget_max',
+            'last_call', 'departing_soon', 'at', 'unlock_by'
+          ])
+        )
+        && request.resource.data.user_key is string
+        && request.resource.data.user_key.matches('^[0-9a-f]{64}$')
+        && request.resource.data.day is string
+        && request.resource.data.day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.when in [
+          'any', 'this_month', 'next_month', 'within_three_months'
+        ]
+        && request.resource.data.when.size() <= 32
+        && request.resource.data.region_ids is string
+        && request.resource.data.region_ids.size() <= 900
+        && (
+          request.resource.data.region_ids == ''
+          || request.resource.data.region_ids.matches(
+            '^[a-z0-9-]{1,40}(,[a-z0-9-]{1,40}){0,19}$'
+          )
+        )
+        && request.resource.data.party is int
+        && request.resource.data.party >= 0
+        && request.resource.data.party <= 20
+        && request.resource.data.budget_max is int
+        && request.resource.data.budget_max >= 0
+        && request.resource.data.budget_max <= 100000000
+        && request.resource.data.last_call is bool
+        && request.resource.data.departing_soon is bool
+        && request.resource.data.at is timestamp
+        && request.resource.data.at > request.time - duration.value(5, 'm')
+        && request.resource.data.at < request.time + duration.value(2, 'm')
+        && (
+          !request.resource.data.keys().hasAny(['unlock_by'])
+          || request.resource.data.unlock_by in [
+            'budget', 'party', 'when', 'where', 'more'
+          ]
+        );
+    }
+
     function seatDayCreateOk() {
       return request.resource.data.keys().hasOnly([
           'opens', 'views', 'flags', 'expires', 'pays', 'cancels', 'closes'
@@ -749,6 +800,13 @@ service cloud.firestore {
 
     // Same-boat analytics. Customers create an event or add 1 to a day counter.
     // Admins read every seat from these top-level collections.
+    // Same-boat unmet searches. Create once per member, day, and conditions.
+    match /seat_demand/{demandId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && seatDemandCreateOk(demandId);
+      allow update, delete: if false;
+    }
+
     match /seat_events/{eventId} {
       allow read: if isAdmin();
       allow create: if isSignedIn() && seatEventCreateOk();
