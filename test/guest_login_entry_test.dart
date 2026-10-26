@@ -21,7 +21,7 @@ void main() {
     guestBrowse.reset();
   });
 
-  testWidgets('홈·마이페이지 로그인 입구가 시트를 열고, 로그아웃하면 홈으로 간다', (
+  testWidgets('둘러보기 중 로그인은 시트, 로그아웃하면 전체 로그인으로 돌아간다', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(900, 1600);
@@ -51,25 +51,27 @@ void main() {
 
     await tester.tap(find.byKey(const Key('home-auth-button')));
     await pumpFrames();
-    expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('auth-full-close')));
-    for (var i = 0; i < 40; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-      if (find.byKey(const Key('auth-full-screen')).evaluate().isEmpty) break;
-    }
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsOneWidget);
     expect(find.byKey(const Key('auth-full-screen')), findsNothing);
+    expect(find.byKey(const Key('home-auth-button')), findsOneWidget);
+    await tester.tapAt(const Offset(20, 20));
+    await pumpFrames(12);
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
+    expect(find.byKey(const Key('home-auth-button')), findsOneWidget);
 
     await tester.tap(find.text(l10n.navProfile));
     await pumpFrames();
     expect(find.byKey(const Key('profile-guest-login')), findsOneWidget);
     await tester.tap(find.byKey(const Key('profile-guest-login-button')));
     await pumpFrames();
-    expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsOneWidget);
+    expect(find.byKey(const Key('auth-full-screen')), findsNothing);
+    expect(find.byKey(const Key('profile-guest-login')), findsOneWidget);
 
-    // Sign up via 「처음이에요」 → SignupOne.
     await tester.tap(find.byKey(const Key('auth-tab-signup')));
     await pumpFrames(12);
-    expect(find.byKey(const Key('auth-signup-screen')), findsOneWidget);
+    expect(find.byKey(const Key('auth-signup-fields')), findsOneWidget);
+    expect(find.byKey(const Key('auth-signup-screen')), findsNothing);
 
     await tester.enterText(
       find.byKey(const Key('auth-signup-login-id')),
@@ -99,7 +101,7 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-sign-out')));
     await pumpFrames(20);
 
-    // After sign-out, gate returns unless browse stays on.
+    // Sign-out clears browse and returns to the full-screen gate.
     expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
     await tester.tap(find.byKey(const Key('auth-browse-first')));
     await pumpFrames();

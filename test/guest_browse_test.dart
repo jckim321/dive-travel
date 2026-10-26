@@ -22,7 +22,7 @@ void main() {
     guestBrowse.reset();
   });
 
-  testWidgets('새 방문자는 전체 로그인 화면으로 이어진다', (tester) async {
+  testWidgets('둘러보는 중 로그인은 시트로 열고, 취소하면 화면이 남는다', (tester) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -49,16 +49,24 @@ void main() {
 
     expect(find.text('waiting'), findsOneWidget);
     await tester.tap(find.byKey(const Key('gated-action')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byKey(const Key('auth-full-screen')), findsOneWidget);
-    expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsOneWidget);
+    expect(find.byKey(const Key('auth-full-screen')), findsNothing);
+    expect(find.text('waiting'), findsOneWidget);
     expect(find.text(l10n.authWelcomeBack), findsWidgets);
 
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-sign-in-sheet')), findsNothing);
+    expect(find.text('waiting'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('gated-action')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('auth-tab-signup')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byKey(const Key('auth-signup-screen')), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-signup-fields')), findsOneWidget);
+    expect(find.byKey(const Key('auth-signup-screen')), findsNothing);
+    expect(find.text('waiting'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('auth-signup-login-id')),

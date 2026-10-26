@@ -9,9 +9,19 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Full-screen signup matching the SignupOne mock (ocean header + form).
+/// SignupOne form. Full route from the cold-start gate, or embedded in a sheet.
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({
+    super.key,
+    this.embedded = false,
+    this.onBackToLogin,
+  });
+
+  /// Form only — no ocean header, no route of its own.
+  final bool embedded;
+
+  /// Sheet: switch back to the login tab. Full screen pops the route.
+  final VoidCallback? onBackToLogin;
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -174,80 +184,17 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final session = SessionScope.of(context);
-    return Scaffold(
-      key: const Key('auth-signup-screen'),
-      backgroundColor: const Color(0xFFF3F6F8),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(
-              20,
-              MediaQuery.paddingOf(context).top + 12,
-              12,
-              28,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0A3A5C), Color(0xFF0B1F33), Color(0xFF16344A)],
-              ),
-            ),
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'DIVE TRAVEL',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        letterSpacing: 1.4,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.authSignupPanelTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.authSignupHeroBody,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: IconButton(
-                    key: const Key('auth-signup-close'),
-                    onPressed: () => Navigator.of(context).pop(false),
-                    icon: const Icon(Icons.close, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-              children: [
+  void _backToLogin() {
+    final custom = widget.onBackToLogin;
+    if (custom != null) {
+      custom();
+      return;
+    }
+    Navigator.of(context).pop(false);
+  }
+
+  List<Widget> _formFields(AppLocalizations l10n, {required bool busy}) {
+    return [
                 Text(
                   l10n.authNameTag,
                   style: const TextStyle(
@@ -474,7 +421,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ],
                 FilledButton(
                   key: const Key('auth-signup-submit'),
-                  onPressed: session.busy ? null : _submit,
+                  onPressed: busy ? null : _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.navy,
                     minimumSize: const Size.fromHeight(52),
@@ -482,7 +429,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: session.busy
+                  child: busy
                       ? const SizedBox(
                           width: 18,
                           height: 18,
@@ -493,7 +440,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 12),
                 TextButton(
                   key: const Key('auth-signup-to-login'),
-                  onPressed: () => Navigator.of(context).pop(false),
+                  onPressed: _backToLogin,
                   child: Text.rich(
                     TextSpan(
                       text: '${l10n.authHaveAccountPrompt} ',
@@ -510,7 +457,91 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final session = SessionScope.of(context);
+    final fields = _formFields(l10n, busy: session.busy);
+    if (widget.embedded) {
+      return ListView(
+        key: const Key('auth-signup-fields'),
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+        children: fields,
+      );
+    }
+    return Scaffold(
+      key: const Key('auth-signup-screen'),
+      backgroundColor: const Color(0xFFF3F6F8),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(
+              20,
+              MediaQuery.paddingOf(context).top + 12,
+              12,
+              28,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0A3A5C), Color(0xFF0B1F33), Color(0xFF16344A)],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'DIVE TRAVEL',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        letterSpacing: 1.4,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      l10n.authSignupPanelTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.authSignupHeroBody,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    key: const Key('auth-signup-close'),
+                    onPressed: () => Navigator.of(context).pop(false),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ),
               ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+              children: fields,
             ),
           ),
         ],

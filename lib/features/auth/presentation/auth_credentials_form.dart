@@ -26,7 +26,7 @@ class AuthCredentials {
   final String loginId;
 }
 
-/// Compact returning-device sheet: login fields; 「처음이에요」 opens [SignupScreen].
+/// Login fields. Tabs are optional so a parent sheet can own them.
 class AuthCredentialsForm extends StatefulWidget {
   const AuthCredentialsForm({
     super.key,
@@ -35,6 +35,8 @@ class AuthCredentialsForm extends StatefulWidget {
     this.errorText,
     this.onSignUpChanged,
     this.initialSignUp = false,
+    this.showTabs = true,
+    this.onOpenSignUp,
   });
 
   final Future<void> Function(AuthCredentials credentials) onSubmit;
@@ -42,6 +44,12 @@ class AuthCredentialsForm extends StatefulWidget {
   final String? errorText;
   final ValueChanged<bool>? onSignUpChanged;
   final bool initialSignUp;
+
+  /// When false, the parent draws 「처음이에요 | 다시 왔어요」.
+  final bool showTabs;
+
+  /// Overrides the default full-screen signup push.
+  final VoidCallback? onOpenSignUp;
 
   @override
   State<AuthCredentialsForm> createState() => _AuthCredentialsFormState();
@@ -70,6 +78,11 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
   }
 
   Future<void> _openSignup() async {
+    final custom = widget.onOpenSignUp;
+    if (custom != null) {
+      custom();
+      return;
+    }
     final ok = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(builder: (_) => const SignupScreen()),
     );
@@ -154,24 +167,26 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
       key: const Key('auth-credentials-form'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            _AuthTab(
-              key: const Key('auth-tab-signup'),
-              label: l10n.authFirstVisit,
-              selected: false,
-              onTap: _openSignup,
-            ),
-            const SizedBox(width: 22),
-            _AuthTab(
-              key: const Key('auth-tab-login'),
-              label: l10n.authWelcomeBack,
-              selected: true,
-              onTap: () {},
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
+        if (widget.showTabs) ...[
+          Row(
+            children: [
+              _AuthTab(
+                key: const Key('auth-tab-signup'),
+                label: l10n.authFirstVisit,
+                selected: false,
+                onTap: _openSignup,
+              ),
+              const SizedBox(width: 22),
+              _AuthTab(
+                key: const Key('auth-tab-login'),
+                label: l10n.authWelcomeBack,
+                selected: true,
+                onTap: () {},
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+        ],
         TextField(
           key: const Key('auth-login-id'),
           controller: _nameTag,

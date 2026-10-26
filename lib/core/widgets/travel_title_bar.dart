@@ -75,7 +75,9 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
               onPartner: () => openPartnerMode(context),
               onAuth: () async {
                 if (session.isSignedIn) {
+                  final nav = Navigator.of(context);
                   await session.signOut();
+                  nav.popUntil((route) => route.isFirst);
                   return;
                 }
                 if (!context.mounted) return;
