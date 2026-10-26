@@ -114,7 +114,7 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-menu-members')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-sub-divers')), findsOneWidget);
-    expect(find.byKey(const Key('admin-menu-instructors')), findsOneWidget);
+    expect(find.byKey(const Key('admin-sub-partner-applications')), findsOneWidget);
     expect(find.byKey(const Key('admin-sub-partners')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('admin-menu-settlement')));
