@@ -545,6 +545,26 @@ bool seatOutcomeAllowed(Map<String, Object?> data) {
       (reason == '' || reason == 'sold_out' || reason == 'departed');
 }
 
+/// Firestore REST field map. Integers are strings, times are timestamps.
+Map<String, Map<String, Object>> seatRestFields(Map<String, Object?> data) {
+  final fields = <String, Map<String, Object>>{};
+  for (final entry in data.entries) {
+    final value = entry.value;
+    if (value is String) {
+      fields[entry.key] = {'stringValue': value};
+    } else if (value is int) {
+      fields[entry.key] = {'integerValue': '$value'};
+    } else if (value is bool) {
+      fields[entry.key] = {'booleanValue': value};
+    } else if (value is DateTime) {
+      fields[entry.key] = {
+        'timestampValue': value.toUtc().toIso8601String(),
+      };
+    }
+  }
+  return fields;
+}
+
 bool sameSeatMap(Map<dynamic, dynamic> a, Map<dynamic, dynamic> b) {
   if (a.length != b.length) {
     return false;

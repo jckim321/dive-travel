@@ -132,6 +132,20 @@ void main() {
     expect(repo.debugSeatDay(seatDayId(now))!['expires'], 1);
     expect(repo.debugSeatDay(seatDayId(now))!['closes'], 1);
   });
+
+  test('rest fields keep numbers and times as Firestore types', () {
+    final fields = seatRestFields({
+      'views': 1,
+      'kind': 'view',
+      'at': DateTime.utc(2026, 10, 27, 1),
+    });
+    expect(fields['views'], {'integerValue': '1'});
+    expect(fields['kind'], {'stringValue': 'view'});
+    expect(
+      fields['at'],
+      {'timestampValue': '2026-10-27T01:00:00.000Z'},
+    );
+  });
 }
 
 SeatLifeEvent _view({bool shareNationality = true}) {

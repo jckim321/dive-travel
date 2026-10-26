@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
@@ -4702,19 +4704,13 @@ class FirestoreDiverRepository implements DiverRepository {
   @override
   Future<bool> createSeatEvent(SeatLifeEvent event) async {
     if (!event.withinShape) {
+      debugPrint('seat life event rejected ${event.id}');
       return false;
     }
     final data = Map<String, dynamic>.from(event.toStoredMap());
-    data['at'] = Timestamp.fromDate(event.at.toUtc());
-    final ref = _seatEvents.doc(event.id);
-    return _db.runTransaction((transaction) async {
-      final snap = await transaction.get(ref);
-      if (snap.exists) {
-        return false;
-      }
-      transaction.set(ref, data);
-      return true;
-    });
+    data['at'] = event.at.toUtc();
+    final wrote = await _createWithoutRead(_seatEvents.doc(event.id), data);
+    return wrote == _SeatWrite.created;
   }
 
   @override
@@ -4724,38 +4720,86 @@ class FirestoreDiverRepository implements DiverRepository {
   }) async {
     if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dayId) ||
         !seatDayFields.contains(field)) {
+      debugPrint('seat life day rejected $dayId $field');
       return false;
     }
     final ref = _db.collection('seat_daily').doc(dayId);
-    return _db.runTransaction((transaction) async {
-      final snap = await transaction.get(ref);
-      if (!snap.exists) {
-        final created = seatDayCreate(field);
-        if (!seatDayCreateAllowed(created)) {
-          return false;
-        }
-        transaction.set(ref, Map<String, dynamic>.from(created));
-        return true;
-      }
-      final raw = snap.data() ?? {};
-      final current = {
-        for (final name in seatDayFields)
-          name: (raw[name] as num?)?.toInt() ?? 0,
-      };
-      final next = Map<String, int>.from(current);
-      next[field] = current[field]! + 1;
-      if (!seatDayPlusOneAllowed(current, next)) {
+    try {
+      await ref.update({field: FieldValue.increment(1)});
+      return true;
+    } on FirebaseException catch (error, stackTrace) {
+      if (error.code != 'not-found') {
+        _logSeatFailure('day update', ref.path, error, stackTrace);
         return false;
       }
-      transaction.update(ref, {field: next[field]});
+    }
+    final wrote = await _createWithoutRead(
+      ref,
+      Map<String, dynamic>.from(seatDayCreate(field)),
+    );
+    if (wrote == _SeatWrite.created) {
       return true;
-    });
+    }
+    if (wrote != _SeatWrite.duplicate) {
+      return false;
+    }
+    try {
+      await ref.update({field: FieldValue.increment(1)});
+      return true;
+    } on FirebaseException catch (error, stackTrace) {
+      _logSeatFailure('day update', ref.path, error, stackTrace);
+      return false;
+    }
+  }
+
+  /// Create at a fixed id. No read. An existing document is a duplicate.
+  Future<_SeatWrite> _createWithoutRead(
+    DocumentReference<Map<String, dynamic>> ref,
+    Map<String, dynamic> data,
+  ) async {
+    final projectId = _db.app.options.projectId;
+    final token = await _auth.currentUser?.getIdToken();
+    if (token == null || token.isEmpty) {
+      debugPrint('seat life create failed (signed out) ${ref.path}');
+      return _SeatWrite.failed;
+    }
+    final uri = Uri.parse(
+      'https://firestore.googleapis.com/v1/projects/$projectId'
+      '/databases/(default)/documents/${ref.parent.path}'
+      '?documentId=${Uri.encodeQueryComponent(ref.id)}',
+    );
+    try {
+      final response = await http.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'fields': seatRestFields(data)}),
+      );
+      if (response.statusCode == 200) {
+        return _SeatWrite.created;
+      }
+      if (response.statusCode == 409 ||
+          response.body.contains('ALREADY_EXISTS')) {
+        debugPrint('seat life duplicate ${ref.path}');
+        return _SeatWrite.duplicate;
+      }
+      debugPrint(
+        'seat life create failed ${response.statusCode} ${ref.path} ${response.body}',
+      );
+      return _SeatWrite.failed;
+    } catch (error, stackTrace) {
+      _logSeatFailure('create', ref.path, error, stackTrace);
+      return _SeatWrite.failed;
+    }
   }
 
   @override
   Future<void> saveSeatOutcome(SeatOutcome outcome) async {
     final data = Map<String, dynamic>.from(outcome.toMap());
     if (!seatOutcomeAllowed(data)) {
+      debugPrint('seat life outcome rejected ${outcome.seatId}');
       return;
     }
     final ref = _db.collection('seat_outcomes').doc(outcome.seatId);
@@ -4784,4 +4828,16 @@ class FirestoreDiverRepository implements DiverRepository {
     }
     return rows;
   }
+
+  void _logSeatFailure(
+    String action,
+    String path,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    debugPrint('seat life $action failed $error $path');
+    debugPrint('$stackTrace');
+  }
 }
+
+enum _SeatWrite { created, duplicate, failed }

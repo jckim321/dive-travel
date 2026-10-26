@@ -7,6 +7,8 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RULES = readFileSync(join(__dirname, '..', 'firestore.rules'), 'utf8');
@@ -115,5 +117,33 @@ describe('seat life analytics', () => {
     await assertFails(
       admin.doc('seat_outcomes/p_prod').update({ email: 'a@b.c' }),
     );
+  });
+
+  it('lets a non-admin customer create an event and add 1, and denies reads', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc('users/customer-1').set({
+        is_admin: false,
+        email: 'customer@example.com',
+        display_name: 'Customer',
+      });
+    });
+    const customer = testEnv.authenticatedContext('customer-1').firestore();
+
+    await assertSucceeds(
+      customer.doc('seat_events/view-customer').set(event()),
+    );
+    await assertFails(customer.doc('seat_events/view-customer').get());
+    await assertFails(customer.collection('seat_events').get());
+
+    await assertSucceeds(
+      customer.doc('seat_daily/2026-10-27').set(day('views')),
+    );
+    await assertSucceeds(
+      customer.doc('seat_daily/2026-10-27').update({
+        views: firebase.firestore.FieldValue.increment(1),
+      }),
+    );
+    await assertFails(customer.doc('seat_daily/2026-10-27').get());
+    await assertFails(customer.collection('seat_daily').get());
   });
 });

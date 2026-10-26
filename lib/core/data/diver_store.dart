@@ -3640,8 +3640,9 @@ class DiverStore extends ChangeNotifier {
           summarizeSeat(seat: seat, events: bySeat[seat.seatId] ?? const []),
         );
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint('seat life sweep failed $error');
+      debugPrint('$stackTrace');
     }
   }
 
@@ -3849,8 +3850,9 @@ class DiverStore extends ChangeNotifier {
         return;
       }
       await _repository.bumpSeatDay(dayId: seatDayId(event.at), field: field);
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint('seat life record failed $error');
+      debugPrint('$stackTrace');
     }
   }
 
