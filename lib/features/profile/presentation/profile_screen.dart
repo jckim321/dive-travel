@@ -131,7 +131,9 @@ class ProfileScreen extends StatelessWidget {
                     onSettings: () => _openSettings(context),
                   ),
                 ),
-                if (stats.gradeCelebrationPending)
+                if (stats.gradeCelebrationPending &&
+                    TickerMode.of(context) &&
+                    (ModalRoute.of(context)?.isCurrent ?? true))
                   _GradeCelebrationHost(
                     grade: stats.gradeCelebrationTo ?? stats.memberGrade,
                     onDismiss: store.clearGradeCelebration,

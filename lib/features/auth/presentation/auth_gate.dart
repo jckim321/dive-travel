@@ -92,6 +92,11 @@ class _SignedInHomeState extends State<_SignedInHome> {
     }
     final live = store.stats;
     final staff = live.isAdmin || live.isBusiness;
+    if (guestBrowse.browsing) {
+      _staffRoutePrimed = true;
+      _openedForUid = uid;
+      return;
+    }
     if (pins.needsUnlock(uid: uid, isStaff: staff)) {
       return;
     }
@@ -141,6 +146,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
     final live = store.stats;
     final staff = live.isAdmin || live.isBusiness;
     if (pins.ready &&
+        !guestBrowse.browsing &&
         pins.needsUnlock(uid: uid, isStaff: staff) &&
         uid != null &&
         uid.isNotEmpty) {
