@@ -2322,6 +2322,78 @@ abstract class AppLocalizations {
   /// **'회원가입'**
   String get authSignup;
 
+  /// No description provided for @authFirstVisit.
+  ///
+  /// In ko, this message translates to:
+  /// **'처음이에요'**
+  String get authFirstVisit;
+
+  /// No description provided for @authWelcomeBack.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 왔어요'**
+  String get authWelcomeBack;
+
+  /// No description provided for @authHeroTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이빙 여행,\n같이 가요'**
+  String get authHeroTitle;
+
+  /// No description provided for @authHeroSignupHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'지금은 이름표와 비밀번호만 있으면 돼요'**
+  String get authHeroSignupHint;
+
+  /// No description provided for @authHeroLoginHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름표와 비밀번호로 다시 들어와요'**
+  String get authHeroLoginHint;
+
+  /// No description provided for @authNameTag.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름표 (한글·영문·숫자 모두 가능)'**
+  String get authNameTag;
+
+  /// No description provided for @authKeepSignedIn.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기기에서는 계속 로그인해 두기'**
+  String get authKeepSignedIn;
+
+  /// No description provided for @authStart.
+  ///
+  /// In ko, this message translates to:
+  /// **'시작하기'**
+  String get authStart;
+
+  /// No description provided for @authForgotPasswordNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 잊었다면 → 「운영팀에 알려 주세요」 (출시 전 임시)'**
+  String get authForgotPasswordNote;
+
+  /// No description provided for @authTrialNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'출시 전 시험용 · 가입과 로그인을 한 화면에서, 입력은 두 칸'**
+  String get authTrialNote;
+
+  /// No description provided for @authErrorNameTagRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름표를 적어 주세요.'**
+  String get authErrorNameTagRequired;
+
+  /// No description provided for @authErrorNameTagTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름표가 너무 길어요. 조금 짧게 적어 주세요.'**
+  String get authErrorNameTagTooLong;
+
   /// No description provided for @authNationality.
   ///
   /// In ko, this message translates to:
@@ -2463,19 +2535,19 @@ abstract class AppLocalizations {
   /// 아이디 중복 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'이미 사용 중인 아이디입니다.'**
+  /// **'이 이름표는 이미 쓰이고 있어요. 다른 이름표를 골라 주세요.'**
   String get authErrorLoginIdInUse;
 
   /// 아이디 형식 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'아이디는 영문 소문자·숫자·_ 조합 4~20자여야 합니다.'**
+  /// **'이름표는 한글, 영문, 숫자만 쓸 수 있어요.'**
   String get authErrorLoginIdFormat;
 
   /// 예약어 아이디 오류입니다.
   ///
   /// In ko, this message translates to:
-  /// **'사용할 수 없는 아이디입니다.'**
+  /// **'이 이름표는 쓸 수 없어요. 다른 이름표를 골라 주세요.'**
   String get authErrorLoginIdReserved;
 
   /// 표시 이름 필수 오류입니다.

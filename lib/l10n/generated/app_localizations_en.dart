@@ -1231,6 +1231,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignup => 'Sign up';
 
   @override
+  String get authFirstVisit => 'I\'m new';
+
+  @override
+  String get authWelcomeBack => 'I\'m back';
+
+  @override
+  String get authHeroTitle => 'Dive travel,\ntogether';
+
+  @override
+  String get authHeroSignupHint =>
+      'A name tag and a password are enough for now';
+
+  @override
+  String get authHeroLoginHint =>
+      'Come back in with your name tag and password';
+
+  @override
+  String get authNameTag => 'Name tag (Korean, English, or digits)';
+
+  @override
+  String get authKeepSignedIn => 'Stay signed in on this device';
+
+  @override
+  String get authStart => 'Get started';
+
+  @override
+  String get authForgotPasswordNote =>
+      'Forgot your password? Tell the crew (temporary, before launch)';
+
+  @override
+  String get authTrialNote =>
+      'Pre-launch trial · sign-up and sign-in on one screen, two fields';
+
+  @override
+  String get authErrorNameTagRequired => 'Enter a name tag.';
+
+  @override
+  String get authErrorNameTagTooLong =>
+      'That name tag is too long. Try a shorter one.';
+
+  @override
   String get authNationality => 'Nationality (optional)';
 
   @override
@@ -1305,14 +1346,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authErrorEmailInUse => 'That email is already registered.';
 
   @override
-  String get authErrorLoginIdInUse => 'That username is already taken.';
+  String get authErrorLoginIdInUse =>
+      'That name tag is already taken. Pick another one.';
 
   @override
   String get authErrorLoginIdFormat =>
-      'Username must be 4–20 characters: lowercase letters, digits, or _.';
+      'Use only Korean, English letters, or digits in a name tag.';
 
   @override
-  String get authErrorLoginIdReserved => 'That username is reserved.';
+  String get authErrorLoginIdReserved =>
+      'That name tag can\'t be used. Pick another one.';
 
   @override
   String get authErrorDisplayNameRequired => 'Enter your name.';

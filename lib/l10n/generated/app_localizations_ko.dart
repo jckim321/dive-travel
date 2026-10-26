@@ -1199,6 +1199,42 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authSignup => '회원가입';
 
   @override
+  String get authFirstVisit => '처음이에요';
+
+  @override
+  String get authWelcomeBack => '다시 왔어요';
+
+  @override
+  String get authHeroTitle => '다이빙 여행,\n같이 가요';
+
+  @override
+  String get authHeroSignupHint => '지금은 이름표와 비밀번호만 있으면 돼요';
+
+  @override
+  String get authHeroLoginHint => '이름표와 비밀번호로 다시 들어와요';
+
+  @override
+  String get authNameTag => '이름표 (한글·영문·숫자 모두 가능)';
+
+  @override
+  String get authKeepSignedIn => '이 기기에서는 계속 로그인해 두기';
+
+  @override
+  String get authStart => '시작하기';
+
+  @override
+  String get authForgotPasswordNote => '비밀번호를 잊었다면 → 「운영팀에 알려 주세요」 (출시 전 임시)';
+
+  @override
+  String get authTrialNote => '출시 전 시험용 · 가입과 로그인을 한 화면에서, 입력은 두 칸';
+
+  @override
+  String get authErrorNameTagRequired => '이름표를 적어 주세요.';
+
+  @override
+  String get authErrorNameTagTooLong => '이름표가 너무 길어요. 조금 짧게 적어 주세요.';
+
+  @override
   String get authNationality => '국적(선택)';
 
   @override
@@ -1270,13 +1306,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authErrorEmailInUse => '이미 가입된 이메일입니다.';
 
   @override
-  String get authErrorLoginIdInUse => '이미 사용 중인 아이디입니다.';
+  String get authErrorLoginIdInUse => '이 이름표는 이미 쓰이고 있어요. 다른 이름표를 골라 주세요.';
 
   @override
-  String get authErrorLoginIdFormat => '아이디는 영문 소문자·숫자·_ 조합 4~20자여야 합니다.';
+  String get authErrorLoginIdFormat => '이름표는 한글, 영문, 숫자만 쓸 수 있어요.';
 
   @override
-  String get authErrorLoginIdReserved => '사용할 수 없는 아이디입니다.';
+  String get authErrorLoginIdReserved => '이 이름표는 쓸 수 없어요. 다른 이름표를 골라 주세요.';
 
   @override
   String get authErrorDisplayNameRequired => '이름을 입력해 주세요.';

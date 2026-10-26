@@ -19,8 +19,35 @@ void main() {
       'jong_01@${AuthIdentity.syntheticDomain}',
     );
     expect(
+      AuthIdentity.toAuthEmail('Jong_01'),
+      'jong_01@${AuthIdentity.syntheticDomain}',
+    );
+    expect(
       AuthIdentity.toAuthEmail('jckim321@gmail.com'),
       'jckim321@gmail.com',
+    );
+  });
+
+  test('한글 이름표는 u_ 로 시작하는 ASCII 로컬파트가 된다', () {
+    expect(
+      AuthIdentity.toAuthEmail('가'),
+      'u_eab080@${AuthIdentity.syntheticDomain}',
+    );
+    expect(
+      AuthIdentity.toAuthEmail('바다'),
+      'u_ebb094eb8ba4@${AuthIdentity.syntheticDomain}',
+    );
+    final local = AuthIdentity.toAuthEmail('바다거북').split('@').first;
+    expect(local.startsWith('u_'), isTrue);
+    expect(RegExp(r'^u_[0-9a-f]+$').hasMatch(local), isTrue);
+    expect(AuthIdentity.storedLoginId('바다거북'), '바다거북');
+    expect(AuthIdentity.storedLoginId('Jong_01'), 'jong_01');
+    expect(AuthIdentity.nameTagIssue('admin'), NameTagIssue.reserved);
+    expect(AuthIdentity.nameTagIssue('바다!'), NameTagIssue.format);
+    expect(AuthIdentity.nameTagIssue('가' * 11), NameTagIssue.tooLong);
+    expect(
+      AuthIdentity.nameTagIssue('owner@dive.test', allowEmail: true),
+      isNull,
     );
   });
 
