@@ -158,7 +158,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ListTile(
                   key: entry.key,
                   leading: Icon(entry.icon, color: AdminConsoleTheme.aqua),
-                  title: Text(entry.label),
+                  title: Text(entry.label, style: _moreSheetTitle),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _go(entry.hub, sub: entry.sub);
@@ -179,7 +179,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ListTile(
                   key: entry.key,
                   leading: Icon(entry.icon, color: AdminConsoleTheme.muted),
-                  title: Text(entry.label),
+                  title: Text(entry.label, style: _moreSheetTitle),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     _go(_AdminHub.tools, sub: entry.sub);
@@ -191,6 +191,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       },
     );
   }
+
+  static const _moreSheetTitle = TextStyle(
+    color: AdminConsoleTheme.ice,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+  );
 
   List<_MoreHubEntry> _moreHubEntries(AppLocalizations l10n) => [
     _MoreHubEntry(

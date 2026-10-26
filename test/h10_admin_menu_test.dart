@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -112,6 +113,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('admin-nav-more-sheet')), findsOneWidget);
     expect(find.byKey(const Key('admin-tool-trial-data')), findsOneWidget);
+    for (final key in const [
+      'admin-more-dive-star',
+      'admin-more-contracts',
+      'admin-more-settlement',
+      'admin-more-sales',
+      'admin-more-stats',
+      'admin-more-reports',
+      'admin-tool-trial-data',
+    ]) {
+      final title = tester.widget<Text>(
+        find.descendant(
+          of: find.byKey(Key(key)),
+          matching: find.byType(Text),
+        ),
+      );
+      expect(title.style?.color, AdminConsoleTheme.ice);
+      expect(title.style?.fontSize, greaterThanOrEqualTo(15));
+    }
     expect(find.byKey(const Key('admin-tool-shops')), findsNothing);
     expect(find.byKey(const Key('admin-menu-weather')), findsNothing);
     expect(find.byKey(const Key('admin-tool-posts')), findsNothing);
