@@ -24,14 +24,17 @@ class ProfileSettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     final session = SessionScope.of(context);
-    final pins = DevicePinScope.of(context);
+    final pins = DevicePinScope.maybeOf(context);
     final email = session.user?.email ?? '';
 
     return Scaffold(
       backgroundColor: AppTheme.seaMist,
       appBar: AppBar(title: Text(l10n.profileSettingsTitle)),
       body: ListenableBuilder(
-        listenable: Listenable.merge([store, pins]),
+        listenable: Listenable.merge([
+          store,
+          if (pins != null) pins,
+        ]),
         builder: (context, _) {
           final live = store.stats;
           final liveGrade = ProfileDisplayGrade.fromMember(
@@ -114,27 +117,29 @@ class ProfileSettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.devicePinSettingsTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 10),
-                _SettingsCard(
-                  child: _SettingsAction(
-                    key: const Key('device-pin-settings'),
-                    icon: Icons.pin_outlined,
-                    title: pins.hasPin && pins.pinnedUid == store.uid
-                        ? l10n.devicePinSettingsChange
-                        : l10n.devicePinSettingsSet,
-                    subtitle: l10n.devicePinSettingsHint,
-                    onTap: () async {
-                      final uid = store.uid ?? session.user?.uid ?? '';
-                      if (uid.isEmpty) return;
-                      await showDevicePinSetupDialog(context, uid: uid);
-                    },
+                if (pins != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.devicePinSettingsTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    child: _SettingsAction(
+                      key: const Key('device-pin-settings'),
+                      icon: Icons.pin_outlined,
+                      title: pins.hasPin && pins.pinnedUid == store.uid
+                          ? l10n.devicePinSettingsChange
+                          : l10n.devicePinSettingsSet,
+                      subtitle: l10n.devicePinSettingsHint,
+                      onTap: () async {
+                        final uid = store.uid ?? session.user?.uid ?? '';
+                        if (uid.isEmpty) return;
+                        await showDevicePinSetupDialog(context, uid: uid);
+                      },
+                    ),
+                  ),
+                ],
               ],
               const SizedBox(height: 28),
               OutlinedButton.icon(
