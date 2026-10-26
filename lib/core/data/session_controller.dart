@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
+import 'package:dive_travel_app/core/auth/pending_profile.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 
@@ -21,7 +23,7 @@ class SessionController extends ChangeNotifier {
         _ready = true;
         _readyTimer?.cancel();
         notifyListeners();
-        if (user == null) {
+        if (user == null || _signupOwnsProfile) {
           return;
         }
         unawaited(_syncProfile(user));
@@ -42,12 +44,17 @@ class SessionController extends ChangeNotifier {
   bool _ready = false;
   String? _error;
   bool _busy = false;
+  var _signupOwnsProfile = false;
+  String? _profileWriteNote;
 
   AppUser? get user => _user;
   bool get ready => _ready;
   bool get isSignedIn => _user != null;
   bool get busy => _busy;
   String? get error => _error;
+
+  /// Dev-only detail for a signup profile write that was hidden from customers.
+  String? get profileWriteNote => _profileWriteNote;
   DiverRepository get repository => _repository;
 
   Future<void> signIn({
@@ -72,24 +79,46 @@ class SessionController extends ChangeNotifier {
     bool privacyAccepted = false,
     bool marketingOptIn = false,
   }) {
-    return _run(
-      () => _repository.signUp(
-        email: email,
-        password: password,
-        displayName: displayName,
-        loginId: loginId,
-        nationality: nationality,
-        birthDate: birthDate,
-        phone: phone,
-        termsAccepted: termsAccepted,
-        privacyAccepted: privacyAccepted,
-        marketingOptIn: marketingOptIn,
-      ),
-    );
+    return _run(() async {
+      _signupOwnsProfile = true;
+      try {
+        await _repository.signUp(
+          email: email,
+          password: password,
+          displayName: displayName,
+          loginId: loginId,
+          nationality: nationality,
+          birthDate: birthDate,
+          phone: phone,
+          termsAccepted: termsAccepted,
+          privacyAccepted: privacyAccepted,
+          marketingOptIn: marketingOptIn,
+        );
+      } on ProfileWriteException catch (error) {
+        _profileWriteNote = error.detail;
+        debugPrint('profile write failed ${error.detail}');
+        await pendingProfileWrites.save(
+          PendingProfile(
+            uid: error.uid,
+            displayName: displayName,
+            loginId: loginId,
+            nationality: nationality,
+            birthDate: birthDate,
+            phone: phone,
+            termsAccepted: termsAccepted,
+            privacyAccepted: privacyAccepted,
+            marketingOptIn: marketingOptIn,
+          ),
+        );
+      } finally {
+        _signupOwnsProfile = false;
+      }
+    });
   }
 
   Future<void> signOut() async {
     guestBrowse.clear();
+    _profileWriteNote = null;
     await _repository.signOut();
   }
 
@@ -98,6 +127,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> _syncProfile(AppUser user) async {
+    if (_signupOwnsProfile) return;
     try {
       await _ensureProfileAndGate();
     } catch (error) {
@@ -112,9 +142,31 @@ class SessionController extends ChangeNotifier {
     if (user == null) {
       return;
     }
-    await _repository.ensureUserDocument(user).timeout(
+    final pending = await pendingProfileWrites.forUid(user.uid);
+    final named = pending == null
+        ? user
+        : AppUser(
+            uid: user.uid,
+            email: user.email,
+            displayName: (user.displayName ?? '').trim().isNotEmpty
+                ? user.displayName
+                : pending.displayName,
+          );
+    await _repository.ensureUserDocument(
+      named,
+      loginId: pending?.loginId,
+      nationality: pending?.nationality,
+      birthDate: pending?.birthDate,
+      phone: pending?.phone,
+      termsAccepted: pending?.termsAccepted,
+      privacyAccepted: pending?.privacyAccepted,
+      marketingOptIn: pending?.marketingOptIn,
+    ).timeout(
       const Duration(seconds: 8),
     );
+    if (pending != null) {
+      await pendingProfileWrites.clear(user.uid);
+    }
     if (!await _repository.isLoginBlocked(user.uid)) {
       return;
     }

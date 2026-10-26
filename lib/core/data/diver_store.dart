@@ -1171,12 +1171,10 @@ class DiverStore extends ChangeNotifier {
   Future<void> ensureMemberProfile(MemberAccount member) async {
     final email = member.email.trim();
     final fallback = email.contains('@') ? email.split('@').first : email;
-    await _repository.ensureUserDocument(
-      AppUser(
-        uid: member.uid,
-        email: member.email,
-        displayName: fallback.isEmpty ? member.uid : fallback,
-      ),
+    await _repository.adminRepairMemberProfile(
+      uid: member.uid,
+      email: email,
+      displayName: fallback.isEmpty ? member.uid : fallback,
     );
     await refreshAdminInbox();
   }

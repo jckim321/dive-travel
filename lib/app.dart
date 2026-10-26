@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_gate.dart';
 import 'package:dive_travel_app/features/auth/presentation/firebase_setup_screen.dart';
+import 'package:dive_travel_app/features/auth/presentation/profile_write_debug_footer.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class DiveTravelApp extends StatefulWidget {
@@ -104,7 +105,7 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
     final store = _store;
     final pins = _pins;
     if (session == null || store == null || pins == null) {
-      return _localizedApp(home: const FirebaseSetupScreen());
+      return _localizedApp(home: const FirebaseSetupScreen(), debugFooter: false);
     }
 
     return SessionScope(
@@ -113,13 +114,13 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
         store: store,
         child: DevicePinScope(
           controller: pins,
-          child: _localizedApp(home: const AuthGate()),
+          child: _localizedApp(home: const AuthGate(), debugFooter: true),
         ),
       ),
     );
   }
 
-  Widget _localizedApp({required Widget home}) {
+  Widget _localizedApp({required Widget home, required bool debugFooter}) {
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: AppTheme.light,
@@ -133,6 +134,11 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: debugFooter
+          ? (context, child) => ProfileWriteDebugFooter(
+                child: child ?? const SizedBox.shrink(),
+              )
+          : null,
       home: home,
     );
   }

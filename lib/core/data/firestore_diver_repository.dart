@@ -5,11 +5,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:dive_travel_app/core/auth/pending_profile.dart';
+
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
+import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
@@ -144,16 +147,21 @@ class FirestoreDiverRepository implements DiverRepository {
     await user.updateDisplayName(name);
     await user.reload();
     final refreshed = _auth.currentUser ?? user;
-    await ensureUserDocument(
-      AppUser(uid: refreshed.uid, email: refreshed.email, displayName: name),
-      loginId: loginId,
-      nationality: nationality,
-      birthDate: birthDate,
-      phone: phone,
-      termsAccepted: termsAccepted,
-      privacyAccepted: privacyAccepted,
-      marketingOptIn: marketingOptIn,
-    );
+    try {
+      await ensureUserDocument(
+        AppUser(uid: refreshed.uid, email: refreshed.email, displayName: name),
+        loginId: loginId,
+        nationality: nationality,
+        birthDate: birthDate,
+        phone: phone,
+        termsAccepted: termsAccepted,
+        privacyAccepted: privacyAccepted,
+        marketingOptIn: marketingOptIn,
+      );
+    } catch (error) {
+      final code = error is FirebaseException ? error.code : 'unknown';
+      throw ProfileWriteException(uid: refreshed.uid, code: code);
+    }
   }
 
   @override
@@ -1051,11 +1059,31 @@ class FirestoreDiverRepository implements DiverRepository {
         'region_log_counts': <String, int>{},
         'created_at': FieldValue.serverTimestamp(),
       });
-    } else if (existing?['member_grade'] == null &&
-        existing?['memberGrade'] == null) {
-      payload['member_grade'] = MemberGrade.silver.firestoreValue;
     }
     await ref.set(payload, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> adminRepairMemberProfile({
+    required String uid,
+    required String email,
+    required String displayName,
+  }) async {
+    final ref = _userDoc(uid);
+    final snapshot = await ref.get();
+    if (!snapshot.exists) return;
+    final data = snapshot.data() ?? <String, dynamic>{};
+    final patch = memberProfileRepairPatch(
+      gradeMissing: data['member_grade'] == null && data['memberGrade'] == null,
+      existingEmail: (data['email'] as String?) ?? '',
+      existingName: (data['display_name'] as String?) ?? '',
+      email: email,
+      displayName: displayName,
+      uid: uid,
+    );
+    if (patch.isEmpty) return;
+    patch['updated_at'] = FieldValue.serverTimestamp();
+    await ref.set(patch, SetOptions(merge: true));
   }
 
   @override

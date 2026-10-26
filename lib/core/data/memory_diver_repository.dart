@@ -3,7 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:dive_travel_app/core/auth/pending_profile.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
@@ -98,6 +100,18 @@ class MemoryDiverRepository implements DiverRepository {
   /// Test-only: fail createBooking after the user copy, before the shop copy.
   /// Clears itself on use. Ensures purchase bump does not run on mid-fail.
   bool debugFailBeforeShopBookingWrite = false;
+
+  /// Test-only: signup's profile ensure throws [ProfileWriteException].
+  bool debugFailSignupProfile = false;
+
+  /// How many times [ensureUserDocument] ran.
+  int debugEnsureCount = 0;
+
+  /// Test-only: uids whose stored grade should be treated as missing.
+  final debugMissingGradeUids = <String>{};
+
+  /// Last admin repair field map, without timestamps.
+  Map<String, Object?>? debugLastRepair;
   bool _isInstructor = false;
   bool _isAdmin = false;
   bool _isBusiness = false;
@@ -287,6 +301,10 @@ class MemoryDiverRepository implements DiverRepository {
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty && _user != null) {
       _loginIds[_user!.uid] = id;
+    }
+    if (debugFailSignupProfile) {
+      debugFailSignupProfile = false;
+      throw ProfileWriteException(uid: _user!.uid, code: 'permission-denied');
     }
     await ensureUserDocument(
       _user!,
@@ -649,6 +667,7 @@ class MemoryDiverRepository implements DiverRepository {
     bool? privacyAccepted,
     bool? marketingOptIn,
   }) async {
+    debugEnsureCount += 1;
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty) {
       _loginIds[user.uid] = id;
@@ -709,6 +728,16 @@ class MemoryDiverRepository implements DiverRepository {
         ),
       );
       _membersController.add(List<MemberAccount>.from(_members));
+    } else if (!closed) {
+      final login = _loginIds[user.uid] ?? '';
+      final current = _members[index];
+      _members[index] = current.copyWith(
+        email: current.email.trim().isEmpty ? (user.email ?? '') : null,
+        displayName: current.displayName.trim().isEmpty ? name : null,
+        loginId: login.isEmpty ? null : login,
+        phone: contact.isEmpty ? null : contact,
+      );
+      _membersController.add(List<MemberAccount>.from(_members));
     }
     _snapshot = DiverSnapshot.empty(
       displayName: user.displayName ?? user.email?.split('@').first ?? '다이버',
@@ -726,6 +755,34 @@ class MemoryDiverRepository implements DiverRepository {
       phone: _phone,
     );
     _diverController.add(_snapshot);
+  }
+
+  @override
+  Future<void> adminRepairMemberProfile({
+    required String uid,
+    required String email,
+    required String displayName,
+  }) async {
+    final index = _members.indexWhere((member) => member.uid == uid);
+    if (index < 0) return;
+    final current = _members[index];
+    final patch = memberProfileRepairPatch(
+      gradeMissing: debugMissingGradeUids.contains(uid),
+      existingEmail: current.email,
+      existingName: current.displayName,
+      email: email,
+      displayName: displayName,
+      uid: uid,
+    );
+    debugLastRepair = patch;
+    if (patch.isEmpty) return;
+    debugMissingGradeUids.remove(uid);
+    _members[index] = current.copyWith(
+      grade: patch.containsKey('member_grade') ? MemberGrade.silver : null,
+      email: patch['email'] as String?,
+      displayName: patch['display_name'] as String?,
+    );
+    _membersController.add(List<MemberAccount>.from(_members));
   }
 
   @override

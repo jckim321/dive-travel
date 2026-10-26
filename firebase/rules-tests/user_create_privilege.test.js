@@ -163,6 +163,30 @@ describe('users/{userId} create privilege lock', () => {
     await assertSucceeds(db.collection('users').doc('blocked').delete());
   });
 
+  it('allows profile fields on an old doc and denies filling member_grade', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('users').doc('diver2').set({
+        email: 'diver2@dive.test',
+        display_name: 'diver2',
+        is_admin: false,
+      });
+    });
+    const db = testEnv.authenticatedContext('diver2').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('diver2').set({
+        display_name: '실명',
+        phone: '010',
+        birth_date: '1990-01-01',
+        nationality: 'KR',
+      }, { merge: true }),
+    );
+    await assertFails(
+      db.collection('users').doc('diver2').set({
+        member_grade: 'silver',
+      }, { merge: true }),
+    );
+  });
+
   it('denies create with camelCase isAdmin', async () => {
     const db = testEnv.authenticatedContext('uid-a').firestore();
     await assertFails(

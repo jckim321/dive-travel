@@ -3,10 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/app.dart';
+import 'package:dive_travel_app/core/auth/pending_profile.dart';
 import 'package:dive_travel_app/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  pendingProfileWrites = PrefsPendingProfileStore();
 
   var firebaseReady = false;
   try {

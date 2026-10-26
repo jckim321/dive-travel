@@ -277,6 +277,7 @@ class MemberAccount {
     DateTime? lastSeenAt,
     String? nationality,
     String? displayName,
+    String? email,
     bool? isAdmin,
     bool? isInstructor,
     String? phone,
@@ -287,7 +288,7 @@ class MemberAccount {
   }) {
     return MemberAccount(
       uid: uid,
-      email: email,
+      email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       grade: grade ?? this.grade,
       totalLogCount: totalLogCount,

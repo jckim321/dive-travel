@@ -67,6 +67,14 @@ abstract class DiverRepository {
     bool? marketingOptIn,
   });
 
+  /// Admin-only fill for an existing users doc with an empty grade, email, or name.
+  /// Does not create a document and does not change a grade that is already set.
+  Future<void> adminRepairMemberProfile({
+    required String uid,
+    required String email,
+    required String displayName,
+  });
+
   /// Saves a country code and the consent time together.
   Future<void> setNationality({required String uid, required String code});
 
