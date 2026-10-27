@@ -4452,6 +4452,174 @@ abstract class AppLocalizations {
   /// **'아직 기록이 없어요'**
   String get seatBriefMissedEmpty;
 
+  /// No description provided for @partnerMeetingOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 미팅 보고서'**
+  String get partnerMeetingOpen;
+
+  /// No description provided for @partnerMeetingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너 미팅 보고서'**
+  String get partnerMeetingTitle;
+
+  /// No description provided for @partnerMeetingHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건을 고르면 보고서를 만들어 드려요'**
+  String get partnerMeetingHint;
+
+  /// No description provided for @partnerMeetingPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'파트너'**
+  String get partnerMeetingPartner;
+
+  /// No description provided for @partnerMeetingScope.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품 · 지역'**
+  String get partnerMeetingScope;
+
+  /// No description provided for @partnerMeetingScopeAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 (상품 {count}개)'**
+  String partnerMeetingScopeAll(int count);
+
+  /// No description provided for @partnerMeetingScopeRegion.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 전체 (상품 {count}개)'**
+  String partnerMeetingScopeRegion(String name, int count);
+
+  /// No description provided for @partnerMeetingPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'보고서 미리보기'**
+  String get partnerMeetingPreview;
+
+  /// No description provided for @partnerMeetingPreviewTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기'**
+  String get partnerMeetingPreviewTitle;
+
+  /// No description provided for @partnerMeetingPreviewHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'A4 1~2쪽 · 파트너 미팅 보고서'**
+  String get partnerMeetingPreviewHint;
+
+  /// No description provided for @partnerMeetingPaperKicker.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이브트래블 × {shop} · 미팅 자료'**
+  String partnerMeetingPaperKicker(String shop);
+
+  /// No description provided for @partnerMeetingPaperTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배 빈자리 운영 리포트'**
+  String get partnerMeetingPaperTitle;
+
+  /// No description provided for @partnerMeetingCompareNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 기간 대비'**
+  String get partnerMeetingCompareNote;
+
+  /// No description provided for @partnerMeetingConclusion.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 결론'**
+  String get partnerMeetingConclusion;
+
+  /// No description provided for @partnerMeetingConclusionHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 기간 가장 중요한 한 가지'**
+  String get partnerMeetingConclusionHint;
+
+  /// No description provided for @partnerMeetingFunnel.
+  ///
+  /// In ko, this message translates to:
+  /// **'팔리는 과정'**
+  String get partnerMeetingFunnel;
+
+  /// No description provided for @partnerMeetingFunnelHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'깔때기'**
+  String get partnerMeetingFunnelHint;
+
+  /// No description provided for @partnerMeetingScoreHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파트너의 자리만'**
+  String get partnerMeetingScoreHint;
+
+  /// No description provided for @partnerMeetingDemandHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 지역에서 못 찾은 조건'**
+  String get partnerMeetingDemandHint;
+
+  /// No description provided for @partnerMeetingProposals.
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 만들 자리 제안'**
+  String get partnerMeetingProposals;
+
+  /// No description provided for @partnerMeetingProposalsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'수요에 맞춘 가격·인원·날짜 아이디어'**
+  String get partnerMeetingProposalsHint;
+
+  /// No description provided for @partnerMeetingOpens.
+  ///
+  /// In ko, this message translates to:
+  /// **'열림'**
+  String get partnerMeetingOpens;
+
+  /// No description provided for @partnerMeetingPrint.
+  ///
+  /// In ko, this message translates to:
+  /// **'출력 / PDF'**
+  String get partnerMeetingPrint;
+
+  /// No description provided for @partnerMeetingSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get partnerMeetingSave;
+
+  /// No description provided for @partnerMeetingSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'보내기'**
+  String get partnerMeetingSend;
+
+  /// No description provided for @partnerMeetingLock.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요'**
+  String get partnerMeetingLock;
+
+  /// No description provided for @partnerMeetingNoShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택할 파트너 샵이 없어요'**
+  String get partnerMeetingNoShop;
+
+  /// No description provided for @partnerMeetingPrevious.
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 기간 열림 {opens} · 조회 {views} · 깃발 {flags} · 결제 {pays}'**
+  String partnerMeetingPrevious(int opens, int views, int flags, int pays);
+
   /// No description provided for @adminSameBoatTitle.
   ///
   /// In ko, this message translates to:

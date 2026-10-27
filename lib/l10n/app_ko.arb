@@ -1512,6 +1512,54 @@
   "seatBriefMissedWall": "무엇이 막고 있었나요",
   "seatBriefMissedWallHint": "조건을 하나 뺐을 때 결과가 열린 횟수",
   "seatBriefMissedEmpty": "아직 기록이 없어요",
+  "partnerMeetingOpen": "파트너 미팅 보고서",
+  "partnerMeetingTitle": "파트너 미팅 보고서",
+  "partnerMeetingHint": "조건을 고르면 보고서를 만들어 드려요",
+  "partnerMeetingPartner": "파트너",
+  "partnerMeetingScope": "상품 · 지역",
+  "partnerMeetingScopeAll": "전체 (상품 {count}개)",
+  "@partnerMeetingScopeAll": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerMeetingScopeRegion": "{name} 전체 (상품 {count}개)",
+  "@partnerMeetingScopeRegion": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "partnerMeetingPreview": "보고서 미리보기",
+  "partnerMeetingPreviewTitle": "미리보기",
+  "partnerMeetingPreviewHint": "A4 1~2쪽 · 파트너 미팅 보고서",
+  "partnerMeetingPaperKicker": "다이브트래블 × {shop} · 미팅 자료",
+  "@partnerMeetingPaperKicker": {
+    "placeholders": { "shop": {"type": "String"} }
+  },
+  "partnerMeetingPaperTitle": "같은배 빈자리 운영 리포트",
+  "partnerMeetingCompareNote": "지난 기간 대비",
+  "partnerMeetingConclusion": "한 줄 결론",
+  "partnerMeetingConclusionHint": "이번 기간 가장 중요한 한 가지",
+  "partnerMeetingFunnel": "팔리는 과정",
+  "partnerMeetingFunnelHint": "깔때기",
+  "partnerMeetingScoreHint": "이 파트너의 자리만",
+  "partnerMeetingDemandHint": "이 지역에서 못 찾은 조건",
+  "partnerMeetingProposals": "함께 만들 자리 제안",
+  "partnerMeetingProposalsHint": "수요에 맞춘 가격·인원·날짜 아이디어",
+  "partnerMeetingOpens": "열림",
+  "partnerMeetingPrint": "출력 / PDF",
+  "partnerMeetingSave": "저장",
+  "partnerMeetingSend": "보내기",
+  "partnerMeetingLock": "다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요",
+  "partnerMeetingNoShop": "선택할 파트너 샵이 없어요",
+  "partnerMeetingPrevious": "지난 기간 열림 {opens} · 조회 {views} · 깃발 {flags} · 결제 {pays}",
+  "@partnerMeetingPrevious": {
+    "placeholders": {
+      "opens": {"type": "int"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
   "adminSameBoatTitle": "같은배 · 빈자리 모니터",
   "adminSameBoatHint": "등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.",
   "adminSameBoatApproveHint": "빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.",

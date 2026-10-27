@@ -2397,6 +2397,103 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seatBriefMissedEmpty => 'No records yet';
 
   @override
+  String get partnerMeetingOpen => 'Partner meeting report';
+
+  @override
+  String get partnerMeetingTitle => 'Partner meeting report';
+
+  @override
+  String get partnerMeetingHint =>
+      'Pick the conditions and the report is filled in';
+
+  @override
+  String get partnerMeetingPartner => 'Partner';
+
+  @override
+  String get partnerMeetingScope => 'Product and region';
+
+  @override
+  String partnerMeetingScopeAll(int count) {
+    return 'All ($count products)';
+  }
+
+  @override
+  String partnerMeetingScopeRegion(String name, int count) {
+    return 'All of $name ($count products)';
+  }
+
+  @override
+  String get partnerMeetingPreview => 'Preview report';
+
+  @override
+  String get partnerMeetingPreviewTitle => 'Preview';
+
+  @override
+  String get partnerMeetingPreviewHint =>
+      'A4, 1–2 pages · partner meeting report';
+
+  @override
+  String partnerMeetingPaperKicker(String shop) {
+    return 'Dive Travel × $shop · meeting notes';
+  }
+
+  @override
+  String get partnerMeetingPaperTitle => 'Same-boat open seat report';
+
+  @override
+  String get partnerMeetingCompareNote => 'Versus the previous period';
+
+  @override
+  String get partnerMeetingConclusion => 'One-line conclusion';
+
+  @override
+  String get partnerMeetingConclusionHint => 'The one thing that mattered';
+
+  @override
+  String get partnerMeetingFunnel => 'How it sold';
+
+  @override
+  String get partnerMeetingFunnelHint => 'Funnel';
+
+  @override
+  String get partnerMeetingScoreHint => 'This partner\'s seats only';
+
+  @override
+  String get partnerMeetingDemandHint =>
+      'Searches in this region that found nothing';
+
+  @override
+  String get partnerMeetingProposals => 'Seats to open together';
+
+  @override
+  String get partnerMeetingProposalsHint =>
+      'Price, party, and dates from demand';
+
+  @override
+  String get partnerMeetingOpens => 'Open';
+
+  @override
+  String get partnerMeetingPrint => 'Print / PDF';
+
+  @override
+  String get partnerMeetingSave => 'Save';
+
+  @override
+  String get partnerMeetingSend => 'Send';
+
+  @override
+  String get partnerMeetingLock =>
+      'Other partners\' names and numbers are left out. Member names and contacts are never included';
+
+  @override
+  String get partnerMeetingNoShop => 'No partner shop to choose';
+
+  @override
+  String partnerMeetingPrevious(int opens, int views, int flags, int pays) {
+    return 'Previous period: open $opens · views $views · flags $flags · paid $pays';
+  }
+
+  @override
   String get adminSameBoatTitle => 'Same-boat · open seats';
 
   @override

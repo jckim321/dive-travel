@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -8,14 +10,18 @@ import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/seat_score.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Period funnel for same-boat opens, views, flags, and payments.
 class AdminSameBoatBriefScreen extends StatefulWidget {
-  const AdminSameBoatBriefScreen({super.key, this.now});
+  const AdminSameBoatBriefScreen({super.key, this.now, this.onMeetingPrint});
 
   /// Test clock. Production uses [DateTime.now].
   final DateTime? now;
+
+  /// Test hook. Production opens the browser print dialog.
+  final Future<void> Function(Uint8List bytes)? onMeetingPrint;
 
   @override
   State<AdminSameBoatBriefScreen> createState() =>
@@ -71,16 +77,10 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
       if (_compare) {
         final earlier = seatBriefPreviousWindow(window);
         previous = seatBriefFunnel(
-          await store.seatEventsBetween(
-            from: earlier.start,
-            to: earlier.end,
-          ),
+          await store.seatEventsBetween(from: earlier.start, to: earlier.end),
         );
         demandPrevious = seatDemandDigest(
-          await store.seatDemandsBetween(
-            from: earlier.start,
-            to: earlier.end,
-          ),
+          await store.seatDemandsBetween(from: earlier.start, to: earlier.end),
         );
       }
       if (!mounted) {
@@ -168,7 +168,8 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
     final seats = <SeatScoreSeat>[];
     for (final product in store.allShopProducts) {
       final hull = product.shopId.split('--').first;
-      final stats = store.liveStatsFor(hull) ?? store.liveStatsFor(product.shopId);
+      final stats =
+          store.liveStatsFor(hull) ?? store.liveStatsFor(product.shopId);
       final shopContinent = stats?.continent ?? '';
       final place = SameBoatPlace(
         continent: product.continent,
@@ -227,261 +228,289 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
     return Scaffold(
       backgroundColor: AdminConsoleTheme.bg,
       body: ListView(
-      key: const Key('admin-same-boat-brief'),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      children: [
-        Text(
-          _conclusion(l10n),
-          key: const Key('seat-brief-conclusion'),
-          style: const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        key: const Key('admin-same-boat-brief'),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          Text(
+            _conclusion(l10n),
+            key: const Key('seat-brief-conclusion'),
+            style: const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              key: const Key('admin-partner-meeting-open'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AdminPartnerMeetingScreen(
+                      now: widget.now,
+                      onPrint: widget.onMeetingPrint,
+                    ),
+                  ),
+                );
+              },
+              child: Text(l10n.partnerMeetingOpen),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _Preset(
+                  key: const Key('seat-brief-preset-today'),
+                  label: l10n.seatBriefToday,
+                  selected: _preset == SeatBriefPreset.today,
+                  onTap: () => _select(SeatBriefPreset.today),
+                ),
+                _Preset(
+                  key: const Key('seat-brief-preset-7'),
+                  label: l10n.seatBriefSeven,
+                  selected: _preset == SeatBriefPreset.sevenDays,
+                  onTap: () => _select(SeatBriefPreset.sevenDays),
+                ),
+                _Preset(
+                  key: const Key('seat-brief-preset-30'),
+                  label: l10n.seatBriefThirty,
+                  selected: _preset == SeatBriefPreset.thirtyDays,
+                  onTap: () => _select(SeatBriefPreset.thirtyDays),
+                ),
+                _Preset(
+                  key: const Key('seat-brief-preset-year'),
+                  label: l10n.seatBriefYear,
+                  selected: _preset == SeatBriefPreset.thisYear,
+                  onTap: () => _select(SeatBriefPreset.thisYear),
+                ),
+                _Preset(
+                  key: const Key('seat-brief-preset-custom'),
+                  label: l10n.seatBriefCustom,
+                  selected: _preset == SeatBriefPreset.custom,
+                  onTap: _pickCustom,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              _Preset(
-                key: const Key('seat-brief-preset-today'),
-                label: l10n.seatBriefToday,
-                selected: _preset == SeatBriefPreset.today,
-                onTap: () => _select(SeatBriefPreset.today),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 16,
+                color: AdminConsoleTheme.muted,
               ),
-              _Preset(
-                key: const Key('seat-brief-preset-7'),
-                label: l10n.seatBriefSeven,
-                selected: _preset == SeatBriefPreset.sevenDays,
-                onTap: () => _select(SeatBriefPreset.sevenDays),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  seatBriefRangeLabel(window),
+                  key: const Key('seat-brief-range'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
-              _Preset(
-                key: const Key('seat-brief-preset-30'),
-                label: l10n.seatBriefThirty,
-                selected: _preset == SeatBriefPreset.thirtyDays,
-                onTap: () => _select(SeatBriefPreset.thirtyDays),
+              Text(
+                l10n.seatBriefCompare,
+                style: const TextStyle(
+                  color: AdminConsoleTheme.muted,
+                  fontSize: 12,
+                ),
               ),
-              _Preset(
-                key: const Key('seat-brief-preset-year'),
-                label: l10n.seatBriefYear,
-                selected: _preset == SeatBriefPreset.thisYear,
-                onTap: () => _select(SeatBriefPreset.thisYear),
-              ),
-              _Preset(
-                key: const Key('seat-brief-preset-custom'),
-                label: l10n.seatBriefCustom,
-                selected: _preset == SeatBriefPreset.custom,
-                onTap: _pickCustom,
+              Switch(
+                key: const Key('seat-brief-compare'),
+                value: _compare,
+                activeThumbColor: AdminConsoleTheme.aqua,
+                onChanged: (value) {
+                  setState(() => _compare = value);
+                  _load();
+                },
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              size: 16,
-              color: AdminConsoleTheme.muted,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                seatBriefRangeLabel(window),
-                key: const Key('seat-brief-range'),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
+          if (beforeRecording) ...[
+            const SizedBox(height: 8),
             Text(
-              l10n.seatBriefCompare,
-              style: const TextStyle(
-                color: AdminConsoleTheme.muted,
-                fontSize: 12,
-              ),
-            ),
-            Switch(
-              key: const Key('seat-brief-compare'),
-              value: _compare,
-              activeThumbColor: AdminConsoleTheme.aqua,
-              onChanged: (value) {
-                setState(() => _compare = value);
-                _load();
-              },
+              l10n.seatBriefBeforeRecording,
+              key: const Key('seat-brief-before-recording'),
+              style: const TextStyle(color: AdminConsoleTheme.amber),
             ),
           ],
-        ),
-        if (beforeRecording) ...[
+          const SizedBox(height: 20),
+          Text(
+            l10n.seatBriefFunnelTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
           const SizedBox(height: 8),
-          Text(
-            l10n.seatBriefBeforeRecording,
-            key: const Key('seat-brief-before-recording'),
-            style: const TextStyle(color: AdminConsoleTheme.amber),
+          _FunnelRow(
+            countKey: const Key('seat-brief-opens'),
+            deltaKey: const Key('seat-brief-opens-delta'),
+            label: l10n.seatBriefOpens,
+            count: _current.opens,
+            previous: _previous?.opens,
+            maxCount: maxCount,
+            caption: null,
           ),
-        ],
-        const SizedBox(height: 20),
-        Text(
-          l10n.seatBriefFunnelTitle,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        if (_loading)
-          const Padding(
-            padding: EdgeInsets.only(top: 12),
-            child: LinearProgressIndicator(minHeight: 2),
+          _FunnelRow(
+            countKey: const Key('seat-brief-views'),
+            deltaKey: const Key('seat-brief-views-delta'),
+            label: l10n.seatBriefViews,
+            count: _current.views,
+            previous: _previous?.views,
+            maxCount: maxCount,
+            caption: l10n.seatBriefViewsPerOpen(
+              _current.viewsPerOpen.toStringAsFixed(1),
+            ),
           ),
-        const SizedBox(height: 8),
-        _FunnelRow(
-          countKey: const Key('seat-brief-opens'),
-          deltaKey: const Key('seat-brief-opens-delta'),
-          label: l10n.seatBriefOpens,
-          count: _current.opens,
-          previous: _previous?.opens,
-          maxCount: maxCount,
-          caption: null,
-        ),
-        _FunnelRow(
-          countKey: const Key('seat-brief-views'),
-          deltaKey: const Key('seat-brief-views-delta'),
-          label: l10n.seatBriefViews,
-          count: _current.views,
-          previous: _previous?.views,
-          maxCount: maxCount,
-          caption: l10n.seatBriefViewsPerOpen(
-            _current.viewsPerOpen.toStringAsFixed(1),
+          _FunnelRow(
+            countKey: const Key('seat-brief-flags'),
+            deltaKey: const Key('seat-brief-flags-delta'),
+            label: l10n.seatBriefFlags,
+            count: _current.flags,
+            previous: _previous?.flags,
+            maxCount: maxCount,
+            caption: l10n.seatBriefFlagRate(_current.flagPercent),
           ),
-        ),
-        _FunnelRow(
-          countKey: const Key('seat-brief-flags'),
-          deltaKey: const Key('seat-brief-flags-delta'),
-          label: l10n.seatBriefFlags,
-          count: _current.flags,
-          previous: _previous?.flags,
-          maxCount: maxCount,
-          caption: l10n.seatBriefFlagRate(_current.flagPercent),
-        ),
-        _FunnelRow(
-          countKey: const Key('seat-brief-pays'),
-          deltaKey: const Key('seat-brief-pays-delta'),
-          label: l10n.seatBriefPays,
-          count: _current.pays,
-          previous: _previous?.pays,
-          maxCount: maxCount,
-          caption: l10n.seatBriefPayRate(_current.payPercent),
-        ),
-        const SizedBox(height: 28),
-        Text(
-          l10n.seatBriefScoreTitle,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.seatBriefScoreHint,
-          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _Preset(
-              key: const Key('seat-score-tab-region'),
-              label: l10n.seatBriefScoreRegion,
-              selected: _scoreTab == _ScoreTab.region,
-              onTap: () => setState(() => _scoreTab = _ScoreTab.region),
-            ),
-            _Preset(
-              key: const Key('seat-score-tab-product'),
-              label: l10n.seatBriefScoreProduct,
-              selected: _scoreTab == _ScoreTab.product,
-              onTap: () => setState(() => _scoreTab = _ScoreTab.product),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (_scoreRows.isEmpty)
-          Text(
-            l10n.seatBriefMissedEmpty,
-            key: const Key('seat-score-empty'),
-            style: const TextStyle(color: AdminConsoleTheme.muted),
-          )
-        else
-          for (final row in _scoreRows)
-            _ScoreCard(
-              row: row,
-              counts: l10n.seatBriefScoreCounts(row.views, row.flags, row.pays),
-              fill: l10n.seatBriefScoreFill(row.fillPercent),
-              badge: _badgeLabel(l10n, row.badge),
-              badgeColor: _badgeColor(row.badge),
-              showRegion: _scoreTab == _ScoreTab.product,
-            ),
-        const SizedBox(height: 28),
-        Text(
-          l10n.seatBriefMissedTitle,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.seatBriefMissedHint,
-          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        if (_demand.isEmpty)
-          Text(
-            l10n.seatBriefMissedEmpty,
-            key: const Key('seat-demand-empty'),
-            style: const TextStyle(color: AdminConsoleTheme.muted),
-          )
-        else ...[
-          Text(
-            l10n.seatBriefMissedTop,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+          _FunnelRow(
+            countKey: const Key('seat-brief-pays'),
+            deltaKey: const Key('seat-brief-pays-delta'),
+            label: l10n.seatBriefPays,
+            count: _current.pays,
+            previous: _previous?.pays,
+            maxCount: maxCount,
+            caption: l10n.seatBriefPayRate(_current.payPercent),
           ),
-          const SizedBox(height: 8),
-          for (var i = 0; i < _demand.top.length; i++)
-            _DemandRank(
-              index: i + 1,
-              label: _demandLine(l10n, _demand.top[i]),
-              count: l10n.seatBriefMissedCount(_demand.top[i].count),
-              delta: _demandPrevious == null
-                  ? null
-                  : seatBriefDeltaLabel(
-                      _demand.top[i].count,
-                      _demandPrevious!.countFor(_demand.top[i].search),
-                    ),
-            ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 28),
           Text(
-            l10n.seatBriefMissedWall,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            l10n.seatBriefScoreTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 4),
           Text(
-            l10n.seatBriefMissedWallHint,
+            l10n.seatBriefScoreHint,
             style: const TextStyle(
               color: AdminConsoleTheme.muted,
               fontSize: 12,
             ),
           ),
-          if (_demand.walls.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                l10n.seatBriefMissedEmpty,
-                key: const Key('seat-demand-wall-empty'),
-                style: const TextStyle(color: AdminConsoleTheme.muted),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _Preset(
+                key: const Key('seat-score-tab-region'),
+                label: l10n.seatBriefScoreRegion,
+                selected: _scoreTab == _ScoreTab.region,
+                onTap: () => setState(() => _scoreTab = _ScoreTab.region),
               ),
+              _Preset(
+                key: const Key('seat-score-tab-product'),
+                label: l10n.seatBriefScoreProduct,
+                selected: _scoreTab == _ScoreTab.product,
+                onTap: () => setState(() => _scoreTab = _ScoreTab.product),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_scoreRows.isEmpty)
+            Text(
+              l10n.seatBriefMissedEmpty,
+              key: const Key('seat-score-empty'),
+              style: const TextStyle(color: AdminConsoleTheme.muted),
             )
           else
-            for (final wall in _demand.walls)
-              _FunnelRow(
-                countKey: Key('seat-demand-wall-${wall.unlock.name}'),
-                deltaKey: Key('seat-demand-wall-${wall.unlock.name}-delta'),
-                label: _unlockLabel(l10n, wall.unlock),
-                count: wall.count,
-                previous: _demandPrevious == null
-                    ? null
-                    : _demandPrevious!.wallCount(wall.unlock),
-                maxCount: _demand.walls
-                    .map((item) => item.count)
-                    .reduce((a, b) => a > b ? a : b),
-                caption: null,
+            for (final row in _scoreRows)
+              _ScoreCard(
+                row: row,
+                counts: l10n.seatBriefScoreCounts(
+                  row.views,
+                  row.flags,
+                  row.pays,
+                ),
+                fill: l10n.seatBriefScoreFill(row.fillPercent),
+                badge: _badgeLabel(l10n, row.badge),
+                badgeColor: _badgeColor(row.badge),
+                showRegion: _scoreTab == _ScoreTab.product,
               ),
+          const SizedBox(height: 28),
+          Text(
+            l10n.seatBriefMissedTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.seatBriefMissedHint,
+            style: const TextStyle(
+              color: AdminConsoleTheme.muted,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_demand.isEmpty)
+            Text(
+              l10n.seatBriefMissedEmpty,
+              key: const Key('seat-demand-empty'),
+              style: const TextStyle(color: AdminConsoleTheme.muted),
+            )
+          else ...[
+            Text(
+              l10n.seatBriefMissedTop,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            for (var i = 0; i < _demand.top.length; i++)
+              _DemandRank(
+                index: i + 1,
+                label: _demandLine(l10n, _demand.top[i]),
+                count: l10n.seatBriefMissedCount(_demand.top[i].count),
+                delta: _demandPrevious == null
+                    ? null
+                    : seatBriefDeltaLabel(
+                        _demand.top[i].count,
+                        _demandPrevious!.countFor(_demand.top[i].search),
+                      ),
+              ),
+            const SizedBox(height: 18),
+            Text(
+              l10n.seatBriefMissedWall,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.seatBriefMissedWallHint,
+              style: const TextStyle(
+                color: AdminConsoleTheme.muted,
+                fontSize: 12,
+              ),
+            ),
+            if (_demand.walls.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  l10n.seatBriefMissedEmpty,
+                  key: const Key('seat-demand-wall-empty'),
+                  style: const TextStyle(color: AdminConsoleTheme.muted),
+                ),
+              )
+            else
+              for (final wall in _demand.walls)
+                _FunnelRow(
+                  countKey: Key('seat-demand-wall-${wall.unlock.name}'),
+                  deltaKey: Key('seat-demand-wall-${wall.unlock.name}-delta'),
+                  label: _unlockLabel(l10n, wall.unlock),
+                  count: wall.count,
+                  previous: _demandPrevious == null
+                      ? null
+                      : _demandPrevious!.wallCount(wall.unlock),
+                  maxCount: _demand.walls
+                      .map((item) => item.count)
+                      .reduce((a, b) => a > b ? a : b),
+                  caption: null,
+                ),
+          ],
         ],
-      ],
       ),
     );
   }
@@ -644,15 +673,9 @@ class _DemandRank extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              label,
-              key: Key('seat-demand-rank-${index - 1}'),
-            ),
+            child: Text(label, key: Key('seat-demand-rank-${index - 1}')),
           ),
-          Text(
-            count,
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
+          Text(count, style: const TextStyle(fontWeight: FontWeight.w800)),
           if (delta != null) ...[
             const SizedBox(width: 8),
             Text(
@@ -726,7 +749,9 @@ String? _demandWhen(AppLocalizations l10n, SeatDemandGroup group) {
     case SameBoatWhen.thisMonth:
       return l10n.sameBoatAlertMonth(local.month);
     case SameBoatWhen.nextMonth:
-      return l10n.sameBoatAlertMonth(DateTime(local.year, local.month + 1).month);
+      return l10n.sameBoatAlertMonth(
+        DateTime(local.year, local.month + 1).month,
+      );
     case SameBoatWhen.withinThreeMonths:
       return l10n.sameBoatSearchThreeMonths;
   }

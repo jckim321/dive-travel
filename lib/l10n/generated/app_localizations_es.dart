@@ -2353,6 +2353,99 @@ class AppLocalizationsEs extends AppLocalizations {
   String get seatBriefMissedEmpty => '아직 기록이 없어요';
 
   @override
+  String get partnerMeetingOpen => '파트너 미팅 보고서';
+
+  @override
+  String get partnerMeetingTitle => '파트너 미팅 보고서';
+
+  @override
+  String get partnerMeetingHint => '조건을 고르면 보고서를 만들어 드려요';
+
+  @override
+  String get partnerMeetingPartner => '파트너';
+
+  @override
+  String get partnerMeetingScope => '상품 · 지역';
+
+  @override
+  String partnerMeetingScopeAll(int count) {
+    return '전체 (상품 $count개)';
+  }
+
+  @override
+  String partnerMeetingScopeRegion(String name, int count) {
+    return '$name 전체 (상품 $count개)';
+  }
+
+  @override
+  String get partnerMeetingPreview => '보고서 미리보기';
+
+  @override
+  String get partnerMeetingPreviewTitle => '미리보기';
+
+  @override
+  String get partnerMeetingPreviewHint => 'A4 1~2쪽 · 파트너 미팅 보고서';
+
+  @override
+  String partnerMeetingPaperKicker(String shop) {
+    return '다이브트래블 × $shop · 미팅 자료';
+  }
+
+  @override
+  String get partnerMeetingPaperTitle => '같은배 빈자리 운영 리포트';
+
+  @override
+  String get partnerMeetingCompareNote => '지난 기간 대비';
+
+  @override
+  String get partnerMeetingConclusion => '한 줄 결론';
+
+  @override
+  String get partnerMeetingConclusionHint => '이번 기간 가장 중요한 한 가지';
+
+  @override
+  String get partnerMeetingFunnel => '팔리는 과정';
+
+  @override
+  String get partnerMeetingFunnelHint => '깔때기';
+
+  @override
+  String get partnerMeetingScoreHint => '이 파트너의 자리만';
+
+  @override
+  String get partnerMeetingDemandHint => '이 지역에서 못 찾은 조건';
+
+  @override
+  String get partnerMeetingProposals => '함께 만들 자리 제안';
+
+  @override
+  String get partnerMeetingProposalsHint => '수요에 맞춘 가격·인원·날짜 아이디어';
+
+  @override
+  String get partnerMeetingOpens => '열림';
+
+  @override
+  String get partnerMeetingPrint => '출력 / PDF';
+
+  @override
+  String get partnerMeetingSave => '저장';
+
+  @override
+  String get partnerMeetingSend => '보내기';
+
+  @override
+  String get partnerMeetingLock =>
+      '다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요';
+
+  @override
+  String get partnerMeetingNoShop => '선택할 파트너 샵이 없어요';
+
+  @override
+  String partnerMeetingPrevious(int opens, int views, int flags, int pays) {
+    return '지난 기간 열림 $opens · 조회 $views · 깃발 $flags · 결제 $pays';
+  }
+
+  @override
   String get adminSameBoatTitle => '같은배 · 빈자리 모니터';
 
   @override

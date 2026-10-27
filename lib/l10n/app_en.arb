@@ -906,6 +906,54 @@
   "seatBriefMissedWall": "What was in the way",
   "seatBriefMissedWallHint": "How often dropping one condition opened results",
   "seatBriefMissedEmpty": "No records yet",
+  "partnerMeetingOpen": "Partner meeting report",
+  "partnerMeetingTitle": "Partner meeting report",
+  "partnerMeetingHint": "Pick the conditions and the report is filled in",
+  "partnerMeetingPartner": "Partner",
+  "partnerMeetingScope": "Product and region",
+  "partnerMeetingScopeAll": "All ({count} products)",
+  "@partnerMeetingScopeAll": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerMeetingScopeRegion": "All of {name} ({count} products)",
+  "@partnerMeetingScopeRegion": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "partnerMeetingPreview": "Preview report",
+  "partnerMeetingPreviewTitle": "Preview",
+  "partnerMeetingPreviewHint": "A4, 1–2 pages · partner meeting report",
+  "partnerMeetingPaperKicker": "Dive Travel × {shop} · meeting notes",
+  "@partnerMeetingPaperKicker": {
+    "placeholders": { "shop": {"type": "String"} }
+  },
+  "partnerMeetingPaperTitle": "Same-boat open seat report",
+  "partnerMeetingCompareNote": "Versus the previous period",
+  "partnerMeetingConclusion": "One-line conclusion",
+  "partnerMeetingConclusionHint": "The one thing that mattered",
+  "partnerMeetingFunnel": "How it sold",
+  "partnerMeetingFunnelHint": "Funnel",
+  "partnerMeetingScoreHint": "This partner's seats only",
+  "partnerMeetingDemandHint": "Searches in this region that found nothing",
+  "partnerMeetingProposals": "Seats to open together",
+  "partnerMeetingProposalsHint": "Price, party, and dates from demand",
+  "partnerMeetingOpens": "Open",
+  "partnerMeetingPrint": "Print / PDF",
+  "partnerMeetingSave": "Save",
+  "partnerMeetingSend": "Send",
+  "partnerMeetingLock": "Other partners' names and numbers are left out. Member names and contacts are never included",
+  "partnerMeetingNoShop": "No partner shop to choose",
+  "partnerMeetingPrevious": "Previous period: open {opens} · views {views} · flags {flags} · paid {pays}",
+  "@partnerMeetingPrevious": {
+    "placeholders": {
+      "opens": {"type": "int"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
   "adminSameBoatTitle": "Same-boat · open seats",
   "adminSameBoatHint": "Only seats opened by product registrants. Flag planting is not done here.",
   "adminSameBoatApproveHint": "Approving a leftover-seat request publishes it to Same-boat. A planted flag locks the seat until the pay deadline.",
