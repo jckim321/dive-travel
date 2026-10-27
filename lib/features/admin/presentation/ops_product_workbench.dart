@@ -5281,6 +5281,7 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
                 data: widget.controller.text.trim().isEmpty
                     ? l10n.detailComposerHint
                     : widget.controller.text,
+                softLineBreak: true,
                 styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
                     .copyWith(
                       p: const TextStyle(

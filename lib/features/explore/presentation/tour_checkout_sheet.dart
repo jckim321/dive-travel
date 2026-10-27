@@ -1629,6 +1629,7 @@ class _MarkdownDetailCard extends StatelessWidget {
               MarkdownBody(
                 data: markdown,
                 shrinkWrap: true,
+                softLineBreak: true,
                 styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
                   p: const TextStyle(
                     color: AppTheme.muted,
