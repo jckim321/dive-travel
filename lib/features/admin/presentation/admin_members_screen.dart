@@ -1,12 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
+import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -150,6 +155,15 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: AdminConsoleTheme.border),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        key: const Key('admin-create-partner'),
+                        onPressed: () => _openCreatePartner(context, store),
+                        child: const Text('제휴파트너 만들기'),
                       ),
                     ),
                     if (missing.isNotEmpty) ...[
@@ -648,7 +662,10 @@ Future<void> _confirmPromote(BuildContext context, DiverStore store, MemberAccou
   if (result.createNew) {
     await store.promoteMemberToPartnerWithNewShop(uid: member.uid, shopName: result.newShopName!);
   } else {
-    await store.promoteMemberToPartner(uid: member.uid, shopId: result.shopId!);
+    await store.promoteMemberToPartner(
+      uid: member.uid,
+      shopId: partnerShopHull(result.shopId!),
+    );
   }
   if (!context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.adminMembersPromoteDone)));
@@ -772,6 +789,16 @@ class AdminMemberDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      if (shown.ownedShopId.contains('--')) ...[
+                        _actionTile(
+                          key: Key('admin-member-fix-hull-${shown.uid}'),
+                          icon: Icons.storefront_outlined,
+                          title: '샵을 hull로 고치기',
+                          subtitle: shown.ownedShopId,
+                          color: AdminConsoleTheme.aqua,
+                          onTap: () => _confirmFixHull(context, store, shown),
+                        ),
+                      ],
                       const Text('계정 관리', style: TextStyle(color: AdminConsoleTheme.muted)),
                       const SizedBox(height: 8),
                       _actionTile(
@@ -1079,5 +1106,305 @@ String memberGradeLabel(AppLocalizations l10n, MemberGrade grade) {
       return l10n.memberGradeDiamond;
     case MemberGrade.platinum:
       return l10n.memberGradePlatinum;
+  }
+}
+
+Future<void> _openCreatePartner(BuildContext context, DiverStore store) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => _CreatePartnerDialog(store: store),
+  );
+}
+
+Future<void> _confirmFixHull(
+  BuildContext context,
+  DiverStore store,
+  MemberAccount member,
+) async {
+  final prefix = partnerShopHull(member.ownedShopId);
+  final picked = await showDialog<String>(
+    context: context,
+    builder: (ctx) => _FixHullDialog(prefix: prefix, shops: store.resortHulls),
+  );
+  if (picked == null || !context.mounted) return;
+  try {
+    await store.fixPartnerShopHull(uid: member.uid, shopId: picked);
+  } catch (error) {
+    if (!context.mounted) return;
+    final code = error is StateError ? '${error.message}' : '';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_provisionMessage(code))),
+    );
+  }
+}
+
+String _provisionMessage(String code) {
+  return switch (code) {
+    'ADMIN_SESSION_LOST' => '관리자 로그인이 바뀌어 멈췄어요.',
+    'SHOP_ALREADY_OWNED' => '이미 다른 파트너가 쓰는 샵이에요.',
+    'ALREADY_PARTNER' => '이미 다른 샵의 파트너예요.',
+    'WEAK_PASSWORD' => '비밀번호는 6자 이상이어야 해요.',
+    'SHOP_NAME_REQUIRED' => '샵 이름을 입력해 주세요.',
+    'LOGIN_ID_EMPTY' ||
+    'LOGIN_ID_RESERVED' ||
+    'LOGIN_ID_FORMAT' ||
+    'LOGIN_ID_TOO_LONG' => '아이디를 확인해 주세요.',
+    'PROMOTE_FAILED' => '파트너 지정에 실패했어요. 같은 아이디로 다시 누르면 지정만 이어 갑니다.',
+    _ => '만들지 못했어요. 다시 시도해 주세요.',
+  };
+}
+
+class _CreatePartnerDialog extends StatefulWidget {
+  const _CreatePartnerDialog({required this.store});
+
+  final DiverStore store;
+
+  @override
+  State<_CreatePartnerDialog> createState() => _CreatePartnerDialogState();
+}
+
+class _CreatePartnerDialogState extends State<_CreatePartnerDialog> {
+  final _shop = TextEditingController();
+  final _login = TextEditingController();
+  final _password = TextEditingController();
+  var _busy = false;
+  var _done = false;
+  var _existing = false;
+  String? _error;
+  String? _failure;
+  String _loginShown = '';
+  String _passwordShown = '';
+  var _copied = false;
+  List<ShopHullChoice> _choices = const [];
+  String? _pickedDocId;
+
+  @override
+  void dispose() {
+    _shop.dispose();
+    _login.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  bool get _ready =>
+      _shop.text.trim().isNotEmpty &&
+      _login.text.trim().isNotEmpty &&
+      _password.text.length >= 6;
+
+  Future<void> _submit() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final picked = _pickedDocId == null
+        ? null
+        : _choices
+            .where((choice) => choice.documentId == _pickedDocId)
+            .map((choice) => choice.hullId)
+            .firstOrNull;
+    try {
+      final result = await widget.store.provisionPartnerAccount(
+        shopName: _shop.text,
+        loginId: _login.text,
+        password: _password.text,
+        hullId: picked,
+      );
+      if (!mounted) return;
+      if (result.needsChoice) {
+        setState(() {
+          _choices = result.choices;
+          _pickedDocId = result.choices.first.documentId;
+          _busy = false;
+        });
+        return;
+      }
+      setState(() {
+        _done = true;
+        _existing = !result.createdAccount;
+        _loginShown = result.loginId;
+        _passwordShown = result.createdAccount ? result.password : '';
+        _busy = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      final code = error is StateError ? '${error.message}' : '';
+      setState(() {
+        _busy = false;
+        if (code == 'ACCOUNT_CREATED') {
+          _done = true;
+          _loginShown = AuthIdentity.storedLoginId(_login.text);
+          _passwordShown = _password.text;
+          _failure =
+              '계정은 만들어졌어요. 파트너 지정은 실패했어요. 같은 아이디로 다시 누르면 지정만 이어 갑니다.';
+        } else {
+          _error = _provisionMessage(code);
+        }
+      });
+    }
+  }
+
+  Future<void> _copy() async {
+    final text = _passwordShown.isEmpty
+        ? _loginShown
+        : '$_loginShown\n$_passwordShown';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    setState(() => _copied = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_done ? '만들어졌어요' : '제휴파트너 만들기'),
+      content: SingleChildScrollView(
+        child: _done ? _card() : _form(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: Text(_done ? '닫기' : '취소'),
+        ),
+        if (!_done)
+          FilledButton(
+            key: const Key('admin-create-partner-submit'),
+            onPressed: _busy || !_ready ? null : _submit,
+            child: Text(_choices.isEmpty ? '만들기' : '이 샵으로 만들기'),
+          ),
+      ],
+    );
+  }
+
+  Widget _form() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          key: const Key('admin-create-partner-shop'),
+          controller: _shop,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(labelText: '샵 이름'),
+        ),
+        TextField(
+          key: const Key('admin-create-partner-login'),
+          controller: _login,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(labelText: '아이디'),
+        ),
+        TextField(
+          key: const Key('admin-create-partner-password'),
+          controller: _password,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(labelText: '임시 비밀번호'),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('admin-create-partner-generate'),
+            onPressed: () {
+              _password.text = generatePartnerPassword();
+              setState(() {});
+            },
+            child: const Text('자동 생성'),
+          ),
+        ),
+        if (_choices.isNotEmpty) ...[
+          const Text('같은 이름의 샵이 여러 개예요. 하나를 고르세요.'),
+          for (final choice in _choices)
+            RadioListTile<String>(
+              key: Key('admin-partner-choice-${choice.documentId}'),
+              value: choice.documentId,
+              groupValue: _pickedDocId,
+              onChanged: (value) => setState(() => _pickedDocId = value),
+              title: Text('${choice.name} (${choice.hullId})'),
+            ),
+        ],
+        if (_error != null)
+          Text(
+            _error!,
+            key: const Key('admin-create-partner-error'),
+            style: const TextStyle(color: AdminConsoleTheme.danger),
+          ),
+      ],
+    );
+  }
+
+  Widget _card() {
+    return Column(
+      key: const Key('admin-create-partner-card'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_failure != null)
+          Text(
+            _failure!,
+            key: const Key('admin-create-partner-failure'),
+            style: const TextStyle(color: AdminConsoleTheme.danger),
+          ),
+        Text('아이디 $_loginShown'),
+        if (_passwordShown.isNotEmpty) Text('임시 비밀번호 $_passwordShown'),
+        if (_existing)
+          const Text(
+            '이미 있는 아이디예요, 비밀번호는 바뀌지 않아요',
+            key: Key('admin-create-partner-existing'),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('admin-create-partner-copy'),
+            onPressed: _copy,
+            child: Text(_copied ? '복사했어요' : '복사'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FixHullDialog extends StatefulWidget {
+  const _FixHullDialog({required this.prefix, required this.shops});
+
+  final String prefix;
+  final List<DiveShop> shops;
+
+  @override
+  State<_FixHullDialog> createState() => _FixHullDialogState();
+}
+
+class _FixHullDialogState extends State<_FixHullDialog> {
+  late String _hull = widget.prefix;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = <String>{
+      widget.prefix,
+      for (final shop in widget.shops) shop.hullId,
+    }.where((id) => id.isNotEmpty && !id.contains('--'));
+    return AlertDialog(
+      title: const Text('샵을 hull로 고치기'),
+      content: DropdownButtonFormField<String>(
+        key: const Key('admin-fix-hull-shop'),
+        initialValue: _hull,
+        items: [
+          for (final id in options)
+            DropdownMenuItem(value: id, child: Text(id)),
+        ],
+        onChanged: (value) {
+          if (value == null) return;
+          setState(() => _hull = value);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('admin-fix-hull-confirm'),
+          onPressed: () => Navigator.pop(context, _hull),
+          child: const Text('고치기'),
+        ),
+      ],
+    );
   }
 }

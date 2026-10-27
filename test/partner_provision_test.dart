@@ -72,7 +72,7 @@ void main() {
         isA<StateError>().having(
           (error) => error.message,
           'message',
-          'PROMOTE_FAILED',
+          'ACCOUNT_CREATED',
         ),
       ),
     );

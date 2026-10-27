@@ -565,6 +565,7 @@ class MemoryDiverRepository implements DiverRepository {
     required String password,
     required String actorUid,
     required String actorName,
+    String? hullId,
   }) {
     final sessionUid = _user?.uid;
     return runPartnerProvision(
@@ -573,6 +574,7 @@ class MemoryDiverRepository implements DiverRepository {
       password: password,
       actorUid: actorUid,
       actorName: actorName,
+      selectedHullId: hullId,
       ensureShop: (name) => ensureShopHull(name: name),
       findLogin: (stored) async => _partnerLoginHit(stored),
       hullClaimedByOther: (hull, exceptUid) async {
@@ -637,6 +639,46 @@ class MemoryDiverRepository implements DiverRepository {
       );
     }
     return null;
+  }
+
+  @override
+  Future<void> fixPartnerShopHull({
+    required String uid,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
+  }) async {
+    final hull = partnerShopHull(shopId);
+    if (hull.isEmpty || hull.contains('--')) {
+      throw StateError('SHOP_HULL_EMPTY');
+    }
+    final index = _members.indexWhere((member) => member.uid == uid);
+    if (index < 0) {
+      throw StateError('NOT_PARTNER');
+    }
+    final member = _members[index];
+    final partner = member.isBusiness || member.ownedShopId.trim().isNotEmpty;
+    if (!partner) {
+      throw StateError('NOT_PARTNER');
+    }
+    for (final other in _members) {
+      if (other.uid == uid) continue;
+      if (other.ownedShopId.trim() == hull) {
+        throw StateError('SHOP_ALREADY_OWNED');
+      }
+    }
+    _roleHistory.putIfAbsent(uid, () => []).add({
+      'action': 'fix_shop_hull',
+      'by_uid': actorUid,
+      'by_name': actorName,
+      'shop_id': hull,
+    });
+    _members[index] = member.copyWith(
+      isBusiness: true,
+      ownedShopId: hull,
+      userRole: 'business',
+    );
+    _membersController.add(List<MemberAccount>.from(_members));
   }
 
   @override

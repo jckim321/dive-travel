@@ -252,6 +252,56 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> fixPartnerShopHull({
+    required String uid,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
+  }) async {
+    final hull = partnerShopHull(shopId);
+    if (hull.isEmpty || hull.contains('--')) {
+      throw StateError('SHOP_HULL_EMPTY');
+    }
+    final owned = await _users.where('owned_shop_id', isEqualTo: hull).limit(1).get();
+    if (owned.docs.isNotEmpty && owned.docs.first.id != uid) {
+      throw StateError('SHOP_ALREADY_OWNED');
+    }
+    final ref = _userDoc(uid);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final data = snap.data() ?? <String, dynamic>{};
+      final wasBusiness = data['is_business'] == true ||
+          data['isBusiness'] == true ||
+          ((data['owned_shop_id'] as String?)?.trim().isNotEmpty ?? false);
+      if (!wasBusiness) {
+        throw StateError('NOT_PARTNER');
+      }
+      final previous = (data['owned_shop_id'] as String?)?.trim() ?? '';
+      final history = _appendRoleHistory(
+        existing: data['role_history'],
+        entry: {
+          'at': Timestamp.now(),
+          'by_uid': actorUid,
+          'by_name': actorName,
+          'action': 'fix_shop_hull',
+          'from': {'owned_shop_id': previous},
+          'to': {'owned_shop_id': hull},
+          'shop_id': hull,
+        },
+      );
+      tx.set(
+        ref,
+        {
+          'owned_shop_id': hull,
+          'role_history': history,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    });
+  }
+
+  @override
   Future<void> demoteMemberFromPartner({
     required String uid,
     required String actorUid,
@@ -427,6 +477,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required String password,
     required String actorUid,
     required String actorName,
+    String? hullId,
   }) {
     return runPartnerProvision(
       shopName: shopName,
@@ -434,6 +485,7 @@ class FirestoreDiverRepository implements DiverRepository {
       password: password,
       actorUid: actorUid,
       actorName: actorName,
+      selectedHullId: hullId,
       ensureShop: (name) => ensureShopHull(name: name),
       findLogin: _partnerLoginHit,
       hullClaimedByOther: (hull, exceptUid) async {

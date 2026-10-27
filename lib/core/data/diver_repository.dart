@@ -124,6 +124,15 @@ abstract class DiverRepository {
     required String password,
     required String actorUid,
     required String actorName,
+    String? hullId,
+  });
+
+  /// Rewrites a partner's owned shop id to the hull before `--`.
+  Future<void> fixPartnerShopHull({
+    required String uid,
+    required String shopId,
+    required String actorUid,
+    required String actorName,
   });
 
   /// H9: admin trial-data counts (prefer Firestore count(), no full scans).

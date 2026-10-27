@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/shop_hull_id.dart';
@@ -81,6 +83,7 @@ Future<PartnerProvisionResult> runPartnerProvision({
   required String password,
   required String actorUid,
   required String actorName,
+  String? selectedHullId,
   required Future<ShopHullResolve> Function(String name) ensureShop,
   required Future<PartnerLoginHit?> Function(String storedLoginId) findLogin,
   required Future<bool> Function(String hullId, String exceptUid) hullClaimedByOther,
@@ -106,11 +109,17 @@ Future<PartnerProvisionResult> runPartnerProvision({
   }
   final stored = AuthIdentity.storedLoginId(loginId);
   final email = AuthIdentity.toAuthEmail(loginId);
-  final shop = await ensureShop(name);
-  if (shop.needsChoice) {
-    return PartnerProvisionResult.choose(shop.choices);
+  final String hull;
+  final selected = selectedHullId?.trim() ?? '';
+  if (selected.isNotEmpty) {
+    hull = partnerShopHull(selected);
+  } else {
+    final shop = await ensureShop(name);
+    if (shop.needsChoice) {
+      return PartnerProvisionResult.choose(shop.choices);
+    }
+    hull = shop.hullId.trim();
   }
-  final hull = shop.hullId.trim();
   if (hull.isEmpty || hull.contains('--')) {
     throw StateError('SHOP_HULL_EMPTY');
   }
@@ -151,12 +160,16 @@ Future<PartnerProvisionResult> runPartnerProvision({
   } else {
     uid = existing.uid;
   }
-  await promote(
-    uid: uid,
-    hullId: hull,
-    actorUid: actorUid,
-    actorName: actorName,
-  );
+  try {
+    await promote(
+      uid: uid,
+      hullId: hull,
+      actorUid: actorUid,
+      actorName: actorName,
+    );
+  } catch (_) {
+    throw StateError(createdAccount ? 'ACCOUNT_CREATED' : 'PROMOTE_FAILED');
+  }
   return PartnerProvisionResult.ready(
     loginId: stored,
     password: password,
@@ -164,6 +177,16 @@ Future<PartnerProvisionResult> runPartnerProvision({
     uid: uid,
     createdAccount: createdAccount,
   );
+}
+
+/// 12 characters the admin can edit. Not stored.
+String generatePartnerPassword() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  final random = Random.secure();
+  return List.generate(
+    12,
+    (_) => alphabet[random.nextInt(alphabet.length)],
+  ).join();
 }
 
 String _loginIssueCode(NameTagIssue issue) {

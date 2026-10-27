@@ -1414,6 +1414,7 @@ class DiverStore extends ChangeNotifier {
     required String shopName,
     required String loginId,
     required String password,
+    String? hullId,
   }) async {
     if (!_stats.isAdmin) {
       throw StateError('Admin only');
@@ -1428,11 +1429,48 @@ class DiverStore extends ChangeNotifier {
       password: password,
       actorUid: actorUid,
       actorName: _stats.displayName,
+      hullId: hullId,
     );
     if (!result.needsChoice) {
       await refreshAdminInbox();
     }
     return result;
+  }
+
+  Future<void> fixPartnerShopHull({
+    required String uid,
+    required String shopId,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    final hull = partnerShopHull(shopId.trim());
+    if (hull.isEmpty || hull.contains('--')) {
+      throw StateError('SHOP_HULL_EMPTY');
+    }
+    for (final member in _members) {
+      if (member.uid != uid && member.ownedShopId.trim() == hull) {
+        throw StateError('SHOP_ALREADY_OWNED');
+      }
+    }
+    await _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(
+        isBusiness: true,
+        ownedShopId: hull,
+        userRole: 'business',
+      ),
+      write: () => _repository.fixPartnerShopHull(
+        uid: uid,
+        shopId: hull,
+        actorUid: actorUid,
+        actorName: _stats.displayName,
+      ),
+    );
   }
 
   Future<void> demoteMemberFromPartner(String uid) async {
