@@ -4674,6 +4674,12 @@ abstract class AppLocalizations {
   /// **'받은 보고서'**
   String get partnerMeetingInbox;
 
+  /// No description provided for @partnerMeetingInboxNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 보고서 {count}'**
+  String partnerMeetingInboxNew(int count);
+
   /// No description provided for @partnerMeetingInboxEmpty.
   ///
   /// In ko, this message translates to:

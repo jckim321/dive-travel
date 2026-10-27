@@ -3,14 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_preview.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_meeting_read_store.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Shared reports for this partner's shop. The list query keeps both filters.
 class PartnerMeetingInboxScreen extends StatefulWidget {
-  const PartnerMeetingInboxScreen({super.key, this.shopName = ''});
+  const PartnerMeetingInboxScreen({
+    super.key,
+    this.shopName = '',
+    this.readStore,
+  });
 
   final String shopName;
+  final PartnerMeetingReadStore? readStore;
 
   @override
   State<PartnerMeetingInboxScreen> createState() =>
@@ -20,6 +26,8 @@ class PartnerMeetingInboxScreen extends StatefulWidget {
 class _PartnerMeetingInboxScreenState extends State<PartnerMeetingInboxScreen> {
   var _loading = true;
   List<PartnerMeetingReport> _reports = const [];
+  late final PartnerMeetingReadStore _reads =
+      widget.readStore ?? PrefsPartnerMeetingReadStore();
 
   @override
   void initState() {
@@ -48,7 +56,11 @@ class _PartnerMeetingInboxScreenState extends State<PartnerMeetingInboxScreen> {
     }
   }
 
-  void _open(PartnerMeetingReport report) {
+  Future<void> _open(PartnerMeetingReport report) async {
+    await _reads.markRead(report.id);
+    if (!mounted) {
+      return;
+    }
     final named = widget.shopName.trim();
     final shopName = named.isEmpty ? report.recipe.hullId : named;
     Navigator.of(context).push(

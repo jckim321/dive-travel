@@ -8,6 +8,10 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_preview.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dashboard_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_meeting_inbox_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_meeting_read_store.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -34,15 +38,7 @@ void main() {
     addTearDown(store.dispose);
 
     await tester.pumpWidget(
-      DiverStoreScope(
-        store: store,
-        child: MaterialApp(
-          locale: const Locale('ko'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const PartnerDashboardScreen(),
-        ),
-      ),
+      _home(store, MemoryPartnerMeetingReadStore()),
     );
     await tester.pump();
     await tester.tap(find.byKey(const Key('partner-meeting-inbox')));
@@ -50,9 +46,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump();
 
-    expect(repo.debugMeetingReportQueries, hasLength(1));
-    expect(repo.debugMeetingReportQueries.single.shared, isTrue);
-    expect(repo.debugMeetingReportQueries.single.shopId, 'palau-dive');
+    expect(repo.debugMeetingReportQueries, isNotEmpty);
+    expect(
+      repo.debugMeetingReportQueries.every(
+        (query) => query.shared && query.shopId == 'palau-dive',
+      ),
+      isTrue,
+    );
     expect(
       find.byKey(const Key('partner-meeting-inbox-row-mr_palau')),
       findsOneWidget,
@@ -156,6 +156,149 @@ void main() {
     expect(find.byKey(const Key('partner-meeting-link-denied')), findsNothing);
     expect(find.byKey(const Key('partner-meeting-save')), findsNothing);
   });
+
+  test('열어 본 보고서 id는 기기에 남는다', () async {
+    SharedPreferences.setMockInitialValues(const {});
+    final store = PrefsPartnerMeetingReadStore();
+    expect(await store.readIds(), isEmpty);
+    await store.markRead('mr_palau');
+    await store.markRead('  ');
+    expect(await store.readIds(), {'mr_palau'});
+    expect(await PrefsPartnerMeetingReadStore().readIds(), {'mr_palau'});
+  });
+
+  testWidgets('안 읽은 보고서가 있으면 받은 보고서 버튼이 청록으로 채워진다', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(
+      isBusiness: true,
+      ownedShopId: 'palau-dive--fundive',
+    );
+    await repo.saveMeetingReport(_stored('mr_palau', 'palau-dive'));
+    await repo.saveMeetingReport(_stored('mr_next', 'palau-dive'));
+    await repo.saveMeetingReport(_stored('mr_draft', 'palau-dive'));
+    await repo.setMeetingReportShared(id: 'mr_palau', shared: true);
+    await repo.setMeetingReportShared(id: 'mr_next', shared: true);
+    final reads = MemoryPartnerMeetingReadStore();
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(_home(store, reads));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('새 보고서 2'), findsOneWidget);
+    expect(find.byKey(const Key('partner-meeting-inbox-dot')), findsOneWidget);
+    final filled = tester.widget<FilledButton>(
+      find.byKey(const Key('partner-meeting-inbox')),
+    );
+    expect(
+      filled.style?.backgroundColor?.resolve(const <WidgetState>{}),
+      PartnerTheme.accent,
+    );
+    final before = tester
+        .widget<FadeTransition>(find.byKey(const Key('partner-meeting-inbox-dot')))
+        .opacity
+        .value;
+    await tester.pump(const Duration(milliseconds: 350));
+    final after = tester
+        .widget<FadeTransition>(find.byKey(const Key('partner-meeting-inbox-dot')))
+        .opacity
+        .value;
+    expect(before, isNot(after));
+
+    await tester.tap(find.byKey(const Key('partner-meeting-inbox')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('partner-meeting-inbox-row-mr_palau')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(reads.ids, {'mr_palau'});
+
+    Navigator.of(
+      tester.element(find.byType(AdminPartnerMeetingPreview)),
+    ).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    Navigator.of(
+      tester.element(find.byType(PartnerMeetingInboxScreen)),
+    ).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('새 보고서 1'), findsOneWidget);
+    expect(
+      tester.widget(find.byKey(const Key('partner-meeting-inbox'))),
+      isA<FilledButton>(),
+    );
+
+    await tester.tap(find.byKey(const Key('partner-meeting-inbox')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byKey(const Key('partner-meeting-inbox-row-mr_next')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    Navigator.of(
+      tester.element(find.byType(AdminPartnerMeetingPreview)),
+    ).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    Navigator.of(
+      tester.element(find.byType(PartnerMeetingInboxScreen)),
+    ).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(find.text('새 보고서 1'), findsNothing);
+    expect(find.byKey(const Key('partner-meeting-inbox-dot')), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('partner-meeting-inbox')),
+        matching: find.text('받은 보고서'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget(find.byKey(const Key('partner-meeting-inbox'))),
+      isA<OutlinedButton>(),
+    );
+  });
+
+  testWidgets('받은 보고서가 없으면 버튼은 테두리만 있다', (tester) async {
+    final repo = MemoryDiverRepository.forTest(
+      isBusiness: true,
+      ownedShopId: 'palau-dive',
+    );
+    await repo.saveMeetingReport(_stored('mr_draft', 'palau-dive'));
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(_home(store, MemoryPartnerMeetingReadStore()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.textContaining('새 보고서'), findsNothing);
+    expect(
+      tester.widget(find.byKey(const Key('partner-meeting-inbox'))),
+      isA<OutlinedButton>(),
+    );
+  });
+}
+
+Widget _home(DiverStore store, PartnerMeetingReadStore reads) {
+  return DiverStoreScope(
+    store: store,
+    child: MaterialApp(
+      locale: const Locale('ko'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: PartnerDashboardScreen(readStore: reads),
+    ),
+  );
 }
 
 class _EmptyPinStore implements DevicePinStore {

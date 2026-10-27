@@ -954,6 +954,12 @@
   "partnerMeetingDraft": "Not sent",
   "partnerMeetingSentBadge": "Sent",
   "partnerMeetingInbox": "Received reports",
+  "partnerMeetingInboxNew": "{count} new",
+  "@partnerMeetingInboxNew": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "partnerMeetingInboxEmpty": "No reports yet",
   "partnerMeetingCopyLink": "Copy link",
   "partnerMeetingLinkCopied": "Link copied.",

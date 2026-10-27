@@ -2519,6 +2519,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerMeetingInbox => 'Received reports';
 
   @override
+  String partnerMeetingInboxNew(int count) {
+    return '$count new';
+  }
+
+  @override
   String get partnerMeetingInboxEmpty => 'No reports yet';
 
   @override

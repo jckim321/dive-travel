@@ -1560,6 +1560,12 @@
   "partnerMeetingDraft": "미발송",
   "partnerMeetingSentBadge": "보냄",
   "partnerMeetingInbox": "받은 보고서",
+  "partnerMeetingInboxNew": "새 보고서 {count}",
+  "@partnerMeetingInboxNew": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "partnerMeetingInboxEmpty": "받은 보고서가 없어요",
   "partnerMeetingCopyLink": "링크 복사",
   "partnerMeetingLinkCopied": "링크를 복사했습니다.",

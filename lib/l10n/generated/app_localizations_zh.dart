@@ -2443,6 +2443,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerMeetingInbox => '받은 보고서';
 
   @override
+  String partnerMeetingInboxNew(int count) {
+    return '새 보고서 $count';
+  }
+
+  @override
   String get partnerMeetingInboxEmpty => '받은 보고서가 없어요';
 
   @override

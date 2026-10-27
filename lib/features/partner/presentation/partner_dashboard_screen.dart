@@ -7,6 +7,7 @@ import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_meeting_inbox_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_meeting_read_store.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_settlement_screen.dart';
@@ -17,7 +18,9 @@ import 'package:dive_travel_app/features/partner/presentation/partner_vouchers_s
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class PartnerDashboardScreen extends StatefulWidget {
-  const PartnerDashboardScreen({super.key});
+  const PartnerDashboardScreen({super.key, this.readStore});
+
+  final PartnerMeetingReadStore? readStore;
 
   @override
   State<PartnerDashboardScreen> createState() => _PartnerDashboardScreenState();
@@ -26,11 +29,17 @@ class PartnerDashboardScreen extends StatefulWidget {
 class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
   List<DiveStarApplication> _apps = const [];
   var _docsBadge = 0;
+  var _unreadReports = 0;
+  late final PartnerMeetingReadStore _reads =
+      widget.readStore ?? PrefsPartnerMeetingReadStore();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadApps());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadApps();
+      _loadUnreadReports();
+    });
   }
 
   Future<void> _loadApps() async {
@@ -72,8 +81,43 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
     }
   }
 
+  Future<void> _loadUnreadReports() async {
+    if (!mounted) {
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    final owned = store.stats.ownedShopId ?? '';
+    try {
+      final reports = await store.listSharedMeetingReports(owned);
+      final seen = await _reads.readIds();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _unreadReports = reports.where((row) => !seen.contains(row.id)).length;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _unreadReports = 0);
+    }
+  }
+
   void _open(Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+
+  Future<void> _openMeetingInbox(String shopName) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PartnerMeetingInboxScreen(
+          shopName: shopName,
+          readStore: _reads,
+        ),
+      ),
+    );
+    await _loadUnreadReports();
   }
 
   @override
@@ -125,13 +169,41 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(
-                      key: const Key('partner-meeting-inbox'),
-                      onPressed: () => _open(
-                        PartnerMeetingInboxScreen(shopName: shopName),
-                      ),
-                      child: Text(l10n.partnerMeetingInbox),
-                    ),
+                    child: _unreadReports > 0
+                        ? FilledButton(
+                            key: const Key('partner-meeting-inbox'),
+                            onPressed: () => _openMeetingInbox(shopName),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              backgroundColor: PartnerTheme.accent,
+                              foregroundColor: PartnerTheme.bg,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  l10n.partnerMeetingInbox,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const _MeetingUnreadDot(),
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n.partnerMeetingInboxNew(_unreadReports),
+                                  key: const Key('partner-meeting-inbox-new'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : OutlinedButton(
+                            key: const Key('partner-meeting-inbox'),
+                            onPressed: () => _openMeetingInbox(shopName),
+                            child: Text(l10n.partnerMeetingInbox),
+                          ),
                   ),
                   const SizedBox(height: 14),
                   _BusinessHighlight(
@@ -161,6 +233,46 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                 ],
               );
             },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MeetingUnreadDot extends StatefulWidget {
+  const _MeetingUnreadDot();
+
+  @override
+  State<_MeetingUnreadDot> createState() => _MeetingUnreadDotState();
+}
+
+class _MeetingUnreadDotState extends State<_MeetingUnreadDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _blink = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+    value: 1,
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      key: const Key('partner-meeting-inbox-dot'),
+      opacity: _blink,
+      child: const SizedBox(
+        width: 8,
+        height: 8,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: PartnerTheme.bg,
+            shape: BoxShape.circle,
           ),
         ),
       ),
