@@ -1293,6 +1293,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           address: _meeting.text.trim(),
           curated: true,
           intro: _blurb.text.trim(),
+          creatorProposal: widget.creatorMode,
+          creatorUid: widget.creatorMode ? store.uid : null,
         );
       }
       final productId = existing?.id.isNotEmpty == true
