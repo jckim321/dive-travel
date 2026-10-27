@@ -227,7 +227,11 @@ class ProfileScreen extends StatelessWidget {
                       else
                         _LightPanel(
                           plate: 0,
-                          child: MyCraftedTripsSection(products: crafted),
+                          child: MyCraftedTripsSection(
+                            products: crafted,
+                            memberGrade: stats.memberGrade,
+                            viewerUid: store.uid ?? '',
+                          ),
                         ),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(
