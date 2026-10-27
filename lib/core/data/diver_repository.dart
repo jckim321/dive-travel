@@ -622,6 +622,9 @@ abstract class DiverRepository {
     bool clearAbsentFormFields = false,
     /// When true, seat keys are not written; the document just read keeps them.
     bool preserveSeatFields = false,
+    /// Creator proposals skip this. The subcollection is admin/owner-only, so
+    /// writing it in the same batch would deny the whole product save.
+    bool recordProductChanges = true,
   });
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId);

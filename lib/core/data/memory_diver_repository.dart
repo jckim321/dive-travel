@@ -3630,6 +3630,7 @@ class MemoryDiverRepository implements DiverRepository {
     List<ShopGallerySlot>? gallery,
     bool clearAbsentFormFields = false,
     bool preserveSeatFields = false,
+    bool recordProductChanges = true,
   }) async {
     final delay = debugDelayShopProductSave;
     if (delay != null) {
@@ -3731,7 +3732,7 @@ class MemoryDiverRepository implements DiverRepository {
       previous: prior,
       next: parsed,
     );
-    if (lines.isNotEmpty) {
+    if (recordProductChanges && lines.isNotEmpty) {
       final at = DateTime.now();
       final stored = _productChanges.putIfAbsent(shopId, () => []);
       stored.addAll([

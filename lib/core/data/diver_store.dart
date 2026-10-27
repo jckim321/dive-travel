@@ -2493,6 +2493,7 @@ class DiverStore extends ChangeNotifier {
       // Full-form saves omit seat keys. The repository re-reads the document
       // and leaves booked_seats, holds, and status as they are now.
       preserveSeatFields: intent != ProductSaveIntent.preserveListing,
+      recordProductChanges: !creatorSubmission,
     );
     // Only mirror bytes locally after a durable R2 URL was written.
     if (gallery != null) {

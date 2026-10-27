@@ -4347,6 +4347,7 @@ class FirestoreDiverRepository implements DiverRepository {
     List<ShopGallerySlot>? gallery,
     bool clearAbsentFormFields = false,
     bool preserveSeatFields = false,
+    bool recordProductChanges = true,
   }) async {
     var saved = product;
     // Upload first so we never persist a product that looks saved without a
@@ -4432,7 +4433,7 @@ class FirestoreDiverRepository implements DiverRepository {
       },
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-    if (actor.isNotEmpty) {
+    if (recordProductChanges && actor.isNotEmpty) {
       for (final line in lines) {
         batch.set(ref.collection('product_changes').doc(), {
           'product_id': line.productId,
