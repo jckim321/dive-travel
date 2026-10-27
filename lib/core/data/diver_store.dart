@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
@@ -1405,6 +1406,33 @@ class DiverStore extends ChangeNotifier {
     await promoteMemberToPartner(uid: uid, shopId: shopId);
     await refreshShopStats();
     return shopId;
+  }
+
+  /// One call: shop hull, diver account when the login is new, then partner.
+  /// [PartnerProvisionResult.password] is the only copy of the password.
+  Future<PartnerProvisionResult> provisionPartnerAccount({
+    required String shopName,
+    required String loginId,
+    required String password,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    final result = await _repository.provisionPartner(
+      shopName: shopName,
+      loginId: loginId,
+      password: password,
+      actorUid: actorUid,
+      actorName: _stats.displayName,
+    );
+    if (!result.needsChoice) {
+      await refreshAdminInbox();
+    }
+    return result;
   }
 
   Future<void> demoteMemberFromPartner(String uid) async {

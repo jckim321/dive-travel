@@ -5,16 +5,19 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:dive_travel_app/core/auth/pending_profile.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
+import 'package:dive_travel_app/firebase_options.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
+import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/seat_demand.dart';
@@ -412,6 +415,166 @@ class FirestoreDiverRepository implements DiverRepository {
         'updated_at': FieldValue.serverTimestamp(),
       });
       return true;
+    });
+  }
+
+  static const partnerProvisionAppName = 'partnerProvision';
+
+  @override
+  Future<PartnerProvisionResult> provisionPartner({
+    required String shopName,
+    required String loginId,
+    required String password,
+    required String actorUid,
+    required String actorName,
+  }) {
+    return runPartnerProvision(
+      shopName: shopName,
+      loginId: loginId,
+      password: password,
+      actorUid: actorUid,
+      actorName: actorName,
+      ensureShop: (name) => ensureShopHull(name: name),
+      findLogin: _partnerLoginHit,
+      hullClaimedByOther: (hull, exceptUid) async {
+        final owned = await _users
+            .where('owned_shop_id', isEqualTo: hull)
+            .limit(1)
+            .get();
+        if (owned.docs.isEmpty) return false;
+        return owned.docs.first.id != exceptUid;
+      },
+      createDiver: (draft) => _createDiverOnSecondary(draft),
+      promote: ({
+        required uid,
+        required hullId,
+        required actorUid,
+        required actorName,
+      }) {
+        return promoteMemberToPartner(
+          uid: uid,
+          shopId: hullId,
+          actorUid: actorUid,
+          actorName: actorName,
+        );
+      },
+      primaryUid: () => FirebaseAuth.instance.currentUser?.uid,
+    );
+  }
+
+  Future<PartnerLoginHit?> _partnerLoginHit(String stored) async {
+    final snap = await _users.where('login_id', isEqualTo: stored).limit(1).get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    final data = doc.data();
+    final owned = (data['owned_shop_id'] as String?)?.trim() ?? '';
+    final business = data['is_business'] == true || owned.isNotEmpty;
+    return PartnerLoginHit(
+      uid: doc.id,
+      isBusiness: business,
+      ownedShopId: owned,
+      hasUserDoc: true,
+    );
+  }
+
+  /// Named app only. Web sets in-memory auth persistence before create or sign-in.
+  /// Stops before the users doc when the default app user changes.
+  Future<ProvisionedDiver> _createDiverOnSecondary(PartnerDiverDraft draft) async {
+    final adminUid = FirebaseAuth.instance.currentUser?.uid;
+    final app = await _partnerProvisionApp();
+    final auth = FirebaseAuth.instanceFor(app: app);
+    try {
+      await _partnerAuthPersistence(auth);
+      UserCredential credential;
+      var createdAuth = false;
+      if (draft.signInExisting) {
+        credential = await auth.signInWithEmailAndPassword(
+          email: draft.email,
+          password: draft.password,
+        );
+      } else {
+        try {
+          credential = await auth.createUserWithEmailAndPassword(
+            email: draft.email,
+            password: draft.password,
+          );
+          createdAuth = true;
+        } on FirebaseAuthException catch (error) {
+          if (error.code != 'email-already-in-use') rethrow;
+          await _partnerAuthPersistence(auth);
+          credential = await auth.signInWithEmailAndPassword(
+            email: draft.email,
+            password: draft.password,
+          );
+        }
+      }
+      if (FirebaseAuth.instance.currentUser?.uid != adminUid) {
+        throw StateError('ADMIN_SESSION_LOST');
+      }
+      final user = credential.user;
+      if (user == null) {
+        throw StateError('AUTH_USER_MISSING');
+      }
+      await _writeOwnerDiverDoc(
+        FirebaseFirestore.instanceFor(app: app),
+        uid: user.uid,
+        email: draft.email,
+        displayName: draft.displayName,
+        storedLoginId: draft.storedLoginId,
+      );
+      return ProvisionedDiver(uid: user.uid, createdAuth: createdAuth);
+    } finally {
+      try {
+        await auth.signOut();
+      } catch (_) {}
+      try {
+        await app.delete();
+      } catch (_) {}
+    }
+  }
+
+  Future<FirebaseApp> _partnerProvisionApp() async {
+    try {
+      return Firebase.app(partnerProvisionAppName);
+    } catch (_) {
+      return Firebase.initializeApp(
+        name: partnerProvisionAppName,
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  }
+
+  Future<void> _partnerAuthPersistence(FirebaseAuth auth) async {
+    if (!kIsWeb) return;
+    await auth.setPersistence(Persistence.NONE);
+  }
+
+  Future<void> _writeOwnerDiverDoc(
+    FirebaseFirestore db, {
+    required String uid,
+    required String email,
+    required String displayName,
+    required String storedLoginId,
+  }) async {
+    final ref = db.collection('users').doc(uid);
+    final snap = await ref.get();
+    if (snap.exists) return;
+    await ref.set({
+      'email': email,
+      'display_name': displayName,
+      'login_id': storedLoginId,
+      'user_role': 'diver',
+      'member_grade': MemberGrade.silver.firestoreValue,
+      'is_instructor': false,
+      'is_verified_pro': false,
+      'c_card_agency': '',
+      'c_card_photo_url': '',
+      'total_log_count': 0,
+      'unique_regions_count': 0,
+      'visited_regions': <String>[],
+      'region_log_counts': <String, int>{},
+      'created_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
     });
   }
 

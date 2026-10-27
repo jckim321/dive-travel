@@ -28,6 +28,7 @@ import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
+import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
@@ -109,6 +110,13 @@ class MemoryDiverRepository implements DiverRepository {
 
   /// Test-only: signup's profile ensure throws [ProfileWriteException].
   bool debugFailSignupProfile = false;
+
+  /// Test-only: the next partner provision creates the diver, then fails
+  /// before promote. Clears itself on use.
+  bool debugFailNextPartnerPromote = false;
+
+  /// How many Auth users [provisionPartner] created. Resumes do not increment.
+  int partnerAuthCreateCount = 0;
 
   /// How many times [ensureUserDocument] ran.
   int debugEnsureCount = 0;
@@ -547,6 +555,89 @@ class MemoryDiverRepository implements DiverRepository {
 
   /// Test helper: name stored for a shop document, if any.
   String? createdShopName(String shopId) => _createdShops[shopId];
+
+  var _partnerUidSeq = 0;
+
+  @override
+  Future<PartnerProvisionResult> provisionPartner({
+    required String shopName,
+    required String loginId,
+    required String password,
+    required String actorUid,
+    required String actorName,
+  }) {
+    final sessionUid = _user?.uid;
+    return runPartnerProvision(
+      shopName: shopName,
+      loginId: loginId,
+      password: password,
+      actorUid: actorUid,
+      actorName: actorName,
+      ensureShop: (name) => ensureShopHull(name: name),
+      findLogin: (stored) async => _partnerLoginHit(stored),
+      hullClaimedByOther: (hull, exceptUid) async {
+        for (final member in _members) {
+          if (member.uid == exceptUid) continue;
+          if (member.ownedShopId.trim() == hull) return true;
+        }
+        return false;
+      },
+      createDiver: (draft) async {
+        if (sessionUid != _user?.uid) {
+          throw StateError('ADMIN_SESSION_LOST');
+        }
+        partnerAuthCreateCount += draft.signInExisting ? 0 : 1;
+        final uid = 'partner-${_partnerUidSeq++}';
+        _loginIds[uid] = draft.storedLoginId;
+        _members.add(
+          MemberAccount(
+            uid: uid,
+            email: draft.email,
+            displayName: draft.displayName,
+            grade: MemberGrade.silver,
+            userRole: 'diver',
+            loginId: draft.storedLoginId,
+          ),
+        );
+        _membersController.add(List<MemberAccount>.from(_members));
+        return ProvisionedDiver(uid: uid, createdAuth: !draft.signInExisting);
+      },
+      promote: ({
+        required uid,
+        required hullId,
+        required actorUid,
+        required actorName,
+      }) async {
+        if (debugFailNextPartnerPromote) {
+          debugFailNextPartnerPromote = false;
+          throw StateError('PROMOTE_FAILED');
+        }
+        await promoteMemberToPartner(
+          uid: uid,
+          shopId: hullId,
+          actorUid: actorUid,
+          actorName: actorName,
+        );
+      },
+      primaryUid: () => _user?.uid,
+    );
+  }
+
+  PartnerLoginHit? _partnerLoginHit(String stored) {
+    for (final member in _members) {
+      final id = member.loginId.isNotEmpty
+          ? member.loginId
+          : (_loginIds[member.uid] ?? '');
+      if (id != stored) continue;
+      return PartnerLoginHit(
+        uid: member.uid,
+        isBusiness: member.isBusiness,
+        ownedShopId: member.ownedShopId,
+        hasUserDoc: true,
+      );
+    }
+    return null;
+  }
 
   @override
   Future<TrialDataSnapshot> fetchTrialDataCounts({

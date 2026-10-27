@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
+import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
@@ -114,6 +115,16 @@ abstract class DiverRepository {
   /// that id's hull. Several matches create nothing. None creates
   /// `shops/{hull}` only when that document is absent.
   Future<ShopHullResolve> ensureShopHull({required String name});
+
+  /// Creates a diver account when the login is new, then promotes [shopName]'s
+  /// hull. The password is only in the returned value.
+  Future<PartnerProvisionResult> provisionPartner({
+    required String shopName,
+    required String loginId,
+    required String password,
+    required String actorUid,
+    required String actorName,
+  });
 
   /// H9: admin trial-data counts (prefer Firestore count(), no full scans).
   Future<TrialDataSnapshot> fetchTrialDataCounts({
