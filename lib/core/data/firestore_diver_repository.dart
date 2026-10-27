@@ -4346,6 +4346,7 @@ class FirestoreDiverRepository implements DiverRepository {
     bool useAsResortCover = false,
     List<ShopGallerySlot>? gallery,
     bool clearAbsentFormFields = false,
+    bool preserveSeatFields = false,
   }) async {
     var saved = product;
     // Upload first so we never persist a product that looks saved without a
@@ -4388,6 +4389,7 @@ class FirestoreDiverRepository implements DiverRepository {
       previous: previousRaw,
       product: saved,
       clearAbsentFormFields: clearAbsentFormFields,
+      preserveSeatFields: preserveSeatFields,
     );
     final next = current.values.toList();
     final coverForShop = saved.coverUrl.isNotEmpty

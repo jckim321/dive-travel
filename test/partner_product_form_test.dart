@@ -73,6 +73,9 @@ void main() {
   testWidgets('partner form is single-scroll dark (no stepper)', (tester) async {
     await pumpPartnerForm(tester);
     expect(find.byKey(const Key('partner-product-form-scroll')), findsOneWidget);
+    expect(find.byKey(const Key('partner-product-shop')), findsOneWidget);
+    expect(find.byKey(const Key('admin-product-shop')), findsNothing);
+    expect(find.byKey(const Key('same-boat-open-package')), findsNothing);
     expect(find.byKey(const Key('partner-form-soft-guide')), findsOneWidget);
     expect(find.byType(PageView), findsNothing);
     expect(find.textContaining('확인'), findsNothing);

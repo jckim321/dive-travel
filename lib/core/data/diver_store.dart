@@ -2490,6 +2490,9 @@ class DiverStore extends ChangeNotifier {
       gallery: gallery,
       // Same-boat seat screen only patches seat fields — keep other keys as-is.
       clearAbsentFormFields: intent != ProductSaveIntent.preserveListing,
+      // Full-form saves omit seat keys. The repository re-reads the document
+      // and leaves booked_seats, holds, and status as they are now.
+      preserveSeatFields: intent != ProductSaveIntent.preserveListing,
     );
     // Only mirror bytes locally after a durable R2 URL was written.
     if (gallery != null) {

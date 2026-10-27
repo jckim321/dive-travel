@@ -1659,6 +1659,19 @@ class ShopProduct {
     };
   }
 
+  /// Seat inventory written by the empty-seat screen and bookings.
+  /// The product form omits these so a save keeps the document's current values.
+  static const seatInventoryKeys = <String>{
+    'open_empty_seats',
+    'same_boat_status',
+    'capacity',
+    'booked_seats',
+    'flag_holds',
+    'departure_start',
+    'flag_closes_at',
+    'same_boat_opened_at',
+  };
+
   /// Optional keys owned by the full product workbench. When absent from
   /// [toMap] (empty), [mergePersistedMap] deletes them so clears stick.
   /// Not included: min_guests/max_guests (legacy, not on the form) or seat
@@ -1692,12 +1705,19 @@ class ShopProduct {
   /// Always overlays [toMap]. When [clearAbsentFormFields] is true, form-owned
   /// keys missing from the overlay are removed (empty form wins). Unknown and
   /// non-form keys (e.g. `min_guests`, custom legacy fields) are kept.
+  ///
+  /// When [preserveSeatFields] is true, seat keys are left off the overlay so
+  /// [previous] (the document just read) keeps booked seats, holds, and status.
   static Map<String, dynamic> mergePersistedMap({
     Map<String, dynamic>? previous,
     required ShopProduct product,
     bool clearAbsentFormFields = false,
+    bool preserveSeatFields = false,
   }) {
     final overlay = product.toMap();
+    if (preserveSeatFields) {
+      _omitSeatInventory(overlay, previous);
+    }
     final merged = <String, dynamic>{
       if (previous != null) ...previous,
       ...overlay,
@@ -1715,6 +1735,89 @@ class ShopProduct {
       }
     }
     return merged;
+  }
+
+  /// Drop seat keys from [overlay]. Option rows keep name and price, and copy
+  /// seat keys from the matching id in [previous].
+  static void _omitSeatInventory(
+    Map<String, dynamic> overlay,
+    Map<String, dynamic>? previous,
+  ) {
+    for (final key in seatInventoryKeys) {
+      overlay.remove(key);
+    }
+    final raw = overlay['options'];
+    if (raw is! List) {
+      return;
+    }
+    final previousById = _optionMapsById(previous?['options']);
+    overlay['options'] = [
+      for (final item in raw)
+        if (item is Map)
+          _optionKeepingDocumentSeats(
+            Map<String, dynamic>.from(item),
+            previousById,
+          )
+        else
+          item,
+    ];
+  }
+
+  /// Stamp seat keys from [from] onto [base] so a lagging raw map does not
+  /// hide a booking that already updated the live product.
+  static Map<String, dynamic> copySeatInventory({
+    required Map<String, dynamic> base,
+    required Map<String, dynamic> from,
+  }) {
+    final next = Map<String, dynamic>.from(base);
+    for (final key in seatInventoryKeys) {
+      if (from.containsKey(key)) {
+        next[key] = from[key];
+      } else {
+        next.remove(key);
+      }
+    }
+    if (from['options'] is List) {
+      next['options'] = from['options'];
+    }
+    return next;
+  }
+
+  static Map<String, Map<String, dynamic>> _optionMapsById(dynamic raw) {
+    final out = <String, Map<String, dynamic>>{};
+    if (raw is! List) {
+      return out;
+    }
+    for (final item in raw) {
+      if (item is! Map) {
+        continue;
+      }
+      final map = Map<String, dynamic>.from(item);
+      final id = map['id'];
+      if (id is String && id.isNotEmpty) {
+        out[id] = map;
+      }
+    }
+    return out;
+  }
+
+  static Map<String, dynamic> _optionKeepingDocumentSeats(
+    Map<String, dynamic> option,
+    Map<String, Map<String, dynamic>> previousById,
+  ) {
+    for (final key in seatInventoryKeys) {
+      option.remove(key);
+    }
+    final id = option['id'];
+    final prior = id is String ? previousById[id] : null;
+    if (prior != null) {
+      for (final key in seatInventoryKeys) {
+        if (prior.containsKey(key)) {
+          option[key] = prior[key];
+        }
+      }
+    }
+    return option;
   }
 
   static PriceRevision? _priceRevision(dynamic raw) {

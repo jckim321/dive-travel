@@ -620,6 +620,8 @@ abstract class DiverRepository {
     List<ShopGallerySlot>? gallery,
     /// When true, empty workbench fields delete persisted keys; unknown keys stay.
     bool clearAbsentFormFields = false,
+    /// When true, seat keys are not written; the document just read keeps them.
+    bool preserveSeatFields = false,
   });
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId);

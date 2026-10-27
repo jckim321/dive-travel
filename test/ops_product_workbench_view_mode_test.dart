@@ -72,72 +72,70 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  Future<void> goToStep(WidgetTester tester, int step) async {
-    await tester.tap(find.byKey(Key('brief-step-$step')));
-    await tester.pumpAndSettle();
-  }
-
   Future<void> reveal(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 50));
   }
 
   testWidgets('보기 모드에서는 스크롤되고 입력은 막힌다', (tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await pumpWorkbench(tester);
     final l10n = await loadKo();
 
     expect(find.byKey(const Key('ops-product-view-hint')), findsOneWidget);
     expect(find.text(l10n.briefViewModeHint), findsOneWidget);
     expect(find.byKey(const Key('brief-edit')), findsOneWidget);
+    expect(find.byKey(const Key('partner-product-form-scroll')), findsOneWidget);
+    expect(find.byType(PageView), findsNothing);
+    expect(find.byKey(const Key('same-boat-open-package')), findsNothing);
 
     await reveal(tester, find.byKey(const Key('admin-product-name')));
-    await tester.tap(find.byKey(const Key('admin-product-name')));
+    await tester.tap(
+      find.byKey(const Key('admin-product-name')),
+      warnIfMissed: false,
+    );
     await tester.pump();
     expect(
       FocusManager.instance.primaryFocus?.context?.widget,
       isNot(isA<EditableText>()),
       reason: 'view mode must not focus the name field',
     );
-
-    await goToStep(tester, 2);
-    await reveal(tester, find.text(l10n.briefSectionSameBoat));
-    expect(find.text(l10n.briefSectionSameBoat), findsWidgets);
-
-    await reveal(tester, find.byKey(const Key('same-boat-open-package')));
-    final openBefore = tester
-        .widget<SwitchListTile>(find.byKey(const Key('same-boat-open-package')))
-        .value;
-    await tester.tap(find.byKey(const Key('same-boat-open-package')));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<SwitchListTile>(
-            find.byKey(const Key('same-boat-open-package')),
-          )
-          .value,
-      openBefore,
-      reason: 'view mode IgnorePointer must block switch taps',
-    );
   });
 
   testWidgets('startEditing true면 바로 편집 모드', (tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await pumpWorkbench(tester, startEditing: true);
     expect(find.byKey(const Key('ops-product-view-hint')), findsNothing);
-    expect(find.byKey(const Key('brief-step-next')), findsOneWidget);
-    await goToStep(tester, 1);
+    expect(find.byKey(const Key('brief-step-next')), findsNothing);
+    expect(find.byKey(const Key('admin-product-shop')), findsOneWidget);
+    expect(find.byKey(const Key('same-boat-open-package')), findsNothing);
+    await reveal(tester, find.byKey(const Key('workbench-diver-price')));
     expect(find.byKey(const Key('workbench-diver-price')), findsOneWidget);
-    await goToStep(tester, 2);
+    await reveal(tester, find.byKey(const Key('admin-product-submit')));
     expect(find.byKey(const Key('admin-product-submit')), findsOneWidget);
   });
 
   testWidgets('수정 모드에서는 입력이 된다', (tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await pumpWorkbench(tester);
 
     await tester.tap(find.byKey(const Key('brief-edit')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('ops-product-view-hint')), findsNothing);
-    expect(find.byKey(const Key('brief-step-next')), findsOneWidget);
+    expect(find.byKey(const Key('same-boat-open-package')), findsNothing);
 
     await reveal(tester, find.byKey(const Key('admin-product-name')));
     await tester.enterText(
@@ -151,22 +149,6 @@ void main() {
           .controller
           ?.text,
       '수정된 상품명',
-    );
-
-    await goToStep(tester, 2);
-    await reveal(tester, find.byKey(const Key('same-boat-open-package')));
-    final openBefore = tester
-        .widget<SwitchListTile>(find.byKey(const Key('same-boat-open-package')))
-        .value;
-    await tester.tap(find.byKey(const Key('same-boat-open-package')));
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<SwitchListTile>(
-            find.byKey(const Key('same-boat-open-package')),
-          )
-          .value,
-      !openBefore,
     );
   });
 }

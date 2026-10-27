@@ -147,6 +147,65 @@ void main() {
     expect(after.schedule, '새 일정');
   });
 
+  test('preserveSeatFields keeps document seats over the form copy', () {
+    final previous = {
+      'id': 'p1',
+      'name': 'Old',
+      'booked_seats': 4,
+      'capacity': 8,
+      'open_empty_seats': true,
+      'same_boat_status': 'approved',
+      'flag_holds': [
+        {'uid': 'u1', 'seats': 1, 'expires_at': '2026-12-01T00:00:00.000'},
+      ],
+      'options': [
+        {
+          'id': 'opt',
+          'name': '옛 옵션',
+          'consumer_price': 1000,
+          'booked_seats': 3,
+          'open_empty_seats': true,
+          'same_boat_status': 'approved',
+        },
+      ],
+    };
+    final next = baseProduct().copyWith(
+      name: '새 이름',
+      bookedSeats: 1,
+      capacity: 1,
+      openEmptySeats: false,
+      sameBoatStatus: SameBoatStatus.closed,
+      options: [
+        ShopProductOption(
+          id: 'opt',
+          name: '고친 옵션',
+          consumerPrice: 2000,
+          professionalPrice: 2000,
+          bookedSeats: 1,
+          openEmptySeats: false,
+          sameBoatStatus: SameBoatStatus.closed,
+        ),
+      ],
+    );
+    final merged = ShopProduct.mergePersistedMap(
+      previous: previous,
+      product: next,
+      clearAbsentFormFields: true,
+      preserveSeatFields: true,
+    );
+    expect(merged['name'], '새 이름');
+    expect(merged['booked_seats'], 4);
+    expect(merged['capacity'], 8);
+    expect(merged['open_empty_seats'], isTrue);
+    expect(merged['same_boat_status'], 'approved');
+    final options = merged['options'] as List;
+    final option = options.single as Map;
+    expect(option['name'], '고친 옵션');
+    expect(option['consumer_price'], 2000);
+    expect(option['booked_seats'], 3);
+    expect(option['open_empty_seats'], isTrue);
+  });
+
   test('legacy min_guests no longer blocks checkout party size', () {
     final product = baseProduct(minGuests: 4);
     expect(product.minGuests, 4);

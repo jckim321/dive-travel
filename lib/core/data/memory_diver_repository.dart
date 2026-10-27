@@ -3629,6 +3629,7 @@ class MemoryDiverRepository implements DiverRepository {
     bool useAsResortCover = false,
     List<ShopGallerySlot>? gallery,
     bool clearAbsentFormFields = false,
+    bool preserveSeatFields = false,
   }) async {
     final delay = debugDelayShopProductSave;
     if (delay != null) {
@@ -3667,7 +3668,15 @@ class MemoryDiverRepository implements DiverRepository {
         break;
       }
     }
-    final previousRaw = byId[saved.id] ?? previousProduct?.toMap();
+    var previousRaw = byId[saved.id] ?? previousProduct?.toMap();
+    // Bookings update the live product before the raw map. Re-read those
+    // seat keys so a form save does not put back the count from open time.
+    if (preserveSeatFields && previousProduct != null) {
+      previousRaw = ShopProduct.copySeatInventory(
+        base: previousRaw ?? <String, dynamic>{'id': saved.id},
+        from: previousProduct.toMap(),
+      );
+    }
     if (gallery == null &&
         saved.coverUrl.isEmpty &&
         previousProduct != null &&
@@ -3686,6 +3695,7 @@ class MemoryDiverRepository implements DiverRepository {
       previous: previousRaw,
       product: toPersist,
       clearAbsentFormFields: clearAbsentFormFields,
+      preserveSeatFields: preserveSeatFields,
     );
     byId[toPersist.id] = merged;
     final parsed = ShopProduct.fromMap(shopId, merged);

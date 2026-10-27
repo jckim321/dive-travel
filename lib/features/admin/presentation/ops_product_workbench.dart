@@ -3,18 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
-import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/partner_product_form_fields.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart'
     show optionHasSeatCommitment;
@@ -24,9 +19,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
-import 'package:dive_travel_app/features/admin/presentation/product_brief_stepper.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
-import 'package:dive_travel_app/features/admin/presentation/product_submit_checklist.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
@@ -248,7 +241,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _sectionCount = 5;
   static const _kBoxRadius = 2.0;
   static const _kDirectShop = '__direct__';
-  static const _stepCount = 3;
 
   late final TextEditingController _name;
   late final TextEditingController _resortName;
@@ -291,9 +283,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _partnerAddonsKey = GlobalKey();
   final _partnerIndividualsKey = GlobalKey();
   ProductSaveIntent? _savingIntent;
-  var _previewDiver = 1;
-  var _previewNondiver = 0;
-  var _previewChild = 0;
   var _hasNondivers = false;
   final _addonQty = <String, int>{};
   var _namedResort = false;
@@ -301,15 +290,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
-  /// 0 basics · 1 pricing · 2 review/submit (admin/creator only).
-  var _stepIndex = 0;
   /// After first temp-save of a new product, reuse this id on later saves.
   String? _persistedProductId;
   /// Form fingerprint after load / successful save (dirty detection).
   String? _baselineSignature;
-  final _checklist = <String, bool>{
-    for (final id in ProductSubmitChecklist.ids) id: false,
-  };
   static final _priceInputFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[0-9,\s원]')),
     LengthLimitingTextInputFormatter(kWorkbenchPriceInputMaxLength),
@@ -336,23 +320,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return status == null || status == ProductPublishStatus.draft;
     }
     return true;
-  }
-
-  bool _adminSameBoatFields(DiverStore store) {
-    return store.stats.isAdmin && !widget.partnerMode && !widget.creatorMode;
-  }
-
-  void _goToStep(int step, {int? revealSection}) {
-    final next = step.clamp(0, _stepCount - 1);
-    setState(() => _stepIndex = next);
-    if (revealSection != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-        _reveal(revealSection);
-      });
-    }
   }
 
   @override
@@ -635,21 +602,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   /// Pending temp-save (creator/admin): photo + name + price > 0.
   bool _validatePendingTempSave(AppLocalizations l10n) {
     if (!_hasPhotosForSave) {
-      _reveal(0);
+      _scrollToPartnerKey(_diverPriceFieldKey);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.briefTempSaveNeedPhoto)),
       );
       return false;
     }
     if (_name.text.trim().isEmpty) {
-      _reveal(0);
+      _scrollToPartnerKey(_nameFieldKey);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.workbenchNeedName)),
       );
       return false;
     }
     if (_diverPriceValue <= 0) {
-      _reveal(3);
+      _scrollToPartnerKey(_diverPriceFieldKey);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
       );
@@ -700,23 +667,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   String get _durationLabelForSave {
-    if (widget.partnerMode) {
-      final nights = int.tryParse(_nightsField.text.trim());
-      final days = int.tryParse(_daysField.text.trim());
-      return durationLabelForPartnerSave(
-        originalLabel: _originalDurationLabel,
-        userEditedFields: _durationFieldsTouched,
-        nights: nights,
-        days: days,
-      );
-    }
-    return _nightsLabel;
+    final nights = int.tryParse(_nightsField.text.trim());
+    final days = int.tryParse(_daysField.text.trim());
+    return durationLabelForPartnerSave(
+      originalLabel: _originalDurationLabel,
+      userEditedFields: _durationFieldsTouched,
+      nights: nights,
+      days: days,
+    );
   }
 
   ProductCategory get _categoryForSave {
-    if (!widget.partnerMode) {
-      return _category;
-    }
     return categoryForPartnerSave(
       stored: widget.existing?.category ?? ProductCategory.resortPackage,
       userSelectedChip: _categoryChipTouched,
@@ -787,13 +748,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _listen(line.name);
   }
 
-  void _dropLine(_LineEditors line) {
-    line.name.removeListener(_onDraftChanged);
-    _draftListeners.remove(line.name);
-    line.consumer.removeListener(_onDraftChanged);
-    _draftListeners.remove(line.consumer);
-    line.dispose();
-  }
 
   void _onDraftChanged() {
     if (mounted) {
@@ -865,79 +819,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
-  BookingQuote _individualQuote(_IndividualTicket ticket) {
-    final option = ticket.toOption();
-    final addonOpts = ticket.addonOptions();
-    final heads = ticket.previewHeads < 1 ? 1 : ticket.previewHeads;
-    final price = option.consumerPrice;
-    final selected = <String>{
-      option.id,
-      for (final addon in addonOpts)
-        if ((ticket.addonQty[addon.id] ?? 0) > 0) addon.id,
-    };
-    return BookingQuote.compute(
-      product: ShopProduct(
-        id: 'draft-ind',
-        shopId: _shopId,
-        name: option.name.isEmpty ? '—' : option.name,
-        consumerPrice: price,
-        professionalPrice: price,
-        options: [option, ...addonOpts],
-      ),
-      professional: false,
-      divers: 0,
-      nondivers: 0,
-      children: 0,
-      infants: 0,
-      bookPackage: false,
-      selectedOptionIds: selected,
-      optionQuantities: {
-        option.id: heads,
-        for (final addon in addonOpts)
-          addon.id: ticket.addonQty[addon.id] ?? 0,
-      },
-    );
-  }
-
-  Future<void> _pickIndividualDate(
-    _IndividualTicket ticket, {
-    required bool checkout,
-  }) async {
-    final initial = checkout
-        ? (ticket.checkOut ?? ticket.checkIn ?? DateTime.now())
-        : (ticket.checkIn ?? DateTime.now());
-    final first = checkout && ticket.checkIn != null
-        ? ticket.checkIn!
-        : DateTime.now().subtract(const Duration(days: 1));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial.isBefore(first) ? first : initial,
-      firstDate: first,
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-    );
-    if (picked == null) {
-      return;
-    }
-    setState(() {
-      if (checkout) {
-        final start = ticket.checkIn;
-        if (start == null) {
-          ticket.checkIn = DateTime(picked.year, picked.month, picked.day);
-          ticket.nights = 0;
-        } else {
-          final checkIn = DateTime(start.year, start.month, start.day);
-          final checkOut = DateTime(picked.year, picked.month, picked.day);
-          var nights = checkOut.difference(checkIn).inDays;
-          if (nights < 0) {
-            nights = 0;
-          }
-          ticket.nights = nights;
-        }
-      } else {
-        ticket.checkIn = DateTime(picked.year, picked.month, picked.day);
-      }
-    });
-  }
 
   static String _seedDetailBody(ShopProduct? existing) {
     final schedule = (existing?.schedule ?? '').trim();
@@ -993,12 +874,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  List<DiveShop> get _shopsForContinent {
-    return [
-      for (final shop in DiveShopCatalog.shops)
-        if (shop.continent == _continent) shop,
-    ];
-  }
 
   List<ShopGallerySlot> get _gallerySlots => [
     for (final item in _gallery)
@@ -1104,24 +979,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return 'base';
   }
 
-  String get _nightsLabel {
-    if (_packageNights <= 0) {
-      return '1일';
-    }
-    return '$_packageNights박 ${_packageNights + 1}일';
-  }
-
-  DateTime? get _checkOut {
-    final start = _departureStart;
-    if (start == null) {
-      return null;
-    }
-    return DateTime(
-      start.year,
-      start.month,
-      start.day,
-    ).add(Duration(days: _packageNights));
-  }
 
   static int _parsePackageNights(String? label) {
     final raw = (label ?? '').trim();
@@ -1140,87 +997,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return 0;
   }
 
-  void _setPackageNights(int nights) {
-    setState(() {
-      _packageNights = nights < 0 ? 0 : nights;
-    });
-  }
-
-  void _setCheckIn(DateTime day) {
-    setState(() {
-      _departureStart = DateTime(day.year, day.month, day.day);
-      _seats.syncPackageDeparture(_departureStart);
-    });
-  }
-
-  void _setCheckOut(DateTime day) {
-    final start = _departureStart;
-    if (start == null) {
-      setState(() {
-        _departureStart = DateTime(day.year, day.month, day.day);
-        _packageNights = 0;
-      });
-      return;
-    }
-    final checkIn = DateTime(start.year, start.month, start.day);
-    final checkOut = DateTime(day.year, day.month, day.day);
-    var nights = checkOut.difference(checkIn).inDays;
-    if (nights < 0) {
-      nights = 0;
-    }
-    setState(() {
-      _packageNights = nights;
-    });
-  }
-
-  Future<void> _pickStayDate({required bool checkout}) async {
-    final initial = checkout
-        ? (_checkOut ?? _departureStart ?? DateTime.now())
-        : (_departureStart ?? DateTime.now());
-    final first = checkout && _departureStart != null
-        ? _departureStart!
-        : DateTime.now().subtract(const Duration(days: 1));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial.isBefore(first) ? first : initial,
-      firstDate: first,
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-    );
-    if (picked == null) {
-      return;
-    }
-    if (checkout) {
-      _setCheckOut(picked);
-    } else {
-      _setCheckIn(picked);
-    }
-  }
-
-  String _fmtDay(DateTime? day) {
-    if (day == null) {
-      return '—';
-    }
-    return DateFormat('yyyy.MM.dd').format(day);
-  }
-
-  String _continentLabel(AppLocalizations l10n, String id) {
-    return switch (id) {
-      ContinentId.asia => l10n.exploreContinentAsia,
-      ContinentId.africa => l10n.exploreContinentAfrica,
-      ContinentId.oceania => l10n.exploreContinentOceania,
-      ContinentId.americas => l10n.exploreContinentAmericas,
-      ContinentId.europe => l10n.exploreContinentEurope,
-      ContinentId.polar => l10n.exploreContinentPolar,
-      _ => id,
-    };
-  }
 
   void _reveal(int index) {
-    final step = briefStepForSection(index);
-    if (_stepIndex != step) {
-      _goToStep(step, revealSection: index);
-      return;
-    }
     final target = _sectionKeys[index].currentContext;
     if (target == null) {
       return;
@@ -1425,13 +1203,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         }
       } else if (!isTemp) {
         if (name.isEmpty) {
-          _reveal(0);
+          _scrollToPartnerKey(_nameFieldKey);
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
           return false;
         }
         if (_namedResort && _resortName.text.trim().isEmpty) {
-          _reveal(1);
+          _scrollToPartnerKey(_nameFieldKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.productFormCuratedResort)),
           );
@@ -1443,20 +1221,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
     }
     final store = DiverStoreScope.of(context);
-    _seats.isAdmin = store.stats.isAdmin;
-    _syncSeatSlots();
-    final validateSeats = !isTemp &&
-        (_adminSameBoatFields(store) ||
-            widget.existing?.openEmptySeats == true);
-    if (validateSeats) {
-      final seatError = _seats.validate(l10n, now: DateTime.now());
-      if (seatError != null) {
-        _reveal(4);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(seatError)));
-        return false;
-      }
-    }
     final existing = widget.existing;
     // Creator rejected → resubmit gate only. Partners publish immediately (H1a).
     final isResubmit = widget.creatorMode &&
@@ -1564,13 +1328,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         focPayCount: existing?.focPayCount ?? 0,
         focFreeCount: existing?.focFreeCount ?? 0,
         focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
-        openEmptySeats: existing?.openEmptySeats ?? false,
-        capacity: existing?.capacity ?? 0,
-        bookedSeats: existing?.bookedSeats ?? 0,
-        flagHolds: existing?.flagHolds ?? const [],
-        departureStart: _departureStart,
-        flagClosesAt: existing?.flagClosesAt,
-        sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
+        // Seat fields are not sent. mergePersistedMap keeps the document's.
         options: [for (final option in options) _withSeatOption(option)],
         listingKind: _shelfKindForSave(existing),
         featuredAt: _featuredAtForSave(existing),
@@ -1588,7 +1346,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ? existing!.submittedByUid
             : sessionUid,
       );
-      var product = _seats.applyToProduct(drafted);
+      var product = drafted;
       // null gallery = leave Firestore photo_urls/cover_url unchanged.
       // Empty list = user cleared photos. Non-empty = upload/keep listed URLs.
       final List<ShopGallerySlot>? galleryArg = _preserveExistingPhotos
@@ -1849,110 +1607,27 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     _seats.isAdmin = store.stats.isAdmin;
+    final form = _buildPartnerScaffold(l10n, store);
     if (widget.partnerMode) {
-      return PartnerTheme.wrap(_buildPartnerScaffold(l10n, store));
+      return PartnerTheme.wrap(form);
     }
-    final shopLocked = widget.lockedShopId != null;
-    final shops = shopLocked
-        ? [DiveShopCatalog.byId(_shopId) ?? DiveShopCatalog.shops.first]
-        : _shopsForContinent;
-    final hull = DiveShopCatalog.byId(_shopId);
-    final canPublish = store.stats.isAdmin &&
-        !widget.partnerMode &&
-        !widget.creatorMode;
-    final busy = _savingIntent != null;
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) {
-          return;
-        }
-        unawaited(_handleSystemBack());
-      },
-      child: Scaffold(
-      backgroundColor: AppTheme.canvas,
-      appBar: AppBar(
-        title: Text(
-          widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
-        ),
-        backgroundColor: AppTheme.canvas,
-        actions: [
-          if (_editing && _canTempSave)
-            TextButton(
-              key: const Key('brief-temp-save'),
-              onPressed: busy
-                  ? null
-                  : () => unawaited(_save(ProductSaveIntent.keepEditing)),
-              child: Text(
-                busy && _savingIntent == ProductSaveIntent.keepEditing
-                    ? l10n.exploreSaving
-                    : l10n.briefTempSave,
-              ),
-            ),
-        ],
-      ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 900;
-          final showSidePreview = wide;
-          final showMobilePreview = !wide && _stepIndex == 2;
-          // IgnorePointer is applied to scroll *children* in _brief / _guestCard
-          // so view mode can still scroll while blocking field taps.
-          final brief = Opacity(
-            opacity: _editing ? 1 : 0.92,
-            child: _brief(
-              l10n,
-              shops,
-              shopLocked,
-              showMobilePreview: showMobilePreview,
-              hull: hull,
-              adminSameBoat: _adminSameBoatFields(store),
-            ),
-          );
-          final guest = Opacity(
-            opacity: _editing ? 1 : 0.92,
-            child: _guestCard(l10n, hull),
-          );
-          return Column(
-            children: [
-              ProductBriefStepper(
-                stepIndex: _stepIndex,
-                // Allow browsing steps in view mode; fields stay IgnorePointer.
-                enabled: true,
-                onStepTap: (i) => _goToStep(i),
-              ),
-              Expanded(
-                child: showSidePreview
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: brief),
-                          SizedBox(
-                            width: 280,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
-                              child: guest,
-                            ),
-                          ),
-                        ],
-                      )
-                    : brief,
-              ),
-              _saveBar(l10n, canPublish: canPublish),
-            ],
-          );
-        },
-      ),
-    ),
-    );
+    return form;
   }
 
-  Widget _buildPartnerScaffold(AppLocalizations l10n, DiverStore _) {
+  Widget _buildPartnerScaffold(AppLocalizations l10n, DiverStore store) {
     final busy = _savingIntent != null;
     final approved =
         widget.existing?.publishStatus == ProductPublishStatus.approved;
     final primaryLabel = approved ? l10n.briefSave : l10n.partnerProductPublishCta;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final partnerChrome = widget.partnerMode;
+    final canPublish =
+        store.stats.isAdmin && !widget.partnerMode && !widget.creatorMode;
+    final rejectNote = widget.existing?.reviewNote.trim() ?? '';
+    final rejectTags = widget.existing?.rejectedReasonTags ?? const <String>[];
+    final showRejectBanner = widget.creatorMode &&
+        widget.existing?.publishStatus == ProductPublishStatus.rejected &&
+        (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -1965,8 +1640,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         backgroundColor: PartnerTheme.bg,
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          leading: PartnerBackButton(onPressed: () => unawaited(_handleSystemBack())),
-          title: Text(l10n.briefTitle),
+          leading: partnerChrome
+              ? PartnerBackButton(
+                  onPressed: () => unawaited(_handleSystemBack()),
+                )
+              : null,
+          title: Text(
+            widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
+          ),
+          backgroundColor: partnerChrome ? PartnerTheme.bg : AppTheme.canvas,
+          foregroundColor: partnerChrome ? PartnerTheme.text : null,
           actions: [
             if (_editing && _canTempSave)
               TextButton(
@@ -1995,6 +1678,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         l10n.briefViewModeHint,
+                        key: const Key('ops-product-view-hint'),
                         style: const TextStyle(
                           color: PartnerTheme.textDim,
                           fontSize: 13,
@@ -2006,6 +1690,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (showRejectBanner)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _RejectReasonBanner(
+                              note: rejectNote,
+                              tags: rejectTags,
+                              l10n: l10n,
+                            ),
+                          ),
+                        _shopLine(l10n, store),
+                        const SizedBox(height: 16),
                         _partnerGuideBanner(l10n),
                         const SizedBox(height: 16),
                         _partnerSectionHeader(1, l10n.partnerFormSectionBasics),
@@ -2027,7 +1722,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
             SafeArea(
               top: false,
-              child: Padding(
+              child: partnerChrome
+                  ? Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: Row(
                   children: [
@@ -2085,10 +1781,103 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ),
                   ],
                 ),
-              ),
+              )
+                  : _saveBar(l10n, canPublish: canPublish),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _shopLine(AppLocalizations l10n, DiverStore store) {
+    final locked = widget.partnerMode || widget.lockedShopId != null;
+    final shop = DiveShopCatalog.byId(_shopId);
+    if (locked) {
+      return Text(
+        shop?.name ?? _shopId,
+        key: const Key('partner-product-shop'),
+        style: const TextStyle(
+          color: PartnerTheme.text,
+          fontWeight: FontWeight.w800,
+          fontSize: 16,
+        ),
+      );
+    }
+    final shops = DiveShopCatalog.shops;
+    final shopValue = _namedResort
+        ? _kDirectShop
+        : (shops.any((item) => item.id == _shopId)
+              ? _shopId
+              : (shops.isNotEmpty ? shops.first.id : _kDirectShop));
+    return KeyedSubtree(
+      key: const Key('admin-product-shop'),
+      child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<String>(
+          key: ValueKey('admin-product-shop-$_namedResort-$shopValue'),
+          initialValue: shopValue,
+          decoration: _field(l10n.productFormShopHint),
+          items: [
+            DropdownMenuItem(
+              value: _kDirectShop,
+              child: Text(l10n.productFormDirectSelect),
+            ),
+            for (final item in shops)
+              DropdownMenuItem(value: item.id, child: Text(item.name)),
+          ],
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() {
+              if (value == _kDirectShop) {
+                final current = DiveShopCatalog.byId(_shopId);
+                _namedResort = true;
+                if (_resortName.text.trim().isEmpty) {
+                  _resortName.text = current?.name ?? '';
+                }
+                if (_resortCountry.text.trim().isEmpty) {
+                  _resortCountry.text = current?.country ?? '';
+                }
+                if (_resortRegion.text.trim().isEmpty) {
+                  _resortRegion.text = current?.location ?? '';
+                }
+                return;
+              }
+              _applyCatalogShop(value, store: store);
+            });
+          },
+        ),
+        if (_namedResort) ...[
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('product-curated-resort'),
+            controller: _resortName,
+            decoration: _field(
+              l10n.productFormCuratedResort,
+              hint: l10n.productFormCuratedResortHint,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _resortCountry,
+            decoration: _field(
+              l10n.productFormCuratedCountry,
+              hint: l10n.productFormCuratedCountryHint,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _resortRegion,
+            decoration: _field(
+              l10n.productFormCuratedLocation,
+              hint: l10n.productFormCuratedLocationHint,
+            ),
+          ),
+        ],
+      ],
       ),
     );
   }
@@ -2221,7 +2010,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         KeyedSubtree(
           key: _nameFieldKey,
           child: TextField(
-            key: const Key('partner-product-name'),
+            key: Key(
+              widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
+            ),
             controller: _name,
             style: const TextStyle(color: PartnerTheme.text),
             cursorColor: PartnerTheme.accent,
@@ -2317,7 +2108,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ),
         ),
         const SizedBox(height: 12),
-        Material(
+        _ProductDetailComposer(
+          controller: _detailBody,
+          decoration: _partnerField(
+            l10n.briefSectionDays,
+            hint: l10n.detailComposerHint,
+            lines: 10,
+          ),
+          onChanged: () => setState(() {}),
+        ),
+        if (widget.partnerMode) ...[
+          const SizedBox(height: 12),
+          Material(
           color: PartnerTheme.card,
           borderRadius: BorderRadius.circular(10),
           child: Padding(
@@ -2352,6 +2154,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
           ),
         ),
+        ],
       ],
     );
   }
@@ -2946,7 +2749,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final busy = _savingIntent != null;
     final pending = canPublish &&
         (widget.existing?.publishStatus == ProductPublishStatus.pending);
-    final onLastStep = _stepIndex >= _stepCount - 1;
     final partnerSaveLabel = widget.existing?.publishStatus ==
             ProductPublishStatus.approved
         ? l10n.briefSave
@@ -2997,60 +2799,26 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 child: Text(l10n.briefEdit),
               )
             else
-              Row(
-                children: [
-                  if (_stepIndex > 0) ...[
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const Key('brief-step-back'),
-                        onPressed: busy
-                            ? null
-                            : () => _goToStep(_stepIndex - 1),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        child: Text(l10n.briefStepBack),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton(
-                      key: onLastStep
-                          ? (canPublish
-                              ? const Key('admin-product-submit')
-                              : const Key('partner-product-save'))
-                          : const Key('brief-step-next'),
-                      onPressed: busy
-                          ? null
-                          : () {
-                              if (onLastStep) {
-                                _save(submitIntent);
-                              } else {
-                                _goToStep(_stepIndex + 1);
-                              }
-                            },
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: AppTheme.navy,
-                      ),
-                      child: Text(
-                        busy &&
-                                _savingIntent != null &&
-                                _savingIntent != ProductSaveIntent.keepEditing
-                            ? l10n.exploreSaving
-                            : (onLastStep
-                                ? (canPublish
-                                    ? l10n.briefSave
-                                    : (widget.partnerMode
-                                        ? partnerSaveLabel
-                                        : l10n.briefSubmit))
-                                : l10n.briefStepNext),
-                      ),
-                    ),
-                  ),
-                ],
+              FilledButton(
+                key: canPublish
+                    ? const Key('admin-product-submit')
+                    : const Key('partner-product-save'),
+                onPressed: busy ? null : () => _save(submitIntent),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: AppTheme.navy,
+                ),
+                child: Text(
+                  busy &&
+                          _savingIntent != null &&
+                          _savingIntent != ProductSaveIntent.keepEditing
+                      ? l10n.exploreSaving
+                      : (canPublish
+                          ? l10n.briefSave
+                          : (widget.partnerMode
+                              ? partnerSaveLabel
+                              : l10n.briefSubmit)),
+                ),
               ),
           ],
         ),
@@ -3142,172 +2910,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
-  Widget _brief(
-    AppLocalizations l10n,
-    List<DiveShop> shops,
-    bool shopLocked, {
-    required bool showMobilePreview,
-    required DiveShop? hull,
-    required bool adminSameBoat,
-  }) {
-    final rejectNote = widget.existing?.reviewNote.trim() ?? '';
-    final rejectTags = widget.existing?.rejectedReasonTags ?? const <String>[];
-    // Creator-only reject banner (partners have no approval flow — H1a).
-    final showRejectBanner = widget.creatorMode &&
-        widget.existing?.publishStatus == ProductPublishStatus.rejected &&
-        (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
-    return ListView(
-      key: const Key('ops-product-brief-scroll'),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      children: [
-        if (showRejectBanner)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _RejectReasonBanner(
-              note: rejectNote,
-              tags: rejectTags,
-              l10n: l10n,
-            ),
-          ),
-        if (!_editing) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              l10n.briefViewModeHint,
-              key: const Key('ops-product-view-hint'),
-              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-            ),
-          ),
-        ],
-        IgnorePointer(
-          ignoring: !_editing,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_stepIndex == 0) ...[
-                _shopInfoCard(l10n),
-                _block(0, l10n.briefSectionCover, [_coverBlock(l10n)]),
-                _block(1, l10n.briefSectionPlace, [
-                  _placeBlock(l10n, shops, shopLocked),
-                ]),
-                _block(2, l10n.briefSectionDays, [_detailBlock(l10n)]),
-              ] else if (_stepIndex == 1) ...[
-                _block(3, l10n.briefSectionTerms, [_bookingEntryBlock(l10n)]),
-              ] else ...[
-                ProductSubmitChecklist(
-                  checked: _checklist,
-                  onChanged: (id, value) {
-                    setState(() => _checklist[id] = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                if (showMobilePreview) ...[
-                  _guestCard(l10n, hull),
-                  const SizedBox(height: 12),
-                ],
-                if (adminSameBoat ||
-                    widget.existing?.openEmptySeats == true)
-                  _block(
-                    4,
-                    l10n.briefSectionSameBoat,
-                    [_sameBoatSeatBlock(l10n)],
-                  )
-                else
-                  _sameBoatPartnerHint(l10n),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _shopInfoCard(AppLocalizations l10n) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        key: const Key('brief-shop-info-card'),
-        color: const Color(0xFFF3F6FA),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.briefShopInfoTitle,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.navy,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.briefShopInfoBody,
-                style: const TextStyle(color: AppTheme.muted, fontSize: 13),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  key: const Key('brief-shop-info-open'),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ResortDeskScreen(shopId: _shopId),
-                      ),
-                    );
-                  },
-                  child: Text(l10n.briefShopInfoOpen),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sameBoatPartnerHint(AppLocalizations l10n) {
-    return Material(
-      key: const Key('brief-same-boat-partner-hint'),
-      color: const Color(0xFFF3F6FA),
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Text(
-          l10n.briefSameBoatPartnerHint,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 13, height: 1.4),
-        ),
-      ),
-    );
-  }
-
-  Widget _sameBoatSeatBlock(AppLocalizations l10n) {
-    _syncSeatSlots();
-    return SameBoatSeatOpenFields(
-      controller: _seats,
-      showPackageDeparturePicker: false,
-      onChanged: () => setState(() {}),
-    );
-  }
-
-  Widget _block(int index, String title, List<Widget> children) {
-    return KeyedSubtree(
-      key: _sectionKeys[index],
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: BookingFormSection(
-          step: '${index + 1}',
-          title: title,
-          borderRadius: _kBoxRadius,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
-          ),
-        ),
-      ),
-    );
-  }
 
   InputDecoration _field(String label, {String? hint, int? lines}) {
     final border = OutlineInputBorder(
@@ -3330,69 +2932,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  Widget _coverBlock(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.workbenchCategory),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _CategoryPick(
-                label: l10n.workbenchCatResort,
-                icon: Icons.apartment_outlined,
-                selected: _category == ProductCategory.resortPackage,
-                onTap: () =>
-                    setState(() => _category = ProductCategory.resortPackage),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _CategoryPick(
-                label: l10n.workbenchCatLiveaboard,
-                icon: Icons.directions_boat_outlined,
-                selected: _category == ProductCategory.liveaboard,
-                onTap: () =>
-                    setState(() => _category = ProductCategory.liveaboard),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _photoBlock(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.exploreCoverPhotoHint,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-        ),
-        if (!R2Config.canPersistListingPhotos)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              l10n.productFormPhotoHint,
-              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-            ),
-          ),
-        const SizedBox(height: 12),
-        BookingGalleryEditor(
-          items: _gallery,
-          onAdd: _addPhotos,
-          onRemove: _removePhoto,
-          onMakeCover: _makeCover,
-          maxItems: _maxGallery,
-          cornerRadius: _kBoxRadius,
-          attachKey: const Key('brief-gallery-add'),
-          compact: true,
-        ),
-      ],
-    );
-  }
 
   void _applyCatalogShop(String shopId, {required DiverStore store}) {
     final next = DiveShopCatalog.byId(shopId);
@@ -3417,299 +2956,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
-  Future<void> _openDestinationMap(AppLocalizations l10n) async {
-    final query = _meeting.text.trim();
-    if (query.isEmpty) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.exploreResortAddress)));
-      return;
-    }
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeQueryComponent(query)}',
-    );
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.workbenchOpenMap)));
-    }
-  }
 
-  Widget _destinationMapCard(AppLocalizations l10n) {
-    final address = _meeting.text.trim();
-    final location = [
-      if (_resortRegion.text.trim().isNotEmpty) _resortRegion.text.trim(),
-      if (_resortCountry.text.trim().isNotEmpty) _resortCountry.text.trim(),
-    ].join(', ');
-    final label = address.isNotEmpty
-        ? address
-        : (location.isNotEmpty ? location : l10n.exploreResortAddress);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.oceanDeep,
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.place_outlined,
-                  color: AppTheme.gold,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: address.isEmpty
-                    ? null
-                    : () => _openDestinationMap(l10n),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFF4EBD3),
-                  disabledForegroundColor: Colors.white38,
-                ),
-                icon: const Icon(Icons.map_outlined, size: 18),
-                label: Text(l10n.workbenchOpenMap),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _placeBlock(
-    AppLocalizations l10n,
-    List<DiveShop> shops,
-    bool shopLocked,
-  ) {
-    final store = DiverStoreScope.of(context);
-    final shopValue = shopLocked
-        ? _shopId
-        : (_namedResort
-              ? _kDirectShop
-              : (shops.any((shop) => shop.id == _shopId)
-                    ? _shopId
-                    : (shops.isNotEmpty ? shops.first.id : _kDirectShop)));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DropdownButtonFormField<String>(
-          key: ValueKey(
-            shopLocked
-                ? 'shop-locked-$_shopId'
-                : 'shop-$_continent-$_namedResort-$_shopId',
-          ),
-          initialValue: shopValue,
-          decoration: _field(l10n.productFormShopHint),
-          items: [
-            if (!shopLocked)
-              DropdownMenuItem(
-                value: _kDirectShop,
-                child: Text(l10n.productFormDirectSelect),
-              ),
-            for (final shop in shops)
-              DropdownMenuItem(value: shop.id, child: Text(shop.name)),
-          ],
-          onChanged: shopLocked
-              ? null
-              : (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    if (value == _kDirectShop) {
-                      final current = DiveShopCatalog.byId(_shopId);
-                      _namedResort = true;
-                      if (_resortName.text.trim().isEmpty) {
-                        _resortName.text = current?.name ?? '';
-                      }
-                      if (_resortCountry.text.trim().isEmpty) {
-                        _resortCountry.text = current?.country ?? '';
-                      }
-                      if (_resortRegion.text.trim().isEmpty) {
-                        _resortRegion.text = current?.location ?? '';
-                      }
-                      return;
-                    }
-                    _applyCatalogShop(value, store: store);
-                  });
-                },
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: _continent,
-          decoration: _field(l10n.productFormContinent),
-          items: [
-            for (final id in ContinentId.all)
-              DropdownMenuItem(
-                value: id,
-                child: Text(_continentLabel(l10n, id)),
-              ),
-          ],
-          onChanged: shopLocked
-              ? null
-              : (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _continent = value;
-                    if (_namedResort) {
-                      return;
-                    }
-                    final filtered = _shopsForContinent;
-                    if (filtered.isNotEmpty &&
-                        !filtered.any((shop) => shop.id == _shopId)) {
-                      _applyCatalogShop(filtered.first.id, store: store);
-                    }
-                  });
-                },
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: Key(
-            widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
-          ),
-          controller: _name,
-          decoration: _field(l10n.partnerDefaultProduct),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _blurb,
-          decoration: _field(
-            l10n.productFormSubtitle,
-            hint: l10n.productFormSubtitleHint,
-          ),
-        ),
-        if (_namedResort) ...[
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('product-curated-resort'),
-            controller: _resortName,
-            decoration: _field(
-              l10n.productFormCuratedResort,
-              hint: l10n.productFormCuratedResortHint,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _resortCountry,
-            decoration: _field(
-              l10n.productFormCuratedCountry,
-              hint: l10n.productFormCuratedCountryHint,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _resortRegion,
-            decoration: _field(
-              l10n.productFormCuratedLocation,
-              hint: l10n.productFormCuratedLocationHint,
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        TextField(
-          controller: _meeting,
-          onChanged: (_) => setState(() {}),
-          decoration: _field(
-            l10n.exploreResortAddress,
-            hint: l10n.productFormMeetingHint,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _destinationMapCard(l10n),
-      ],
-    );
-  }
-
-  Widget _detailBlock(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _nightsLabel,
-          style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
-        _ProductDetailComposer(
-          controller: _detailBody,
-          decoration: _field(
-            l10n.briefSectionDays,
-            hint: l10n.detailComposerHint,
-            lines: 10,
-          ),
-          onChanged: () => setState(() {}),
-        ),
-      ],
-    );
-  }
-
-  Set<String> get _previewAddonIds {
-    return {
-      for (final draft in _addons)
-        if (draft.name.text.trim().isNotEmpty && (_addonQty[draft.id] ?? 0) > 0)
-          draft.id,
-    };
-  }
-
-  BookingQuote get _previewQuote {
-    return BookingQuote.compute(
-      product: _draftProduct,
-      professional: false,
-      divers: _previewDiver,
-      nondivers: _hasNondivers ? _previewNondiver : 0,
-      children: _hasNondivers ? _previewChild : 0,
-      infants: 0,
-      bookPackage: true,
-      selectedOptionIds: _previewAddonIds,
-      optionQuantities: {
-        for (final draft in _addons)
-          if (draft.name.text.trim().isNotEmpty)
-            draft.id: _addonQty[draft.id] ?? 0,
-      },
-    );
-  }
-
-  void _setHasNondivers(bool value) {
-    setState(() {
-      _hasNondivers = value;
-      _rateEnabled[GuestRole.nondiver] = value;
-      _rateEnabled[GuestRole.child] = value;
-      _rateEnabled[GuestRole.infant] = false;
-      if (!value) {
-        _previewNondiver = 0;
-        _previewChild = 0;
-      }
-    });
-  }
-
-  /// White filled fields on the booking step — dark text for contrast.
-  static const TextStyle _bookingFieldStyle = TextStyle(
-    color: AppTheme.navy,
-    fontWeight: FontWeight.w700,
-    fontSize: 14,
-  );
 
   InputDecoration _bookingDense(
     String label, {
@@ -3749,1306 +2996,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
-  InputDecoration _priceFieldDecoration(
-    AppLocalizations l10n, {
-    String? errorText,
-  }) {
-    return _bookingDense(
-      l10n.workbenchUnitPriceRequired,
-      errorText: errorText,
-      suffixText: l10n.workbenchCurrencyWon,
-    );
-  }
-
-  Widget _bookingEntryBlock(AppLocalizations l10n) {
-    final emptyName = _name.text.trim().isEmpty;
-    final packageName = emptyName
-        ? l10n.partnerDefaultProduct
-        : _name.text.trim();
-    final quote = _previewQuote;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(_kBoxRadius),
-            border: Border.all(color: const Color(0xFFE2E8EE)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: AppTheme.oceanDeep,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(_kBoxRadius),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.bookingEntryBasePackage,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        packageName,
-                        style: TextStyle(
-                          color: emptyName
-                              ? Colors.white.withValues(alpha: 0.45)
-                              : Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.goldSoft,
-                              borderRadius: BorderRadius.circular(_kBoxRadius),
-                            ),
-                            child: Text(
-                              _nightsLabel,
-                              style: const TextStyle(
-                                color: AppTheme.navy,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      key: const Key('workbench-diver-price'),
-                      focusNode: _diverPriceFocus,
-                      controller: _rateConsumer[GuestRole.diver],
-                      keyboardType: TextInputType.number,
-                      maxLength: kWorkbenchPriceInputMaxLength,
-                      inputFormatters: _priceInputFormatters,
-                      style: _bookingFieldStyle.copyWith(fontSize: 15),
-                      cursorColor: AppTheme.navy,
-                      decoration: _priceFieldDecoration(
-                        l10n,
-                        errorText: _diverPriceError,
-                      ).copyWith(
-                        counterText: '',
-                        errorStyle: const TextStyle(
-                          color: Color(0xFFE53935),
-                          fontSize: 11,
-                        ),
-                      ),
-                      onChanged: (_) => setState(() {
-                        _diverPriceError = null;
-                      }),
-                    ),
-                    const SizedBox(height: 10),
-                    _photoBlock(l10n),
-                    const SizedBox(height: 10),
-                    _stayDateStrip(l10n),
-                    const SizedBox(height: 8),
-                    Theme(
-                      data: Theme.of(context)
-                          .copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        tilePadding: EdgeInsets.zero,
-                        childrenPadding: const EdgeInsets.only(bottom: 4),
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(
-                          l10n.bookingEntryTermsToggle,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                        children: [
-                          TextField(
-                            controller: _includes,
-                            minLines: 2,
-                            maxLines: 4,
-                            style: _bookingFieldStyle.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: _bookingDense(
-                              l10n.productFormIncludes,
-                              hint: l10n.productFormIncludesHint,
-                              lines: 2,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _excludes,
-                            minLines: 2,
-                            maxLines: 4,
-                            style: _bookingFieldStyle.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: _bookingDense(
-                              l10n.productFormExcludes,
-                              hint: l10n.productFormExcludesHint,
-                              lines: 2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.workbenchGuestPreviewTitle,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.workbenchGuestPreviewHint,
-                      style: const TextStyle(
-                        color: AppTheme.muted,
-                        fontSize: 11,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _guestStepperRow(
-                      label: l10n.workbenchGuestDiver,
-                      value: _previewDiver,
-                      onChanged: (v) =>
-                          setState(() => _previewDiver = v < 1 ? 1 : v),
-                      priceLabel: l10n.workbenchUnitPriceRequired,
-                      priceText:
-                          _rateConsumer[GuestRole.diver]!.text.trim().isEmpty
-                          ? '—'
-                          : _rateConsumer[GuestRole.diver]!.text.trim(),
-                    ),
-                    const SizedBox(height: 4),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7F8FA),
-                        borderRadius: BorderRadius.circular(_kBoxRadius),
-                        border: Border.all(color: const Color(0xFFE2E8EE)),
-                      ),
-                      child: Column(
-                        children: [
-                          SwitchListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
-                            dense: true,
-                            visualDensity: VisualDensity.compact,
-                            title: Text(
-                              l10n.bookingEntryHasNondivers,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                            value: _hasNondivers,
-                            onChanged: _setHasNondivers,
-                          ),
-                          if (_hasNondivers) ...[
-                            const Divider(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                              child: Column(
-                                children: [
-                                  _guestStepperRow(
-                                    label: l10n.bookingEntryAdultNondiver,
-                                    value: _previewNondiver,
-                                    onChanged: (v) =>
-                                        setState(() => _previewNondiver = v),
-                                    priceField:
-                                        _rateConsumer[GuestRole.nondiver],
-                                    priceLabel: l10n.workbenchUnitPriceRequired,
-                                    priceFocus: _nondiverPriceFocus,
-                                    priceError: _nondiverPriceError,
-                                    onPriceChanged: () => setState(() {
-                                      _nondiverPriceError = null;
-                                    }),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  _guestStepperRow(
-                                    label: l10n.bookingEntryChildInfant,
-                                    value: _previewChild,
-                                    onChanged: (v) =>
-                                        setState(() => _previewChild = v),
-                                    priceField: _rateConsumer[GuestRole.child],
-                                    priceLabel: l10n.workbenchUnitPriceRequired,
-                                    priceFocus: _childPriceFocus,
-                                    priceError: _childPriceError,
-                                    onPriceChanged: () => setState(() {
-                                      _childPriceError = null;
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.bookingEntryAddons,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    for (var i = 0; i < _addons.length; i++) ...[
-                      _bookingAddonRow(
-                        l10n,
-                        list: _addons,
-                        qtyMap: _addonQty,
-                        index: i,
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          final line = _LineEditors(
-                            kind: ProductOptionKind.addon,
-                          );
-                          _watchLine(line);
-                          _listen(line.consumer);
-                          setState(() {
-                            _addons.add(line);
-                            _addonQty[line.id] = 0;
-                          });
-                        },
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                        ),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(l10n.bookingEntryAddOption),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              DecoratedBox(
-                decoration: const BoxDecoration(
-                  color: AppTheme.navy,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(_kBoxRadius),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.checkoutTotal('${quote.total}'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      FilledButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.bookingEntryPreviewSnack),
-                            ),
-                          );
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTheme.gold,
-                          foregroundColor: AppTheme.navy,
-                          minimumSize: const Size(0, 40),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                        child: Text(l10n.exploreBook),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                child: TextField(
-                  controller: _cancel,
-                  maxLines: 1,
-                  decoration: _bookingDense(
-                    l10n.productFormCancelNote,
-                    hint: l10n.productFormCancelHint,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          l10n.bookingEntryIndividuals,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.bookingEntryIndividualsHint,
-          style: const TextStyle(
-            color: AppTheme.muted,
-            fontSize: 12,
-            height: 1.35,
-          ),
-        ),
-        const SizedBox(height: 10),
-        for (var i = 0; i < _individuals.length; i++) ...[
-          _individualTicketCard(l10n, i),
-          const SizedBox(height: 10),
-        ],
-        OutlinedButton.icon(
-          onPressed: _addIndividualTicket,
-          icon: const Icon(Icons.add),
-          label: Text(l10n.bookingEntryAddIndividual),
-        ),
-      ],
-    );
-  }
-
-  Widget _individualTicketCard(AppLocalizations l10n, int index) {
-    final ticket = _individuals[index];
-    final emptyName = ticket.name.text.trim().isEmpty;
-    final quote = _individualQuote(ticket);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-        border: Border.all(color: const Color(0xFFE2E8EE)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DecoratedBox(
-            decoration: const BoxDecoration(
-              color: AppTheme.navyMid,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(_kBoxRadius),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.bookingEntryIndividuals,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        color: Colors.white70,
-                        onPressed: () {
-                          final existingOpt = _existingOption(ticket.id);
-                          if (existingOpt != null &&
-                              optionHasSeatCommitment(existingOpt)) {
-                            setState(() => ticket.bookable = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  l10n.workbenchOptionClosedNotDeleted,
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          setState(() {
-                            _dropIndividual(ticket);
-                            _individuals.removeAt(index);
-                            _syncSeatSlots();
-                          });
-                        },
-                        icon: const Icon(Icons.close, size: 18),
-                      ),
-                    ],
-                  ),
-                  TextField(
-                    controller: ticket.name,
-                    style: TextStyle(
-                      color: emptyName
-                          ? AppTheme.muted
-                          : AppTheme.navy,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                    cursorColor: AppTheme.navy,
-                    decoration: InputDecoration(
-                      hintText: l10n.bookingEntryIndividualName,
-                      hintStyle: const TextStyle(
-                        color: AppTheme.muted,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(_kBoxRadius),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(_kBoxRadius),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(_kBoxRadius),
-                        borderSide: const BorderSide(
-                          color: AppTheme.gold,
-                          width: 1.4,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 8),
-                  _optionGroupMenu(
-                    id: ticket.id,
-                    value: ticket.group,
-                    partner: false,
-                    onChanged: (next) => setState(() => ticket.group = next),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.goldSoft,
-                          borderRadius: BorderRadius.circular(_kBoxRadius),
-                        ),
-                        child: Text(
-                          ticket.nightsLabel,
-                          style: const TextStyle(
-                            color: AppTheme.navy,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          focusNode: ticket.consumerFocus,
-                          controller: ticket.consumer,
-                          keyboardType: TextInputType.number,
-                          maxLength: kWorkbenchPriceInputMaxLength,
-                          inputFormatters: _priceInputFormatters,
-                          style: _bookingFieldStyle,
-                          cursorColor: AppTheme.navy,
-                          decoration: InputDecoration(
-                            labelText: l10n.bookingEntryDiverPrice,
-                            labelStyle: const TextStyle(
-                              color: AppTheme.muted,
-                              fontSize: 12,
-                            ),
-                            errorText: ticket.priceError,
-                            counterText: '',
-                            isDense: true,
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 8,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(_kBoxRadius),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF94A3B8),
-                                width: 1.2,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(_kBoxRadius),
-                              borderSide: const BorderSide(
-                                color: AppTheme.navy,
-                                width: 1.4,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(_kBoxRadius),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE53935),
-                                width: 1.4,
-                              ),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(_kBoxRadius),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE53935),
-                                width: 1.4,
-                              ),
-                            ),
-                          ),
-                          onChanged: (_) => setState(() {
-                            ticket.priceError = null;
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _individualDateStrip(l10n, ticket),
-                const SizedBox(height: 6),
-                Theme(
-                  data: Theme.of(context)
-                      .copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    tilePadding: EdgeInsets.zero,
-                    childrenPadding: const EdgeInsets.only(bottom: 4),
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                    title: Text(
-                      l10n.bookingEntryTermsToggle,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                    children: [
-                      TextField(
-                        controller: ticket.includes,
-                        minLines: 2,
-                        maxLines: 4,
-                        style: _bookingFieldStyle.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: _bookingDense(
-                          l10n.productFormIncludes,
-                          hint: l10n.productFormIncludesHint,
-                          lines: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: ticket.excludes,
-                        minLines: 2,
-                        maxLines: 4,
-                        style: _bookingFieldStyle.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: _bookingDense(
-                          l10n.productFormExcludes,
-                          hint: l10n.productFormExcludesHint,
-                          lines: 2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  l10n.checkoutGuests,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                _guestStepperRow(
-                  label: l10n.workbenchGuestDiver,
-                  value: ticket.guests,
-                  onChanged: (v) =>
-                      setState(() => ticket.guests = v < 1 ? 1 : v),
-                  priceText: ticket.consumer.text.trim().isEmpty
-                      ? '—'
-                      : ticket.consumer.text.trim(),
-                ),
-                const SizedBox(height: 4),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F8FA),
-                    borderRadius: BorderRadius.circular(_kBoxRadius),
-                    border: Border.all(color: const Color(0xFFE2E8EE)),
-                  ),
-                  child: Column(
-                    children: [
-                      SwitchListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        dense: true,
-                        visualDensity: VisualDensity.compact,
-                        title: Text(
-                          l10n.bookingEntryHasNondivers,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        value: ticket.hasNondivers,
-                        onChanged: (value) {
-                          setState(() {
-                            ticket.hasNondivers = value;
-                            if (!value) {
-                              ticket.nondivers = 0;
-                              ticket.children = 0;
-                            }
-                          });
-                        },
-                      ),
-                      if (ticket.hasNondivers) ...[
-                        const Divider(height: 1),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                          child: Column(
-                            children: [
-                              _guestStepperRow(
-                                label: l10n.bookingEntryAdultNondiver,
-                                value: ticket.nondivers,
-                                onChanged: (v) =>
-                                    setState(() => ticket.nondivers = v),
-                                priceText: ticket.consumer.text.trim().isEmpty
-                                    ? '—'
-                                    : ticket.consumer.text.trim(),
-                              ),
-                              const SizedBox(height: 4),
-                              _guestStepperRow(
-                                label: l10n.bookingEntryChildInfant,
-                                value: ticket.children,
-                                onChanged: (v) =>
-                                    setState(() => ticket.children = v),
-                                priceText: ticket.consumer.text.trim().isEmpty
-                                    ? '—'
-                                    : ticket.consumer.text.trim(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.bookingEntryAddons,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                for (var i = 0; i < ticket.addons.length; i++) ...[
-                  _bookingAddonRow(
-                    l10n,
-                    list: ticket.addons,
-                    qtyMap: ticket.addonQty,
-                    index: i,
-                    allowRemoveLast: true,
-                  ),
-                  const SizedBox(height: 4),
-                ],
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      final line = _LineEditors(kind: ProductOptionKind.addon);
-                      _watchLine(line);
-                      _listen(line.consumer);
-                      setState(() {
-                        ticket.addons.add(line);
-                        ticket.addonQty[line.id] = 0;
-                      });
-                    },
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                    ),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(l10n.bookingEntryAddOption),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          DecoratedBox(
-            decoration: const BoxDecoration(
-              color: AppTheme.navy,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(_kBoxRadius),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.checkoutTotal('${quote.total}'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.bookingEntryPreviewSnack)),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.gold,
-                      foregroundColor: AppTheme.navy,
-                      minimumSize: const Size(0, 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    child: Text(l10n.exploreBook),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _individualDateStrip(AppLocalizations l10n, _IndividualTicket ticket) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-        border: Border.all(color: const Color(0xFFE2E8EE)),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Expanded(
-              child: _dateCell(
-                label: l10n.bookingEntryCheckIn,
-                value: ticket.checkIn == null
-                    ? l10n.bookingEntryPickDate
-                    : _fmtDay(ticket.checkIn),
-                onTap: () => _pickIndividualDate(ticket, checkout: false),
-              ),
-            ),
-            Container(width: 1, color: const Color(0xFFE2E8EE)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 28,
-                      minHeight: 28,
-                    ),
-                    onPressed: ticket.nights <= 0
-                        ? null
-                        : () => setState(() => ticket.nights -= 1),
-                    icon: const Icon(Icons.remove, size: 16),
-                  ),
-                  Text(
-                    ticket.nightsLabel,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      color: AppTheme.navy,
-                    ),
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 28,
-                      minHeight: 28,
-                    ),
-                    onPressed: () => setState(() => ticket.nights += 1),
-                    icon: const Icon(Icons.add, size: 16),
-                  ),
-                ],
-              ),
-            ),
-            Container(width: 1, color: const Color(0xFFE2E8EE)),
-            Expanded(
-              child: _dateCell(
-                label: l10n.bookingEntryCheckOut,
-                value: ticket.checkOut == null
-                    ? l10n.bookingEntryPickDate
-                    : _fmtDay(ticket.checkOut),
-                onTap: ticket.checkIn == null
-                    ? null
-                    : () => _pickIndividualDate(ticket, checkout: true),
-                muted: ticket.checkIn == null,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _stayDateStrip(AppLocalizations l10n) {
-    final stayLocked = _seats.packageScheduleLocked;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-        border: Border.all(color: const Color(0xFFE2E8EE)),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Expanded(
-              child: _dateCell(
-                label: l10n.bookingEntryCheckIn,
-                value: _departureStart == null
-                    ? l10n.bookingEntryPickDate
-                    : _fmtDay(_departureStart),
-                onTap: stayLocked ? null : () => _pickStayDate(checkout: false),
-                muted: stayLocked,
-              ),
-            ),
-            Container(width: 1, color: const Color(0xFFE2E8EE)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 28,
-                          minHeight: 28,
-                        ),
-                        onPressed: _packageNights <= 0
-                            ? null
-                            : () => _setPackageNights(_packageNights - 1),
-                        icon: const Icon(Icons.remove, size: 16),
-                      ),
-                      Text(
-                        _nightsLabel,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                          color: AppTheme.navy,
-                        ),
-                      ),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 28,
-                          minHeight: 28,
-                        ),
-                        onPressed: () => _setPackageNights(_packageNights + 1),
-                        icon: const Icon(Icons.add, size: 16),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(width: 1, color: const Color(0xFFE2E8EE)),
-            Expanded(
-              child: _dateCell(
-                label: l10n.bookingEntryCheckOut,
-                value: _checkOut == null
-                    ? l10n.bookingEntryPickDate
-                    : _fmtDay(_checkOut),
-                onTap: stayLocked || _departureStart == null
-                    ? null
-                    : () => _pickStayDate(checkout: true),
-                muted: stayLocked || _departureStart == null,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _dateCell({
-    required String label,
-    required String value,
-    VoidCallback? onTap,
-    bool muted = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: muted ? AppTheme.muted : const Color(0xFF667085),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: muted ? AppTheme.muted : AppTheme.navy,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _bookingAddonRow(
-    AppLocalizations l10n, {
-    required List<_LineEditors> list,
-    required Map<String, int> qtyMap,
-    required int index,
-    bool allowRemoveLast = false,
-  }) {
-    final draft = list[index];
-    final qty = qtyMap[draft.id] ?? 0;
-    final canRemove = allowRemoveLast || list.length > 1;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-        border: Border.all(color: const Color(0xFFE2E8EE)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: TextField(
-                controller: draft.name,
-                style: _bookingFieldStyle.copyWith(fontWeight: FontWeight.w600),
-                decoration: _bookingDense(l10n.bookingEntryOptionName),
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            const SizedBox(width: 6),
-            SizedBox(
-              width: 88,
-              child: TextField(
-                focusNode: draft.consumerFocus,
-                controller: draft.consumer,
-                keyboardType: TextInputType.number,
-                maxLength: kWorkbenchPriceInputMaxLength,
-                inputFormatters: _priceInputFormatters,
-                style: _bookingFieldStyle,
-                decoration: _bookingDense(
-                  l10n.bookingEntryOptionPrice,
-                  errorText: draft.priceError,
-                ).copyWith(counterText: ''),
-                onChanged: (_) => setState(() {
-                  draft.priceError = null;
-                }),
-              ),
-            ),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              onPressed: qty <= 0
-                  ? null
-                  : () => setState(() => qtyMap[draft.id] = qty - 1),
-              icon: const Icon(Icons.remove_circle_outline, size: 18),
-            ),
-            Text(
-              '$qty',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              onPressed: () => setState(() => qtyMap[draft.id] = qty + 1),
-              icon: const Icon(Icons.add_circle_outline, size: 18),
-            ),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              tooltip: l10n.productFormRemoveOption,
-              onPressed: !canRemove
-                  ? null
-                  : () {
-                      if (_closeOptionInsteadOfRemove(draft)) {
-                        setState(() {});
-                        return;
-                      }
-                      setState(() {
-                        qtyMap.remove(draft.id);
-                        _dropLine(draft);
-                        list.removeAt(index);
-                      });
-                    },
-              icon: const Icon(Icons.close, size: 18),
-            ),
-          ],
-        ),
-            const SizedBox(height: 4),
-            _optionGroupMenu(
-              id: draft.id,
-              value: draft.group,
-              partner: false,
-              onChanged: (next) => setState(() => draft.group = next),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _guestStepperRow({
-    required String label,
-    required int value,
-    required ValueChanged<int> onChanged,
-    String? priceLabel,
-    String? priceText,
-    TextEditingController? priceField,
-    FocusNode? priceFocus,
-    String? priceError,
-    VoidCallback? onPriceChanged,
-  }) {
-    final l10n = AppLocalizations.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 3,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(label, style: const TextStyle(fontSize: 13)),
-          ),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: value <= 0 ? null : () => onChanged(value - 1),
-          icon: const Icon(Icons.remove_circle_outline, size: 18),
-        ),
-        SizedBox(
-          width: 22,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-          ),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () => onChanged(value + 1),
-          icon: const Icon(Icons.add_circle_outline, size: 18),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          flex: 2,
-          child: priceField != null
-              ? TextField(
-                  focusNode: priceFocus,
-                  controller: priceField,
-                  keyboardType: TextInputType.number,
-                  maxLength: kWorkbenchPriceInputMaxLength,
-                  inputFormatters: _priceInputFormatters,
-                  decoration: _bookingDense(
-                    priceLabel ?? '',
-                    errorText: priceError,
-                    suffixText: l10n.workbenchCurrencyWon,
-                  ).copyWith(counterText: ''),
-                  style: _bookingFieldStyle,
-                  onChanged: (_) {
-                    onPriceChanged?.call();
-                    setState(() {});
-                  },
-                )
-              : Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    priceText ?? '',
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.muted,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  ShopProduct get _draftProduct {
-    final existing = widget.existing;
-    final diverPrice =
-        parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
-    return ShopProduct(
-      id: 'draft',
-      shopId: _shopId,
-      name: _name.text.trim().isEmpty ? '—' : _name.text.trim(),
-      consumerPrice: diverPrice,
-      professionalPrice: diverPrice,
-      blurb: _blurb.text.trim(),
-      durationLabel: _durationLabelForSave,
-      guestRates: [
-        for (final role in GuestRole.values)
-          GuestRate(
-            role: role,
-            enabled: switch (role) {
-              GuestRole.diver => true,
-              GuestRole.nondiver || GuestRole.child => _hasNondivers,
-              GuestRole.infant => false,
-            },
-            consumer: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
-            professional: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
-          ),
-      ],
-      options: [
-        for (final draft in _addons)
-          if (draft.name.text.trim().isNotEmpty)
-            draft.toOption().copyWith(kind: ProductOptionKind.addon),
-      ],
-      focPayCount: existing?.focPayCount ?? 0,
-      focFreeCount: existing?.focFreeCount ?? 0,
-      focAppliesTo: existing?.focAppliesTo ?? GuestRole.diver,
-    );
-  }
-
-  Widget _guestCard(AppLocalizations l10n, DiveShop? hull) {
-    final quote = _previewQuote;
-    final resort = _namedResort
-        ? (_resortName.text.trim().isEmpty ? '—' : _resortName.text.trim())
-        : (hull?.name ?? '');
-    final diverRaw = _rateConsumer[GuestRole.diver]!.text.trim();
-    final diverParsed = parseWorkbenchPrice(diverRaw);
-    final startLabel = diverParsed.isOk
-        ? '${diverParsed.value}'
-        : (diverRaw.isEmpty ? '—' : diverRaw);
-    final cover = _gallery.isEmpty ? null : _gallery.first;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_kBoxRadius),
-        border: Border.all(color: const Color(0xFFE2E8EE)),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: IgnorePointer(
-          ignoring: !_editing,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.briefGuestCard,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              if (cover != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(_kBoxRadius),
-                  child: SizedBox(
-                    height: 96,
-                    width: double.infinity,
-                    child: cover.photo != null
-                        ? Image.memory(cover.photo!.bytes, fit: BoxFit.cover)
-                        : Image.network(cover.url!, fit: BoxFit.cover),
-                  ),
-                ),
-              if (cover != null) const SizedBox(height: 8),
-              Text(_name.text.trim().isEmpty ? '—' : _name.text.trim()),
-              Text(
-                resort,
-                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-              ),
-              Text(_nightsLabel),
-              if (_departureStart != null)
-                Text(
-                  l10n.bookingEntryStayRange(
-                    _fmtDay(_departureStart),
-                    _fmtDay(_checkOut),
-                  ),
-                  style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-                ),
-              if (_blurb.text.trim().isNotEmpty) Text(_blurb.text.trim()),
-              const SizedBox(height: 8),
-              Text(
-                '${l10n.briefStartPrice} $startLabel',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${l10n.workbenchGuestDiver} $_previewDiver'
-                '${_hasNondivers && _previewNondiver > 0 ? ' · ${l10n.workbenchGuestNondiver} $_previewNondiver' : ''}'
-                '${_hasNondivers && _previewChild > 0 ? ' · ${l10n.bookingEntryChildInfant} $_previewChild' : ''}',
-                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.checkoutTotal('${quote.total}'),
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.briefSectionTerms,
-                style: const TextStyle(color: AppTheme.muted, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _ProductDetailComposer extends StatefulWidget {
@@ -5303,74 +3250,6 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
             decoration: widget.decoration.copyWith(alignLabelWithHint: true),
           ),
       ],
-    );
-  }
-}
-
-class _CategoryPick extends StatelessWidget {
-  const _CategoryPick({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final border = selected
-        ? const BorderSide(color: AppTheme.navy, width: 1.8)
-        : const BorderSide(color: Color(0xFFD0D5DD));
-    final bg = selected ? const Color(0xFFEEF2F7) : Colors.white;
-    return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(
-        _OpsProductWorkbenchState._kBoxRadius,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          _OpsProductWorkbenchState._kBoxRadius,
-        ),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              _OpsProductWorkbenchState._kBoxRadius,
-            ),
-            border: Border.fromBorderSide(border),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 28,
-                color: selected ? AppTheme.navy : AppTheme.muted,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  color: selected ? AppTheme.navy : const Color(0xFF344054),
-                ),
-              ),
-              if (selected) ...[
-                const SizedBox(height: 6),
-                const Icon(Icons.check_circle, size: 16, color: AppTheme.navy),
-              ],
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
