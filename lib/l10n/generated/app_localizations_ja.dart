@@ -3709,6 +3709,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get productFormCreatorResortDone => '완료';
 
   @override
+  String productFormPleaseEnter(String label, String particle) {
+    return '$label$particle 입력해 주세요';
+  }
+
+  @override
   String get productFormSubtitle => '한 줄 소개';
 
   @override

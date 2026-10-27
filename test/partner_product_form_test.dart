@@ -86,7 +86,7 @@ void main() {
     await pumpPartnerForm(tester);
     await tester.tap(find.byKey(const Key('partner-form-temp-save')));
     await tester.pump();
-    expect(find.text(l10n.workbenchNeedName), findsOneWidget);
+    expect(find.text('상품명을 입력해 주세요'), findsOneWidget);
   });
 
   testWidgets('name without price blocks publish', (tester) async {
@@ -99,7 +99,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('partner-product-save')));
     await tester.pump();
-    expect(find.text(l10n.workbenchNeedDiverPrice), findsWidgets);
+    expect(find.text('1인 기준 가격을 입력해 주세요'), findsWidgets);
   });
 
   testWidgets('photo not required when name and price filled', (tester) async {
@@ -151,7 +151,7 @@ void main() {
     await tester.tap(find.byKey(const Key('partner-product-save')));
     await tester.pump();
     expect(
-      find.text(l10n.workbenchNeedOptionPriceNamed('공항픽업')),
+      find.text('옵션 소비자가를 입력해 주세요'),
       findsWidgets,
     );
   });

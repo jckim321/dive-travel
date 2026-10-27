@@ -1567,6 +1567,13 @@
   "productFormDirectSelect": "Planned special (resort not in the app)",
   "productFormCreatorShop": "A trip I plan (my own)",
   "productFormCreatorResortDone": "Done",
+  "productFormPleaseEnter": "Please enter {label}{particle}",
+  "@productFormPleaseEnter": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "particle": {"type": "String"}
+    }
+  },
   "productFormSubtitle": "One-line pitch",
   "productFormSubtitleHint": "e.g. Check dive then 2 tanks, same van",
   "productFormDurationHint": "e.g. 2 nights / half-day morning",

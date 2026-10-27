@@ -2129,6 +2129,13 @@
   "productFormDirectSelect": "기획스페셜 (앱에 없는 리조트)",
   "productFormCreatorShop": "내가 짜는 여행 (직접 기획)",
   "productFormCreatorResortDone": "완료",
+  "productFormPleaseEnter": "{label}{particle} 입력해 주세요",
+  "@productFormPleaseEnter": {
+    "placeholders": {
+      "label": {"type": "String"},
+      "particle": {"type": "String"}
+    }
+  },
   "productFormSubtitle": "한 줄 소개",
   "productFormSubtitleHint": "예: 체크다이브 후 2탱크, 같은 밴 동행",
   "productFormDurationHint": "예: 2박 3일 / 오전 반나절",

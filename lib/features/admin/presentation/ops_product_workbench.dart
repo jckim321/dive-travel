@@ -72,7 +72,8 @@ class _LineEditors {
        description = TextEditingController(text: description),
        consumer = TextEditingController(text: consumer),
        professional = TextEditingController(text: professional),
-       consumerFocus = FocusNode();
+       consumerFocus = FocusNode(),
+       priceKey = GlobalKey();
 
   final String id;
   final TextEditingController name;
@@ -80,6 +81,7 @@ class _LineEditors {
   final TextEditingController consumer;
   final TextEditingController professional;
   final FocusNode consumerFocus;
+  final GlobalKey priceKey;
   String? priceError;
   ProductOptionKind kind;
   bool bookable;
@@ -122,7 +124,8 @@ class _IndividualTicket {
        consumer = TextEditingController(text: consumer),
        includes = TextEditingController(text: includes),
        excludes = TextEditingController(text: excludes),
-       consumerFocus = FocusNode();
+       consumerFocus = FocusNode(),
+       priceKey = GlobalKey();
 
   factory _IndividualTicket.fromOption(ShopProductOption option) {
     final raw = option.description.trim();
@@ -154,6 +157,7 @@ class _IndividualTicket {
   final TextEditingController includes;
   final TextEditingController excludes;
   final FocusNode consumerFocus;
+  final GlobalKey priceKey;
   String? priceError;
   final addons = <_LineEditors>[];
   final addonQty = <String, int>{};
@@ -280,6 +284,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _partnerScrollController = ScrollController();
   final _nameFieldKey = GlobalKey();
   final _diverPriceFieldKey = GlobalKey();
+  final _adminShopKey = GlobalKey();
+  final _resortNameKey = GlobalKey();
+  final _resortCountryKey = GlobalKey();
+  final _resortRegionKey = GlobalKey();
   final _partnerAddonsKey = GlobalKey();
   final _partnerIndividualsKey = GlobalKey();
   ProductSaveIntent? _savingIntent;
@@ -680,23 +688,45 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return true;
   }
 
+  /// Korean object particle so 「가격을」「국가를」 both read naturally.
+  String _pleaseEnter(AppLocalizations l10n, String label) {
+    final code = label.runes.isEmpty ? 0 : label.runes.last;
+    final hangul = code >= 0xAC00 && code <= 0xD7A3;
+    final hasBatchim = hangul && (code - 0xAC00) % 28 != 0;
+    final particle = Localizations.localeOf(context).languageCode == 'ko'
+        ? (!hangul || hasBatchim ? '을' : '를')
+        : '';
+    return l10n.productFormPleaseEnter(label, particle);
+  }
+
+  ButtonStyle _readableFilledStyle({double height = 48}) {
+    return FilledButton.styleFrom(
+      minimumSize: Size.fromHeight(height),
+      backgroundColor: PartnerTheme.accent,
+      foregroundColor: PartnerTheme.bg,
+      disabledBackgroundColor: PartnerTheme.borderStrong,
+      disabledForegroundColor: PartnerTheme.text,
+    );
+  }
+
   /// Partner H1b: name + base price only (photo optional) for temp and publish.
   bool _validatePartnerRequired(AppLocalizations l10n) {
     if (_name.text.trim().isEmpty) {
       _scrollToPartnerKey(_nameFieldKey);
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workbenchNeedName)),
+        SnackBar(content: Text(_pleaseEnter(l10n, l10n.partnerDefaultProduct))),
       );
       return false;
     }
     if (_diverPriceValue <= 0) {
       _scrollToPartnerKey(_diverPriceFieldKey);
+      final message = _pleaseEnter(l10n, l10n.partnerFormBasePrice);
       setState(() {
-        _diverPriceError = l10n.workbenchNeedDiverPrice;
+        _diverPriceError = message;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workbenchNeedDiverPrice)),
+        SnackBar(content: Text(message)),
       );
       return false;
     }
@@ -704,19 +734,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   void _scrollToPartnerKey(GlobalKey key) {
-    final ctx = key.currentContext;
-    if (ctx == null) {
-      return;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
+      final target = key.currentContext;
+      if (target == null) {
+        return;
+      }
       Scrollable.ensureVisible(
-        ctx,
-        duration: const Duration(milliseconds: 280),
-        alignment: 0.1,
-        curve: Curves.easeOut,
+        target,
+        duration: Duration.zero,
+        alignment: 0.15,
       );
     });
   }
@@ -1105,13 +1134,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   /// First named option row that fails price parse (addons → individuals → ticket addons).
-  ({FocusNode focus, void Function(String?) setError})? _findFailedOptionTarget(
-    String optionName,
-  ) {
+  ({FocusNode focus, GlobalKey key, String label, void Function(String?) setError})?
+  _findFailedOptionTarget(String optionName) {
     for (final draft in _addons) {
       if (draft.name.text.trim() == optionName &&
           parsePositivePrice(draft.consumer.text) == null) {
-        return (focus: draft.consumerFocus, setError: (e) => draft.priceError = e);
+        return (
+          focus: draft.consumerFocus,
+          key: draft.priceKey,
+          label: _optionPriceLabel(individual: false),
+          setError: (e) => draft.priceError = e,
+        );
       }
     }
     for (final ticket in _individuals) {
@@ -1119,6 +1152,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           parsePositivePrice(ticket.consumer.text) == null) {
         return (
           focus: ticket.consumerFocus,
+          key: ticket.priceKey,
+          label: _optionPriceLabel(individual: true),
           setError: (e) => ticket.priceError = e,
         );
       }
@@ -1127,12 +1162,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             parsePositivePrice(draft.consumer.text) == null) {
           return (
             focus: draft.consumerFocus,
+            key: draft.priceKey,
+            label: _optionPriceLabel(individual: false),
             setError: (e) => draft.priceError = e,
           );
         }
       }
     }
     return null;
+  }
+
+  String _optionPriceLabel({required bool individual}) {
+    final l10n = AppLocalizations.of(context);
+    return individual ? l10n.partnerFormBasePrice : l10n.productFormOptionConsumer;
   }
 
   void _focusPriceField(FocusNode focus) {
@@ -1168,22 +1210,24 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final target = check.target!;
     final optionName = check.optionName?.trim() ?? '';
     final overCap = check.failure == WorkbenchPriceParseFailure.overCap;
+    final optionTarget = target == WorkbenchPriceTarget.option &&
+            optionName.isNotEmpty
+        ? _findFailedOptionTarget(optionName)
+        : null;
     final message = overCap
         ? (target == WorkbenchPriceTarget.option && optionName.isNotEmpty
             ? l10n.workbenchPriceOverCapNamed(optionName)
             : l10n.workbenchPriceOverCap)
         : switch (target) {
-            WorkbenchPriceTarget.diver => l10n.workbenchNeedDiverPrice,
+            WorkbenchPriceTarget.diver =>
+              _pleaseEnter(l10n, l10n.partnerFormBasePrice),
             WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
               l10n.workbenchNeedGuestPrice,
-            WorkbenchPriceTarget.option => optionName.isEmpty
-                ? l10n.workbenchNeedOptionPrice
-                : l10n.workbenchNeedOptionPriceNamed(optionName),
+            WorkbenchPriceTarget.option => _pleaseEnter(
+                l10n,
+                optionTarget?.label ?? l10n.productFormOptionConsumer,
+              ),
           };
-    final optionTarget = target == WorkbenchPriceTarget.option &&
-            optionName.isNotEmpty
-        ? _findFailedOptionTarget(optionName)
-        : null;
     final focus = switch (target) {
       WorkbenchPriceTarget.diver => _diverPriceFocus,
       WorkbenchPriceTarget.nondiver => _nondiverPriceFocus,
@@ -1205,6 +1249,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
     });
     _reveal(3);
+    if (optionTarget != null) {
+      _scrollToPartnerKey(optionTarget.key);
+    }
     _focusPriceField(focus);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     return false;
@@ -1246,6 +1293,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         widget.lockedShopId == null &&
         !_namedResort &&
         _shopId.trim().isEmpty) {
+      _scrollToPartnerKey(widget.creatorMode ? _nameFieldKey : _adminShopKey);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.productFormPickShop)),
       );
@@ -1270,36 +1318,47 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         }
       } else if (!isTemp) {
         if (name.isEmpty) {
-          _scrollToPartnerKey(_nameFieldKey);
+          _scrollToPartnerKey(
+            widget.creatorMode ? _resortNameKey : _nameFieldKey,
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                widget.creatorMode
-                    ? l10n.productFormCuratedResort
-                    : l10n.workbenchNeedName,
+                _pleaseEnter(
+                  l10n,
+                  widget.creatorMode
+                      ? l10n.productFormCuratedResort
+                      : l10n.partnerDefaultProduct,
+                ),
               ),
             ),
           );
           return false;
         }
         if (_namedResort && _resortName.text.trim().isEmpty) {
-          _scrollToPartnerKey(_nameFieldKey);
+          _scrollToPartnerKey(_resortNameKey);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.productFormCuratedResort)),
+            SnackBar(
+              content: Text(_pleaseEnter(l10n, l10n.productFormCuratedResort)),
+            ),
           );
           return false;
         }
         if (widget.creatorMode && _resortCountry.text.trim().isEmpty) {
-          _scrollToPartnerKey(_nameFieldKey);
+          _scrollToPartnerKey(_resortCountryKey);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.productFormCuratedCountry)),
+            SnackBar(
+              content: Text(_pleaseEnter(l10n, l10n.productFormCuratedCountry)),
+            ),
           );
           return false;
         }
         if (widget.creatorMode && _resortRegion.text.trim().isEmpty) {
-          _scrollToPartnerKey(_nameFieldKey);
+          _scrollToPartnerKey(_resortRegionKey);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.productFormCuratedLocation)),
+            SnackBar(
+              content: Text(_pleaseEnter(l10n, l10n.productFormCuratedLocation)),
+            ),
           );
           return false;
         }
@@ -1847,11 +1906,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                             : () => unawaited(
                                   _save(ProductSaveIntent.submitForReview),
                                 ),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          backgroundColor: PartnerTheme.accent,
-                          foregroundColor: PartnerTheme.bg,
-                        ),
+                        style: _readableFilledStyle(),
                         child: Text(
                           !_editing
                               ? l10n.briefEdit
@@ -1905,6 +1960,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ? null
                     : (shops.isNotEmpty ? shops.first.id : _kDirectShop)));
     return KeyedSubtree(
+      key: _adminShopKey,
+      child: KeyedSubtree(
       key: const Key('admin-product-shop'),
       child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1947,32 +2004,42 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
         if (_namedResort) ...[
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('product-curated-resort'),
-            controller: _resortName,
-            decoration: _field(
-              l10n.productFormCuratedResort,
-              hint: l10n.productFormCuratedResortHint,
+          KeyedSubtree(
+            key: _resortNameKey,
+            child: TextField(
+              key: const Key('product-curated-resort'),
+              controller: _resortName,
+              decoration: _field(
+                l10n.productFormCuratedResort,
+                hint: l10n.productFormCuratedResortHint,
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _resortCountry,
-            decoration: _field(
-              l10n.productFormCuratedCountry,
-              hint: l10n.productFormCuratedCountryHint,
+          KeyedSubtree(
+            key: _resortCountryKey,
+            child: TextField(
+              controller: _resortCountry,
+              decoration: _field(
+                l10n.productFormCuratedCountry,
+                hint: l10n.productFormCuratedCountryHint,
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _resortRegion,
-            decoration: _field(
-              l10n.productFormCuratedLocation,
-              hint: l10n.productFormCuratedLocationHint,
+          KeyedSubtree(
+            key: _resortRegionKey,
+            child: TextField(
+              controller: _resortRegion,
+              decoration: _field(
+                l10n.productFormCuratedLocation,
+                hint: l10n.productFormCuratedLocationHint,
+              ),
             ),
           ),
         ],
       ],
+      ),
       ),
     );
   }
@@ -2054,17 +2121,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Widget _creatorResortFields(AppLocalizations l10n) {
     Widget field({
       required Key key,
+      required GlobalKey scrollKey,
       required TextEditingController controller,
       required String label,
       required String hint,
     }) {
-      return TextField(
-        key: key,
-        controller: controller,
-        style: const TextStyle(color: PartnerTheme.text),
-        cursorColor: PartnerTheme.accent,
-        decoration: _partnerField(label, hint: hint),
-        onChanged: (_) => _name.text = _resortName.text,
+      return KeyedSubtree(
+        key: scrollKey,
+        child: TextField(
+          key: key,
+          controller: controller,
+          style: const TextStyle(color: PartnerTheme.text),
+          cursorColor: PartnerTheme.accent,
+          decoration: _partnerField(label, hint: hint),
+          onChanged: (_) => _name.text = _resortName.text,
+        ),
       );
     }
 
@@ -2074,6 +2145,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       children: [
         field(
           key: const Key('product-curated-resort'),
+          scrollKey: _resortNameKey,
           controller: _resortName,
           label: l10n.productFormCuratedResort,
           hint: l10n.productFormCuratedResortHint,
@@ -2081,6 +2153,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         const SizedBox(height: 12),
         field(
           key: const Key('product-curated-country'),
+          scrollKey: _resortCountryKey,
           controller: _resortCountry,
           label: l10n.productFormCuratedCountry,
           hint: l10n.productFormCuratedCountryHint,
@@ -2088,6 +2161,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         const SizedBox(height: 12),
         field(
           key: const Key('product-curated-region'),
+          scrollKey: _resortRegionKey,
           controller: _resortRegion,
           label: l10n.productFormCuratedLocation,
           hint: l10n.productFormCuratedLocationHint,
@@ -2652,7 +2726,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 const SizedBox(width: 8),
                 Expanded(
                   flex: 2,
-                  child: TextField(
+                  child: KeyedSubtree(
+                    key: draft.priceKey,
+                    child: TextField(
                     focusNode: draft.consumerFocus,
                     controller: draft.consumer,
                     keyboardType: TextInputType.number,
@@ -2663,6 +2739,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       errorText: draft.priceError,
                     ),
                     onChanged: (_) => setState(() => draft.priceError = null),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -2738,7 +2815,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               onChanged: (next) => setState(() => ticket.group = next),
             ),
             const SizedBox(height: 8),
-            TextField(
+            KeyedSubtree(
+              key: ticket.priceKey,
+              child: TextField(
+              key: Key('partner-form-individual-price-$index'),
               focusNode: ticket.consumerFocus,
               controller: ticket.consumer,
               keyboardType: TextInputType.number,
@@ -2749,6 +2829,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 errorText: ticket.priceError,
               ),
               onChanged: (_) => setState(() => ticket.priceError = null),
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -2790,7 +2871,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: TextField(
+                        child: KeyedSubtree(
+                          key: ticket.addons[j].priceKey,
+                          child: TextField(
                           focusNode: ticket.addons[j].consumerFocus,
                           controller: ticket.addons[j].consumer,
                           keyboardType: TextInputType.number,
@@ -2802,6 +2885,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           ),
                           onChanged: (_) =>
                               setState(() => ticket.addons[j].priceError = null),
+                          ),
                         ),
                       ),
                       IconButton(
@@ -3029,10 +3113,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               FilledButton(
                 key: const Key('brief-edit'),
                 onPressed: () => setState(() => _editing = true),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  backgroundColor: AppTheme.navy,
-                ),
+                style: _readableFilledStyle(),
                 child: Text(l10n.briefEdit),
               )
             else
@@ -3041,10 +3122,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ? const Key('admin-product-submit')
                     : const Key('partner-product-save'),
                 onPressed: busy ? null : () => _save(submitIntent),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  backgroundColor: AppTheme.navy,
-                ),
+                style: _readableFilledStyle(),
                 child: Text(
                   busy &&
                           _savingIntent != null &&

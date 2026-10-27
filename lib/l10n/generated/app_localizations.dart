@@ -7020,6 +7020,12 @@ abstract class AppLocalizations {
   /// **'완료'**
   String get productFormCreatorResortDone;
 
+  /// No description provided for @productFormPleaseEnter.
+  ///
+  /// In ko, this message translates to:
+  /// **'{label}{particle} 입력해 주세요'**
+  String productFormPleaseEnter(String label, String particle);
+
   /// No description provided for @productFormSubtitle.
   ///
   /// In ko, this message translates to:

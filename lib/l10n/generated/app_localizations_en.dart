@@ -3825,6 +3825,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormCreatorResortDone => 'Done';
 
   @override
+  String productFormPleaseEnter(String label, String particle) {
+    return 'Please enter $label$particle';
+  }
+
+  @override
   String get productFormSubtitle => 'One-line pitch';
 
   @override
