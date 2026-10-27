@@ -3804,7 +3804,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormShopHint => 'Partner resort';
 
   @override
-  String get productFormDirectSelect => 'Enter manually';
+  String get productFormPickShop => 'Select a shop';
+
+  @override
+  String get productFormDirectSelect =>
+      'Planned special (resort not in the app)';
 
   @override
   String get productFormSubtitle => 'One-line pitch';

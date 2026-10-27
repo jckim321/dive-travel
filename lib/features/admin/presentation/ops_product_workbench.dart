@@ -327,10 +327,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     super.initState();
     // H1a: ignore legacy price_revision / pending_options (do not overlay).
     final existing = widget.existing;
-    _shopId =
-        widget.lockedShopId ??
-        existing?.shopId ??
-        DiveShopCatalog.shops.first.id;
+    _shopId = widget.lockedShopId ?? existing?.shopId ?? '';
     final shop = DiveShopCatalog.byId(_shopId);
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
@@ -1184,6 +1181,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (_savingIntent != null) {
       return false;
     }
+    if (!widget.partnerMode &&
+        widget.lockedShopId == null &&
+        !_namedResort &&
+        _shopId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.productFormPickShop)),
+      );
+      return false;
+    }
     final isTemp = intent == ProductSaveIntent.keepEditing;
     if (widget.partnerMode) {
       // H1b: name + base price for both temp and publish; photos optional.
@@ -1805,11 +1811,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       );
     }
     final shops = DiveShopCatalog.shops;
-    final shopValue = _namedResort
+    final String? shopValue = _namedResort
         ? _kDirectShop
         : (shops.any((item) => item.id == _shopId)
               ? _shopId
-              : (shops.isNotEmpty ? shops.first.id : _kDirectShop));
+              : (widget.existing == null
+                    ? null
+                    : (shops.isNotEmpty ? shops.first.id : _kDirectShop)));
     return KeyedSubtree(
       key: const Key('admin-product-shop'),
       child: Column(
@@ -1818,6 +1826,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         DropdownButtonFormField<String>(
           key: ValueKey('admin-product-shop-$_namedResort-$shopValue'),
           initialValue: shopValue,
+          hint: Text(l10n.productFormPickShop),
           decoration: _field(l10n.productFormShopHint),
           items: [
             DropdownMenuItem(

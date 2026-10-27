@@ -6984,10 +6984,16 @@ abstract class AppLocalizations {
   /// **'제휴리조트'**
   String get productFormShopHint;
 
+  /// No description provided for @productFormPickShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵을 선택하세요'**
+  String get productFormPickShop;
+
   /// No description provided for @productFormDirectSelect.
   ///
   /// In ko, this message translates to:
-  /// **'직접선택'**
+  /// **'기획스페셜 (앱에 없는 리조트)'**
   String get productFormDirectSelect;
 
   /// No description provided for @productFormSubtitle.

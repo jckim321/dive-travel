@@ -3702,7 +3702,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get productFormShopHint => '제휴리조트';
 
   @override
-  String get productFormDirectSelect => '직접선택';
+  String get productFormPickShop => '샵을 선택하세요';
+
+  @override
+  String get productFormDirectSelect => '기획스페셜 (앱에 없는 리조트)';
 
   @override
   String get productFormSubtitle => '한 줄 소개';
