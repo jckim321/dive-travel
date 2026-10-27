@@ -1615,11 +1615,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     _seats.isAdmin = store.stats.isAdmin;
-    final form = _buildPartnerScaffold(l10n, store);
-    if (widget.partnerMode) {
-      return PartnerTheme.wrap(form);
-    }
-    return form;
+    return PartnerTheme.wrap(_buildPartnerScaffold(l10n, store));
   }
 
   Widget _buildPartnerScaffold(AppLocalizations l10n, DiverStore store) {
@@ -1656,8 +1652,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           title: Text(
             widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
           ),
-          backgroundColor: partnerChrome ? PartnerTheme.bg : AppTheme.canvas,
-          foregroundColor: partnerChrome ? PartnerTheme.text : null,
+          backgroundColor: PartnerTheme.bg,
+          foregroundColor: PartnerTheme.text,
           actions: [
             if (_editing && _canTempSave)
               TextButton(
