@@ -27,6 +27,7 @@ import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/gear_item.dart';
 import 'package:dive_travel_app/core/models/guest_review.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -3725,6 +3726,43 @@ class DiverStore extends ChangeNotifier {
     required DateTime to,
   }) {
     return _repository.listSeatDemandsBetween(from: from, to: to);
+  }
+
+  var _meetingReportSeq = 0;
+
+  /// A new unshared document. Returns null when the shape is rejected.
+  Future<String?> saveMeetingReport(PartnerMeetingReport report) async {
+    _meetingReportSeq += 1;
+    final stored = PartnerMeetingReport(
+      id: 'mr_${report.createdAt.toUtc().microsecondsSinceEpoch}_$_meetingReportSeq',
+      recipe: report.recipe,
+      snapshot: report.snapshot,
+      createdAt: report.createdAt,
+    );
+    if (!stored.withinShape) {
+      debugPrint('meeting report rejected ${stored.id}');
+      return null;
+    }
+    try {
+      await _repository.saveMeetingReport(stored);
+      return stored.id;
+    } catch (error, stackTrace) {
+      debugPrint('meeting report save failed $error');
+      debugPrint('$stackTrace');
+      return null;
+    }
+  }
+
+  Future<List<PartnerMeetingReport>> listMeetingReports() {
+    return _repository.listMeetingReports();
+  }
+
+  Future<bool> setMeetingReportShared({
+    required String id,
+    required bool shared,
+    DateTime? at,
+  }) {
+    return _repository.setMeetingReportShared(id: id, shared: shared, at: at);
   }
 
   /// Expired holds and passed departures. Running twice writes the same line.

@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/seat_score.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_meeting_archive_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_preview.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -221,7 +222,7 @@ class _AdminPartnerMeetingScreenState extends State<AdminPartnerMeetingScreen> {
         recipe: recipe,
         events: events,
         demands: demands,
-        seats: _seats(shop),
+        seats: meetingReportSeats(shop),
         createdAt: _now,
         previousEvents: previous,
       );
@@ -424,6 +425,18 @@ class _AdminPartnerMeetingScreenState extends State<AdminPartnerMeetingScreen> {
               ),
             ),
             const SizedBox(height: 16),
+            OutlinedButton(
+              key: const Key('partner-meeting-archive'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AdminMeetingArchiveScreen(now: _now),
+                  ),
+                );
+              },
+              child: Text(l10n.partnerMeetingArchive),
+            ),
+            const SizedBox(height: 8),
             FilledButton(
               key: const Key('partner-meeting-preview'),
               onPressed: shop == null || _building ? null : _preview,
@@ -453,7 +466,7 @@ String _regionId(ShopLiveStats shop, ShopProduct product) {
       '';
 }
 
-List<MeetingReportSeat> _seats(ShopLiveStats shop) {
+List<MeetingReportSeat> meetingReportSeats(ShopLiveStats shop) {
   final seats = <MeetingReportSeat>[];
   for (final product in shop.products) {
     final region = _regionId(shop, product);

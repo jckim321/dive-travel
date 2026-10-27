@@ -2489,6 +2489,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerMeetingNoShop => 'No partner shop to choose';
 
   @override
+  String get partnerMeetingArchive => 'Saved reports';
+
+  @override
+  String get partnerMeetingArchiveEmpty => 'No saved reports yet';
+
+  @override
+  String get partnerMeetingSaved => 'Saved';
+
+  @override
+  String get partnerMeetingAgain => 'Build again with the same conditions';
+
+  @override
+  String get partnerMeetingUnsend => 'Cancel send';
+
+  @override
+  String get partnerMeetingSent => 'Sent';
+
+  @override
+  String get partnerMeetingUnsent => 'Send cancelled';
+
+  @override
   String partnerMeetingPrevious(int opens, int views, int flags, int pays) {
     return 'Previous period: open $opens · views $views · flags $flags · paid $pays';
   }

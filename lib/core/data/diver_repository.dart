@@ -18,6 +18,7 @@ import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
@@ -779,5 +780,18 @@ abstract class DiverRepository {
   Future<List<SeatDemand>> listSeatDemandsBetween({
     required DateTime from,
     required DateTime to,
+  });
+
+  /// New document. Always stored with shared false.
+  Future<void> saveMeetingReport(PartnerMeetingReport report);
+
+  /// Newest first. Skips a document that is not the allowed shape.
+  Future<List<PartnerMeetingReport>> listMeetingReports();
+
+  /// shared true and shared_at, or shared false with shared_at removed.
+  Future<bool> setMeetingReportShared({
+    required String id,
+    required bool shared,
+    DateTime? at,
   });
 }

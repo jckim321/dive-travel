@@ -836,6 +836,208 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ownsShop compares the stored id exactly. A partner's owned_shop_id can
+    // be `hull--product`, while a report's shop_id is only the hull.
+    function shopHull(id) {
+      return id.matches('.*--.*') ? id.replace('--.*', '') : id;
+    }
+
+    function ownsMeetingShop(shopId) {
+      return isBusiness()
+        && userDoc().owned_shop_id is string
+        && shopHull(userDoc().owned_shop_id) == shopHull(shopId)
+        && shopHull(shopId).size() > 0;
+    }
+
+    function meetingDayOk(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    function meetingTimeOk(value) {
+      return value is string
+        && value.size() <= 40
+        && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$');
+    }
+
+    function meetingFunnelOk(funnel) {
+      return funnel is map
+        && funnel.keys().hasOnly(['opens', 'views', 'flags', 'pays'])
+        && funnel.opens is int && funnel.opens >= 0
+        && funnel.views is int && funnel.views >= 0
+        && funnel.flags is int && funnel.flags >= 0
+        && funnel.pays is int && funnel.pays >= 0;
+    }
+
+    function meetingScoreRowOk(row) {
+      return row is map
+        && row.keys().hasOnly([
+          'product_id', 'title', 'views', 'flags', 'pays', 'fill_percent', 'badge'
+        ])
+        && row.product_id is string
+        && row.product_id.size() > 0
+        && row.product_id.size() <= 120
+        && row.title is string
+        && row.title.size() <= 120
+        && row.views is int && row.views >= 0
+        && row.flags is int && row.flags >= 0
+        && row.pays is int && row.pays >= 0
+        && row.fill_percent is int
+        && row.fill_percent >= 0
+        && row.fill_percent <= 100
+        && row.badge in ['selling', 'viewsOnly', 'quiet', 'ordinary'];
+    }
+
+    function meetingScoreRowsOk(rows) {
+      return rows is list && rows.size() <= 20
+        && (rows.size() < 1 || meetingScoreRowOk(rows[0]))
+        && (rows.size() < 2 || meetingScoreRowOk(rows[1]))
+        && (rows.size() < 3 || meetingScoreRowOk(rows[2]))
+        && (rows.size() < 4 || meetingScoreRowOk(rows[3]))
+        && (rows.size() < 5 || meetingScoreRowOk(rows[4]))
+        && (rows.size() < 6 || meetingScoreRowOk(rows[5]))
+        && (rows.size() < 7 || meetingScoreRowOk(rows[6]))
+        && (rows.size() < 8 || meetingScoreRowOk(rows[7]))
+        && (rows.size() < 9 || meetingScoreRowOk(rows[8]))
+        && (rows.size() < 10 || meetingScoreRowOk(rows[9]))
+        && (rows.size() < 11 || meetingScoreRowOk(rows[10]))
+        && (rows.size() < 12 || meetingScoreRowOk(rows[11]))
+        && (rows.size() < 13 || meetingScoreRowOk(rows[12]))
+        && (rows.size() < 14 || meetingScoreRowOk(rows[13]))
+        && (rows.size() < 15 || meetingScoreRowOk(rows[14]))
+        && (rows.size() < 16 || meetingScoreRowOk(rows[15]))
+        && (rows.size() < 17 || meetingScoreRowOk(rows[16]))
+        && (rows.size() < 18 || meetingScoreRowOk(rows[17]))
+        && (rows.size() < 19 || meetingScoreRowOk(rows[18]))
+        && (rows.size() < 20 || meetingScoreRowOk(rows[19]));
+    }
+
+    function meetingDemandOk(row) {
+      return row is map
+        && row.keys().hasOnly(['label', 'count'])
+        && row.label is string
+        && row.label.size() <= 200
+        && row.count is int
+        && row.count >= 0;
+    }
+
+    function meetingDemandsOk(rows) {
+      return rows is list && rows.size() <= 3
+        && (rows.size() < 1 || meetingDemandOk(rows[0]))
+        && (rows.size() < 2 || meetingDemandOk(rows[1]))
+        && (rows.size() < 3 || meetingDemandOk(rows[2]));
+    }
+
+    function meetingProposalsOk(lines) {
+      return lines is list && lines.size() <= 2
+        && (lines.size() < 1 || (lines[0] is string && lines[0].size() <= 200))
+        && (lines.size() < 2 || (lines[1] is string && lines[1].size() <= 200));
+    }
+
+    function meetingProductIdsOk(ids) {
+      return ids is list && ids.size() <= 20
+        && (ids.size() < 1 || (ids[0] is string && ids[0].size() > 0 && ids[0].size() <= 80))
+        && (ids.size() < 2 || (ids[1] is string && ids[1].size() > 0 && ids[1].size() <= 80))
+        && (ids.size() < 3 || (ids[2] is string && ids[2].size() > 0 && ids[2].size() <= 80))
+        && (ids.size() < 4 || (ids[3] is string && ids[3].size() > 0 && ids[3].size() <= 80))
+        && (ids.size() < 5 || (ids[4] is string && ids[4].size() > 0 && ids[4].size() <= 80))
+        && (ids.size() < 6 || (ids[5] is string && ids[5].size() > 0 && ids[5].size() <= 80))
+        && (ids.size() < 7 || (ids[6] is string && ids[6].size() > 0 && ids[6].size() <= 80))
+        && (ids.size() < 8 || (ids[7] is string && ids[7].size() > 0 && ids[7].size() <= 80))
+        && (ids.size() < 9 || (ids[8] is string && ids[8].size() > 0 && ids[8].size() <= 80))
+        && (ids.size() < 10 || (ids[9] is string && ids[9].size() > 0 && ids[9].size() <= 80))
+        && (ids.size() < 11 || (ids[10] is string && ids[10].size() > 0 && ids[10].size() <= 80))
+        && (ids.size() < 12 || (ids[11] is string && ids[11].size() > 0 && ids[11].size() <= 80))
+        && (ids.size() < 13 || (ids[12] is string && ids[12].size() > 0 && ids[12].size() <= 80))
+        && (ids.size() < 14 || (ids[13] is string && ids[13].size() > 0 && ids[13].size() <= 80))
+        && (ids.size() < 15 || (ids[14] is string && ids[14].size() > 0 && ids[14].size() <= 80))
+        && (ids.size() < 16 || (ids[15] is string && ids[15].size() > 0 && ids[15].size() <= 80))
+        && (ids.size() < 17 || (ids[16] is string && ids[16].size() > 0 && ids[16].size() <= 80))
+        && (ids.size() < 18 || (ids[17] is string && ids[17].size() > 0 && ids[17].size() <= 80))
+        && (ids.size() < 19 || (ids[18] is string && ids[18].size() > 0 && ids[18].size() <= 80))
+        && (ids.size() < 20 || (ids[19] is string && ids[19].size() > 0 && ids[19].size() <= 80));
+    }
+
+    function meetingSectionsOk(sections) {
+      return sections is map
+        && sections.keys().hasOnly([
+          'conclusion', 'funnel', 'scorecard', 'demand', 'proposals'
+        ])
+        && sections.conclusion is bool
+        && sections.funnel is bool
+        && sections.scorecard is bool
+        && sections.demand is bool
+        && sections.proposals is bool;
+    }
+
+    function meetingSnapshotOk(snap) {
+      return snap is map
+        && snap.keys().hasOnly([
+          'conclusion', 'funnel', 'funnel_previous', 'fill_percent',
+          'score_rows', 'demands', 'proposals'
+        ])
+        && (!('conclusion' in snap)
+            || (snap.conclusion is string && snap.conclusion.size() <= 400))
+        && (!('funnel' in snap) || meetingFunnelOk(snap.funnel))
+        && (!('funnel_previous' in snap) || meetingFunnelOk(snap.funnel_previous))
+        && (!('fill_percent' in snap)
+            || (snap.fill_percent is int
+                && snap.fill_percent >= 0
+                && snap.fill_percent <= 100))
+        && (!('score_rows' in snap) || meetingScoreRowsOk(snap.score_rows))
+        && (!('demands' in snap) || meetingDemandsOk(snap.demands))
+        && (!('proposals' in snap) || meetingProposalsOk(snap.proposals));
+    }
+
+    function meetingRecipeOk() {
+      let recipe = request.resource.data.recipe;
+      let shopId = request.resource.data.shop_id;
+      return recipe is map
+        && recipe.keys().hasOnly([
+          'shop_id', 'product_ids', 'region_id', 'period_start', 'period_end',
+          'compare', 'sections'
+        ])
+        && recipe.shop_id is string
+        && recipe.shop_id == shopId
+        && meetingDayOk(recipe.period_start)
+        && meetingDayOk(recipe.period_end)
+        && recipe.region_id is string
+        && recipe.region_id.size() <= 40
+        && recipe.compare is bool
+        && meetingProductIdsOk(recipe.product_ids)
+        && meetingSectionsOk(recipe.sections);
+    }
+
+    function meetingShopIdOk(shopId) {
+      return shopId is string
+        && shopId.size() > 0
+        && shopId.size() <= 80
+        && !shopId.matches('.*--.*')
+        && shopId.matches('^[A-Za-z0-9][A-Za-z0-9_-]*$');
+    }
+
+    function meetingReportOk() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'shop_id', 'recipe', 'snapshot', 'shared', 'created_at', 'shared_at'
+        ])
+        && meetingShopIdOk(data.shop_id)
+        && data.shared is bool
+        && meetingTimeOk(data.created_at)
+        && (
+          (data.shared && ('shared_at' in data) && meetingTimeOk(data.shared_at))
+          || (!data.shared && !('shared_at' in data))
+        )
+        && meetingRecipeOk()
+        && meetingSnapshotOk(data.snapshot);
+    }
+
+    match /meeting_reports/{reportId} {
+      allow read: if isAdmin()
+        || (resource.data.shared == true && ownsMeetingShop(resource.data.shop_id));
+      allow create, update: if isAdmin() && meetingReportOk();
+      allow delete: if false;
+    }
+
     match /posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();

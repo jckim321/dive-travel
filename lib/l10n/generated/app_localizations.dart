@@ -4614,6 +4614,48 @@ abstract class AppLocalizations {
   /// **'선택할 파트너 샵이 없어요'**
   String get partnerMeetingNoShop;
 
+  /// No description provided for @partnerMeetingArchive.
+  ///
+  /// In ko, this message translates to:
+  /// **'보고서 보관함'**
+  String get partnerMeetingArchive;
+
+  /// No description provided for @partnerMeetingArchiveEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 보고서가 없어요'**
+  String get partnerMeetingArchiveEmpty;
+
+  /// No description provided for @partnerMeetingSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장했어요'**
+  String get partnerMeetingSaved;
+
+  /// No description provided for @partnerMeetingAgain.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은 조건으로 다시 만들기'**
+  String get partnerMeetingAgain;
+
+  /// No description provided for @partnerMeetingUnsend.
+  ///
+  /// In ko, this message translates to:
+  /// **'보내기 취소'**
+  String get partnerMeetingUnsend;
+
+  /// No description provided for @partnerMeetingSent.
+  ///
+  /// In ko, this message translates to:
+  /// **'보냈어요'**
+  String get partnerMeetingSent;
+
+  /// No description provided for @partnerMeetingUnsent.
+  ///
+  /// In ko, this message translates to:
+  /// **'보내기를 취소했어요'**
+  String get partnerMeetingUnsent;
+
   /// No description provided for @partnerMeetingPrevious.
   ///
   /// In ko, this message translates to:

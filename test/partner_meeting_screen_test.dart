@@ -12,13 +12,14 @@ import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_pdf.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_preview.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_brief_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('미리보기는 고른 샵의 숫자만 종이에 담고 저장과 보내기는 막혀 있다', (tester) async {
+  testWidgets('미리보기는 고른 샵의 숫자만 종이에 담고 보내기는 아직 막혀 있다', (tester) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -132,7 +133,7 @@ void main() {
       tester
           .widget<OutlinedButton>(find.byKey(const Key('partner-meeting-save')))
           .onPressed,
-      isNull,
+      isNotNull,
     );
     expect(
       tester
@@ -237,6 +238,135 @@ void main() {
     final text =
         '${latin1.decode(bytes, allowInvalid: true)}${_inflateStreams(bytes)}';
     expect(text.contains('<AE30>'), isTrue);
+  });
+
+  testWidgets('저장은 새 문서를 만들고 보관함에서 보내고 다음 달을 다시 만든다', (tester) async {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: 'palau-dive',
+      name: '팔라우 다이브센터',
+      location: '팔라우',
+      productName: '펀다이빙',
+      consumerPrice: 180000,
+      professionalPrice: 120000,
+      country: '팔라우',
+    );
+    await repo.saveShopProduct(
+      shopId: 'palau-dive',
+      product: const ShopProduct(
+        id: 'palau-live',
+        shopId: 'palau-dive',
+        name: '펀다이빙',
+        continent: 'palau',
+        consumerPrice: 180000,
+        professionalPrice: 120000,
+        capacity: 10,
+        bookedSeats: 8,
+      ),
+    );
+    await repo.createSeatEvent(
+      _event('palau-view', 'palau-dive', DateTime(2026, 10, 22, 11)),
+    );
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AdminPartnerMeetingScreen(now: DateTime(2026, 10, 27, 15)),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('partner-meeting-shop')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('팔라우 다이브센터').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.byKey(const Key('partner-meeting-preview')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    await tester.ensureVisible(find.byKey(const Key('partner-meeting-save')));
+    await tester.tap(find.byKey(const Key('partner-meeting-save')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.debugMeetingReports, hasLength(1));
+    final saved = repo.debugMeetingReports.entries.single;
+    expect(saved.value['shared'], isFalse);
+    expect(saved.value.containsKey('shared_at'), isFalse);
+    expect(saved.value.containsKey('user_key'), isFalse);
+    expect(saved.value['shop_id'], 'palau-dive');
+    expect(find.text('저장했어요'), findsWidgets);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    await tester.ensureVisible(
+      find.byKey(const Key('partner-meeting-archive')),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('partner-meeting-archive')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    expect(
+      find.byKey(Key('partner-meeting-archive-row-${saved.key}')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(Key('partner-meeting-archive-send-${saved.key}')),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(repo.debugMeetingReports[saved.key]!['shared'], isTrue);
+    expect(repo.debugMeetingReports[saved.key]!['shared_at'], isA<String>());
+
+    await tester.tap(
+      find.byKey(Key('partner-meeting-archive-unsend-${saved.key}')),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(repo.debugMeetingReports[saved.key]!['shared'], isFalse);
+    expect(
+      repo.debugMeetingReports[saved.key]!.containsKey('shared_at'),
+      isFalse,
+    );
+
+    await tester.tap(
+      find.byKey(Key('partner-meeting-archive-again-${saved.key}')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(find.text('2026.11.21 ~ 11.27'), findsOneWidget);
+    expect(_text(tester, 'partner-meeting-views'), '0');
+    expect(repo.debugMeetingReports, hasLength(1));
+    final storedFunnel =
+        repo.debugMeetingReports[saved.key]!['snapshot'] as Map;
+    expect((storedFunnel['funnel'] as Map)['views'], 1);
+    expect(repo.debugSeatEventQueries.last, (
+      DateTime(2026, 11, 21),
+      DateTime(2026, 11, 28),
+    ));
   });
 }
 

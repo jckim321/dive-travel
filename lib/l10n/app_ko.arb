@@ -1551,6 +1551,13 @@
   "partnerMeetingSend": "보내기",
   "partnerMeetingLock": "다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요",
   "partnerMeetingNoShop": "선택할 파트너 샵이 없어요",
+  "partnerMeetingArchive": "보고서 보관함",
+  "partnerMeetingArchiveEmpty": "저장한 보고서가 없어요",
+  "partnerMeetingSaved": "저장했어요",
+  "partnerMeetingAgain": "같은 조건으로 다시 만들기",
+  "partnerMeetingUnsend": "보내기 취소",
+  "partnerMeetingSent": "보냈어요",
+  "partnerMeetingUnsent": "보내기를 취소했어요",
   "partnerMeetingPrevious": "지난 기간 열림 {opens} · 조회 {views} · 깃발 {flags} · 결제 {pays}",
   "@partnerMeetingPrevious": {
     "placeholders": {

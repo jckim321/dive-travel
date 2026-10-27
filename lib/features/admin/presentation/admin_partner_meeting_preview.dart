@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/seat_brief.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
@@ -90,7 +91,7 @@ class AdminPartnerMeetingPreview extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     key: const Key('partner-meeting-save'),
-                    onPressed: null,
+                    onPressed: () => _save(context),
                     icon: const Icon(Icons.bookmark_border),
                     label: Text(l10n.partnerMeetingSave),
                   ),
@@ -109,6 +110,17 @@ class AdminPartnerMeetingPreview extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _save(BuildContext context) async {
+    final store = DiverStoreScope.of(context);
+    final id = await store.saveMeetingReport(report);
+    if (!context.mounted || id == null) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).partnerMeetingSaved)),
     );
   }
 

@@ -945,6 +945,13 @@
   "partnerMeetingSend": "Send",
   "partnerMeetingLock": "Other partners' names and numbers are left out. Member names and contacts are never included",
   "partnerMeetingNoShop": "No partner shop to choose",
+  "partnerMeetingArchive": "Saved reports",
+  "partnerMeetingArchiveEmpty": "No saved reports yet",
+  "partnerMeetingSaved": "Saved",
+  "partnerMeetingAgain": "Build again with the same conditions",
+  "partnerMeetingUnsend": "Cancel send",
+  "partnerMeetingSent": "Sent",
+  "partnerMeetingUnsent": "Send cancelled",
   "partnerMeetingPrevious": "Previous period: open {opens} · views {views} · flags {flags} · paid {pays}",
   "@partnerMeetingPrevious": {
     "placeholders": {

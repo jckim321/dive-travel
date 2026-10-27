@@ -25,7 +25,9 @@ import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/core/models/dive_star_assessment.dart';
 import 'package:dive_travel_app/core/models/partner_contract.dart';
+import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
@@ -4126,6 +4128,62 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
     return rows;
+  }
+
+  final _meetingReports = <String, Map<String, dynamic>>{};
+
+  Map<String, Map<String, dynamic>> get debugMeetingReports => {
+    for (final entry in _meetingReports.entries)
+      entry.key: Map<String, dynamic>.from(entry.value),
+  };
+
+  @override
+  Future<void> saveMeetingReport(PartnerMeetingReport report) async {
+    if (report.shared || !report.withinShape) {
+      return;
+    }
+    _meetingReports[report.id] = Map<String, dynamic>.from(report.toMap());
+  }
+
+  @override
+  Future<List<PartnerMeetingReport>> listMeetingReports() async {
+    final rows = <PartnerMeetingReport>[];
+    for (final entry in _meetingReports.entries) {
+      final parsed = PartnerMeetingReport.fromMap(
+        entry.key,
+        Map<String, dynamic>.from(entry.value),
+      );
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return rows;
+  }
+
+  @override
+  Future<bool> setMeetingReportShared({
+    required String id,
+    required bool shared,
+    DateTime? at,
+  }) async {
+    final current = _meetingReports[id];
+    if (current == null) {
+      return false;
+    }
+    final parsed = PartnerMeetingReport.fromMap(
+      id,
+      Map<String, dynamic>.from(current),
+    );
+    if (parsed == null) {
+      return false;
+    }
+    final next = shared ? parsed.share(at ?? DateTime.now()) : parsed.unshare();
+    if (!next.withinShape) {
+      return false;
+    }
+    _meetingReports[id] = Map<String, dynamic>.from(next.toMap());
+    return true;
   }
 
   void dispose() {

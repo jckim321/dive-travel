@@ -2413,6 +2413,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get partnerMeetingNoShop => '선택할 파트너 샵이 없어요';
 
   @override
+  String get partnerMeetingArchive => '보고서 보관함';
+
+  @override
+  String get partnerMeetingArchiveEmpty => '저장한 보고서가 없어요';
+
+  @override
+  String get partnerMeetingSaved => '저장했어요';
+
+  @override
+  String get partnerMeetingAgain => '같은 조건으로 다시 만들기';
+
+  @override
+  String get partnerMeetingUnsend => '보내기 취소';
+
+  @override
+  String get partnerMeetingSent => '보냈어요';
+
+  @override
+  String get partnerMeetingUnsent => '보내기를 취소했어요';
+
+  @override
   String partnerMeetingPrevious(int opens, int views, int flags, int pays) {
     return '지난 기간 열림 $opens · 조회 $views · 깃발 $flags · 결제 $pays';
   }

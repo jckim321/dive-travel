@@ -36,6 +36,7 @@ import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -4908,6 +4909,70 @@ class FirestoreDiverRepository implements DiverRepository {
       }
     }
     return rows;
+  }
+
+  CollectionReference<Map<String, dynamic>> get _meetingReports =>
+      _db.collection('meeting_reports');
+
+  @override
+  Future<void> saveMeetingReport(PartnerMeetingReport report) async {
+    if (report.shared || !report.withinShape) {
+      debugPrint('meeting report rejected ${report.id}');
+      return;
+    }
+    try {
+      await _meetingReports.doc(report.id).set(
+        Map<String, dynamic>.from(report.toMap()),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('meeting report save failed $error');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<PartnerMeetingReport>> listMeetingReports() async {
+    final snap = await _meetingReports.get();
+    final rows = <PartnerMeetingReport>[];
+    for (final doc in snap.docs) {
+      final parsed = PartnerMeetingReport.fromMap(
+        doc.id,
+        Map<String, dynamic>.from(doc.data()),
+      );
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return rows;
+  }
+
+  @override
+  Future<bool> setMeetingReportShared({
+    required String id,
+    required bool shared,
+    DateTime? at,
+  }) async {
+    final ref = _meetingReports.doc(id);
+    try {
+      if (shared) {
+        await ref.update({
+          'shared': true,
+          'shared_at': (at ?? DateTime.now()).toUtc().toIso8601String(),
+        });
+      } else {
+        await ref.update({
+          'shared': false,
+          'shared_at': FieldValue.delete(),
+        });
+      }
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('meeting report share failed $error');
+      debugPrint('$stackTrace');
+      return false;
+    }
   }
 
   void _logSeatFailure(
