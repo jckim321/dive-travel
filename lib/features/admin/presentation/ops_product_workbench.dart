@@ -621,7 +621,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ].join(';');
     final ticketSig = [
       for (final t in _individuals)
-        '${t.name.text}|${t.consumer.text}|${[
+        '${t.name.text}|${t.consumer.text}|${t.includes.text}|${t.excludes.text}|${[
           for (final a in t.addons) '${a.name.text}|${a.consumer.text}',
         ].join(',')}',
     ].join(';');
@@ -2753,12 +2753,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
             const SizedBox(height: 8),
             TextField(
+              key: Key('partner-form-individual-includes-$index'),
               controller: ticket.includes,
               minLines: 2,
               maxLines: 3,
               style: const TextStyle(color: PartnerTheme.text),
               decoration: _partnerField(
                 l10n.productFormIncludes,
+                lines: 2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: Key('partner-form-individual-excludes-$index'),
+              controller: ticket.excludes,
+              minLines: 2,
+              maxLines: 3,
+              style: const TextStyle(color: PartnerTheme.text),
+              decoration: _partnerField(
+                l10n.productFormExcludes,
                 lines: 2,
               ),
             ),
