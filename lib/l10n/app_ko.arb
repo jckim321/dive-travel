@@ -2503,6 +2503,7 @@
   "communityPlantFlag": "깃발 꽂기",
   "communityFlagButton": "🚩 깃발 꽂기",
   "communityFlagPlantAndPay": "🚩 깃발 꽂고 결제하러 가기",
+  "staffCannotBuy": "제휴파트너·관리자 계정은 구매할 수 없어요. 개인 회원으로 가입해 주세요",
   "communitySeeProduct": "상품 자세히 보기",
   "communityFlagPartyTotal": "합계 {amount}",
   "@communityFlagPartyTotal": {

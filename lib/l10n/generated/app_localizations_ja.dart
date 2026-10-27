@@ -4622,6 +4622,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get communityFlagPlantAndPay => '🚩 깃발 꽂고 결제하러 가기';
 
   @override
+  String get staffCannotBuy => '제휴파트너·관리자 계정은 구매할 수 없어요. 개인 회원으로 가입해 주세요';
+
+  @override
   String get communitySeeProduct => '상품 자세히 보기';
 
   @override

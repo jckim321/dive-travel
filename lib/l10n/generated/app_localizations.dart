@@ -8748,6 +8748,12 @@ abstract class AppLocalizations {
   /// **'🚩 깃발 꽂고 결제하러 가기'**
   String get communityFlagPlantAndPay;
 
+  /// No description provided for @staffCannotBuy.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴파트너·관리자 계정은 구매할 수 없어요. 개인 회원으로 가입해 주세요'**
+  String get staffCannotBuy;
+
   /// No description provided for @communitySeeProduct.
   ///
   /// In ko, this message translates to:

@@ -198,4 +198,72 @@ void main() {
     expect(find.text(l10n.communityDesignPreviewFlag), findsOneWidget);
     expect(find.byKey(const Key('same-boat-flag-sheet')), findsNothing);
   });
+
+  testWidgets('제휴파트너와 관리자는 깃발 꽂기 버튼이 꺼지고 안내가 보인다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    for (final repo in [
+      MemoryDiverRepository.forTest(isAdmin: true),
+      MemoryDiverRepository.forTest(isBusiness: true),
+    ]) {
+      final now = DateTime.now();
+      await repo.saveShopProduct(
+        shopId: 'seat-shop',
+        product: ShopProduct(
+          id: 'seat-prod',
+          shopId: 'seat-shop',
+          name: '시트 시험 상품',
+          consumerPrice: 100000,
+          professionalPrice: 80000,
+          blurb: '한 줄 소개',
+          openEmptySeats: true,
+          capacity: 4,
+          bookedSeats: 1,
+          sameBoatStatus: SameBoatStatus.approved,
+          departureStart: now.add(const Duration(days: 10)),
+          flagClosesAt: now.add(const Duration(days: 3)),
+        ),
+      );
+      await tester.pumpWidget(
+        DiveTravelApp(firebaseReady: true, repository: repo),
+      );
+      await tester.pump();
+      await tester.pump();
+      for (var i = 0; i < 3 && find.text(l10n.navCommunity).evaluate().isEmpty; i++) {
+        final poppable = tester
+            .stateList<NavigatorState>(find.byType(Navigator))
+            .where((nav) => nav.canPop());
+        if (poppable.isEmpty) {
+          break;
+        }
+        poppable.first.pop();
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text(l10n.navCommunity));
+      await tester.pumpAndSettle();
+
+      final flag = find.byKey(const Key('same-boat-flag-seat-prod-'));
+      expect(flag, findsOneWidget);
+      expect(tester.widget<FilledButton>(flag).onPressed, isNull);
+      expect(find.text(l10n.staffCannotBuy), findsWidgets);
+
+      await tester.tap(find.byKey(const Key('same-boat-seat-prod-')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const Key('same-boat-detail-plant-pay')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(find.text(l10n.staffCannotBuy), findsWidgets);
+    }
+  });
 }

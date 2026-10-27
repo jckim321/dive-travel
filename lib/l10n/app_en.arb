@@ -1932,6 +1932,7 @@
   "communityPlantFlag": "Plant a flag",
   "communityFlagButton": "🚩 Plant a flag",
   "communityFlagPlantAndPay": "🚩 Plant a flag and pay",
+  "staffCannotBuy": "Partner and admin accounts can't buy. Please sign up as a personal member.",
   "communitySeeProduct": "View product",
   "communityFlagPartyTotal": "Total {amount}",
   "@communityFlagPartyTotal": {

@@ -436,6 +436,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
     DiverStore store,
     SameBoatOffer offer,
   ) async {
+    if (accountCannotBuy(store)) {
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final product = offer.product;
     final now = DateTime.now();
@@ -614,6 +617,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
     SameBoatOffer offer,
     int partySize,
   ) async {
+    if (accountCannotBuy(store)) {
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final product = offer.product;
     if (!await ensureSignedIn(context)) {
@@ -974,6 +980,7 @@ class _SeatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cannotBuy = accountCannotBuy(DiverStoreScope.of(context));
     final product = offer.product;
     final now = DateTime.now();
     final paid = offer.bookedSeats;
@@ -1139,14 +1146,20 @@ class _SeatCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: FilledButton(
-                key: Key('same-boat-flag-${product.id}-${offer.optionId}'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE07A1F),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: onTake,
-                child: Text(l10n.communityFlagButton),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (cannotBuy) const StaffCannotBuyNote(),
+                  FilledButton(
+                    key: Key('same-boat-flag-${product.id}-${offer.optionId}'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFE07A1F),
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: cannotBuy ? null : onTake,
+                    child: Text(l10n.communityFlagButton),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1403,6 +1416,7 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cannotBuy = accountCannotBuy(DiverStoreScope.of(context));
     final bottom = MediaQuery.paddingOf(context).bottom;
     final total = widget.totalFor(_seats);
     return SingleChildScrollView(
@@ -1493,13 +1507,14 @@ class _FlagPlantSheetState extends State<_FlagPlantSheet> {
             shortened: widget.shortened,
           ),
           const SizedBox(height: 16),
+          if (cannotBuy) const StaffCannotBuyNote(),
           FilledButton(
             key: const Key('same-boat-plant-pay'),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFE07A1F),
               foregroundColor: Colors.white,
             ),
-            onPressed: () => Navigator.pop(context, _seats),
+            onPressed: cannotBuy ? null : () => Navigator.pop(context, _seats),
             child: Text(l10n.communityFlagPlantAndPay),
           ),
           TextButton(
@@ -1611,6 +1626,7 @@ class _SameBoatDetailPageState extends State<_SameBoatDetailPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cannotBuy = accountCannotBuy(DiverStoreScope.of(context));
     final offer = widget.offer;
     final shop = widget.shop;
     final shopName = widget.shopName;
@@ -1718,16 +1734,22 @@ class _SameBoatDetailPageState extends State<_SameBoatDetailPage> {
                 ),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
-                    key: const Key('same-boat-detail-plant-pay'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFE07A1F),
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: widget.open < 1
-                        ? null
-                        : () => Navigator.pop(context, seats),
-                    child: Text(l10n.communityFlagPlantAndPay),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (cannotBuy) const StaffCannotBuyNote(),
+                      FilledButton(
+                        key: const Key('same-boat-detail-plant-pay'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFE07A1F),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: cannotBuy || widget.open < 1
+                            ? null
+                            : () => Navigator.pop(context, seats),
+                        child: Text(l10n.communityFlagPlantAndPay),
+                      ),
+                    ],
                   ),
                 ),
               ],

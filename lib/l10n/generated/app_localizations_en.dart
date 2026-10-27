@@ -4764,6 +4764,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityFlagPlantAndPay => '🚩 Plant a flag and pay';
 
   @override
+  String get staffCannotBuy =>
+      'Partner and admin accounts can\'t buy. Please sign up as a personal member.';
+
+  @override
   String get communitySeeProduct => 'View product';
 
   @override

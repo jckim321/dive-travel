@@ -41,6 +41,29 @@ Future<void> showTourCheckoutSheet({
   );
 }
 
+bool accountCannotBuy(DiverStore store) =>
+    store.stats.isAdmin || store.stats.isBusiness;
+
+class StaffCannotBuyNote extends StatelessWidget {
+  const StaffCannotBuyNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        AppLocalizations.of(context).staffCannotBuy,
+        key: const Key('staff-cannot-buy'),
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.muted,
+        ),
+      ),
+    );
+  }
+}
+
 class TourCheckoutSheet extends StatefulWidget {
   const TourCheckoutSheet({
     super.key,
@@ -327,6 +350,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
+    if (accountCannotBuy(store)) {
+      return;
+    }
     if (!await ensureSignedIn(context)) {
       return;
     }
@@ -441,6 +467,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final product = widget.product;
     final quote = widget.quote;
     final store = DiverStoreScope.of(context);
+    final cannotBuy = accountCannotBuy(store);
     final saved = store.isFavoriteShop(widget.shop.id);
     final refund = RefundPolicy.forUserCancel(tourDate: _tourDate);
     final payAmount = _payable(context);
@@ -743,6 +770,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                 children: [
                   _guestIdentityFields(l10n),
                   const SizedBox(height: 8),
+                  if (cannotBuy) const StaffCannotBuyNote(),
                   Row(
                 children: [
                   Expanded(
@@ -789,7 +817,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   if (!_workbench)
                     FilledButton(
                       key: const Key('explore-checkout-pay'),
-                      onPressed: _guestReady ? _pay : null,
+                      onPressed: cannotBuy || !_guestReady ? null : _pay,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppTheme.navy,
                         padding: const EdgeInsets.symmetric(
@@ -800,7 +828,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       child: Text(l10n.explorePay),
                     )
                   else
-                    _workbenchFooter(l10n),
+                    _workbenchFooter(l10n, cannotBuy: cannotBuy),
                 ],
               ),
                 ],
@@ -855,12 +883,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   /// Same-boat / flag checkout: pay CTA and SimPay copy (not Explore request).
   bool get _sameBoatCheckout => widget.fromFlag || _checksSeats;
 
-  Widget _workbenchFooter(AppLocalizations l10n) {
+  Widget _workbenchFooter(AppLocalizations l10n, {required bool cannotBuy}) {
     final canReview = _bookPackage || _selected.isNotEmpty;
     if (_bookStep == 0) {
       return FilledButton(
         key: const Key('checkout-review-cta'),
-        onPressed: canReview ? () => setState(() => _bookStep = 1) : null,
+        onPressed: cannotBuy || !canReview
+            ? null
+            : () => setState(() => _bookStep = 1),
         style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
         child: Text(l10n.checkoutReviewCta),
       );
@@ -877,7 +907,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         Expanded(
           child: FilledButton(
             key: Key(sameBoat ? 'checkout-pay-same-boat' : 'checkout-confirm'),
-            onPressed: _guestReady ? _pay : null,
+            onPressed: cannotBuy || !_guestReady ? null : _pay,
             style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
             child: Text(
               sameBoat ? l10n.explorePay : l10n.checkoutConfirm,

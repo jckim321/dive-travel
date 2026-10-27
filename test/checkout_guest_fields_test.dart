@@ -122,4 +122,21 @@ void main() {
       isNotNull,
     );
   });
+
+  testWidgets('제휴파트너와 관리자는 결제 버튼이 꺼지고 안내가 보인다', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    for (final repo in [
+      MemoryDiverRepository.forTest(isAdmin: true, birthDate: '1988-03-04', phone: '010-9999-0000'),
+      MemoryDiverRepository.forTest(isBusiness: true, birthDate: '1988-03-04', phone: '010-9999-0000'),
+    ]) {
+      await pumpCheckout(tester, repo);
+      expect(find.text(l10n.staffCannotBuy), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('explore-checkout-pay')))
+            .onPressed,
+        isNull,
+      );
+    }
+  });
 }
