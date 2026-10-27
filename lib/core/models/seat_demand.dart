@@ -161,4 +161,44 @@ class SeatDemand {
         data['departing_soon'] is bool &&
         (unlockBy == null || SeatUnlock.parse(unlockBy!.name) == unlockBy);
   }
+
+  static SeatDemand? fromStored(String id, Map<String, dynamic> data) {
+    final at = _storedAt(data['at']);
+    final userKey = data['user_key'];
+    final day = data['day'];
+    if (at == null || userKey is! String || day is! String) {
+      return null;
+    }
+    final party = (data['party'] as num?)?.toInt() ?? 0;
+    final budget = (data['budget_max'] as num?)?.toInt() ?? 0;
+    final regions = <String>{
+      for (final part in (data['region_ids'] as String? ?? '').split(','))
+        if (part.isNotEmpty) part,
+    };
+    return SeatDemand(
+      id: id,
+      userKey: userKey,
+      day: day,
+      at: at,
+      unlockBy: SeatUnlock.parse(data['unlock_by'] as String?),
+      search: SameBoatSearch(
+        when: SameBoatWhenStorage.parse(data['when']),
+        regionIds: regions,
+        party: party == 0 ? null : party,
+        budgetMax: budget == 0 ? null : budget,
+        lastCall: data['last_call'] == true,
+        departingSoon: data['departing_soon'] == true,
+      ),
+    );
+  }
+}
+
+DateTime? _storedAt(Object? value) {
+  if (value is DateTime) {
+    return value;
+  }
+  if (value is String) {
+    return DateTime.tryParse(value);
+  }
+  return null;
 }

@@ -846,6 +846,18 @@
     "placeholders": { "percent": { "type": "int" } }
   },
   "seatBriefBeforeRecording": "Before recording started, counts come from bookings",
+  "seatBriefMissedTitle": "Missed demand",
+  "seatBriefMissedHint": "Zero-result searches",
+  "seatBriefMissedTop": "Searched often, nothing open",
+  "seatBriefMissedCount": "{count} times",
+  "@seatBriefMissedCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "seatBriefMissedWall": "What was in the way",
+  "seatBriefMissedWallHint": "How often dropping one condition opened results",
+  "seatBriefMissedEmpty": "No records yet",
   "adminSameBoatTitle": "Same-boat · open seats",
   "adminSameBoatHint": "Only seats opened by product registrants. Flag planting is not done here.",
   "adminSameBoatApproveHint": "Approving a leftover-seat request publishes it to Same-boat. A planted flag locks the seat until the pay deadline.",

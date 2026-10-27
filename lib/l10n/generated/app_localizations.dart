@@ -4326,6 +4326,48 @@ abstract class AppLocalizations {
   /// **'기록 시작일 이전은 예약 기준'**
   String get seatBriefBeforeRecording;
 
+  /// No description provided for @seatBriefMissedTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'놓친 수요'**
+  String get seatBriefMissedTitle;
+
+  /// No description provided for @seatBriefMissedHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'0건 검색'**
+  String get seatBriefMissedHint;
+
+  /// No description provided for @seatBriefMissedTop.
+  ///
+  /// In ko, this message translates to:
+  /// **'많이 찾았는데 없던 조건'**
+  String get seatBriefMissedTop;
+
+  /// No description provided for @seatBriefMissedCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}회'**
+  String seatBriefMissedCount(int count);
+
+  /// No description provided for @seatBriefMissedWall.
+  ///
+  /// In ko, this message translates to:
+  /// **'무엇이 막고 있었나요'**
+  String get seatBriefMissedWall;
+
+  /// No description provided for @seatBriefMissedWallHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'조건을 하나 뺐을 때 결과가 열린 횟수'**
+  String get seatBriefMissedWallHint;
+
+  /// No description provided for @seatBriefMissedEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 기록이 없어요'**
+  String get seatBriefMissedEmpty;
+
   /// No description provided for @adminSameBoatTitle.
   ///
   /// In ko, this message translates to:

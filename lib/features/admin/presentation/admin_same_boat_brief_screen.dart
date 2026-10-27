@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/region_catalog.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/seat_brief.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -25,6 +28,8 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
   var _loading = true;
   SeatBriefFunnel _current = SeatBriefFunnel.empty;
   SeatBriefFunnel? _previous;
+  SeatDemandDigest _demand = SeatDemandDigest.empty;
+  SeatDemandDigest? _demandPrevious;
 
   DateTime get _now => widget.now ?? DateTime.now();
 
@@ -46,25 +51,39 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
     final window = _window;
     setState(() => _loading = true);
     try {
-      final current = await store.seatEventsBetween(
+      final currentEvents = await store.seatEventsBetween(
+        from: window.start,
+        to: window.end,
+      );
+      final currentDemands = await store.seatDemandsBetween(
         from: window.start,
         to: window.end,
       );
       SeatBriefFunnel? previous;
+      SeatDemandDigest? demandPrevious;
       if (_compare) {
         final earlier = seatBriefPreviousWindow(window);
-        final rows = await store.seatEventsBetween(
-          from: earlier.start,
-          to: earlier.end,
+        previous = seatBriefFunnel(
+          await store.seatEventsBetween(
+            from: earlier.start,
+            to: earlier.end,
+          ),
         );
-        previous = seatBriefFunnel(rows);
+        demandPrevious = seatDemandDigest(
+          await store.seatDemandsBetween(
+            from: earlier.start,
+            to: earlier.end,
+          ),
+        );
       }
       if (!mounted) {
         return;
       }
       setState(() {
-        _current = seatBriefFunnel(current);
+        _current = seatBriefFunnel(currentEvents);
+        _demand = seatDemandDigest(currentDemands);
         _previous = previous;
+        _demandPrevious = demandPrevious;
         _loading = false;
       });
     } catch (error, stackTrace) {
@@ -249,6 +268,79 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
           maxCount: maxCount,
           caption: l10n.seatBriefPayRate(_current.payPercent),
         ),
+        const SizedBox(height: 28),
+        Text(
+          l10n.seatBriefMissedTitle,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.seatBriefMissedHint,
+          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        if (_demand.isEmpty)
+          Text(
+            l10n.seatBriefMissedEmpty,
+            key: const Key('seat-demand-empty'),
+            style: const TextStyle(color: AdminConsoleTheme.muted),
+          )
+        else ...[
+          Text(
+            l10n.seatBriefMissedTop,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < _demand.top.length; i++)
+            _DemandRank(
+              index: i + 1,
+              label: _demandLine(l10n, _demand.top[i]),
+              count: l10n.seatBriefMissedCount(_demand.top[i].count),
+              delta: _demandPrevious == null
+                  ? null
+                  : seatBriefDeltaLabel(
+                      _demand.top[i].count,
+                      _demandPrevious!.countFor(_demand.top[i].search),
+                    ),
+            ),
+          const SizedBox(height: 18),
+          Text(
+            l10n.seatBriefMissedWall,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.seatBriefMissedWallHint,
+            style: const TextStyle(
+              color: AdminConsoleTheme.muted,
+              fontSize: 12,
+            ),
+          ),
+          if (_demand.walls.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                l10n.seatBriefMissedEmpty,
+                key: const Key('seat-demand-wall-empty'),
+                style: const TextStyle(color: AdminConsoleTheme.muted),
+              ),
+            )
+          else
+            for (final wall in _demand.walls)
+              _FunnelRow(
+                countKey: Key('seat-demand-wall-${wall.unlock.name}'),
+                deltaKey: Key('seat-demand-wall-${wall.unlock.name}-delta'),
+                label: _unlockLabel(l10n, wall.unlock),
+                count: wall.count,
+                previous: _demandPrevious == null
+                    ? null
+                    : _demandPrevious!.wallCount(wall.unlock),
+                maxCount: _demand.walls
+                    .map((item) => item.count)
+                    .reduce((a, b) => a > b ? a : b),
+                caption: null,
+              ),
+        ],
       ],
       ),
     );
@@ -381,5 +473,136 @@ class _FunnelRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DemandRank extends StatelessWidget {
+  const _DemandRank({
+    required this.index,
+    required this.label,
+    required this.count,
+    required this.delta,
+  });
+
+  final int index;
+  final String label;
+  final String count;
+  final String? delta;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Text(
+            '$index',
+            style: const TextStyle(
+              color: AdminConsoleTheme.muted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              key: Key('seat-demand-rank-${index - 1}'),
+            ),
+          ),
+          Text(
+            count,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          if (delta != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              delta!,
+              key: Key('seat-demand-rank-${index - 1}-delta'),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: delta!.startsWith('+')
+                    ? AdminConsoleTheme.aqua
+                    : delta!.startsWith('-')
+                    ? AdminConsoleTheme.danger
+                    : AdminConsoleTheme.muted,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+String _demandLine(AppLocalizations l10n, SeatDemandGroup group) {
+  final parts = <String>[];
+  final names = <String>[];
+  for (final id in group.search.regionIds) {
+    for (final region in RegionCatalog.known) {
+      if (region.id == id) {
+        names.add(region.name);
+        break;
+      }
+    }
+  }
+  if (names.isNotEmpty) {
+    parts.add(names.join(', '));
+  }
+  final when = _demandWhen(l10n, group);
+  if (when != null) {
+    parts.add(when);
+  }
+  final party = group.search.party;
+  if (party != null) {
+    parts.add(
+      party >= SameBoatSearch.partyFivePlus
+          ? l10n.sameBoatSearchPartyFivePlus
+          : l10n.sameBoatSearchPartyCount(party),
+    );
+  }
+  final budget = group.search.budgetMax;
+  if (budget == SameBoatSearch.budget50) {
+    parts.add(l10n.sameBoatSearchBudget50);
+  } else if (budget == SameBoatSearch.budget100) {
+    parts.add(l10n.sameBoatSearchBudget100);
+  } else if (budget == SameBoatSearch.budget200) {
+    parts.add(l10n.sameBoatSearchBudget200);
+  }
+  final more = <String>[
+    if (group.search.lastCall) l10n.sameBoatSearchLastCall,
+    if (group.search.departingSoon) l10n.sameBoatSearchDeparting,
+  ];
+  if (more.isNotEmpty) {
+    parts.add(more.join(', '));
+  }
+  return parts.join(' · ');
+}
+
+String? _demandWhen(AppLocalizations l10n, SeatDemandGroup group) {
+  final local = group.latestAt.toLocal();
+  switch (group.search.when) {
+    case SameBoatWhen.any:
+      return null;
+    case SameBoatWhen.thisMonth:
+      return l10n.sameBoatAlertMonth(local.month);
+    case SameBoatWhen.nextMonth:
+      return l10n.sameBoatAlertMonth(DateTime(local.year, local.month + 1).month);
+    case SameBoatWhen.withinThreeMonths:
+      return l10n.sameBoatSearchThreeMonths;
+  }
+}
+
+String _unlockLabel(AppLocalizations l10n, SeatUnlock unlock) {
+  switch (unlock) {
+    case SeatUnlock.budget:
+      return l10n.sameBoatUnlockBudget;
+    case SeatUnlock.party:
+      return l10n.sameBoatUnlockParty;
+    case SeatUnlock.when:
+      return l10n.sameBoatUnlockWhen;
+    case SeatUnlock.where:
+      return l10n.sameBoatUnlockWhere;
+    case SeatUnlock.more:
+      return l10n.sameBoatUnlockMore;
   }
 }

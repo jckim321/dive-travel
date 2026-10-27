@@ -774,4 +774,10 @@ abstract class DiverRepository {
     required DateTime from,
     required DateTime to,
   });
+
+  /// Admin read of unmet searches in `[from, to)`. Never the whole log.
+  Future<List<SeatDemand>> listSeatDemandsBetween({
+    required DateTime from,
+    required DateTime to,
+  });
 }

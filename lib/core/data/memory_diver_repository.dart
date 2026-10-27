@@ -4015,6 +4015,29 @@ class MemoryDiverRepository implements DiverRepository {
     return true;
   }
 
+  final debugSeatDemandQueries = <(DateTime, DateTime)>[];
+
+  @override
+  Future<List<SeatDemand>> listSeatDemandsBetween({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    debugSeatDemandQueries.add((from, to));
+    final rows = <SeatDemand>[];
+    for (final entry in _seatDemands.entries) {
+      final parsed = SeatDemand.fromStored(
+        entry.key,
+        Map<String, dynamic>.from(entry.value),
+      );
+      if (parsed != null &&
+          !parsed.at.isBefore(from) &&
+          parsed.at.isBefore(to)) {
+        rows.add(parsed);
+      }
+    }
+    return rows;
+  }
+
   @override
   Future<bool> createSeatEvent(SeatLifeEvent event) async {
     if (_seatEvents.containsKey(event.id) || !event.withinShape) {

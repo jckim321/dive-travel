@@ -1,4 +1,6 @@
 import 'package:dive_travel_app/core/models/seat_life.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 
 /// First local day `seat_events` exist. Earlier days are not in that log.
 final seatEventRecordingStart = DateTime(2026, 10, 27);
@@ -128,4 +130,133 @@ String seatBriefDeltaLabel(int current, int previous) {
     return '+$delta';
   }
   return '$delta';
+}
+
+class SeatDemandGroup {
+  const SeatDemandGroup({
+    required this.search,
+    required this.count,
+    required this.latestAt,
+  });
+
+  final SameBoatSearch search;
+  final int count;
+  final DateTime latestAt;
+}
+
+class SeatDemandWall {
+  const SeatDemandWall({required this.unlock, required this.count});
+
+  final SeatUnlock unlock;
+  final int count;
+}
+
+class SeatDemandDigest {
+  const SeatDemandDigest({
+    required this.top,
+    required this.all,
+    required this.walls,
+  });
+
+  static const empty = SeatDemandDigest(top: [], all: [], walls: []);
+
+  final List<SeatDemandGroup> top;
+  final List<SeatDemandGroup> all;
+  final List<SeatDemandWall> walls;
+
+  bool get isEmpty => all.isEmpty;
+
+  int countFor(SameBoatSearch search) {
+    for (final group in all) {
+      if (group.search.sameConditions(search)) {
+        return group.count;
+      }
+    }
+    return 0;
+  }
+
+  int wallCount(SeatUnlock unlock) {
+    for (final wall in walls) {
+      if (wall.unlock == unlock) {
+        return wall.count;
+      }
+    }
+    return 0;
+  }
+}
+
+/// Top three identical searches, then unlock counts. Ignores member identity.
+SeatDemandDigest seatDemandDigest(Iterable<SeatDemand> rows) {
+  final groups = <String, _DemandAcc>{};
+  final walls = {for (final unlock in SeatUnlock.values) unlock: 0};
+  for (final row in rows) {
+    final key = _demandKey(row.search);
+    final acc = groups.putIfAbsent(key, () => _DemandAcc(row.search, row.at));
+    acc.count += 1;
+    if (row.at.isAfter(acc.latestAt)) {
+      acc.latestAt = row.at;
+    }
+    final unlock = row.unlockBy;
+    if (unlock != null) {
+      walls[unlock] = walls[unlock]! + 1;
+    }
+  }
+  final ranked = groups.values.toList()
+    ..sort((a, b) {
+      final byCount = b.count.compareTo(a.count);
+      if (byCount != 0) {
+        return byCount;
+      }
+      return _demandKey(a.search).compareTo(_demandKey(b.search));
+    });
+  const order = [
+    SeatUnlock.budget,
+    SeatUnlock.party,
+    SeatUnlock.when,
+    SeatUnlock.where,
+    SeatUnlock.more,
+  ];
+  return SeatDemandDigest(
+    top: [
+      for (final acc in ranked.take(3))
+        SeatDemandGroup(
+          search: acc.search,
+          count: acc.count,
+          latestAt: acc.latestAt,
+        ),
+    ],
+    all: [
+      for (final acc in ranked)
+        SeatDemandGroup(
+          search: acc.search,
+          count: acc.count,
+          latestAt: acc.latestAt,
+        ),
+    ],
+    walls: [
+      for (final unlock in order)
+        if (walls[unlock]! > 0)
+          SeatDemandWall(unlock: unlock, count: walls[unlock]!),
+    ],
+  );
+}
+
+String _demandKey(SameBoatSearch search) {
+  final regions = search.regionIds.toList()..sort();
+  return [
+    search.when.name,
+    regions.join(','),
+    '${search.party ?? 0}',
+    '${search.budgetMax ?? 0}',
+    search.lastCall,
+    search.departingSoon,
+  ].join('|');
+}
+
+class _DemandAcc {
+  _DemandAcc(this.search, this.latestAt);
+
+  final SameBoatSearch search;
+  int count = 0;
+  DateTime latestAt;
 }

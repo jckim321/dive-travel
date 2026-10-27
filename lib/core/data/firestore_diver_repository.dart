@@ -4885,6 +4885,31 @@ class FirestoreDiverRepository implements DiverRepository {
     return rows;
   }
 
+  @override
+  Future<List<SeatDemand>> listSeatDemandsBetween({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final snap = await _db
+        .collection('seat_demand')
+        .where('at', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+        .where('at', isLessThan: Timestamp.fromDate(to))
+        .get();
+    final rows = <SeatDemand>[];
+    for (final doc in snap.docs) {
+      final data = Map<String, dynamic>.from(doc.data());
+      final at = data['at'];
+      if (at is Timestamp) {
+        data['at'] = at.toDate().toUtc().toIso8601String();
+      }
+      final parsed = SeatDemand.fromStored(doc.id, data);
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    return rows;
+  }
+
   void _logSeatFailure(
     String action,
     String path,

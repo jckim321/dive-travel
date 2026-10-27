@@ -2316,6 +2316,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Before recording started, counts come from bookings';
 
   @override
+  String get seatBriefMissedTitle => 'Missed demand';
+
+  @override
+  String get seatBriefMissedHint => 'Zero-result searches';
+
+  @override
+  String get seatBriefMissedTop => 'Searched often, nothing open';
+
+  @override
+  String seatBriefMissedCount(int count) {
+    return '$count times';
+  }
+
+  @override
+  String get seatBriefMissedWall => 'What was in the way';
+
+  @override
+  String get seatBriefMissedWallHint =>
+      'How often dropping one condition opened results';
+
+  @override
+  String get seatBriefMissedEmpty => 'No records yet';
+
+  @override
   String get adminSameBoatTitle => 'Same-boat · open seats';
 
   @override

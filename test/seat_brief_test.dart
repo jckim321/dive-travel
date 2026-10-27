@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
+import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/seat_brief.dart';
+import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dashboard_screen.dart';
@@ -135,6 +137,117 @@ void main() {
     ]);
   });
 
+  testWidgets('놓친 수요는 기간 안 같은 조건 상위 3개와 막힌 이유만 보여 준다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    const palau = SameBoatSearch(
+      when: SameBoatWhen.nextMonth,
+      regionIds: {'palau'},
+      party: 2,
+      budgetMax: SameBoatSearch.budget100,
+    );
+    const cebu = SameBoatSearch(
+      when: SameBoatWhen.thisMonth,
+      regionIds: {'cebu'},
+      party: 4,
+    );
+    const yap = SameBoatSearch(
+      when: SameBoatWhen.nextMonth,
+      regionIds: {'yap'},
+      party: 1,
+    );
+    expect(
+      await _demand(repo, 'a', palau, DateTime(2026, 10, 22, 12), SeatUnlock.budget),
+      isTrue,
+    );
+    expect(
+      await _demand(repo, 'b', palau, DateTime(2026, 10, 23, 12), SeatUnlock.party),
+      isTrue,
+    );
+    expect(
+      await _demand(repo, 'c', palau, DateTime(2026, 10, 24, 12), SeatUnlock.budget),
+      isTrue,
+    );
+    expect(
+      await _demand(repo, 'd', cebu, DateTime(2026, 10, 25, 12), SeatUnlock.where),
+      isTrue,
+    );
+    expect(await _demand(repo, 'e', cebu, DateTime(2026, 10, 26, 12), null), isTrue);
+    expect(await _demand(repo, 'f', yap, DateTime(2026, 10, 22, 12), null), isTrue);
+    expect(
+      await _demand(repo, 'g', palau, DateTime(2026, 10, 13, 12), SeatUnlock.more),
+      isTrue,
+    );
+    expect(await _demand(repo, 'h', palau, DateTime(2026, 10, 20, 12), null), isTrue);
+
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AdminSameBoatBriefScreen(now: DateTime(2026, 10, 27, 15)),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.debugSeatDemandQueries, [
+      (DateTime(2026, 10, 21), DateTime(2026, 10, 28)),
+    ]);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('seat-demand-rank-0'))).data,
+      '팔라우 · 11월 · 2명 · 100만 이하',
+    );
+    expect(find.text('3회'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('seat-demand-rank-1'))).data,
+      '필리핀 세부 · 10월 · 4명',
+    );
+    expect(find.text('2회'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('seat-demand-rank-2'))).data,
+      '얍 · 11월 · 1명',
+    );
+    expect(find.text('1회'), findsWidgets);
+    expect(_count(tester, 'seat-demand-wall-budget'), '2');
+    expect(_count(tester, 'seat-demand-wall-party'), '1');
+    expect(_count(tester, 'seat-demand-wall-where'), '1');
+    expect(find.byKey(const Key('seat-demand-wall-when')), findsNothing);
+    expect(find.byKey(const Key('seat-demand-wall-more')), findsNothing);
+    expect(find.text('알림 대기'), findsNothing);
+    expect(find.byKey(const Key('seat-demand-empty')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('seat-brief-compare')));
+    await tester.pump();
+    await tester.pump();
+    expect(_count(tester, 'seat-demand-rank-0-delta'), '+2');
+    expect(_count(tester, 'seat-demand-wall-budget-delta'), '+2');
+
+    await tester.tap(find.byKey(const Key('seat-brief-compare')));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('seat-brief-preset-today')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('seat-demand-empty')), findsOneWidget);
+    expect(find.byKey(const Key('seat-demand-rank-0')), findsNothing);
+    expect(repo.debugSeatDemandQueries.last, (
+      DateTime(2026, 10, 27),
+      DateTime(2026, 10, 28),
+    ));
+  });
+
   testWidgets('상품관리에서 같은배 모니터 옆 탭으로 브리프가 열린다', (tester) async {
     tester.view.physicalSize = const Size(1280, 900);
     tester.view.devicePixelRatio = 1;
@@ -191,4 +304,16 @@ Future<void> _plant(
   DateTime at,
 ) {
   return repo.createSeatEvent(_event(id, kind, at));
+}
+
+Future<bool> _demand(
+  MemoryDiverRepository repo,
+  String uid,
+  SameBoatSearch search,
+  DateTime at,
+  SeatUnlock? unlock,
+) {
+  return repo.createSeatDemand(
+    SeatDemand.forSearch(uid: uid, search: search, at: at, unlockBy: unlock),
+  );
 }

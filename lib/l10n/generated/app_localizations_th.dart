@@ -2262,6 +2262,29 @@ class AppLocalizationsTh extends AppLocalizations {
   String get seatBriefBeforeRecording => '기록 시작일 이전은 예약 기준';
 
   @override
+  String get seatBriefMissedTitle => '놓친 수요';
+
+  @override
+  String get seatBriefMissedHint => '0건 검색';
+
+  @override
+  String get seatBriefMissedTop => '많이 찾았는데 없던 조건';
+
+  @override
+  String seatBriefMissedCount(int count) {
+    return '$count회';
+  }
+
+  @override
+  String get seatBriefMissedWall => '무엇이 막고 있었나요';
+
+  @override
+  String get seatBriefMissedWallHint => '조건을 하나 뺐을 때 결과가 열린 횟수';
+
+  @override
+  String get seatBriefMissedEmpty => '아직 기록이 없어요';
+
+  @override
   String get adminSameBoatTitle => '같은배 · 빈자리 모니터';
 
   @override

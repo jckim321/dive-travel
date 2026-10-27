@@ -3719,6 +3719,14 @@ class DiverStore extends ChangeNotifier {
     return _repository.listSeatEventsBetween(from: from, to: to);
   }
 
+  /// Unmet searches in `[from, to)` only. Does not read member alerts.
+  Future<List<SeatDemand>> seatDemandsBetween({
+    required DateTime from,
+    required DateTime to,
+  }) {
+    return _repository.listSeatDemandsBetween(from: from, to: to);
+  }
+
   /// Expired holds and passed departures. Running twice writes the same line.
   Future<void> sweepSeatLives() async {
     final actor = _uid;
