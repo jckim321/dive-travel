@@ -1441,8 +1441,56 @@
   "seatBriefPays": "결제",
   "seatBriefViewsPerOpen": "열림 → 조회 자리당 {count}회",
   "@seatBriefViewsPerOpen": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": { "count": { "type": "String" } }
   },
+  "seatBriefConclusionPrice": "{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 가격이 막고 있는 것으로 보여요",
+  "@seatBriefConclusionPrice": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionSelling": "{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 잘 팔리고 있어요",
+  "@seatBriefConclusionSelling": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionQuiet": "{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 아직 조용해요",
+  "@seatBriefConclusionQuiet": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionWait": "기록이 더 쌓이면 알려 드릴게요",
+  "seatBriefScoreTitle": "자리 성적표",
+  "seatBriefScoreHint": "지역·상품별",
+  "seatBriefScoreRegion": "지역별",
+  "seatBriefScoreProduct": "상품별",
+  "seatBriefScoreCounts": "조회 {views}  깃발 {flags}  결제 {pays}",
+  "@seatBriefScoreCounts": {
+    "placeholders": {
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefScoreFill": "채움 {percent}%",
+  "@seatBriefScoreFill": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefBadgeSelling": "잘 팔림",
+  "seatBriefBadgeViews": "조회만 많음",
+  "seatBriefBadgeQuiet": "조용함",
+  "seatBriefBadgeOrdinary": "보통",
   "seatBriefFlagRate": "조회 → 깃발 {percent}%",
   "@seatBriefFlagRate": {
     "placeholders": { "percent": { "type": "int" } }

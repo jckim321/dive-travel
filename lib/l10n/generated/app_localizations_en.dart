@@ -2297,9 +2297,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seatBriefPays => 'Paid';
 
   @override
-  String seatBriefViewsPerOpen(int count) {
+  String seatBriefViewsPerOpen(String count) {
     return 'Open → view, $count per seat';
   }
+
+  @override
+  String seatBriefConclusionPrice(String who, int views, int flags, int pays) {
+    return '$who: $views views · $flags flags · $pays paid. Price looks like the blocker';
+  }
+
+  @override
+  String seatBriefConclusionSelling(
+    String who,
+    int views,
+    int flags,
+    int pays,
+  ) {
+    return '$who: $views views · $flags flags · $pays paid. This one is selling';
+  }
+
+  @override
+  String seatBriefConclusionQuiet(String who, int views, int flags, int pays) {
+    return '$who: $views views · $flags flags · $pays paid. Still quiet';
+  }
+
+  @override
+  String get seatBriefConclusionWait => 'More records will make this clearer';
+
+  @override
+  String get seatBriefScoreTitle => 'Seat scorecard';
+
+  @override
+  String get seatBriefScoreHint => 'By region and product';
+
+  @override
+  String get seatBriefScoreRegion => 'Region';
+
+  @override
+  String get seatBriefScoreProduct => 'Product';
+
+  @override
+  String seatBriefScoreCounts(int views, int flags, int pays) {
+    return '$views views  $flags flags  $pays paid';
+  }
+
+  @override
+  String seatBriefScoreFill(int percent) {
+    return 'Filled $percent%';
+  }
+
+  @override
+  String get seatBriefBadgeSelling => 'Selling';
+
+  @override
+  String get seatBriefBadgeViews => 'Views only';
+
+  @override
+  String get seatBriefBadgeQuiet => 'Quiet';
+
+  @override
+  String get seatBriefBadgeOrdinary => 'Steady';
 
   @override
   String seatBriefFlagRate(int percent) {

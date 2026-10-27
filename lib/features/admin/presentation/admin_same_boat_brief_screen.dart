@@ -5,6 +5,8 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/seat_brief.dart';
 import 'package:dive_travel_app/core/models/seat_demand.dart';
+import 'package:dive_travel_app/core/models/seat_score.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -20,6 +22,8 @@ class AdminSameBoatBriefScreen extends StatefulWidget {
       _AdminSameBoatBriefScreenState();
 }
 
+enum _ScoreTab { region, product }
+
 class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
   SeatBriefPreset _preset = SeatBriefPreset.sevenDays;
   DateTime? _customStart;
@@ -30,6 +34,8 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
   SeatBriefFunnel? _previous;
   SeatDemandDigest _demand = SeatDemandDigest.empty;
   SeatDemandDigest? _demandPrevious;
+  SeatScoreboard _score = SeatScoreboard.empty;
+  var _scoreTab = _ScoreTab.region;
 
   DateTime get _now => widget.now ?? DateTime.now();
 
@@ -51,6 +57,7 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
     final window = _window;
     setState(() => _loading = true);
     try {
+      await store.ensureShopStatsLoaded();
       final currentEvents = await store.seatEventsBetween(
         from: window.start,
         to: window.end,
@@ -82,6 +89,10 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
       setState(() {
         _current = seatBriefFunnel(currentEvents);
         _demand = seatDemandDigest(currentDemands);
+        _score = seatScoreboard(
+          events: currentEvents,
+          seats: _briefSeats(store),
+        );
         _previous = previous;
         _demandPrevious = demandPrevious;
         _loading = false;
@@ -121,6 +132,83 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
     _load();
   }
 
+  List<SeatScoreRow> get _scoreRows =>
+      _scoreTab == _ScoreTab.region ? _score.regions : _score.products;
+
+  String _conclusion(AppLocalizations l10n) {
+    final row = seatScoreHeadline(_score.regions);
+    if (row == null || row.badge == SeatScoreBadge.ordinary) {
+      return l10n.seatBriefConclusionWait;
+    }
+    final who = l10n.localeName == 'ko' ? seatScoreTopic(row.title) : row.title;
+    return switch (row.badge) {
+      SeatScoreBadge.viewsOnly => l10n.seatBriefConclusionPrice(
+        who,
+        row.views,
+        row.flags,
+        row.pays,
+      ),
+      SeatScoreBadge.selling => l10n.seatBriefConclusionSelling(
+        who,
+        row.views,
+        row.flags,
+        row.pays,
+      ),
+      SeatScoreBadge.quiet => l10n.seatBriefConclusionQuiet(
+        who,
+        row.views,
+        row.flags,
+        row.pays,
+      ),
+      SeatScoreBadge.ordinary => l10n.seatBriefConclusionWait,
+    };
+  }
+
+  List<SeatScoreSeat> _briefSeats(DiverStore store) {
+    final seats = <SeatScoreSeat>[];
+    for (final product in store.allShopProducts) {
+      final hull = product.shopId.split('--').first;
+      final stats = store.liveStatsFor(hull) ?? store.liveStatsFor(product.shopId);
+      final shopContinent = stats?.continent ?? '';
+      final place = SameBoatPlace(
+        continent: product.continent,
+        location: stats?.location ?? '',
+        country: stats?.country ?? '',
+        sites: [if (shopContinent.isNotEmpty) shopContinent],
+      );
+      final options = [
+        for (final option in product.options)
+          if (option.capacity > 0) option,
+      ];
+      if (options.isEmpty) {
+        seats.add(
+          SeatScoreSeat(
+            productId: product.id,
+            optionId: '',
+            productName: product.name,
+            place: place,
+            booked: product.bookedSeats,
+            capacity: product.capacity,
+          ),
+        );
+        continue;
+      }
+      for (final option in options) {
+        seats.add(
+          SeatScoreSeat(
+            productId: product.id,
+            optionId: option.id,
+            productName: product.name,
+            place: place,
+            booked: option.bookedSeats,
+            capacity: option.capacity,
+          ),
+        );
+      }
+    }
+    return seats;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -142,6 +230,12 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
       key: const Key('admin-same-boat-brief'),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: [
+        Text(
+          _conclusion(l10n),
+          key: const Key('seat-brief-conclusion'),
+          style: const TextStyle(fontWeight: FontWeight.w800, height: 1.35),
+        ),
+        const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -248,7 +342,9 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
           count: _current.views,
           previous: _previous?.views,
           maxCount: maxCount,
-          caption: l10n.seatBriefViewsPerOpen(_current.viewsPerOpen),
+          caption: l10n.seatBriefViewsPerOpen(
+            _current.viewsPerOpen.toStringAsFixed(1),
+          ),
         ),
         _FunnelRow(
           countKey: const Key('seat-brief-flags'),
@@ -268,6 +364,50 @@ class _AdminSameBoatBriefScreenState extends State<AdminSameBoatBriefScreen> {
           maxCount: maxCount,
           caption: l10n.seatBriefPayRate(_current.payPercent),
         ),
+        const SizedBox(height: 28),
+        Text(
+          l10n.seatBriefScoreTitle,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.seatBriefScoreHint,
+          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _Preset(
+              key: const Key('seat-score-tab-region'),
+              label: l10n.seatBriefScoreRegion,
+              selected: _scoreTab == _ScoreTab.region,
+              onTap: () => setState(() => _scoreTab = _ScoreTab.region),
+            ),
+            _Preset(
+              key: const Key('seat-score-tab-product'),
+              label: l10n.seatBriefScoreProduct,
+              selected: _scoreTab == _ScoreTab.product,
+              onTap: () => setState(() => _scoreTab = _ScoreTab.product),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_scoreRows.isEmpty)
+          Text(
+            l10n.seatBriefMissedEmpty,
+            key: const Key('seat-score-empty'),
+            style: const TextStyle(color: AdminConsoleTheme.muted),
+          )
+        else
+          for (final row in _scoreRows)
+            _ScoreCard(
+              row: row,
+              counts: l10n.seatBriefScoreCounts(row.views, row.flags, row.pays),
+              fill: l10n.seatBriefScoreFill(row.fillPercent),
+              badge: _badgeLabel(l10n, row.badge),
+              badgeColor: _badgeColor(row.badge),
+              showRegion: _scoreTab == _ScoreTab.product,
+            ),
         const SizedBox(height: 28),
         Text(
           l10n.seatBriefMissedTitle,
@@ -604,5 +744,119 @@ String _unlockLabel(AppLocalizations l10n, SeatUnlock unlock) {
       return l10n.sameBoatUnlockWhere;
     case SeatUnlock.more:
       return l10n.sameBoatUnlockMore;
+  }
+}
+
+String _badgeLabel(AppLocalizations l10n, SeatScoreBadge badge) {
+  return switch (badge) {
+    SeatScoreBadge.selling => l10n.seatBriefBadgeSelling,
+    SeatScoreBadge.viewsOnly => l10n.seatBriefBadgeViews,
+    SeatScoreBadge.quiet => l10n.seatBriefBadgeQuiet,
+    SeatScoreBadge.ordinary => l10n.seatBriefBadgeOrdinary,
+  };
+}
+
+Color _badgeColor(SeatScoreBadge badge) {
+  return switch (badge) {
+    SeatScoreBadge.selling => const Color(0xFF3DDC97),
+    SeatScoreBadge.viewsOnly => AdminConsoleTheme.amber,
+    SeatScoreBadge.quiet => AdminConsoleTheme.ice,
+    SeatScoreBadge.ordinary => AdminConsoleTheme.muted,
+  };
+}
+
+class _ScoreCard extends StatelessWidget {
+  const _ScoreCard({
+    required this.row,
+    required this.counts,
+    required this.fill,
+    required this.badge,
+    required this.badgeColor,
+    required this.showRegion,
+  });
+
+  final SeatScoreRow row;
+  final String counts;
+  final String fill;
+  final String badge;
+  final Color badgeColor;
+  final bool showRegion;
+
+  @override
+  Widget build(BuildContext context) {
+    final prefix = showRegion ? 'product' : 'region';
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: AdminConsoleTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AdminConsoleTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  row.title,
+                  key: Key('seat-score-$prefix-${row.id}'),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                badge,
+                key: Key('seat-score-badge-${row.id}'),
+                style: TextStyle(
+                  color: badgeColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          if (showRegion && row.regionName.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              row.regionName,
+              key: Key('seat-score-product-${row.id}-region'),
+              style: const TextStyle(
+                color: AdminConsoleTheme.muted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  counts,
+                  key: Key('seat-score-counts-${row.id}'),
+                  style: const TextStyle(color: AdminConsoleTheme.muted),
+                ),
+              ),
+              Text(
+                fill,
+                key: Key('seat-score-fill-${row.id}'),
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: row.fillPercent / 100,
+              minHeight: 8,
+              backgroundColor: AdminConsoleTheme.surfaceHigh,
+              color: AdminConsoleTheme.aqua,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

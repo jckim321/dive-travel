@@ -97,7 +97,8 @@ class SeatBriefFunnel {
   final int flags;
   final int pays;
 
-  int get viewsPerOpen => opens == 0 ? 0 : views ~/ opens;
+  /// Views per open seat, one decimal in the UI (`0.3`).
+  double get viewsPerOpen => opens == 0 ? 0 : views / opens;
 
   int get flagPercent => views == 0 ? 0 : flags * 100 ~/ views;
 

@@ -835,8 +835,56 @@
   "seatBriefPays": "Paid",
   "seatBriefViewsPerOpen": "Open → view, {count} per seat",
   "@seatBriefViewsPerOpen": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": { "count": { "type": "String" } }
   },
+  "seatBriefConclusionPrice": "{who}: {views} views · {flags} flags · {pays} paid. Price looks like the blocker",
+  "@seatBriefConclusionPrice": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionSelling": "{who}: {views} views · {flags} flags · {pays} paid. This one is selling",
+  "@seatBriefConclusionSelling": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionQuiet": "{who}: {views} views · {flags} flags · {pays} paid. Still quiet",
+  "@seatBriefConclusionQuiet": {
+    "placeholders": {
+      "who": {"type": "String"},
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefConclusionWait": "More records will make this clearer",
+  "seatBriefScoreTitle": "Seat scorecard",
+  "seatBriefScoreHint": "By region and product",
+  "seatBriefScoreRegion": "Region",
+  "seatBriefScoreProduct": "Product",
+  "seatBriefScoreCounts": "{views} views  {flags} flags  {pays} paid",
+  "@seatBriefScoreCounts": {
+    "placeholders": {
+      "views": {"type": "int"},
+      "flags": {"type": "int"},
+      "pays": {"type": "int"}
+    }
+  },
+  "seatBriefScoreFill": "Filled {percent}%",
+  "@seatBriefScoreFill": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "seatBriefBadgeSelling": "Selling",
+  "seatBriefBadgeViews": "Views only",
+  "seatBriefBadgeQuiet": "Quiet",
+  "seatBriefBadgeOrdinary": "Steady",
   "seatBriefFlagRate": "View → flag {percent}%",
   "@seatBriefFlagRate": {
     "placeholders": { "percent": { "type": "int" } }

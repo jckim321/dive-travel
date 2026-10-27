@@ -4306,7 +4306,91 @@ abstract class AppLocalizations {
   ///
   /// In ko, this message translates to:
   /// **'열림 → 조회 자리당 {count}회'**
-  String seatBriefViewsPerOpen(int count);
+  String seatBriefViewsPerOpen(String count);
+
+  /// No description provided for @seatBriefConclusionPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 가격이 막고 있는 것으로 보여요'**
+  String seatBriefConclusionPrice(String who, int views, int flags, int pays);
+
+  /// No description provided for @seatBriefConclusionSelling.
+  ///
+  /// In ko, this message translates to:
+  /// **'{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 잘 팔리고 있어요'**
+  String seatBriefConclusionSelling(String who, int views, int flags, int pays);
+
+  /// No description provided for @seatBriefConclusionQuiet.
+  ///
+  /// In ko, this message translates to:
+  /// **'{who} 조회 {views} · 깃발 {flags} · 결제 {pays}. 아직 조용해요'**
+  String seatBriefConclusionQuiet(String who, int views, int flags, int pays);
+
+  /// No description provided for @seatBriefConclusionWait.
+  ///
+  /// In ko, this message translates to:
+  /// **'기록이 더 쌓이면 알려 드릴게요'**
+  String get seatBriefConclusionWait;
+
+  /// No description provided for @seatBriefScoreTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'자리 성적표'**
+  String get seatBriefScoreTitle;
+
+  /// No description provided for @seatBriefScoreHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'지역·상품별'**
+  String get seatBriefScoreHint;
+
+  /// No description provided for @seatBriefScoreRegion.
+  ///
+  /// In ko, this message translates to:
+  /// **'지역별'**
+  String get seatBriefScoreRegion;
+
+  /// No description provided for @seatBriefScoreProduct.
+  ///
+  /// In ko, this message translates to:
+  /// **'상품별'**
+  String get seatBriefScoreProduct;
+
+  /// No description provided for @seatBriefScoreCounts.
+  ///
+  /// In ko, this message translates to:
+  /// **'조회 {views}  깃발 {flags}  결제 {pays}'**
+  String seatBriefScoreCounts(int views, int flags, int pays);
+
+  /// No description provided for @seatBriefScoreFill.
+  ///
+  /// In ko, this message translates to:
+  /// **'채움 {percent}%'**
+  String seatBriefScoreFill(int percent);
+
+  /// No description provided for @seatBriefBadgeSelling.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘 팔림'**
+  String get seatBriefBadgeSelling;
+
+  /// No description provided for @seatBriefBadgeViews.
+  ///
+  /// In ko, this message translates to:
+  /// **'조회만 많음'**
+  String get seatBriefBadgeViews;
+
+  /// No description provided for @seatBriefBadgeQuiet.
+  ///
+  /// In ko, this message translates to:
+  /// **'조용함'**
+  String get seatBriefBadgeQuiet;
+
+  /// No description provided for @seatBriefBadgeOrdinary.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get seatBriefBadgeOrdinary;
 
   /// No description provided for @seatBriefFlagRate.
   ///

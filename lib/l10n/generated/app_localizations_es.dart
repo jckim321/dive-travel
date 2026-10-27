@@ -2255,9 +2255,66 @@ class AppLocalizationsEs extends AppLocalizations {
   String get seatBriefPays => '결제';
 
   @override
-  String seatBriefViewsPerOpen(int count) {
+  String seatBriefViewsPerOpen(String count) {
     return '열림 → 조회 자리당 $count회';
   }
+
+  @override
+  String seatBriefConclusionPrice(String who, int views, int flags, int pays) {
+    return '$who 조회 $views · 깃발 $flags · 결제 $pays. 가격이 막고 있는 것으로 보여요';
+  }
+
+  @override
+  String seatBriefConclusionSelling(
+    String who,
+    int views,
+    int flags,
+    int pays,
+  ) {
+    return '$who 조회 $views · 깃발 $flags · 결제 $pays. 잘 팔리고 있어요';
+  }
+
+  @override
+  String seatBriefConclusionQuiet(String who, int views, int flags, int pays) {
+    return '$who 조회 $views · 깃발 $flags · 결제 $pays. 아직 조용해요';
+  }
+
+  @override
+  String get seatBriefConclusionWait => '기록이 더 쌓이면 알려 드릴게요';
+
+  @override
+  String get seatBriefScoreTitle => '자리 성적표';
+
+  @override
+  String get seatBriefScoreHint => '지역·상품별';
+
+  @override
+  String get seatBriefScoreRegion => '지역별';
+
+  @override
+  String get seatBriefScoreProduct => '상품별';
+
+  @override
+  String seatBriefScoreCounts(int views, int flags, int pays) {
+    return '조회 $views  깃발 $flags  결제 $pays';
+  }
+
+  @override
+  String seatBriefScoreFill(int percent) {
+    return '채움 $percent%';
+  }
+
+  @override
+  String get seatBriefBadgeSelling => '잘 팔림';
+
+  @override
+  String get seatBriefBadgeViews => '조회만 많음';
+
+  @override
+  String get seatBriefBadgeQuiet => '조용함';
+
+  @override
+  String get seatBriefBadgeOrdinary => '보통';
 
   @override
   String seatBriefFlagRate(int percent) {
