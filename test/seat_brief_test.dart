@@ -19,10 +19,7 @@ void main() {
 
   test('기간은 오늘을 포함한 길이고 직전 구간은 같은 길이이다', () {
     final now = DateTime(2026, 10, 27, 15);
-    final week = seatBriefWindow(
-      preset: SeatBriefPreset.sevenDays,
-      now: now,
-    );
+    final week = seatBriefWindow(preset: SeatBriefPreset.sevenDays, now: now);
     expect(week.start, DateTime(2026, 10, 21));
     expect(week.end, DateTime(2026, 10, 28));
     expect(seatBriefRangeLabel(week), '2026.10.21 ~ 10.27');
@@ -39,10 +36,7 @@ void main() {
 
     final year = seatBriefWindow(preset: SeatBriefPreset.thisYear, now: now);
     expect(year.start, DateTime(2026, 1, 1));
-    final month = seatBriefWindow(
-      preset: SeatBriefPreset.thirtyDays,
-      now: now,
-    );
+    final month = seatBriefWindow(preset: SeatBriefPreset.thirtyDays, now: now);
     expect(month.end.difference(month.start).inDays, 30);
 
     final custom = seatBriefWindow(
@@ -146,9 +140,7 @@ void main() {
     ]);
   });
 
-  testWidgets('놓친 수요는 기간 안 같은 조건 상위 3개와 막힌 이유만 보여 준다', (
-    tester,
-  ) async {
+  testWidgets('놓친 수요는 기간 안 같은 조건 상위 3개와 막힌 이유만 보여 준다', (tester) async {
     tester.view.physicalSize = const Size(800, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -172,28 +164,67 @@ void main() {
       party: 1,
     );
     expect(
-      await _demand(repo, 'a', palau, DateTime(2026, 10, 22, 12), SeatUnlock.budget),
+      await _demand(
+        repo,
+        'a',
+        palau,
+        DateTime(2026, 10, 22, 12),
+        SeatUnlock.budget,
+      ),
       isTrue,
     );
     expect(
-      await _demand(repo, 'b', palau, DateTime(2026, 10, 23, 12), SeatUnlock.party),
+      await _demand(
+        repo,
+        'b',
+        palau,
+        DateTime(2026, 10, 23, 12),
+        SeatUnlock.party,
+      ),
       isTrue,
     );
     expect(
-      await _demand(repo, 'c', palau, DateTime(2026, 10, 24, 12), SeatUnlock.budget),
+      await _demand(
+        repo,
+        'c',
+        palau,
+        DateTime(2026, 10, 24, 12),
+        SeatUnlock.budget,
+      ),
       isTrue,
     );
     expect(
-      await _demand(repo, 'd', cebu, DateTime(2026, 10, 25, 12), SeatUnlock.where),
+      await _demand(
+        repo,
+        'd',
+        cebu,
+        DateTime(2026, 10, 25, 12),
+        SeatUnlock.where,
+      ),
       isTrue,
     );
-    expect(await _demand(repo, 'e', cebu, DateTime(2026, 10, 26, 12), null), isTrue);
-    expect(await _demand(repo, 'f', yap, DateTime(2026, 10, 22, 12), null), isTrue);
     expect(
-      await _demand(repo, 'g', palau, DateTime(2026, 10, 13, 12), SeatUnlock.more),
+      await _demand(repo, 'e', cebu, DateTime(2026, 10, 26, 12), null),
       isTrue,
     );
-    expect(await _demand(repo, 'h', palau, DateTime(2026, 10, 20, 12), null), isTrue);
+    expect(
+      await _demand(repo, 'f', yap, DateTime(2026, 10, 22, 12), null),
+      isTrue,
+    );
+    expect(
+      await _demand(
+        repo,
+        'g',
+        palau,
+        DateTime(2026, 10, 13, 12),
+        SeatUnlock.more,
+      ),
+      isTrue,
+    );
+    expect(
+      await _demand(repo, 'h', palau, DateTime(2026, 10, 20, 12), null),
+      isTrue,
+    );
 
     final store = DiverStore(repo);
     addTearDown(store.dispose);
@@ -288,12 +319,24 @@ void main() {
     final at = DateTime(2026, 10, 22, 12);
     final events = <SeatLifeEvent>[
       for (var i = 0; i < 30; i++)
-        _event('cebu-view-$i', 'view', at, region: '필리핀 세부', productId: 'cebu-live'),
+        _event(
+          'cebu-view-$i',
+          'view',
+          at,
+          region: '필리핀 세부',
+          productId: 'cebu-live',
+        ),
       _event('cebu-flag', 'flag', at, region: 'cebu', productId: 'cebu-live'),
       _event('palau-ko', 'view', at, region: '팔라우', productId: 'palau-live'),
       _event('palau-id', 'view', at, region: 'palau', productId: 'palau-live'),
       _event('palau-pay', 'pay', at, region: 'palau', productId: 'palau-live'),
-      _event('open-ignored', 'open', at, region: '팔라우', productId: 'palau-live'),
+      _event(
+        'open-ignored',
+        'open',
+        at,
+        region: '팔라우',
+        productId: 'palau-live',
+      ),
     ];
     final board = seatScoreboard(
       events: events,
@@ -355,6 +398,84 @@ void main() {
         ),
       ]),
       isNull,
+    );
+  });
+
+  test('목록에 없는 지역은 기타로 모아 깔때기 조회 깃발 결제와 맞춘다', () {
+    final at = DateTime(2026, 10, 22, 12);
+    final events = [
+      _event('palau', 'view', at, region: '팔라우', productId: 'palau-live'),
+      _event(
+        'via-product',
+        'flag',
+        at,
+        region: 'zz-unlisted',
+        productId: 'palau-live',
+      ),
+      _event(
+        'stray-view',
+        'view',
+        at,
+        region: 'zz-unlisted',
+        productId: 'mystery',
+      ),
+      _event(
+        'stray-pay',
+        'pay',
+        at,
+        region: 'zz-unlisted',
+        productId: 'mystery',
+      ),
+      _event('open', 'open', at, region: 'zz-unlisted', productId: 'mystery'),
+    ];
+    final board = seatScoreboard(
+      events: events,
+      seats: const [
+        SeatScoreSeat(
+          productId: 'palau-live',
+          optionId: '',
+          productName: '팔라우 씨월드',
+          place: SameBoatPlace(continent: 'palau'),
+          booked: 8,
+          capacity: 10,
+        ),
+        SeatScoreSeat(
+          productId: 'mystery',
+          optionId: '',
+          productName: '미분류 상품',
+          place: SameBoatPlace(country: 'zz-unlisted'),
+          booked: 1,
+          capacity: 4,
+        ),
+      ],
+    );
+    final other = board.regions.singleWhere(
+      (row) => row.id == seatScoreOtherId,
+    );
+    expect(other.title, seatScoreOtherTitle);
+    expect(other.views, 1);
+    expect(other.pays, 1);
+    expect(other.fillPercent, 25);
+    final palau = board.regions.singleWhere((row) => row.id == 'palau');
+    expect(palau.views, 1);
+    expect(palau.flags, 1);
+    expect(palau.fillPercent, 80);
+    final funnel = seatBriefFunnel(events);
+    expect(
+      board.regions.fold<int>(0, (sum, row) => sum + row.views),
+      funnel.views,
+    );
+    expect(
+      board.regions.fold<int>(0, (sum, row) => sum + row.flags),
+      funnel.flags,
+    );
+    expect(
+      board.regions.fold<int>(0, (sum, row) => sum + row.pays),
+      funnel.pays,
+    );
+    expect(
+      board.products.singleWhere((row) => row.id == 'mystery').regionName,
+      '기타·미분류',
     );
   });
 
@@ -435,6 +556,14 @@ void main() {
     );
     await _plant(
       repo,
+      'unlisted',
+      'view',
+      DateTime(2026, 10, 24, 14),
+      region: 'zz-unlisted',
+      productId: 'mystery',
+    );
+    await _plant(
+      repo,
       'palau-old',
       'view',
       DateTime(2026, 10, 13, 12),
@@ -474,6 +603,9 @@ void main() {
     expect(_count(tester, 'seat-score-badge-palau'), '잘 팔림');
     expect(_count(tester, 'seat-score-counts-palau'), '조회 2  깃발 0  결제 0');
     expect(_count(tester, 'seat-score-fill-palau'), '채움 80%');
+    expect(_count(tester, 'seat-brief-views'), '33');
+    expect(_count(tester, 'seat-score-region-other'), '기타·미분류');
+    expect(_count(tester, 'seat-score-counts-other'), '조회 1  깃발 0  결제 0');
 
     await tester.tap(find.byKey(const Key('seat-score-tab-product')));
     await tester.pump();
@@ -517,7 +649,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('admin-menu-shops')));
     await tester.pump();
-    await tester.ensureVisible(find.byKey(const Key('admin-sub-same-boat-brief')));
+    await tester.ensureVisible(
+      find.byKey(const Key('admin-sub-same-boat-brief')),
+    );
     await tester.tap(find.byKey(const Key('admin-sub-same-boat-brief')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

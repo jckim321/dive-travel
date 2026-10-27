@@ -80,13 +80,16 @@ Future<Uint8List> buildPartnerMeetingPdf({
               l10n.seatBriefScoreTitle,
               style: const pw.TextStyle(fontSize: 13),
             ),
-            for (final row in snapshot.scoreRows) ...[
-              pw.SizedBox(height: 6),
-              pw.Text(
-                '${row.title}  ${l10n.seatBriefScoreCounts(row.views, row.flags, row.pays)}  '
-                '${l10n.seatBriefScoreFill(row.fillPercent)}',
-              ),
-            ],
+            if (snapshot.scoreRows.isEmpty)
+              pw.Text(l10n.seatBriefConclusionWait)
+            else
+              for (final row in snapshot.scoreRows) ...[
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  '${row.title}  ${l10n.seatBriefScoreCounts(row.views, row.flags, row.pays)}  '
+                  '${l10n.seatBriefScoreFill(row.fillPercent)}',
+                ),
+              ],
           ],
           if (sections.demand && snapshot.demands.isNotEmpty) ...[
             pw.SizedBox(height: 16),

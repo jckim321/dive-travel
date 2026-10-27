@@ -102,6 +102,19 @@ class SeatScoreboard {
   final List<SeatScoreRow> products;
 }
 
+/// Bucket for a view, flag, or payment whose place is not in the catalog.
+const seatScoreOtherId = 'other';
+
+/// Shown on the region list so those events still add up to the funnel.
+const seatScoreOtherTitle = '기타·미분류';
+
+String seatScoreRegionTitle(String id) {
+  if (id == seatScoreOtherId) {
+    return seatScoreOtherTitle;
+  }
+  return seatCatalogRegionName(id);
+}
+
 /// Catalog region for a stored place. The longest matching name wins.
 String? seatCatalogRegionId(SameBoatPlace place) {
   DiveRegion? best;
@@ -139,7 +152,8 @@ String seatScoreTopic(String name) {
 }
 
 /// Views, flags, and payments in [events], grouped by catalog region and product.
-/// Fill rate uses current [seats], not the event log.
+/// A place outside the catalog is one 「기타·미분류」 row, so the region rows
+/// add up to the funnel. Fill rate uses current [seats], not the event log.
 SeatScoreboard seatScoreboard({
   required Iterable<SeatLifeEvent> events,
   required Iterable<SeatScoreSeat> seats,
@@ -181,11 +195,9 @@ SeatScoreboard seatScoreboard({
     if (kind != 'view' && kind != 'flag' && kind != 'pay') {
       continue;
     }
-    final regionId = regionForEvent(event);
-    if (regionId != null) {
-      final acc = regionCounts.putIfAbsent(regionId, _ScoreAcc.new);
-      acc.add(kind);
-    }
+    final regionId = regionForEvent(event) ?? seatScoreOtherId;
+    final acc = regionCounts.putIfAbsent(regionId, _ScoreAcc.new);
+    acc.add(kind);
     if (event.productId.isNotEmpty) {
       final acc = productCounts.putIfAbsent(event.productId, _ScoreAcc.new);
       acc.add(kind);
@@ -205,18 +217,23 @@ SeatScoreboard seatScoreboard({
     var capacity = 0;
     for (final rows in seatsByProduct.values) {
       for (final seat in rows) {
-        if (seatCatalogRegionId(seat.place) == entry.key) {
+        final placeId = seatCatalogRegionId(seat.place);
+        final matches = entry.key == seatScoreOtherId
+            ? placeId == null
+            : placeId == entry.key;
+        if (matches) {
           booked += seat.booked;
           capacity += seat.capacity;
         }
       }
     }
+    final title = seatScoreRegionTitle(entry.key);
     regions.add(
       SeatScoreRow(
         id: entry.key,
-        title: seatCatalogRegionName(entry.key),
+        title: title,
         regionId: entry.key,
-        regionName: seatCatalogRegionName(entry.key),
+        regionName: title,
         views: entry.value.views,
         flags: entry.value.flags,
         pays: entry.value.pays,
@@ -252,7 +269,7 @@ SeatScoreboard seatScoreboard({
             ? name
             : (entry.value.title.isNotEmpty ? entry.value.title : entry.key),
         regionId: resolved,
-        regionName: resolved.isEmpty ? '' : seatCatalogRegionName(resolved),
+        regionName: resolved.isEmpty ? '' : seatScoreRegionTitle(resolved),
         views: entry.value.views,
         flags: entry.value.flags,
         pays: entry.value.pays,

@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_pdf.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_preview.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_brief_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -122,6 +123,7 @@ void main() {
     expect(find.byKey(const Key('partner-meeting-conclusion')), findsNothing);
     expect(find.byKey(const Key('partner-meeting-proposals')), findsNothing);
     expect(find.byKey(const Key('partner-meeting-funnel')), findsOneWidget);
+    expect(find.byKey(const Key('partner-meeting-score-empty')), findsNothing);
     expect(_text(tester, 'partner-meeting-views'), '1');
     expect(find.text('채움 80%'), findsWidgets);
     expect(find.text('국적비밀'), findsNothing);
@@ -201,10 +203,67 @@ void main() {
     expect(text.contains('국적비밀'), isFalse);
     expect(text.contains('<D314>'), isTrue);
   });
+
+  testWidgets('성적표에 줄이 없으면 더 쌓이면 알려 드린다는 한 줄을 보여 준다', (tester) async {
+    final report = _emptyScoreReport();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: AdminPartnerMeetingPreview(
+          report: report,
+          shopName: '팔라우 다이브센터',
+          periodLabel: '2026.10.21 ~ 10.27',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('partner-meeting-score')), findsOneWidget);
+    expect(
+      find.byKey(const Key('partner-meeting-score-empty')),
+      findsOneWidget,
+    );
+    expect(find.text('기록이 더 쌓이면 알려 드릴게요'), findsOneWidget);
+
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    final bytes = await buildPartnerMeetingPdf(
+      report: report,
+      shopName: '팔라우 다이브센터',
+      periodLabel: '2026.10.21 ~ 10.27',
+      l10n: l10n,
+    );
+    final text =
+        '${latin1.decode(bytes, allowInvalid: true)}${_inflateStreams(bytes)}';
+    expect(text.contains('<AE30>'), isTrue);
+  });
 }
 
 String _text(WidgetTester tester, String key) {
   return tester.widget<Text>(find.byKey(Key(key))).data!;
+}
+
+PartnerMeetingReport _emptyScoreReport() {
+  return buildPartnerMeetingReport(
+    id: 'preview',
+    recipe: MeetingReportRecipe(
+      shopId: 'palau-dive',
+      periodStart: DateTime(2026, 10, 21),
+      periodEnd: DateTime(2026, 10, 27),
+      sections: const MeetingReportSections(
+        conclusion: false,
+        funnel: false,
+        scorecard: true,
+        demand: false,
+        proposals: false,
+      ),
+    ),
+    events: const [],
+    demands: const [],
+    seats: const [],
+    createdAt: DateTime(2026, 10, 27, 15),
+  );
 }
 
 String _inflateStreams(List<int> bytes) {

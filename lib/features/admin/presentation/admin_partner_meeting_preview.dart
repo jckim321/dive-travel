@@ -228,14 +228,23 @@ class _PaperBody extends StatelessWidget {
               key: const Key('partner-meeting-score'),
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            for (final row in snapshot.scoreRows)
+            if (snapshot.scoreRows.isEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  '${row.title}  ${l10n.seatBriefScoreCounts(row.views, row.flags, row.pays)}  '
-                  '${l10n.seatBriefScoreFill(row.fillPercent)}',
+                  l10n.seatBriefConclusionWait,
+                  key: const Key('partner-meeting-score-empty'),
                 ),
-              ),
+              )
+            else
+              for (final row in snapshot.scoreRows)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${row.title}  ${l10n.seatBriefScoreCounts(row.views, row.flags, row.pays)}  '
+                    '${l10n.seatBriefScoreFill(row.fillPercent)}',
+                  ),
+                ),
           ],
           if (sections.demand && snapshot.demands.isNotEmpty) ...[
             const SizedBox(height: 20),
