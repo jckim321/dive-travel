@@ -187,6 +187,156 @@ describe('users/{userId} create privilege lock', () => {
     );
   });
 
+  async function seedUser(id, data) {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('users').doc(id).set({
+        email: `${id}@dive.test`,
+        display_name: id,
+        is_admin: false,
+        is_business: false,
+        user_role: 'diver',
+        member_grade: 'silver',
+        member_grade_locked: false,
+        paid_purchase_count: 0,
+        review_count: 0,
+        ...data,
+      });
+    });
+  }
+
+  it('allows a purchase of exactly +1 to raise the matching grade', async () => {
+    await seedUser('buyer', { paid_purchase_count: 2, member_grade: 'silver' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 3,
+        review_count: 0,
+        member_grade: 'gold',
+        grade_celebration_pending: true,
+        grade_celebration_to: 'gold',
+      }, { merge: true }),
+    );
+  });
+
+  it('denies a purchase of +1 that writes a higher grade than the count', async () => {
+    await seedUser('buyer', { paid_purchase_count: 2, member_grade: 'silver' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 3,
+        member_grade: 'platinum',
+      }, { merge: true }),
+    );
+  });
+
+  it('denies raising a grade when the purchase count jumps by more than 1', async () => {
+    await seedUser('buyer', { paid_purchase_count: 2, member_grade: 'silver' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 4,
+        member_grade: 'gold',
+      }, { merge: true }),
+    );
+  });
+
+  it('allows the 10th purchase to raise diamond', async () => {
+    await seedUser('buyer', { paid_purchase_count: 9, member_grade: 'gold' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 10,
+        member_grade: 'diamond',
+      }, { merge: true }),
+    );
+  });
+
+  it('allows the 20th purchase to raise platinum', async () => {
+    await seedUser('buyer', { paid_purchase_count: 19, member_grade: 'diamond' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 20,
+        member_grade: 'platinum',
+      }, { merge: true }),
+    );
+  });
+
+  it('denies lowering a grade on the next purchase', async () => {
+    await seedUser('buyer', { paid_purchase_count: 20, member_grade: 'platinum' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 21,
+        member_grade: 'gold',
+      }, { merge: true }),
+    );
+  });
+
+  it('allows a locked account to increment purchases but not grade', async () => {
+    await seedUser('buyer', {
+      paid_purchase_count: 2,
+      member_grade: 'silver',
+      member_grade_locked: true,
+    });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 3,
+      }, { merge: true }),
+    );
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 4,
+        member_grade: 'gold',
+      }, { merge: true }),
+    );
+  });
+
+  it('denies a grade write without a purchase increment', async () => {
+    await seedUser('buyer', { paid_purchase_count: 3, member_grade: 'silver' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        member_grade: 'gold',
+      }, { merge: true }),
+    );
+  });
+
+  it('denies a grade raise that also sets is_admin', async () => {
+    await seedUser('buyer', { paid_purchase_count: 2, member_grade: 'silver' });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        paid_purchase_count: 3,
+        member_grade: 'gold',
+        is_admin: true,
+      }, { merge: true }),
+    );
+  });
+
+  it('denies the owner changing member_grade_locked', async () => {
+    await seedUser('buyer', { member_grade_locked: true });
+    const db = testEnv.authenticatedContext('buyer').firestore();
+    await assertFails(
+      db.collection('users').doc('buyer').set({
+        member_grade_locked: false,
+      }, { merge: true }),
+    );
+  });
+
+  it('allows an admin to set member_grade without a purchase increment', async () => {
+    await seedUser('admin-1', { is_admin: true });
+    await seedUser('buyer', { member_grade: 'silver', paid_purchase_count: 0 });
+    const db = testEnv.authenticatedContext('admin-1').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('buyer').set({
+        member_grade: 'platinum',
+        member_grade_locked: true,
+      }, { merge: true }),
+    );
+  });
+
   it('denies create with camelCase isAdmin', async () => {
     const db = testEnv.authenticatedContext('uid-a').firestore();
     await assertFails(

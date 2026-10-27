@@ -140,6 +140,38 @@ service cloud.firestore {
         && !('ownedShopId' in request.resource.data);
     }
 
+    // Purchase-only grades. Must match MemberGrade.fromActivity.
+    function purchaseGrade(count) {
+      return count >= 20
+        ? 'platinum'
+        : count >= 10
+          ? 'diamond'
+          : count >= 3
+            ? 'gold'
+            : 'silver';
+    }
+
+    function gradeRank(grade) {
+      return grade == 'platinum'
+        ? 3
+        : grade == 'diamond'
+          ? 2
+          : grade == 'gold'
+            ? 1
+            : 0;
+    }
+
+    // Owner may raise member_grade only with a purchase count of exactly +1.
+    function ownerPurchaseGradeRaise() {
+      return resource.data.get('member_grade_locked', false) != true
+        && request.resource.data.paid_purchase_count
+            == resource.data.get('paid_purchase_count', 0) + 1
+        && request.resource.data.member_grade
+            == purchaseGrade(request.resource.data.paid_purchase_count)
+        && gradeRank(request.resource.data.member_grade)
+            > gradeRank(resource.data.get('member_grade', 'silver'));
+    }
+
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -148,7 +180,12 @@ service cloud.firestore {
         isOwner(userId)
         && !accountClosed()
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['is_admin', 'is_business', 'member_grade', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at'])
+            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['member_grade'])
+          || ownerPurchaseGradeRaise()
+        )
       );
       allow delete: if isAdmin() || (isOwner(userId) && !accountClosed());
 
