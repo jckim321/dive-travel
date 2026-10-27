@@ -1512,7 +1512,7 @@
   "seatBriefMissedWall": "무엇이 막고 있었나요",
   "seatBriefMissedWallHint": "조건을 하나 뺐을 때 결과가 열린 횟수",
   "seatBriefMissedEmpty": "아직 기록이 없어요",
-  "partnerMeetingOpen": "파트너 미팅 보고서",
+  "partnerMeetingOpen": "미팅 보고서 만들기",
   "partnerMeetingTitle": "파트너 미팅 보고서",
   "partnerMeetingHint": "조건을 고르면 보고서를 만들어 드려요",
   "partnerMeetingPartner": "파트너",
@@ -1558,6 +1558,13 @@
   "partnerMeetingUnsend": "보내기 취소",
   "partnerMeetingSent": "보냈어요",
   "partnerMeetingUnsent": "보내기를 취소했어요",
+  "partnerMeetingDraft": "미발송",
+  "partnerMeetingSentBadge": "보냄",
+  "partnerMeetingInbox": "받은 보고서",
+  "partnerMeetingInboxEmpty": "받은 보고서가 없어요",
+  "partnerMeetingCopyLink": "링크 복사",
+  "partnerMeetingLinkCopied": "링크를 복사했습니다.",
+  "partnerMeetingDenied": "이 보고서를 볼 수 없어요",
   "partnerMeetingPrevious": "지난 기간 열림 {opens} · 조회 {views} · 깃발 {flags} · 결제 {pays}",
   "@partnerMeetingPrevious": {
     "placeholders": {

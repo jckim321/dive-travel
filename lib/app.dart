@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/data/firestore_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_gate.dart';
+import 'package:dive_travel_app/features/partner/presentation/meeting_report_link_host.dart';
 import 'package:dive_travel_app/features/auth/presentation/firebase_setup_screen.dart';
 import 'package:dive_travel_app/features/auth/presentation/profile_write_debug_footer.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -22,10 +23,14 @@ class DiveTravelApp extends StatefulWidget {
     this.firebaseReady = false,
     this.repository,
     this.devicePinStore,
+    this.initialReportId,
   });
 
   final bool firebaseReady;
   final DiverRepository? repository;
+
+  /// `#report={id}` captured before the first frame. Null when the address has none.
+  final String? initialReportId;
 
   /// Injected in tests; production uses [PrefsDevicePinStore].
   final DevicePinStore? devicePinStore;
@@ -114,7 +119,13 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
         store: store,
         child: DevicePinScope(
           controller: pins,
-          child: _localizedApp(home: const AuthGate(), debugFooter: true),
+          child: _localizedApp(
+            home: MeetingReportLinkHost(
+              reportId: widget.initialReportId,
+              child: const AuthGate(),
+            ),
+            debugFooter: true,
+          ),
         ),
       ),
     );

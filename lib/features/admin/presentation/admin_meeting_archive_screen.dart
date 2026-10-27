@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
@@ -33,9 +34,29 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
+  Future<void> _copyLink(PartnerMeetingReport report) async {
+    final url = meetingReportShareUrl(Uri.base, report.id);
+    try {
+      await Clipboard.setData(ClipboardData(text: url));
+    } catch (error, stackTrace) {
+      debugPrint('meeting report link copy failed $error');
+      debugPrint('$stackTrace');
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).partnerMeetingLinkCopied),
+      ),
+    );
+  }
+
   Future<void> _load() async {
     final store = DiverStoreScope.of(context);
     try {
+      await store.ensureShopStatsLoaded();
       final rows = await store.listMeetingReports();
       if (!mounted) {
         return;
@@ -95,7 +116,7 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
         builder: (_) => AdminPartnerMeetingPreview(
           report: report,
           shopName: shop == null ? report.recipe.hullId : _label(shop),
-          periodLabel: _range(report.recipe),
+          periodLabel: meetingReportPeriodLabel(report.recipe),
         ),
       ),
     );
@@ -143,7 +164,7 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
           builder: (_) => AdminPartnerMeetingPreview(
             report: report,
             shopName: name,
-            periodLabel: _range(recipe),
+            periodLabel: meetingReportPeriodLabel(recipe),
           ),
         ),
       );
@@ -156,6 +177,7 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
     return Theme(
       data: AdminConsoleTheme.dark,
       child: Scaffold(
@@ -172,11 +194,13 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
                   for (final report in _reports)
                     _ArchiveRow(
                       report: report,
-                      range: _range(report.recipe),
+                      name: _partnerName(store, report.recipe.hullId),
+                      range: meetingReportPeriodLabel(report.recipe),
                       onOpen: () => _open(report),
                       onAgain: () => _again(report),
                       onSend: () => _share(report, true),
                       onUnsend: () => _share(report, false),
+                      onCopyLink: () => _copyLink(report),
                     ),
                 ],
               ),
@@ -188,31 +212,72 @@ class _AdminMeetingArchiveScreenState extends State<AdminMeetingArchiveScreen> {
 class _ArchiveRow extends StatelessWidget {
   const _ArchiveRow({
     required this.report,
+    required this.name,
     required this.range,
     required this.onOpen,
     required this.onAgain,
     required this.onSend,
     required this.onUnsend,
+    required this.onCopyLink,
   });
 
   final PartnerMeetingReport report;
+  final String name;
   final String range;
   final VoidCallback onOpen;
   final VoidCallback onAgain;
   final VoidCallback onSend;
   final VoidCallback onUnsend;
+  final VoidCallback onCopyLink;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final sent = report.shared;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${report.recipe.hullId} · $range',
+            name,
             key: Key('partner-meeting-archive-row-${report.id}'),
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                meetingReportCreatedLabel(report.createdAt),
+                key: Key('partner-meeting-archive-date-${report.id}'),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: sent ? AdminConsoleTheme.amber : AdminConsoleTheme.border,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  sent ? l10n.partnerMeetingSentBadge : l10n.partnerMeetingDraft,
+                  key: Key('partner-meeting-archive-status-${report.id}'),
+                  style: TextStyle(
+                    color: sent ? AdminConsoleTheme.bg : AdminConsoleTheme.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                range,
+                style: const TextStyle(
+                  color: AdminConsoleTheme.muted,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -241,6 +306,11 @@ class _ArchiveRow extends StatelessWidget {
                   onPressed: onUnsend,
                   child: Text(l10n.partnerMeetingUnsend),
                 ),
+              OutlinedButton(
+                key: Key('partner-meeting-copy-link-${report.id}'),
+                onPressed: onCopyLink,
+                child: Text(l10n.partnerMeetingCopyLink),
+              ),
             ],
           ),
         ],
@@ -249,18 +319,12 @@ class _ArchiveRow extends StatelessWidget {
   }
 }
 
-String _range(MeetingReportRecipe recipe) {
-  final start = DateTime(
-    recipe.periodStart.year,
-    recipe.periodStart.month,
-    recipe.periodStart.day,
-  );
-  final end = DateTime(
-    recipe.periodEnd.year,
-    recipe.periodEnd.month,
-    recipe.periodEnd.day,
-  ).add(const Duration(days: 1));
-  return seatBriefRangeLabel(SeatBriefWindow(start: start, end: end));
+String _partnerName(DiverStore store, String hull) {
+  final shop = _shop(store, hull);
+  if (shop == null) {
+    return hull;
+  }
+  return _label(shop);
 }
 
 ShopLiveStats? _shop(DiverStore store, String hull) {

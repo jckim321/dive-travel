@@ -2397,7 +2397,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seatBriefMissedEmpty => 'No records yet';
 
   @override
-  String get partnerMeetingOpen => 'Partner meeting report';
+  String get partnerMeetingOpen => 'Create a meeting report';
 
   @override
   String get partnerMeetingTitle => 'Partner meeting report';
@@ -2508,6 +2508,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get partnerMeetingUnsent => 'Send cancelled';
+
+  @override
+  String get partnerMeetingDraft => 'Not sent';
+
+  @override
+  String get partnerMeetingSentBadge => 'Sent';
+
+  @override
+  String get partnerMeetingInbox => 'Received reports';
+
+  @override
+  String get partnerMeetingInboxEmpty => 'No reports yet';
+
+  @override
+  String get partnerMeetingCopyLink => 'Copy link';
+
+  @override
+  String get partnerMeetingLinkCopied => 'Link copied.';
+
+  @override
+  String get partnerMeetingDenied => 'You can\'t view this report';
 
   @override
   String partnerMeetingPrevious(int opens, int views, int flags, int pays) {

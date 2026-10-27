@@ -4161,6 +4161,63 @@ class MemoryDiverRepository implements DiverRepository {
     return rows;
   }
 
+  final debugMeetingReportQueries = <MeetingReportListQuery>[];
+
+  @override
+  Future<List<PartnerMeetingReport>> listSharedMeetingReports({
+    required String shopId,
+  }) async {
+    final query = MeetingReportListQuery.sharedForOwnedShop(shopId);
+    if (query == null) {
+      return const [];
+    }
+    debugMeetingReportQueries.add(query);
+    final rows = <PartnerMeetingReport>[];
+    for (final entry in _meetingReports.entries) {
+      final parsed = PartnerMeetingReport.fromMap(
+        entry.key,
+        Map<String, dynamic>.from(entry.value),
+      );
+      if (parsed == null ||
+          parsed.shared != query.shared ||
+          parsed.recipe.hullId != query.shopId) {
+        continue;
+      }
+      rows.add(parsed);
+    }
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return rows;
+  }
+
+  @override
+  Future<PartnerMeetingReport?> getMeetingReport(String id) async {
+    final key = id.trim();
+    final current = _meetingReports[key];
+    if (current == null) {
+      return null;
+    }
+    final parsed = PartnerMeetingReport.fromMap(
+      key,
+      Map<String, dynamic>.from(current),
+    );
+    if (parsed == null) {
+      return null;
+    }
+    if (_resolvedAdmin) {
+      return parsed;
+    }
+    final hull = partnerShopHull(_ownedShopId ?? '');
+    final allowed =
+        _resolvedBusiness &&
+        parsed.shared &&
+        hull.isNotEmpty &&
+        hull == parsed.recipe.hullId;
+    if (!allowed) {
+      throw StateError('permission-denied');
+    }
+    return parsed;
+  }
+
   @override
   Future<bool> setMeetingReportShared({
     required String id,

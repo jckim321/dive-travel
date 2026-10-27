@@ -788,6 +788,14 @@ abstract class DiverRepository {
   /// Newest first. Skips a document that is not the allowed shape.
   Future<List<PartnerMeetingReport>> listMeetingReports();
 
+  /// Partner list. Always filters shared and the hull of [shopId] together.
+  Future<List<PartnerMeetingReport>> listSharedMeetingReports({
+    required String shopId,
+  });
+
+  /// One document. Null when it is missing. Denied reads throw.
+  Future<PartnerMeetingReport?> getMeetingReport(String id);
+
   /// shared true and shared_at, or shared false with shared_at removed.
   Future<bool> setMeetingReportShared({
     required String id,

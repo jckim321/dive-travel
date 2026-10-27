@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
-import 'package:dive_travel_app/core/models/seat_brief.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_meeting_pdf.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -18,12 +17,16 @@ class AdminPartnerMeetingPreview extends StatelessWidget {
     required this.shopName,
     required this.periodLabel,
     this.onPrint,
+    this.readOnly = false,
   });
 
   final PartnerMeetingReport report;
   final String shopName;
   final String periodLabel;
   final Future<void> Function(Uint8List bytes)? onPrint;
+
+  /// Partner and link views. Save and send stay off the paper.
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +38,11 @@ class AdminPartnerMeetingPreview extends StatelessWidget {
       data: AdminConsoleTheme.dark,
       child: Scaffold(
         backgroundColor: AdminConsoleTheme.bg,
-        appBar: AppBar(title: Text(l10n.partnerMeetingPreviewTitle)),
+        appBar: AppBar(
+          title: Text(
+            readOnly ? l10n.partnerMeetingInbox : l10n.partnerMeetingPreviewTitle,
+          ),
+        ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
           children: [
@@ -73,40 +80,53 @@ class AdminPartnerMeetingPreview extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const Key('partner-meeting-print'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AdminConsoleTheme.amber,
-                      foregroundColor: AdminConsoleTheme.bg,
+            if (readOnly)
+              FilledButton.icon(
+                key: const Key('partner-meeting-print'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AdminConsoleTheme.amber,
+                  foregroundColor: AdminConsoleTheme.bg,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                onPressed: () => _print(context),
+                icon: const Icon(Icons.print_outlined),
+                label: Text(l10n.partnerMeetingPrint),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      key: const Key('partner-meeting-print'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AdminConsoleTheme.amber,
+                        foregroundColor: AdminConsoleTheme.bg,
+                      ),
+                      onPressed: () => _print(context),
+                      icon: const Icon(Icons.print_outlined),
+                      label: Text(l10n.partnerMeetingPrint),
                     ),
-                    onPressed: () => _print(context),
-                    icon: const Icon(Icons.print_outlined),
-                    label: Text(l10n.partnerMeetingPrint),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    key: const Key('partner-meeting-save'),
-                    onPressed: () => _save(context),
-                    icon: const Icon(Icons.bookmark_border),
-                    label: Text(l10n.partnerMeetingSave),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const Key('partner-meeting-save'),
+                      onPressed: () => _save(context),
+                      icon: const Icon(Icons.bookmark_border),
+                      label: Text(l10n.partnerMeetingSave),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    key: const Key('partner-meeting-send'),
-                    onPressed: null,
-                    icon: const Icon(Icons.send_outlined),
-                    label: Text(l10n.partnerMeetingSend),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const Key('partner-meeting-send'),
+                      onPressed: null,
+                      icon: const Icon(Icons.send_outlined),
+                      label: Text(l10n.partnerMeetingSend),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

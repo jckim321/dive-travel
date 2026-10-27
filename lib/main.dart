@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/auth/pending_profile.dart';
+import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/firebase_options.dart';
 
 Future<void> main() async {
@@ -24,5 +25,10 @@ Future<void> main() async {
     debugPrint('$stackTrace');
   }
 
-  runApp(DiveTravelApp(firebaseReady: firebaseReady));
+  runApp(
+    DiveTravelApp(
+      firebaseReady: firebaseReady,
+      initialReportId: meetingReportIdFromFragment(Uri.base.fragment),
+    ),
+  );
 }

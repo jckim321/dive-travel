@@ -4949,6 +4949,55 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<List<PartnerMeetingReport>> listSharedMeetingReports({
+    required String shopId,
+  }) async {
+    final query = MeetingReportListQuery.sharedForOwnedShop(shopId);
+    if (query == null) {
+      return const [];
+    }
+    final snap = await _meetingReports
+        .where('shared', isEqualTo: query.shared)
+        .where('shop_id', isEqualTo: query.shopId)
+        .get();
+    final rows = <PartnerMeetingReport>[];
+    for (final doc in snap.docs) {
+      final parsed = PartnerMeetingReport.fromMap(
+        doc.id,
+        Map<String, dynamic>.from(doc.data()),
+      );
+      if (parsed != null) {
+        rows.add(parsed);
+      }
+    }
+    rows.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return rows;
+  }
+
+  @override
+  Future<PartnerMeetingReport?> getMeetingReport(String id) async {
+    final key = id.trim();
+    if (key.isEmpty) {
+      return null;
+    }
+    try {
+      final snap = await _meetingReports.doc(key).get();
+      final data = snap.data();
+      if (!snap.exists || data == null) {
+        return null;
+      }
+      return PartnerMeetingReport.fromMap(
+        snap.id,
+        Map<String, dynamic>.from(data),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('meeting report read failed $error');
+      debugPrint('$stackTrace');
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> setMeetingReportShared({
     required String id,
     required bool shared,

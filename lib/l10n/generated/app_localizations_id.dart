@@ -2350,7 +2350,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get seatBriefMissedEmpty => '아직 기록이 없어요';
 
   @override
-  String get partnerMeetingOpen => '파트너 미팅 보고서';
+  String get partnerMeetingOpen => '미팅 보고서 만들기';
 
   @override
   String get partnerMeetingTitle => '파트너 미팅 보고서';
@@ -2457,6 +2457,27 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get partnerMeetingUnsent => '보내기를 취소했어요';
+
+  @override
+  String get partnerMeetingDraft => '미발송';
+
+  @override
+  String get partnerMeetingSentBadge => '보냄';
+
+  @override
+  String get partnerMeetingInbox => '받은 보고서';
+
+  @override
+  String get partnerMeetingInboxEmpty => '받은 보고서가 없어요';
+
+  @override
+  String get partnerMeetingCopyLink => '링크 복사';
+
+  @override
+  String get partnerMeetingLinkCopied => '링크를 복사했습니다.';
+
+  @override
+  String get partnerMeetingDenied => '이 보고서를 볼 수 없어요';
 
   @override
   String partnerMeetingPrevious(int opens, int views, int flags, int pays) {

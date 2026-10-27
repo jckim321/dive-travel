@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/seat_demand.dart';
@@ -247,6 +248,78 @@ void main() {
     expect(snapshot.containsKey('funnel'), isTrue);
     expect(snapshot.toString().contains(secret), isFalse);
   });
+
+  test('받은 목록은 shared와 샵 앞부분을 함께 건다', () async {
+    final query = MeetingReportListQuery.sharedForOwnedShop(
+      'palau-dive--fundive',
+    );
+    expect(query, isNotNull);
+    expect(query!.shared, isTrue);
+    expect(query.shopId, 'palau-dive');
+    expect(MeetingReportListQuery.sharedForOwnedShop('--listing'), isNull);
+    expect(MeetingReportListQuery.sharedForOwnedShop('   '), isNull);
+
+    final repo = MemoryDiverRepository.forTest(
+      isBusiness: true,
+      ownedShopId: 'palau-dive--fundive',
+    );
+    final mine = _stored('mr_palau', 'palau-dive');
+    final draft = _stored('mr_draft', 'palau-dive');
+    final other = _stored('mr_cebu', 'cebu-dive');
+    await repo.saveMeetingReport(mine);
+    await repo.saveMeetingReport(draft);
+    await repo.saveMeetingReport(other);
+    await repo.setMeetingReportShared(id: mine.id, shared: true);
+    await repo.setMeetingReportShared(id: other.id, shared: true);
+
+    final rows = await repo.listSharedMeetingReports(
+      shopId: 'palau-dive--fundive',
+    );
+    expect(repo.debugMeetingReportQueries, hasLength(1));
+    expect(repo.debugMeetingReportQueries.single.shared, isTrue);
+    expect(repo.debugMeetingReportQueries.single.shopId, 'palau-dive');
+    expect(rows.map((row) => row.id), ['mr_palau']);
+
+    expect(await repo.listSharedMeetingReports(shopId: '--x'), isEmpty);
+    expect(repo.debugMeetingReportQueries, hasLength(1));
+
+    expect((await repo.getMeetingReport('mr_palau'))?.id, 'mr_palau');
+    expect(repo.getMeetingReport('mr_draft'), throwsStateError);
+    expect(repo.getMeetingReport('mr_cebu'), throwsStateError);
+  });
+
+  test('링크는 #report=id만 담고 숫자는 넣지 않는다', () {
+    final page = Uri.parse(
+      'https://jckim321.github.io/dive-travel/?views=30&pays=3#/',
+    );
+    final url = meetingReportShareUrl(page, 'mr_palau');
+    expect(url, 'https://jckim321.github.io/dive-travel/#report=mr_palau');
+    expect(url.contains('30'), isFalse);
+    expect(url.contains('pays'), isFalse);
+    expect(meetingReportIdFromFragment(Uri.parse(url).fragment), 'mr_palau');
+    expect(meetingReportIdFromFragment('#report=mr_palau'), 'mr_palau');
+    expect(meetingReportIdFromFragment('report=mr_palau&views=30'), isNull);
+    expect(meetingReportIdFromFragment(''), isNull);
+    expect(
+      meetingReportCreatedLabel(DateTime(2026, 10, 27, 15)),
+      '2026.10.27',
+    );
+  });
+}
+
+PartnerMeetingReport _stored(String id, String shopId) {
+  return buildPartnerMeetingReport(
+    id: id,
+    recipe: MeetingReportRecipe(
+      shopId: shopId,
+      periodStart: DateTime(2026, 10, 21),
+      periodEnd: DateTime(2026, 10, 27),
+    ),
+    events: const [],
+    demands: const [],
+    seats: const [],
+    createdAt: DateTime(2026, 10, 27, 15),
+  );
 }
 
 SeatLifeEvent _event(

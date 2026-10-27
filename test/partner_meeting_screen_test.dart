@@ -78,6 +78,17 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(
+      tester
+          .widget<Text>(
+            find.descendant(
+              of: find.byKey(const Key('admin-partner-meeting-open')),
+              matching: find.byType(Text),
+            ),
+          )
+          .data,
+      '미팅 보고서 만들기',
+    );
     await tester.tap(find.byKey(const Key('admin-partner-meeting-open')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -328,7 +339,31 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(Key('partner-meeting-archive-row-${saved.key}')),
+      tester
+          .widget<Text>(
+            find.byKey(Key('partner-meeting-archive-row-${saved.key}')),
+          )
+          .data,
+      '팔라우 다이브센터',
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(Key('partner-meeting-archive-date-${saved.key}')),
+          )
+          .data,
+      '2026.10.27',
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(Key('partner-meeting-archive-status-${saved.key}')),
+          )
+          .data,
+      '미발송',
+    );
+    expect(
+      find.byKey(Key('partner-meeting-copy-link-${saved.key}')),
       findsOneWidget,
     );
     await tester.tap(
@@ -338,6 +373,14 @@ void main() {
     await tester.pump();
     expect(repo.debugMeetingReports[saved.key]!['shared'], isTrue);
     expect(repo.debugMeetingReports[saved.key]!['shared_at'], isA<String>());
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(Key('partner-meeting-archive-status-${saved.key}')),
+          )
+          .data,
+      '보냄',
+    );
 
     await tester.tap(
       find.byKey(Key('partner-meeting-archive-unsend-${saved.key}')),

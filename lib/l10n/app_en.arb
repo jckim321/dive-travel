@@ -906,7 +906,7 @@
   "seatBriefMissedWall": "What was in the way",
   "seatBriefMissedWallHint": "How often dropping one condition opened results",
   "seatBriefMissedEmpty": "No records yet",
-  "partnerMeetingOpen": "Partner meeting report",
+  "partnerMeetingOpen": "Create a meeting report",
   "partnerMeetingTitle": "Partner meeting report",
   "partnerMeetingHint": "Pick the conditions and the report is filled in",
   "partnerMeetingPartner": "Partner",
@@ -952,6 +952,13 @@
   "partnerMeetingUnsend": "Cancel send",
   "partnerMeetingSent": "Sent",
   "partnerMeetingUnsent": "Send cancelled",
+  "partnerMeetingDraft": "Not sent",
+  "partnerMeetingSentBadge": "Sent",
+  "partnerMeetingInbox": "Received reports",
+  "partnerMeetingInboxEmpty": "No reports yet",
+  "partnerMeetingCopyLink": "Copy link",
+  "partnerMeetingLinkCopied": "Link copied.",
+  "partnerMeetingDenied": "You can't view this report",
   "partnerMeetingPrevious": "Previous period: open {opens} · views {views} · flags {flags} · paid {pays}",
   "@partnerMeetingPrevious": {
     "placeholders": {

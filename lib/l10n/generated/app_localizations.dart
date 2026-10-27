@@ -4455,7 +4455,7 @@ abstract class AppLocalizations {
   /// No description provided for @partnerMeetingOpen.
   ///
   /// In ko, this message translates to:
-  /// **'파트너 미팅 보고서'**
+  /// **'미팅 보고서 만들기'**
   String get partnerMeetingOpen;
 
   /// No description provided for @partnerMeetingTitle.
@@ -4655,6 +4655,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'보내기를 취소했어요'**
   String get partnerMeetingUnsent;
+
+  /// No description provided for @partnerMeetingDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'미발송'**
+  String get partnerMeetingDraft;
+
+  /// No description provided for @partnerMeetingSentBadge.
+  ///
+  /// In ko, this message translates to:
+  /// **'보냄'**
+  String get partnerMeetingSentBadge;
+
+  /// No description provided for @partnerMeetingInbox.
+  ///
+  /// In ko, this message translates to:
+  /// **'받은 보고서'**
+  String get partnerMeetingInbox;
+
+  /// No description provided for @partnerMeetingInboxEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'받은 보고서가 없어요'**
+  String get partnerMeetingInboxEmpty;
+
+  /// No description provided for @partnerMeetingCopyLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크 복사'**
+  String get partnerMeetingCopyLink;
+
+  /// No description provided for @partnerMeetingLinkCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크를 복사했습니다.'**
+  String get partnerMeetingLinkCopied;
+
+  /// No description provided for @partnerMeetingDenied.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 보고서를 볼 수 없어요'**
+  String get partnerMeetingDenied;
 
   /// No description provided for @partnerMeetingPrevious.
   ///

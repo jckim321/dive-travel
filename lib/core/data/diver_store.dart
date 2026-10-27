@@ -3757,6 +3757,17 @@ class DiverStore extends ChangeNotifier {
     return _repository.listMeetingReports();
   }
 
+  /// Shared reports for this owned shop. Both query filters are required.
+  Future<List<PartnerMeetingReport>> listSharedMeetingReports(
+    String ownedShopId,
+  ) {
+    return _repository.listSharedMeetingReports(shopId: ownedShopId);
+  }
+
+  Future<PartnerMeetingReport?> getMeetingReport(String id) {
+    return _repository.getMeetingReport(id);
+  }
+
   Future<bool> setMeetingReportShared({
     required String id,
     required bool shared,

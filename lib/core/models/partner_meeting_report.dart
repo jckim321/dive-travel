@@ -16,6 +16,78 @@ String partnerShopHull(String shopId) {
   return trimmed.substring(0, cut);
 }
 
+/// List filters the rules require together. A missing one is denied.
+class MeetingReportListQuery {
+  const MeetingReportListQuery({required this.shared, required this.shopId});
+
+  final bool shared;
+  final String shopId;
+
+  /// Null when the hull is empty, so the caller does not run a query.
+  static MeetingReportListQuery? sharedForOwnedShop(String ownedShopId) {
+    final hull = partnerShopHull(ownedShopId);
+    if (hull.isEmpty) {
+      return null;
+    }
+    return MeetingReportListQuery(shared: true, shopId: hull);
+  }
+}
+
+/// Address is the page plus `#report={id}`. Counts and query strings stay off.
+String meetingReportShareUrl(Uri page, String id) {
+  return Uri(
+    scheme: page.scheme,
+    userInfo: page.userInfo.isEmpty ? null : page.userInfo,
+    host: page.host,
+    port: page.hasPort ? page.port : null,
+    path: page.path,
+    fragment: 'report=${id.trim()}',
+  ).toString();
+}
+
+String? meetingReportIdFromFragment(String fragment) {
+  var raw = fragment.trim();
+  if (raw.startsWith('#')) {
+    raw = raw.substring(1);
+  }
+  const prefix = 'report=';
+  if (!raw.startsWith(prefix) || raw.length == prefix.length) {
+    return null;
+  }
+  final id = raw.substring(prefix.length);
+  if (id.contains('&') ||
+      id.contains('?') ||
+      id.contains('/') ||
+      id.contains('#')) {
+    return null;
+  }
+  final decoded = Uri.decodeQueryComponent(id).trim();
+  if (decoded.isEmpty || decoded.contains('&') || decoded.contains('/')) {
+    return null;
+  }
+  return decoded;
+}
+
+String meetingReportCreatedLabel(DateTime at) {
+  final local = at.toLocal();
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${local.year}.${two(local.month)}.${two(local.day)}';
+}
+
+String meetingReportPeriodLabel(MeetingReportRecipe recipe) {
+  final start = DateTime(
+    recipe.periodStart.year,
+    recipe.periodStart.month,
+    recipe.periodStart.day,
+  );
+  final end = DateTime(
+    recipe.periodEnd.year,
+    recipe.periodEnd.month,
+    recipe.periodEnd.day,
+  ).add(const Duration(days: 1));
+  return seatBriefRangeLabel(SeatBriefWindow(start: start, end: end));
+}
+
 const meetingReportForbiddenKeys = {
   'uid',
   'user_key',

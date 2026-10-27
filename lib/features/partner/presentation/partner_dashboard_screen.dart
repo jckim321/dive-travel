@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/models/dive_star_application.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_dive_star_milestone.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_documents_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_meeting_inbox_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_radar_painter.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_settlement_screen.dart';
@@ -120,6 +121,17 @@ class _PartnerDashboardScreenState extends State<PartnerDashboardScreen> {
                     onStats: () => _open(PartnerStatsScreen(shopId: shopId)),
                     onDocs: () => _open(const PartnerDocumentsScreen()),
                     docsBadge: _docsBadge,
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      key: const Key('partner-meeting-inbox'),
+                      onPressed: () => _open(
+                        PartnerMeetingInboxScreen(shopName: shopName),
+                      ),
+                      child: Text(l10n.partnerMeetingInbox),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   _BusinessHighlight(
