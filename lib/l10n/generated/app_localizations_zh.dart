@@ -3703,6 +3703,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get productFormDirectSelect => '기획스페셜 (앱에 없는 리조트)';
 
   @override
+  String get productFormCreatorShop => '내가 짜는 여행 (직접 기획)';
+
+  @override
   String get productFormSubtitle => '한 줄 소개';
 
   @override

@@ -35,26 +35,26 @@ void main() {
     await tester.pump();
     expect(store.uid, 'test-user');
 
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('admin-product-shop')),
-        matching: find.byType(DropdownButtonFormField<String>),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('creator-product-shop')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text(l10n.productFormDirectSelect).last);
+    await tester.tap(find.text(l10n.productFormCreatorShop).last);
     await tester.pump();
 
-    await tester.enterText(
-      find.byKey(const Key('admin-product-name')),
-      '골드 기획 여행',
-    );
-    await tester.ensureVisible(find.byKey(const Key('product-curated-resort')));
+    expect(find.byKey(const Key('admin-product-name')), findsNothing);
     await tester.enterText(
       find.byKey(const Key('product-curated-resort')),
       '없는 리조트',
     );
+    await tester.enterText(
+      find.byKey(const Key('product-curated-country')),
+      '필리핀',
+    );
+    await tester.enterText(
+      find.byKey(const Key('product-curated-region')),
+      '보홀',
+    );
+    await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('workbench-diver-price')));
     await tester.enterText(
       find.byKey(const Key('workbench-diver-price')),
@@ -74,5 +74,7 @@ void main() {
     expect(curated, isNotEmpty);
     expect(curated.single.name, '없는 리조트');
     expect(curated.single.curated, isTrue);
+    expect(curated.single.productName, '없는 리조트');
+    expect(curated.single.products.single.name, '없는 리조트');
   });
 }

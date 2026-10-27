@@ -286,6 +286,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _hasNondivers = false;
   final _addonQty = <String, int>{};
   var _namedResort = false;
+  /// Creator shop picker: the single "내가 짜는 여행" choice was selected.
+  var _creatorShopPicked = false;
+  /// Creator resort name/country/region stay open until all three are filled.
+  var _creatorResortExpanded = true;
+  /// Tap-to-edit keeps the filled resort line open.
+  var _creatorResortHoldOpen = false;
+  var _seededCreatorShop = false;
   DateTime? _departureStart;
   var _packageNights = 0;
   late bool _editing;
@@ -336,12 +343,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _category = existing?.category ?? ProductCategory.resortPackage;
     _categoryChipTouched = false;
     _namedResort = _shopId.startsWith('curated-');
+    _creatorShopPicked = widget.creatorMode && _namedResort;
     _persistedProductId =
         existing?.id.isNotEmpty == true ? existing!.id : null;
     _name = TextEditingController(text: existing?.name ?? '');
     _resortName = TextEditingController(text: shop?.name ?? '');
     _resortCountry = TextEditingController(text: shop?.country ?? '');
     _resortRegion = TextEditingController(text: shop?.location ?? '');
+    if (widget.creatorMode &&
+        _resortName.text.trim().isEmpty &&
+        (existing?.name ?? '').trim().isNotEmpty) {
+      _resortName.text = existing!.name.trim();
+    }
+    _creatorResortExpanded = !_creatorResortComplete;
     _blurb = TextEditingController(text: existing?.blurb ?? '');
     final meetingSeed = (existing?.meetingPoint ?? '').trim();
     final addressSeed = (shop?.address ?? '').trim();
@@ -484,6 +498,50 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
+  bool get _creatorResortComplete =>
+      _resortName.text.trim().isNotEmpty &&
+      _resortCountry.text.trim().isNotEmpty &&
+      _resortRegion.text.trim().isNotEmpty;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_seededCreatorShop || !widget.creatorMode || !_creatorShopPicked) {
+      return;
+    }
+    _seededCreatorShop = true;
+    final live = DiverStoreScope.of(context).liveStatsFor(_shopId);
+    if (live == null) {
+      return;
+    }
+    void fill(TextEditingController controller, String? value) {
+      final next = (value ?? '').trim();
+      if (controller.text.trim().isEmpty && next.isNotEmpty) {
+        controller.text = next;
+      }
+    }
+
+    fill(_resortName, live.name);
+    fill(_resortCountry, live.country);
+    fill(_resortRegion, live.location);
+    _name.text = _resortName.text;
+    if (_creatorResortComplete && !_creatorResortHoldOpen) {
+      _creatorResortExpanded = false;
+    }
+  }
+
+  void _onCreatorResortEdited() {
+    _name.text = _resortName.text;
+    if (!_creatorResortComplete) {
+      _creatorResortHoldOpen = false;
+      _creatorResortExpanded = true;
+      return;
+    }
+    if (!_creatorResortHoldOpen) {
+      _creatorResortExpanded = false;
+    }
+  }
+
   void _applyPartnerFocus() {
     if (!widget.partnerMode) {
       return;
@@ -608,7 +666,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (_name.text.trim().isEmpty) {
       _scrollToPartnerKey(_nameFieldKey);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.workbenchNeedName)),
+        SnackBar(
+          content: Text(
+            widget.creatorMode
+                ? l10n.productFormCuratedResort
+                : l10n.workbenchNeedName,
+          ),
+        ),
       );
       return false;
     }
@@ -1177,6 +1241,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   /// Returns true when Firestore/local save finished successfully.
   Future<bool> _save(ProductSaveIntent intent) async {
     final l10n = AppLocalizations.of(context);
+    if (widget.creatorMode) {
+      _name.text = _resortName.text.trim();
+    }
     final name = _name.text.trim();
     if (_savingIntent != null) {
       return false;
@@ -1210,14 +1277,35 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       } else if (!isTemp) {
         if (name.isEmpty) {
           _scrollToPartnerKey(_nameFieldKey);
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(l10n.workbenchNeedName)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                widget.creatorMode
+                    ? l10n.productFormCuratedResort
+                    : l10n.workbenchNeedName,
+              ),
+            ),
+          );
           return false;
         }
         if (_namedResort && _resortName.text.trim().isEmpty) {
           _scrollToPartnerKey(_nameFieldKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.productFormCuratedResort)),
+          );
+          return false;
+        }
+        if (widget.creatorMode && _resortCountry.text.trim().isEmpty) {
+          _scrollToPartnerKey(_nameFieldKey);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.productFormCuratedCountry)),
+          );
+          return false;
+        }
+        if (widget.creatorMode && _resortRegion.text.trim().isEmpty) {
+          _scrollToPartnerKey(_nameFieldKey);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.productFormCuratedLocation)),
           );
           return false;
         }
@@ -1795,6 +1883,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _shopLine(AppLocalizations l10n, DiverStore store) {
+    if (widget.creatorMode) {
+      return KeyedSubtree(
+        key: _nameFieldKey,
+        child: _creatorShopLine(l10n),
+      );
+    }
     final locked = widget.partnerMode || widget.lockedShopId != null;
     final shop = DiveShopCatalog.byId(_shopId);
     if (locked) {
@@ -1886,6 +1980,129 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ],
       ],
       ),
+    );
+  }
+
+  Widget _creatorShopLine(AppLocalizations l10n) {
+    final resortOpen = _creatorResortExpanded || !_creatorResortComplete;
+    return KeyedSubtree(
+      key: const Key('admin-product-shop'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!_creatorShopPicked)
+            DropdownButtonFormField<String>(
+              key: const Key('creator-product-shop'),
+              initialValue: null,
+              hint: Text(l10n.productFormPickShop),
+              decoration: _partnerField(l10n.productFormShopHint),
+              dropdownColor: PartnerTheme.card,
+              style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
+              items: [
+                DropdownMenuItem(
+                  value: _kDirectShop,
+                  child: Text(l10n.productFormCreatorShop),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  _creatorShopPicked = true;
+                  _namedResort = true;
+                  _creatorResortHoldOpen = false;
+                  _creatorResortExpanded = !_creatorResortComplete;
+                });
+              },
+            )
+          else
+            Text(
+              l10n.productFormCreatorShop,
+              key: const Key('creator-shop-picked'),
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+          if (_creatorShopPicked) ...[
+            const SizedBox(height: 12),
+            if (resortOpen)
+              _creatorResortFields(l10n)
+            else
+              Material(
+                key: const Key('creator-resort-summary'),
+                color: PartnerTheme.card,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  onTap: () => setState(() {
+                    _creatorResortHoldOpen = true;
+                    _creatorResortExpanded = true;
+                  }),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    child: Text(
+                      '${_resortName.text.trim()} · ${_resortCountry.text.trim()} · ${_resortRegion.text.trim()}',
+                      style: const TextStyle(
+                        color: PartnerTheme.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _creatorResortFields(AppLocalizations l10n) {
+    Widget field({
+      required Key key,
+      required TextEditingController controller,
+      required String label,
+      required String hint,
+    }) {
+      return TextField(
+        key: key,
+        controller: controller,
+        style: const TextStyle(color: PartnerTheme.text),
+        cursorColor: PartnerTheme.accent,
+        decoration: _partnerField(label, hint: hint),
+        onChanged: (_) => setState(_onCreatorResortEdited),
+      );
+    }
+
+    return Column(
+      key: const Key('creator-resort-fields'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        field(
+          key: const Key('product-curated-resort'),
+          controller: _resortName,
+          label: l10n.productFormCuratedResort,
+          hint: l10n.productFormCuratedResortHint,
+        ),
+        const SizedBox(height: 12),
+        field(
+          key: const Key('product-curated-country'),
+          controller: _resortCountry,
+          label: l10n.productFormCuratedCountry,
+          hint: l10n.productFormCuratedCountryHint,
+        ),
+        const SizedBox(height: 12),
+        field(
+          key: const Key('product-curated-region'),
+          controller: _resortRegion,
+          label: l10n.productFormCuratedLocation,
+          hint: l10n.productFormCuratedLocationHint,
+        ),
+      ],
     );
   }
 
@@ -2000,40 +2217,41 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Text(
-              l10n.partnerDefaultProduct,
-              style: const TextStyle(
-                color: PartnerTheme.text,
-                fontWeight: FontWeight.w700,
+        if (!widget.creatorMode) ...[
+          Row(
+            children: [
+              Text(
+                l10n.partnerDefaultProduct,
+                style: const TextStyle(
+                  color: PartnerTheme.text,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            _partnerRequiredBadge(l10n),
-          ],
-        ),
-        const SizedBox(height: 6),
-        KeyedSubtree(
-          key: _nameFieldKey,
-          child: TextField(
-            key: Key(
-              widget.partnerMode ? 'partner-product-name' : 'admin-product-name',
-            ),
-            controller: _name,
-            style: const TextStyle(color: PartnerTheme.text),
-            cursorColor: PartnerTheme.accent,
-            decoration: _partnerField(
-              l10n.partnerDefaultProduct,
-              hint: l10n.partnerFormNameHint,
-              errorText: _name.text.trim().isEmpty && _diverPriceError != null
-                  ? null
-                  : null,
-            ),
-            onChanged: (_) => setState(() {}),
+              const SizedBox(width: 8),
+              _partnerRequiredBadge(l10n),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          KeyedSubtree(
+            key: _nameFieldKey,
+            child: TextField(
+              key: Key(
+                widget.partnerMode
+                    ? 'partner-product-name'
+                    : 'admin-product-name',
+              ),
+              controller: _name,
+              style: const TextStyle(color: PartnerTheme.text),
+              cursorColor: PartnerTheme.accent,
+              decoration: _partnerField(
+                l10n.partnerDefaultProduct,
+                hint: l10n.partnerFormNameHint,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         TextField(
           controller: _blurb,
           style: const TextStyle(color: PartnerTheme.text),

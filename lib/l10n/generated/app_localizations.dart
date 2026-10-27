@@ -7008,6 +7008,12 @@ abstract class AppLocalizations {
   /// **'기획스페셜 (앱에 없는 리조트)'**
   String get productFormDirectSelect;
 
+  /// No description provided for @productFormCreatorShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'내가 짜는 여행 (직접 기획)'**
+  String get productFormCreatorShop;
+
   /// No description provided for @productFormSubtitle.
   ///
   /// In ko, this message translates to:

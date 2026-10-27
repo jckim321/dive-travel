@@ -3819,6 +3819,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Planned special (resort not in the app)';
 
   @override
+  String get productFormCreatorShop => 'A trip I plan (my own)';
+
+  @override
   String get productFormSubtitle => 'One-line pitch';
 
   @override
