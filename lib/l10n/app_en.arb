@@ -1567,6 +1567,17 @@
   "productFormDirectSelect": "Planned special (resort not in the app)",
   "productFormCreatorShop": "A trip I plan (my own)",
   "productFormCreatorResortDone": "Done",
+  "creatorWizardProgress": "{step}/5",
+  "@creatorWizardProgress": {
+    "placeholders": {
+      "step": {"type": "int"}
+    }
+  },
+  "creatorWizardBack": "Back",
+  "creatorWizardNext": "Next",
+  "creatorWizardStepIntro": "Intro",
+  "creatorWizardStepSchedule": "Schedule",
+  "creatorWizardStepPrice": "Price",
   "productFormPleaseEnter": "Please enter {label}{particle}",
   "@productFormPleaseEnter": {
     "placeholders": {

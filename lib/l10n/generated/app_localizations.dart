@@ -7020,6 +7020,42 @@ abstract class AppLocalizations {
   /// **'완료'**
   String get productFormCreatorResortDone;
 
+  /// No description provided for @creatorWizardProgress.
+  ///
+  /// In ko, this message translates to:
+  /// **'{step}/5'**
+  String creatorWizardProgress(int step);
+
+  /// No description provided for @creatorWizardBack.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get creatorWizardBack;
+
+  /// No description provided for @creatorWizardNext.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get creatorWizardNext;
+
+  /// No description provided for @creatorWizardStepIntro.
+  ///
+  /// In ko, this message translates to:
+  /// **'소개'**
+  String get creatorWizardStepIntro;
+
+  /// No description provided for @creatorWizardStepSchedule.
+  ///
+  /// In ko, this message translates to:
+  /// **'일정'**
+  String get creatorWizardStepSchedule;
+
+  /// No description provided for @creatorWizardStepPrice.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격'**
+  String get creatorWizardStepPrice;
+
   /// No description provided for @productFormPleaseEnter.
   ///
   /// In ko, this message translates to:

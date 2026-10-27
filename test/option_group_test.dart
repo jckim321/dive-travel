@@ -30,11 +30,7 @@ void main() {
   });
 
   test('알려진 그룹만 저장하고 목록 밖 코드는 비운다', () {
-    final gear = ShopProductOption(
-      id: 'g',
-      name: '렌탈',
-      group: 'gear',
-    );
+    final gear = ShopProductOption(id: 'g', name: '렌탈', group: 'gear');
     final saved = ShopProductOption.fromMap(gear.toMap());
     expect(saved.group, 'gear');
     expect(saved.toMap()['group'], 'gear');
@@ -58,6 +54,24 @@ void main() {
     ]);
   });
 
+  test('이름은 앞쪽 규칙으로 분류하고 못 정하면 기타', () {
+    expect(classifyOptionGroup('수중 사진'), 'media');
+    expect(classifyOptionGroup('BCD 렌탈'), 'gear');
+    expect(classifyOptionGroup('공항 픽업'), 'transfer');
+    expect(classifyOptionGroup('저녁'), 'meal');
+    expect(classifyOptionGroup('호텔 1박'), 'stay');
+    expect(classifyOptionGroup('펀다이빙'), 'activity');
+    expect(classifyOptionGroup('골프'), 'activity');
+    expect(classifyOptionGroup('스파'), 'activity');
+    expect(classifyOptionGroup('마사지'), 'activity');
+    expect(classifyOptionGroup('낚시'), 'activity');
+    expect(classifyOptionGroup('요가'), 'activity');
+    expect(classifyOptionGroup('골프 픽업'), 'transfer');
+    expect(classifyOptionGroup('요트'), 'other');
+    expect(classifyOptionGroup(''), 'other');
+    expect(classifyOptionGroup('  '), 'other');
+  });
+
   test('그룹만 바꿔도 가격 지문과 승인 지문은 같다', () {
     final plain = ShopProductOption(id: 'a', name: '픽업', consumerPrice: 5000);
     final grouped = plain.copyWith(group: 'transfer');
@@ -75,9 +89,7 @@ void main() {
       professionalPrice: 4000,
     );
     final previous = _product([live]);
-    final draft = _product([
-      live.copyWith(consumerPrice: 7000, group: 'gear'),
-    ]);
+    final draft = _product([live.copyWith(consumerPrice: 7000, group: 'gear')]);
     final result = stageApprovedPartnerSave(previous: previous, draft: draft);
     expect(result.stagedPriceOrNewOptions, isTrue);
     expect(result.product.options.single.consumerPrice, 5000);

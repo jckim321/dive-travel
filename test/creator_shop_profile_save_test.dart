@@ -55,6 +55,10 @@ void main() {
       '보홀',
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('creator-wizard-next')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('creator-wizard-next')));
+    await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('workbench-diver-price')));
     await tester.enterText(
       find.byKey(const Key('workbench-diver-price')),

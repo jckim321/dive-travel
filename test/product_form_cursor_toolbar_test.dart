@@ -35,7 +35,9 @@ void main() {
           home: TravelProductRegistrationScreen(
             creatorMode: creatorMode,
             partnerMode: partnerMode,
-            lockedShopId: partnerMode ? AppConstants.defaultPartnerShopId : null,
+            lockedShopId: partnerMode
+                ? AppConstants.defaultPartnerShopId
+                : null,
             startEditing: true,
           ),
         ),
@@ -73,6 +75,10 @@ void main() {
         partnerMode: mode.partner,
         admin: mode.admin,
       );
+      if (mode.creator) {
+        await tester.tap(find.byKey(const Key('creator-wizard-next')));
+        await tester.pump();
+      }
       final editor = find.byKey(const Key('product-detail-editor'));
       final theme = Theme.of(tester.element(editor));
       expect(theme.textSelectionTheme.cursorColor, PartnerTheme.accent);
@@ -105,12 +111,18 @@ void main() {
           .dy;
       expect((boldTop - previewTop).abs(), lessThan(2));
 
-      expect(iconColor(tester, const Key('product-detail-bold')), AppTheme.navy);
+      expect(
+        iconColor(tester, const Key('product-detail-bold')),
+        AppTheme.navy,
+      );
       expect(
         iconColor(tester, const Key('product-detail-heading')),
         AppTheme.navy,
       );
-      expect(iconColor(tester, const Key('product-detail-list')), AppTheme.navy);
+      expect(
+        iconColor(tester, const Key('product-detail-list')),
+        AppTheme.navy,
+      );
       expect(
         tester
             .widget<Icon>(
@@ -135,7 +147,9 @@ void main() {
             ?.resolve(const <WidgetState>{}),
         toolbarTeal,
       );
-      final preview = tester.widget<Text>(find.text(l10n.detailComposerPreview));
+      final preview = tester.widget<Text>(
+        find.text(l10n.detailComposerPreview),
+      );
       expect(preview.style?.fontSize, greaterThanOrEqualTo(14));
       expect(
         tester

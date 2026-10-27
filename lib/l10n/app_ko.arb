@@ -2129,6 +2129,17 @@
   "productFormDirectSelect": "기획스페셜 (앱에 없는 리조트)",
   "productFormCreatorShop": "내가 짜는 여행 (직접 기획)",
   "productFormCreatorResortDone": "완료",
+  "creatorWizardProgress": "{step}/5",
+  "@creatorWizardProgress": {
+    "placeholders": {
+      "step": {"type": "int"}
+    }
+  },
+  "creatorWizardBack": "이전",
+  "creatorWizardNext": "다음",
+  "creatorWizardStepIntro": "소개",
+  "creatorWizardStepSchedule": "일정",
+  "creatorWizardStepPrice": "가격",
   "productFormPleaseEnter": "{label}{particle} 입력해 주세요",
   "@productFormPleaseEnter": {
     "placeholders": {

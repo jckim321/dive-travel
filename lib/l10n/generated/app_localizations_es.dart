@@ -3737,6 +3737,26 @@ class AppLocalizationsEs extends AppLocalizations {
   String get productFormCreatorResortDone => '완료';
 
   @override
+  String creatorWizardProgress(int step) {
+    return '$step/5';
+  }
+
+  @override
+  String get creatorWizardBack => '이전';
+
+  @override
+  String get creatorWizardNext => '다음';
+
+  @override
+  String get creatorWizardStepIntro => '소개';
+
+  @override
+  String get creatorWizardStepSchedule => '일정';
+
+  @override
+  String get creatorWizardStepPrice => '가격';
+
+  @override
   String productFormPleaseEnter(String label, String particle) {
     return '$label$particle 입력해 주세요';
   }

@@ -50,14 +50,10 @@ void main() {
     await tester.pump();
     final addContext = tester.element(addOption);
     expect(Theme.of(addContext).brightness, Brightness.dark);
+    expect(Theme.of(addContext).textTheme.bodyLarge?.color, PartnerTheme.text);
     expect(
-      Theme.of(addContext).textTheme.bodyLarge?.color,
-      PartnerTheme.text,
-    );
-    expect(
-      Theme.of(addContext).outlinedButtonTheme.style?.foregroundColor?.resolve(
-        const <WidgetState>{},
-      ),
+      Theme.of(addContext).outlinedButtonTheme.style?.foregroundColor
+          ?.resolve(const <WidgetState>{}),
       PartnerTheme.text,
     );
 
@@ -82,9 +78,14 @@ void main() {
     );
   }
 
-  testWidgets('다이버 새 여행 짜기는 옵션 글자가 밝다', (tester) async {
+  testWidgets('다이버 새 여행 짜기 1단계는 글자가 밝고 옵션 칸은 없다', (tester) async {
     await pumpForm(tester, creatorMode: true);
-    await expectLightOptionText(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    expect(find.text(l10n.creatorWizardProgress(1)), findsOneWidget);
+    expect(find.byKey(const Key('partner-form-add-option')), findsNothing);
+    final blurb = find.byKey(const Key('creator-wizard-blurb'));
+    expect(tester.widget<TextField>(blurb).style?.color, PartnerTheme.text);
+    expect(Theme.of(tester.element(blurb)).brightness, Brightness.dark);
   });
 
   testWidgets('관리자 상품 등록도 옵션 글자가 밝다', (tester) async {

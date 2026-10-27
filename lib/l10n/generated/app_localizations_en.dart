@@ -3825,6 +3825,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormCreatorResortDone => 'Done';
 
   @override
+  String creatorWizardProgress(int step) {
+    return '$step/5';
+  }
+
+  @override
+  String get creatorWizardBack => 'Back';
+
+  @override
+  String get creatorWizardNext => 'Next';
+
+  @override
+  String get creatorWizardStepIntro => 'Intro';
+
+  @override
+  String get creatorWizardStepSchedule => 'Schedule';
+
+  @override
+  String get creatorWizardStepPrice => 'Price';
+
+  @override
   String productFormPleaseEnter(String label, String particle) {
     return 'Please enter $label$particle';
   }

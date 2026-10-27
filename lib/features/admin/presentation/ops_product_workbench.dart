@@ -298,6 +298,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _creatorShopPicked = false;
   /// Creator resort fields fold only when the user taps 완료.
   var _creatorResortExpanded = true;
+  /// Creator wizard step. 1 intro, 2 schedule, 3 price, 4–5 empty for now.
+  var _creatorStep = 1;
   var _seededCreatorShop = false;
   DateTime? _departureStart;
   var _packageNights = 0;
@@ -310,6 +312,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static final _priceInputFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.allow(RegExp(r'[0-9,\s원]')),
     LengthLimitingTextInputFormatter(kWorkbenchPriceInputMaxLength),
+  ];
+  static final _wonPriceInputFormatters = <TextInputFormatter>[
+    const WorkbenchWonInputFormatter(),
+    LengthLimitingTextInputFormatter(kWorkbenchWonInputMaxLength),
   ];
 
   final _diverPriceFocus = FocusNode();
@@ -414,6 +420,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _hasNondivers =
         (_rateEnabled[GuestRole.nondiver] ?? false) ||
         (_rateEnabled[GuestRole.child] ?? false);
+    if (widget.creatorMode) {
+      for (final role in const [
+        GuestRole.diver,
+        GuestRole.nondiver,
+        GuestRole.child,
+      ]) {
+        final controller = _rateConsumer[role]!;
+        final formatted = formatWorkbenchWon(controller.text);
+        if (formatted.isNotEmpty) {
+          controller.text = formatted;
+        }
+      }
+    }
     final existingOptions =
         existing?.options ?? const <ShopProductOption>[];
     final childAddons = <String, List<ShopProductOption>>{};
@@ -1218,6 +1237,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     };
     setState(() {
       _clearPriceErrors();
+      if (widget.creatorMode && target != WorkbenchPriceTarget.option) {
+        _creatorStep = 3;
+      }
       switch (target) {
         case WorkbenchPriceTarget.diver:
           _diverPriceError = message;
@@ -1299,6 +1321,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         }
       } else if (!isTemp) {
         if (name.isEmpty) {
+          _focusCreatorStep(1);
           _scrollToPartnerKey(
             widget.creatorMode ? _resortNameKey : _nameFieldKey,
           );
@@ -1317,6 +1340,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           return false;
         }
         if (_namedResort && _resortName.text.trim().isEmpty) {
+          _focusCreatorStep(1);
           _scrollToPartnerKey(_resortNameKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1326,6 +1350,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           return false;
         }
         if (widget.creatorMode && _resortCountry.text.trim().isEmpty) {
+          _focusCreatorStep(1);
           _scrollToPartnerKey(_resortCountryKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1335,6 +1360,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           return false;
         }
         if (widget.creatorMode && _resortRegion.text.trim().isEmpty) {
+          _focusCreatorStep(1);
           _scrollToPartnerKey(_resortRegionKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1588,8 +1614,26 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
+  void _focusCreatorStep(int step) {
+    if (!widget.creatorMode || _creatorStep == step) {
+      return;
+    }
+    setState(() => _creatorStep = step);
+  }
+
+  void _creatorGo(int step) {
+    if (step < 1 || step > 5 || step == _creatorStep) {
+      return;
+    }
+    setState(() => _creatorStep = step);
+  }
+
   Future<void> _handleSystemBack() async {
     if (_savingIntent != null) {
+      return;
+    }
+    if (widget.creatorMode && _creatorStep > 1) {
+      _creatorGo(_creatorStep - 1);
       return;
     }
     if (!_editing || !_isDirty) {
@@ -1834,21 +1878,26 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                               l10n: l10n,
                             ),
                           ),
-                        _shopLine(l10n, store),
-                        const SizedBox(height: 16),
-                        _partnerGuideBanner(l10n),
-                        const SizedBox(height: 16),
-                        _partnerSectionHeader(1, l10n.partnerFormSectionBasics),
-                        const SizedBox(height: 10),
-                        _partnerBasicsSection(l10n),
-                        const SizedBox(height: 20),
-                        _partnerSectionHeader(2, l10n.partnerFormSectionPricing),
-                        const SizedBox(height: 10),
-                        _partnerPricingSection(l10n),
-                        const SizedBox(height: 20),
-                        _partnerSectionHeader(3, l10n.partnerFormSectionPublish),
-                        const SizedBox(height: 10),
-                        _partnerPublishSection(l10n),
+                        if (widget.creatorMode) ...[
+                          _creatorProgress(l10n),
+                          _creatorStepBody(l10n, store),
+                        ] else ...[
+                          _shopLine(l10n, store),
+                          const SizedBox(height: 16),
+                          _partnerGuideBanner(l10n),
+                          const SizedBox(height: 16),
+                          _partnerSectionHeader(1, l10n.partnerFormSectionBasics),
+                          const SizedBox(height: 10),
+                          _partnerBasicsSection(l10n),
+                          const SizedBox(height: 20),
+                          _partnerSectionHeader(2, l10n.partnerFormSectionPricing),
+                          const SizedBox(height: 10),
+                          _partnerPricingSection(l10n),
+                          const SizedBox(height: 20),
+                          _partnerSectionHeader(3, l10n.partnerFormSectionPublish),
+                          const SizedBox(height: 10),
+                          _partnerPublishSection(l10n),
+                        ],
                       ],
                     ),
                   ),
@@ -2272,6 +2321,346 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
       ),
+    );
+  }
+
+  Widget _creatorProgress(AppLocalizations l10n) {
+    final title = switch (_creatorStep) {
+      1 => l10n.creatorWizardStepIntro,
+      2 => l10n.creatorWizardStepSchedule,
+      3 => l10n.creatorWizardStepPrice,
+      _ => '',
+    };
+    return Column(
+      key: const Key('creator-wizard-progress'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.creatorWizardProgress(_creatorStep),
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+          ),
+        ),
+        if (title.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              color: PartnerTheme.text,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: _creatorStep / 5,
+          minHeight: 4,
+          color: PartnerTheme.accent,
+          backgroundColor: PartnerTheme.border,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _creatorStepNav(AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            key: const Key('creator-wizard-prev'),
+            onPressed: _creatorStep <= 1
+                ? null
+                : () => _creatorGo(_creatorStep - 1),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: PartnerTheme.text,
+              minimumSize: const Size.fromHeight(44),
+            ),
+            child: Text(l10n.creatorWizardBack),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FilledButton(
+            key: const Key('creator-wizard-next'),
+            onPressed: _creatorStep >= 5
+                ? null
+                : () => _creatorGo(_creatorStep + 1),
+            style: _readableFilledStyle(height: 44),
+            child: Text(l10n.creatorWizardNext),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _creatorStepBody(AppLocalizations l10n, DiverStore store) {
+    return switch (_creatorStep) {
+      1 => _creatorStepIntro(l10n, store),
+      2 => _creatorStepSchedule(l10n),
+      3 => _creatorStepPrice(l10n),
+      _ => SizedBox(
+          key: Key('creator-wizard-step-$_creatorStep'),
+          height: 8,
+        ),
+    };
+  }
+
+  Widget _creatorStepIntro(AppLocalizations l10n, DiverStore store) {
+    return Column(
+      key: const Key('creator-wizard-step-1'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _shopLine(l10n, store),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('creator-wizard-blurb'),
+          controller: _blurb,
+          style: const TextStyle(color: PartnerTheme.text),
+          cursorColor: PartnerTheme.accent,
+          decoration: _partnerField(
+            l10n.productFormSubtitle,
+            hint: l10n.partnerFormBlurbHint,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          l10n.partnerFormPhotoOptionalHint,
+          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        BookingGalleryEditor(
+          items: _gallery,
+          onAdd: _addPhotos,
+          onRemove: _removePhoto,
+          onMakeCover: _makeCover,
+          maxItems: _maxGallery,
+          compact: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _creatorStepSchedule(AppLocalizations l10n) {
+    final chip = selectedPartnerCategoryChip(_category);
+    return Column(
+      key: const Key('creator-wizard-step-2'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.partnerFormProductType,
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _partnerTypeChip(
+              key: 'partner-cat-resort',
+              label: l10n.workbenchCatResort,
+              selected: chip == ProductCategory.resortPackage,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.resortPackage),
+            ),
+            _partnerTypeChip(
+              key: 'partner-cat-day',
+              label: l10n.workbenchCatDay,
+              selected: chip == ProductCategory.dayTrip,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.dayTrip),
+            ),
+            _partnerTypeChip(
+              key: 'partner-cat-liveaboard',
+              label: l10n.workbenchCatLiveaboard,
+              selected: chip == ProductCategory.liveaboard,
+              onTap: () => _onPartnerCategoryChip(ProductCategory.liveaboard),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('partner-form-nights'),
+                controller: _nightsField,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: PartnerTheme.text),
+                cursorColor: PartnerTheme.accent,
+                decoration: _partnerField(l10n.partnerFormNights),
+                onChanged: (_) => _onPartnerDurationEdited(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                key: const Key('partner-form-days'),
+                controller: _daysField,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: PartnerTheme.text),
+                cursorColor: PartnerTheme.accent,
+                decoration: _partnerField(l10n.partnerFormDays),
+                onChanged: (_) => _onPartnerDurationEdited(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _meeting,
+          style: const TextStyle(color: PartnerTheme.text),
+          cursorColor: PartnerTheme.accent,
+          decoration: _partnerField(
+            l10n.partnerFormMeeting,
+            hint: l10n.productFormMeetingHint,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ProductDetailComposer(
+          controller: _detailBody,
+          decoration: _partnerField(
+            l10n.briefSectionDays,
+            hint: l10n.detailComposerHint,
+            lines: 10,
+          ),
+          onChanged: () => setState(() {}),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          controller: _includes,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.productFormIncludes,
+            hint: l10n.productFormIncludesHint,
+            lines: 2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _excludes,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.productFormExcludes,
+            hint: l10n.productFormExcludesHint,
+            lines: 2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _cancel,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.partnerFormCancelPolicy,
+            hint: l10n.productFormCancelHint,
+            lines: 2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _creatorPriceField({
+    required Key key,
+    required FocusNode focusNode,
+    required TextEditingController controller,
+    required String label,
+    required String? errorText,
+    required VoidCallback onChanged,
+  }) {
+    return TextField(
+      key: key,
+      focusNode: focusNode,
+      controller: controller,
+      keyboardType: TextInputType.number,
+      maxLength: kWorkbenchWonInputMaxLength,
+      inputFormatters: _wonPriceInputFormatters,
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: _partnerField(label, errorText: errorText).copyWith(
+        counterText: '',
+      ),
+      onChanged: (_) => onChanged(),
+    );
+  }
+
+  Widget _creatorStepPrice(AppLocalizations l10n) {
+    return Column(
+      key: const Key('creator-wizard-step-3'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Text(
+              l10n.partnerFormBasePrice,
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _partnerRequiredBadge(l10n),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.partnerFormBasePriceHint,
+          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        KeyedSubtree(
+          key: _diverPriceFieldKey,
+          child: _creatorPriceField(
+            key: const Key('workbench-diver-price'),
+            focusNode: _diverPriceFocus,
+            controller: _rateConsumer[GuestRole.diver]!,
+            label: l10n.partnerFormBasePrice,
+            errorText: _diverPriceError,
+            onChanged: () => setState(() => _diverPriceError = null),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SwitchListTile.adaptive(
+          key: const Key('partner-form-guest-rates'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            l10n.partnerFormGuestRatesToggle,
+            style: const TextStyle(color: PartnerTheme.text, fontSize: 13),
+          ),
+          value: _hasNondivers,
+          activeThumbColor: PartnerTheme.accent,
+          onChanged: (v) => setState(() => _hasNondivers = v),
+        ),
+        if (_hasNondivers) ...[
+          _creatorPriceField(
+            key: const Key('creator-wizard-nondiver-price'),
+            focusNode: _nondiverPriceFocus,
+            controller: _rateConsumer[GuestRole.nondiver]!,
+            label: l10n.workbenchGuestNondiver,
+            errorText: _nondiverPriceError,
+            onChanged: () => setState(() => _nondiverPriceError = null),
+          ),
+          const SizedBox(height: 8),
+          _creatorPriceField(
+            key: const Key('creator-wizard-child-price'),
+            focusNode: _childPriceFocus,
+            controller: _rateConsumer[GuestRole.child]!,
+            label: l10n.workbenchGuestChild,
+            errorText: _childPriceError,
+            onChanged: () => setState(() => _childPriceError = null),
+          ),
+        ],
+      ],
     );
   }
 
@@ -3133,6 +3522,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (widget.creatorMode) ...[
+              _creatorStepNav(l10n),
+              const SizedBox(height: 8),
+            ],
             if (pending) ...[
               Row(
                 children: [

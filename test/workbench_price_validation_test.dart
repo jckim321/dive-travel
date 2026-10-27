@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
@@ -64,6 +65,22 @@ void main() {
         WorkbenchPriceParseFailure.overCap,
       );
       expect(parsePositivePrice('100,000,001'), isNull);
+    });
+
+    test('원 표시는 쉼표와 원을 붙이고 커서는 원 앞', () {
+      expect(formatWorkbenchWon('180000'), '180,000원');
+      expect(formatWorkbenchWon('100000000'), '100,000,000원');
+      expect(formatWorkbenchWon('0001500'), '1,500원');
+      expect(formatWorkbenchWon('0'), '');
+      expect(formatWorkbenchWon('12345678901'), '123,456,789원');
+      const formatter = WorkbenchWonInputFormatter();
+      final next = formatter.formatEditUpdate(
+        TextEditingValue.empty,
+        const TextEditingValue(text: '180000'),
+      );
+      expect(next.text, '180,000원');
+      expect(next.selection.baseOffset, '180,000'.length);
+      expect(parsePositivePrice(next.text), 180000);
     });
 
     test('상한 이내(100,000,000)는 허용', () {
