@@ -1420,6 +1420,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authErrorFirestore => '账号已创建，但无法写入 Firestore 资料。请创建数据库并粘贴规则。';
 
   @override
+  String get profilePasswordTitle => '비밀번호 변경';
+
+  @override
+  String get profilePasswordCurrent => '현재 비밀번호';
+
+  @override
+  String get profilePasswordNew => '새 비밀번호';
+
+  @override
+  String get profilePasswordConfirm => '새 비밀번호 확인';
+
+  @override
+  String get profilePasswordSave => '비밀번호 변경';
+
+  @override
+  String get profilePasswordSaved => '비밀번호를 바꿨어요';
+
+  @override
+  String get profilePasswordWrong => '현재 비밀번호가 틀려요';
+
+  @override
+  String get profilePasswordTooShort => '새 비밀번호는 6자 이상이어야 해요';
+
+  @override
+  String get profilePasswordMismatch => '새 비밀번호가 서로 달라요';
+
+  @override
+  String get profilePasswordRelogin => '다시 로그인해 주세요';
+
+  @override
   String get profileSignOut => '退出登录';
 
   @override

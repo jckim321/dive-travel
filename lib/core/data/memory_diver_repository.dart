@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:dive_travel_app/core/auth/password_change.dart';
 import 'package:dive_travel_app/core/auth/pending_profile.dart';
 import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
@@ -295,6 +296,7 @@ class MemoryDiverRepository implements DiverRepository {
 
   @override
   Future<void> signIn({required String email, required String password}) async {
+    _authPassword = password;
     _user = AppUser(
       uid: 'memory-${email.hashCode}',
       email: email,
@@ -349,7 +351,37 @@ class MemoryDiverRepository implements DiverRepository {
   @override
   Future<void> signOut() async {
     _user = null;
+    _authPassword = null;
     _authController.add(null);
+  }
+
+  String? _authPassword;
+
+  /// Test-only: next [changePassword] throws this [PasswordChangeException] code.
+  /// Clears itself on use.
+  String? debugPasswordChangeCode;
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final forced = debugPasswordChangeCode;
+    if (forced != null) {
+      debugPasswordChangeCode = null;
+      throw PasswordChangeException(forced);
+    }
+    final email = _user?.email?.trim() ?? '';
+    if (_user == null || email.isEmpty || _authPassword == null) {
+      throw const PasswordChangeException(PasswordChangeException.relogin);
+    }
+    if (newPassword.length < 6) {
+      throw const PasswordChangeException(PasswordChangeException.tooShort);
+    }
+    if (currentPassword != _authPassword) {
+      throw const PasswordChangeException(PasswordChangeException.wrong);
+    }
+    _authPassword = newPassword;
   }
 
   @override

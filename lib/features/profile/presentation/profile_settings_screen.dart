@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:dive_travel_app/core/auth/password_change.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
@@ -140,6 +141,10 @@ class ProfileSettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ],
+              if (session.isSignedIn) ...[
+                const SizedBox(height: 16),
+                const _PasswordCard(),
               ],
               const SizedBox(height: 28),
               OutlinedButton.icon(
@@ -357,6 +362,161 @@ class _NationalityCardState extends State<_NationalityCard> {
               _notice!,
               key: const Key('profile-nationality-notice'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PasswordCard extends StatefulWidget {
+  const _PasswordCard();
+
+  @override
+  State<_PasswordCard> createState() => _PasswordCardState();
+}
+
+class _PasswordCardState extends State<_PasswordCard> {
+  final _current = TextEditingController();
+  final _next = TextEditingController();
+  final _again = TextEditingController();
+  var _busy = false;
+  var _saved = false;
+  String? _notice;
+
+  @override
+  void dispose() {
+    _current.dispose();
+    _next.dispose();
+    _again.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_busy) {
+      return;
+    }
+    final next = _next.text;
+    final again = _again.text;
+    if (next.length < 6) {
+      setState(() {
+        _saved = false;
+        _notice = AppLocalizations.of(context).profilePasswordTooShort;
+      });
+      return;
+    }
+    if (next != again) {
+      setState(() {
+        _saved = false;
+        _notice = AppLocalizations.of(context).profilePasswordMismatch;
+      });
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _notice = null;
+    });
+    try {
+      await SessionScope.of(context).changePassword(
+        currentPassword: _current.text,
+        newPassword: next,
+      );
+      if (!mounted) {
+        return;
+      }
+      _current.clear();
+      _next.clear();
+      _again.clear();
+      setState(() {
+        _saved = true;
+        _notice = AppLocalizations.of(context).profilePasswordSaved;
+      });
+    } on PasswordChangeException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final l10n = AppLocalizations.of(context);
+      setState(() {
+        _saved = false;
+        _notice = switch (error.code) {
+          PasswordChangeException.wrong => l10n.profilePasswordWrong,
+          PasswordChangeException.tooShort => l10n.profilePasswordTooShort,
+          _ => l10n.profilePasswordRelogin,
+        };
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _saved = false;
+        _notice = AppLocalizations.of(context).profilePasswordRelogin;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final noticeColor = _saved
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.error;
+    return _SettingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.profilePasswordTitle,
+            key: const Key('profile-password-title'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('profile-password-current'),
+            controller: _current,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            autofillHints: const [],
+            decoration: InputDecoration(labelText: l10n.profilePasswordCurrent),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('profile-password-new'),
+            controller: _next,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            autofillHints: const [],
+            decoration: InputDecoration(labelText: l10n.profilePasswordNew),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('profile-password-confirm'),
+            controller: _again,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            autofillHints: const [],
+            decoration: InputDecoration(labelText: l10n.profilePasswordConfirm),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            key: const Key('profile-password-submit'),
+            onPressed: _busy ? null : _submit,
+            child: Text(l10n.profilePasswordSave),
+          ),
+          if (_notice != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _notice!,
+              key: const Key('profile-password-notice'),
+              style: TextStyle(color: noticeColor),
             ),
           ],
         ],

@@ -126,6 +126,17 @@ class SessionController extends ChangeNotifier {
     return _run(() => _repository.sendPasswordReset(email));
   }
 
+  /// Does not keep the password on the session or in [_error].
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _repository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
   Future<void> _syncProfile(AppUser user) async {
     if (_signupOwnsProfile) return;
     try {

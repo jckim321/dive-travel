@@ -2778,6 +2778,66 @@ abstract class AppLocalizations {
   /// **'계정은 만들어졌지만 Firestore에 프로필을 쓰지 못했습니다. 콘솔에서 Firestore Database를 만들고 규칙을 붙여 주세요.'**
   String get authErrorFirestore;
 
+  /// No description provided for @profilePasswordTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 변경'**
+  String get profilePasswordTitle;
+
+  /// No description provided for @profilePasswordCurrent.
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 비밀번호'**
+  String get profilePasswordCurrent;
+
+  /// No description provided for @profilePasswordNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호'**
+  String get profilePasswordNew;
+
+  /// No description provided for @profilePasswordConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호 확인'**
+  String get profilePasswordConfirm;
+
+  /// No description provided for @profilePasswordSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 변경'**
+  String get profilePasswordSave;
+
+  /// No description provided for @profilePasswordSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 바꿨어요'**
+  String get profilePasswordSaved;
+
+  /// No description provided for @profilePasswordWrong.
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 비밀번호가 틀려요'**
+  String get profilePasswordWrong;
+
+  /// No description provided for @profilePasswordTooShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호는 6자 이상이어야 해요'**
+  String get profilePasswordTooShort;
+
+  /// No description provided for @profilePasswordMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호가 서로 달라요'**
+  String get profilePasswordMismatch;
+
+  /// No description provided for @profilePasswordRelogin.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 로그인해 주세요'**
+  String get profilePasswordRelogin;
+
   /// 로그아웃 버튼입니다.
   ///
   /// In ko, this message translates to:

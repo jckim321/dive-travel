@@ -59,6 +59,13 @@ abstract class DiverRepository {
 
   Future<void> sendPasswordReset(String email);
 
+  /// Re-authenticate with [currentPassword], then set [newPassword].
+  /// Does not write the password to a profile document or a log.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   /// 로그인/회원가입 직후 users/{uid} 문서가 없으면 생성합니다.
   /// [nationality]가 있으면 nationality와 nationality_consent_at을 같이 씁니다.
   /// Optional profile / consent fields are merged onto the same users doc.

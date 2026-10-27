@@ -1054,6 +1054,16 @@
   "@authErrorFirestore": {
     "description": "가입 후 Firestore 문서 생성 실패 안내입니다."
   },
+  "profilePasswordTitle": "비밀번호 변경",
+  "profilePasswordCurrent": "현재 비밀번호",
+  "profilePasswordNew": "새 비밀번호",
+  "profilePasswordConfirm": "새 비밀번호 확인",
+  "profilePasswordSave": "비밀번호 변경",
+  "profilePasswordSaved": "비밀번호를 바꿨어요",
+  "profilePasswordWrong": "현재 비밀번호가 틀려요",
+  "profilePasswordTooShort": "새 비밀번호는 6자 이상이어야 해요",
+  "profilePasswordMismatch": "새 비밀번호가 서로 달라요",
+  "profilePasswordRelogin": "다시 로그인해 주세요",
   "profileSignOut": "로그아웃",
   "@profileSignOut": {
     "description": "로그아웃 버튼입니다."

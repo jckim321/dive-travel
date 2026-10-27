@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:dive_travel_app/core/auth/password_change.dart';
 import 'package:dive_travel_app/core/auth/pending_profile.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
@@ -177,6 +178,29 @@ class FirestoreDiverRepository implements DiverRepository {
   @override
   Future<void> sendPasswordReset(String email) {
     return _auth.sendPasswordResetEmail(email: email.trim());
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < 6) {
+      throw const PasswordChangeException(PasswordChangeException.tooShort);
+    }
+    final user = _auth.currentUser;
+    final email = user?.email?.trim() ?? '';
+    if (user == null || email.isEmpty) {
+      throw const PasswordChangeException(PasswordChangeException.relogin);
+    }
+    try {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: email, password: currentPassword),
+      );
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (error) {
+      throw PasswordChangeException(passwordChangeCodeForAuth(error.code));
+    }
   }
 
   @override

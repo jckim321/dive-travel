@@ -1476,6 +1476,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'Account created, but the Firestore profile could not be saved. Create Firestore and paste the rules.';
 
   @override
+  String get profilePasswordTitle => 'Change password';
+
+  @override
+  String get profilePasswordCurrent => 'Current password';
+
+  @override
+  String get profilePasswordNew => 'New password';
+
+  @override
+  String get profilePasswordConfirm => 'Confirm new password';
+
+  @override
+  String get profilePasswordSave => 'Change password';
+
+  @override
+  String get profilePasswordSaved => 'Password changed.';
+
+  @override
+  String get profilePasswordWrong => 'Current password is wrong.';
+
+  @override
+  String get profilePasswordTooShort =>
+      'New password must be at least 6 characters.';
+
+  @override
+  String get profilePasswordMismatch => 'The new passwords do not match.';
+
+  @override
+  String get profilePasswordRelogin => 'Please sign in again.';
+
+  @override
   String get profileSignOut => 'Log out';
 
   @override
