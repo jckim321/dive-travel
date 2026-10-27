@@ -1602,6 +1602,13 @@
   "adminSameBoatRejectedBadge": "반려됨",
   "adminSameBoatClosedBadge": "닫힘",
   "adminSameBoatEmpty": "열린 빈자리 상품이 없습니다.",
+  "adminSameBoatZeroBookings": "예약 0",
+  "adminSameBoatZeroBookingsForDays": "열린 지 {days}일째 예약 0",
+  "@adminSameBoatZeroBookingsForDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "adminSameBoatHide": "숨김",
   "adminSameBoatReopen": "다시 열기",
   "adminSameBoatHiddenTitle": "숨긴 자리",

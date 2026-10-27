@@ -996,6 +996,13 @@
   "adminSameBoatRejectedBadge": "Rejected",
   "adminSameBoatClosedBadge": "Closed",
   "adminSameBoatEmpty": "No products with open leftover seats.",
+  "adminSameBoatZeroBookings": "0 bookings",
+  "adminSameBoatZeroBookingsForDays": "Open {days} days with 0 bookings",
+  "@adminSameBoatZeroBookingsForDays": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "adminSameBoatHide": "Hide",
   "adminSameBoatReopen": "Reopen",
   "adminSameBoatHiddenTitle": "Hidden seats",

@@ -178,6 +178,17 @@ bool _hasLiveSeats(ShopProduct product) {
   return false;
 }
 
+/// Calendar days from [openedAt] through [today]. Null when the time was never stored.
+int? sameBoatZeroBookingOpenDays(DateTime? openedAt, DateTime today) {
+  if (openedAt == null) {
+    return null;
+  }
+  final start = DateTime(openedAt.year, openedAt.month, openedAt.day);
+  final day = DateTime(today.year, today.month, today.day);
+  final days = day.difference(start).inDays;
+  return days < 0 ? 0 : days;
+}
+
 /// Hidden or rejected, and nothing still on the live board.
 bool _hasConcealedSeats(ShopProduct product) {
   if (_hasLiveSeats(product)) {
@@ -268,6 +279,10 @@ class _SameBoatTile extends StatelessWidget {
                           ].join(' · '),
                           style: TextStyle(fontSize: 12, color: muted),
                         ),
+                        if (!reopen && product.bookedSeats == 0) ...[
+                          const SizedBox(height: 6),
+                          _ZeroBookingBadge(product: product),
+                        ],
                       ],
                     ),
                   ),
@@ -317,6 +332,43 @@ class _SameBoatTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ZeroBookingBadge extends StatelessWidget {
+  const _ZeroBookingBadge({required this.product});
+
+  final ShopProduct product;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final days = sameBoatZeroBookingOpenDays(
+      product.sameBoatOpenedAt,
+      DateTime.now(),
+    );
+    final label = days == null
+        ? l10n.adminSameBoatZeroBookings
+        : l10n.adminSameBoatZeroBookingsForDays(days);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        key: Key('admin-same-boat-zero-badge-${product.id}'),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFB45309).withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFFB45309),
+          ),
         ),
       ),
     );

@@ -2613,6 +2613,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSameBoatEmpty => 'No products with open leftover seats.';
 
   @override
+  String get adminSameBoatZeroBookings => '0 bookings';
+
+  @override
+  String adminSameBoatZeroBookingsForDays(int days) {
+    return 'Open $days days with 0 bookings';
+  }
+
+  @override
   String get adminSameBoatHide => 'Hide';
 
   @override

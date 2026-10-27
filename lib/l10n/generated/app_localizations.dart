@@ -4848,6 +4848,18 @@ abstract class AppLocalizations {
   /// **'열린 빈자리 상품이 없습니다.'**
   String get adminSameBoatEmpty;
 
+  /// No description provided for @adminSameBoatZeroBookings.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약 0'**
+  String get adminSameBoatZeroBookings;
+
+  /// No description provided for @adminSameBoatZeroBookingsForDays.
+  ///
+  /// In ko, this message translates to:
+  /// **'열린 지 {days}일째 예약 0'**
+  String adminSameBoatZeroBookingsForDays(int days);
+
   /// No description provided for @adminSameBoatHide.
   ///
   /// In ko, this message translates to:

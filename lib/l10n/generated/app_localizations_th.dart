@@ -2552,6 +2552,14 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminSameBoatEmpty => '열린 빈자리 상품이 없습니다.';
 
   @override
+  String get adminSameBoatZeroBookings => '예약 0';
+
+  @override
+  String adminSameBoatZeroBookingsForDays(int days) {
+    return '열린 지 $days일째 예약 0';
+  }
+
+  @override
   String get adminSameBoatHide => '숨김';
 
   @override
