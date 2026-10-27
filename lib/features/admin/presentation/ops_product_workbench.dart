@@ -288,10 +288,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _namedResort = false;
   /// Creator shop picker: the single "내가 짜는 여행" choice was selected.
   var _creatorShopPicked = false;
-  /// Creator resort name/country/region stay open until all three are filled.
+  /// Creator resort fields fold only when the user taps 완료.
   var _creatorResortExpanded = true;
-  /// Tap-to-edit keeps the filled resort line open.
-  var _creatorResortHoldOpen = false;
   var _seededCreatorShop = false;
   DateTime? _departureStart;
   var _packageNights = 0;
@@ -525,21 +523,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     fill(_resortCountry, live.country);
     fill(_resortRegion, live.location);
     _name.text = _resortName.text;
-    if (_creatorResortComplete && !_creatorResortHoldOpen) {
+    if (_creatorResortComplete) {
       _creatorResortExpanded = false;
     }
   }
 
-  void _onCreatorResortEdited() {
+  void _collapseCreatorResort() {
     _name.text = _resortName.text;
     if (!_creatorResortComplete) {
-      _creatorResortHoldOpen = false;
-      _creatorResortExpanded = true;
       return;
     }
-    if (!_creatorResortHoldOpen) {
-      _creatorResortExpanded = false;
-    }
+    setState(() => _creatorResortExpanded = false);
   }
 
   void _applyPartnerFocus() {
@@ -2011,8 +2005,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 setState(() {
                   _creatorShopPicked = true;
                   _namedResort = true;
-                  _creatorResortHoldOpen = false;
-                  _creatorResortExpanded = !_creatorResortComplete;
+                  _creatorResortExpanded = true;
                 });
               },
             )
@@ -2036,10 +2029,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 color: PartnerTheme.card,
                 borderRadius: BorderRadius.circular(10),
                 child: InkWell(
-                  onTap: () => setState(() {
-                    _creatorResortHoldOpen = true;
-                    _creatorResortExpanded = true;
-                  }),
+                  onTap: () => setState(() => _creatorResortExpanded = true),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -2074,7 +2064,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         style: const TextStyle(color: PartnerTheme.text),
         cursorColor: PartnerTheme.accent,
         decoration: _partnerField(label, hint: hint),
-        onChanged: (_) => setState(_onCreatorResortEdited),
+        onChanged: (_) => _name.text = _resortName.text,
       );
     }
 
@@ -2101,6 +2091,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           controller: _resortRegion,
           label: l10n.productFormCuratedLocation,
           hint: l10n.productFormCuratedLocationHint,
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: OutlinedButton(
+            key: const Key('creator-resort-done'),
+            onPressed: _collapseCreatorResort,
+            child: Text(l10n.productFormCreatorResortDone),
+          ),
         ),
       ],
     );

@@ -3706,6 +3706,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get productFormCreatorShop => '내가 짜는 여행 (직접 기획)';
 
   @override
+  String get productFormCreatorResortDone => '완료';
+
+  @override
   String get productFormSubtitle => '한 줄 소개';
 
   @override

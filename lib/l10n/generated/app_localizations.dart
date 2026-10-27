@@ -7014,6 +7014,12 @@ abstract class AppLocalizations {
   /// **'내가 짜는 여행 (직접 기획)'**
   String get productFormCreatorShop;
 
+  /// No description provided for @productFormCreatorResortDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'완료'**
+  String get productFormCreatorResortDone;
+
   /// No description provided for @productFormSubtitle.
   ///
   /// In ko, this message translates to:

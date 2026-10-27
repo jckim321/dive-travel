@@ -63,9 +63,7 @@ void main() {
     expect(find.byKey(const Key('admin-product-name')), findsNothing);
   });
 
-  testWidgets('리조트 이름·국가·지역이 채워지면 한 줄로 접히고 탭하면 펼쳐진다', (
-    tester,
-  ) async {
+  testWidgets('완료를 눌러야 한 줄로 접히고 탭하면 다시 펼쳐진다', (tester) async {
     await pumpCreator(tester);
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     await tester.tap(find.byKey(const Key('creator-product-shop')));
@@ -88,6 +86,14 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byKey(const Key('creator-resort-fields')), findsOneWidget);
+    expect(find.byKey(const Key('creator-resort-summary')), findsNothing);
+
+    final done = find.byKey(const Key('creator-resort-done'));
+    await tester.ensureVisible(done);
+    await tester.tap(done);
+    await tester.pump();
+
     expect(find.byKey(const Key('creator-resort-fields')), findsNothing);
     expect(find.text('블루홀 · 필리핀 · 보홀'), findsOneWidget);
 
@@ -101,6 +107,45 @@ void main() {
           ?.text,
       '블루홀',
     );
+  });
+
+  testWidgets('지역 첫 글자만 쳐도 칸과 컨트롤러가 유지된다', (tester) async {
+    await pumpCreator(tester);
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    await tester.tap(find.byKey(const Key('creator-product-shop')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text(l10n.productFormCreatorShop));
+    await tester.pump();
+
+    await tester.enterText(
+      find.byKey(const Key('product-curated-resort')),
+      '블루홀',
+    );
+    await tester.enterText(
+      find.byKey(const Key('product-curated-country')),
+      '필리핀',
+    );
+    await tester.pump();
+
+    final region = find.byKey(const Key('product-curated-region'));
+    await tester.showKeyboard(region);
+    final stateBefore = tester.state(region);
+    final controller = tester.widget<TextField>(region).controller!;
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'ㄱ',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('creator-resort-fields')), findsOneWidget);
+    expect(find.byKey(const Key('creator-resort-summary')), findsNothing);
+    expect(tester.state(region), same(stateBefore));
+    expect(tester.widget<TextField>(region).controller, same(controller));
+    expect(controller.text, 'ㄱ');
   });
 
   testWidgets('이미 만든 직접 기획은 샵이 접혀 있고 상품명이 리조트 이름이다', (tester) async {

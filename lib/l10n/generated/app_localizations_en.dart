@@ -3822,6 +3822,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormCreatorShop => 'A trip I plan (my own)';
 
   @override
+  String get productFormCreatorResortDone => 'Done';
+
+  @override
   String get productFormSubtitle => 'One-line pitch';
 
   @override
