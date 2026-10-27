@@ -65,7 +65,6 @@ void main() {
     );
     controller.openPackage = true;
     controller.packageCapacity.text = '10';
-    controller.packageBooked.text = '4';
     controller.packageDeparture = departure;
     controller.packageFlagClose = DateTime(2026, 10, 28);
     final next = controller.applyToProduct(closed);
@@ -74,7 +73,7 @@ void main() {
     expect(next.sameBoatStatus, SameBoatStatus.approved);
     expect(next.openEmptySeats, isTrue);
     expect(next.capacity, 10);
-    expect(next.bookedSeats, 4);
+    expect(next.bookedSeats, 0);
     expect(next.departureStart, departure);
     expect(next.publishStatus, ProductPublishStatus.approved);
     expect(next.active, isTrue);
@@ -92,7 +91,6 @@ void main() {
     );
     controller.options['cabin']!.open = true;
     controller.options['cabin']!.capacity.text = '2';
-    controller.options['cabin']!.booked.text = '0';
     controller.options['cabin']!.departure = departure;
     controller.options['cabin']!.flagClose = DateTime(2026, 10, 28);
     final next = controller.applyToProduct(product);

@@ -99,11 +99,11 @@ void main() {
       optionSlots: const [],
       isAdmin: true,
     );
-    // Form "already booked" text would lie if applied — must not overwrite.
-    controller.packageBooked.text = '99';
-    controller.packageCapacity.text = '10';
-    final next = controller.applyToProduct(existing.copyWith(includes: '가이드'));
-    expect(next.bookedSeats, 4);
+    // A typed booked count is not a field. The document's count is kept.
+    final next = controller.applyToProduct(
+      existing.copyWith(bookedSeats: 6, includes: '가이드'),
+    );
+    expect(next.bookedSeats, 6);
     expect(next.flagHolds.length, 1);
     expect(next.flagHolds.single.uid, 'u1');
     expect(next.includes, '가이드');
@@ -232,7 +232,7 @@ void main() {
     expect(ko.simPaySameBoatNotice, isNot(equals(ko.simPayNotice)));
   });
 
-  test('first open writes form booked_seats; regular product stays closed', () {
+  test('first open keeps document booked_seats (0) and goes live', () {
     final fresh = _base();
     final controller = SameBoatSeatOpenController(
       existing: fresh,
@@ -241,12 +241,12 @@ void main() {
     );
     controller.openPackage = true;
     controller.packageCapacity.text = '10';
-    controller.packageBooked.text = '4';
     controller.packageDeparture = DateTime(2026, 11, 1);
     controller.packageFlagClose = DateTime(2026, 10, 28);
     final opened = controller.applyToProduct(fresh);
     expect(opened.openEmptySeats, isTrue);
-    expect(opened.bookedSeats, 4);
+    expect(opened.bookedSeats, 0);
+    expect(opened.flagHolds, isEmpty);
     expect(opened.capacity, 10);
     expect(opened.sameBoatStatus, SameBoatStatus.approved);
     controller.dispose();
@@ -261,6 +261,161 @@ void main() {
     expect(closed.openEmptySeats, isFalse);
     expect(closed.sameBoatStatus, SameBoatStatus.closed);
     off.dispose();
+  });
+
+  test('future departure with a new booking keeps that count and the date', () {
+    final now = DateTime(2026, 10, 27, 12);
+    final opened = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      departure: DateTime(2026, 11, 1),
+      flag: DateTime(2026, 10, 28),
+    );
+    final controller = SameBoatSeatOpenController(
+      existing: opened,
+      optionSlots: const [],
+      isAdmin: true,
+      now: now,
+    );
+    expect(controller.packageScheduleLocked, isFalse);
+    controller.packageDeparture = DateTime(2026, 12, 1);
+    final fresh = opened.copyWith(
+      bookedSeats: 3,
+      flagHolds: [
+        SeatHold(
+          seats: 1,
+          expiresAt: DateTime(2026, 11, 2),
+          uid: 'late',
+        ),
+      ],
+    );
+    final next = controller.applyToProduct(fresh);
+    expect(next.bookedSeats, 3);
+    expect(next.flagHolds.single.uid, 'late');
+    expect(next.departureStart, DateTime(2026, 11, 1));
+    controller.dispose();
+  });
+
+  test('passed departure allows a new date and starts seats at zero', () {
+    final now = DateTime(2026, 10, 27, 12);
+    final existing = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      booked: 4,
+      holds: [
+        SeatHold(
+          seats: 2,
+          expiresAt: DateTime(2026, 11, 1),
+          uid: 'u1',
+        ),
+      ],
+      departure: DateTime(2026, 10, 1),
+      flag: DateTime(2026, 9, 20),
+    );
+    final controller = SameBoatSeatOpenController(
+      existing: existing,
+      optionSlots: const [],
+      isAdmin: false,
+      now: now,
+    );
+    expect(controller.packageScheduleLocked, isFalse);
+    expect(controller.packageReferenceBooked, 4);
+    controller.packageDeparture = DateTime(2026, 12, 1);
+    expect(controller.packageReferenceBooked, 0);
+    controller.packageCapacity.text = '8';
+    controller.packageFlagClose = DateTime(2026, 11, 20);
+    final next = controller.applyToProduct(
+      existing.copyWith(sameBoatOpenedAt: DateTime(2026, 9, 1)),
+    );
+    expect(next.departureStart, DateTime(2026, 12, 1));
+    expect(next.flagClosesAt, DateTime(2026, 11, 20));
+    expect(next.capacity, 8);
+    expect(next.bookedSeats, 0);
+    expect(next.flagHolds, isEmpty);
+    expect(next.sameBoatOpenedAt, now);
+    expect(next.sameBoatStatus, SameBoatStatus.approved);
+    controller.dispose();
+  });
+
+  test('passed option departure starts the new date at zero', () {
+    final now = DateTime(2026, 10, 27, 12);
+    final cabin = ShopProductOption(
+      id: 'cabin',
+      name: 'Cabin',
+      description: '',
+      openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
+      capacity: 4,
+      bookedSeats: 2,
+      flagHolds: [
+        SeatHold(
+          seats: 1,
+          expiresAt: DateTime(2026, 11, 1),
+          uid: 'u1',
+        ),
+      ],
+      departureStart: DateTime(2026, 10, 1),
+      flagClosesAt: DateTime(2026, 9, 20),
+    );
+    final product = _base(options: [cabin]);
+    final controller = SameBoatSeatOpenController(
+      existing: product,
+      optionSlots: const [SameBoatOptionSeatSlot(id: 'cabin', name: 'Cabin')],
+      isAdmin: true,
+      now: now,
+    );
+    expect(controller.optionScheduleLocked('cabin'), isFalse);
+    final draft = controller.options['cabin']!;
+    draft.departure = DateTime(2026, 12, 5);
+    draft.flagClose = DateTime(2026, 11, 25);
+    draft.capacity.text = '3';
+    final option = controller.applyToProduct(product).options.single;
+    expect(option.departureStart, DateTime(2026, 12, 5));
+    expect(option.bookedSeats, 0);
+    expect(option.flagHolds, isEmpty);
+    expect(option.capacity, 3);
+    expect(option.sameBoatOpenedAt, now);
+    controller.dispose();
+  });
+
+  testWidgets('seat form shows reference and fill, not a booked field', (
+    tester,
+  ) async {
+    final product = _base(
+      open: true,
+      status: SameBoatStatus.approved,
+      capacity: 10,
+      booked: 4,
+      departure: DateTime(2026, 11, 1),
+      flag: DateTime(2026, 10, 28),
+    );
+    final controller = SameBoatSeatOpenController(
+      existing: product,
+      optionSlots: const [],
+      isAdmin: true,
+      now: DateTime(2026, 10, 27, 12),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SameBoatSeatOpenFields(
+            controller: controller,
+            onChanged: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('same-boat-booked')), findsNothing);
+    expect(find.text('이 날짜 예약 4명'), findsOneWidget);
+    expect(find.text('채울 자리 6명'), findsOneWidget);
+    expect(find.text('출발에 필요한 인원'), findsOneWidget);
+    controller.dispose();
   });
 
   test('resolveBookedSeats only uses form on first open', () {

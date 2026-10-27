@@ -152,13 +152,110 @@ abstract final class SameBoatSeatOpenLogic {
         option.sameBoatStatus.isBoardLive;
   }
 
+  /// True when [departure]'s calendar day is before [now]'s calendar day.
+  static bool departureHasPassed(DateTime? departure, DateTime now) {
+    if (departure == null) {
+      return false;
+    }
+    final start = DateTime(departure.year, departure.month, departure.day);
+    final today = DateTime(now.year, now.month, now.day);
+    return start.isBefore(today);
+  }
+
+  static bool sameCalendarDay(DateTime? a, DateTime? b) {
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  /// Booked count shown beside the date. A different day shows 0.
+  static int referenceBooked({
+    required DateTime? selected,
+    required DateTime? stored,
+    required int booked,
+  }) {
+    if (!sameCalendarDay(selected, stored)) {
+      return 0;
+    }
+    return booked < 0 ? 0 : booked;
+  }
+
   /// Schedule edits use the product's own booked seats and flag holds.
+  /// A departure that has already passed is not locked, so a new date can start at 0.
   static bool scheduleLocked({
     required int booked,
     required List<SeatHold> holds,
     required DateTime now,
+    DateTime? departure,
   }) {
+    if (departureHasPassed(departure, now)) {
+      return false;
+    }
     return booked > 0 || liveHoldSeats(holds, now) > 0;
+  }
+
+  /// Seat numbers written on save. [booked] and [holds] come from the product
+  /// just read, unless a passed departure is replaced by a new day.
+  static SeatScheduleWrite scheduleWrite({
+    required bool open,
+    required int formCapacity,
+    required DateTime? formDeparture,
+    required DateTime? formFlagClose,
+    required int storedCapacity,
+    required int storedBooked,
+    required List<SeatHold> storedHolds,
+    required DateTime? storedDeparture,
+    required DateTime? storedFlagClose,
+    required DateTime now,
+  }) {
+    if (!open) {
+      return SeatScheduleWrite(
+        capacity: storedCapacity,
+        booked: storedBooked,
+        holds: storedHolds,
+        departure: storedDeparture,
+        flagClose: storedFlagClose,
+        restart: false,
+      );
+    }
+    final locked = scheduleLocked(
+      booked: storedBooked,
+      holds: storedHolds,
+      now: now,
+      departure: storedDeparture,
+    );
+    if (locked) {
+      return SeatScheduleWrite(
+        capacity: storedCapacity,
+        booked: storedBooked,
+        holds: storedHolds,
+        departure: storedDeparture,
+        flagClose: storedFlagClose,
+        restart: false,
+      );
+    }
+    final restart = departureHasPassed(storedDeparture, now) &&
+        formDeparture != null &&
+        !sameCalendarDay(formDeparture, storedDeparture);
+    if (restart) {
+      return SeatScheduleWrite(
+        capacity: formCapacity,
+        booked: 0,
+        holds: const <SeatHold>[],
+        departure: formDeparture,
+        flagClose: formFlagClose,
+        restart: true,
+      );
+    }
+    return SeatScheduleWrite(
+      capacity: formCapacity,
+      booked: storedBooked,
+      holds: storedHolds,
+      departure: formDeparture,
+      flagClose: formFlagClose,
+      restart: false,
+    );
   }
 
   /// Product- or option-level seat open fields required for board / approve.
@@ -200,6 +297,25 @@ abstract final class SameBoatSeatOpenLogic {
     }
     return true;
   }
+}
+
+/// Capacity, dates, and seat counts produced by [SameBoatSeatOpenLogic.scheduleWrite].
+class SeatScheduleWrite {
+  const SeatScheduleWrite({
+    required this.capacity,
+    required this.booked,
+    required this.holds,
+    required this.departure,
+    required this.flagClose,
+    required this.restart,
+  });
+
+  final int capacity;
+  final int booked;
+  final List<SeatHold> holds;
+  final DateTime? departure;
+  final DateTime? flagClose;
+  final bool restart;
 }
 
 class SameBoatCapacityViolation {

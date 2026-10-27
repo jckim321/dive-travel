@@ -9975,8 +9975,26 @@ abstract class AppLocalizations {
   /// No description provided for @workbenchOpenSeatsNeedFields.
   ///
   /// In ko, this message translates to:
-  /// **'빈자리를 열려면 총 인원·출발일·깃발 마감을 넣으세요.'**
+  /// **'빈자리를 열려면 필요 인원·출발일·깃발 마감을 넣으세요.'**
   String get workbenchOpenSeatsNeedFields;
+
+  /// No description provided for @sameBoatRequiredHeadcount.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발에 필요한 인원'**
+  String get sameBoatRequiredHeadcount;
+
+  /// No description provided for @sameBoatBookedReference.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 날짜 예약 {count}명'**
+  String sameBoatBookedReference(int count);
+
+  /// No description provided for @sameBoatSeatsToFill.
+  ///
+  /// In ko, this message translates to:
+  /// **'채울 자리 {count}명'**
+  String sameBoatSeatsToFill(int count);
 
   /// No description provided for @sameBoatAlreadyBooked.
   ///

@@ -5459,7 +5459,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workbenchOpenSeatsNeedFields =>
-      'Total seats, departure date, and flag deadline are required to open leftover seats.';
+      'People needed, a departure date, and a flag deadline are required to open leftover seats.';
+
+  @override
+  String get sameBoatRequiredHeadcount => 'People needed to depart';
+
+  @override
+  String sameBoatBookedReference(int count) {
+    return '$count booked on this date';
+  }
+
+  @override
+  String sameBoatSeatsToFill(int count) {
+    return '$count seats to fill';
+  }
 
   @override
   String get sameBoatAlreadyBooked => 'Already recruited';

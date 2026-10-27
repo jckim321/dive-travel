@@ -92,20 +92,26 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       return;
     }
     _seats.isAdmin = widget.adminBypassApproval;
-    final error = _seats.validate(l10n, now: DateTime.now());
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    final early = _seats.validate(l10n, now: DateTime.now());
+    if (early != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(early)));
       return;
     }
 
     setState(() => _saving = true);
     try {
-      final base = widget.partnerLiveCopy
-          ? await store.requireFreshShopProduct(
-              shopId: widget.product.shopId,
-              productId: widget.product.id,
-            )
-          : widget.product;
+      final base = await store.requireFreshShopProduct(
+        shopId: widget.product.shopId,
+        productId: widget.product.id,
+      );
+      final error = _seats.validate(l10n, now: DateTime.now(), countsFrom: base);
+      if (error != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+        return;
+      }
       final next = _seats.applyToProduct(base);
       await store.saveShopProduct(
         shopId: next.shopId,

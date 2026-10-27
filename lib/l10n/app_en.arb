@@ -2222,7 +2222,20 @@
   "workbenchSeatCount": "Total seats",
   "workbenchDepartureDate": "Departure date",
   "workbenchFlagDeadline": "Flag deadline",
-  "workbenchOpenSeatsNeedFields": "Total seats, departure date, and flag deadline are required to open leftover seats.",
+  "workbenchOpenSeatsNeedFields": "People needed, a departure date, and a flag deadline are required to open leftover seats.",
+  "sameBoatRequiredHeadcount": "People needed to depart",
+  "sameBoatBookedReference": "{count} booked on this date",
+  "@sameBoatBookedReference": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "sameBoatSeatsToFill": "{count} seats to fill",
+  "@sameBoatSeatsToFill": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "sameBoatAlreadyBooked": "Already recruited",
   "sameBoatSeatOpenPreview": "{capacity} seats · {booked} confirmed · {open} open",
   "@sameBoatSeatOpenPreview": {

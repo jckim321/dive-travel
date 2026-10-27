@@ -5294,7 +5294,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workbenchFlagDeadline => '깃발 마감일';
 
   @override
-  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 총 인원·출발일·깃발 마감을 넣으세요.';
+  String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 필요 인원·출발일·깃발 마감을 넣으세요.';
+
+  @override
+  String get sameBoatRequiredHeadcount => '출발에 필요한 인원';
+
+  @override
+  String sameBoatBookedReference(int count) {
+    return '이 날짜 예약 $count명';
+  }
+
+  @override
+  String sameBoatSeatsToFill(int count) {
+    return '채울 자리 $count명';
+  }
 
   @override
   String get sameBoatAlreadyBooked => '이미 모집된 인원';

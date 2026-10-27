@@ -33,12 +33,12 @@ class SameBoatSeatOpenController {
     packageCapacity = TextEditingController(
       text: (p != null && p.capacity > 0) ? '${p.capacity}' : '',
     );
-    packageBooked = TextEditingController(
-      text: (p != null && p.bookedSeats > 0) ? '${p.bookedSeats}' : '',
-    );
+    _existingPackageCapacity = p?.capacity ?? 0;
     _existingPackageBooked = p?.bookedSeats ?? 0;
     _existingPackageHolds = List<SeatHold>.from(p?.flagHolds ?? const []);
     _packageStatus = p?.sameBoatStatus ?? SameBoatStatus.closed;
+    _storedPackageDeparture = p?.departureStart;
+    _storedPackageFlagClose = p?.flagClosesAt;
     this.packageDeparture = packageDeparture ?? p?.departureStart;
     packageFlagClose = p?.flagClosesAt;
     _syncOptionSlots(optionSlots, existing: p);
@@ -53,14 +53,16 @@ class SameBoatSeatOpenController {
 
   late bool openPackage;
   late final TextEditingController packageCapacity;
-  late final TextEditingController packageBooked;
   DateTime? packageDeparture;
   DateTime? packageFlagClose;
 
   late bool _packageWasOpen;
+  late int _existingPackageCapacity;
   late int _existingPackageBooked;
   late List<SeatHold> _existingPackageHolds;
   late SameBoatStatus _packageStatus;
+  late DateTime? _storedPackageDeparture;
+  late DateTime? _storedPackageFlagClose;
 
   final Map<String, SameBoatOptionSeatDraft> options = {};
 
@@ -72,12 +74,20 @@ class SameBoatSeatOpenController {
 
   SameBoatStatus get packageStatus => _packageStatus;
 
-  /// Locked when this product already has a booking or a live flag.
+  /// Locked when this departure has not passed and already has a booking or a live flag.
   /// Counts come from the product document, not analytics.
   bool get packageScheduleLocked => SameBoatSeatOpenLogic.scheduleLocked(
         booked: _existingPackageBooked,
         holds: _existingPackageHolds,
         now: _now,
+        departure: _storedPackageDeparture,
+      );
+
+  /// Booked count for the day currently shown. A different day shows 0.
+  int get packageReferenceBooked => SameBoatSeatOpenLogic.referenceBooked(
+        selected: packageDeparture,
+        stored: _storedPackageDeparture,
+        booked: _existingPackageBooked,
       );
 
   bool optionScheduleLocked(String id) {
@@ -89,6 +99,7 @@ class SameBoatSeatOpenController {
       booked: draft.existingBooked,
       holds: draft.existingHolds,
       now: _now,
+      departure: draft.storedDeparture,
     );
   }
 
@@ -137,36 +148,46 @@ class SameBoatSeatOpenController {
 
   void dispose() {
     packageCapacity.dispose();
-    packageBooked.dispose();
     for (final d in options.values) {
       d.dispose();
     }
   }
 
+  SeatScheduleWrite _packageWrite(ShopProduct? countsFrom, DateTime now) {
+    return SameBoatSeatOpenLogic.scheduleWrite(
+      open: openPackage,
+      formCapacity: int.tryParse(packageCapacity.text.trim()) ?? 0,
+      formDeparture: packageDeparture,
+      formFlagClose: packageFlagClose,
+      storedCapacity: countsFrom?.capacity ?? _existingPackageCapacity,
+      storedBooked: countsFrom?.bookedSeats ?? _existingPackageBooked,
+      storedHolds: countsFrom?.flagHolds ?? _existingPackageHolds,
+      storedDeparture: countsFrom?.departureStart ?? _storedPackageDeparture,
+      storedFlagClose: countsFrom?.flagClosesAt ?? _storedPackageFlagClose,
+      now: now,
+    );
+  }
+
   /// Validates open rows; returns localized snack text or null if ok.
-  String? validate(AppLocalizations l10n, {required DateTime now}) {
+  /// [countsFrom] is the product re-read just before save.
+  String? validate(
+    AppLocalizations l10n, {
+    required DateTime now,
+    ShopProduct? countsFrom,
+  }) {
     if (openPackage) {
+      final write = _packageWrite(countsFrom, now);
       final cap = int.tryParse(packageCapacity.text.trim()) ?? 0;
-      if (cap <= 0 || packageDeparture == null) {
+      if (cap <= 0 || write.departure == null) {
         return l10n.workbenchOpenSeatsNeedFields;
       }
-      if (packageFlagClose == null) {
+      if (write.flagClose == null) {
         return l10n.workbenchFlagDeadlineRequired;
       }
-      final booked = SameBoatSeatOpenLogic.resolveBookedSeats(
-        nowOpen: true,
-        wasAlreadyOpen: _packageWasOpen,
-        formBooked: int.tryParse(packageBooked.text.trim()) ?? 0,
-        existingBooked: _existingPackageBooked,
-      );
-      final holds = SameBoatSeatOpenLogic.liveHoldSeats(
-        _existingPackageHolds,
-        now,
-      );
       final bad = SameBoatSeatOpenLogic.capacityViolation(
         capacity: cap,
-        booked: booked,
-        liveHolds: holds,
+        booked: write.booked,
+        liveHolds: SameBoatSeatOpenLogic.liveHoldSeats(write.holds, now),
       );
       if (bad != null) {
         return l10n.sameBoatCapacityBelowOccupied(bad.booked, bad.liveHolds);
@@ -176,27 +197,25 @@ class SameBoatSeatOpenController {
       if (!draft.open) {
         continue;
       }
+      ShopProductOption? prior;
+      for (final option in countsFrom?.options ?? const <ShopProductOption>[]) {
+        if (option.id == draft.id) {
+          prior = option;
+          break;
+        }
+      }
+      final write = draft.scheduleWrite(fresh: prior, now: now);
       final cap = int.tryParse(draft.capacity.text.trim()) ?? 0;
-      if (cap <= 0 || draft.departure == null) {
+      if (cap <= 0 || write.departure == null) {
         return l10n.workbenchOpenSeatsNeedFields;
       }
-      if (draft.flagClose == null) {
+      if (write.flagClose == null) {
         return l10n.workbenchFlagDeadlineRequired;
       }
-      final booked = SameBoatSeatOpenLogic.resolveBookedSeats(
-        nowOpen: true,
-        wasAlreadyOpen: draft.wasAlreadyOpen,
-        formBooked: int.tryParse(draft.booked.text.trim()) ?? 0,
-        existingBooked: draft.existingBooked,
-      );
-      final holds = SameBoatSeatOpenLogic.liveHoldSeats(
-        draft.existingHolds,
-        now,
-      );
       final bad = SameBoatSeatOpenLogic.capacityViolation(
         capacity: cap,
-        booked: booked,
-        liveHolds: holds,
+        booked: write.booked,
+        liveHolds: SameBoatSeatOpenLogic.liveHoldSeats(write.holds, now),
       );
       if (bad != null) {
         return l10n.sameBoatCapacityBelowOccupied(bad.booked, bad.liveHolds);
@@ -205,8 +224,9 @@ class SameBoatSeatOpenController {
     return null;
   }
 
-  /// Apply seat fields onto a product built from the rest of the form.
-  /// Never overwrites [flag_holds]; [booked_seats] only on first open.
+  /// Apply seat fields onto [base], the product re-read just before save.
+  /// [booked_seats] and [flag_holds] stay on [base] unless a passed departure
+  /// is replaced, in which case both start at 0.
   ShopProduct applyToProduct(ShopProduct base) {
     final nextOptions = <ShopProductOption>[
       for (final option in base.options)
@@ -219,13 +239,7 @@ class SameBoatSeatOpenController {
         else
           option,
     ];
-    final packageCap = int.tryParse(packageCapacity.text.trim()) ?? 0;
-    final booked = SameBoatSeatOpenLogic.resolveBookedSeats(
-      nowOpen: openPackage,
-      wasAlreadyOpen: _packageWasOpen,
-      formBooked: int.tryParse(packageBooked.text.trim()) ?? 0,
-      existingBooked: _existingPackageBooked,
-    );
+    final write = _packageWrite(base, _now);
     final status = openPackage
         ? SameBoatSeatOpenLogic.statusWhenOpen(
             isAdmin: isAdmin,
@@ -237,17 +251,19 @@ class SameBoatSeatOpenController {
           );
     return base.copyWith(
       openEmptySeats: openPackage,
-      capacity: openPackage ? packageCap : base.capacity,
-      bookedSeats: booked,
-      flagHolds: _existingPackageHolds,
-      departureStart: openPackage ? packageDeparture : base.departureStart,
-      flagClosesAt: openPackage ? packageFlagClose : base.flagClosesAt,
+      capacity: write.capacity,
+      bookedSeats: write.booked,
+      flagHolds: write.holds,
+      departureStart: write.departure,
+      flagClosesAt: write.flagClose,
       sameBoatStatus: status,
-      sameBoatOpenedAt: SameBoatSeatOpenLogic.openedAtWhenSaving(
-        next: status,
-        existing: base.sameBoatOpenedAt,
-        now: _now,
-      ),
+      sameBoatOpenedAt: write.restart && status == SameBoatStatus.approved
+          ? _now
+          : SameBoatSeatOpenLogic.openedAtWhenSaving(
+              next: status,
+              existing: base.sameBoatOpenedAt,
+              now: _now,
+            ),
       options: nextOptions,
     );
   }
@@ -259,13 +275,15 @@ class SameBoatOptionSeatDraft {
     required this.name,
     required this.open,
     required this.capacity,
-    required this.booked,
     required this.departure,
     required this.flagClose,
     required this.wasAlreadyOpen,
+    required this.existingCapacity,
     required this.existingBooked,
     required this.existingHolds,
     required this.existingStatus,
+    required this.storedDeparture,
+    required this.storedFlagClose,
   });
 
   factory SameBoatOptionSeatDraft.from({
@@ -284,17 +302,15 @@ class SameBoatOptionSeatDraft {
       capacity: TextEditingController(
         text: (prior != null && prior.capacity > 0) ? '${prior.capacity}' : '',
       ),
-      booked: TextEditingController(
-        text: (prior != null && prior.bookedSeats > 0)
-            ? '${prior.bookedSeats}'
-            : '',
-      ),
       departure: prior?.departureStart,
       flagClose: prior?.flagClosesAt,
       wasAlreadyOpen: wasOpen,
+      existingCapacity: prior?.capacity ?? 0,
       existingBooked: prior?.bookedSeats ?? 0,
       existingHolds: List<SeatHold>.from(prior?.flagHolds ?? const []),
       existingStatus: prior?.sameBoatStatus ?? SameBoatStatus.closed,
+      storedDeparture: prior?.departureStart,
+      storedFlagClose: prior?.flagClosesAt,
     );
   }
 
@@ -302,17 +318,42 @@ class SameBoatOptionSeatDraft {
   String name;
   bool open;
   final TextEditingController capacity;
-  final TextEditingController booked;
   DateTime? departure;
   DateTime? flagClose;
   final bool wasAlreadyOpen;
+  final int existingCapacity;
   final int existingBooked;
   final List<SeatHold> existingHolds;
   final SameBoatStatus existingStatus;
+  final DateTime? storedDeparture;
+  final DateTime? storedFlagClose;
+
+  int get referenceBooked => SameBoatSeatOpenLogic.referenceBooked(
+        selected: departure,
+        stored: storedDeparture,
+        booked: existingBooked,
+      );
 
   void dispose() {
     capacity.dispose();
-    booked.dispose();
+  }
+
+  SeatScheduleWrite scheduleWrite({
+    ShopProductOption? fresh,
+    required DateTime now,
+  }) {
+    return SameBoatSeatOpenLogic.scheduleWrite(
+      open: open,
+      formCapacity: int.tryParse(capacity.text.trim()) ?? 0,
+      formDeparture: departure,
+      formFlagClose: flagClose,
+      storedCapacity: fresh?.capacity ?? existingCapacity,
+      storedBooked: fresh?.bookedSeats ?? existingBooked,
+      storedHolds: fresh?.flagHolds ?? existingHolds,
+      storedDeparture: fresh?.departureStart ?? storedDeparture,
+      storedFlagClose: fresh?.flagClosesAt ?? storedFlagClose,
+      now: now,
+    );
   }
 
   ShopProductOption apply(
@@ -320,13 +361,8 @@ class SameBoatOptionSeatDraft {
     required bool isAdmin,
     DateTime? now,
   }) {
-    final cap = int.tryParse(capacity.text.trim()) ?? 0;
-    final nextBooked = SameBoatSeatOpenLogic.resolveBookedSeats(
-      nowOpen: open,
-      wasAlreadyOpen: wasAlreadyOpen,
-      formBooked: int.tryParse(booked.text.trim()) ?? 0,
-      existingBooked: existingBooked,
-    );
+    final clock = now ?? DateTime.now();
+    final write = scheduleWrite(fresh: base, now: clock);
     final status = open
         ? SameBoatSeatOpenLogic.statusWhenOpen(
             isAdmin: isAdmin,
@@ -338,17 +374,19 @@ class SameBoatOptionSeatDraft {
           );
     return base.copyWith(
       openEmptySeats: open,
-      capacity: open ? cap : base.capacity,
-      bookedSeats: nextBooked,
-      flagHolds: existingHolds,
-      departureStart: open ? departure : base.departureStart,
-      flagClosesAt: open ? flagClose : base.flagClosesAt,
+      capacity: write.capacity,
+      bookedSeats: write.booked,
+      flagHolds: write.holds,
+      departureStart: write.departure,
+      flagClosesAt: write.flagClose,
       sameBoatStatus: status,
-      sameBoatOpenedAt: SameBoatSeatOpenLogic.openedAtWhenSaving(
-        next: status,
-        existing: base.sameBoatOpenedAt,
-        now: now ?? DateTime.now(),
-      ),
+      sameBoatOpenedAt: write.restart && status == SameBoatStatus.approved
+          ? clock
+          : SameBoatSeatOpenLogic.openedAtWhenSaving(
+              next: status,
+              existing: base.sameBoatOpenedAt,
+              now: clock,
+            ),
     );
   }
 }
@@ -411,9 +449,7 @@ class SameBoatSeatOpenFields extends StatelessWidget {
         if (c.openPackage) ...[
           _SeatOpenInputs(
             capacity: c.packageCapacity,
-            booked: c.packageBooked,
-            bookedReadOnly: c.packageWasAlreadyOpen,
-            displayBooked: c.existingPackageBooked,
+            referenceBooked: c.packageReferenceBooked,
             departure: c.packageDeparture,
             flagClose: c.packageFlagClose,
             scheduleLocked: c.packageScheduleLocked,
@@ -467,9 +503,7 @@ class SameBoatSeatOpenFields extends StatelessWidget {
                     if (draft.open)
                       _SeatOpenInputs(
                         capacity: draft.capacity,
-                        booked: draft.booked,
-                        bookedReadOnly: draft.wasAlreadyOpen,
-                        displayBooked: draft.existingBooked,
+                        referenceBooked: draft.referenceBooked,
                         departure: draft.departure,
                         flagClose: draft.flagClose,
                         scheduleLocked: c.optionScheduleLocked(draft.id),
@@ -510,9 +544,7 @@ class SameBoatSeatOpenFields extends StatelessWidget {
 class _SeatOpenInputs extends StatelessWidget {
   const _SeatOpenInputs({
     required this.capacity,
-    required this.booked,
-    required this.bookedReadOnly,
-    required this.displayBooked,
+    required this.referenceBooked,
     required this.departure,
     required this.flagClose,
     required this.scheduleLocked,
@@ -524,9 +556,7 @@ class _SeatOpenInputs extends StatelessWidget {
   });
 
   final TextEditingController capacity;
-  final TextEditingController booked;
-  final bool bookedReadOnly;
-  final int displayBooked;
+  final int referenceBooked;
   final DateTime? departure;
   final DateTime? flagClose;
   final bool scheduleLocked;
@@ -540,59 +570,53 @@ class _SeatOpenInputs extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cap = int.tryParse(capacity.text.trim()) ?? 0;
-    final paid = bookedReadOnly
-        ? displayBooked
-        : (int.tryParse(booked.text.trim()) ?? 0);
-    final open = SameBoatSeatOpenLogic.openPreviewSeats(
-      capacity: cap,
-      booked: paid,
+    final fill = cap - referenceBooked;
+    final openSeats = fill < 0 ? 0 : fill;
+    final dateTile = ListTile(
+      contentPadding: EdgeInsets.zero,
+      enabled: showDeparturePicker && !scheduleLocked,
+      title: Text(l10n.workbenchDepartureDate),
+      subtitle: Text(
+        departure == null
+            ? (showDeparturePicker ? '—' : l10n.bookingEntryPickDate)
+            : dayFmt.format(departure!),
+      ),
+      trailing: showDeparturePicker ? const Icon(Icons.calendar_today) : null,
+      onTap: showDeparturePicker && !scheduleLocked ? onPickDeparture : null,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: dateTile),
+            Text(
+              key: const Key('same-boat-booked-reference'),
+              l10n.sameBoatBookedReference(referenceBooked),
+            ),
+          ],
+        ),
         TextField(
           key: const Key('same-boat-capacity'),
           controller: capacity,
           enabled: !scheduleLocked,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(labelText: l10n.workbenchSeatCount),
+          decoration: InputDecoration(
+            labelText: l10n.sameBoatRequiredHeadcount,
+          ),
           onChanged: (_) => onChanged(),
         ),
-        const SizedBox(height: 8),
-        if (bookedReadOnly)
-          ListTile(
-            key: const Key('same-boat-booked-readonly'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.sameBoatAlreadyBooked),
-            subtitle: Text('$displayBooked'),
-          )
-        else
-          TextField(
-            key: const Key('same-boat-booked'),
-            controller: booked,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(labelText: l10n.sameBoatAlreadyBooked),
-            onChanged: (_) => onChanged(),
-          ),
-        if (showDeparturePicker)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            enabled: !scheduleLocked,
-            title: Text(l10n.workbenchDepartureDate),
-            subtitle: Text(departure == null ? '—' : dayFmt.format(departure!)),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: scheduleLocked ? null : onPickDeparture,
-          )
-        else
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.workbenchDepartureDate),
-            subtitle: Text(
-              departure == null
-                  ? l10n.bookingEntryPickDate
-                  : dayFmt.format(departure!),
+        if (cap > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              key: const Key('same-boat-seats-to-fill'),
+              l10n.sameBoatSeatsToFill(openSeats),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ListTile(
@@ -613,14 +637,6 @@ class _SeatOpenInputs extends StatelessWidget {
             child: Text(
               l10n.sameBoatAskAdminToChange,
               style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        if (cap > 0)
-          Text(
-            key: const Key('same-boat-seat-preview'),
-            l10n.sameBoatSeatOpenPreview(cap, paid, open),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
             ),
           ),
         Text(
