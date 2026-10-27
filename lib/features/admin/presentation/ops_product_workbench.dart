@@ -1709,6 +1709,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             content: TextField(
               key: const Key('partner-resubmit-note-field'),
               controller: controller,
+              cursorColor: PartnerTheme.accent,
               maxLength: ProductPublishGuard.resubmitNoteMaxLength,
               maxLines: 4,
               autofocus: true,
@@ -1756,7 +1757,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     _seats.isAdmin = store.stats.isAdmin;
-    return PartnerTheme.wrap(_buildPartnerScaffold(l10n, store));
+    return Theme(
+      data: PartnerTheme.dark.copyWith(
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: PartnerTheme.accent,
+          selectionHandleColor: PartnerTheme.accent,
+        ),
+      ),
+      child: _buildPartnerScaffold(l10n, store),
+    );
   }
 
   Widget _buildPartnerScaffold(AppLocalizations l10n, DiverStore store) {
@@ -3446,21 +3455,37 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 IconButton(
+                  key: const Key('product-detail-bold'),
                   tooltip: l10n.detailComposerBold,
                   onPressed: _preview ? null : () => _wrapSelection('**', '**'),
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppTheme.navy,
+                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
+                  ),
                   icon: const Icon(Icons.format_bold, size: 20),
                 ),
                 IconButton(
+                  key: const Key('product-detail-heading'),
                   tooltip: l10n.detailComposerHeading,
                   onPressed: _preview ? null : () => _prefixLine('### '),
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppTheme.navy,
+                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
+                  ),
                   icon: const Icon(Icons.title, size: 20),
                 ),
                 IconButton(
+                  key: const Key('product-detail-list'),
                   tooltip: l10n.detailComposerList,
                   onPressed: _preview ? null : () => _prefixLine('- '),
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppTheme.navy,
+                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
+                  ),
                   icon: const Icon(Icons.format_list_bulleted, size: 20),
                 ),
                 PopupMenuButton<String>(
+                  key: const Key('product-detail-table'),
                   tooltip: l10n.detailComposerTable,
                   enabled: !_preview,
                   onSelected: (value) {
@@ -3488,14 +3513,19 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
                         Icon(
                           Icons.table_chart_outlined,
                           size: 20,
-                          color: _preview ? Colors.black26 : null,
+                          color: _preview
+                              ? AppTheme.navy.withValues(alpha: 0.38)
+                              : AppTheme.navy,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           l10n.detailComposerTable,
                           style: TextStyle(
                             fontSize: 12,
-                            color: _preview ? Colors.black26 : AppTheme.muted,
+                            fontWeight: FontWeight.w700,
+                            color: _preview
+                                ? AppTheme.navy.withValues(alpha: 0.38)
+                                : AppTheme.navy,
                           ),
                         ),
                       ],
@@ -3503,6 +3533,10 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
                   ),
                 ),
                 TextButton.icon(
+                  key: const Key('product-detail-day'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: PartnerTheme.accent,
+                  ),
                   onPressed: _preview
                       ? null
                       : () {
@@ -3516,6 +3550,10 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
                   label: Text(l10n.detailComposerDay),
                 ),
                 TextButton(
+                  key: const Key('product-detail-preview'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: PartnerTheme.accent,
+                  ),
                   onPressed: () => setState(() => _preview = !_preview),
                   child: Text(
                     _preview
@@ -3557,8 +3595,10 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
           )
         else
           TextField(
+            key: const Key('product-detail-editor'),
             controller: widget.controller,
             focusNode: _focus,
+            cursorColor: PartnerTheme.accent,
             minLines: 10,
             maxLines: 24,
             onChanged: (_) => _notify(),
