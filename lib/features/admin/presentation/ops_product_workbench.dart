@@ -451,15 +451,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _addons.add(_LineEditors(kind: ProductOptionKind.addon));
     }
     for (final line in _addons) {
-      _watchLine(line);
-      _listen(line.consumer);
       _addonQty.putIfAbsent(line.id, () => 0);
     }
     for (final ticket in _individuals) {
-      _listen(ticket.name);
-      _listen(ticket.consumer);
-      _listen(ticket.includes);
-      _listen(ticket.excludes);
       for (final option in childAddons[ticket.id] ?? const <ShopProductOption>[]) {
         final line = _LineEditors(
           id: option.id,
@@ -473,8 +467,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           bookable: option.bookable,
           group: option.group,
         );
-        _watchLine(line);
-        _listen(line.consumer);
         ticket.addons.add(line);
         ticket.addonQty[line.id] = 0;
       }
@@ -553,8 +545,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         return;
       case PartnerFormFocus.addAddon:
         final line = _LineEditors(kind: ProductOptionKind.addon);
-        _listen(line.name);
-        _listen(line.consumer);
         setState(() => _addons.add(line));
         _scrollToPartnerKey(_partnerAddonsKey);
       case PartnerFormFocus.addons:
@@ -828,11 +818,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _draftListeners.add(controller);
   }
 
-  void _watchLine(_LineEditors line) {
-    _listen(line.name);
-  }
-
-
   void _onDraftChanged() {
     if (mounted) {
       setState(() {});
@@ -893,10 +878,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   void _addIndividualTicket() {
     final ticket = _IndividualTicket();
-    _listen(ticket.name);
-    _listen(ticket.consumer);
-    _listen(ticket.includes);
-    _listen(ticket.excludes);
     setState(() {
       _individuals.add(ticket);
       _syncSeatSlots();
@@ -2607,8 +2588,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 key: const Key('partner-form-add-option'),
                 onPressed: () {
                   final line = _LineEditors(kind: ProductOptionKind.addon);
-                  _listen(line.name);
-                  _listen(line.consumer);
                   setState(() => _addons.add(line));
                 },
                 child: Text(l10n.partnerFormAddOption),
@@ -2714,6 +2693,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Widget _partnerAddonRow(AppLocalizations l10n, int index) {
     final draft = _addons[index];
     return Material(
+      key: ValueKey('addon-row-${draft.id}'),
       color: PartnerTheme.card,
       borderRadius: BorderRadius.circular(10),
       child: Padding(
@@ -2726,10 +2706,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               children: [
                 Expanded(
                   flex: 3,
-                  child: TextField(
-                    controller: draft.name,
-                    style: const TextStyle(color: PartnerTheme.text),
-                    decoration: _partnerField(l10n.productFormOptionName),
+                  child: _StableField(
+                    key: ValueKey('addon-name-slot-${draft.id}'),
+                    stamp: 0,
+                    buildField: () => TextField(
+                      key: ValueKey('addon-name-${draft.id}'),
+                      controller: draft.name,
+                      cursorColor: PartnerTheme.accent,
+                      style: const TextStyle(color: PartnerTheme.text),
+                      decoration: _partnerField(l10n.productFormOptionName),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -2737,17 +2723,27 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   flex: 2,
                   child: KeyedSubtree(
                     key: draft.priceKey,
-                    child: TextField(
-                    focusNode: draft.consumerFocus,
-                    controller: draft.consumer,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: _priceInputFormatters,
-                    style: const TextStyle(color: PartnerTheme.text),
-                    decoration: _partnerField(
-                      l10n.productFormOptionConsumer,
-                      errorText: draft.priceError,
-                    ),
-                    onChanged: (_) => setState(() => draft.priceError = null),
+                    child: _StableField(
+                      key: ValueKey('addon-price-slot-${draft.id}'),
+                      stamp: draft.priceError,
+                      buildField: () => TextField(
+                        key: ValueKey('addon-price-${draft.id}'),
+                        focusNode: draft.consumerFocus,
+                        controller: draft.consumer,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: _priceInputFormatters,
+                        cursorColor: PartnerTheme.accent,
+                        style: const TextStyle(color: PartnerTheme.text),
+                        decoration: _partnerField(
+                          l10n.productFormOptionConsumer,
+                          errorText: draft.priceError,
+                        ),
+                        onChanged: (_) {
+                          if (draft.priceError != null) {
+                            setState(() => draft.priceError = null);
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -2785,6 +2781,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Widget _partnerIndividualCard(AppLocalizations l10n, int index) {
     final ticket = _individuals[index];
     return Material(
+      key: ValueKey('individual-row-${ticket.id}'),
       color: PartnerTheme.card,
       borderRadius: BorderRadius.circular(10),
       child: Padding(
@@ -2795,10 +2792,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: ticket.name,
-                    style: const TextStyle(color: PartnerTheme.text),
-                    decoration: _partnerField(l10n.bookingEntryIndividualName),
+                  child: _StableField(
+                    key: ValueKey('individual-name-slot-${ticket.id}'),
+                    stamp: 0,
+                    buildField: () => TextField(
+                      key: ValueKey('individual-name-${ticket.id}'),
+                      controller: ticket.name,
+                      cursorColor: PartnerTheme.accent,
+                      style: const TextStyle(color: PartnerTheme.text),
+                      decoration: _partnerField(l10n.bookingEntryIndividualName),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -2826,109 +2829,71 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             const SizedBox(height: 8),
             KeyedSubtree(
               key: ticket.priceKey,
-              child: TextField(
-              key: Key('partner-form-individual-price-$index'),
-              focusNode: ticket.consumerFocus,
-              controller: ticket.consumer,
-              keyboardType: TextInputType.number,
-              inputFormatters: _priceInputFormatters,
-              style: const TextStyle(color: PartnerTheme.text),
-              decoration: _partnerField(
-                l10n.partnerFormBasePrice,
-                errorText: ticket.priceError,
-              ),
-              onChanged: (_) => setState(() => ticket.priceError = null),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              key: Key('partner-form-individual-includes-$index'),
-              controller: ticket.includes,
-              minLines: 2,
-              maxLines: 3,
-              style: const TextStyle(color: PartnerTheme.text),
-              decoration: _partnerField(
-                l10n.productFormIncludes,
-                lines: 2,
+              child: _StableField(
+                key: ValueKey('individual-price-slot-${ticket.id}'),
+                stamp: ticket.priceError,
+                buildField: () => TextField(
+                  key: ValueKey('partner-form-individual-price-${ticket.id}'),
+                  focusNode: ticket.consumerFocus,
+                  controller: ticket.consumer,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: _priceInputFormatters,
+                  cursorColor: PartnerTheme.accent,
+                  style: const TextStyle(color: PartnerTheme.text),
+                  decoration: _partnerField(
+                    l10n.partnerFormBasePrice,
+                    errorText: ticket.priceError,
+                  ),
+                  onChanged: (_) {
+                    if (ticket.priceError != null) {
+                      setState(() => ticket.priceError = null);
+                    }
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              key: Key('partner-form-individual-excludes-$index'),
-              controller: ticket.excludes,
-              minLines: 2,
-              maxLines: 3,
-              style: const TextStyle(color: PartnerTheme.text),
-              decoration: _partnerField(
-                l10n.productFormExcludes,
-                lines: 2,
+            _StableField(
+              key: ValueKey('individual-includes-slot-${ticket.id}'),
+              stamp: 0,
+              buildField: () => TextField(
+                key: ValueKey('partner-form-individual-includes-${ticket.id}'),
+                controller: ticket.includes,
+                minLines: 2,
+                maxLines: 3,
+                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PartnerTheme.text),
+                decoration: _partnerField(
+                  l10n.productFormIncludes,
+                  lines: 2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _StableField(
+              key: ValueKey('individual-excludes-slot-${ticket.id}'),
+              stamp: 0,
+              buildField: () => TextField(
+                key: ValueKey('partner-form-individual-excludes-${ticket.id}'),
+                controller: ticket.excludes,
+                minLines: 2,
+                maxLines: 3,
+                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PartnerTheme.text),
+                decoration: _partnerField(
+                  l10n.productFormExcludes,
+                  lines: 2,
+                ),
               ),
             ),
             const SizedBox(height: 8),
             for (var j = 0; j < ticket.addons.length; j++) ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: ticket.addons[j].name,
-                          style: const TextStyle(color: PartnerTheme.text),
-                          decoration: _partnerField(l10n.productFormOptionName),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: KeyedSubtree(
-                          key: ticket.addons[j].priceKey,
-                          child: TextField(
-                          focusNode: ticket.addons[j].consumerFocus,
-                          controller: ticket.addons[j].consumer,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: _priceInputFormatters,
-                          style: const TextStyle(color: PartnerTheme.text),
-                          decoration: _partnerField(
-                            l10n.productFormOptionConsumer,
-                            errorText: ticket.addons[j].priceError,
-                          ),
-                          onChanged: (_) =>
-                              setState(() => ticket.addons[j].priceError = null),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            ticket.addons[j].dispose();
-                            ticket.addons.removeAt(j);
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.close,
-                          size: 18,
-                          color: PartnerTheme.textDim,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  _optionGroupMenu(
-                    id: ticket.addons[j].id,
-                    value: ticket.addons[j].group,
-                    partner: true,
-                    onChanged: (next) =>
-                        setState(() => ticket.addons[j].group = next),
-                  ),
-                ],
-              ),
+              _nestedAddonRow(l10n, ticket, j),
               const SizedBox(height: 6),
             ],
             TextButton(
               onPressed: () {
                 final line = _LineEditors(kind: ProductOptionKind.addon);
-                _listen(line.name);
-                _listen(line.consumer);
                 setState(() => ticket.addons.add(line));
               },
               child: Text(l10n.partnerFormIndividualOptions),
@@ -2936,6 +2901,85 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _nestedAddonRow(
+    AppLocalizations l10n,
+    _IndividualTicket ticket,
+    int index,
+  ) {
+    final draft = ticket.addons[index];
+    return Column(
+      key: ValueKey('nested-addon-row-${draft.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StableField(
+                key: ValueKey('nested-addon-name-slot-${draft.id}'),
+                stamp: 0,
+                buildField: () => TextField(
+                  key: ValueKey('nested-addon-name-${draft.id}'),
+                  controller: draft.name,
+                  cursorColor: PartnerTheme.accent,
+                  style: const TextStyle(color: PartnerTheme.text),
+                  decoration: _partnerField(l10n.productFormOptionName),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: KeyedSubtree(
+                key: draft.priceKey,
+                child: _StableField(
+                  key: ValueKey('nested-addon-price-slot-${draft.id}'),
+                  stamp: draft.priceError,
+                  buildField: () => TextField(
+                    key: ValueKey('nested-addon-price-${draft.id}'),
+                    focusNode: draft.consumerFocus,
+                    controller: draft.consumer,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: _priceInputFormatters,
+                    cursorColor: PartnerTheme.accent,
+                    style: const TextStyle(color: PartnerTheme.text),
+                    decoration: _partnerField(
+                      l10n.productFormOptionConsumer,
+                      errorText: draft.priceError,
+                    ),
+                    onChanged: (_) {
+                      if (draft.priceError != null) {
+                        setState(() => draft.priceError = null);
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  draft.dispose();
+                  ticket.addons.removeAt(index);
+                });
+              },
+              icon: const Icon(
+                Icons.close,
+                size: 18,
+                color: PartnerTheme.textDim,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        _optionGroupMenu(
+          id: draft.id,
+          value: draft.group,
+          partner: true,
+          onChanged: (next) => setState(() => draft.group = next),
+        ),
+      ],
     );
   }
 
@@ -3702,5 +3746,35 @@ class _RejectReasonBannerState extends State<_RejectReasonBanner> {
         ),
       ),
     );
+  }
+}
+
+/// Keeps one [TextField] instance so a parent rebuild does not replace the
+/// field the phone keyboard is editing.
+class _StableField extends StatefulWidget {
+  const _StableField({
+    super.key,
+    required this.stamp,
+    required this.buildField,
+  });
+
+  final Object? stamp;
+  final TextField Function() buildField;
+
+  @override
+  State<_StableField> createState() => _StableFieldState();
+}
+
+class _StableFieldState extends State<_StableField> {
+  TextField? _field;
+  Object? _stamp;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_field == null || _stamp != widget.stamp) {
+      _stamp = widget.stamp;
+      _field = widget.buildField();
+    }
+    return _field!;
   }
 }

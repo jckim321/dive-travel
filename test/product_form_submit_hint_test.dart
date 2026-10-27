@@ -129,7 +129,11 @@ void main() {
     tester.view.physicalSize = const Size(400, 520);
     await tester.pump();
 
-    final price = find.byKey(const Key('partner-form-individual-price-0'));
+    final price = find.byWidgetPredicate((widget) {
+      final key = widget.key;
+      return key is ValueKey<String> &&
+          key.value.startsWith('partner-form-individual-price-');
+    });
     final scrollable = tester.state<ScrollableState>(
       find
           .descendant(

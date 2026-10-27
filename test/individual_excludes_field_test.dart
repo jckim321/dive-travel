@@ -52,8 +52,16 @@ void main() {
     await tester.tap(add);
     await tester.pump();
 
-    final includes = find.byKey(const Key('partner-form-individual-includes-0'));
-    final excludes = find.byKey(const Key('partner-form-individual-excludes-0'));
+    final includes = find.byWidgetPredicate((widget) {
+      final key = widget.key;
+      return key is ValueKey<String> &&
+          key.value.startsWith('partner-form-individual-includes-');
+    });
+    final excludes = find.byWidgetPredicate((widget) {
+      final key = widget.key;
+      return key is ValueKey<String> &&
+          key.value.startsWith('partner-form-individual-excludes-');
+    });
     await tester.ensureVisible(excludes);
     expect(
       tester.widget<TextField>(includes).decoration?.labelText,
@@ -111,7 +119,11 @@ void main() {
     expect(
       tester
           .widget<TextField>(
-            find.byKey(const Key('partner-form-individual-excludes-0')),
+            find.byWidgetPredicate((widget) {
+              final key = widget.key;
+              return key is ValueKey<String> &&
+                  key.value.startsWith('partner-form-individual-excludes-');
+            }),
           )
           .controller
           ?.text,
@@ -120,7 +132,11 @@ void main() {
     expect(
       tester
           .widget<TextField>(
-            find.byKey(const Key('partner-form-individual-includes-0')),
+            find.byWidgetPredicate((widget) {
+              final key = widget.key;
+              return key is ValueKey<String> &&
+                  key.value.startsWith('partner-form-individual-includes-');
+            }),
           )
           .controller
           ?.text,
