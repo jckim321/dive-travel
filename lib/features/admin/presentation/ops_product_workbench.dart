@@ -3366,6 +3366,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
 }
 
+/// Darker than [PartnerTheme.accent] so the same teal reads on the white bar.
+const _kDetailToolbarTeal = Color(0xFF0F766E);
+
+final _detailInkIconStyle = IconButton.styleFrom(
+  foregroundColor: AppTheme.navy,
+  disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
+  minimumSize: const Size(36, 36),
+  padding: EdgeInsets.zero,
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  visualDensity: VisualDensity.compact,
+);
+
+final _detailTealButtonStyle = TextButton.styleFrom(
+  foregroundColor: _kDetailToolbarTeal,
+  disabledForegroundColor: _kDetailToolbarTeal.withValues(alpha: 0.45),
+  minimumSize: const Size(0, 36),
+  padding: const EdgeInsets.symmetric(horizontal: 8),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  visualDensity: VisualDensity.compact,
+  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+);
+
 class _ProductDetailComposer extends StatefulWidget {
   const _ProductDetailComposer({
     required this.controller,
@@ -3492,120 +3514,124 @@ class _ProductDetailComposerState extends State<_ProductDetailComposer> {
             border: Border.all(color: const Color(0xFFE2E8EE)),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Wrap(
-              spacing: 2,
-              runSpacing: 2,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                IconButton(
-                  key: const Key('product-detail-bold'),
-                  tooltip: l10n.detailComposerBold,
-                  onPressed: _preview ? null : () => _wrapSelection('**', '**'),
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppTheme.navy,
-                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
-                  ),
-                  icon: const Icon(Icons.format_bold, size: 20),
-                ),
-                IconButton(
-                  key: const Key('product-detail-heading'),
-                  tooltip: l10n.detailComposerHeading,
-                  onPressed: _preview ? null : () => _prefixLine('### '),
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppTheme.navy,
-                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
-                  ),
-                  icon: const Icon(Icons.title, size: 20),
-                ),
-                IconButton(
-                  key: const Key('product-detail-list'),
-                  tooltip: l10n.detailComposerList,
-                  onPressed: _preview ? null : () => _prefixLine('- '),
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppTheme.navy,
-                    disabledForegroundColor: AppTheme.navy.withValues(alpha: 0.38),
-                  ),
-                  icon: const Icon(Icons.format_list_bulleted, size: 20),
-                ),
-                PopupMenuButton<String>(
-                  key: const Key('product-detail-table'),
-                  tooltip: l10n.detailComposerTable,
-                  enabled: !_preview,
-                  onSelected: (value) {
-                    if (value == 'schedule') {
-                      _insert('\n$_tableSchedule\n');
-                    } else {
-                      _insert('\n$_tableInclude\n');
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'schedule',
-                      child: Text(l10n.detailComposerTableSchedule),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+            child: SizedBox(
+              height: 36,
+              child: SingleChildScrollView(
+                key: const Key('product-detail-toolbar'),
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    IconButton(
+                      key: const Key('product-detail-bold'),
+                      tooltip: l10n.detailComposerBold,
+                      onPressed: _preview
+                          ? null
+                          : () => _wrapSelection('**', '**'),
+                      style: _detailInkIconStyle,
+                      icon: const Icon(Icons.format_bold, size: 18),
                     ),
-                    PopupMenuItem(
-                      value: 'include',
-                      child: Text(l10n.detailComposerTableInclude),
+                    IconButton(
+                      key: const Key('product-detail-heading'),
+                      tooltip: l10n.detailComposerHeading,
+                      onPressed: _preview ? null : () => _prefixLine('### '),
+                      style: _detailInkIconStyle,
+                      icon: const Icon(Icons.title, size: 18),
                     ),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.table_chart_outlined,
-                          size: 20,
-                          color: _preview
-                              ? AppTheme.navy.withValues(alpha: 0.38)
-                              : AppTheme.navy,
+                    IconButton(
+                      key: const Key('product-detail-list'),
+                      tooltip: l10n.detailComposerList,
+                      onPressed: _preview ? null : () => _prefixLine('- '),
+                      style: _detailInkIconStyle,
+                      icon: const Icon(Icons.format_list_bulleted, size: 18),
+                    ),
+                    PopupMenuButton<String>(
+                      key: const Key('product-detail-table'),
+                      tooltip: l10n.detailComposerTable,
+                      enabled: !_preview,
+                      onSelected: (value) {
+                        if (value == 'schedule') {
+                          _insert('\n$_tableSchedule\n');
+                        } else {
+                          _insert('\n$_tableInclude\n');
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'schedule',
+                          child: Text(l10n.detailComposerTableSchedule),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          l10n.detailComposerTable,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: _preview
-                                ? AppTheme.navy.withValues(alpha: 0.38)
-                                : AppTheme.navy,
-                          ),
+                        PopupMenuItem(
+                          value: 'include',
+                          child: Text(l10n.detailComposerTableInclude),
                         ),
                       ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.table_chart_outlined,
+                              size: 18,
+                              color: _preview
+                                  ? AppTheme.navy.withValues(alpha: 0.38)
+                                  : AppTheme.navy,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.detailComposerTable,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: _preview
+                                    ? AppTheme.navy.withValues(alpha: 0.38)
+                                    : AppTheme.navy,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    TextButton.icon(
+                      key: const Key('product-detail-day'),
+                      style: _detailTealButtonStyle,
+                      onPressed: _preview
+                          ? null
+                          : () {
+                              final day = _nextDayNumber();
+                              final block =
+                                  widget.controller.text.trim().isEmpty
+                                  ? '### $day일차 — \n'
+                                  : '\n### $day일차 — \n';
+                              _insert(block, cursorOffset: block.length);
+                            },
+                      icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                      label: Text(
+                        l10n.detailComposerDay,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      key: const Key('product-detail-preview'),
+                      style: _detailTealButtonStyle,
+                      onPressed: () => setState(() => _preview = !_preview),
+                      child: Text(
+                        _preview
+                            ? l10n.detailComposerEdit
+                            : l10n.detailComposerPreview,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton.icon(
-                  key: const Key('product-detail-day'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: PartnerTheme.accent,
-                  ),
-                  onPressed: _preview
-                      ? null
-                      : () {
-                          final day = _nextDayNumber();
-                          final block = widget.controller.text.trim().isEmpty
-                              ? '### $day일차 — \n'
-                              : '\n### $day일차 — \n';
-                          _insert(block, cursorOffset: block.length);
-                        },
-                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                  label: Text(l10n.detailComposerDay),
-                ),
-                TextButton(
-                  key: const Key('product-detail-preview'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: PartnerTheme.accent,
-                  ),
-                  onPressed: () => setState(() => _preview = !_preview),
-                  child: Text(
-                    _preview
-                        ? l10n.detailComposerEdit
-                        : l10n.detailComposerPreview,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
