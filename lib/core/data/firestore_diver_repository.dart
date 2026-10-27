@@ -37,6 +37,7 @@ import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
+import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/active_seat_flag.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/review_detail_options.dart';
@@ -323,6 +324,95 @@ class FirestoreDiverRepository implements DiverRepository {
       'updated_at': FieldValue.serverTimestamp(),
     });
     return shopId;
+  }
+
+  @override
+  Future<ShopHullResolve> ensureShopHull({required String name}) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw StateError('SHOP_NAME_REQUIRED');
+    }
+    final sameName = await _shops.where('name', isEqualTo: trimmed).get();
+    final hits = [
+      for (final doc in sameName.docs)
+        ShopHullChoice(
+          documentId: doc.id,
+          name: (doc.data()['name'] as String?) ?? trimmed,
+        ),
+    ];
+    final suffix = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+    if (hits.length > 1) {
+      return ShopHullResolve.choose(
+        decideShopHull(
+          name: trimmed,
+          sameName: hits,
+          documentExists: (id) => hits.any((hit) => hit.documentId == id),
+          collisionSuffix: suffix,
+        ).choices,
+      );
+    }
+    if (hits.length == 1) {
+      final hull = hits.single.hullId.trim();
+      final hullDocIsMatch = hits.single.documentId == hull;
+      final hullExists =
+          hullDocIsMatch || (await _shops.doc(hull).get()).exists;
+      final decision = decideShopHull(
+        name: trimmed,
+        sameName: hits,
+        documentExists: (id) => id == hull && hullExists,
+        collisionSuffix: suffix,
+      );
+      if (decision.createId == null) {
+        return ShopHullResolve.existing(decision.hullId);
+      }
+      final created = await _createShopDocIfAbsent(decision.createId!, trimmed);
+      return created
+          ? ShopHullResolve.created(decision.createId!)
+          : ShopHullResolve.existing(decision.createId!);
+    }
+
+    final base = shopHullSlug(trimmed);
+    final baseSnap = await _shops.doc(base).get();
+    final baseName = (baseSnap.data()?['name'] as String?)?.trim() ?? '';
+    if (baseSnap.exists && baseName == trimmed) {
+      return ShopHullResolve.existing(base);
+    }
+    final id = freshShopHullId(
+      name: trimmed,
+      documentExists: (candidate) => candidate == base && baseSnap.exists,
+      collisionSuffix: suffix,
+    );
+    if (await _createShopDocIfAbsent(id, trimmed)) {
+      return ShopHullResolve.created(id);
+    }
+    final retry = freshShopHullId(
+      name: trimmed,
+      documentExists: (candidate) => candidate == base || candidate == id,
+      collisionSuffix: '${suffix}x',
+    );
+    if (retry == id || !await _createShopDocIfAbsent(retry, trimmed)) {
+      throw StateError('SHOP_HULL_EXHAUSTED');
+    }
+    return ShopHullResolve.created(retry);
+  }
+
+  /// Writes the hull document only when it is missing, so an existing name stays.
+  Future<bool> _createShopDocIfAbsent(String shopId, String name) {
+    final ref = _shops.doc(shopId);
+    return _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (snap.exists) return false;
+      tx.set(ref, {
+        'name': name,
+        'location': '',
+        'product_name': '',
+        'consumer_price': 0,
+        'professional_price': 0,
+        'created_at': FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
   }
 
   Future<int?> _countQuery(Query<Map<String, dynamic>> query) async {

@@ -25,6 +25,7 @@ import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
+import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
@@ -108,6 +109,11 @@ abstract class DiverRepository {
 
   /// Creates a minimal shop doc and returns its id (admin partner promote).
   Future<String> createEmptyShop({required String name});
+
+  /// One hull for [name]. A single same-name doc keeps its name and yields
+  /// that id's hull. Several matches create nothing. None creates
+  /// `shops/{hull}` only when that document is absent.
+  Future<ShopHullResolve> ensureShopHull({required String name});
 
   /// H9: admin trial-data counts (prefer Firestore count(), no full scans).
   Future<TrialDataSnapshot> fetchTrialDataCounts({

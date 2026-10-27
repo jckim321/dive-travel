@@ -28,6 +28,7 @@ import 'package:dive_travel_app/core/models/partner_contract.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
 import 'package:dive_travel_app/core/models/partner_contract_terms.dart';
 import 'package:dive_travel_app/core/models/partner_meeting_report.dart';
+import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/partner_application.dart';
 import 'package:dive_travel_app/core/models/partner_promotion.dart';
 import 'package:dive_travel_app/core/models/partner_document.dart';
@@ -495,6 +496,46 @@ class MemoryDiverRepository implements DiverRepository {
     return id;
   }
 
+  @override
+  Future<ShopHullResolve> ensureShopHull({required String name}) async {
+    final trimmed = name.trim();
+    final hits = [
+      for (final entry in _createdShops.entries)
+        if (entry.value == trimmed)
+          ShopHullChoice(documentId: entry.key, name: entry.value),
+    ];
+    final decision = decideShopHull(
+      name: trimmed,
+      sameName: hits,
+      documentExists: _createdShops.containsKey,
+      collisionSuffix: DateTime.now().millisecondsSinceEpoch.toRadixString(36),
+    );
+    if (decision.choices.length > 1) {
+      return ShopHullResolve.choose(decision.choices);
+    }
+    if (decision.createId == null) {
+      return ShopHullResolve.existing(decision.hullId);
+    }
+    final id = decision.createId!;
+    if (_createdShops.containsKey(id)) {
+      return ShopHullResolve.existing(id);
+    }
+    _createdShops[id] = trimmed;
+    _shopStats.putIfAbsent(
+      id,
+      () => ShopLiveStats(
+        shopId: id,
+        reviewCount: 0,
+        avgSafety: 0,
+        avgGuide: 0,
+        avgBoat: 0,
+        avgOverall: 0,
+        diveStar: 0,
+      ),
+    );
+    return ShopHullResolve.created(id);
+  }
+
   /// Test helper: role_history entries written by promote/demote.
   List<Map<String, dynamic>> roleHistoryFor(String uid) =>
       List<Map<String, dynamic>>.from(_roleHistory[uid] ?? const []);
@@ -503,6 +544,9 @@ class MemoryDiverRepository implements DiverRepository {
   void seedShopName(String shopId, String name) {
     _createdShops[shopId] = name;
   }
+
+  /// Test helper: name stored for a shop document, if any.
+  String? createdShopName(String shopId) => _createdShops[shopId];
 
   @override
   Future<TrialDataSnapshot> fetchTrialDataCounts({
