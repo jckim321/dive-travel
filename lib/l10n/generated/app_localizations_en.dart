@@ -1759,8 +1759,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminNearUpgradeTitle => 'Near upgrade';
 
   @override
-  String adminNearUpgradeHint(int purchases, int reviews) {
-    return 'Need $purchases purchases · $reviews reviews';
+  String adminNearUpgradeHint(int purchases) {
+    return '$purchases purchases to the next grade';
   }
 
   @override

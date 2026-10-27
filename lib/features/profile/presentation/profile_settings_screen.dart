@@ -472,7 +472,7 @@ String _nextGradeLine(AppLocalizations l10n, DiverStats stats) {
     MemberGrade.diamond => l10n.profileGradePlatinum,
     MemberGrade.platinum => l10n.profileGradePlatinum,
   };
-  return '${l10n.adminNearUpgradeHint(deficit.$1, deficit.$2)} → $nextLabel';
+  return '${l10n.adminNearUpgradeHint(deficit.$1)} → $nextLabel';
 }
 
 class _GradeLadder extends StatefulWidget {

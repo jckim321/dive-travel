@@ -3315,8 +3315,8 @@ abstract class AppLocalizations {
   /// No description provided for @adminNearUpgradeHint.
   ///
   /// In ko, this message translates to:
-  /// **'다음 등급까지 구매 {purchases} · 리뷰 {reviews}'**
-  String adminNearUpgradeHint(int purchases, int reviews);
+  /// **'다음 등급까지 구매 {purchases}회'**
+  String adminNearUpgradeHint(int purchases);
 
   /// No description provided for @adminProductSignalTitle.
   ///

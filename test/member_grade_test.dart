@@ -5,32 +5,53 @@ import 'package:dive_travel_app/app.dart';
 import 'package:dive_travel_app/core/auth/device_pin_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 import 'support/device_pin_test_helpers.dart';
 
 void main() {
-  test('활동 AND 조건으로 등급이 정해진다', () {
+  test('구매 횟수만으로 등급이 정해진다', () {
     expect(MemberGrade.parse(null), MemberGrade.silver);
     expect(
-      MemberGrade.fromActivity(paidPurchases: 0, reviews: 0),
+      MemberGrade.fromActivity(paidPurchases: 2, reviews: 99),
       MemberGrade.silver,
     );
     expect(
       MemberGrade.fromActivity(paidPurchases: 3, reviews: 0),
-      MemberGrade.silver,
-    );
-    expect(
-      MemberGrade.fromActivity(paidPurchases: 3, reviews: 1),
       MemberGrade.gold,
     );
     expect(
-      MemberGrade.fromActivity(paidPurchases: 10, reviews: 5),
+      MemberGrade.fromActivity(paidPurchases: 9, reviews: 0),
+      MemberGrade.gold,
+    );
+    expect(
+      MemberGrade.fromActivity(paidPurchases: 10, reviews: 0),
       MemberGrade.diamond,
     );
     expect(
-      MemberGrade.fromActivity(paidPurchases: 30, reviews: 15),
+      MemberGrade.fromActivity(paidPurchases: 19, reviews: 0),
+      MemberGrade.diamond,
+    );
+    expect(
+      MemberGrade.fromActivity(paidPurchases: 20, reviews: 0),
       MemberGrade.platinum,
+    );
+    expect(
+      MemberGrade.deficitToNext(
+        current: MemberGrade.silver,
+        paidPurchases: 1,
+        reviews: 4,
+      ),
+      (2, 0),
+    );
+    expect(
+      MemberGrade.deficitToNext(
+        current: MemberGrade.diamond,
+        paidPurchases: 10,
+        reviews: 0,
+      ),
+      (10, 0),
     );
   });
 
@@ -47,6 +68,100 @@ void main() {
     final member = after.firstWhere((item) => item.uid == 'pending-instructor');
     expect(member.grade, MemberGrade.diamond);
     expect(member.gradeLocked, isTrue);
+  });
+
+  test('결제 1건만 등급을 올리고 후기와 잠금은 등급을 건드리지 않는다', () async {
+    final repo = MemoryDiverRepository.forTest();
+    final past = DateTime.now().subtract(const Duration(days: 3));
+    Future<void> pay() {
+      return repo.createBooking(
+        uid: 'test-user',
+        shopId: 'grade-shop',
+        shopName: '샵',
+        productName: '펀다이빙',
+        price: 1000,
+        tourDate: past,
+        status: BookingStatus.confirmed,
+        paymentStatus: PaymentStatus.captured,
+      );
+    }
+
+    await pay();
+    await pay();
+    var member = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(member.grade, MemberGrade.silver);
+    expect(member.paidPurchaseCount, 2);
+
+    final booking = (await repo.watchBookings('test-user').first).first;
+    await repo.submitOperationReview(
+      uid: 'test-user',
+      shopId: booking.shopId,
+      bookingId: booking.id,
+      safety: 5,
+      guide: 5,
+      boat: 5,
+    );
+    member = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(member.grade, MemberGrade.silver);
+    expect(member.reviewCount, 1);
+    expect(member.isInstructor, isFalse);
+
+    await pay();
+    member = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(member.grade, MemberGrade.gold);
+    expect(member.paidPurchaseCount, 3);
+
+    final review = (await repo.listMyReviews('test-user')).first;
+    await repo.deleteOperationReview(
+      uid: 'test-user',
+      shopId: booking.shopId,
+      reviewId: review.id,
+    );
+    member = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(member.grade, MemberGrade.gold);
+    expect(member.reviewCount, 0);
+
+    await repo.approveInstructor('test-user');
+    member = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(member.isInstructor, isTrue);
+    expect(member.grade, MemberGrade.gold);
+
+    final locked = MemoryDiverRepository.forTest();
+    await locked.setMemberGrade(uid: 'test-user', grade: MemberGrade.silver);
+    await locked.createBooking(
+      uid: 'test-user',
+      shopId: 'grade-shop',
+      shopName: '샵',
+      productName: '펀다이빙',
+      price: 1000,
+      tourDate: past,
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
+    );
+    await locked.createBooking(
+      uid: 'test-user',
+      shopId: 'grade-shop',
+      shopName: '샵',
+      productName: '펀다이빙',
+      price: 1000,
+      tourDate: past,
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
+    );
+    await locked.createBooking(
+      uid: 'test-user',
+      shopId: 'grade-shop',
+      shopName: '샵',
+      productName: '펀다이빙',
+      price: 1000,
+      tourDate: past,
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
+    );
+    final held = (await locked.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
+    expect(held.gradeLocked, isTrue);
+    expect(held.grade, MemberGrade.silver);
+    expect(held.paidPurchaseCount, 3);
   });
 
   testWidgets('관리자 대시보드에 회원 관리 메뉴가 있다', (tester) async {

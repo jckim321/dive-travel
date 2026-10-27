@@ -2613,7 +2613,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'review_count': reviews,
         'updated_at': FieldValue.serverTimestamp(),
       };
-      if (!locked && earned.rank > current.rank) {
+      if (purchaseDelta == 1 && !locked && earned.rank > current.rank) {
         patch['member_grade'] = earned.firestoreValue;
         patch['grade_celebration_pending'] = true;
         patch['grade_celebration_to'] = earned.firestoreValue;

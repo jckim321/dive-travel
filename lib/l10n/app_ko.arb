@@ -1188,11 +1188,10 @@
   "adminFunnelCancelled": "취소·종료",
   "adminFunnelUnreviewed": "리뷰 미작성 결제",
   "adminNearUpgradeTitle": "승급 임박",
-  "adminNearUpgradeHint": "다음 등급까지 구매 {purchases} · 리뷰 {reviews}",
+  "adminNearUpgradeHint": "다음 등급까지 구매 {purchases}회",
   "@adminNearUpgradeHint": {
     "placeholders": {
-      "purchases": { "type": "int" },
-      "reviews": { "type": "int" }
+      "purchases": { "type": "int" }
     }
   },
   "adminProductSignalTitle": "상품·제휴 신호",

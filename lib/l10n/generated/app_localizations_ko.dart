@@ -1709,8 +1709,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminNearUpgradeTitle => '승급 임박';
 
   @override
-  String adminNearUpgradeHint(int purchases, int reviews) {
-    return '다음 등급까지 구매 $purchases · 리뷰 $reviews';
+  String adminNearUpgradeHint(int purchases) {
+    return '다음 등급까지 구매 $purchases회';
   }
 
   @override

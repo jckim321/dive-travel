@@ -38,18 +38,18 @@ enum MemberGrade {
     }
   }
 
-  /// 구매·리뷰 동시충족(AND). 골드 3/1, 다이아 10/5, 플래티넘 30/15.
+  /// 구매 횟수만. 골드 3, 다이아몬드 10, 플래티넘 20. 후기는 보지 않는다.
   static MemberGrade fromActivity({
     required int paidPurchases,
     required int reviews,
   }) {
-    if (paidPurchases >= 30 && reviews >= 15) {
+    if (paidPurchases >= 20) {
       return MemberGrade.platinum;
     }
-    if (paidPurchases >= 10 && reviews >= 5) {
+    if (paidPurchases >= 10) {
       return MemberGrade.diamond;
     }
-    if (paidPurchases >= 3 && reviews >= 1) {
+    if (paidPurchases >= 3) {
       return MemberGrade.gold;
     }
     return MemberGrade.silver;
@@ -70,24 +70,22 @@ enum MemberGrade {
     return a.rank >= b.rank ? a : b;
   }
 
-  /// 다음 등급까지 부족한 구매·리뷰. 이미 플래티넘이면 (0,0).
+  /// 다음 등급까지 부족한 구매. 후기는 0. 이미 플래티넘이면 (0,0).
   static (int purchases, int reviews) deficitToNext({
     required MemberGrade current,
     required int paidPurchases,
     required int reviews,
   }) {
     final target = switch (current) {
-      MemberGrade.silver => (3, 1),
-      MemberGrade.gold => (10, 5),
-      MemberGrade.diamond => (30, 15),
-      MemberGrade.platinum => (0, 0),
+      MemberGrade.silver => 3,
+      MemberGrade.gold => 10,
+      MemberGrade.diamond => 20,
+      MemberGrade.platinum => 0,
     };
-    if (target.$1 == 0 && target.$2 == 0) {
+    if (target == 0) {
       return (0, 0);
     }
-    final needP = (target.$1 - paidPurchases).clamp(0, 999);
-    final needR = (target.$2 - reviews).clamp(0, 999);
-    return (needP, needR);
+    return ((target - paidPurchases).clamp(0, 999), 0);
   }
 }
 

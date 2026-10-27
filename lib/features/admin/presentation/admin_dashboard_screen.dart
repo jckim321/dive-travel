@@ -1530,7 +1530,7 @@ class _NearUpgradeTile extends StatelessWidget {
       child: ListTile(
         dense: true,
         title: Text(member.displayName),
-        subtitle: Text(l10n.adminNearUpgradeHint(deficit.$1, deficit.$2)),
+        subtitle: Text(l10n.adminNearUpgradeHint(deficit.$1)),
         trailing: Text(
           _displayGradeLabel(
             l10n,

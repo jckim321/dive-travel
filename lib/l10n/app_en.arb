@@ -588,11 +588,10 @@
   "adminFunnelCancelled": "Cancelled / closed",
   "adminFunnelUnreviewed": "Paid, no review",
   "adminNearUpgradeTitle": "Near upgrade",
-  "adminNearUpgradeHint": "Need {purchases} purchases · {reviews} reviews",
+  "adminNearUpgradeHint": "{purchases} purchases to the next grade",
   "@adminNearUpgradeHint": {
     "placeholders": {
-      "purchases": { "type": "int" },
-      "reviews": { "type": "int" }
+      "purchases": { "type": "int" }
     }
   },
   "adminProductSignalTitle": "Product signals",

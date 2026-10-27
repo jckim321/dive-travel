@@ -1911,7 +1911,8 @@ class MemoryDiverRepository implements DiverRepository {
       paidPurchases: purchases,
       reviews: reviews,
     );
-    final upgraded = !locked && earned.rank > current.rank;
+    final upgraded =
+        purchaseDelta == 1 && !locked && earned.rank > current.rank;
     final nextGrade = upgraded ? earned : current;
     if (index >= 0) {
       _members[index] = _members[index].copyWith(
