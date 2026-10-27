@@ -156,8 +156,12 @@ void main() {
     expect(_cardCount(tester, 'platinum'), '0');
     expect(_cardCount(tester, 'instructor'), '1');
     expect(_cardCount(tester, 'silver'), '1');
-    expect(find.byKey(const Key('admin-member-badge-admin-test-user')), findsOneWidget);
+    expect(find.byKey(const Key('admin-member-badge-admin-test-user')), findsNothing);
     expect(find.byKey(const Key('admin-member-badge-partner-test-user')), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('admin-member-shown-grade-test-user'))).data,
+      '관리자',
+    );
     expect(
       tester.widget<Text>(find.byKey(const Key('admin-member-shown-grade-pending-instructor'))).data,
       l10n.profileGradeInstructor,
@@ -166,7 +170,8 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-member-menu-pending-instructor')));
     await tester.pumpAndSettle();
     expect(find.text('강사 해제'), findsNothing);
-    expect(find.text('역할'), findsWidgets);
+    expect(find.text('역할'), findsNothing);
+    expect(find.text('등급'), findsNothing);
     await tester.tap(find.byKey(const Key('admin-member-grade-instructor-pending-instructor')));
     await tester.pumpAndSettle();
 
@@ -186,13 +191,114 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.byKey(const Key('admin-member-shown-grade-test-user'))).data,
-      l10n.profileGradeInstructor,
+      '관리자',
     );
     final promoted = (await repo.fetchMembers()).firstWhere((m) => m.uid == 'test-user');
     expect(promoted.isInstructor, isTrue);
     expect(promoted.grade, MemberGrade.silver);
     expect(_cardCount(tester, 'silver'), '0');
     expect(_cardCount(tester, 'instructor'), '1');
+  });
+
+  testWidgets('파트너를 일반 구분으로 바꾸면 해제만 하고 등급과 구매는 남긴다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.setMemberGrade(uid: 'pending-instructor', grade: MemberGrade.platinum);
+    await repo.promoteMemberToPartner(
+      uid: 'pending-instructor',
+      shopId: 'palau-dive',
+      actorUid: 'test-user',
+      actorName: '관리자',
+    );
+    final before = (await repo.fetchMembers())
+        .firstWhere((member) => member.uid == 'pending-instructor');
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AdminConsoleTheme.dark,
+          home: const Scaffold(body: AdminMembersScreen()),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(
+        find.byKey(const Key('admin-member-shown-grade-pending-instructor')),
+      ).data,
+      '제휴파트너',
+    );
+
+    await tester.tap(find.byKey(const Key('admin-member-menu-pending-instructor')));
+    await tester.pumpAndSettle();
+    for (final grade in MemberGrade.valuesInOrder) {
+      expect(
+        find.byKey(Key('admin-member-grade-${grade.name}-pending-instructor')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.byKey(const Key('admin-member-grade-instructor-pending-instructor')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('admin-member-promote-pending-instructor')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('admin-member-admin-pending-instructor')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('admin-member-grade-silver-pending-instructor')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.adminMembersDemotePartner), findsWidgets);
+    await tester.tap(find.text(l10n.adminHqClose));
+    await tester.pumpAndSettle();
+
+    var kept = (await repo.fetchMembers())
+        .firstWhere((member) => member.uid == 'pending-instructor');
+    expect(kept.isBusiness, isTrue);
+    expect(kept.grade, MemberGrade.platinum);
+    expect(kept.paidPurchaseCount, before.paidPurchaseCount);
+
+    await tester.tap(find.byKey(const Key('admin-member-menu-pending-instructor')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('admin-member-grade-silver-pending-instructor')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('admin-member-demote-confirm-pending-instructor')),
+    );
+    await tester.pumpAndSettle();
+
+    kept = (await repo.fetchMembers())
+        .firstWhere((member) => member.uid == 'pending-instructor');
+    expect(kept.isBusiness, isFalse);
+    expect(kept.grade, MemberGrade.platinum);
+    expect(kept.paidPurchaseCount, before.paidPurchaseCount);
+    expect(
+      tester.widget<Text>(
+        find.byKey(const Key('admin-member-shown-grade-pending-instructor')),
+      ).data,
+      l10n.memberGradePlatinum,
+    );
   });
 }
 

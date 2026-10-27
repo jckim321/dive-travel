@@ -68,7 +68,7 @@ void main() {
     expect(find.byKey(const Key('admin-sub-partners')), findsOneWidget);
     expect(find.byKey(const Key('admin-members-search')), findsOneWidget);
 
-    expect(find.textContaining('역할'), findsWidgets);
+    expect(find.textContaining('구분'), findsWidgets);
     await tester.ensureVisible(
       find.byKey(const Key('admin-member-menu-pending-instructor')),
     );

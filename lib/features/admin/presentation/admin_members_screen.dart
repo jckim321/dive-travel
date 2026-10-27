@@ -122,7 +122,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                         ),
                         const Spacer(),
                         const Text(
-                          '오른쪽에서 등급·역할을 바꿔요',
+                          '오른쪽에서 구분을 바꿔요',
                           style: TextStyle(
                             color: AdminConsoleTheme.muted,
                             fontSize: 11,
@@ -458,18 +458,6 @@ class _MemberRow extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (member.isBusiness)
-                      _RoleBadge(
-                        label: '제휴파트너',
-                        color: AdminConsoleTheme.aqua,
-                        badgeKey: Key('admin-member-badge-partner-${member.uid}'),
-                      ),
-                    if (member.isAdmin)
-                      _RoleBadge(
-                        label: '관리자',
-                        color: const Color(0xFFFFB15A),
-                        badgeKey: Key('admin-member-badge-admin-${member.uid}'),
-                      ),
                     if (member.loginBlocked)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -523,42 +511,43 @@ class _RoleMenu extends StatelessWidget {
       color: const Color(0xFF152033),
       onSelected: (choice) => _onChoice(context, choice),
       itemBuilder: (context) => [
-        const PopupMenuItem(enabled: false, child: Text('등급', style: TextStyle(color: AdminConsoleTheme.muted, fontSize: 12))),
         for (final grade in MemberGrade.valuesInOrder)
           PopupMenuItem(
+            key: Key('admin-member-grade-${grade.name}-${member.uid}'),
             value: _MenuChoice.grade(grade),
-            child: Row(
-              children: [
-                Expanded(child: Text(memberGradeLabel(l10n, grade), style: TextStyle(color: grade == MemberGrade.gold ? const Color(0xFFE2B15A) : AdminConsoleTheme.ice))),
-                if (!member.isInstructor && member.grade == grade) const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
-              ],
+            child: _KindRow(
+              label: memberGradeLabel(l10n, grade),
+              color: grade == MemberGrade.gold
+                  ? const Color(0xFFE2B15A)
+                  : AdminConsoleTheme.ice,
+              selected: _kindSelected(member, _MenuChoice.grade(grade)),
             ),
           ),
         PopupMenuItem(
           key: Key('admin-member-grade-instructor-${member.uid}'),
           value: const _MenuChoice.instructor(),
-          child: Row(
-            children: [
-              const Expanded(child: Text('강사', style: TextStyle(color: Color(0xFF7DDEA0)))),
-              if (member.isInstructor) const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
-            ],
+          child: _KindRow(
+            label: '강사',
+            color: const Color(0xFF7DDEA0),
+            selected: _kindSelected(member, const _MenuChoice.instructor()),
           ),
         ),
-        const PopupMenuItem(enabled: false, child: Text('역할', style: TextStyle(color: AdminConsoleTheme.muted, fontSize: 12))),
         PopupMenuItem(
           key: Key('admin-member-promote-${member.uid}'),
           value: const _MenuChoice.partner(),
-          child: Text(
-            member.isBusiness ? '제휴파트너 해제' : '제휴파트너',
-            style: const TextStyle(color: AdminConsoleTheme.aqua),
+          child: _KindRow(
+            label: '제휴파트너',
+            color: AdminConsoleTheme.aqua,
+            selected: _kindSelected(member, const _MenuChoice.partner()),
           ),
         ),
         PopupMenuItem(
           key: Key('admin-member-admin-${member.uid}'),
           value: const _MenuChoice.admin(),
-          child: Text(
-            member.isAdmin ? '관리자 해제' : '관리자',
-            style: const TextStyle(color: Color(0xFFFFB15A)),
+          child: _KindRow(
+            label: '관리자',
+            color: const Color(0xFFFFB15A),
+            selected: _kindSelected(member, const _MenuChoice.admin()),
           ),
         ),
         const PopupMenuItem(
@@ -594,12 +583,16 @@ class _RoleMenu extends StatelessWidget {
     try {
       switch (choice.kind) {
         case _ChoiceKind.grade:
-          final next = choice.grade!;
-          if (member.isInstructor) {
-            await store.rejectInstructor(member.uid);
-          }
-          if (!member.isInstructor || next != member.grade) {
-            await store.setMemberGrade(uid: member.uid, grade: next);
+          if (member.isBusiness) {
+            await _confirmDemote(context, store, member);
+          } else {
+            final next = choice.grade!;
+            if (member.isInstructor) {
+              await store.rejectInstructor(member.uid);
+            }
+            if (!member.isInstructor || next != member.grade) {
+              await store.setMemberGrade(uid: member.uid, grade: next);
+            }
           }
         case _ChoiceKind.instructor:
           if (member.isInstructor) {
@@ -608,9 +601,7 @@ class _RoleMenu extends StatelessWidget {
             await store.approveInstructor(member.uid);
           }
         case _ChoiceKind.partner:
-          if (member.isBusiness) {
-            await _confirmDemote(context, store, member);
-          } else {
+          if (!member.isBusiness) {
             await _confirmPromote(context, store, member);
           }
         case _ChoiceKind.admin:
@@ -853,7 +844,7 @@ class AdminMemberDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        '역할(제휴파트너·관리자·강사)은 위 목록의 등급·역할 칸에서 바꿔요.',
+                        '구분은 위 목록의 칸에서 바꿔요.',
                         style: TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
                       ),
                     ],
@@ -1029,37 +1020,51 @@ class _PromotePartnerDialogState extends State<_PromotePartnerDialog> {
 }
 
 String memberShownGradeLabel(AppLocalizations l10n, MemberAccount member) {
+  if (member.isAdmin) {
+    return '관리자';
+  }
+  if (member.isBusiness) {
+    return '제휴파트너';
+  }
   if (member.isInstructor) {
     return l10n.profileGradeInstructor;
   }
   return memberGradeLabel(l10n, member.grade);
 }
 
-class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({
+bool _kindSelected(MemberAccount member, _MenuChoice choice) {
+  return switch (choice.kind) {
+    _ChoiceKind.admin => member.isAdmin,
+    _ChoiceKind.partner => !member.isAdmin && member.isBusiness,
+    _ChoiceKind.instructor =>
+      !member.isAdmin && !member.isBusiness && member.isInstructor,
+    _ChoiceKind.grade =>
+      !member.isAdmin &&
+          !member.isBusiness &&
+          !member.isInstructor &&
+          member.grade == choice.grade,
+  };
+}
+
+class _KindRow extends StatelessWidget {
+  const _KindRow({
     required this.label,
     required this.color,
-    required this.badgeKey,
+    required this.selected,
   });
 
   final String label;
   final Color color;
-  final Key badgeKey;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 6),
-      child: Container(
-        key: badgeKey,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: color),
-        ),
-        child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
-      ),
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: TextStyle(color: color))),
+        if (selected)
+          const Icon(Icons.check, size: 16, color: AdminConsoleTheme.muted),
+      ],
     );
   }
 }
