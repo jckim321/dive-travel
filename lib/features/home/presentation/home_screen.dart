@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -41,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context);
     final english = lookupAppLocalizations(const Locale('en'));
     final store = DiverStoreScope.of(context);
-    final stats = store.stats;
     final theme = Theme.of(context);
     final explored = store.regions.length;
     final diveStarShops = store.resortsFeaturedAs(ProductListingKind.diveStar);
@@ -81,21 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 if (store.loading) ...[
                   const LinearProgressIndicator(minHeight: 2),
-                  const SizedBox(height: 16),
-                ],
-                if (stats.isVerifiedPro) ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Chip(
-                      avatar: const Icon(
-                        Icons.verified_outlined,
-                        size: 16,
-                        color: AppTheme.navy,
-                      ),
-                      label: Text(l10n.profileProBadge),
-                      backgroundColor: AppTheme.goldSoft,
-                    ),
-                  ),
                   const SizedBox(height: 16),
                 ],
                 ExplorationMap(
