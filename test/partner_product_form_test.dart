@@ -46,6 +46,30 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
+  testWidgets('이름과 1인 가격이 한 줄 사진보다 위에 있다', (tester) async {
+    tester.view.physicalSize = const Size(900, 4200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await pumpPartnerForm(tester);
+
+    final name = tester.getTopLeft(find.byKey(const Key('partner-product-name'))).dy;
+    final price = tester.getTopLeft(find.byKey(const Key('workbench-diver-price'))).dy;
+    final photo = tester.getTopLeft(find.byKey(const Key('product-photo-add'))).dy;
+    expect(name, lessThan(price));
+    expect(price, lessThan(photo));
+    expect(
+      tester.getSize(find.byKey(const Key('product-photo-strip'))).height,
+      72,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('product-photo-add'))),
+      const Size(72, 72),
+    );
+    expect(find.text('+ 사진 추가'), findsOneWidget);
+  });
+
   testWidgets('partner form is single-scroll dark (no stepper)', (tester) async {
     await pumpPartnerForm(tester);
     expect(find.byKey(const Key('partner-product-form-scroll')), findsOneWidget);

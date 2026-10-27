@@ -38,6 +38,7 @@ class BookingGalleryEditor extends StatelessWidget {
     this.fieldKey,
     this.attachKey,
     this.testKey,
+    this.compact = false,
   });
 
   final List<BookingGalleryItem> items;
@@ -51,11 +52,24 @@ class BookingGalleryEditor extends StatelessWidget {
   final Key? attachKey;
   final Key? testKey;
 
+  /// One 72px row. Product forms use this. Resort keeps the large cover.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final canAdd = items.length < maxItems;
+    if (compact) {
+      return _CompactPhotoRow(
+        key: fieldKey,
+        items: items,
+        onAdd: canAdd ? onAdd : null,
+        onRemove: onRemove,
+        onMakeCover: onMakeCover,
+        addKey: attachKey ?? const Key('product-photo-add'),
+      );
+    }
 
     return Column(
       key: fieldKey,
@@ -121,6 +135,194 @@ class BookingGalleryEditor extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _CompactPhotoRow extends StatelessWidget {
+  const _CompactPhotoRow({
+    super.key,
+    required this.items,
+    required this.onRemove,
+    required this.onMakeCover,
+    required this.addKey,
+    this.onAdd,
+  });
+
+  static const thumb = 72.0;
+
+  final List<BookingGalleryItem> items;
+  final VoidCallback? onAdd;
+  final ValueChanged<int> onRemove;
+  final ValueChanged<int> onMakeCover;
+  final Key addKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SizedBox(
+      key: const Key('product-photo-strip'),
+      height: thumb,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _CompactAddTile(
+              key: addKey,
+              enabled: onAdd != null,
+              label: '+ ${l10n.exploreGalleryAdd}',
+              onTap: onAdd,
+            );
+          }
+          final photoIndex = index - 1;
+          return _CompactThumb(
+            key: Key('product-photo-thumb-$photoIndex'),
+            item: items[photoIndex],
+            isCover: photoIndex == 0,
+            onSelected: (action) {
+              if (action == 'cover') {
+                onMakeCover(photoIndex);
+              } else if (action == 'delete') {
+                onRemove(photoIndex);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CompactAddTile extends StatelessWidget {
+  const _CompactAddTile({
+    super.key,
+    required this.label,
+    required this.enabled,
+    this.onTap,
+  });
+
+  final String label;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _CompactPhotoRow.thumb,
+      height: _CompactPhotoRow.thumb,
+      child: Material(
+        color: const Color(0xFF16324A),
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: enabled ? Colors.white : Colors.white38,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactThumb extends StatelessWidget {
+  const _CompactThumb({
+    super.key,
+    required this.item,
+    required this.isCover,
+    required this.onSelected,
+  });
+
+  final BookingGalleryItem item;
+  final bool isCover;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SizedBox(
+      width: _CompactPhotoRow.thumb,
+      height: _CompactPhotoRow.thumb,
+      child: PopupMenuButton<String>(
+        padding: EdgeInsets.zero,
+        offset: const Offset(0, _CompactPhotoRow.thumb),
+        onSelected: onSelected,
+        itemBuilder: (context) => [
+          if (!isCover)
+            PopupMenuItem(
+              value: 'cover',
+              key: const Key('product-photo-make-cover'),
+              height: 36,
+              child: Text(l10n.exploreGalleryMakeCover),
+            ),
+          PopupMenuItem(
+            value: 'delete',
+            key: const Key('product-photo-delete'),
+            height: 36,
+            child: Text(l10n.exploreCoverRemove),
+          ),
+        ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(
+                color: const Color(0xFF0B1F33),
+                child: item.photo != null
+                    ? Image.memory(item.photo!.bytes, fit: BoxFit.cover)
+                    : item.url != null && item.url!.isNotEmpty
+                    ? Image.network(
+                        item.url!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              if (isCover)
+                Positioned(
+                  left: 4,
+                  bottom: 4,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.62),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      child: Text(
+                        l10n.partnerFormPhotoMain,
+                        key: const Key('product-photo-cover'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

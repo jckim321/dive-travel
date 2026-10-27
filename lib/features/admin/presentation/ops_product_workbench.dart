@@ -2204,19 +2204,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.partnerFormPhotoOptionalHint,
-          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
-        ),
-        const SizedBox(height: 8),
-        BookingGalleryEditor(
-          items: _gallery,
-          onAdd: _addPhotos,
-          onRemove: _removePhoto,
-          onMakeCover: _makeCover,
-          maxItems: _maxGallery,
-        ),
-        const SizedBox(height: 14),
         Row(
           children: [
             Text(
@@ -2434,6 +2421,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ).copyWith(counterText: ''),
             onChanged: (_) => setState(() => _diverPriceError = null),
           ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          l10n.partnerFormPhotoOptionalHint,
+          style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        BookingGalleryEditor(
+          items: _gallery,
+          onAdd: _addPhotos,
+          onRemove: _removePhoto,
+          onMakeCover: _makeCover,
+          maxItems: _maxGallery,
+          compact: true,
         ),
         const SizedBox(height: 8),
         SwitchListTile.adaptive(
@@ -3358,8 +3359,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        _photoBlock(l10n),
       ],
     );
   }
@@ -3389,6 +3388,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           maxItems: _maxGallery,
           cornerRadius: _kBoxRadius,
           attachKey: const Key('brief-gallery-add'),
+          compact: true,
         ),
       ],
     );
@@ -3866,6 +3866,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         _diverPriceError = null;
                       }),
                     ),
+                    const SizedBox(height: 10),
+                    _photoBlock(l10n),
                     const SizedBox(height: 10),
                     _stayDateStrip(l10n),
                     const SizedBox(height: 8),
