@@ -23,12 +23,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _jumpDiveStar = GlobalKey();
-  final _jumpSameBoat = GlobalKey();
-  final _jumpHot = GlobalKey();
-  final _jumpCurated = GlobalKey();
-  final _jumpCaptain = GlobalKey();
-
   @override
   void initState() {
     super.initState();
@@ -67,55 +61,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final shelves = <Widget>[
       if (diveStarShops.isNotEmpty)
-        KeyedSubtree(
-          key: _jumpDiveStar,
-          child: HomeDiscoverySection(
-            key: const Key('home-section-dive-star'),
-            title: l10n.homeDiveStarTitle,
-            subtitle: l10n.homeDiveStarShelfHint,
-            style: HomeShelfStyle.diveStar,
-            shops: diveStarShops,
-            onOpen: (shop) => _openShop(context, shop),
-          ),
+        HomeDiscoverySection(
+          key: const Key('home-section-dive-star'),
+          title: l10n.homeDiveStarTitle,
+          subtitle: l10n.homeDiveStarShelfHint,
+          style: HomeShelfStyle.diveStar,
+          shops: diveStarShops,
+          onOpen: (shop) => _openShop(context, shop),
         ),
       if (lastCallShops.isNotEmpty)
-        KeyedSubtree(
-          key: _jumpSameBoat,
-          child: HomeDiscoverySection(
-            key: const Key('home-section-same-boat'),
-            title: l10n.homeNextDepartures,
-            style: HomeShelfStyle.sameBoat,
-            shops: lastCallShops,
-            onOpen: (shop) => _openShop(context, shop),
-          ),
+        HomeDiscoverySection(
+          key: const Key('home-section-same-boat'),
+          title: l10n.homeNextDepartures,
+          style: HomeShelfStyle.sameBoat,
+          shops: lastCallShops,
+          onOpen: (shop) => _openShop(context, shop),
         ),
       if (hotShops.isNotEmpty)
-        KeyedSubtree(
-          key: _jumpHot,
-          child: HomeDiscoverySection(
-            key: const Key('home-section-hot'),
-            title: l10n.homePopularTitle,
-            subtitle: l10n.homeHotSpotSubtitle,
-            style: HomeShelfStyle.ranked,
-            shops: hotShops,
-            onOpen: (shop) => _openShop(context, shop),
-          ),
+        HomeDiscoverySection(
+          key: const Key('home-section-hot'),
+          title: l10n.homePopularTitle,
+          subtitle: l10n.homeHotSpotSubtitle,
+          style: HomeShelfStyle.ranked,
+          shops: hotShops,
+          onOpen: (shop) => _openShop(context, shop),
         ),
       if (curatedShops.isNotEmpty)
-        KeyedSubtree(
-          key: _jumpCurated,
-          child: HomeDiscoverySection(
-            key: const Key('home-section-curated'),
-            title: l10n.homeCuratedTitle,
-            style: HomeShelfStyle.curated,
-            shops: curatedShops,
-            onOpen: (shop) => _openShop(context, shop),
-          ),
+        HomeDiscoverySection(
+          key: const Key('home-section-curated'),
+          title: l10n.homeCuratedTitle,
+          style: HomeShelfStyle.curated,
+          shops: curatedShops,
+          onOpen: (shop) => _openShop(context, shop),
         ),
       if (plannedShops.isNotEmpty || canCaptain)
-        KeyedSubtree(
-          key: _jumpCaptain,
-          child: HomeDiscoverySection(
+        HomeDiscoverySection(
             key: const Key('home-section-captain'),
             title: l10n.homeFavoritesTitle,
             subtitle: l10n.homeDiverPlannedSubtitle,
@@ -153,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 : null,
             onOpen: (shop) => _openShop(context, shop),
           ),
-        ),
     ];
     final spaced = <Widget>[];
     for (final shelf in shelves) {
@@ -197,39 +176,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     final canCaptain =
         store.stats.memberGrade.rank >= MemberGrade.gold.rank;
-    final showCaptain = plannedShops.isNotEmpty || canCaptain;
-    final jumps = <HomeShelfJump>[
-      if (diveStarShops.isNotEmpty)
-        HomeShelfJump(
-          id: 'dive-star',
-          label: l10n.homeChipCertified,
-          target: _jumpDiveStar,
-        ),
-      if (lastCallShops.isNotEmpty)
-        HomeShelfJump(
-          id: 'same-boat',
-          label: l10n.homeChipClosing,
-          target: _jumpSameBoat,
-        ),
-      if (hotShops.isNotEmpty)
-        HomeShelfJump(
-          id: 'hot',
-          label: l10n.homeChipPopular,
-          target: _jumpHot,
-        ),
-      if (curatedShops.isNotEmpty)
-        HomeShelfJump(
-          id: 'curated',
-          label: l10n.homeChipCurated,
-          target: _jumpCurated,
-        ),
-      if (showCaptain)
-        HomeShelfJump(
-          id: 'captain',
-          label: l10n.homeChipCaptain,
-          target: _jumpCaptain,
-        ),
-    ];
 
     return Scaffold(
       body: ListView(
@@ -260,10 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
-                if (jumps.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  HomeShelfJumpRow(jumps: jumps),
-                ],
                 const SizedBox(height: 24),
                 ..._homeShelves(
                   context,

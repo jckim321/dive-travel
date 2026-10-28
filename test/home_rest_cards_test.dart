@@ -73,7 +73,7 @@ void main() {
     );
   });
 
-  testWidgets('같은 배·기획·캡틴 카드와 탑승권·칩·빈 지도 문구', (tester) async {
+  testWidgets('같은 배·기획·캡틴 카드와 탑승권·빈 지도 문구', (tester) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     final repo = MemoryDiverRepository.forTest();
     final depart = DateTime(2026, 11, 2);
@@ -164,12 +164,9 @@ void main() {
 
     expect(find.text(l10n.homeMapEmptyPrompt), findsOneWidget);
     expect(find.byKey(const Key('home-for-you')), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.byKey(const Key('home-shelf-chips'))).dy,
-      lessThan(
-        tester.getTopLeft(find.byKey(const Key('home-section-same-boat'))).dy,
-      ),
-    );
+    expect(find.byKey(const Key('home-shelf-chips')), findsNothing);
+    expect(find.byKey(const Key('home-chip-same-boat')), findsNothing);
+    expect(find.byKey(const Key('home-chip-captain')), findsNothing);
     expect(find.text('보홀 오션 하이드아웃'), findsOneWidget);
     expect(find.text('2탱크 펀다이빙'), findsOneWidget);
     expect(
@@ -218,46 +215,45 @@ void main() {
     expect(price.style?.color, AppTheme.gold);
 
     expect(find.text('크루 팔라우'), findsOneWidget);
+    final captainCard = find.byKey(
+      const Key('home-captain-card-palau-rock-islands'),
+    );
+    expect(tester.getSize(captainCard).width, HomeCaptainCard.width);
+    expect(tester.getSize(captainCard).height, HomeCaptainCard.height);
+    expect(HomeCaptainCard.width, 260);
+    final captainTop = tester.getTopLeft(captainCard).dy;
+    final captainPhotoBottom =
+        captainTop + HomeCaptainCard.width / HomeCaptainCard.photoAspect;
+    expect(
+      tester
+          .getTopLeft(
+            find.byKey(const Key('home-captain-initial-palau-rock-islands')),
+          )
+          .dy,
+      lessThan(captainTop + 24),
+    );
     expect(
       tester.widget<Text>(find.byKey(const Key('home-captain-initial-palau-rock-islands'))).data,
       '테',
     );
     expect(
-      tester.widget<Text>(find.byKey(const Key('home-captain-name-palau-rock-islands'))).data,
-      '테스트 다이버',
-    );
-    expect(
       tester.widget<Text>(find.byKey(const Key('home-captain-grade-palau-rock-islands'))).data,
       l10n.profileGradeDiamond,
     );
-    expect(find.text(l10n.homeCrewRecruiting), findsOneWidget);
-    expect(find.text('₩320,000'), findsOneWidget);
-
-    expect(find.byKey(const Key('home-chip-same-boat')), findsOneWidget);
-    expect(find.byKey(const Key('home-chip-curated')), findsOneWidget);
-    expect(find.byKey(const Key('home-chip-captain')), findsOneWidget);
+    expect(find.byKey(const Key('home-captain-name-palau-rock-islands')), findsNothing);
+    expect(tester.getTopLeft(find.text('크루 팔라우')).dy, greaterThan(captainPhotoBottom - 1));
     expect(
-      tester.getTopLeft(find.byKey(const Key('home-chip-same-boat'))).dx,
-      lessThan(tester.getTopLeft(find.byKey(const Key('home-chip-curated'))).dx),
+      tester.getTopLeft(find.text(l10n.homeCrewRecruiting)).dy,
+      greaterThan(captainPhotoBottom - 1),
     );
-    expect(
-      tester.getTopLeft(find.byKey(const Key('home-chip-curated'))).dx,
-      lessThan(tester.getTopLeft(find.byKey(const Key('home-chip-captain'))).dx),
+    final captainPrice = tester.widget<Text>(
+      find.byKey(const Key('home-captain-price-palau-rock-islands')),
     );
+    expect(captainPrice.data, '₩320,000');
+    expect(captainPrice.style?.color, AppTheme.gold);
     expect(
       tester.getTopLeft(find.byKey(const Key('home-section-captain'))).dy,
       lessThan(tester.getTopLeft(find.byKey(const Key('home-for-you'))).dy),
     );
-    expect(find.byKey(const Key('home-chip-dive-star')), findsNothing);
-    expect(find.byKey(const Key('home-chip-hot')), findsNothing);
-
-    final captain = find.byKey(const Key('home-section-captain'));
-    final chip = find.byKey(const Key('home-chip-captain'));
-    expect(tester.getCenter(chip).dy, lessThan(1100));
-    final before = tester.getTopLeft(captain).dy;
-    await tester.tap(chip);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(tester.getTopLeft(captain).dy, lessThan(before));
   });
 }

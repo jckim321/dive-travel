@@ -252,41 +252,11 @@ abstract class AppLocalizations {
   /// **'즐겨찾기'**
   String get homeChipFavorites;
 
-  /// 홈 분류 칩의 인기입니다.
-  ///
-  /// In ko, this message translates to:
-  /// **'인기'**
-  String get homeChipPopular;
-
   /// 홈 분류 칩의 마감 임박입니다.
   ///
   /// In ko, this message translates to:
   /// **'마감임박'**
   String get homeChipLastMinute;
-
-  /// No description provided for @homeChipCertified.
-  ///
-  /// In ko, this message translates to:
-  /// **'인증'**
-  String get homeChipCertified;
-
-  /// No description provided for @homeChipClosing.
-  ///
-  /// In ko, this message translates to:
-  /// **'마감 임박'**
-  String get homeChipClosing;
-
-  /// No description provided for @homeChipCurated.
-  ///
-  /// In ko, this message translates to:
-  /// **'기획'**
-  String get homeChipCurated;
-
-  /// No description provided for @homeChipCaptain.
-  ///
-  /// In ko, this message translates to:
-  /// **'캡틴'**
-  String get homeChipCaptain;
 
   /// No description provided for @homeMapEmptyPrompt.
   ///

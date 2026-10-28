@@ -756,8 +756,10 @@ class HomeCaptainCard extends StatelessWidget {
     required this.onDetails,
   });
 
-  static const width = 230.0;
-  static const height = 168.0;
+  static const width = 260.0;
+  static const photoAspect = 1.6;
+  static const bandHeight = 86.0;
+  static const height = width / photoAspect + bandHeight;
 
   final DiveShop shop;
   final VoidCallback onDetails;
@@ -785,174 +787,126 @@ class HomeCaptainCard extends StatelessWidget {
     return GestureDetector(
       onTap: onDetails,
       behavior: HitTestBehavior.opaque,
-      child: DecoratedBox(
+      child: ClipRRect(
         key: Key('home-captain-card-${shop.hullId}'),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE4E8EE)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.navy,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
-              ),
-              if (identity != null && initial.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    DecoratedBox(
-                      decoration: const BoxDecoration(
-                        color: AppTheme.navy,
-                        shape: BoxShape.circle,
-                      ),
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: Center(
-                          child: Text(
-                            initial,
-                            key: Key('home-captain-initial-${shop.hullId}'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: photoAspect,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ListingCoverPhoto(shop: shop),
+                  if (identity != null && initial.isNotEmpty)
+                    Positioned(
+                      left: 10,
+                      top: 10,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DecoratedBox(
+                            decoration: const BoxDecoration(
+                              color: AppTheme.navy,
+                              shape: BoxShape.circle,
+                            ),
+                            child: SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: Center(
+                                child: Text(
+                                  initial,
+                                  key: Key(
+                                    'home-captain-initial-${shop.hullId}',
+                                  ),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 6),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppTheme.gold,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: Text(
+                                homeGradeLabel(l10n, identity.grade),
+                                key: Key('home-captain-grade-${shop.hullId}'),
+                                style: const TextStyle(
+                                  color: AppTheme.navy,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        identity.name,
-                        key: Key('home-captain-name-${shop.hullId}'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ColoredBox(
+                color: AppTheme.navy,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppTheme.goldSoft,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        child: Text(
-                          homeGradeLabel(l10n, identity.grade),
-                          key: Key('home-captain-grade-${shop.hullId}'),
-                          style: const TextStyle(
-                            color: AppTheme.navy,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.homeCrewRecruiting,
+                        key: Key('home-captain-status-${shop.hullId}'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFD5DDE6),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          height: 1.2,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 8),
-              Text(
-                l10n.homeCrewRecruiting,
-                key: Key('home-captain-status-${shop.hullId}'),
-                style: const TextStyle(
-                  color: homeCoral,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                homeWon(shop.consumerPrice),
-                key: Key('home-captain-price-${shop.hullId}'),
-                style: const TextStyle(
-                  color: AppTheme.navy,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
+                      const SizedBox(height: 4),
+                      Text(
+                        homeWon(shop.consumerPrice),
+                        key: Key('home-captain-price-${shop.hullId}'),
+                        style: const TextStyle(
+                          color: AppTheme.gold,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class HomeShelfJump {
-  const HomeShelfJump({
-    required this.id,
-    required this.label,
-    required this.target,
-  });
-
-  final String id;
-  final String label;
-  final GlobalKey target;
-}
-
-class HomeShelfJumpRow extends StatelessWidget {
-  const HomeShelfJumpRow({super.key, required this.jumps});
-
-  final List<HomeShelfJump> jumps;
-
-  @override
-  Widget build(BuildContext context) {
-    if (jumps.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return SingleChildScrollView(
-      key: const Key('home-shelf-chips'),
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < jumps.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            ActionChip(
-              key: Key('home-chip-${jumps[i].id}'),
-              label: Text(jumps[i].label),
-              visualDensity: VisualDensity.compact,
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0x330B1F33)),
-              labelStyle: const TextStyle(
-                color: AppTheme.navy,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-              onPressed: () {
-                final target = jumps[i].target.currentContext;
-                if (target == null) {
-                  return;
-                }
-                Scrollable.ensureVisible(
-                  target,
-                  alignment: 0.02,
-                  duration: const Duration(milliseconds: 250),
-                );
-              },
             ),
           ],
-        ],
+        ),
       ),
     );
   }

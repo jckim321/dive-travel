@@ -95,18 +95,10 @@
   "@homeChipFavorites": {
     "description": "홈 분류 칩의 즐겨찾기입니다."
   },
-  "homeChipPopular": "인기",
-  "@homeChipPopular": {
-    "description": "홈 분류 칩의 인기입니다."
-  },
   "homeChipLastMinute": "마감임박",
   "@homeChipLastMinute": {
     "description": "홈 분류 칩의 마감 임박입니다."
   },
-  "homeChipCertified": "인증",
-  "homeChipClosing": "마감 임박",
-  "homeChipCurated": "기획",
-  "homeChipCaptain": "캡틴",
   "homeMapEmptyPrompt": "첫 바다를 열어 보세요",
   "homeApdiSpecial": "APDI SPECIAL",
   "homeCrewRecruiting": "크루 모집 중",

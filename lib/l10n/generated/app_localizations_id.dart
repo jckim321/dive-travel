@@ -85,22 +85,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get homeChipFavorites => '즐겨찾기';
 
   @override
-  String get homeChipPopular => '인기';
-
-  @override
   String get homeChipLastMinute => '마감임박';
-
-  @override
-  String get homeChipCertified => '인증';
-
-  @override
-  String get homeChipClosing => '마감 임박';
-
-  @override
-  String get homeChipCurated => '기획';
-
-  @override
-  String get homeChipCaptain => '캡틴';
 
   @override
   String get homeMapEmptyPrompt => '첫 바다를 열어 보세요';

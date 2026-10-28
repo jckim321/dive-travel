@@ -86,22 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeChipFavorites => 'Saved';
 
   @override
-  String get homeChipPopular => 'Popular';
-
-  @override
   String get homeChipLastMinute => 'Last call';
-
-  @override
-  String get homeChipCertified => 'Verified';
-
-  @override
-  String get homeChipClosing => 'Last call';
-
-  @override
-  String get homeChipCurated => 'Specials';
-
-  @override
-  String get homeChipCaptain => 'Captain';
 
   @override
   String get homeMapEmptyPrompt => 'Open your first ocean';

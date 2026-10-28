@@ -120,14 +120,7 @@ void main() {
     expect(top(tester, hot), lessThan(top(tester, curated)));
     expect(top(tester, curated), lessThan(top(tester, captain)));
     expect(find.text(l10n.homeForYouTitle), findsNothing);
-    double chipLeft(String id) {
-      return tester.getTopLeft(find.byKey(Key('home-chip-$id'))).dx;
-    }
-
-    expect(chipLeft('dive-star'), lessThan(chipLeft('same-boat')));
-    expect(chipLeft('same-boat'), lessThan(chipLeft('hot')));
-    expect(chipLeft('hot'), lessThan(chipLeft('curated')));
-    expect(chipLeft('curated'), lessThan(chipLeft('captain')));
+    expect(find.byKey(const Key('home-shelf-chips')), findsNothing);
     expect(find.text(l10n.homeMapEmptyPrompt), findsNothing);
     expect(find.text(l10n.homeShelfEmpty), findsNothing);
     expect(find.text(l10n.homeDiverPlannedSubtitle), findsOneWidget);
