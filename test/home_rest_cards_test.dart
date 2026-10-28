@@ -165,10 +165,6 @@ void main() {
     expect(find.text(l10n.homeMapEmptyPrompt), findsOneWidget);
     expect(find.byKey(const Key('home-for-you')), findsOneWidget);
     expect(
-      tester.getTopLeft(find.byKey(const Key('home-for-you'))).dy,
-      lessThan(tester.getTopLeft(find.byKey(const Key('home-shelf-chips'))).dy),
-    );
-    expect(
       tester.getTopLeft(find.byKey(const Key('home-shelf-chips'))).dy,
       lessThan(
         tester.getTopLeft(find.byKey(const Key('home-section-same-boat'))).dy,
@@ -199,11 +195,27 @@ void main() {
     expect(find.text('₩140,000'), findsOneWidget);
 
     final curated = find.byKey(const Key('home-curated-card-similan-liveaboard'));
+    expect(tester.getSize(curated).width, HomeCuratedCard.width);
     expect(tester.getSize(curated).height, HomeCuratedCard.height);
-    expect(tester.getSize(curated).width, greaterThan(300));
+    // Phone content width leaves a sliver of the next card, not a second full card.
+    const phoneContent = 390.0 - 40;
+    expect(HomeCuratedCard.width + 12, lessThan(phoneContent));
+    expect(phoneContent - HomeCuratedCard.width, lessThan(HomeCuratedCard.width));
+    final cardTop = tester.getTopLeft(curated).dy;
+    final photoBottom = cardTop + HomeCuratedCard.width / HomeCuratedCard.photoAspect;
+    expect(
+      tester.getTopLeft(find.byKey(const Key('home-curated-kicker-similan-liveaboard'))).dy,
+      lessThan(cardTop + 24),
+    );
+    expect(tester.getTopLeft(find.text('시밀란 스페셜')).dy, greaterThan(photoBottom - 1));
     expect(find.text(l10n.homeApdiSpecial), findsOneWidget);
     expect(find.text('시밀란 스페셜'), findsOneWidget);
-    expect(find.text('₩240,000'), findsOneWidget);
+    expect(find.byKey(const Key('home-curated-line-similan-liveaboard')), findsOneWidget);
+    final price = tester.widget<Text>(
+      find.byKey(const Key('home-curated-price-similan-liveaboard')),
+    );
+    expect(price.data, '₩240,000');
+    expect(price.style?.color, AppTheme.gold);
 
     expect(find.text('크루 팔라우'), findsOneWidget);
     expect(
@@ -224,6 +236,18 @@ void main() {
     expect(find.byKey(const Key('home-chip-same-boat')), findsOneWidget);
     expect(find.byKey(const Key('home-chip-curated')), findsOneWidget);
     expect(find.byKey(const Key('home-chip-captain')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('home-chip-same-boat'))).dx,
+      lessThan(tester.getTopLeft(find.byKey(const Key('home-chip-curated'))).dx),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('home-chip-curated'))).dx,
+      lessThan(tester.getTopLeft(find.byKey(const Key('home-chip-captain'))).dx),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('home-section-captain'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('home-for-you'))).dy),
+    );
     expect(find.byKey(const Key('home-chip-dive-star')), findsNothing);
     expect(find.byKey(const Key('home-chip-hot')), findsNothing);
 

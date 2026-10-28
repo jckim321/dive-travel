@@ -616,6 +616,16 @@ class HomeSameBoatCard extends StatelessWidget {
   }
 }
 
+/// Location, then the product blurb, on one line.
+String homeCuratedLine(DiveShop shop) {
+  final place = shop.location.trim();
+  final blurb = shop.blurb.trim();
+  if (place.isNotEmpty && blurb.isNotEmpty) {
+    return '$place · $blurb';
+  }
+  return place.isNotEmpty ? place : blurb;
+}
+
 class HomeCuratedCard extends StatelessWidget {
   const HomeCuratedCard({
     super.key,
@@ -623,7 +633,10 @@ class HomeCuratedCard extends StatelessWidget {
     required this.onDetails,
   });
 
-  static const height = 170.0;
+  static const width = 260.0;
+  static const photoAspect = 1.6;
+  static const bandHeight = 86.0;
+  static const height = width / photoAspect + bandHeight;
 
   final DiveShop shop;
   final VoidCallback onDetails;
@@ -634,70 +647,102 @@ class HomeCuratedCard extends StatelessWidget {
     final title = shop.productName.trim().isNotEmpty
         ? shop.productName.trim()
         : shop.name;
+    final line = homeCuratedLine(shop);
     return GestureDetector(
       onTap: onDetails,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        height: height,
-        width: double.infinity,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            key: Key('home-curated-card-${shop.hullId}'),
-            fit: StackFit.expand,
-            children: [
-              ListingCoverPhoto(shop: shop),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0x66000000), Color(0xE6052A4A)],
+      child: ClipRRect(
+        key: Key('home-curated-card-${shop.hullId}'),
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio: photoAspect,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ListingCoverPhoto(shop: shop),
+                  Positioned(
+                    left: 10,
+                    top: 10,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppTheme.gold,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          l10n.homeApdiSpecial,
+                          key: Key('home-curated-kicker-${shop.hullId}'),
+                          style: const TextStyle(
+                            color: AppTheme.navy,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ColoredBox(
+                color: AppTheme.navy,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                      ),
+                      if (line.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          line,
+                          key: Key('home-curated-line-${shop.hullId}'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFD5DDE6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Text(
+                        homeWon(shop.consumerPrice),
+                        key: Key('home-curated-price-${shop.hullId}'),
+                        style: const TextStyle(
+                          color: AppTheme.gold,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.homeApdiSpecial,
-                      key: Key('home-curated-kicker-${shop.hullId}'),
-                      style: const TextStyle(
-                        color: AppTheme.gold,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      homeWon(shop.consumerPrice),
-                      key: Key('home-curated-price-${shop.hullId}'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -951,6 +996,7 @@ class HomeDiscoverySection extends StatelessWidget {
       HomeShelfStyle.diveStar => HomeDiveStarCard.width,
       HomeShelfStyle.sameBoat => HomeSameBoatCard.width,
       HomeShelfStyle.captain => HomeCaptainCard.width,
+      HomeShelfStyle.curated => HomeCuratedCard.width,
       _ => (screenW * 0.55).clamp(168.0, 220.0),
     };
     final cardHeight = switch (style) {
@@ -1002,20 +1048,7 @@ class HomeDiscoverySection extends StatelessWidget {
         ],
         if (shops.isNotEmpty) ...[
           const SizedBox(height: 10),
-          if (style == HomeShelfStyle.curated)
-            Column(
-              children: [
-                for (var i = 0; i < shops.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 12),
-                  HomeCuratedCard(
-                    shop: shops[i],
-                    onDetails: () => onOpen(shops[i]),
-                  ),
-                ],
-              ],
-            )
-          else
-            SizedBox(
+          SizedBox(
               height: cardHeight,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,

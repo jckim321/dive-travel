@@ -260,10 +260,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
-                if (store.nextTrip != null) ...[
-                  const SizedBox(height: 16),
-                  const ForYouSection(),
-                ],
                 if (jumps.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   HomeShelfJumpRow(jumps: jumps),
@@ -280,6 +276,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   curatedShops: curatedShops,
                   plannedShops: plannedShops,
                 ),
+                if (store.nextTrip != null) ...[
+                  const SizedBox(height: 24),
+                  const ForYouSection(),
+                ],
               ],
             ),
           ),
