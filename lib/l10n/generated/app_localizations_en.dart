@@ -40,10 +40,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDiveStarShelfHint => 'Resorts divers have checked themselves';
 
   @override
-  String get homeFavoritesTitle => 'My real trip';
+  String get homeFavoritesTitle => 'I\'m the captain';
 
   @override
-  String get homeDiverPlannedSubtitle => 'Itineraries divers build themselves';
+  String get homeDiverPlannedSubtitle => 'A trip just for us, with the crew';
+
+  @override
+  String get homeCaptainNeedsGold => 'Gold members can become captains.';
+
+  @override
+  String get homeBecomeCaptain => 'Become a captain';
 
   @override
   String get homePopularTitle => 'Spots heating up';
@@ -891,7 +897,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileDepartureDeskKicker => 'Departure desk';
 
   @override
-  String get profileCraftedTripsTitle => 'Trips I planned myself';
+  String get profileCraftedTripsTitle => 'I\'m the captain';
 
   @override
   String get profileCraftedTripsHint =>
@@ -899,6 +905,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileCraftNewTrip => 'Craft a new trip';
+
+  @override
+  String get profileCaptainTripTitle => 'A captain\'s new trip';
 
   @override
   String get profileCraftNeedsGold =>

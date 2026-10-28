@@ -165,14 +165,26 @@ abstract class AppLocalizations {
   /// 홈 화면 다이버 직접 기획 섹션 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'내가 만드는 찐 여행'**
+  /// **'내가 캡틴'**
   String get homeFavoritesTitle;
 
   /// 내가 만드는 찐 여행 선반 서브카피입니다.
   ///
   /// In ko, this message translates to:
-  /// **'다이버가 직접 꾸민 진짜 일정'**
+  /// **'크루와 함께 떠나는 우리들만의 여행'**
   String get homeDiverPlannedSubtitle;
+
+  /// No description provided for @homeCaptainNeedsGold.
+  ///
+  /// In ko, this message translates to:
+  /// **'골드 등급부터 캡틴이 될 수 있어요'**
+  String get homeCaptainNeedsGold;
+
+  /// No description provided for @homeBecomeCaptain.
+  ///
+  /// In ko, this message translates to:
+  /// **'캡틴 되기'**
+  String get homeBecomeCaptain;
 
   /// 홈 화면 핫 다이빙 스팟 섹션 제목입니다.
   ///
@@ -1707,7 +1719,7 @@ abstract class AppLocalizations {
   /// 다이버가 제안한 DIY 여행 상품 섹션 제목입니다.
   ///
   /// In ko, this message translates to:
-  /// **'내가 직접 짠 여행'**
+  /// **'내가 캡틴'**
   String get profileCraftedTripsTitle;
 
   /// DIY 여행 상품 섹션 안내 문구입니다.
@@ -1721,6 +1733,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'새 여행 짜기'**
   String get profileCraftNewTrip;
+
+  /// No description provided for @profileCaptainTripTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'캡틴의 새 여행'**
+  String get profileCaptainTripTitle;
 
   /// No description provided for @profileCraftNeedsGold.
   ///

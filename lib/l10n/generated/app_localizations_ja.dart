@@ -39,10 +39,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeDiveStarShelfHint => '다이버가 직접 검증한 리조트';
 
   @override
-  String get homeFavoritesTitle => '내가 만드는 찐 여행';
+  String get homeFavoritesTitle => '내가 캡틴';
 
   @override
-  String get homeDiverPlannedSubtitle => '다이버가 직접 꾸민 진짜 일정';
+  String get homeDiverPlannedSubtitle => '크루와 함께 떠나는 우리들만의 여행';
+
+  @override
+  String get homeCaptainNeedsGold => '골드 등급부터 캡틴이 될 수 있어요';
+
+  @override
+  String get homeBecomeCaptain => '캡틴 되기';
 
   @override
   String get homePopularTitle => '지금 뜨는 스팟';
@@ -863,13 +869,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileDepartureDeskKicker => '출항 데스크';
 
   @override
-  String get profileCraftedTripsTitle => '내가 직접 짠 여행';
+  String get profileCraftedTripsTitle => '내가 캡틴';
 
   @override
   String get profileCraftedTripsHint => '리조트를 골라 일정을 짜면 관리자 승인 후 여행상품에 올라갑니다.';
 
   @override
   String get profileCraftNewTrip => '새 여행 짜기';
+
+  @override
+  String get profileCaptainTripTitle => '캡틴의 새 여행';
 
   @override
   String get profileCraftNeedsGold =>

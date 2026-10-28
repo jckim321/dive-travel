@@ -2129,7 +2129,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 )
               : null,
           title: Text(
-            widget.creatorMode ? l10n.profileCraftNewTrip : l10n.briefTitle,
+            widget.creatorMode ? l10n.profileCaptainTripTitle : l10n.briefTitle,
           ),
           backgroundColor: PartnerTheme.bg,
           foregroundColor: PartnerTheme.text,

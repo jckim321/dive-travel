@@ -134,19 +134,26 @@ class HomeDiscoverySection extends StatelessWidget {
     required this.shops,
     required this.onOpen,
     this.subtitle,
-    this.emptyText,
+    this.belowSubtitle,
+    this.headerAction,
+    this.showWhenEmpty = false,
     this.onSeeAll,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? belowSubtitle;
+  final Widget? headerAction;
   final List<DiveShop> shops;
-  final String? emptyText;
+  final bool showWhenEmpty;
   final VoidCallback? onSeeAll;
   final void Function(DiveShop shop) onOpen;
 
   @override
   Widget build(BuildContext context) {
+    if (shops.isEmpty && !showWhenEmpty) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     // Compact rail: next card peeks; 4:3 keeps image shorter than the old 1:1 tiles.
@@ -175,6 +182,10 @@ class HomeDiscoverySection extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (belowSubtitle != null) ...[
+                    const SizedBox(height: 4),
+                    belowSubtitle!,
+                  ],
                 ],
               ),
             ),
@@ -186,16 +197,12 @@ class HomeDiscoverySection extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 10),
-        if (shops.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4, right: 8),
-            child: Text(
-              emptyText ?? l10n.homeShelfEmpty,
-              style: theme.textTheme.bodySmall,
-            ),
-          )
-        else
+        if (headerAction != null) ...[
+          const SizedBox(height: 10),
+          headerAction!,
+        ],
+        if (shops.isNotEmpty) ...[
+          const SizedBox(height: 10),
           SizedBox(
             height: cardHeight,
             child: ListView.separated(
@@ -215,6 +222,7 @@ class HomeDiscoverySection extends StatelessWidget {
               },
             ),
           ),
+        ],
       ],
     );
   }

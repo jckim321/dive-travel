@@ -4,7 +4,6 @@ import 'package:dive_travel_app/core/models/crafted_trip_seats.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
-import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -74,8 +73,6 @@ class MyCraftedTripsSection extends StatelessWidget {
       key: const Key('my-crafted-trips'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppSectionHeader(title: l10n.profileCraftedTripsTitle),
-        const SizedBox(height: 8),
         Text(l10n.profileCraftedTripsHint, style: theme.textTheme.bodySmall),
         const SizedBox(height: 14),
         SizedBox(
@@ -217,18 +214,22 @@ class _CraftedTripCard extends StatelessWidget {
               ),
               const Spacer(),
               if (onOpenSeats != null)
-                TextButton(
+                FilledButton(
                   key: Key('crafted-open-seats-${product.id}'),
                   onPressed: onOpenSeats,
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, 28),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.ocean,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  child: Text(
-                    l10n.sameBoatSeatsTitle,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-                  ),
+                  child: Text(l10n.sameBoatSeatsTitle),
                 )
               else
                 Text(

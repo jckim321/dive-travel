@@ -96,6 +96,11 @@ void main() {
     );
 
     expect(find.byKey(Key('crafted-open-seats-$productId')), findsOneWidget);
+    expect(
+      tester.widget(find.byKey(Key('crafted-open-seats-$productId'))),
+      isA<FilledButton>(),
+    );
+    expect(find.text(l10n.profileCraftedTripsTitle), findsOneWidget);
     expect(find.text(l10n.profileCraftStatusPending), findsNothing);
     expect(find.text(l10n.profileCraftStatusLive), findsOneWidget);
     expect(

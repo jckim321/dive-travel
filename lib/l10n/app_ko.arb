@@ -41,11 +41,13 @@
   "@homeDiveStarShelfHint": {
     "description": "홈 Dive Star 선반 한 줄 감성 카피입니다."
   },
-  "homeFavoritesTitle": "내가 만드는 찐 여행",
+  "homeFavoritesTitle": "내가 캡틴",
   "@homeFavoritesTitle": {
     "description": "홈 화면 다이버 직접 기획 섹션 제목입니다."
   },
-  "homeDiverPlannedSubtitle": "다이버가 직접 꾸민 진짜 일정",
+  "homeDiverPlannedSubtitle": "크루와 함께 떠나는 우리들만의 여행",
+  "homeCaptainNeedsGold": "골드 등급부터 캡틴이 될 수 있어요",
+  "homeBecomeCaptain": "캡틴 되기",
   "@homeDiverPlannedSubtitle": {
     "description": "내가 만드는 찐 여행 선반 서브카피입니다."
   },
@@ -697,7 +699,7 @@
   "@profileDepartureDeskKicker": {
     "description": "마이페이지 출항 데스크 히어로 키커입니다."
   },
-  "profileCraftedTripsTitle": "내가 직접 짠 여행",
+  "profileCraftedTripsTitle": "내가 캡틴",
   "@profileCraftedTripsTitle": {
     "description": "다이버가 제안한 DIY 여행 상품 섹션 제목입니다."
   },
@@ -706,6 +708,7 @@
     "description": "DIY 여행 상품 섹션 안내 문구입니다."
   },
   "profileCraftNewTrip": "새 여행 짜기",
+  "profileCaptainTripTitle": "캡틴의 새 여행",
   "profileCraftNeedsGold": "골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.",
   "@profileCraftNewTrip": {
     "description": "새 DIY 여행 상품 등록 버튼입니다."

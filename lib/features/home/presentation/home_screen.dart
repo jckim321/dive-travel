@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
+import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/for_you_section.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
@@ -33,6 +36,105 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openShop(BuildContext context, DiveShop shop) {
     openResortDetail(context, shop.hullId);
+  }
+
+  void _openCaptainForm(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const TravelProductRegistrationScreen(
+          creatorMode: true,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _homeShelves(
+    BuildContext context, {
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required bool canCaptain,
+    required List<DiveShop> diveStarShops,
+    required List<DiveShop> lastCallShops,
+    required List<DiveShop> hotShops,
+    required List<DiveShop> curatedShops,
+    required List<DiveShop> plannedShops,
+  }) {
+    final shelves = <Widget>[
+      if (diveStarShops.isNotEmpty)
+        HomeDiscoverySection(
+          key: const Key('home-section-dive-star'),
+          title: l10n.homeDiveStarTitle,
+          shops: diveStarShops,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
+      if (lastCallShops.isNotEmpty)
+        HomeDiscoverySection(
+          key: const Key('home-section-same-boat'),
+          title: l10n.homeNextDepartures,
+          shops: lastCallShops,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
+      if (hotShops.isNotEmpty)
+        HomeDiscoverySection(
+          key: const Key('home-section-hot'),
+          title: l10n.homePopularTitle,
+          shops: hotShops,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
+      if (curatedShops.isNotEmpty)
+        HomeDiscoverySection(
+          key: const Key('home-section-curated'),
+          title: l10n.homeCuratedTitle,
+          shops: curatedShops,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
+      if (plannedShops.isNotEmpty || canCaptain)
+        HomeDiscoverySection(
+          key: const Key('home-section-captain'),
+          title: l10n.homeFavoritesTitle,
+          subtitle: l10n.homeDiverPlannedSubtitle,
+          shops: plannedShops,
+          showWhenEmpty: canCaptain,
+          belowSubtitle: canCaptain
+              ? null
+              : Text(
+                  l10n.homeCaptainNeedsGold,
+                  key: const Key('home-captain-needs-gold'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.muted,
+                    fontSize: 12,
+                  ),
+                ),
+          headerAction: canCaptain
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton(
+                    key: const Key('home-become-captain'),
+                    onPressed: () => _openCaptainForm(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.ocean,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 40),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    child: Text(l10n.homeBecomeCaptain),
+                  ),
+                )
+              : null,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
+    ];
+    final spaced = <Widget>[];
+    for (final shelf in shelves) {
+      if (spaced.isNotEmpty) {
+        spaced.add(const SizedBox(height: 24));
+      }
+      spaced.add(shelf);
+    }
+    return spaced;
   }
 
   @override
@@ -65,6 +167,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ProductListingKind.curated,
       excludeHullIds: claimed,
     );
+    final canCaptain =
+        store.stats.memberGrade.rank >= MemberGrade.gold.rank;
 
     return Scaffold(
       body: ListView(
@@ -95,38 +199,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 24),
-                HomeDiscoverySection(
-                  title: l10n.homeDiveStarTitle,
-                  shops: diveStarShops,
-                  onOpen: (shop) => _openShop(context, shop),
-                ),
-                const SizedBox(height: 24),
-                HomeDiscoverySection(
-                  title: l10n.homeFavoritesTitle,
-                  shops: plannedShops,
-                  emptyText: l10n.homeShelfEmpty,
-                  onOpen: (shop) => _openShop(context, shop),
-                ),
-                const SizedBox(height: 24),
-                HomeDiscoverySection(
-                  title: l10n.homePopularTitle,
-                  shops: hotShops,
-                  emptyText: l10n.homeShelfEmpty,
-                  onOpen: (shop) => _openShop(context, shop),
-                ),
-                const SizedBox(height: 24),
-                HomeDiscoverySection(
-                  title: l10n.homeNextDepartures,
-                  shops: lastCallShops,
-                  emptyText: l10n.homeShelfEmpty,
-                  onOpen: (shop) => _openShop(context, shop),
-                ),
-                const SizedBox(height: 24),
-                HomeDiscoverySection(
-                  title: l10n.homeCuratedTitle,
-                  shops: curatedShops,
-                  emptyText: l10n.homeShelfEmpty,
-                  onOpen: (shop) => _openShop(context, shop),
+                ..._homeShelves(
+                  context,
+                  l10n: l10n,
+                  theme: theme,
+                  canCaptain: canCaptain,
+                  diveStarShops: diveStarShops,
+                  lastCallShops: lastCallShops,
+                  hotShops: hotShops,
+                  curatedShops: curatedShops,
+                  plannedShops: plannedShops,
                 ),
                 const ForYouSection(),
               ],
