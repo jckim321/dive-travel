@@ -431,6 +431,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreProPrice => 'Pro price';
 
   @override
+  String get exploreSeeMore => 'See more ›';
+
+  @override
+  String get exploreOtherRegion => 'Other';
+
+  @override
   String get exploreSearchHint => 'Search resorts, sites, countries';
 
   @override

@@ -870,6 +870,18 @@ abstract class AppLocalizations {
   /// **'강사 우대가'**
   String get exploreProPrice;
 
+  /// 여행상품 지역 줄의 전체 보기입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'더보기 ›'**
+  String get exploreSeeMore;
+
+  /// 지역을 못 찾은 여행상품 줄 제목입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기타'**
+  String get exploreOtherRegion;
+
   /// 투어 예약 검색 필드 힌트입니다.
   ///
   /// In ko, this message translates to:

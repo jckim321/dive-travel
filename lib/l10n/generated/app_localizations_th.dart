@@ -424,6 +424,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreProPrice => 'ราคาโปร';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => 'ค้นหารีสอร์ต จุดดำน้ำ ประเทศ';
 
   @override

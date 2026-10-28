@@ -422,6 +422,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exploreProPrice => '강사 우대가';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => '리조트, 포인트, 국가 검색';
 
   @override

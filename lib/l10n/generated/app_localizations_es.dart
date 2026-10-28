@@ -428,6 +428,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exploreProPrice => 'Precio pro';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => 'Buscar resorts, puntos, países';
 
   @override

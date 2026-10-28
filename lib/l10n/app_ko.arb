@@ -368,6 +368,14 @@
   "@exploreProPrice": {
     "description": "강사에게 보이는 가격 라벨입니다."
   },
+  "exploreSeeMore": "더보기 ›",
+  "@exploreSeeMore": {
+    "description": "여행상품 지역 줄의 전체 보기입니다."
+  },
+  "exploreOtherRegion": "기타",
+  "@exploreOtherRegion": {
+    "description": "지역을 못 찾은 여행상품 줄 제목입니다."
+  },
   "exploreSearchHint": "리조트, 포인트, 국가 검색",
   "@exploreSearchHint": {
     "description": "투어 예약 검색 필드 힌트입니다."

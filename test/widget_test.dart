@@ -13,6 +13,32 @@ void main() {
     return AppLocalizations.delegate.load(const Locale('ko'));
   }
 
+  Finder exploreListScrollable() {
+    return find.descendant(
+      of: find.byKey(const Key('explore-shop-list')),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+  }
+
+  Future<void> revealExploreCard(WidgetTester tester, Key key) {
+    return tester.scrollUntilVisible(
+      find.byKey(key),
+      400,
+      scrollable: exploreListScrollable(),
+    );
+  }
+
+  /// Travel cards are taller than the space above the tab bar, so the center
+  /// sits under the bar. Tap the visible top of the card instead.
+  Future<void> tapExploreCard(WidgetTester tester, Key key) async {
+    await revealExploreCard(tester, key);
+    final top = tester.getTopLeft(find.byKey(key));
+    await tester.tapAt(top + const Offset(24, 24));
+  }
+
   Future<void> pumpSignedInApp(WidgetTester tester) async {
     await tester.pumpWidget(
       DiveTravelApp(
@@ -117,6 +143,7 @@ void main() {
     expect(find.text(l10n.exploreConsumerBanner), findsNothing);
     expect(find.text('180,000원'), findsNothing);
     expect(find.text('126,000원'), findsNothing);
+    await revealExploreCard(tester, const Key('shop-card-bohol-hideout'));
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     // Memory seed assigns Dive Star grade 2 to bohol-hideout (admin grade).
     expect(find.textContaining('Dive Star ★★'), findsWidgets);
@@ -124,7 +151,7 @@ void main() {
     expect(find.text(l10n.exploreBuyNow), findsNothing);
     // Grade 0 shops no longer show "new / pending" cert badges.
 
-    await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
+    await tapExploreCard(tester, const Key('shop-card-bohol-hideout'));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('resort-detail-bohol-hideout')),
@@ -166,7 +193,7 @@ void main() {
 
     await tester.tap(find.text(l10n.navExplore));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('shop-card-bohol-hideout')));
+    await tapExploreCard(tester, const Key('shop-card-bohol-hideout'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('edit-resort-page')), findsOneWidget);
 
@@ -228,6 +255,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('continent-filter-asia')));
     await tester.pumpAndSettle();
+    await revealExploreCard(tester, const Key('shop-card-bohol-hideout'));
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
   });
 

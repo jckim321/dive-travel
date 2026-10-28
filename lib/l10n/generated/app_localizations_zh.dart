@@ -416,6 +416,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exploreProPrice => '教练优惠价';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => '搜索度假村、潜点、国家';
 
   @override

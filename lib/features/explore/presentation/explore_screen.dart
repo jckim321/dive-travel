@@ -6,11 +6,12 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
-import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
-import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_region_groups.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_region_screen.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -84,6 +85,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 .latestPublicProductAt(b.hullId)
                 .compareTo(store.latestPublicProductAt(a.hullId)),
           );
+        final groups = exploreRegionGroups(
+          shops,
+          otherLabel: l10n.exploreOtherRegion,
+        );
         final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
         final daysUntil = nextTrip == null
             ? null
@@ -145,36 +150,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ],
                           )
                         : ListView(
+                            key: const Key('explore-shop-list'),
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                             children: [
-                              GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: shops.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      mainAxisSpacing: 18,
-                                      crossAxisSpacing: 8,
-                                      mainAxisExtent:
-                                          ListingCover.travelCardExtent(
-                                            context,
-                                          ),
-                                    ),
-                                itemBuilder: (context, index) {
-                                  final shop = shops[index];
-                                  return HomeStayCard(
-                                    key: Key('shop-card-${shop.id}'),
-                                    shop: shop,
-                                    travelTab: true,
-                                    onDetails: () => openResortDetail(
-                                      context,
-                                      shop.hullId,
-                                    ),
-                                  );
-                                },
-                              ),
+                              for (var i = 0; i < groups.length; i++) ...[
+                                _ExploreRegionRow(group: groups[i]),
+                                if (i != groups.length - 1)
+                                  const SizedBox(height: 22),
+                              ],
                             ],
                           ),
                   ),
@@ -184,6 +168,77 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _ExploreRegionRow extends StatelessWidget {
+  const _ExploreRegionRow({required this.group});
+
+  final ExploreRegionGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final cardWidth = exploreCardWidth(context);
+    final cardHeight = ListingCover.travelCardExtent(context);
+
+    return Column(
+      key: Key('explore-region-row-${group.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                group.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            TextButton(
+              key: Key('explore-region-more-${group.id}'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => ExploreRegionScreen(
+                      title: group.title,
+                      shops: group.shops,
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.navy,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(l10n.exploreSeeMore),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: cardHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: group.shops.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: cardWidth,
+                child: exploreStayCard(context, group.shops[index]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

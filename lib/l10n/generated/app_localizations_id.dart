@@ -428,6 +428,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreProPrice => 'Harga pro';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => 'Cari resor, situs, negara';
 
   @override

@@ -416,6 +416,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreProPrice => 'インストラクター価格';
 
   @override
+  String get exploreSeeMore => '더보기 ›';
+
+  @override
+  String get exploreOtherRegion => '기타';
+
+  @override
   String get exploreSearchHint => 'リゾート・ポイント・国を検索';
 
   @override
