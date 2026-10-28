@@ -146,6 +146,15 @@ void main() {
     expect(tester.state(region), same(stateBefore));
     expect(tester.widget<TextField>(region).controller, same(controller));
     expect(controller.text, 'ㄱ');
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.state(region), same(stateBefore));
+    expect(tester.widget<TextField>(region).controller, same(controller));
+    expect(controller.text, 'ㄱ');
+    expect(find.text(l10n.briefKept), findsNothing);
+    expect(find.byKey(const Key('creator-wizard-step-1')), findsOneWidget);
   });
 
   testWidgets('이미 만든 직접 기획은 샵이 접혀 있고 상품명이 리조트 이름이다', (tester) async {

@@ -330,6 +330,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     (_) => GlobalKey(),
   );
   final _draftListeners = <TextEditingController>[];
+  final _autosaveControllers = <TextEditingController>[];
+  Timer? _creatorAutosaveTimer;
+  var _autosaveSuspended = false;
+  var _autosaveQueued = false;
   static const _maxGallery = GalleryLimits.maxProductPhotos;
   late String _shopId;
   late String _continent;
@@ -582,15 +586,33 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         _creatorOfferIds.add(ticket.id);
       }
     }
-    _listen(_name);
-    _listen(_blurb);
-    _listen(_detailBody);
-    _listen(_includes);
-    _listen(_excludes);
-    _listen(_resortName);
-    _listen(_rateConsumer[GuestRole.diver]!);
-    _listen(_rateConsumer[GuestRole.nondiver]!);
-    _listen(_rateConsumer[GuestRole.child]!);
+    _trackDraft(_name);
+    _trackDraft(_blurb);
+    _trackDraft(_detailBody);
+    _trackDraft(_includes);
+    _trackDraft(_excludes);
+    _trackDraft(_resortName);
+    _trackDraft(_rateConsumer[GuestRole.diver]!);
+    _trackDraft(_rateConsumer[GuestRole.nondiver]!);
+    _trackDraft(_rateConsumer[GuestRole.child]!);
+    if (widget.creatorMode) {
+      for (final controller in [
+        _resortCountry,
+        _resortRegion,
+        _meeting,
+        _cancel,
+        _nightsField,
+        _daysField,
+      ]) {
+        _bindCreatorAutosave(controller);
+      }
+      for (final line in _addons) {
+        _bindCreatorLine(line);
+      }
+      for (final ticket in _individuals) {
+        _bindCreatorTicket(ticket);
+      }
+    }
     _seedGallery(existing);
     _seats = SameBoatSeatOpenController(
       existing: widget.existing,
@@ -630,11 +652,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
     }
 
+    final typedBeforeSeed =
+        _resortName.text.trim().isNotEmpty ||
+        _resortCountry.text.trim().isNotEmpty ||
+        _resortRegion.text.trim().isNotEmpty;
     fill(_resortName, live.name);
     fill(_resortCountry, live.country);
     fill(_resortRegion, live.location);
-    _name.text = _resortName.text;
-    if (_creatorResortComplete) {
+    if (_name.text != _resortName.text) {
+      _name.text = _resortName.text;
+    }
+    if (_creatorResortComplete && !typedBeforeSeed) {
       _creatorResortExpanded = false;
     }
   }
@@ -930,14 +958,138 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _draftListeners.add(controller);
   }
 
+  void _trackDraft(TextEditingController controller) {
+    if (widget.creatorMode) {
+      _bindCreatorAutosave(controller);
+      return;
+    }
+    _listen(controller);
+  }
+
+  void _bindCreatorAutosave(TextEditingController controller) {
+    if (!widget.creatorMode || _autosaveControllers.contains(controller)) {
+      return;
+    }
+    controller.addListener(_armCreatorAutosave);
+    _autosaveControllers.add(controller);
+  }
+
+  void _unbindCreatorAutosave(TextEditingController controller) {
+    controller.removeListener(_armCreatorAutosave);
+    _autosaveControllers.remove(controller);
+  }
+
+  void _bindCreatorLine(_LineEditors line) {
+    _bindCreatorAutosave(line.name);
+    _bindCreatorAutosave(line.description);
+    _bindCreatorAutosave(line.includes);
+    _bindCreatorAutosave(line.excludes);
+    _bindCreatorAutosave(line.consumer);
+    _bindCreatorAutosave(line.professional);
+  }
+
+  void _unbindCreatorLine(_LineEditors line) {
+    _unbindCreatorAutosave(line.name);
+    _unbindCreatorAutosave(line.description);
+    _unbindCreatorAutosave(line.includes);
+    _unbindCreatorAutosave(line.excludes);
+    _unbindCreatorAutosave(line.consumer);
+    _unbindCreatorAutosave(line.professional);
+  }
+
+  void _bindCreatorTicket(_IndividualTicket ticket) {
+    _bindCreatorAutosave(ticket.name);
+    _bindCreatorAutosave(ticket.lead);
+    _bindCreatorAutosave(ticket.consumer);
+    _bindCreatorAutosave(ticket.includes);
+    _bindCreatorAutosave(ticket.excludes);
+    for (final line in ticket.addons) {
+      _bindCreatorLine(line);
+    }
+  }
+
+  void _unbindCreatorTicket(_IndividualTicket ticket) {
+    _unbindCreatorAutosave(ticket.name);
+    _unbindCreatorAutosave(ticket.lead);
+    _unbindCreatorAutosave(ticket.consumer);
+    _unbindCreatorAutosave(ticket.includes);
+    _unbindCreatorAutosave(ticket.excludes);
+    for (final line in ticket.addons) {
+      _unbindCreatorLine(line);
+    }
+  }
+
   void _onDraftChanged() {
     if (mounted) {
       setState(() {});
     }
   }
 
+  /// Resets the 2s draft timer. Does not rebuild, so Hangul composing stays.
+  void _armCreatorAutosave() {
+    if (!widget.creatorMode) {
+      return;
+    }
+    if (_autosaveSuspended) {
+      _autosaveQueued = true;
+      return;
+    }
+    _creatorAutosaveTimer?.cancel();
+    _creatorAutosaveTimer = Timer(const Duration(seconds: 2), () {
+      unawaited(_creatorAutosave());
+    });
+  }
+
+  bool _creatorAutosaveReady() {
+    if (!widget.creatorMode || !mounted || !_editing) {
+      return false;
+    }
+    if (_savingIntent != null || !_canTempSave || !_isDirty) {
+      return false;
+    }
+    if (!_creatorShopPicked || _resortName.text.trim().isEmpty) {
+      return false;
+    }
+    if (widget.existing?.publishStatus == ProductPublishStatus.pending &&
+        (!_hasPhotosForSave || _diverPriceValue <= 0)) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _creatorAutosave() async {
+    _creatorAutosaveTimer?.cancel();
+    if (!_creatorAutosaveReady()) {
+      return;
+    }
+    _autosaveSuspended = true;
+    try {
+      await _save(ProductSaveIntent.keepEditing, quiet: true);
+    } finally {
+      _autosaveSuspended = false;
+      if (_autosaveQueued) {
+        _autosaveQueued = false;
+        if (_isDirty) {
+          _armCreatorAutosave();
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _creatorAutosaveTimer?.cancel();
+    for (final line in _addons) {
+      _unbindCreatorLine(line);
+    }
+    for (final ticket in _individuals) {
+      _unbindCreatorTicket(ticket);
+    }
+    for (final controller in List<TextEditingController>.of(
+      _autosaveControllers,
+    )) {
+      _unbindCreatorAutosave(controller);
+    }
     for (final controller in _draftListeners) {
       controller.removeListener(_onDraftChanged);
     }
@@ -1424,10 +1576,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   /// Returns true when Firestore/local save finished successfully.
-  Future<bool> _save(ProductSaveIntent intent) async {
+  /// [quiet] is the creator draft timer and 「다음」: no snack, stay on the form.
+  Future<bool> _save(ProductSaveIntent intent, {bool quiet = false}) async {
     final l10n = AppLocalizations.of(context);
+    if (quiet && !_creatorAutosaveReady()) {
+      return false;
+    }
     if (widget.creatorMode) {
-      _name.text = _resortName.text.trim();
+      final resort = _resortName.text.trim();
+      if (_name.text != resort) {
+        _name.text = resort;
+      }
     }
     final name = _name.text.trim();
     if (_savingIntent != null) {
@@ -1705,14 +1864,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       _persistedProductId = product.id;
       _baselineSignature = _formSignature();
-      final savedText = _savedMessage(
-        l10n,
-        effectiveIntent,
-        partnerLive: widget.partnerMode && !widget.creatorMode,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(savedText)),
-      );
+      if (!quiet) {
+        final savedText = _savedMessage(
+          l10n,
+          effectiveIntent,
+          partnerLive: widget.partnerMode && !widget.creatorMode,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(savedText)),
+        );
+      }
       // Temp save stays on the form; submit/publish leaves.
       if (effectiveIntent != ProductSaveIntent.keepEditing) {
         Navigator.of(context).pop();
@@ -1723,17 +1884,22 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         return false;
       }
       // Stay on the edit screen so partner inputs are preserved.
-      final raw = '$error';
-      final message = raw.contains('SHOP_STAT_REFRESH_FAILED')
-          ? l10n.shopStatRefreshFailed
-          : (raw.contains('R2') || raw.contains('업로드')
-              ? l10n.workbenchPhotoUploadFailed
-              : raw
-                  .replaceFirst('Bad state: ', '')
-                  .replaceFirst('StateError: ', ''));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 8)),
-      );
+      if (!quiet) {
+        final raw = '$error';
+        final message = raw.contains('SHOP_STAT_REFRESH_FAILED')
+            ? l10n.shopStatRefreshFailed
+            : (raw.contains('R2') || raw.contains('업로드')
+                ? l10n.workbenchPhotoUploadFailed
+                : raw
+                    .replaceFirst('Bad state: ', '')
+                    .replaceFirst('StateError: ', ''));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
       return false;
     } finally {
       if (mounted) {
@@ -1754,6 +1920,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return;
     }
     setState(() => _creatorStep = step);
+  }
+
+  void _creatorAdvance(int step) {
+    if (step > _creatorStep) {
+      unawaited(_creatorAutosave());
+    }
+    _creatorGo(step);
   }
 
   Future<void> _handleSystemBack() async {
@@ -2295,13 +2468,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }) {
       return KeyedSubtree(
         key: scrollKey,
-        child: TextField(
-          key: key,
-          controller: controller,
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
-          decoration: _partnerField(label, hint: hint),
-          onChanged: (_) => _name.text = _resortName.text,
+        child: _StableField(
+          stamp: key,
+          buildField: () => TextField(
+            key: key,
+            controller: controller,
+            style: const TextStyle(color: PartnerTheme.text),
+            cursorColor: PartnerTheme.accent,
+            decoration: _partnerField(label, hint: hint),
+            onChanged: (_) {
+              final resort = _resortName.text;
+              if (_name.text != resort) {
+                _name.text = resort;
+              }
+            },
+          ),
         ),
       );
     }
@@ -2518,7 +2699,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             key: const Key('creator-wizard-next'),
             onPressed: _creatorStep >= 5
                 ? null
-                : () => _creatorGo(_creatorStep + 1),
+                : () => _creatorAdvance(_creatorStep + 1),
             style: _readableFilledStyle(height: 44),
             child: Text(
               _creatorStep == 4 && _creatorOfferIds.isEmpty
@@ -2664,7 +2845,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             hint: l10n.detailComposerHint,
             lines: 10,
           ),
-          onChanged: () => setState(() {}),
         ),
         const SizedBox(height: 14),
         TextField(
@@ -2843,6 +3023,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   void _addCreatorOffer() {
     final line = _LineEditors(kind: ProductOptionKind.addon);
+    _bindCreatorLine(line);
     setState(() {
       _addons.add(line);
       _addonQty[line.id] = 0;
@@ -2868,9 +3049,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      line?.dispose();
+      final removed = line;
+      if (removed != null) {
+        _unbindCreatorLine(removed);
+        removed.dispose();
+      }
       final dropped = ticket;
       if (dropped != null) {
+        _unbindCreatorTicket(dropped);
         _dropIndividual(dropped);
       }
     });
@@ -2902,6 +3088,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           group: line.group,
         );
         _individuals.add(ticket);
+        _bindCreatorTicket(ticket);
         dropLine = line;
         return;
       }
@@ -2921,6 +3108,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         group: ticket.group,
         kind: ProductOptionKind.addon,
       );
+      _bindCreatorLine(line);
       _addons.add(line);
       _addonQty[line.id] = 0;
       final at = _creatorOfferIds.indexOf(ticket.id);
@@ -2938,8 +3126,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       dropTicket = ticket;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      dropLine?.dispose();
-      dropTicket?.dispose();
+      final removed = dropLine;
+      if (removed != null) {
+        _unbindCreatorLine(removed);
+        removed.dispose();
+      }
+      final dropped = dropTicket;
+      if (dropped != null) {
+        _unbindCreatorTicket(dropped);
+        dropped.dispose();
+      }
     });
   }
 
@@ -2949,6 +3145,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return;
     }
     final line = _LineEditors(kind: ProductOptionKind.addon);
+    _bindCreatorLine(line);
     setState(() {
       ticket.addons.add(line);
       ticket.addonQty[line.id] = 0;
@@ -2969,7 +3166,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       line = ticket.addons.removeAt(index);
       ticket.addonQty.remove(nestedId);
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => line?.dispose());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final removed = line;
+      if (removed != null) {
+        _unbindCreatorLine(removed);
+        removed.dispose();
+      }
+    });
   }
 
   Widget _creatorOfferText({
