@@ -642,6 +642,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreNoResults => 'Tidak ada toko yang cocok.';
 
   @override
+  String get exploreCountryEmpty => '아직 등록된 상품이 없어요';
+
+  @override
   String exploreDiveStar(int stars) {
     return 'Dive Star $stars';
   }

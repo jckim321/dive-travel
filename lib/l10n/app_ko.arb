@@ -541,6 +541,10 @@
   "@exploreNoResults": {
     "description": "검색 결과가 없을 때 문구입니다."
   },
+  "exploreCountryEmpty": "아직 등록된 상품이 없어요",
+  "@exploreCountryEmpty": {
+    "description": "고른 나라에 등록된 상품이 없을 때 안내입니다."
+  },
   "exploreDiveStar": "Dive Star {stars}",
   "@exploreDiveStar": {
     "description": "샵 카드의 Dive Star 배지입니다.",

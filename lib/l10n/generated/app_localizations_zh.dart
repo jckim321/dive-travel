@@ -626,6 +626,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exploreNoResults => '没有匹配的店铺。';
 
   @override
+  String get exploreCountryEmpty => '아직 등록된 상품이 없어요';
+
+  @override
   String exploreDiveStar(int stars) {
     return 'Dive Star $stars';
   }

@@ -28,8 +28,9 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _search = TextEditingController();
   String _region = TravelRegionId.all;
+  String? _menuRegion;
   String? _countryId;
-  String? _seaId;
+  String? _countryLabel;
 
   @override
   void initState() {
@@ -91,7 +92,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               shop: shop,
               regionId: _region,
               countryId: _countryId,
-              seaId: _seaId,
               needle: needle,
             ))
               shop,
@@ -101,11 +101,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 .latestPublicProductAt(b.hullId)
                 .compareTo(store.latestPublicProductAt(a.hullId)),
           );
-        final groups = exploreRegionGroups(
-          shops,
-          otherLabel: l10n.exploreOtherRegion,
-          continentLabel: (id) => travelRegionLabel(l10n, id),
-        );
+        final groups = _countryLabel == null
+            ? exploreRegionGroups(
+                shops,
+                otherLabel: l10n.exploreOtherRegion,
+                continentLabel: (id) => travelRegionLabel(l10n, id),
+              )
+            : shops.isEmpty
+                ? const <ExploreRegionGroup>[]
+                : [
+                    ExploreRegionGroup(
+                      id: _countryId!,
+                      title: _countryLabel!,
+                      shops: shops,
+                    ),
+                  ];
         final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
         final daysUntil = nextTrip == null
             ? null
@@ -118,29 +128,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 ContinentAtlasRail(
                   selectedId: _region,
+                  menuId: _menuRegion,
                   onSelected: (id) => setState(() {
                     _region = id;
                     _countryId = null;
-                    if (id == TravelRegionId.all) {
-                      _seaId = null;
-                    }
+                    _countryLabel = null;
+                    _menuRegion = null;
+                  }),
+                  onMenu: (id) => setState(() {
+                    _menuRegion = _menuRegion == id ? null : id;
                   }),
                 ),
-                if (_region != TravelRegionId.all)
-                  ExploreCountryMenu(
-                    regionId: _region,
+                if (_menuRegion != null)
+                  ExploreFeaturedMenu(
+                    regionId: _menuRegion!,
                     selectedCountryId: _countryId,
+                    selectedLabel: _countryLabel,
                     countryIdsWithProducts: countryIdsWithProducts,
-                    onCountry: (id) => setState(() {
-                      _countryId = _countryId == id ? null : id;
+                    onPlace: (place) => setState(() {
+                      final same = _countryId == place.countryId &&
+                          _countryLabel == place.label;
+                      if (same) {
+                        _countryId = null;
+                        _countryLabel = null;
+                      } else {
+                        _countryId = place.countryId;
+                        _countryLabel = place.label;
+                        _region = place.regionId;
+                      }
                     }),
                   ),
-                ExploreSeaRail(
-                  selectedSeaId: _seaId,
-                  onSelected: (id) => setState(() {
-                    _seaId = _seaId == id ? null : id;
-                  }),
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                   child: TextField(
@@ -182,7 +199,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               SizedBox(
                                 height: MediaQuery.sizeOf(context).height * 0.4,
                                 child: Center(
-                                  child: Text(l10n.exploreNoResults),
+                                  child: Text(
+                                    _countryLabel != null
+                                        ? l10n.exploreCountryEmpty
+                                        : l10n.exploreNoResults,
+                                    key: _countryLabel != null
+                                        ? const Key('explore-country-empty')
+                                        : null,
+                                  ),
                                 ),
                               ),
                             ],

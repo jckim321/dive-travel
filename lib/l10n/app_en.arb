@@ -208,6 +208,7 @@
   "sameBoatSeatConfirmed": "Payment completed and your seat is confirmed (test payment).",
   "exploreConsumerPayHint": "This is the shop's listed guest price.",
   "exploreNoResults": "No shops match that search.",
+  "exploreCountryEmpty": "No trips listed here yet",
   "exploreDiveStar": "Dive Star {stars}",
   "exploreRating": "{rating} · {count} reviews",
   "explorePriceWon": "{price} KRW",

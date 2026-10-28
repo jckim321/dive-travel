@@ -1260,6 +1260,12 @@ abstract class AppLocalizations {
   /// **'검색과 일치하는 샵이 없습니다.'**
   String get exploreNoResults;
 
+  /// 고른 나라에 등록된 상품이 없을 때 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 등록된 상품이 없어요'**
+  String get exploreCountryEmpty;
+
   /// 샵 카드의 Dive Star 배지입니다.
   ///
   /// In ko, this message translates to:

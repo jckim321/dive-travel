@@ -650,6 +650,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreNoResults => 'No shops match that search.';
 
   @override
+  String get exploreCountryEmpty => 'No trips listed here yet';
+
+  @override
   String exploreDiveStar(int stars) {
     return 'Dive Star $stars';
   }

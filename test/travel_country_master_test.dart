@@ -121,4 +121,76 @@ void main() {
     expect(TravelCountryMaster.search('없는나라'), isEmpty);
     expect(TravelCountryMaster.search(''), TravelCountryMaster.countries);
   });
+
+  test('주요 나라 칩은 권역 순서대로 두고 사이판·로타는 북마리아나다', () {
+    List<String> labels(String regionId) {
+      return TravelCountryMaster.featuredIn(regionId)
+          .map((place) => place.label)
+          .toList();
+    }
+
+    expect(labels(TravelRegionId.asia), [
+      '필리핀',
+      '인도네시아',
+      '말레이시아',
+      '태국',
+      '몰디브',
+      '일본',
+    ]);
+    expect(labels(TravelRegionId.pacific), [
+      '팔라우',
+      '얍',
+      '추크',
+      '괌',
+      '사이판',
+      '로타',
+      '피지',
+      '호주',
+    ]);
+    expect(labels(TravelRegionId.europe), [
+      '몰타',
+      '그리스',
+      '크로아티아',
+      '이탈리아',
+      '스페인',
+    ]);
+    expect(labels(TravelRegionId.africa), [
+      '이집트',
+      '남아공',
+      '모잠비크',
+      '세이셸',
+      '탄자니아',
+    ]);
+    expect(labels(TravelRegionId.northAmerica), [
+      '멕시코',
+      '바하마',
+      '벨리즈',
+      '미국',
+      '케이맨',
+    ]);
+    expect(labels(TravelRegionId.southAmerica), [
+      '에콰도르',
+      '콜롬비아',
+      '브라질',
+      '칠레',
+    ]);
+
+    final mariana = TravelCountryMaster.featured
+        .where((place) => place.label == '사이판' || place.label == '로타');
+    expect(mariana.map((place) => place.countryId), [
+      'northernMariana',
+      'northernMariana',
+    ]);
+    for (final place in TravelCountryMaster.featured) {
+      final country = TravelCountryMaster.countries.singleWhere(
+        (item) => item.id == place.countryId,
+      );
+      expect(country.regionId, place.regionId);
+      expect(country.featured, isTrue);
+    }
+    expect(
+      TravelCountryMaster.countries.singleWhere((c) => c.id == 'korea').featured,
+      isFalse,
+    );
+  });
 }

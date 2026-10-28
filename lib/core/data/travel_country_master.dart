@@ -55,6 +55,20 @@ class TravelCountry {
   final String? zone;
   final String? sea;
   final List<String> aliases;
+
+  /// True when this country appears in [TravelCountryMaster.featured].
+  bool get featured => TravelCountryMaster.featured.any(
+        (place) => place.countryId == id,
+      );
+}
+
+/// One chip under a region chevron. Edit [TravelCountryMaster.featured].
+class TravelFeaturedPlace {
+  const TravelFeaturedPlace(this.regionId, this.countryId, this.label);
+
+  final String regionId;
+  final String countryId;
+  final String label;
 }
 
 /// Country master for the travel tab. One region each, optional sea, aliases.
@@ -567,6 +581,51 @@ abstract final class TravelCountryMaster {
       aliases: ['argentina'],
     ),
   ];
+
+  /// 권역 ▾ 메뉴에 나오는 주요 나라. 순서와 글자를 여기서 바꿉니다.
+  /// 같은 나라를 사이판·로타처럼 칩 두 개로 둘 수 있습니다.
+  static const featured = <TravelFeaturedPlace>[
+    TravelFeaturedPlace(TravelRegionId.asia, 'philippines', '필리핀'),
+    TravelFeaturedPlace(TravelRegionId.asia, 'indonesia', '인도네시아'),
+    TravelFeaturedPlace(TravelRegionId.asia, 'malaysia', '말레이시아'),
+    TravelFeaturedPlace(TravelRegionId.asia, 'thailand', '태국'),
+    TravelFeaturedPlace(TravelRegionId.asia, 'maldives', '몰디브'),
+    TravelFeaturedPlace(TravelRegionId.asia, 'japan', '일본'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'palau', '팔라우'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'yap', '얍'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'chuuk', '추크'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'guam', '괌'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'northernMariana', '사이판'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'northernMariana', '로타'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'fiji', '피지'),
+    TravelFeaturedPlace(TravelRegionId.pacific, 'australia', '호주'),
+    TravelFeaturedPlace(TravelRegionId.europe, 'malta', '몰타'),
+    TravelFeaturedPlace(TravelRegionId.europe, 'greece', '그리스'),
+    TravelFeaturedPlace(TravelRegionId.europe, 'croatia', '크로아티아'),
+    TravelFeaturedPlace(TravelRegionId.europe, 'italy', '이탈리아'),
+    TravelFeaturedPlace(TravelRegionId.europe, 'spain', '스페인'),
+    TravelFeaturedPlace(TravelRegionId.africa, 'egypt', '이집트'),
+    TravelFeaturedPlace(TravelRegionId.africa, 'southAfrica', '남아공'),
+    TravelFeaturedPlace(TravelRegionId.africa, 'mozambique', '모잠비크'),
+    TravelFeaturedPlace(TravelRegionId.africa, 'seychelles', '세이셸'),
+    TravelFeaturedPlace(TravelRegionId.africa, 'tanzania', '탄자니아'),
+    TravelFeaturedPlace(TravelRegionId.northAmerica, 'mexico', '멕시코'),
+    TravelFeaturedPlace(TravelRegionId.northAmerica, 'bahamas', '바하마'),
+    TravelFeaturedPlace(TravelRegionId.northAmerica, 'belize', '벨리즈'),
+    TravelFeaturedPlace(TravelRegionId.northAmerica, 'usa', '미국'),
+    TravelFeaturedPlace(TravelRegionId.northAmerica, 'cayman', '케이맨'),
+    TravelFeaturedPlace(TravelRegionId.southAmerica, 'ecuador', '에콰도르'),
+    TravelFeaturedPlace(TravelRegionId.southAmerica, 'colombia', '콜롬비아'),
+    TravelFeaturedPlace(TravelRegionId.southAmerica, 'brazil', '브라질'),
+    TravelFeaturedPlace(TravelRegionId.southAmerica, 'chile', '칠레'),
+  ];
+
+  static List<TravelFeaturedPlace> featuredIn(String regionId) {
+    return [
+      for (final place in featured)
+        if (place.regionId == regionId) place,
+    ];
+  }
 
   /// Zone names are not countries. They still resolve to the Pacific region.
   static const zoneLabels = <String, String>{

@@ -9,11 +9,15 @@ class ContinentAtlasRail extends StatelessWidget {
   const ContinentAtlasRail({
     super.key,
     required this.selectedId,
+    required this.menuId,
     required this.onSelected,
+    required this.onMenu,
   });
 
   final String selectedId;
+  final String? menuId;
   final ValueChanged<String> onSelected;
+  final ValueChanged<String> onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +54,9 @@ class ContinentAtlasRail extends StatelessWidget {
                   id: id,
                   label: travelRegionLabel(l10n, id),
                   selected: selectedId == id,
+                  menuOpen: menuId == id,
                   onTap: () => onSelected(id),
+                  onMenu: id == TravelRegionId.all ? null : () => onMenu(id),
                 );
               },
             ),
@@ -79,13 +85,17 @@ class _AtlasNode extends StatelessWidget {
     required this.id,
     required this.label,
     required this.selected,
+    required this.menuOpen,
     required this.onTap,
+    required this.onMenu,
   });
 
   final String id;
   final String label;
   final bool selected;
+  final bool menuOpen;
   final VoidCallback onTap;
+  final VoidCallback? onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -93,17 +103,20 @@ class _AtlasNode extends StatelessWidget {
     final fill = selected
         ? AppTheme.gold.withValues(alpha: 0.22)
         : Colors.white.withValues(alpha: 0.06);
+    final labelColor = selected
+        ? AppTheme.goldSoft
+        : Colors.white.withValues(alpha: 0.88);
 
-    return InkWell(
-      key: Key('continent-filter-$id'),
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          InkWell(
+            key: Key('continent-filter-$id'),
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(18),
+            child: AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               width: 36,
               height: 36,
@@ -127,19 +140,43 @@ class _AtlasNode extends StatelessWidget {
                 color: selected ? AppTheme.goldSoft : const Color(0xFFB8CDD8),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              softWrap: false,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                color: selected ? AppTheme.goldSoft : Colors.white.withValues(alpha: 0.88),
-                height: 1.1,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: Text(
+                  label,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    color: labelColor,
+                    height: 1.1,
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
+              if (onMenu != null)
+                InkWell(
+                  key: Key('continent-chevron-$id'),
+                  onTap: onMenu,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2),
+                    child: Text(
+                      '▾',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1,
+                        color: menuOpen ? AppTheme.gold : labelColor,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -139,7 +139,8 @@ void main() {
     );
     expect(find.text(l10n.exploreSeeMore), findsWidgets);
     expect(find.byKey(const Key('explore-region-row-other')), findsNothing);
-    expect(find.byKey(const Key('explore-sea-unmatched')), findsOneWidget);
+    expect(find.byKey(const Key('explore-sea-unmatched')), findsNothing);
+    expect(find.byKey(const Key('explore-sea-rail')), findsNothing);
     expect(
       find.descendant(
         of: row,

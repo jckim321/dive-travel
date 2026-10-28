@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -34,7 +35,7 @@ void main() {
     );
   }
 
-  test('권역·나라·해역·검색이 모두 맞아야 보인다', () {
+  test('권역·나라·검색이 맞아야 보이고 못 찾은 상품은 거르지 않는다', () {
     final bohol = shop(id: 'bohol', country: '필리핀', location: '필리핀 보홀');
     final dahab = shop(id: 'dahab', country: '이집트', location: '이집트 다합');
     final lost = shop(id: 'lost', country: '없는나라', location: '없는바다');
@@ -44,8 +45,7 @@ void main() {
       exploreShopMatches(
         shop: bohol,
         regionId: TravelRegionId.asia,
-        countryId: 'philippines',
-        seaId: TravelSea.red,
+        countryId: 'egypt',
         needle: '보홀',
       ),
       isFalse,
@@ -55,40 +55,27 @@ void main() {
         shop: dahab,
         regionId: TravelRegionId.africa,
         countryId: 'egypt',
-        seaId: TravelSea.red,
         needle: '다합',
       ),
       isTrue,
     );
     expect(
-      exploreShopMatches(
-        shop: lost,
-        regionId: TravelRegionId.all,
-        seaId: exploreSeaUnmatched,
-      ),
+      exploreShopMatches(shop: lost, regionId: TravelRegionId.all),
       isTrue,
     );
     expect(
-      exploreShopMatches(
-        shop: bohol,
-        regionId: TravelRegionId.all,
-        seaId: exploreSeaUnmatched,
-      ),
+      exploreShopMatches(shop: lost, regionId: TravelRegionId.asia),
       isFalse,
     );
     expect(travelCountryForShop(zone), isNull);
     expect(travelRegionForShop(zone), TravelRegionId.pacific);
     expect(
-      exploreShopMatches(
-        shop: zone,
-        regionId: TravelRegionId.pacific,
-        seaId: exploreSeaUnmatched,
-      ),
+      exploreShopMatches(shop: zone, regionId: TravelRegionId.pacific),
       isTrue,
     );
   });
 
-  testWidgets('나라 드롭다운과 해역 칩이 상품을 함께 거른다', (tester) async {
+  testWidgets('▾는 주요 나라만 열고 원 이름은 권역 전체다', (tester) async {
     tester.view.physicalSize = const Size(800, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -116,185 +103,128 @@ void main() {
     await tester.pump();
 
     final l10n = AppLocalizations.of(tester.element(find.byType(ExploreScreen)));
-    expect(find.byKey(const Key('explore-sea-rail')), findsOneWidget);
-    expect(
-      tester.widget<Material>(find.byKey(const Key('explore-sea-indian'))).color,
-      Colors.white,
-    );
-    expect(
-      tester.widget<Material>(find.byKey(const Key('explore-sea-red'))).color,
-      Colors.white,
-    );
+    expect(find.byKey(const Key('explore-sea-rail')), findsNothing);
+    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
+    expect(find.byKey(const Key('continent-chevron-all')), findsNothing);
+    expect(find.text('▾'), findsWidgets);
     expect(find.byKey(const Key('explore-region-row-asia')), findsOneWidget);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     expect(find.text(l10n.exploreNoResults), findsNothing);
-    expect(
-      tester.getSize(find.byKey(const Key('explore-sea-southPacific'))).width,
-      greaterThan(
-        tester.getSize(find.byKey(const Key('explore-sea-red'))).width,
-      ),
-    );
-    expect(find.text(l10n.exploreSeaIndian), findsOneWidget);
-    expect(find.text(l10n.exploreSeaRed), findsOneWidget);
-    expect(find.text(l10n.exploreSeaCaribbean), findsOneWidget);
-    expect(find.text(l10n.exploreSeaSouthPacific), findsOneWidget);
-    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
+    expect(find.text(l10n.exploreCountryEmpty), findsNothing);
 
     await tester.tap(find.byKey(const Key('continent-filter-asia')));
     await tester.pump();
-
-    expect(find.byKey(const Key('explore-country-philippines')), findsOneWidget);
-    expect(find.byKey(const Key('explore-country-vietnam')), findsOneWidget);
-    expect(find.byKey(const Key('explore-country-taiwan')), findsOneWidget);
-    expect(
-      tester
-          .widget<Opacity>(find.byKey(const Key('explore-country-dim-korea')))
-          .opacity,
-      0.38,
-    );
-    expect(
-      tester
-          .widget<InkWell>(find.byKey(const Key('explore-country-korea')))
-          .onTap,
-      isNull,
-    );
-
-    await tester.tap(find.byKey(const Key('explore-country-philippines')));
-    await tester.pump();
+    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('continent-chevron-asia')));
+    await tester.pump();
+    expect(find.byKey(const Key('explore-country-menu')), findsOneWidget);
+    expect(find.byKey(const Key('explore-featured-philippines-필리핀')), findsOneWidget);
+    expect(find.byKey(const Key('explore-featured-japan-일본')), findsOneWidget);
+    expect(find.byKey(const Key('explore-featured-korea-한국')), findsNothing);
+    expect(find.byKey(const Key('explore-zone-micronesia')), findsNothing);
+    expect(find.text(l10n.exploreZoneMicronesia), findsNothing);
+
+    await tester.tap(find.byKey(const Key('explore-featured-philippines-필리핀')));
+    await tester.pump();
+    final philippines = find.byKey(const Key('explore-region-row-philippines'));
+    expect(philippines, findsOneWidget);
+    expect(find.descendant(of: philippines, matching: find.text('필리핀')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: philippines,
+        matching: find.byKey(const Key('shop-card-bohol-hideout')),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('shop-card-kerama-okinawa')), findsNothing);
+    expect(find.byKey(const Key('explore-region-row-asia')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('explore-country-philippines')));
+    await tester.tap(find.byKey(const Key('explore-featured-philippines-필리핀')));
     await tester.pump();
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-kerama-okinawa')), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('continent-filter-pacific')));
-    await tester.pump();
-    final menuScroll = find.descendant(
-      of: find.byKey(const Key('explore-country-menu')),
-      matching: find.byType(Scrollable),
+    expect(find.byKey(const Key('explore-region-row-philippines')), findsNothing);
+    expect(find.byKey(const Key('explore-region-row-asia')), findsOneWidget);
+    expect(
+      find.byKey(const Key('shop-card-kerama-okinawa'), skipOffstage: false),
+      findsOneWidget,
     );
-    for (final zone in [
-      TravelZone.micronesia,
-      TravelZone.melanesia,
-      TravelZone.polynesia,
-      TravelZone.other,
-    ]) {
-      await tester.scrollUntilVisible(
-        find.byKey(Key('explore-zone-$zone')),
-        120,
-        scrollable: menuScroll,
-      );
-      expect(find.byKey(Key('explore-zone-$zone')), findsOneWidget);
-    }
+
+    await tester.tap(find.byKey(const Key('continent-chevron-asia')));
+    await tester.pump();
+    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('continent-chevron-pacific')));
+    await tester.pump();
+    final saipan = find.byKey(const Key('explore-featured-northernMariana-사이판'));
+    final rota = find.byKey(const Key('explore-featured-northernMariana-로타'));
+    expect(saipan, findsOneWidget);
+    expect(rota, findsOneWidget);
+    expect(find.byKey(const Key('explore-zone-micronesia')), findsNothing);
+    await tester.tap(saipan);
+    await tester.pump();
+    expect(_chipColor(tester, saipan), AppTheme.navy);
+    expect(find.byKey(const Key('explore-country-empty')), findsOneWidget);
+    await tester.tap(rota);
+    await tester.pump();
+    expect(_chipColor(tester, rota), AppTheme.navy);
+    expect(_chipColor(tester, saipan), Colors.white);
+    expect(find.byKey(const Key('explore-country-empty')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('continent-filter-all')));
+    await tester.pump();
+
     await tester.scrollUntilVisible(
-      find.byKey(const Key('explore-country-newZealand')),
-      80,
-      scrollable: menuScroll,
-    );
-    expect(
-      tester
-          .widget<Opacity>(
-            find.byKey(const Key('explore-country-dim-newZealand')),
-          )
-          .opacity,
-      0.38,
-    );
-    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
-
-    await tester.tap(find.byKey(const Key('continent-filter-all')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-sea-red')));
-    await tester.pump();
-    expect(find.byKey(const Key('shop-card-dahab-bluehole')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
-
-    await tester.enterText(find.byKey(const Key('explore-search')), '보홀');
-    await tester.pump();
-    expect(find.byKey(const Key('shop-card-dahab-bluehole')), findsNothing);
-    expect(find.text(l10n.exploreNoResults), findsOneWidget);
-
-    await tester.enterText(find.byKey(const Key('explore-search')), '다합');
-    await tester.pump();
-    expect(find.byKey(const Key('shop-card-dahab-bluehole')), findsOneWidget);
-
-    await tester.enterText(find.byKey(const Key('explore-search')), '');
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-sea-red')));
-    await tester.pump();
-    expect(
-      tester.widget<Material>(find.byKey(const Key('explore-sea-red'))).color,
-      Colors.white,
-    );
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('continent-filter-asia')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-sea-indian')));
-    await tester.pump();
-    expect(find.byKey(const Key('shop-card-maldives-ari')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
-
-    await tester.tap(find.byKey(const Key('explore-sea-indian')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('continent-filter-all')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-sea-unmatched')));
-    await tester.pump();
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
-    expect(find.text(l10n.exploreNoResults), findsOneWidget);
-  });
-
-  testWidgets('전체는 권역·나라·해역만 풀고 검색어는 남긴다', (tester) async {
-    tester.view.physicalSize = const Size(800, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final store = DiverStore(MemoryDiverRepository.forTest());
-    addTearDown(store.dispose);
-    await tester.pumpWidget(
-      DiverStoreScope(
-        store: store,
-        child: MaterialApp(
-          locale: const Locale('ko'),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const ExploreScreen(),
-        ),
+      find.byKey(const Key('continent-chevron-northAmerica')),
+      120,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('continent-atlas-rail')),
+        matching: find.byType(Scrollable),
       ),
     );
+    await tester.tap(find.byKey(const Key('continent-chevron-northAmerica')));
     await tester.pump();
+    final bahamas = find.byKey(const Key('explore-featured-bahamas-바하마'));
+    expect(bahamas, findsOneWidget);
+    expect(
+      tester.widget<Opacity>(
+        find.byKey(const Key('explore-featured-dim-bahamas-바하마')),
+      ).opacity,
+      0.38,
+    );
+    expect(tester.widget<InkWell>(bahamas).onTap, isNotNull);
+    await tester.tap(bahamas);
     await tester.pump();
+    expect(find.byKey(const Key('explore-country-empty')), findsOneWidget);
+    expect(find.text(l10n.exploreCountryEmpty), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('continent-filter-asia')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-country-philippines')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('explore-sea-indian')));
-    await tester.pump();
     await tester.enterText(find.byKey(const Key('explore-search')), '보홀');
     await tester.pump();
-
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('continent-filter-all')),
+      -120,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('continent-atlas-rail')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     await tester.tap(find.byKey(const Key('continent-filter-all')));
     await tester.pump();
-
     expect(find.byKey(const Key('explore-country-menu')), findsNothing);
-    expect(
-      tester.widget<Material>(find.byKey(const Key('explore-sea-indian'))).color,
-      Colors.white,
-    );
+    expect(find.byKey(const Key('explore-country-empty')), findsNothing);
     expect(
       tester.widget<TextField>(find.byKey(const Key('explore-search'))).controller?.text,
       '보홀',
     );
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-maldives-ari')), findsNothing);
+    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+
   });
+}
+
+Color _chipColor(WidgetTester tester, Finder chip) {
+  return tester.widget<Material>(
+    find.ancestor(of: chip, matching: find.byType(Material)).first,
+  ).color!;
 }
