@@ -2420,6 +2420,22 @@ class DiverStore extends ChangeNotifier {
     return out;
   }
 
+  /// Re-read each shop this diver crafted so an admin approval replaces
+  /// the pending copy kept in memory.
+  Future<void> refreshCraftedTripShops() async {
+    final uid = _uid ?? '';
+    if (uid.isEmpty) {
+      return;
+    }
+    final shopIds = <String>{
+      for (final product in craftedProductsFor(uid))
+        if (product.shopId.trim().isNotEmpty) product.shopId.trim(),
+    };
+    for (final shopId in shopIds) {
+      await refreshShopStat(shopId);
+    }
+  }
+
   /// Shop id used for partner UI + saves.
   String get partnerOwnedShopId =>
       stats.ownedShopId ?? AppConstants.defaultPartnerShopId;

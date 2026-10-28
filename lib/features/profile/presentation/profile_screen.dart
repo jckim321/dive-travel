@@ -32,6 +32,50 @@ import 'package:dive_travel_app/features/profile/presentation/profile_settings_s
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+/// Reloads the signed-in diver's crafted shops when My is shown and on pull.
+class _CraftedShopRefresh extends StatefulWidget {
+  const _CraftedShopRefresh({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_CraftedShopRefresh> createState() => _CraftedShopRefreshState();
+}
+
+class _CraftedShopRefreshState extends State<_CraftedShopRefresh> {
+  var _refreshedWhileVisible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.of(context);
+    final store = DiverStoreScope.of(context);
+    if (!visible) {
+      _refreshedWhileVisible = false;
+      return;
+    }
+    if (_refreshedWhileVisible || (store.uid ?? '').isEmpty) {
+      return;
+    }
+    _refreshedWhileVisible = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      DiverStoreScope.of(context).refreshCraftedTripShops();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      key: const Key('profile-crafted-refresh'),
+      onRefresh: () => DiverStoreScope.of(context).refreshCraftedTripShops(),
+      child: widget.child,
+    );
+  }
+}
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -120,9 +164,11 @@ class ProfileScreen extends StatelessWidget {
                 booking,
           ];
 
-          return ListView(
+          return _CraftedShopRefresh(
+            child: ListView(
               key: const Key('profile-departure-desk'),
               padding: EdgeInsets.zero,
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 SafeArea(
                   bottom: false,
@@ -301,6 +347,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
           );
         },
       ),
