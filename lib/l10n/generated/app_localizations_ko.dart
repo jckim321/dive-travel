@@ -1062,6 +1062,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileCharmsTitle => '나의 바다 뱃지';
 
   @override
+  String get profileDivingPassportTitle => '나의 다이빙 여권';
+
+  @override
+  String profileDivingPassportRegions(int count) {
+    return '$count개 지역';
+  }
+
+  @override
   String get bookingVoucherOpen => '여행 바우처';
 
   @override

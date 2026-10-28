@@ -2064,6 +2064,18 @@ abstract class AppLocalizations {
   /// **'나의 바다 뱃지'**
   String get profileCharmsTitle;
 
+  /// No description provided for @profileDivingPassportTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 다이빙 여권'**
+  String get profileDivingPassportTitle;
+
+  /// No description provided for @profileDivingPassportRegions.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 지역'**
+  String profileDivingPassportRegions(int count);
+
   /// No description provided for @bookingVoucherOpen.
   ///
   /// In ko, this message translates to:

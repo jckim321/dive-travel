@@ -1089,6 +1089,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileCharmsTitle => 'My ocean charms';
 
   @override
+  String get profileDivingPassportTitle => 'My diving passport';
+
+  @override
+  String profileDivingPassportRegions(int count) {
+    return '$count regions';
+  }
+
+  @override
   String get bookingVoucherOpen => 'Travel voucher';
 
   @override

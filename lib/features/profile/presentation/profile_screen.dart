@@ -25,6 +25,7 @@ import 'package:dive_travel_app/features/explore/presentation/tour_checkout_shee
 import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.dart';
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
+import 'package:dive_travel_app/features/profile/presentation/diving_passport_card.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
 import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
@@ -194,6 +195,8 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      DivingPassportCard(regions: store.regions),
+                      const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.profileTripScheduleTitle),
                       const SizedBox(height: 12),
                       _TripScheduleBox(

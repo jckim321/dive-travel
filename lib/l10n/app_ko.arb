@@ -805,6 +805,13 @@
   "myReviewDeleted": "후기를 삭제했습니다.",
   "profileWriteReviewTitle": "내가 다녀온 여행 리뷰쓰기",
   "profileCharmsTitle": "나의 바다 뱃지",
+  "profileDivingPassportTitle": "나의 다이빙 여권",
+  "profileDivingPassportRegions": "{count}개 지역",
+  "@profileDivingPassportRegions": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "bookingVoucherOpen": "여행 바우처",
   "bookingVoucherTitle": "여행 바우처",
   "bookingVoucherSave": "폰에 저장·보관",

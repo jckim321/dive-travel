@@ -365,6 +365,13 @@
   "myReviewDeleted": "Review deleted.",
   "profileWriteReviewTitle": "Write a review of a trip I took",
   "profileCharmsTitle": "My ocean charms",
+  "profileDivingPassportTitle": "My diving passport",
+  "profileDivingPassportRegions": "{count} regions",
+  "@profileDivingPassportRegions": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "bookingVoucherOpen": "Travel voucher",
   "bookingVoucherTitle": "Travel voucher",
   "bookingVoucherSave": "Save to phone",
