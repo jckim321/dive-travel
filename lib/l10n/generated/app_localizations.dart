@@ -954,6 +954,54 @@ abstract class AppLocalizations {
   /// **'남미'**
   String get exploreRegionSouthAmerica;
 
+  /// 태평양 구역 미크로네시아입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'미크로네시아'**
+  String get exploreZoneMicronesia;
+
+  /// 태평양 구역 멜라네시아입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'멜라네시아'**
+  String get exploreZoneMelanesia;
+
+  /// 태평양 구역 폴리네시아입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'폴리네시아'**
+  String get exploreZonePolynesia;
+
+  /// 태평양 구역 그 밖입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'그 밖'**
+  String get exploreZoneOther;
+
+  /// 해역 칩 인도양입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'인도양'**
+  String get exploreSeaIndian;
+
+  /// 해역 칩 홍해입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'홍해'**
+  String get exploreSeaRed;
+
+  /// 해역 칩 카리브해입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'카리브해'**
+  String get exploreSeaCaribbean;
+
+  /// 해역 칩 남태평양입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'남태평양'**
+  String get exploreSeaSouthPacific;
+
   /// 강사 세션에서 예약 화면에 보이는 안내입니다.
   ///
   /// In ko, this message translates to:

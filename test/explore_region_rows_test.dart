@@ -138,7 +138,8 @@ void main() {
       findsNothing,
     );
     expect(find.text(l10n.exploreSeeMore), findsWidgets);
-    expect(find.text(l10n.exploreOtherRegion), findsNothing);
+    expect(find.byKey(const Key('explore-region-row-other')), findsNothing);
+    expect(find.byKey(const Key('explore-sea-unmatched')), findsOneWidget);
     expect(
       find.descendant(
         of: row,

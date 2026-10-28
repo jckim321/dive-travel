@@ -458,6 +458,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreRegionSouthAmerica => '남미';
 
   @override
+  String get exploreZoneMicronesia => '미크로네시아';
+
+  @override
+  String get exploreZoneMelanesia => '멜라네시아';
+
+  @override
+  String get exploreZonePolynesia => '폴리네시아';
+
+  @override
+  String get exploreZoneOther => '그 밖';
+
+  @override
+  String get exploreSeaIndian => '인도양';
+
+  @override
+  String get exploreSeaRed => '홍해';
+
+  @override
+  String get exploreSeaCaribbean => '카리브해';
+
+  @override
+  String get exploreSeaSouthPacific => '남태평양';
+
+  @override
   String get exploreProBanner => 'インストラクター確認済み · 全商品が優待価格です';
 
   @override

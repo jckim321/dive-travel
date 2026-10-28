@@ -641,8 +641,23 @@ abstract final class TravelCountryMaster {
   }
 }
 
+/// A listed country, ignoring bare zone names such as 미크로네시아.
+TravelCountry? travelCountryForShop(DiveShop shop) {
+  for (final raw in [shop.country, shop.location, ...shop.sites]) {
+    final country = TravelCountryMaster.match(raw);
+    if (country != null) {
+      return country;
+    }
+  }
+  return null;
+}
+
 /// Match a shop's country, then its place text, against the master list.
 String? travelRegionForShop(DiveShop shop) {
+  final country = travelCountryForShop(shop);
+  if (country != null) {
+    return country.regionId;
+  }
   for (final raw in [shop.country, shop.location, ...shop.sites]) {
     final id = TravelCountryMaster.regionIdFor(raw);
     if (id != null) {

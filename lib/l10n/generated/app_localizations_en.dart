@@ -473,6 +473,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreRegionSouthAmerica => 'South America';
 
   @override
+  String get exploreZoneMicronesia => 'Micronesia';
+
+  @override
+  String get exploreZoneMelanesia => 'Melanesia';
+
+  @override
+  String get exploreZonePolynesia => 'Polynesia';
+
+  @override
+  String get exploreZoneOther => 'Other areas';
+
+  @override
+  String get exploreSeaIndian => 'Indian Ocean';
+
+  @override
+  String get exploreSeaRed => 'Red Sea';
+
+  @override
+  String get exploreSeaCaribbean => 'Caribbean';
+
+  @override
+  String get exploreSeaSouthPacific => 'South Pacific';
+
+  @override
   String get exploreProBanner =>
       'Instructor verified · every shop shows the professional price';
 

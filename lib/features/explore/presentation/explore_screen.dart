@@ -11,8 +11,10 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_region_groups.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_region_screen.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -26,6 +28,8 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   final _search = TextEditingController();
   String _region = TravelRegionId.all;
+  String? _countryId;
+  String? _seaId;
 
   @override
   void initState() {
@@ -73,12 +77,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
         final needle = _search.text.trim().toLowerCase();
         // One card per resort (hull). Live public products replace catalog
         // shells; never expand every SKU into duplicate tiles.
-        final shops = DiveShopCatalog.hulls([
+        final listed = [
           for (final shop in store.shops)
-            if ((_region == TravelRegionId.all ||
-                    travelRegionForShop(shop) == _region) &&
-                (needle.isEmpty || shop.searchBlob.contains(needle)) &&
-                _showsOnExplore(shop, store))
+            if (_showsOnExplore(shop, store)) shop,
+        ];
+        final countryIdsWithProducts = <String>{
+          for (final shop in listed)
+            if (travelCountryForShop(shop) case final country?) country.id,
+        };
+        final shops = DiveShopCatalog.hulls([
+          for (final shop in listed)
+            if (exploreShopMatches(
+              shop: shop,
+              regionId: _region,
+              countryId: _countryId,
+              seaId: _seaId,
+              needle: needle,
+            ))
               shop,
         ])
           ..sort(
@@ -103,7 +118,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
               children: [
                 ContinentAtlasRail(
                   selectedId: _region,
-                  onSelected: (id) => setState(() => _region = id),
+                  onSelected: (id) => setState(() {
+                    _region = id;
+                    _countryId = null;
+                  }),
+                ),
+                if (_region != TravelRegionId.all)
+                  ExploreCountryMenu(
+                    regionId: _region,
+                    selectedCountryId: _countryId,
+                    countryIdsWithProducts: countryIdsWithProducts,
+                    onCountry: (id) => setState(() {
+                      _countryId = _countryId == id ? null : id;
+                    }),
+                  ),
+                ExploreSeaRail(
+                  selectedSeaId: _seaId,
+                  onSelected: (id) => setState(() {
+                    _seaId = _seaId == id ? null : id;
+                  }),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),

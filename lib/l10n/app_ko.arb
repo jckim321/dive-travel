@@ -406,6 +406,38 @@
   "@exploreRegionSouthAmerica": {
     "description": "여행상품 권역 남미입니다."
   },
+  "exploreZoneMicronesia": "미크로네시아",
+  "@exploreZoneMicronesia": {
+    "description": "태평양 구역 미크로네시아입니다."
+  },
+  "exploreZoneMelanesia": "멜라네시아",
+  "@exploreZoneMelanesia": {
+    "description": "태평양 구역 멜라네시아입니다."
+  },
+  "exploreZonePolynesia": "폴리네시아",
+  "@exploreZonePolynesia": {
+    "description": "태평양 구역 폴리네시아입니다."
+  },
+  "exploreZoneOther": "그 밖",
+  "@exploreZoneOther": {
+    "description": "태평양 구역 그 밖입니다."
+  },
+  "exploreSeaIndian": "인도양",
+  "@exploreSeaIndian": {
+    "description": "해역 칩 인도양입니다."
+  },
+  "exploreSeaRed": "홍해",
+  "@exploreSeaRed": {
+    "description": "해역 칩 홍해입니다."
+  },
+  "exploreSeaCaribbean": "카리브해",
+  "@exploreSeaCaribbean": {
+    "description": "해역 칩 카리브해입니다."
+  },
+  "exploreSeaSouthPacific": "남태평양",
+  "@exploreSeaSouthPacific": {
+    "description": "해역 칩 남태평양입니다."
+  },
   "exploreProBanner": "강사 자격 확인됨 · 모든 상품이 강사 우대가로 표시됩니다",
   "@exploreProBanner": {
     "description": "강사 세션에서 예약 화면에 보이는 안내입니다."
