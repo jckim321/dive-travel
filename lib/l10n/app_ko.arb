@@ -398,6 +398,12 @@
   "optionBookAddon": "이 구성 더해 예약",
   "optionBookIndividual": "이 구성만 예약",
   "explorePay": "결제하기",
+  "explorePayAmount": "{price}원 결제하기",
+  "@explorePayAmount": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
   "checkoutGuestName": "예약자 이름",
   "checkoutGuestBirth": "생년월일",
   "checkoutGuestContact": "연락처",

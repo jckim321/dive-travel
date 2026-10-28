@@ -165,12 +165,9 @@ void main() {
     await tester.tap(find.byKey(const Key('same-boat-plant-pay')));
     await tester.pumpAndSettle();
     expect(find.byType(TourCheckoutSheet), findsOneWidget);
-    expect(
-      find.byKey(const Key('checkout-review-cta')).evaluate().isNotEmpty ||
-          find.byKey(const Key('checkout-pay-same-boat')).evaluate().isNotEmpty ||
-          find.byKey(const Key('explore-checkout-pay')).evaluate().isNotEmpty,
-      isTrue,
-    );
+    expect(find.byKey(const Key('checkout-review-cta')), findsNothing);
+    expect(find.byKey(const Key('checkout-pay-same-boat')), findsNothing);
+    expect(find.byKey(const Key('explore-checkout-pay')), findsOneWidget);
   });
 
   testWidgets('빈자리가 없으면 샘플 카드만 보이고 깃발은 안내만 한다', (tester) async {

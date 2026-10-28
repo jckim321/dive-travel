@@ -960,6 +960,12 @@ abstract class AppLocalizations {
   /// **'결제하기'**
   String get explorePay;
 
+  /// No description provided for @explorePayAmount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{price}원 결제하기'**
+  String explorePayAmount(String price);
+
   /// No description provided for @checkoutGuestName.
   ///
   /// In ko, this message translates to:

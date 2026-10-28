@@ -478,6 +478,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get explorePay => 'Pay';
 
   @override
+  String explorePayAmount(String price) {
+    return 'Pay $price KRW';
+  }
+
+  @override
   String get checkoutGuestName => 'Booker name';
 
   @override

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 
@@ -98,7 +98,6 @@ class TourCheckoutSheet extends StatefulWidget {
 class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   static final _priceFormat = NumberFormat('#,###', 'en_US');
   DateTime _tourDate = DateTime.now().add(const Duration(days: 7));
-  var _bookStep = 0;
   var _qtyDiver = 1;
   var _qtyNondiver = 0;
   var _qtyChild = 0;
@@ -107,6 +106,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   final _selected = <String>{};
   var _paying = false;
   var _guestSeeded = false;
+  var _profileName = '';
+  var _profileBirth = '';
+  var _profileContact = '';
   final _guestName = TextEditingController();
   final _guestBirth = TextEditingController();
   final _guestContact = TextEditingController();
@@ -171,12 +173,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final store = DiverStoreScope.of(context);
     if (store.uid == null || store.loading) return;
     _guestSeeded = true;
-    final name = store.profileGuestName;
-    if (name.isNotEmpty) _guestName.text = name;
-    final birth = store.stats.birthDate.trim();
-    if (birth.isNotEmpty) _guestBirth.text = birth;
-    final contact = store.stats.phone.trim();
-    if (contact.isNotEmpty) _guestContact.text = contact;
+    _profileName = store.profileGuestName.trim();
+    _profileBirth = store.stats.birthDate.trim();
+    _profileContact = store.stats.phone.trim();
+    if (_profileName.isNotEmpty) _guestName.text = _profileName;
+    if (_profileBirth.isNotEmpty) _guestBirth.text = _profileBirth;
+    if (_profileContact.isNotEmpty) _guestContact.text = _profileContact;
   }
 
   @override
@@ -191,6 +193,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       _guestName.text.trim().isNotEmpty &&
       _guestBirth.text.trim().isNotEmpty &&
       _guestContact.text.trim().isNotEmpty;
+
+  bool get _choiceReady =>
+      !_workbench || _bookPackage || _selected.isNotEmpty;
 
   bool get _partyLocked =>
       widget.fromFlag && widget.lockedPartySize > 0;
@@ -500,7 +505,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         : l10n.exploreConsumerPrice;
     final bottom = MediaQuery.paddingOf(context).bottom;
     final cancelNote = product?.cancellationNote.trim() ?? '';
-    final reviewing = _workbench && _bookStep > 0;
     final diveStarLine = () {
       if (!shop.showsDiveStarBadge) {
         return '';
@@ -517,16 +521,12 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          reviewing ? l10n.checkoutStepReview : l10n.exploreCheckoutTitle,
-        ),
+        title: Text(l10n.exploreCheckoutTitle),
       ),
       body: Column(
         children: [
           Expanded(
-            child: reviewing
-                ? _reviewPage(l10n, theme, refund)
-                : CustomScrollView(
+            child: CustomScrollView(
                     slivers: [
                       SliverToBoxAdapter(
                         child: Padding(
@@ -753,8 +753,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            if (_hasProduct &&
-                                (!_workbench || _bookStep == 0)) ...[
+                            if (_hasProduct) ...[
                               _guestQtyBlock(l10n, theme),
                               const SizedBox(height: 12),
                             ],
@@ -762,20 +761,43 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               _bookingPanel(l10n, theme),
                               const SizedBox(height: 12),
                             ],
-                            Text(
-                              cancelNote.isNotEmpty
-                                  ? cancelNote
-                                  : l10n.refundPolicyHint(refund.percent),
-                              style: theme.textTheme.bodySmall,
+                            _guestIdentityFields(l10n),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  l10n.explorePriceWon(formatted),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.explorePerTrip,
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
                             Text(
-                              l10n.exploreWontChargeYet,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppTheme.muted,
+                              label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: quote.isProfessional
+                                    ? AppTheme.gold
+                                    : AppTheme.navy,
                               ),
                             ),
-                            const SizedBox(height: 88),
+                            if (quote.hasDiscount)
+                              Text(
+                                l10n.exploreOriginalPrice(
+                                  _priceFormat.format(quote.compareAtAmount!),
+                                ),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
@@ -790,72 +812,33 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
               padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + bottom),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _guestIdentityFields(l10n),
-                  const SizedBox(height: 8),
                   if (cannotBuy) const StaffCannotBuyNote(),
-                  Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              l10n.explorePriceWon(formatted),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            Text(
-                              l10n.explorePerTrip,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: quote.isProfessional
-                                ? AppTheme.gold
-                                : AppTheme.navy,
-                          ),
-                        ),
-                        if (quote.hasDiscount)
-                          Text(
-                            l10n.exploreOriginalPrice(
-                              _priceFormat.format(quote.compareAtAmount!),
-                            ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                      ],
-                    ),
+                  Text(
+                    cancelNote.isNotEmpty
+                        ? cancelNote
+                        : l10n.refundPolicyHint(refund.percent),
+                    style: theme.textTheme.bodySmall,
                   ),
-                  if (!_workbench)
-                    FilledButton(
-                      key: const Key('explore-checkout-pay'),
-                      onPressed: cannotBuy || !_guestReady || _paying
-                          ? null
-                          : _pay,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.navy,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22,
-                          vertical: 14,
-                        ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    key: const Key('explore-checkout-pay'),
+                    onPressed: cannotBuy ||
+                            !_guestReady ||
+                            !_choiceReady ||
+                            _paying
+                        ? null
+                        : _pay,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.navy,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 14,
                       ),
-                      child: _payButtonChild(l10n.explorePay),
-                    )
-                  else
-                    _workbenchFooter(l10n, cannotBuy: cannotBuy),
-                ],
-              ),
+                    ),
+                    child: _payButtonChild(l10n.explorePayAmount(formatted)),
+                  ),
                 ],
               ),
             ),
@@ -866,8 +849,10 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   Widget _guestIdentityFields(AppLocalizations l10n) {
-    return Column(
-      children: [
+    final rows = <Widget>[
+      if (_profileName.isNotEmpty)
+        _guestShown(l10n.checkoutGuestName, _profileName)
+      else
         TextField(
           key: const Key('checkout-guest-name'),
           controller: _guestName,
@@ -878,7 +863,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             isDense: true,
           ),
         ),
-        const SizedBox(height: 8),
+      if (_profileBirth.isNotEmpty)
+        _guestShown(l10n.checkoutGuestBirth, _profileBirth)
+      else
         TextField(
           key: const Key('checkout-guest-birth'),
           controller: _guestBirth,
@@ -890,7 +877,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             isDense: true,
           ),
         ),
-        const SizedBox(height: 8),
+      if (_profileContact.isNotEmpty)
+        _guestShown(l10n.checkoutGuestContact, _profileContact)
+      else
         TextField(
           key: const Key('checkout-guest-contact'),
           controller: _guestContact,
@@ -901,192 +890,34 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             isDense: true,
           ),
         ),
-      ],
-    );
-  }
-
-  /// Same-boat / flag checkout: pay CTA and SimPay copy (not Explore request).
-  bool get _sameBoatCheckout => widget.fromFlag || _checksSeats;
-
-  Widget _workbenchFooter(AppLocalizations l10n, {required bool cannotBuy}) {
-    final canReview = _bookPackage || _selected.isNotEmpty;
-    if (_bookStep == 0) {
-      return FilledButton(
-        key: const Key('checkout-review-cta'),
-        onPressed: cannotBuy || !canReview
-            ? null
-            : () => setState(() => _bookStep = 1),
-        style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-        child: Text(l10n.checkoutReviewCta),
-      );
-    }
-    final sameBoat = _sameBoatCheckout;
-    return Row(
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OutlinedButton(
-          key: const Key('checkout-edit-booking'),
-          onPressed: () => setState(() => _bookStep = 0),
-          child: Text(l10n.checkoutEditBooking),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: FilledButton(
-            key: Key(sameBoat ? 'checkout-pay-same-boat' : 'checkout-confirm'),
-            onPressed: cannotBuy || !_guestReady || _paying ? null : _pay,
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-            child: _payButtonChild(
-              sameBoat ? l10n.explorePay : l10n.checkoutConfirm,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _reviewPage(
-    AppLocalizations l10n,
-    ThemeData theme,
-    RefundQuote refund,
-  ) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-      children: [
-        Text(
-          l10n.checkoutStepReview,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.checkoutReviewDetailHint,
-          style: theme.textTheme.bodyMedium?.copyWith(color: AppTheme.muted),
-        ),
-        const SizedBox(height: 16),
-        _summaryCard(l10n, theme, refund),
-      ],
-    );
-  }
-
-  Widget _summaryCard(
-    AppLocalizations l10n,
-    ThemeData theme,
-    RefundQuote refund,
-  ) {
-    final product = widget.product;
-    final booking = _booking;
-    final departure = _summaryDeparture();
-    final flag = _summaryFlag();
-    final chosen = _chosenLabels();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4E8EC)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.shop.name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            if (chosen.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(chosen, style: theme.textTheme.bodyMedium),
-            ],
-            const SizedBox(height: 12),
-            if (departure != null)
-              _summaryLine(l10n.workbenchDepartureDate, departure),
-            if (flag != null) _summaryLine(l10n.workbenchFlagDeadline, flag),
-            if (_flagPayByLabel() != null)
-              _summaryLine(l10n.checkoutFlagPayBy, _flagPayByLabel()!),
-            _summaryLine(
-              l10n.checkoutGuests,
-              l10n.bookingPartySummary(
-                _qtyDiver,
-                _qtyNondiver,
-                _qtyChild,
-                _qtyInfant,
-              ),
-            ),
-            const Divider(height: 24),
-            for (final line in booking.lines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(line.label)),
-                    Text(_priceFormat.format(line.amount)),
-                  ],
-                ),
-              ),
-            if (product != null && product.focPayCount > 0)
-              Text(
-                l10n.checkoutFocLine(
-                  product.focPayCount,
-                  product.focFreeCount,
-                  booking.freeDivers,
-                ),
-                style: theme.textTheme.bodySmall,
-              ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.checkoutTotal(_priceFormat.format(booking.total)),
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.refundPolicyHint(refund.percent),
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _summaryLine(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 88,
-            child: Text(label, style: const TextStyle(color: AppTheme.muted)),
-          ),
-          Expanded(child: Text(value)),
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          rows[i],
         ],
-      ),
+      ],
     );
   }
 
-  String? _summaryDeparture() {
-    final product = widget.product;
-    final option = _findOption(_seatOptionId);
-    final start = option?.departureStart ?? product?.departureStart;
-    if (start != null) {
-      return DateFormat('yyyy.MM.dd').format(start);
-    }
-    final window = widget.shop.departure?.windowLabel;
-    if (window != null && window.isNotEmpty) {
-      return window;
-    }
-    return DateFormat('yyyy.MM.dd').format(_tourDate);
-  }
-
-  String? _summaryFlag() {
-    final option = _findOption(_seatOptionId);
-    final flag = option?.flagClosesAt ?? widget.product?.flagClosesAt;
-    if (flag == null) {
-      return null;
-    }
-    return DateFormat('yyyy.MM.dd').format(flag);
+  Widget _guestShown(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.muted,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ],
+    );
   }
 
   String? _flagPayByLabel() {

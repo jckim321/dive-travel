@@ -51,23 +51,18 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('프로필 값이 있으면 채우고, 비어 있으면 결제 버튼이 꺼진다', (tester) async {
+  testWidgets('프로필 값이 있으면 글씨만 보이고, 빈 칸을 채워야 결제가 켜진다', (tester) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     await pumpCheckout(tester, MemoryDiverRepository.forTest());
+    await tester.scrollUntilVisible(find.text(l10n.checkoutGuestName), 400);
 
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const Key('checkout-guest-name')))
-          .controller!
-          .text,
-      '테스트 다이버',
-    );
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const Key('checkout-guest-birth')))
-          .controller!
-          .text,
-      isEmpty,
-    );
+    expect(find.byKey(const Key('checkout-guest-name')), findsNothing);
+    expect(find.text('테스트 다이버'), findsOneWidget);
+    expect(find.byKey(const Key('checkout-guest-birth')), findsOneWidget);
+    expect(find.byKey(const Key('checkout-guest-contact')), findsOneWidget);
+    expect(find.text(l10n.exploreWontChargeYet), findsNothing);
+    expect(find.text(l10n.explorePayAmount('100,000')), findsOneWidget);
+    expect(find.textContaining('환불'), findsWidgets);
     expect(
       tester
           .widget<FilledButton>(find.byKey(const Key('explore-checkout-pay')))
@@ -92,7 +87,7 @@ void main() {
     );
   });
 
-  testWidgets('생년월일과 연락처가 프로필에 있으면 결제 버튼이 켜진다', (tester) async {
+  testWidgets('프로필에 셋이 있으면 입력칸 없이 결제 버튼이 켜진다', (tester) async {
     await pumpCheckout(
       tester,
       MemoryDiverRepository.forTest(
@@ -100,21 +95,15 @@ void main() {
         phone: '010-9999-0000',
       ),
     );
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    await tester.scrollUntilVisible(find.text(l10n.checkoutGuestName), 400);
 
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const Key('checkout-guest-birth')))
-          .controller!
-          .text,
-      '1988-03-04',
-    );
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const Key('checkout-guest-contact')))
-          .controller!
-          .text,
-      '010-9999-0000',
-    );
+    expect(find.byKey(const Key('checkout-guest-name')), findsNothing);
+    expect(find.byKey(const Key('checkout-guest-birth')), findsNothing);
+    expect(find.byKey(const Key('checkout-guest-contact')), findsNothing);
+    expect(find.text('테스트 다이버'), findsOneWidget);
+    expect(find.text('1988-03-04'), findsOneWidget);
+    expect(find.text('010-9999-0000'), findsOneWidget);
     expect(
       tester
           .widget<FilledButton>(find.byKey(const Key('explore-checkout-pay')))

@@ -467,6 +467,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get explorePay => '결제하기';
 
   @override
+  String explorePayAmount(String price) {
+    return '$price원 결제하기';
+  }
+
+  @override
   String get checkoutGuestName => '예약자 이름';
 
   @override

@@ -158,6 +158,7 @@
   "optionBookAddon": "Add this and book",
   "optionBookIndividual": "Book this only",
   "explorePay": "Pay",
+  "explorePayAmount": "Pay {price} KRW",
   "checkoutGuestName": "Booker name",
   "checkoutGuestBirth": "Date of birth",
   "checkoutGuestContact": "Contact",

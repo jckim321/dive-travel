@@ -461,6 +461,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get explorePay => '座席をリクエスト';
 
   @override
+  String explorePayAmount(String price) {
+    return '$price원 결제하기';
+  }
+
+  @override
   String get checkoutGuestName => '예약자 이름';
 
   @override
