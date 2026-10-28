@@ -8,18 +8,20 @@ class CCardProductFrame extends StatelessWidget {
     super.key,
     required this.child,
     this.radius = 5,
+    this.color = const Color(0xFF111111),
   });
 
   final Widget child;
   final double radius;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        color: const Color(0xFF111111),
-        border: Border.all(color: const Color(0xFF111111), width: 1.5),
+        color: color,
+        border: Border.all(color: color, width: 1.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius - 1.5),

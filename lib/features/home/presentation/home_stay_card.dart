@@ -139,15 +139,66 @@ class _TravelStayCard extends StatelessWidget {
         : shop.country.trim();
     final hasReviews = shop.reviewCount > 0;
 
+    final band = ColoredBox(
+      key: const Key('explore-card-band'),
+      color: _band,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              shop.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                height: 1.2,
+              ),
+            ),
+            if (region.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                region,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  height: 1.2,
+                ),
+              ),
+            ],
+            const SizedBox(height: 2),
+            Text(
+              hasReviews
+                  ? '★ ${l10n.exploreRating(shop.rating.toStringAsFixed(1), shop.reviewCount)}'
+                  : l10n.reviewNoReviewsYet,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: hasReviews ? AppTheme.gold : AppTheme.muted,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
     return GestureDetector(
       onTap: onDetails,
       behavior: HitTestBehavior.opaque,
       child: CCardProductFrame(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
+        color: _band,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final photo = AspectRatio(
               aspectRatio:
                   ListingCover.aspectRatio / ListingCover.travelPhotoScale,
               child: Stack(
@@ -179,59 +230,18 @@ class _TravelStayCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            ColoredBox(
-              key: const Key('explore-card-band'),
-              color: _band,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      shop.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.navy,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        height: 1.2,
-                      ),
-                    ),
-                    if (region.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        region,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.navy,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 2),
-                    Text(
-                      hasReviews
-                          ? '★ ${l10n.exploreRating(shop.rating.toStringAsFixed(1), shop.reviewCount)}'
-                          : l10n.reviewNoReviewsYet,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: hasReviews ? AppTheme.gold : AppTheme.muted,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                photo,
+                if (constraints.hasBoundedHeight)
+                  Expanded(child: band)
+                else
+                  band,
+              ],
+            );
+          },
         ),
       ),
     );
@@ -251,8 +261,8 @@ class _TravelBadge extends StatelessWidget {
         opacity: 0.45,
         child: _pill(
           l10n.exploreCardDiveStarRenew,
-          foreground: AppTheme.gold,
-          background: const Color(0xF2FFFFFF),
+          foreground: AppTheme.navy,
+          background: AppTheme.gold,
         ),
       );
     }
@@ -260,8 +270,8 @@ class _TravelBadge extends StatelessWidget {
       final marks = '★' * shop.stars.clamp(1, 3);
       return _pill(
         l10n.exploreCardDiveStar(marks),
-        foreground: AppTheme.gold,
-        background: const Color(0xF2FFFFFF),
+        foreground: AppTheme.navy,
+        background: AppTheme.gold,
       );
     }
     return _pill(

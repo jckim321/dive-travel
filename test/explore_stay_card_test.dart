@@ -39,7 +39,11 @@ void main() {
     );
   }
 
-  Future<void> pumpCards(WidgetTester tester, List<Widget> cards) async {
+  Future<void> pumpCards(
+    WidgetTester tester,
+    List<Widget> cards, {
+    double? cardHeight,
+  }) async {
     final store = DiverStore(MemoryDiverRepository.forTest());
     addTearDown(store.dispose);
     await tester.pumpWidget(
@@ -55,7 +59,7 @@ void main() {
               child: Column(
                 children: [
                   for (final card in cards)
-                    SizedBox(width: 180, child: card),
+                    SizedBox(width: 180, height: cardHeight, child: card),
                 ],
               ),
             ),
@@ -117,10 +121,20 @@ void main() {
     final review = tester.widget<Text>(find.text('★ 4.8 · 후기 23'));
     expect(review.style?.color, AppTheme.gold);
     expect(find.text(l10n.reviewNoReviewsYet), findsWidgets);
-    expect(find.text(l10n.exploreCardDiveStar('★★★')), findsOneWidget);
+    final starBadge = find.text(l10n.exploreCardDiveStar('★★★'));
+    expect(starBadge, findsOneWidget);
+    expect(tester.widget<Text>(starBadge).style?.color, AppTheme.navy);
+    final starPill = tester.widget<DecoratedBox>(
+      find.ancestor(of: starBadge, matching: find.byType(DecoratedBox)).first,
+    );
+    expect((starPill.decoration as BoxDecoration).color, AppTheme.gold);
     expect(find.text(l10n.exploreCardPartner), findsOneWidget);
     final renew = find.text(l10n.exploreCardDiveStarRenew);
     expect(renew, findsOneWidget);
+    final renewPill = tester.widget<DecoratedBox>(
+      find.ancestor(of: renew, matching: find.byType(DecoratedBox)).first,
+    );
+    expect((renewPill.decoration as BoxDecoration).color, AppTheme.gold);
     expect(
       tester
           .widget<Opacity>(
@@ -132,6 +146,40 @@ void main() {
     expect(find.textContaining('180,000'), findsNothing);
     expect(find.textContaining('126,000'), findsNothing);
     expect(find.byIcon(Icons.favorite_border), findsNWidgets(3));
+  });
+
+  testWidgets('카드가 내용보다 높으면 하늘색 띠가 맨 아래까지 찬다', (tester) async {
+    await pumpCards(
+      tester,
+      [
+        HomeStayCard(
+          shop: shop(
+            id: 'tall',
+            name: '보홀 오션 하이드아웃',
+            stars: 2,
+            rating: 4.8,
+            reviewCount: 23,
+          ),
+          travelTab: true,
+          onDetails: () {},
+        ),
+      ],
+      cardHeight: 360,
+    );
+
+    final frame = tester.getRect(find.byType(CCardProductFrame));
+    final band = tester.getRect(find.byKey(const Key('explore-card-band')));
+    expect(band.bottom, closeTo(frame.bottom, 2));
+    expect(band.height, greaterThan(80));
+    final frameBox = tester.widget<DecoratedBox>(
+      find
+          .descendant(
+            of: find.byType(CCardProductFrame),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect((frameBox.decoration as BoxDecoration).color, const Color(0xFFD7EEF8));
   });
 
   testWidgets('홈 기본 카드는 사진 아래 흰 설명을 유지한다', (tester) async {
