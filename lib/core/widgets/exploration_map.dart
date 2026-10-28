@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -234,13 +235,19 @@ class _MapCaption extends StatelessWidget {
   }
 }
 
-/// Daylight in the upper-right corner: a larger disk and a fan of rays
-/// that cross the top half of the ocean and the continents under them.
+/// Daylight in the upper-right corner: a disk and wedges that thin out
+/// and fade to nothing across the top half of the ocean.
 class ExplorationSunPainter extends CustomPainter {
   const ExplorationSunPainter();
 
   static const rayCount = 7;
-  static const rayOpacity = 0.36;
+
+  /// Opacity beside the disk. The tip is [rayTipOpacity].
+  static const rayOpacity = 0.4;
+  static const rayTipOpacity = 0.0;
+
+  /// Half-width of a wedge at the sun. The far end is a point.
+  static const rayBaseHalfWidth = 4.0;
   static const diskRadius = 22.0;
 
   static Offset originFor(Size size) => Offset(size.width - 26, 18);
@@ -262,6 +269,21 @@ class ExplorationSunPainter extends CustomPainter {
     return ends;
   }
 
+  /// Base, tip, base. The tip is a single point so the wedge fades out.
+  static List<Offset> rayVertices(Offset origin, Offset end) {
+    final delta = end - origin;
+    final length = delta.distance;
+    if (length == 0) {
+      return [origin, end, origin];
+    }
+    final perp = Offset(-delta.dy / length, delta.dx / length);
+    return [
+      origin + perp * rayBaseHalfWidth,
+      end,
+      origin - perp * rayBaseHalfWidth,
+    ];
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final origin = originFor(size);
@@ -276,17 +298,30 @@ class ExplorationSunPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: origin, radius: glowRadius));
     canvas.drawCircle(origin, glowRadius, glow);
 
-    final halo = Paint()
-      ..color = const Color(0xFFFFF3C4).withValues(alpha: 0.32)
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round;
-    final ray = Paint()
-      ..color = const Color(0xFFFFF6D0).withValues(alpha: rayOpacity)
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
     for (final end in rayEnds(size)) {
-      canvas.drawLine(origin, end, halo);
-      canvas.drawLine(origin, end, ray);
+      final vertices = rayVertices(origin, end);
+      final wedge = Path()
+        ..moveTo(vertices[0].dx, vertices[0].dy)
+        ..lineTo(vertices[1].dx, vertices[1].dy)
+        ..lineTo(vertices[2].dx, vertices[2].dy)
+        ..close();
+      final delta = end - origin;
+      final length = delta.distance;
+      final fadeStart = length == 0
+          ? origin
+          : origin + delta / length * diskRadius;
+      canvas.drawPath(
+        wedge,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            fadeStart,
+            end,
+            [
+              const Color(0xFFFFF6D0).withValues(alpha: rayOpacity),
+              const Color(0xFFFFF6D0).withValues(alpha: rayTipOpacity),
+            ],
+          ),
+      );
     }
     canvas.drawCircle(
       origin,

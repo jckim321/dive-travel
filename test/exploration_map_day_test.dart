@@ -83,8 +83,10 @@ void main() {
       find.byKey(const Key('exploration-map-sun')),
     );
     expect(sunPaint.painter, isA<ExplorationSunPainter>());
-    expect(ExplorationSunPainter.rayCount, inInclusiveRange(6, 8));
-    expect(ExplorationSunPainter.rayOpacity, inInclusiveRange(0.3, 0.4));
+    expect(ExplorationSunPainter.rayCount, 7);
+    expect(ExplorationSunPainter.rayOpacity, 0.4);
+    expect(ExplorationSunPainter.rayTipOpacity, 0);
+    expect(ExplorationSunPainter.rayBaseHalfWidth, lessThan(6));
     expect(ExplorationSunPainter.diskRadius, greaterThan(16));
     final mapSize = tester.getSize(find.byKey(const Key('exploration-map-sun')));
     final origin = ExplorationSunPainter.originFor(mapSize);
@@ -92,6 +94,12 @@ void main() {
     expect(origin.dy, lessThan(mapSize.height * 0.2));
     final ends = ExplorationSunPainter.rayEnds(mapSize);
     expect(ends, hasLength(ExplorationSunPainter.rayCount));
+    final wedge = ExplorationSunPainter.rayVertices(origin, ends.first);
+    expect(wedge[1], ends.first);
+    expect(
+      (wedge[0] - wedge[2]).distance,
+      closeTo(ExplorationSunPainter.rayBaseHalfWidth * 2, 0.01),
+    );
     var lowest = 0.0;
     for (final end in ends) {
       expect(end.dx, lessThan(origin.dx));
