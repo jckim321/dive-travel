@@ -15,12 +15,13 @@ void main() {
   const hint = '승인되면 빈자리를 열 수 있어요';
 
   ShopProduct trip({
+    String shopId = 's1',
     String submittedByUid = 'test-user',
     ProductPublishStatus status = ProductPublishStatus.approved,
   }) {
     return ShopProduct(
       id: 'trip-1',
-      shopId: 's1',
+      shopId: shopId,
       name: '블루홀',
       consumerPrice: 100000,
       professionalPrice: 80000,
@@ -33,8 +34,14 @@ void main() {
   Future<DiverStore> openStore(
     WidgetTester tester, {
     MemberGrade grade = MemberGrade.gold,
+    bool isAdmin = false,
+    String? ownedShopId,
   }) async {
-    final repo = MemoryDiverRepository.forTest();
+    final repo = MemoryDiverRepository.forTest(
+      isAdmin: isAdmin,
+      isBusiness: ownedShopId != null && ownedShopId.isNotEmpty,
+      ownedShopId: ownedShopId,
+    );
     if (grade != MemberGrade.silver) {
       await repo.setMemberGrade(uid: 'test-user', grade: grade);
       await repo.clearGradeCelebration('test-user');
@@ -45,6 +52,10 @@ void main() {
     await tester.pump();
     expect(store.uid, 'test-user');
     expect(store.stats.memberGrade, grade);
+    expect(store.stats.isAdmin, isAdmin);
+    if (ownedShopId != null) {
+      expect(store.stats.ownedShopId, ownedShopId);
+    }
     return store;
   }
 
@@ -188,11 +199,15 @@ void main() {
     expect(seatsHint(), findsNothing);
   });
 
-  testWidgets('관리자·파트너 게시 구역도 승인 상품은 버튼, 새 상품은 안내', (tester) async {
-    final gold = await openStore(tester);
+  testWidgets('파트너는 자기 샵 승인 상품만 버튼, 새 상품은 안내', (tester) async {
+    final partner = await openStore(
+      tester,
+      grade: MemberGrade.silver,
+      ownedShopId: 's1',
+    );
     await pumpForm(
       tester,
-      store: gold,
+      store: partner,
       partnerMode: true,
       existing: trip(),
     );
@@ -201,21 +216,60 @@ void main() {
     expect(tester.widget<FilledButton>(seatsButton()), isA<FilledButton>());
     await openSeats(tester);
 
-    await pumpForm(tester, store: gold, partnerMode: true);
+    await pumpForm(
+      tester,
+      store: partner,
+      partnerMode: true,
+      existing: trip(status: ProductPublishStatus.pending),
+    );
     await scrollFormToEnd(tester);
     expect(seatsButton(), findsNothing);
     expect(tester.widget<Text>(seatsHint()).data, hint);
 
-    await pumpForm(tester, store: gold, existing: trip());
+    await pumpForm(tester, store: partner, partnerMode: true);
+    await scrollFormToEnd(tester);
+    expect(seatsButton(), findsNothing);
+    expect(seatsHint(), findsOneWidget);
+  });
+
+  testWidgets('관리자는 모든 승인 상품에 버튼이 보이고 승인 대기는 안내', (tester) async {
+    final admin = await openStore(
+      tester,
+      grade: MemberGrade.silver,
+      isAdmin: true,
+    );
+    await pumpForm(
+      tester,
+      store: admin,
+      existing: trip(shopId: 'any-shop', submittedByUid: 'someone'),
+    );
     await scrollFormToEnd(tester);
     expect(seatsButton(), findsOneWidget);
 
-    final silver = await openStore(tester, grade: MemberGrade.silver);
     await pumpForm(
       tester,
-      store: silver,
+      store: admin,
+      existing: trip(
+        shopId: 'any-shop',
+        status: ProductPublishStatus.pending,
+      ),
+    );
+    await scrollFormToEnd(tester);
+    expect(seatsButton(), findsNothing);
+    expect(seatsHint(), findsOneWidget);
+  });
+
+  testWidgets('파트너는 남의 샵 상품에서 빈자리 입구가 숨는다', (tester) async {
+    final partner = await openStore(
+      tester,
+      grade: MemberGrade.silver,
+      ownedShopId: 'my-shop',
+    );
+    await pumpForm(
+      tester,
+      store: partner,
       partnerMode: true,
-      existing: trip(),
+      existing: trip(shopId: 'other-shop'),
     );
     await scrollFormToEnd(tester);
     expect(seatsButton(), findsNothing);

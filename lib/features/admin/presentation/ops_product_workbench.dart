@@ -4296,9 +4296,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ];
   }
 
-  /// Gold+ only. Own approved trip opens [SameBoatSeatsScreen]; a new or
-  /// not-yet-approved trip of the same diver shows a hint. Hidden otherwise.
+  /// Creator wizard keeps [craftedTripCanOpenSeats]. The one-screen form
+  /// shows the button for an admin on any approved product, or for a partner
+  /// on an approved product of [DiverStats.ownedShopId].
   Widget? _openSeatsEntry(AppLocalizations l10n) {
+    if (widget.creatorMode) {
+      return _creatorOpenSeatsEntry(l10n);
+    }
+    return _staffOpenSeatsEntry(l10n);
+  }
+
+  Widget? _creatorOpenSeatsEntry(AppLocalizations l10n) {
     final store = DiverStoreScope.of(context);
     final uid = store.uid ?? '';
     final grade = store.stats.memberGrade;
@@ -4324,25 +4332,60 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       viewerUid: uid,
       product: gate,
     )) {
-      final product = existing!;
-      return FilledButton(
-        key: const Key('workbench-open-seats'),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-          backgroundColor: AppTheme.ocean,
-          foregroundColor: Colors.white,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-        ),
-        onPressed: () {
-          Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (_) => SameBoatSeatsScreen(product: product),
-            ),
-          );
-        },
-        child: Text(l10n.sameBoatSeatsTitle),
-      );
+      return _openSeatsButton(l10n, existing!);
     }
+    return _openSeatsHint(l10n);
+  }
+
+  Widget? _staffOpenSeatsEntry(AppLocalizations l10n) {
+    final store = DiverStoreScope.of(context);
+    if ((store.uid ?? '').isEmpty) {
+      return null;
+    }
+    final existing = widget.existing;
+    final ownsShop = _partnerOwnsListedShop(store.stats.ownedShopId, existing);
+    if (!store.stats.isAdmin && !ownsShop) {
+      return null;
+    }
+    if (existing != null &&
+        existing.publishStatus == ProductPublishStatus.approved) {
+      return _openSeatsButton(l10n, existing);
+    }
+    return _openSeatsHint(l10n);
+  }
+
+  bool _partnerOwnsListedShop(String? ownedShopId, ShopProduct? existing) {
+    final owned = ownedShopId?.trim() ?? '';
+    if (owned.isEmpty) {
+      return false;
+    }
+    if (existing == null) {
+      return true;
+    }
+    return existing.shopId.trim() == owned;
+  }
+
+  Widget _openSeatsButton(AppLocalizations l10n, ShopProduct product) {
+    return FilledButton(
+      key: const Key('workbench-open-seats'),
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        backgroundColor: AppTheme.ocean,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+      ),
+      onPressed: () {
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => SameBoatSeatsScreen(product: product),
+          ),
+        );
+      },
+      child: Text(l10n.sameBoatSeatsTitle),
+    );
+  }
+
+  Widget _openSeatsHint(AppLocalizations l10n) {
     return Text(
       l10n.workbenchOpenSeatsAfterApproval,
       key: const Key('workbench-open-seats-hint'),
