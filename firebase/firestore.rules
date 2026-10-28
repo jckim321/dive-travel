@@ -16,7 +16,7 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && userDoc().is_admin == true;
+        && userDoc().get('is_admin', false) == true;
     }
 
     // Missing fields on old users docs must not deny everyone.
@@ -180,7 +180,12 @@ service cloud.firestore {
         isOwner(userId)
         && !accountClosed()
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked', 'is_instructor'])
+            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['is_instructor'])
+          || request.resource.data.is_instructor == false
+        )
         && (
           !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['member_grade'])

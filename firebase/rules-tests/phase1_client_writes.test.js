@@ -38,6 +38,18 @@ function loiPayload(overrides = {}) {
   };
 }
 
+function proApplication(overrides = {}) {
+  return {
+    is_verified_pro: 'pending',
+    is_instructor: false,
+    c_card_agency: 'PADI',
+    c_card_photo_url: 'https://example.com/ccards/uid/card.jpg',
+    c_card_submitted_at: new Date(),
+    updated_at: new Date(),
+    ...overrides,
+  };
+}
+
 function postPayload(overrides = {}) {
   return {
     type: 'buddy',
@@ -85,13 +97,35 @@ describe('phase 1 client write locks', { concurrency: 1 }, () => {
     await seed('users/uid-a', diverDoc());
     const db = testEnv.authenticatedContext('uid-a').firestore();
     await assertSucceeds(
-      db.collection('users').doc('uid-a').set({
-        is_verified_pro: 'pending',
-        is_instructor: false,
-        c_card_agency: 'PADI',
-        c_card_photo_url: 'https://example.com/card.jpg',
-        c_card_submitted_at: new Date(),
-      }, { merge: true }),
+      db.collection('users').doc('uid-a').set(proApplication(), { merge: true }),
+    );
+  });
+
+  it('lets a new member without is_instructor apply with false', async () => {
+    await seed('users/uid-new', {
+      email: 'new@example.com',
+      display_name: 'New',
+      user_role: 'diver',
+      member_grade: 'silver',
+      is_verified_pro: false,
+      c_card_agency: '',
+      c_card_photo_url: '',
+    });
+    const db = testEnv.authenticatedContext('uid-new').firestore();
+    await assertSucceeds(
+      db.collection('users').doc('uid-new').set(proApplication(), { merge: true }),
+    );
+  });
+
+  it('lets an existing instructor resubmit pending only', async () => {
+    await seed('users/uid-pro', diverDoc({
+      is_instructor: true,
+      is_verified_pro: true,
+    }));
+    const db = testEnv.authenticatedContext('uid-pro').firestore();
+    const { is_instructor: _omit, ...pendingOnly } = proApplication();
+    await assertSucceeds(
+      db.collection('users').doc('uid-pro').set(pendingOnly, { merge: true }),
     );
   });
 
