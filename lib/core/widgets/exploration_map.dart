@@ -27,15 +27,18 @@ class ExplorationMap extends StatelessWidget {
   final String exploredEnglish;
   final String exploredLocalized;
 
-  /// Wider than the old 1.9 panel so the shelves below appear sooner.
-  static const _aspect = 2.6;
+  /// About 215px tall on a phone, so the ocean sits under the shorter hero.
+  static const _aspect = 1.75;
 
   static const _sandFill = Color(0xFFF6EBD4);
   static const _sandStroke = Color(0xD9FFFFFF);
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        DecoratedBox(
       key: const Key('exploration-map-porthole'),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
@@ -147,17 +150,6 @@ class ExplorationMap extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Positioned(
-                        left: 4,
-                        top: 0,
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            key: Key('exploration-map-diver'),
-                            size: Size(42, 30),
-                            painter: _PeekingDiverPainter(),
-                          ),
-                        ),
-                      ),
                     ],
                   );
                 },
@@ -166,19 +158,32 @@ class ExplorationMap extends StatelessWidget {
           ),
         ),
       ),
+        ),
+        const Positioned(
+          right: 2,
+          top: 0,
+          child: IgnorePointer(
+            child: CustomPaint(
+              key: Key('exploration-map-diver'),
+              size: Size(56, 58),
+              painter: _PeekingDiverPainter(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _marker(DiveRegion region, Size size) {
     final point = projectLonLat(region.longitude, region.latitude, size);
-    final diameter = region.isGolden ? 16.0 : 12.0;
+    final diameter = region.isGolden ? 22.0 : 16.0;
     return Positioned(
       left: point.dx - diameter / 2,
       top: point.dy - diameter / 2,
       child: PulsingMarker(
         color: region.isGolden
-            ? const Color(0xFFC4A35A)
-            : const Color(0xFFD7F3FF),
+            ? const Color(0xFFC4922A)
+            : const Color(0xFFE2C36A),
         isGolden: region.isGolden,
         tooltip: region.isGolden
             ? '단골 우수 지역: ${region.name} (${region.logCount}로그)'
@@ -235,7 +240,7 @@ class _SunGlowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final origin = Offset(size.width - 26, 18);
+    final origin = Offset(size.width - 96, 24);
     final glow = Paint()
       ..shader = const RadialGradient(
         colors: [Color(0x99FFF6C8), Color(0x33FFE08A), Color(0x00FFF6C8)],
@@ -263,32 +268,80 @@ class _SunGlowPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Helmet and shoulders sitting on the top rim, clear of the caption.
+/// Mask and face leaning over the top-right brass rim.
 class _PeekingDiverPainter extends CustomPainter {
   const _PeekingDiverPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final helmet = Offset(size.width / 2, 12);
+    final head = Offset(size.width * 0.54, 20);
+
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(4, 16, size.width - 8, 14),
+        Rect.fromLTWH(8, 36, size.width - 14, 22),
+        const Radius.circular(11),
+      ),
+      Paint()..color = const Color(0xFF14344C),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(14, 34, size.width - 28, 8),
         const Radius.circular(6),
       ),
-      Paint()..color = const Color(0xFF1E4E6E),
+      Paint()..color = const Color(0xFF1E5674),
     );
-    canvas.drawCircle(helmet, 11, Paint()..color = const Color(0xFFF7F1E4));
+
+    canvas.drawCircle(head, 17, Paint()..color = const Color(0xFF102838));
     canvas.drawCircle(
-      helmet,
-      11,
-      Paint()
-        ..color = const Color(0xFFC4A35A)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6,
+      head.translate(0, 1.5),
+      13.5,
+      Paint()..color = const Color(0xFFF2CDB4),
+    );
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: head.translate(0, 0.4),
+          width: 24,
+          height: 13,
+        ),
+        const Radius.circular(6.5),
+      ),
+      Paint()..color = const Color(0xFF0C1C2A),
+    );
+    final glass = Paint()..color = const Color(0xFFB7E4F2);
+    final leftLens = head.translate(-5.2, 0.2);
+    final rightLens = head.translate(5.2, 0.2);
+    canvas.drawOval(
+      Rect.fromCenter(center: leftLens, width: 9, height: 8),
+      glass,
     );
     canvas.drawOval(
-      Rect.fromCenter(center: helmet.translate(0, 1), width: 14, height: 8),
-      Paint()..color = const Color(0xFF16324A),
+      Rect.fromCenter(center: rightLens, width: 9, height: 8),
+      glass,
+    );
+    final eye = Paint()..color = const Color(0xFF1A2834);
+    canvas.drawCircle(leftLens.translate(0, 0.4), 1.3, eye);
+    canvas.drawCircle(rightLens.translate(0, 0.4), 1.3, eye);
+    final glint = Paint()..color = const Color(0xCCFFFFFF);
+    canvas.drawCircle(leftLens.translate(-1.6, -1.4), 1.1, glint);
+    canvas.drawCircle(rightLens.translate(-1.6, -1.4), 1.1, glint);
+
+    final smile = Path()
+      ..moveTo(head.dx - 3.2, head.dy + 7.2)
+      ..quadraticBezierTo(
+        head.dx,
+        head.dy + 10.2,
+        head.dx + 3.2,
+        head.dy + 7.2,
+      );
+    canvas.drawPath(
+      smile,
+      Paint()
+        ..color = const Color(0xFF8C5344)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round,
     );
   }
 

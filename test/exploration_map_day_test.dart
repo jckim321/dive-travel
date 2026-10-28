@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
+import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
+import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
 import 'package:dive_travel_app/core/widgets/world_outline_painter.dart';
+import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
   const sandFill = Color(0xFFF6EBD4);
@@ -49,12 +54,12 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('낮 바다·황동 테두리·큰 제목이고 카드는 더 납작하다', (tester) async {
+  testWidgets('낮 바다·황동 테두리·큰 제목이고 지도는 더 높다', (tester) async {
     await pumpMap(tester);
 
     expect(
       tester.widget<AspectRatio>(find.byType(AspectRatio)).aspectRatio,
-      greaterThan(2.3),
+      closeTo(1.75, 0.01),
     );
 
     final porthole = tester.widget<DecoratedBox>(
@@ -89,7 +94,14 @@ void main() {
     final diver = tester.getRect(
       find.byKey(const Key('exploration-map-diver')),
     );
+    final card = tester.getRect(
+      find.byKey(const Key('exploration-map-porthole')),
+    );
     final caption = tester.getRect(find.text('My ocean map'));
+    expect(diver.width, closeTo(56, 1));
+    expect(diver.center.dx, greaterThan(card.center.dx));
+    expect(diver.top, lessThanOrEqualTo(card.top + 2));
+    expect(diver.right, greaterThan(card.right - 8));
     expect(diver.bottom, lessThan(caption.top));
 
     final markers = tester
@@ -98,16 +110,55 @@ void main() {
     expect(markers.where((marker) => marker.isGolden), hasLength(1));
     expect(
       markers.singleWhere((marker) => marker.isGolden).color,
-      const Color(0xFFC4A35A),
+      const Color(0xFFC4922A),
     );
     expect(
       markers.singleWhere((marker) => !marker.isGolden).color,
-      const Color(0xFFD7F3FF),
+      const Color(0xFFE2C36A),
+    );
+    expect(
+      find.byWidgetPredicate((widget) {
+        final decoration = widget is Container ? widget.decoration : null;
+        return decoration is BoxDecoration &&
+            decoration.color == const Color(0xFFFFF6E4);
+      }),
+      findsNWidgets(2),
     );
     for (final marker in find.byType(PulsingMarker).evaluate()) {
       final spot = tester.getCenter(find.byWidget(marker.widget));
       expect(diver.contains(spot), isFalse);
       expect(caption.contains(spot), isFalse);
     }
+  });
+
+  testWidgets('사진 카드는 폰 너비에서 약 140이다', (tester) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repo = MemoryDiverRepository.forTest();
+    final store = DiverStore(repo);
+    final session = SessionController(repo);
+    addTearDown(store.dispose);
+    addTearDown(session.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: SessionScope(
+          session: session,
+          child: const MaterialApp(
+            locale: Locale('ko'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: TravelPosterHeader()),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      tester.getSize(find.byKey(const Key('home-hero-card'))).height,
+      closeTo(140, 6),
+    );
   });
 }

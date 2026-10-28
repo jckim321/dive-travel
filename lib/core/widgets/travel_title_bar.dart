@@ -57,7 +57,7 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
     final session = SessionScope.of(context);
     final stats = DiverStoreScope.of(context).stats;
     final width = MediaQuery.sizeOf(context).width;
-    final cardHeight = (width * 0.48).clamp(168.0, 220.0);
+    final cardHeight = (width * 0.36).clamp(132.0, 152.0);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -96,6 +96,7 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                   return Opacity(
                     opacity: _fade.value,
                     child: SizedBox(
+                      key: const Key('home-hero-card'),
                       height: cardHeight,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -138,7 +139,7 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                               ),
                               Padding(
                                 padding:
-                                    const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                                    const EdgeInsets.fromLTRB(16, 10, 16, 10),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [

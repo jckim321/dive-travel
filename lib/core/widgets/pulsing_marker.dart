@@ -37,26 +37,49 @@ class _PulsingMarkerState extends State<PulsingMarker>
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.isGolden ? 16.0 : 12.0;
-    final marker = ScaleTransition(
-      scale: Tween<double>(begin: 0.8, end: 1.3).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
-      child: FadeTransition(
-        opacity: Tween<double>(begin: 0.45, end: 1).animate(_controller),
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: widget.color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: widget.color,
-                blurRadius: widget.isGolden ? 14 : 8,
-                spreadRadius: widget.isGolden ? 4 : 2,
+    final glow = widget.isGolden ? 22.0 : 16.0;
+    final core = widget.isGolden ? 9.0 : 7.0;
+    final marker = SizedBox(
+      width: glow,
+      height: glow,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final pulse = 0.82 + (_controller.value * 0.18);
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: glow * pulse,
+                height: glow * pulse,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.color.withValues(alpha: 0.42),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.95),
+                      blurRadius: widget.isGolden ? 8 : 5,
+                      spreadRadius: widget.isGolden ? 1.5 : 0.4,
+                    ),
+                  ],
+                ),
               ),
+              child!,
             ],
+          );
+        },
+        child: Container(
+          width: core,
+          height: core,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFFFFF6E4),
+            border: Border.all(
+              color: widget.isGolden
+                  ? const Color(0xFF8C6424)
+                  : const Color(0xFFD4AF57),
+              width: 1.3,
+            ),
           ),
         ),
       ),
