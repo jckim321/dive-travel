@@ -3896,6 +3896,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creatorWizardStepReview => 'Review';
 
   @override
+  String get creatorWizardReviewHint =>
+      'Press request approval to save. After an admin approves it, open leftover seats from My > your captain card to set the date and headcount.';
+
+  @override
+  String get creatorWizardSubmitted =>
+      'Approval request sent. After it is approved you can open leftover seats from My.';
+
+  @override
   String get creatorWizardSkip => 'Skip';
 
   @override

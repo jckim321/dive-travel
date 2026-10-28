@@ -1609,6 +1609,8 @@
   "creatorWizardStepPrice": "Price",
   "creatorWizardStepExtras": "Sold with the trip",
   "creatorWizardStepReview": "Review",
+  "creatorWizardReviewHint": "Press request approval to save. After an admin approves it, open leftover seats from My > your captain card to set the date and headcount.",
+  "creatorWizardSubmitted": "Approval request sent. After it is approved you can open leftover seats from My.",
   "creatorWizardSkip": "Skip",
   "creatorWizardAddToTrip": "Add to the trip",
   "creatorWizardBuySeparate": "Buy separately",

@@ -7146,6 +7146,18 @@ abstract class AppLocalizations {
   /// **'확인'**
   String get creatorWizardStepReview;
 
+  /// No description provided for @creatorWizardReviewHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.'**
+  String get creatorWizardReviewHint;
+
+  /// No description provided for @creatorWizardSubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 요청을 보냈어요. 승인되면 마이에서 빈자리를 열 수 있어요'**
+  String get creatorWizardSubmitted;
+
   /// No description provided for @creatorWizardSkip.
   ///
   /// In ko, this message translates to:

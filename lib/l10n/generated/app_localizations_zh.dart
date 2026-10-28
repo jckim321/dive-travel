@@ -3780,6 +3780,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get creatorWizardStepReview => '확인';
 
   @override
+  String get creatorWizardReviewHint =>
+      '승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.';
+
+  @override
+  String get creatorWizardSubmitted => '승인 요청을 보냈어요. 승인되면 마이에서 빈자리를 열 수 있어요';
+
+  @override
   String get creatorWizardSkip => '건너뛰기';
 
   @override

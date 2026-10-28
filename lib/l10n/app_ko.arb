@@ -2171,6 +2171,8 @@
   "creatorWizardStepPrice": "가격",
   "creatorWizardStepExtras": "함께 파는 것",
   "creatorWizardStepReview": "확인",
+  "creatorWizardReviewHint": "승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.",
+  "creatorWizardSubmitted": "승인 요청을 보냈어요. 승인되면 마이에서 빈자리를 열 수 있어요",
   "creatorWizardSkip": "건너뛰기",
   "creatorWizardAddToTrip": "여행에 더하기",
   "creatorWizardBuySeparate": "따로 구매",

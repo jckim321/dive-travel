@@ -13,6 +13,8 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
   const hint = '승인되면 빈자리를 열 수 있어요';
+  const creatorHint =
+      '승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.';
 
   ShopProduct trip({
     String shopId = 's1',
@@ -79,6 +81,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: TravelProductRegistrationScreen(
+            key: UniqueKey(),
             creatorMode: creatorMode,
             partnerMode: partnerMode,
             existing: existing,
@@ -138,8 +141,11 @@ void main() {
     expect(seatsHint(), findsNothing);
 
     await toStep5(tester);
+    expect(find.byKey(const Key('creator-wizard-next')), findsNothing);
+    expect(find.byKey(const Key('creator-wizard-prev')), findsOneWidget);
+    expect(find.text('승인 요청'), findsOneWidget);
     expect(seatsButton(), findsNothing);
-    expect(find.text(hint), findsOneWidget);
+    expect(find.text(creatorHint), findsOneWidget);
     expect(find.byKey(const Key('creator-wizard-preview')), findsOneWidget);
   });
 
@@ -172,7 +178,7 @@ void main() {
     );
     await toStep5(tester);
     expect(seatsButton(), findsNothing);
-    expect(find.text(hint), findsOneWidget);
+    expect(find.text(creatorHint), findsOneWidget);
   });
 
   testWidgets('실버와 남의 여행은 5단계에도 입구가 없다', (tester) async {

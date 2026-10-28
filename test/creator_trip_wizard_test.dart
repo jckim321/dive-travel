@@ -107,12 +107,9 @@ void main() {
           .onPressed,
       isNull,
     );
-    expect(
-      tester
-          .widget<FilledButton>(find.byKey(const Key('creator-wizard-next')))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const Key('creator-wizard-next')), findsNothing);
+    expect(find.byKey(const Key('creator-wizard-prev')), findsOneWidget);
+    expect(find.text(l10n.briefSubmit), findsOneWidget);
     expect(find.byKey(const Key('partner-product-save')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('creator-wizard-prev')));
@@ -202,5 +199,69 @@ void main() {
     expect(find.byKey(const Key('creator-wizard-next')), findsNothing);
     expect(find.byKey(const Key('admin-product-name')), findsOneWidget);
     expect(find.byKey(const Key('workbench-diver-price')), findsOneWidget);
+  });
+
+  testWidgets('승인 요청이 성공하면 화면이 닫히고 스낵바가 남는다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = DiverStore(MemoryDiverRepository.forTest());
+    addTearDown(store.dispose);
+    const product = ShopProduct(
+      id: 'trip-snack',
+      shopId: 'bohol-hideout',
+      name: '보홀 오션 하이드아웃',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+      publishStatus: ProductPublishStatus.pending,
+      active: true,
+    );
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AppTheme.light,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const TravelProductRegistrationScreen(
+                        creatorMode: true,
+                        existing: product,
+                        startEditing: true,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('open-wizard'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.text('open-wizard'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    for (var i = 0; i < 4; i++) {
+      await tester.tap(find.byKey(const Key('creator-wizard-next')));
+      await tester.pump();
+    }
+    expect(find.byKey(const Key('creator-wizard-step-5')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('partner-product-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(TravelProductRegistrationScreen), findsNothing);
+    expect(
+      find.text('승인 요청을 보냈어요. 승인되면 마이에서 빈자리를 열 수 있어요'),
+      findsOneWidget,
+    );
   });
 }

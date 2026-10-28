@@ -1867,18 +1867,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       _persistedProductId = product.id;
       _baselineSignature = _formSignature();
-      if (!quiet) {
-        final savedText = _savedMessage(
-          l10n,
-          effectiveIntent,
-          partnerLive: widget.partnerMode && !widget.creatorMode,
-        );
+      final savedText = _savedMessage(
+        l10n,
+        effectiveIntent,
+        partnerLive: widget.partnerMode && !widget.creatorMode,
+      );
+      final closeCreator = widget.creatorMode &&
+          effectiveIntent != ProductSaveIntent.keepEditing;
+      if (!quiet && !closeCreator) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(savedText)),
         );
       }
-      // Temp save stays on the form; submit/publish leaves.
-      if (effectiveIntent != ProductSaveIntent.keepEditing) {
+      // Temp save stays on the form. A creator submit closes immediately;
+      // Navigator.pop is not blocked by PopScope (that only vetoes system back).
+      if (closeCreator) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(SnackBar(content: Text(savedText)));
+        Navigator.of(context).pop();
+      } else if (effectiveIntent != ProductSaveIntent.keepEditing) {
         Navigator.of(context).pop();
       }
       return true;
@@ -2682,6 +2689,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   Widget _creatorStepNav(AppLocalizations l10n) {
+    final showNext = _creatorStep < 5;
     return Row(
       children: [
         Expanded(
@@ -2697,21 +2705,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             child: Text(l10n.creatorWizardBack),
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: FilledButton(
-            key: const Key('creator-wizard-next'),
-            onPressed: _creatorStep >= 5
-                ? null
-                : () => _creatorAdvance(_creatorStep + 1),
-            style: _readableFilledStyle(height: 44),
-            child: Text(
-              _creatorStep == 4 && _creatorOfferIds.isEmpty
-                  ? l10n.creatorWizardSkip
-                  : l10n.creatorWizardNext,
+        if (showNext) ...[
+          const SizedBox(width: 10),
+          Expanded(
+            child: FilledButton(
+              key: const Key('creator-wizard-next'),
+              onPressed: () => _creatorAdvance(_creatorStep + 1),
+              style: _readableFilledStyle(height: 44),
+              child: Text(
+                _creatorStep == 4 && _creatorOfferIds.isEmpty
+                    ? l10n.creatorWizardSkip
+                    : l10n.creatorWizardNext,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -4387,7 +4395,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _openSeatsHint(AppLocalizations l10n) {
     return Text(
-      l10n.workbenchOpenSeatsAfterApproval,
+      widget.creatorMode
+          ? l10n.creatorWizardReviewHint
+          : l10n.workbenchOpenSeatsAfterApproval,
       key: const Key('workbench-open-seats-hint'),
       style: const TextStyle(
         color: PartnerTheme.text,
@@ -4485,6 +4495,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }) {
     if (partnerLive && intent == ProductSaveIntent.submitForReview) {
       return l10n.partnerProductPublished;
+    }
+    if (widget.creatorMode && intent == ProductSaveIntent.submitForReview) {
+      return l10n.creatorWizardSubmitted;
     }
     return switch (intent) {
       ProductSaveIntent.keepEditing => l10n.briefKept,
