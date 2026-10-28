@@ -812,6 +812,19 @@
       "count": {"type": "int"}
     }
   },
+  "profileDivingPassportDives": "{count}회",
+  "@profileDivingPassportDives": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "profileDivingPassportShowAll": "모든 도장 보기 ({count}개)",
+  "@profileDivingPassportShowAll": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "profileDivingPassportShowLess": "도장 접기",
   "bookingVoucherOpen": "여행 바우처",
   "bookingVoucherTitle": "여행 바우처",
   "bookingVoucherSave": "폰에 저장·보관",

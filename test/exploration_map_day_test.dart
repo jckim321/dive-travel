@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
+import 'package:dive_travel_app/core/theme/region_neon.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
 import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
@@ -135,14 +136,18 @@ void main() {
     final markers = tester
         .widgetList<PulsingMarker>(find.byType(PulsingMarker))
         .toList();
-    expect(markers.where((marker) => marker.isGolden), hasLength(1));
+    expect(markers.where((marker) => marker.isGolden), isEmpty);
     expect(
-      markers.singleWhere((marker) => marker.isGolden).color,
-      const Color(0xFFC4922A),
+      markers.singleWhere((marker) => marker.tooltip!.contains('팔라우')).color,
+      regionNeonTeal,
     );
     expect(
-      markers.singleWhere((marker) => !marker.isGolden).color,
-      const Color(0xFFE2C36A),
+      markers.singleWhere((marker) => marker.tooltip!.contains('몰디브')).color,
+      regionNeonBrightTeal,
+    );
+    expect(
+      markers.every((marker) => !marker.doubleRing && !marker.softGlow),
+      isTrue,
     );
     expect(
       find.byWidgetPredicate((widget) {
@@ -188,5 +193,92 @@ void main() {
       tester.getSize(find.byKey(const Key('home-hero-card'))).height,
       closeTo(140, 6),
     );
+  });
+
+  testWidgets('지도 마커 금빛은 여권과 같은 단계다', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ExplorationMap(
+            regions: [
+              DiveRegion(
+                id: 'teal',
+                name: '청록해',
+                latitude: 7,
+                longitude: 134,
+                logCount: 5,
+                continent: 'pacific',
+              ),
+              DiveRegion(
+                id: 'bright',
+                name: '밝은바다',
+                latitude: 8,
+                longitude: 120,
+                logCount: 20,
+                continent: 'pacific',
+              ),
+              DiveRegion(
+                id: 'gold',
+                name: '금색',
+                latitude: 3,
+                longitude: 73,
+                logCount: 80,
+                continent: 'indian',
+              ),
+              DiveRegion(
+                id: 'ring',
+                name: '이중',
+                latitude: 10,
+                longitude: 100,
+                logCount: 250,
+                continent: 'asia',
+              ),
+              DiveRegion(
+                id: 'glow',
+                name: '빛',
+                latitude: 1,
+                longitude: 50,
+                logCount: 1200,
+                continent: 'asia',
+              ),
+            ],
+            titleEnglish: 'My ocean map',
+            titleLocalized: '나의 글로벌 바다 개척 지도',
+            exploredEnglish: 'Exploring 5 regions so far',
+            exploredLocalized: '현재까지 총 5개 지역 탐험 중',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    PulsingMarker marker(String name) {
+      return tester.widget<PulsingMarker>(
+        find.byWidgetPredicate(
+          (widget) => widget is PulsingMarker && widget.tooltip!.contains(name),
+        ),
+      );
+    }
+
+    final teal = marker('청록해');
+    final bright = marker('밝은바다');
+    final gold = marker('금색');
+    final ring = marker('이중');
+    final glow = marker('빛');
+    expect(teal.color, regionNeonTeal);
+    expect(teal.isGolden, isFalse);
+    expect(bright.color, regionNeonBrightTeal);
+    expect(bright.isGolden, isFalse);
+    expect(gold.color, regionNeonGold);
+    expect(gold.isGolden, isTrue);
+    expect(gold.doubleRing, isFalse);
+    expect(gold.softGlow, isFalse);
+    expect(ring.doubleRing, isTrue);
+    expect(ring.softGlow, isFalse);
+    expect(ring.color, regionNeonGold);
+    expect(glow.doubleRing, isTrue);
+    expect(glow.softGlow, isTrue);
+    expect(glow.isGolden, isTrue);
+    expect(glow.tooltip, contains('단골 우수 지역'));
   });
 }

@@ -2076,6 +2076,24 @@ abstract class AppLocalizations {
   /// **'{count}개 지역'**
   String profileDivingPassportRegions(int count);
 
+  /// No description provided for @profileDivingPassportDives.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}회'**
+  String profileDivingPassportDives(String count);
+
+  /// No description provided for @profileDivingPassportShowAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 도장 보기 ({count}개)'**
+  String profileDivingPassportShowAll(int count);
+
+  /// No description provided for @profileDivingPassportShowLess.
+  ///
+  /// In ko, this message translates to:
+  /// **'도장 접기'**
+  String get profileDivingPassportShowLess;
+
   /// No description provided for @bookingVoucherOpen.
   ///
   /// In ko, this message translates to:

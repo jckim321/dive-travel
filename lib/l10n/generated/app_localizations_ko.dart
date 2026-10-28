@@ -1070,6 +1070,19 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String profileDivingPassportDives(String count) {
+    return '$count회';
+  }
+
+  @override
+  String profileDivingPassportShowAll(int count) {
+    return '모든 도장 보기 ($count개)';
+  }
+
+  @override
+  String get profileDivingPassportShowLess => '도장 접기';
+
+  @override
   String get bookingVoucherOpen => '여행 바우처';
 
   @override

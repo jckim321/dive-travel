@@ -5,11 +5,15 @@ class PulsingMarker extends StatefulWidget {
     super.key,
     required this.color,
     this.isGolden = false,
+    this.doubleRing = false,
+    this.softGlow = false,
     this.tooltip,
   });
 
   final Color color;
   final bool isGolden;
+  final bool doubleRing;
+  final bool softGlow;
   final String? tooltip;
 
   @override
@@ -61,6 +65,12 @@ class _PulsingMarkerState extends State<PulsingMarker>
                       blurRadius: widget.isGolden ? 8 : 5,
                       spreadRadius: widget.isGolden ? 1.5 : 0.4,
                     ),
+                    if (widget.softGlow)
+                      BoxShadow(
+                        color: widget.color.withValues(alpha: 0.35),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      ),
                   ],
                 ),
               ),
@@ -68,20 +78,7 @@ class _PulsingMarkerState extends State<PulsingMarker>
             ],
           );
         },
-        child: Container(
-          width: core,
-          height: core,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFFFFF6E4),
-            border: Border.all(
-              color: widget.isGolden
-                  ? const Color(0xFF8C6424)
-                  : const Color(0xFFD4AF57),
-              width: 1.3,
-            ),
-          ),
-        ),
+        child: _core(core),
       ),
     );
 
@@ -90,5 +87,31 @@ class _PulsingMarkerState extends State<PulsingMarker>
     }
 
     return Tooltip(message: widget.tooltip!, child: marker);
+  }
+
+  Widget _core(double core) {
+    final ink = widget.isGolden ? const Color(0xFF8C6424) : widget.color;
+    final dot = Container(
+      width: core,
+      height: core,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFFFFF6E4),
+        border: Border.all(color: ink, width: 1.3),
+      ),
+    );
+    if (!widget.doubleRing) {
+      return dot;
+    }
+    return Container(
+      width: core + 5,
+      height: core + 5,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: widget.color, width: 1.2),
+      ),
+      child: dot,
+    );
   }
 }

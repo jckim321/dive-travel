@@ -1097,6 +1097,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String profileDivingPassportDives(String count) {
+    return '$count dives';
+  }
+
+  @override
+  String profileDivingPassportShowAll(int count) {
+    return 'Show all stamps ($count)';
+  }
+
+  @override
+  String get profileDivingPassportShowLess => 'Show fewer stamps';
+
+  @override
   String get bookingVoucherOpen => 'Travel voucher';
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/core/theme/region_neon.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 import 'package:dive_travel_app/core/widgets/bilingual_rotator.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
@@ -184,10 +185,10 @@ class ExplorationMap extends StatelessWidget {
       left: point.dx - diameter / 2,
       top: point.dy - diameter / 2,
       child: PulsingMarker(
-        color: region.isGolden
-            ? const Color(0xFFC4922A)
-            : const Color(0xFFE2C36A),
+        color: regionNeonColor(region.logCount),
         isGolden: region.isGolden,
+        doubleRing: regionNeonHasDoubleRing(region.logCount),
+        softGlow: regionNeonHasGlow(region.logCount),
         tooltip: region.isGolden
             ? '단골 우수 지역: ${region.name} (${region.logCount}로그)'
             : '${region.name} (${region.logCount}로그)',

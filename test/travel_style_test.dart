@@ -48,8 +48,8 @@ void main() {
 
   test('골든 지역은 딥 로컬 스타일이다', () {
     final insight = TravelStyleAnalyzer.analyze(
-      regions: [region(ContinentId.asia, logs: 20)],
-      stats: emptyStats.copyWith(totalLogCount: 20, uniqueRegionsCount: 1),
+      regions: [region(ContinentId.asia, logs: 50)],
+      stats: emptyStats.copyWith(totalLogCount: 50, uniqueRegionsCount: 1),
       shops: const [],
     );
     expect(insight.kind, TravelStyleKind.deepLocal);

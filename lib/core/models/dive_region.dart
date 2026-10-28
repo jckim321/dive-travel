@@ -38,7 +38,10 @@ class DiveRegion {
 }
 
 abstract final class AppRegionThresholds {
-  static const int goldenLogCount = 20;
+  static const int brightTealLogCount = 10;
+  static const int goldenLogCount = 50;
+  static const int doubleRingLogCount = 200;
+  static const int glowLogCount = 1000;
 }
 
 abstract final class ContinentId {

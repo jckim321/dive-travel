@@ -372,6 +372,19 @@
       "count": {"type": "int"}
     }
   },
+  "profileDivingPassportDives": "{count} dives",
+  "@profileDivingPassportDives": {
+    "placeholders": {
+      "count": {"type": "String"}
+    }
+  },
+  "profileDivingPassportShowAll": "Show all stamps ({count})",
+  "@profileDivingPassportShowAll": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "profileDivingPassportShowLess": "Show fewer stamps",
   "bookingVoucherOpen": "Travel voucher",
   "bookingVoucherTitle": "Travel voucher",
   "bookingVoucherSave": "Save to phone",
