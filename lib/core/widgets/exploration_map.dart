@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 import 'package:dive_travel_app/core/widgets/bilingual_rotator.dart';
 import 'package:dive_travel_app/core/widgets/pulsing_marker.dart';
 import 'package:dive_travel_app/core/widgets/world_outline_painter.dart';
@@ -103,14 +104,15 @@ class ExplorationMap extends StatelessWidget {
                       ),
                       for (final region in regions) _marker(region, size),
                       if (regions.isEmpty)
-                        const Align(
-                          alignment: Alignment(0, -0.12),
+                        Align(
+                          alignment: const Alignment(0, -0.12),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Text(
-                              '로그를 추가하면 여기에 불이 켜집니다',
+                              AppLocalizations.of(context).homeMapEmptyPrompt,
+                              key: const Key('exploration-map-empty'),
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF16324A),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

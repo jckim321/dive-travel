@@ -26,6 +26,32 @@
   "homeChipFavorites": "Saved",
   "homeChipPopular": "Popular",
   "homeChipLastMinute": "Last call",
+  "homeChipCertified": "Verified",
+  "homeChipClosing": "Last call",
+  "homeChipCurated": "Specials",
+  "homeChipCaptain": "Captain",
+  "homeMapEmptyPrompt": "Open your first ocean",
+  "homeApdiSpecial": "APDI SPECIAL",
+  "homeCrewRecruiting": "Recruiting a crew",
+  "homeSameBoatCountdown": "D-{days} · {seats} seats left",
+  "@homeSameBoatCountdown": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "seats": {"type": "int"}
+    }
+  },
+  "homeSameBoatSeatsLeft": "{seats} seats left",
+  "@homeSameBoatSeatsLeft": {
+    "placeholders": {
+      "seats": {"type": "int"}
+    }
+  },
+  "homeBoardingUntil": "D-{days} until departure",
+  "@homeBoardingUntil": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "homeNextDepartures": "Same boat · last call",
   "homeLastMinuteTitle": "Last-call departures",
   "homeLastMinuteCrew": "Dahab 3-day social crew",

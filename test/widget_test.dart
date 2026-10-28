@@ -306,7 +306,7 @@ void main() {
     expect(find.text('보홀'), findsNothing);
   });
 
-  testWidgets('홈 나를 위한 다음 바다는 신규에선 숨기고 로그 후엔 짧은 카드로 보인다', (
+  testWidgets('홈 나를 위한 다음 바다는 다가오는 여행이 없으면 숨긴다', (
     WidgetTester tester,
   ) async {
     await pumpSignedInApp(tester);
@@ -329,31 +329,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    for (var i = 0; i < 16 && find.byKey(const Key('for-you-panel')).evaluate().isEmpty; i++) {
-      await tester.drag(
-        find.byKey(const Key('home-scroll')),
-        const Offset(0, -420),
-      );
-      await tester.pump();
-    }
-    // Panel may already be off-screen; drag until title is visible.
-    for (var i = 0;
-        i < 20 &&
-            tester.any(find.text(l10n.homeForYouTitle)) == false;
-        i++) {
-      await tester.drag(
-        find.byKey(const Key('home-scroll')),
-        const Offset(0, -420),
-      );
-      await tester.pump();
-    }
-
-    expect(find.byKey(const Key('for-you-panel')), findsOneWidget);
-    expect(find.text(l10n.homeForYouTitle), findsOneWidget);
-    expect(find.text(l10n.homeNextOceanTitle), findsOneWidget);
-    expect(find.byKey(const Key('for-you-passport-peek')), findsNothing);
-    expect(find.byKey(const Key('for-you-stamps')), findsNothing);
-    expect(find.byKey(const Key('for-you-badge')), findsNothing);
+    expect(find.byKey(const Key('for-you-panel')), findsNothing);
+    expect(find.text(l10n.homeForYouTitle), findsNothing);
   });
 
   testWidgets('마이페이지에 강사 C-Card 인증 폼이 있다', (WidgetTester tester) async {

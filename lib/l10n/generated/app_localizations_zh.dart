@@ -90,6 +90,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeChipLastMinute => '마감임박';
 
   @override
+  String get homeChipCertified => '인증';
+
+  @override
+  String get homeChipClosing => '마감 임박';
+
+  @override
+  String get homeChipCurated => '기획';
+
+  @override
+  String get homeChipCaptain => '캡틴';
+
+  @override
+  String get homeMapEmptyPrompt => '첫 바다를 열어 보세요';
+
+  @override
+  String get homeApdiSpecial => 'APDI SPECIAL';
+
+  @override
+  String get homeCrewRecruiting => '크루 모집 중';
+
+  @override
+  String homeSameBoatCountdown(int days, int seats) {
+    return 'D-$days · $seats자리 남음';
+  }
+
+  @override
+  String homeSameBoatSeatsLeft(int seats) {
+    return '$seats자리 남음';
+  }
+
+  @override
+  String homeBoardingUntil(int days) {
+    return '출발까지 D-$days';
+  }
+
+  @override
   String get homeNextDepartures => '本班出发';
 
   @override

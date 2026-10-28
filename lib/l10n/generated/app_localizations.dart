@@ -264,6 +264,66 @@ abstract class AppLocalizations {
   /// **'마감임박'**
   String get homeChipLastMinute;
 
+  /// No description provided for @homeChipCertified.
+  ///
+  /// In ko, this message translates to:
+  /// **'인증'**
+  String get homeChipCertified;
+
+  /// No description provided for @homeChipClosing.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감 임박'**
+  String get homeChipClosing;
+
+  /// No description provided for @homeChipCurated.
+  ///
+  /// In ko, this message translates to:
+  /// **'기획'**
+  String get homeChipCurated;
+
+  /// No description provided for @homeChipCaptain.
+  ///
+  /// In ko, this message translates to:
+  /// **'캡틴'**
+  String get homeChipCaptain;
+
+  /// No description provided for @homeMapEmptyPrompt.
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 바다를 열어 보세요'**
+  String get homeMapEmptyPrompt;
+
+  /// No description provided for @homeApdiSpecial.
+  ///
+  /// In ko, this message translates to:
+  /// **'APDI SPECIAL'**
+  String get homeApdiSpecial;
+
+  /// No description provided for @homeCrewRecruiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'크루 모집 중'**
+  String get homeCrewRecruiting;
+
+  /// No description provided for @homeSameBoatCountdown.
+  ///
+  /// In ko, this message translates to:
+  /// **'D-{days} · {seats}자리 남음'**
+  String homeSameBoatCountdown(int days, int seats);
+
+  /// No description provided for @homeSameBoatSeatsLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'{seats}자리 남음'**
+  String homeSameBoatSeatsLeft(int seats);
+
+  /// No description provided for @homeBoardingUntil.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발까지 D-{days}'**
+  String homeBoardingUntil(int days);
+
   /// 홈에서 같은 배 마감 임박 목록 제목입니다.
   ///
   /// In ko, this message translates to:

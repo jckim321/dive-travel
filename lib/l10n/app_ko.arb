@@ -103,6 +103,32 @@
   "@homeChipLastMinute": {
     "description": "홈 분류 칩의 마감 임박입니다."
   },
+  "homeChipCertified": "인증",
+  "homeChipClosing": "마감 임박",
+  "homeChipCurated": "기획",
+  "homeChipCaptain": "캡틴",
+  "homeMapEmptyPrompt": "첫 바다를 열어 보세요",
+  "homeApdiSpecial": "APDI SPECIAL",
+  "homeCrewRecruiting": "크루 모집 중",
+  "homeSameBoatCountdown": "D-{days} · {seats}자리 남음",
+  "@homeSameBoatCountdown": {
+    "placeholders": {
+      "days": {"type": "int"},
+      "seats": {"type": "int"}
+    }
+  },
+  "homeSameBoatSeatsLeft": "{seats}자리 남음",
+  "@homeSameBoatSeatsLeft": {
+    "placeholders": {
+      "seats": {"type": "int"}
+    }
+  },
+  "homeBoardingUntil": "출발까지 D-{days}",
+  "@homeBoardingUntil": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "homeNextDepartures": "같은 배 · 마감 임박",
   "@homeNextDepartures": {
     "description": "홈에서 같은 배 마감 임박 목록 제목입니다."

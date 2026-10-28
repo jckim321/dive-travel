@@ -180,7 +180,7 @@ void main() {
       findsNothing,
     );
     expect(
-      find.descendant(of: sameBoat, matching: find.byType(HomeStayCard)),
+      find.descendant(of: sameBoat, matching: find.byType(HomeSameBoatCard)),
       findsOneWidget,
     );
     expect(

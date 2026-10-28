@@ -91,7 +91,7 @@ void main() {
     return tester.getTopLeft(finder).dy;
   }
 
-  testWidgets('홈 구역은 Dive Star, 같은 배, 스팟, 스페셜, 캡틴, 다음 바다 순이다', (
+  testWidgets('홈 구역은 Dive Star, 같은 배, 스팟, 스페셜, 캡틴 순이다', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
@@ -114,13 +114,13 @@ void main() {
     final hot = find.byKey(const Key('home-section-hot'));
     final curated = find.byKey(const Key('home-section-curated'));
     final captain = find.byKey(const Key('home-section-captain'));
-    final forYou = find.text(l10n.homeForYouTitle);
 
     expect(top(tester, diveStar), lessThan(top(tester, sameBoat)));
     expect(top(tester, sameBoat), lessThan(top(tester, hot)));
     expect(top(tester, hot), lessThan(top(tester, curated)));
     expect(top(tester, curated), lessThan(top(tester, captain)));
-    expect(top(tester, captain), lessThan(top(tester, forYou)));
+    expect(find.text(l10n.homeForYouTitle), findsNothing);
+    expect(find.text(l10n.homeMapEmptyPrompt), findsNothing);
     expect(find.text(l10n.homeShelfEmpty), findsNothing);
     expect(find.text(l10n.homeDiverPlannedSubtitle), findsOneWidget);
     expect(find.byKey(const Key('home-captain-needs-gold')), findsOneWidget);

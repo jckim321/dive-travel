@@ -92,6 +92,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeChipLastMinute => 'Last call';
 
   @override
+  String get homeChipCertified => 'Verified';
+
+  @override
+  String get homeChipClosing => 'Last call';
+
+  @override
+  String get homeChipCurated => 'Specials';
+
+  @override
+  String get homeChipCaptain => 'Captain';
+
+  @override
+  String get homeMapEmptyPrompt => 'Open your first ocean';
+
+  @override
+  String get homeApdiSpecial => 'APDI SPECIAL';
+
+  @override
+  String get homeCrewRecruiting => 'Recruiting a crew';
+
+  @override
+  String homeSameBoatCountdown(int days, int seats) {
+    return 'D-$days · $seats seats left';
+  }
+
+  @override
+  String homeSameBoatSeatsLeft(int seats) {
+    return '$seats seats left';
+  }
+
+  @override
+  String homeBoardingUntil(int days) {
+    return 'D-$days until departure';
+  }
+
+  @override
   String get homeNextDepartures => 'Same boat · last call';
 
   @override

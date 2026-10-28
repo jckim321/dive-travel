@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/travel_style.dart';
+import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
@@ -127,7 +131,163 @@ class HomeStayCard extends StatelessWidget {
   }
 }
 
-enum HomeShelfStyle { standard, diveStar, ranked }
+enum HomeShelfStyle { standard, diveStar, ranked, sameBoat, curated, captain }
+
+const homeCoral = Color(0xFFE06A5C);
+const homeTicketOrange = Color(0xFFE36A1E);
+
+/// Thousands separator, for example 100000 → ₩100,000.
+String homeWon(int amount) {
+  final negative = amount < 0;
+  final raw = amount.abs().toString();
+  final digits = StringBuffer();
+  for (var i = 0; i < raw.length; i++) {
+    if (i > 0 && (raw.length - i) % 3 == 0) {
+      digits.write(',');
+    }
+    digits.write(raw[i]);
+  }
+  return '${negative ? '-' : ''}₩$digits';
+}
+
+String homeDayLabel(DateTime date) {
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '${date.year}.$month.$day';
+}
+
+String homeNameInitial(String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  return String.fromCharCode(trimmed.runes.first);
+}
+
+String homeGradeLabel(AppLocalizations l10n, MemberGrade grade) {
+  return switch (grade) {
+    MemberGrade.silver => l10n.profileGradeSilver,
+    MemberGrade.gold => l10n.profileGradeGold,
+    MemberGrade.diamond => l10n.profileGradeDiamond,
+    MemberGrade.platinum => l10n.profileGradePlatinum,
+  };
+}
+
+ShopProduct? homeListingProduct(DiveShop shop, List<ShopProduct> products) {
+  final id = shop.listingProductId;
+  if (id == null) {
+    return null;
+  }
+  for (final product in products) {
+    if (product.id == id) {
+      return product;
+    }
+  }
+  return null;
+}
+
+class HomeBoatFacts {
+  const HomeBoatFacts({this.departure, this.capacity = 0, this.booked = 0});
+
+  final DateTime? departure;
+  final int capacity;
+  final int booked;
+
+  int? get seatsLeft {
+    if (capacity <= 0) {
+      return null;
+    }
+    final left = capacity - booked;
+    return left < 0 ? 0 : left;
+  }
+
+  /// Filled dots are booked seats, open dots are the rest of capacity.
+  String get dots {
+    if (capacity <= 0) {
+      return '';
+    }
+    final filled = booked.clamp(0, capacity);
+    return '${'●' * filled}${'○' * (capacity - filled)}';
+  }
+}
+
+/// Product seats win. An option is used only when the product has neither
+/// capacity nor a departure. Catalog departure is the last fallback.
+HomeBoatFacts homeBoatFacts(DiveShop shop, ShopProduct? product) {
+  if (product != null &&
+      (product.capacity > 0 || product.departureStart != null)) {
+    if (product.capacity > 0) {
+      return HomeBoatFacts(
+        departure: product.departureStart,
+        capacity: product.capacity,
+        booked: product.bookedSeats,
+      );
+    }
+    for (final option in product.options) {
+      if (option.capacity > 0) {
+        return HomeBoatFacts(
+          departure: option.departureStart ?? product.departureStart,
+          capacity: option.capacity,
+          booked: option.bookedSeats,
+        );
+      }
+    }
+    return HomeBoatFacts(departure: product.departureStart);
+  }
+  if (product != null) {
+    for (final option in product.options) {
+      if (option.capacity > 0 || option.departureStart != null) {
+        return HomeBoatFacts(
+          departure: option.departureStart,
+          capacity: option.capacity,
+          booked: option.bookedSeats,
+        );
+      }
+    }
+  }
+  final seed = shop.departure;
+  if (seed == null) {
+    return const HomeBoatFacts();
+  }
+  return HomeBoatFacts(
+    departure: seed.start,
+    capacity: seed.capacity,
+    booked: seed.bookedSeats,
+  );
+}
+
+class HomeCaptainIdentity {
+  const HomeCaptainIdentity({required this.name, required this.grade});
+
+  final String name;
+  final MemberGrade grade;
+}
+
+/// Name and grade only when a member record or the signed-in submitter has them.
+HomeCaptainIdentity? homeCaptainIdentity({
+  required String submittedByUid,
+  required String viewerUid,
+  required String viewerName,
+  required MemberGrade viewerGrade,
+  required List<MemberAccount> members,
+}) {
+  if (submittedByUid.isEmpty) {
+    return null;
+  }
+  for (final member in members) {
+    if (member.uid == submittedByUid && member.displayName.trim().isNotEmpty) {
+      return HomeCaptainIdentity(
+        name: member.displayName.trim(),
+        grade: member.grade,
+      );
+    }
+  }
+  final name = viewerName.trim();
+  if (submittedByUid == viewerUid && name.isNotEmpty) {
+    return HomeCaptainIdentity(name: name, grade: viewerGrade);
+  }
+  return null;
+}
 
 /// Gold star marks for a Dive Star grade. Empty when the shop has no grade.
 String homeDiveStarMarks(int stars) {
@@ -330,6 +490,429 @@ class HomeHotSpotCard extends StatelessWidget {
   }
 }
 
+class HomeSameBoatCard extends StatelessWidget {
+  const HomeSameBoatCard({
+    super.key,
+    required this.shop,
+    required this.onDetails,
+  });
+
+  static const width = 230.0;
+  static const height = 176.0;
+
+  final DiveShop shop;
+  final VoidCallback onDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final product = homeListingProduct(
+      shop,
+      store.liveStatsFor(shop.hullId)?.products ?? const [],
+    );
+    final facts = homeBoatFacts(shop, product);
+    final title = shop.productName.trim().isNotEmpty
+        ? shop.productName.trim()
+        : shop.name;
+    final days = facts.departure == null
+        ? null
+        : TravelStyleAnalyzer.daysUntil(facts.departure!);
+    final seats = facts.seatsLeft;
+    final countdown = days != null && days >= 0 && seats != null
+        ? l10n.homeSameBoatCountdown(days, seats)
+        : seats == null
+        ? null
+        : l10n.homeSameBoatSeatsLeft(seats);
+
+    return GestureDetector(
+      onTap: onDetails,
+      behavior: HitTestBehavior.opaque,
+      child: DecoratedBox(
+        key: Key('home-same-boat-card-${shop.hullId}'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE4E8EE)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ColoredBox(
+                color: homeCoral,
+                child: SizedBox(height: 5, width: double.infinity),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (facts.departure != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        homeDayLabel(facts.departure!),
+                        key: Key('home-same-boat-date-${shop.hullId}'),
+                        style: const TextStyle(
+                          color: AppTheme.muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    if (facts.dots.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        facts.dots,
+                        key: Key('home-same-boat-dots-${shop.hullId}'),
+                        style: const TextStyle(
+                          color: AppTheme.navy,
+                          fontSize: 13,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (countdown != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        countdown,
+                        key: Key('home-same-boat-countdown-${shop.hullId}'),
+                        style: const TextStyle(
+                          color: homeCoral,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      homeWon(shop.consumerPrice),
+                      key: Key('home-same-boat-price-${shop.hullId}'),
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeCuratedCard extends StatelessWidget {
+  const HomeCuratedCard({
+    super.key,
+    required this.shop,
+    required this.onDetails,
+  });
+
+  static const height = 170.0;
+
+  final DiveShop shop;
+  final VoidCallback onDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final title = shop.productName.trim().isNotEmpty
+        ? shop.productName.trim()
+        : shop.name;
+    return GestureDetector(
+      onTap: onDetails,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            key: Key('home-curated-card-${shop.hullId}'),
+            fit: StackFit.expand,
+            children: [
+              ListingCoverPhoto(shop: shop),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x66000000), Color(0xE6052A4A)],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.homeApdiSpecial,
+                      key: Key('home-curated-kicker-${shop.hullId}'),
+                      style: const TextStyle(
+                        color: AppTheme.gold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      homeWon(shop.consumerPrice),
+                      key: Key('home-curated-price-${shop.hullId}'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeCaptainCard extends StatelessWidget {
+  const HomeCaptainCard({
+    super.key,
+    required this.shop,
+    required this.onDetails,
+  });
+
+  static const width = 230.0;
+  static const height = 168.0;
+
+  final DiveShop shop;
+  final VoidCallback onDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final product = homeListingProduct(
+      shop,
+      store.liveStatsFor(shop.hullId)?.products ?? const [],
+    );
+    final identity = homeCaptainIdentity(
+      submittedByUid: product?.submittedByUid ?? '',
+      viewerUid: store.uid ?? '',
+      viewerName: store.stats.displayName,
+      viewerGrade: store.stats.memberGrade,
+      members: store.members,
+    );
+    final title = shop.productName.trim().isNotEmpty
+        ? shop.productName.trim()
+        : shop.name;
+    final initial = identity == null ? '' : homeNameInitial(identity.name);
+
+    return GestureDetector(
+      onTap: onDetails,
+      behavior: HitTestBehavior.opaque,
+      child: DecoratedBox(
+        key: Key('home-captain-card-${shop.hullId}'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE4E8EE)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              if (identity != null && initial.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    DecoratedBox(
+                      decoration: const BoxDecoration(
+                        color: AppTheme.navy,
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Center(
+                          child: Text(
+                            initial,
+                            key: Key('home-captain-initial-${shop.hullId}'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        identity.name,
+                        key: Key('home-captain-name-${shop.hullId}'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.navy,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppTheme.goldSoft,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        child: Text(
+                          homeGradeLabel(l10n, identity.grade),
+                          key: Key('home-captain-grade-${shop.hullId}'),
+                          style: const TextStyle(
+                            color: AppTheme.navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                l10n.homeCrewRecruiting,
+                key: Key('home-captain-status-${shop.hullId}'),
+                style: const TextStyle(
+                  color: homeCoral,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                homeWon(shop.consumerPrice),
+                key: Key('home-captain-price-${shop.hullId}'),
+                style: const TextStyle(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeShelfJump {
+  const HomeShelfJump({
+    required this.id,
+    required this.label,
+    required this.target,
+  });
+
+  final String id;
+  final String label;
+  final GlobalKey target;
+}
+
+class HomeShelfJumpRow extends StatelessWidget {
+  const HomeShelfJumpRow({super.key, required this.jumps});
+
+  final List<HomeShelfJump> jumps;
+
+  @override
+  Widget build(BuildContext context) {
+    if (jumps.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return SingleChildScrollView(
+      key: const Key('home-shelf-chips'),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < jumps.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            ActionChip(
+              key: Key('home-chip-${jumps[i].id}'),
+              label: Text(jumps[i].label),
+              visualDensity: VisualDensity.compact,
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0x330B1F33)),
+              labelStyle: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+              onPressed: () {
+                final target = jumps[i].target.currentContext;
+                if (target == null) {
+                  return;
+                }
+                Scrollable.ensureVisible(
+                  target,
+                  alignment: 0.02,
+                  duration: const Duration(milliseconds: 250),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class HomeDiscoverySection extends StatelessWidget {
   const HomeDiscoverySection({
     super.key,
@@ -364,12 +947,18 @@ class HomeDiscoverySection extends StatelessWidget {
     // Compact rail: next card peeks; 4:3 keeps image shorter than the old 1:1 tiles.
     const coverAspect = 4 / 3;
     final screenW = MediaQuery.sizeOf(context).width;
-    final cardWidth = style == HomeShelfStyle.diveStar
-        ? HomeDiveStarCard.width
-        : (screenW * 0.55).clamp(168.0, 220.0);
+    final cardWidth = switch (style) {
+      HomeShelfStyle.diveStar => HomeDiveStarCard.width,
+      HomeShelfStyle.sameBoat => HomeSameBoatCard.width,
+      HomeShelfStyle.captain => HomeCaptainCard.width,
+      _ => (screenW * 0.55).clamp(168.0, 220.0),
+    };
     final cardHeight = switch (style) {
       HomeShelfStyle.diveStar => HomeDiveStarCard.height,
       HomeShelfStyle.ranked => HomeHotSpotCard.heightFor(cardWidth),
+      HomeShelfStyle.sameBoat => HomeSameBoatCard.height,
+      HomeShelfStyle.captain => HomeCaptainCard.height,
+      HomeShelfStyle.curated => HomeCuratedCard.height,
       HomeShelfStyle.standard => cardWidth / coverAspect + 50,
     };
 
@@ -413,36 +1002,61 @@ class HomeDiscoverySection extends StatelessWidget {
         ],
         if (shops.isNotEmpty) ...[
           const SizedBox(height: 10),
-          SizedBox(
-            height: cardHeight,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: shops.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final shop = shops[index];
-                return SizedBox(
-                  width: cardWidth,
-                  child: switch (style) {
-                    HomeShelfStyle.diveStar => HomeDiveStarCard(
-                      shop: shop,
-                      onDetails: () => onOpen(shop),
-                    ),
-                    HomeShelfStyle.ranked => HomeHotSpotCard(
-                      shop: shop,
-                      rank: index + 1,
-                      onDetails: () => onOpen(shop),
-                    ),
-                    HomeShelfStyle.standard => HomeStayCard(
-                      shop: shop,
-                      coverAspectRatio: coverAspect,
-                      onDetails: () => onOpen(shop),
-                    ),
-                  },
-                );
-              },
+          if (style == HomeShelfStyle.curated)
+            Column(
+              children: [
+                for (var i = 0; i < shops.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  HomeCuratedCard(
+                    shop: shops[i],
+                    onDetails: () => onOpen(shops[i]),
+                  ),
+                ],
+              ],
+            )
+          else
+            SizedBox(
+              height: cardHeight,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: shops.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final shop = shops[index];
+                  return SizedBox(
+                    width: cardWidth,
+                    child: switch (style) {
+                      HomeShelfStyle.diveStar => HomeDiveStarCard(
+                        shop: shop,
+                        onDetails: () => onOpen(shop),
+                      ),
+                      HomeShelfStyle.ranked => HomeHotSpotCard(
+                        shop: shop,
+                        rank: index + 1,
+                        onDetails: () => onOpen(shop),
+                      ),
+                      HomeShelfStyle.sameBoat => HomeSameBoatCard(
+                        shop: shop,
+                        onDetails: () => onOpen(shop),
+                      ),
+                      HomeShelfStyle.captain => HomeCaptainCard(
+                        shop: shop,
+                        onDetails: () => onOpen(shop),
+                      ),
+                      HomeShelfStyle.curated => HomeCuratedCard(
+                        shop: shop,
+                        onDetails: () => onOpen(shop),
+                      ),
+                      HomeShelfStyle.standard => HomeStayCard(
+                        shop: shop,
+                        coverAspectRatio: coverAspect,
+                        onDetails: () => onOpen(shop),
+                      ),
+                    },
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ],
     );
