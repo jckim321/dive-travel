@@ -16,13 +16,14 @@ void main() {
     required String id,
     required String location,
     required String country,
+    String continent = '',
   }) {
     return DiveShop(
       id: id,
       name: id,
       location: location,
       country: country,
-      continent: ContinentId.asia,
+      continent: continent,
       sites: const [],
       productName: '펀다이빙',
       stars: 0,
@@ -34,32 +35,62 @@ void main() {
     );
   }
 
-  test('상품이 많은 나라 순이고 못 찾은 상품은 맨 아래 기타다', () {
+  String label(String id) {
+    return switch (id) {
+      ContinentId.asia => '아시아',
+      ContinentId.africa => '아프리카',
+      ContinentId.oceania => '오세아니아',
+      ContinentId.americas => '아메리카',
+      ContinentId.europe => '유럽',
+      _ => id,
+    };
+  }
+
+  test('상품이 많은 대륙 순이고 별칭은 대륙으로, 못 찾은 상품은 기타다', () {
     final groups = exploreRegionGroups(
       [
         ...DiveShopCatalog.shops,
         shop(id: 'lost', location: '없는바다', country: '없는나라'),
+        shop(
+          id: 'micro',
+          location: '마이크로네시아',
+          country: '마이크로네시아',
+          continent: ContinentId.asia,
+        ),
+        shop(
+          id: 'micro-ko',
+          location: '',
+          country: '미크로네시아',
+        ),
       ],
       otherLabel: '기타',
+      continentLabel: label,
     );
 
-    expect(groups.first.title, '인도네시아');
+    expect(groups.first.id, ContinentId.asia);
+    expect(groups.first.title, '아시아');
+    expect(groups.first.shops.map((item) => item.id), contains('bohol-hideout'));
+    expect(groups.first.shops.map((item) => item.id), contains('komodo-comel'));
     expect(
-      groups.first.shops.map((item) => item.id).toList(),
-      ['komodo-comel', 'raja-ampat'],
+      groups.map((group) => group.title),
+      isNot(contains('인도네시아')),
+    );
+    expect(groups.any((group) => group.shops.isEmpty), isFalse);
+    expect(
+      groups.map((group) => group.id).where((id) => id == ContinentId.polar),
+      isEmpty,
+    );
+    final oceania = groups.singleWhere((group) => group.id == ContinentId.oceania);
+    expect(oceania.title, '오세아니아');
+    expect(
+      oceania.shops.map((item) => item.id),
+      containsAll(['palau-rock-islands', 'micro', 'micro-ko']),
     );
     expect(groups.last.id, exploreOtherRegionId);
     expect(groups.last.title, '기타');
     expect(groups.last.shops.single.id, 'lost');
-    expect(groups.any((group) => group.shops.isEmpty), isFalse);
     expect(
-      groups.map((group) => group.title).where((title) => title == '한국'),
-      isEmpty,
-    );
-    final philippines = groups.singleWhere((group) => group.title == '필리핀');
-    expect(philippines.shops.single.id, 'bohol-hideout');
-    expect(
-      groups.indexWhere((group) => group.title == '인도네시아'),
+      groups.indexWhere((group) => group.id == ContinentId.asia),
       lessThan(groups.indexWhere((group) => group.id == exploreOtherRegionId)),
     );
   });
@@ -94,53 +125,59 @@ void main() {
     final l10n = AppLocalizations.of(
       tester.element(find.byType(ExploreScreen)),
     );
-    final row = find.byKey(const Key('explore-region-row-asia|인도네시아'));
-    expect(find.text('인도네시아'), findsOneWidget);
+    final row = find.byKey(const Key('explore-region-row-asia'));
+    expect(
+      find.descendant(of: row, matching: find.text('아시아')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: row, matching: find.text('인도네시아')),
+      findsNothing,
+    );
     expect(find.text(l10n.exploreSeeMore), findsWidgets);
-    expect(find.text('한국'), findsNothing);
     expect(find.text(l10n.exploreOtherRegion), findsNothing);
     expect(
       find.descendant(
         of: row,
-        matching: find.byKey(const Key('shop-card-komodo-comel')),
+        matching: find.byKey(const Key('shop-card-bohol-hideout')),
       ),
       findsOneWidget,
     );
     expect(
       find.descendant(
         of: row,
-        matching: find.byKey(const Key('shop-card-raja-ampat')),
+        matching: find.text('필리핀 보홀'),
       ),
       findsOneWidget,
     );
     expect(
-      tester.getSize(find.byKey(const Key('shop-card-komodo-comel'))).width,
+      tester.getSize(find.byKey(const Key('shop-card-bohol-hideout'))).width,
       closeTo(176, 1),
     );
 
-    await tester.tap(find.byKey(const Key('explore-region-more-asia|인도네시아')));
+    await tester.tap(find.byKey(const Key('explore-region-more-asia')));
     await tester.pumpAndSettle();
 
     final screen = find.byKey(const Key('explore-region-screen'));
     expect(screen, findsOneWidget);
-    expect(
-      find.descendant(
-        of: screen,
-        matching: find.byKey(const Key('shop-card-komodo-comel')),
-      ),
-      findsOneWidget,
+    expect(find.descendant(of: screen, matching: find.text('아시아')), findsWidgets);
+    final onScreen = find.descendant(
+      of: screen,
+      matching: find.byKey(const Key('shop-card-bohol-hideout')),
     );
-    expect(
-      find.descendant(
+    await tester.scrollUntilVisible(
+      onScreen,
+      400,
+      scrollable: find.descendant(
         of: screen,
-        matching: find.byKey(const Key('shop-card-raja-ampat')),
+        matching: find.byType(Scrollable),
       ),
-      findsOneWidget,
     );
+    expect(onScreen, findsOneWidget);
     expect(
       find.descendant(
         of: screen,
-        matching: find.byKey(const Key('shop-card-bohol-hideout')),
+        matching: find.byKey(const Key('shop-card-dahab-bluehole')),
       ),
       findsNothing,
     );

@@ -23,12 +23,11 @@ void main() {
     );
   }
 
-  Future<void> revealExploreCard(WidgetTester tester, Key key) {
-    return tester.scrollUntilVisible(
-      find.byKey(key),
-      400,
-      scrollable: exploreListScrollable(),
-    );
+  Future<void> revealExploreCard(WidgetTester tester, Key key) async {
+    final card = find.byKey(key);
+    await tester.scrollUntilVisible(card, 400, scrollable: exploreListScrollable());
+    await tester.ensureVisible(card);
+    await tester.pump();
   }
 
   /// Travel cards are taller than the space above the tab bar, so the center
@@ -244,13 +243,44 @@ void main() {
     await tester.tap(find.text(l10n.navExplore));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('continent-atlas-rail')), findsOneWidget);
-    expect(find.text(l10n.exploreFilterAll), findsOneWidget);
-    expect(find.text(l10n.exploreContinentAsia), findsOneWidget);
-    expect(find.text(l10n.exploreContinentAfrica), findsOneWidget);
-    expect(find.text(l10n.exploreContinentOceania), findsOneWidget);
-    expect(find.text(l10n.exploreContinentAmericas), findsOneWidget);
-    expect(find.text(l10n.exploreContinentEurope), findsOneWidget);
+    final rail = find.byKey(const Key('continent-atlas-rail'));
+    expect(rail, findsOneWidget);
+    expect(
+      find.descendant(of: rail, matching: find.text(l10n.exploreFilterAll)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: rail, matching: find.text(l10n.exploreContinentAsia)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreContinentAfrica),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreContinentOceania),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreContinentAmericas),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreContinentEurope),
+      ),
+      findsOneWidget,
+    );
     expect(find.text(l10n.exploreMyBookings), findsNothing);
 
     await tester.tap(find.byKey(const Key('continent-filter-asia')));

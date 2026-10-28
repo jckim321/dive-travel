@@ -88,6 +88,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         final groups = exploreRegionGroups(
           shops,
           otherLabel: l10n.exploreOtherRegion,
+          continentLabel: (id) => continentFilterLabel(l10n, id),
         );
         final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
         final daysUntil = nextTrip == null
@@ -226,16 +227,19 @@ class _ExploreRegionRow extends StatelessWidget {
         const SizedBox(height: 8),
         SizedBox(
           height: cardHeight,
-          child: ListView.separated(
+          child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            itemCount: group.shops.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              return SizedBox(
-                width: cardWidth,
-                child: exploreStayCard(context, group.shops[index]),
-              );
-            },
+            child: Row(
+              children: [
+                for (var index = 0; index < group.shops.length; index++) ...[
+                  if (index > 0) const SizedBox(width: 8),
+                  SizedBox(
+                    width: cardWidth,
+                    child: exploreStayCard(context, group.shops[index]),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ],

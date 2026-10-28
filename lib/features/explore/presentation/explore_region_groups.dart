@@ -17,33 +17,31 @@ class ExploreRegionGroup {
 
 const exploreOtherRegionId = 'other';
 
-/// Bundle shops by the home-map country (continent + country from [RegionCatalog]).
+/// Bundle shops by continent, using the same ids as the atlas rail.
+/// A known place alias wins, including when the country text is a region name.
 /// Rows with the most shops come first. Unmatched shops are one trailing group.
-/// Countries with no shops are omitted.
+/// Continents with no shops are omitted.
 List<ExploreRegionGroup> exploreRegionGroups(
   List<DiveShop> shops, {
   required String otherLabel,
+  required String Function(String continentId) continentLabel,
 }) {
   final buckets = <String, List<DiveShop>>{};
-  final titles = <String, String>{};
   final other = <DiveShop>[];
   for (final shop in shops) {
-    final region = _regionForShop(shop);
-    if (region == null) {
+    final continent = _continentForShop(shop);
+    if (continent == null) {
       other.add(shop);
       continue;
     }
-    final country = RegionCatalog.countryOf(region);
-    final id = '${region.continent}|$country';
-    titles[id] = country;
-    (buckets[id] ??= <DiveShop>[]).add(shop);
+    (buckets[continent] ??= <DiveShop>[]).add(shop);
   }
   final groups = [
     for (final entry in buckets.entries)
       if (entry.value.isNotEmpty)
         ExploreRegionGroup(
           id: entry.key,
-          title: titles[entry.key] ?? entry.key,
+          title: continentLabel(entry.key),
           shops: entry.value,
         ),
   ]..sort((a, b) {
@@ -51,7 +49,7 @@ List<ExploreRegionGroup> exploreRegionGroups(
       if (byCount != 0) {
         return byCount;
       }
-      return a.title.compareTo(b.title);
+      return _continentOrder(a.id).compareTo(_continentOrder(b.id));
     });
   if (other.isNotEmpty) {
     groups.add(
@@ -65,9 +63,27 @@ List<ExploreRegionGroup> exploreRegionGroups(
   return groups;
 }
 
-DiveRegion? _regionForShop(DiveShop shop) {
-  return _knownPlace(shop.location) ?? _knownPlace(shop.country);
+String? _continentForShop(DiveShop shop) {
+  final region = _knownPlace(shop.location) ?? _knownPlace(shop.country);
+  if (region != null && _isContinent(region.continent)) {
+    return region.continent;
+  }
+  if (_isContinent(shop.continent)) {
+    return shop.continent;
+  }
+  return null;
 }
+
+int _continentOrder(String id) {
+  final menu = ContinentFilter.values.indexOf(id);
+  if (menu >= 0) {
+    return menu;
+  }
+  final known = ContinentId.all.indexOf(id);
+  return known < 0 ? 99 : ContinentFilter.values.length + known;
+}
+
+bool _isContinent(String id) => ContinentId.all.contains(id);
 
 /// Same resolver the home map uses. A synthetic id means the name is unknown.
 DiveRegion? _knownPlace(String raw) {
