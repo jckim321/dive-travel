@@ -36,7 +36,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeDiveStarTitle => 'Dive Star 인증';
 
   @override
-  String get homeDiveStarShelfHint => '다이버가 직접 검증한 리조트';
+  String get homeDiveStarShelfHint => '협회가 직접 검증한 바다';
 
   @override
   String get homeFavoritesTitle => '내가 캡틴';
@@ -54,7 +54,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homePopularTitle => '지금 뜨는 스팟';
 
   @override
-  String get homeHotSpotSubtitle => '다이버들이 몰리는 핫 다이빙';
+  String get homeHotSpotSubtitle => '요즘 다이버들이 몰려요';
 
   @override
   String get homeSeeAll => '더보기';

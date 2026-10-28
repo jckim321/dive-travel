@@ -37,7 +37,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDiveStarTitle => 'Dive Star verified';
 
   @override
-  String get homeDiveStarShelfHint => 'Resorts divers have checked themselves';
+  String get homeDiveStarShelfHint => 'Seas the association checked itself';
 
   @override
   String get homeFavoritesTitle => 'I\'m the captain';
@@ -55,7 +55,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homePopularTitle => 'Spots heating up';
 
   @override
-  String get homeHotSpotSubtitle => 'Where divers are heading now';
+  String get homeHotSpotSubtitle => 'Divers are gathering here lately';
 
   @override
   String get homeSeeAll => 'See all';

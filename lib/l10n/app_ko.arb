@@ -37,7 +37,7 @@
   "@homeDiveStarTitle": {
     "description": "홈 화면 다이브 스타 섹션 제목입니다."
   },
-  "homeDiveStarShelfHint": "다이버가 직접 검증한 리조트",
+  "homeDiveStarShelfHint": "협회가 직접 검증한 바다",
   "@homeDiveStarShelfHint": {
     "description": "홈 Dive Star 선반 한 줄 감성 카피입니다."
   },
@@ -55,7 +55,7 @@
   "@homePopularTitle": {
     "description": "홈 화면 핫 다이빙 스팟 섹션 제목입니다."
   },
-  "homeHotSpotSubtitle": "다이버들이 몰리는 핫 다이빙",
+  "homeHotSpotSubtitle": "요즘 다이버들이 몰려요",
   "@homeHotSpotSubtitle": {
     "description": "지금 뜨는 스팟 선반 서브카피입니다."
   },

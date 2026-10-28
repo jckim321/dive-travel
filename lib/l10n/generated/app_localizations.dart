@@ -159,7 +159,7 @@ abstract class AppLocalizations {
   /// 홈 Dive Star 선반 한 줄 감성 카피입니다.
   ///
   /// In ko, this message translates to:
-  /// **'다이버가 직접 검증한 리조트'**
+  /// **'협회가 직접 검증한 바다'**
   String get homeDiveStarShelfHint;
 
   /// 홈 화면 다이버 직접 기획 섹션 제목입니다.
@@ -195,7 +195,7 @@ abstract class AppLocalizations {
   /// 지금 뜨는 스팟 선반 서브카피입니다.
   ///
   /// In ko, this message translates to:
-  /// **'다이버들이 몰리는 핫 다이빙'**
+  /// **'요즘 다이버들이 몰려요'**
   String get homeHotSpotSubtitle;
 
   /// 홈 섹션 우측 더보기입니다.

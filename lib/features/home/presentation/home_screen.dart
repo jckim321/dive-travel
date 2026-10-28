@@ -64,6 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
         HomeDiscoverySection(
           key: const Key('home-section-dive-star'),
           title: l10n.homeDiveStarTitle,
+          subtitle: l10n.homeDiveStarShelfHint,
+          style: HomeShelfStyle.diveStar,
           shops: diveStarShops,
           onOpen: (shop) => _openShop(context, shop),
         ),
@@ -78,6 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
         HomeDiscoverySection(
           key: const Key('home-section-hot'),
           title: l10n.homePopularTitle,
+          subtitle: l10n.homeHotSpotSubtitle,
+          style: HomeShelfStyle.ranked,
           shops: hotShops,
           onOpen: (shop) => _openShop(context, shop),
         ),
