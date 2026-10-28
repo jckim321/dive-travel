@@ -197,11 +197,20 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   /// Flag payment uses the price captured at plant time. Older holds with no
   /// snapshot, and every normal checkout, keep the live quote.
   int _payable(BuildContext context) {
-    return flagOrLivePayable(
+    return CheckoutCharge.resolve(
       fromFlag: widget.fromFlag,
+      lockedPartySize: widget.lockedPartySize,
       lockedPrice: _flagLockedPrice(context) ?? 0,
-      liveTotal: _hasProduct ? _booking.total : widget.quote.amount,
-    );
+      divers: _qtyDiver,
+      nondivers: _qtyNondiver,
+      children: _qtyChild,
+      infants: _qtyInfant,
+      product: widget.product,
+      professional: widget.quote.isProfessional,
+      bookPackage: _bookPackage,
+      selectedOptionIds: _selected,
+      quoteAmount: widget.quote.amount,
+    ).total;
   }
 
   int? _flagLockedPrice(BuildContext context) {

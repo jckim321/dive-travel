@@ -37,14 +37,38 @@ void main() {
     final hold = product.liveFlagFor('guest-1', now)!;
     expect(hold.lockedPrice, 100000);
     expect(hold.toMap()['locked_price'], 100000);
-    expect(
-      flagOrLivePayable(fromFlag: true, lockedPrice: 100000, liveTotal: 80000),
-      100000,
+    final quoted = ShopProduct(
+      id: 'p1',
+      shopId: 'shop-a',
+      name: 'Boat',
+      consumerPrice: 40000,
+      professionalPrice: 30000,
     );
-    expect(
-      flagOrLivePayable(fromFlag: false, lockedPrice: 100000, liveTotal: 80000),
-      80000,
+    final locked = CheckoutCharge.resolve(
+      fromFlag: true,
+      lockedPartySize: 2,
+      lockedPrice: 100000,
+      divers: 9,
+      product: quoted,
     );
+    expect(locked.partySize, 2);
+    expect(locked.total, 100000);
+    final normal = CheckoutCharge.resolve(
+      fromFlag: false,
+      lockedPartySize: 9,
+      lockedPrice: 100000,
+      divers: 2,
+      product: quoted,
+    );
+    expect(normal.partySize, 2);
+    expect(normal.total, 80000);
+    final three = CheckoutCharge.resolve(
+      fromFlag: true,
+      lockedPartySize: 3,
+      product: quoted.copyWith(consumerPrice: 100000),
+    );
+    expect(three.partySize, 3);
+    expect(three.total, 300000);
 
     final old = SeatHold.fromMap({
       'seats': 1,
@@ -53,10 +77,14 @@ void main() {
     })!;
     expect(old.lockedPrice, 0);
     expect(old.toMap().containsKey('locked_price'), isFalse);
-    expect(
-      flagOrLivePayable(fromFlag: true, lockedPrice: 0, liveTotal: 80000),
-      80000,
+    final missingLock = CheckoutCharge.resolve(
+      fromFlag: true,
+      lockedPartySize: 2,
+      lockedPrice: 0,
+      product: quoted,
     );
+    expect(missingLock.partySize, 2);
+    expect(missingLock.total, 80000);
   });
 
   test('price and capacity changes are recorded and booked seats are not', () {

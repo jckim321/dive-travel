@@ -632,13 +632,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
     final until = ShopProduct.personalFlagUntil(now, offer.flagClosesAt);
     final shop = _shopForProduct(store, product);
     final professional = shop != null && store.quoteFor(shop).isProfessional;
-    final lockedPrice = BookingQuote.compute(
+    final lockedPrice = CheckoutCharge.resolve(
+      fromFlag: true,
+      lockedPartySize: partySize,
       product: product,
       professional: professional,
-      divers: partySize,
-      nondivers: 0,
-      children: 0,
-      infants: 0,
       bookPackage: offer.optionId.isEmpty,
       selectedOptionIds: offer.optionId.isEmpty ? const {} : {offer.optionId},
     ).total;

@@ -1,5 +1,6 @@
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 
 /// Explore-only vs home shelf placement for an approved product.
@@ -387,6 +388,56 @@ int flagOrLivePayable({
     return lockedPrice;
   }
   return liveTotal;
+}
+
+/// Party size and payable total for one checkout. Flag holds with a party
+/// lock count divers only. A planted [lockedPrice] replaces the live quote.
+class CheckoutCharge {
+  const CheckoutCharge({required this.partySize, required this.total});
+
+  final int partySize;
+  final int total;
+
+  static CheckoutCharge resolve({
+    required bool fromFlag,
+    int lockedPartySize = 0,
+    int lockedPrice = 0,
+    int divers = 0,
+    int nondivers = 0,
+    int children = 0,
+    int infants = 0,
+    ShopProduct? product,
+    bool professional = false,
+    bool bookPackage = true,
+    Set<String> selectedOptionIds = const {},
+    int quoteAmount = 0,
+  }) {
+    final lockParty = fromFlag && lockedPartySize > 0;
+    final partyDivers = lockParty ? lockedPartySize : divers;
+    final partyNondivers = lockParty ? 0 : nondivers;
+    final partyChildren = lockParty ? 0 : children;
+    final partyInfants = lockParty ? 0 : infants;
+    final live = product == null
+        ? quoteAmount
+        : BookingQuote.compute(
+            product: product,
+            professional: professional,
+            divers: partyDivers,
+            nondivers: partyNondivers,
+            children: partyChildren,
+            infants: partyInfants,
+            bookPackage: bookPackage,
+            selectedOptionIds: selectedOptionIds,
+          ).total;
+    return CheckoutCharge(
+      partySize: partyDivers + partyNondivers + partyChildren + partyInfants,
+      total: flagOrLivePayable(
+        fromFlag: fromFlag,
+        lockedPrice: lockedPrice,
+        liveTotal: live,
+      ),
+    );
+  }
 }
 
 enum SeatFlagPlant {
