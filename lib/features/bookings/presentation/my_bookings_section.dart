@@ -11,7 +11,7 @@ import 'package:dive_travel_app/features/community/presentation/open_tide_room.d
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Shared booking list for Profile (and scroll target from Explore banner).
+/// Shared booking list for Profile.
 class MyBookingsSection extends StatelessWidget {
   const MyBookingsSection({super.key, this.bookings});
 
@@ -603,57 +603,4 @@ _ChipTone _paymentTone(TourBooking booking) {
     PaymentStatus.captured => _ChipTone.navy,
     PaymentStatus.refunded => _ChipTone.danger,
   };
-}
-
-/// One-line upcoming departure chip on Explore.
-class DepartureTripBanner extends StatelessWidget {
-  const DepartureTripBanner({
-    super.key,
-    required this.days,
-    required this.shopName,
-    required this.onTap,
-  });
-
-  final int days;
-  final String shopName;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-
-    return Material(
-      color: const Color(0xFFE8EEF2),
-      borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-      child: InkWell(
-        key: const Key('explore-departure-banner'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusTight),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.flight_takeoff_outlined,
-                size: 18,
-                color: AppTheme.navy,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.exploreDepartureBanner(days, shopName),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.navy,
-                  ),
-                ),
-              ),
-              const Icon(Icons.chevron_right, size: 18, color: AppTheme.navy),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -5,17 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
-import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
-import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_region_groups.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_region_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
-import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -47,24 +44,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void dispose() {
     _search.dispose();
     super.dispose();
-  }
-
-  void _openMyBookings() {
-    MainShell.goToTab(context, 4);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final target = MyBookingsSection.sectionKey.currentContext;
-        if (target == null) {
-          return;
-        }
-        Scrollable.ensureVisible(
-          target,
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          alignment: 0.12,
-        );
-      });
-    });
   }
 
   @override
@@ -116,11 +95,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       shops: shops,
                     ),
                   ];
-        final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
-        final daysUntil = nextTrip == null
-            ? null
-            : TravelStyleAnalyzer.daysUntil(nextTrip.scheduledFor);
-
         return Scaffold(
           body: SafeArea(
             bottom: false,
@@ -180,15 +154,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ),
                   ),
                 ),
-                if (nextTrip != null && daysUntil != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                    child: DepartureTripBanner(
-                      days: daysUntil,
-                      shopName: nextTrip.shopName,
-                      onTap: _openMyBookings,
-                    ),
-                  ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: store.refreshShopStats,
