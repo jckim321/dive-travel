@@ -390,6 +390,22 @@
   "exploreContinentAmericas": "아메리카",
   "exploreContinentEurope": "유럽",
   "exploreContinentPolar": "극지",
+  "exploreRegionPacific": "태평양·오세아니아",
+  "@exploreRegionPacific": {
+    "description": "여행상품 권역 태평양·오세아니아입니다."
+  },
+  "exploreRegionAfricaRed": "아프리카·홍해",
+  "@exploreRegionAfricaRed": {
+    "description": "여행상품 권역 아프리카·홍해입니다."
+  },
+  "exploreRegionNorthAmerica": "북·중미",
+  "@exploreRegionNorthAmerica": {
+    "description": "여행상품 권역 북·중미입니다."
+  },
+  "exploreRegionSouthAmerica": "남미",
+  "@exploreRegionSouthAmerica": {
+    "description": "여행상품 권역 남미입니다."
+  },
   "exploreProBanner": "강사 자격 확인됨 · 모든 상품이 강사 우대가로 표시됩니다",
   "@exploreProBanner": {
     "description": "강사 세션에서 예약 화면에 보이는 안내입니다."

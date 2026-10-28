@@ -446,6 +446,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exploreContinentPolar => '极地';
 
   @override
+  String get exploreRegionPacific => '태평양·오세아니아';
+
+  @override
+  String get exploreRegionAfricaRed => '아프리카·홍해';
+
+  @override
+  String get exploreRegionNorthAmerica => '북·중미';
+
+  @override
+  String get exploreRegionSouthAmerica => '남미';
+
+  @override
   String get exploreProBanner => '教练已验证 · 全部商品显示优惠价';
 
   @override

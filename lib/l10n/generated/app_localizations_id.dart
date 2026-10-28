@@ -458,6 +458,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreContinentPolar => 'Kutub';
 
   @override
+  String get exploreRegionPacific => '태평양·오세아니아';
+
+  @override
+  String get exploreRegionAfricaRed => '아프리카·홍해';
+
+  @override
+  String get exploreRegionNorthAmerica => '북·중미';
+
+  @override
+  String get exploreRegionSouthAmerica => '남미';
+
+  @override
   String get exploreProBanner =>
       'Instruktur terverifikasi · semua harga profesional';
 

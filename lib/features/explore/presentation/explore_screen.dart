@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -24,7 +25,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final _search = TextEditingController();
-  String _continent = ContinentFilter.all;
+  String _region = TravelRegionId.all;
 
   @override
   void initState() {
@@ -74,8 +75,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
         // shells; never expand every SKU into duplicate tiles.
         final shops = DiveShopCatalog.hulls([
           for (final shop in store.shops)
-            if ((_continent == ContinentFilter.all ||
-                    shop.continent == _continent) &&
+            if ((_region == TravelRegionId.all ||
+                    travelRegionForShop(shop) == _region) &&
                 (needle.isEmpty || shop.searchBlob.contains(needle)) &&
                 _showsOnExplore(shop, store))
               shop,
@@ -88,7 +89,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         final groups = exploreRegionGroups(
           shops,
           otherLabel: l10n.exploreOtherRegion,
-          continentLabel: (id) => continentFilterLabel(l10n, id),
+          continentLabel: (id) => travelRegionLabel(l10n, id),
         );
         final nextTrip = TravelStyleAnalyzer.nextTrip(store.bookings);
         final daysUntil = nextTrip == null
@@ -101,8 +102,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Column(
               children: [
                 ContinentAtlasRail(
-                  selectedId: _continent,
-                  onSelected: (id) => setState(() => _continent = id),
+                  selectedId: _region,
+                  onSelected: (id) => setState(() => _region = id),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),

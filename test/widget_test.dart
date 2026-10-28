@@ -256,21 +256,7 @@ void main() {
     expect(
       find.descendant(
         of: rail,
-        matching: find.text(l10n.exploreContinentAfrica),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: rail,
-        matching: find.text(l10n.exploreContinentOceania),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: rail,
-        matching: find.text(l10n.exploreContinentAmericas),
+        matching: find.text(l10n.exploreRegionPacific),
       ),
       findsOneWidget,
     );
@@ -281,12 +267,34 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreRegionAfricaRed),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreRegionNorthAmerica),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rail,
+        matching: find.text(l10n.exploreRegionSouthAmerica),
+      ),
+      findsOneWidget,
+    );
     expect(find.text(l10n.exploreMyBookings), findsNothing);
 
     await tester.tap(find.byKey(const Key('continent-filter-asia')));
     await tester.pumpAndSettle();
     await revealExploreCard(tester, const Key('shop-card-bohol-hideout'));
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
   });
 
   testWidgets('로그북에서 오퍼레이션 리뷰 화면을 연다', (WidgetTester tester) async {

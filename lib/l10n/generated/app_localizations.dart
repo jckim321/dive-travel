@@ -930,6 +930,30 @@ abstract class AppLocalizations {
   /// **'극지'**
   String get exploreContinentPolar;
 
+  /// 여행상품 권역 태평양·오세아니아입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'태평양·오세아니아'**
+  String get exploreRegionPacific;
+
+  /// 여행상품 권역 아프리카·홍해입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'아프리카·홍해'**
+  String get exploreRegionAfricaRed;
+
+  /// 여행상품 권역 북·중미입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'북·중미'**
+  String get exploreRegionNorthAmerica;
+
+  /// 여행상품 권역 남미입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'남미'**
+  String get exploreRegionSouthAmerica;
+
   /// 강사 세션에서 예약 화면에 보이는 안내입니다.
   ///
   /// In ko, this message translates to:

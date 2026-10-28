@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
@@ -37,11 +38,12 @@ void main() {
 
   String label(String id) {
     return switch (id) {
-      ContinentId.asia => '아시아',
-      ContinentId.africa => '아프리카',
-      ContinentId.oceania => '오세아니아',
-      ContinentId.americas => '아메리카',
-      ContinentId.europe => '유럽',
+      TravelRegionId.asia => '아시아',
+      TravelRegionId.pacific => '태평양·오세아니아',
+      TravelRegionId.europe => '유럽',
+      TravelRegionId.africa => '아프리카·홍해',
+      TravelRegionId.northAmerica => '북·중미',
+      TravelRegionId.southAmerica => '남미',
       _ => id,
     };
   }
@@ -62,35 +64,36 @@ void main() {
           location: '',
           country: '미크로네시아',
         ),
+        shop(id: 'peru', location: '페루 리마', country: '페루'),
       ],
       otherLabel: '기타',
       continentLabel: label,
     );
 
-    expect(groups.first.id, ContinentId.asia);
+    expect(groups.first.id, TravelRegionId.asia);
     expect(groups.first.title, '아시아');
     expect(groups.first.shops.map((item) => item.id), contains('bohol-hideout'));
     expect(groups.first.shops.map((item) => item.id), contains('komodo-comel'));
+    expect(groups.first.shops.map((item) => item.id), isNot(contains('micro')));
     expect(
       groups.map((group) => group.title),
       isNot(contains('인도네시아')),
     );
     expect(groups.any((group) => group.shops.isEmpty), isFalse);
+    final pacific = groups.singleWhere((group) => group.id == TravelRegionId.pacific);
+    expect(pacific.title, '태평양·오세아니아');
     expect(
-      groups.map((group) => group.id).where((id) => id == ContinentId.polar),
-      isEmpty,
+      pacific.shops.map((item) => item.id),
+      containsAll(['palau-rock-islands', 'cairns-gbr', 'micro', 'micro-ko']),
     );
-    final oceania = groups.singleWhere((group) => group.id == ContinentId.oceania);
-    expect(oceania.title, '오세아니아');
-    expect(
-      oceania.shops.map((item) => item.id),
-      containsAll(['palau-rock-islands', 'micro', 'micro-ko']),
-    );
+    final south = groups.singleWhere((group) => group.id == TravelRegionId.southAmerica);
+    expect(south.title, '남미');
+    expect(south.shops.single.id, 'peru');
     expect(groups.last.id, exploreOtherRegionId);
     expect(groups.last.title, '기타');
     expect(groups.last.shops.single.id, 'lost');
     expect(
-      groups.indexWhere((group) => group.id == ContinentId.asia),
+      groups.indexWhere((group) => group.id == TravelRegionId.asia),
       lessThan(groups.indexWhere((group) => group.id == exploreOtherRegionId)),
     );
   });

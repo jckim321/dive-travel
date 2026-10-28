@@ -461,6 +461,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreContinentPolar => 'Polar';
 
   @override
+  String get exploreRegionPacific => 'Pacific & Oceania';
+
+  @override
+  String get exploreRegionAfricaRed => 'Africa & Red Sea';
+
+  @override
+  String get exploreRegionNorthAmerica => 'North & Central America';
+
+  @override
+  String get exploreRegionSouthAmerica => 'South America';
+
+  @override
   String get exploreProBanner =>
       'Instructor verified · every shop shows the professional price';
 

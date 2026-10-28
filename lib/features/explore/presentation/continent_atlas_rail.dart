@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/models/dive_region.dart';
-import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -43,13 +42,13 @@ class ContinentAtlasRail extends StatelessWidget {
               key: const Key('continent-atlas-rail'),
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-              itemCount: ContinentFilter.values.length,
+              itemCount: TravelRegionId.menu.length,
               separatorBuilder: (_, _) => const SizedBox(width: 14),
               itemBuilder: (context, index) {
-                final id = ContinentFilter.values[index];
+                final id = TravelRegionId.menu[index];
                 return _AtlasNode(
                   id: id,
-                  label: continentFilterLabel(l10n, id),
+                  label: travelRegionLabel(l10n, id),
                   selected: selectedId == id,
                   onTap: () => onSelected(id),
                 );
@@ -62,15 +61,15 @@ class ContinentAtlasRail extends StatelessWidget {
   }
 }
 
-String continentFilterLabel(AppLocalizations l10n, String id) {
+String travelRegionLabel(AppLocalizations l10n, String id) {
   return switch (id) {
-    ContinentFilter.all => l10n.exploreFilterAll,
-    ContinentId.asia => l10n.exploreContinentAsia,
-    ContinentId.africa => l10n.exploreContinentAfrica,
-    ContinentId.oceania => l10n.exploreContinentOceania,
-    ContinentId.americas => l10n.exploreContinentAmericas,
-    ContinentId.europe => l10n.exploreContinentEurope,
-    ContinentId.polar => l10n.exploreContinentPolar,
+    TravelRegionId.all => l10n.exploreFilterAll,
+    TravelRegionId.asia => l10n.exploreContinentAsia,
+    TravelRegionId.pacific => l10n.exploreRegionPacific,
+    TravelRegionId.europe => l10n.exploreContinentEurope,
+    TravelRegionId.africa => l10n.exploreRegionAfricaRed,
+    TravelRegionId.northAmerica => l10n.exploreRegionNorthAmerica,
+    TravelRegionId.southAmerica => l10n.exploreRegionSouthAmerica,
     _ => id,
   };
 }
@@ -147,12 +146,13 @@ class _AtlasNode extends StatelessWidget {
 
   IconData _iconFor(String id) {
     return switch (id) {
-      ContinentFilter.all => Icons.public,
-      ContinentId.asia => Icons.waves_outlined,
-      ContinentId.africa => Icons.wb_sunny_outlined,
-      ContinentId.oceania => Icons.scuba_diving,
-      ContinentId.americas => Icons.terrain_outlined,
-      ContinentId.europe => Icons.explore_outlined,
+      TravelRegionId.all => Icons.public,
+      TravelRegionId.asia => Icons.waves_outlined,
+      TravelRegionId.pacific => Icons.scuba_diving,
+      TravelRegionId.europe => Icons.explore_outlined,
+      TravelRegionId.africa => Icons.wb_sunny_outlined,
+      TravelRegionId.northAmerica => Icons.terrain_outlined,
+      TravelRegionId.southAmerica => Icons.landscape_outlined,
       _ => Icons.circle_outlined,
     };
   }

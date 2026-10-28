@@ -446,6 +446,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreContinentPolar => '極地';
 
   @override
+  String get exploreRegionPacific => '태평양·오세아니아';
+
+  @override
+  String get exploreRegionAfricaRed => '아프리카·홍해';
+
+  @override
+  String get exploreRegionNorthAmerica => '북·중미';
+
+  @override
+  String get exploreRegionSouthAmerica => '남미';
+
+  @override
   String get exploreProBanner => 'インストラクター確認済み · 全商品が優待価格です';
 
   @override
