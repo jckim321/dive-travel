@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
+import 'package:dive_travel_app/core/models/dive_region.dart';
+import 'package:dive_travel_app/features/logbook/presentation/new_sea_stamp.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -157,7 +160,14 @@ class _AddLogScreenState extends State<AddLogScreen> {
     try {
       final store = DiverStoreScope.of(context);
       final existing = widget.existing;
+      // Decide before addLog. The snapshot inserts the region as soon as
+      // the write lands, so a check afterwards would always look recorded.
+      DiveRegion? freshRegion;
       if (existing == null) {
+        final resolved = RegionCatalog.resolve(site, 1);
+        if (!store.regions.any((region) => region.id == resolved.id)) {
+          freshRegion = resolved;
+        }
         await store.addLog(
           siteName: site,
           divedAt: _divedAt,
@@ -182,6 +192,15 @@ class _AddLogScreenState extends State<AddLogScreen> {
       }
       if (!mounted) {
         return;
+      }
+      final region = freshRegion;
+      if (region != null &&
+          store.regions.any((item) => item.id == region.id)) {
+        NewSeaStamp.show(
+          context,
+          regionId: region.id,
+          regionName: region.name,
+        );
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

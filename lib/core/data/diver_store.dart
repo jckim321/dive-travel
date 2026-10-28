@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
+import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
@@ -899,6 +900,7 @@ class DiverStore extends ChangeNotifier {
     if (uid == null) {
       return;
     }
+    final trimmed = siteName.trim();
     await _repository.addLog(
       uid: uid,
       siteName: siteName,
@@ -909,6 +911,16 @@ class DiverStore extends ChangeNotifier {
       photoContentType: photoContentType,
       profile: profile,
     );
+    // The diver listener usually applies the new region before this returns.
+    // If it has not, show the passport stamp immediately and let the next
+    // snapshot replace the list.
+    if (trimmed.isNotEmpty) {
+      final resolved = RegionCatalog.resolve(trimmed, 1);
+      if (!_regions.any((region) => region.id == resolved.id)) {
+        _regions = [..._regions, resolved];
+        notifyListeners();
+      }
+    }
     await refreshLogs();
   }
 
