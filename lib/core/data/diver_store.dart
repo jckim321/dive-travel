@@ -1060,6 +1060,34 @@ class DiverStore extends ChangeNotifier {
     return result;
   }
 
+  /// Rewrites the signed-in member's live flag party and locked price.
+  /// The flag expiry does not move. Refreshes the shop before returning so
+  /// checkout reads the new snapshot.
+  Future<SeatFlagPlant> replaceSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    String optionId = '',
+    int lockedPrice = 0,
+  }) async {
+    final uid = _uid;
+    if (uid == null || uid.isEmpty) {
+      return SeatFlagPlant.unavailable;
+    }
+    final hull = shopId.split('--').first;
+    final result = await _repository.replaceSeatFlag(
+      shopId: hull,
+      productId: productId,
+      partySize: partySize,
+      now: DateTime.now(),
+      optionId: optionId,
+      uid: uid,
+      lockedPrice: lockedPrice,
+    );
+    await refreshShopStat(hull);
+    return result;
+  }
+
   Future<bool> cancelSeatFlag({
     required String shopId,
     required String productId,

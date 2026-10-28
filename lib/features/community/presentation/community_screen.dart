@@ -677,6 +677,68 @@ class _CommunityScreenState extends State<CommunityScreen> {
       return;
     }
     if (planted == SeatFlagPlant.alreadyHeld) {
+      await store.refreshShopStat(product.shopId.split('--').first);
+      if (!context.mounted) {
+        return;
+      }
+      final fresh = _freshProduct(store, product) ?? product;
+      final uid = store.uid ?? '';
+      final heldNow = DateTime.now();
+      final hold = fresh.liveFlagFor(uid, heldNow, optionId: offer.optionId) ??
+          fresh.liveFlagFor(uid, heldNow);
+      if (hold != null && hold.seats != partySize) {
+        final change = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              key: const Key('flag-resize-dialog'),
+              content: Text(l10n.communityFlagResizeAsk(hold.seats, partySize)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(l10n.communityPlantFlagLater),
+                ),
+                FilledButton(
+                  key: const Key('flag-resize-confirm'),
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: Text(l10n.communityFlagResizeConfirm),
+                ),
+              ],
+            );
+          },
+        );
+        if (change != true || !context.mounted) {
+          return;
+        }
+        final replaced = await store.replaceSeatFlag(
+          shopId: product.shopId,
+          productId: product.id,
+          partySize: partySize,
+          optionId: offer.optionId,
+          lockedPrice: lockedPrice,
+        );
+        if (!context.mounted) {
+          return;
+        }
+        if (replaced == SeatFlagPlant.taken ||
+            replaced == SeatFlagPlant.unavailable) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.communitySeatsShort)),
+          );
+          return;
+        }
+        if (replaced != SeatFlagPlant.planted) {
+          return;
+        }
+        await _openFlagCheckout(
+          context,
+          store,
+          offer,
+          lockedPartySize: partySize,
+          flagPayBy: hold.expiresAt,
+        );
+        return;
+      }
       final continuePay = await showDialog<bool>(
         context: context,
         builder: (dialogContext) {

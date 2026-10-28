@@ -1073,6 +1073,46 @@ class ShopProduct {
     );
   }
 
+  /// Rewrites this member's live hold to [partySize] and [lockedPrice].
+  /// The original expiry stays. Unchanged when there is no live hold or the
+  /// new party does not fit in the seats still free plus this hold.
+  ShopProduct replaceFlagParty({
+    required int partySize,
+    required DateTime now,
+    String uid = '',
+    String optionId = '',
+    int lockedPrice = 0,
+  }) {
+    if (optionId.isNotEmpty) {
+      return _mapOption(optionId, (option) {
+        return option.copyWith(
+          flagHolds: _replaceHolds(
+            open: option.openEmptySeats && option.sameBoatStatus.isBoardLive,
+            capacity: option.capacity,
+            booked: option.bookedSeats,
+            holds: option.flagHolds,
+            partySize: partySize,
+            now: now,
+            uid: uid,
+            lockedPrice: lockedPrice,
+          ),
+        );
+      });
+    }
+    return copyWith(
+      flagHolds: _replaceHolds(
+        open: openEmptySeats && sameBoatStatus.isBoardLive,
+        capacity: capacity,
+        booked: bookedSeats,
+        holds: flagHolds,
+        partySize: partySize,
+        now: now,
+        uid: uid,
+        lockedPrice: lockedPrice,
+      ),
+    );
+  }
+
   ShopProduct capturePayment(
     int partySize,
     DateTime now, {
@@ -1174,6 +1214,50 @@ class ShopProduct {
       SeatHold(
         seats: partySize,
         expiresAt: personalFlagUntil(now, flagClosesAt),
+        uid: uid,
+        lockedPrice: lockedPrice,
+      ),
+    ];
+  }
+
+  List<SeatHold> _replaceHolds({
+    required bool open,
+    required int capacity,
+    required int booked,
+    required List<SeatHold> holds,
+    required int partySize,
+    required DateTime now,
+    required String uid,
+    required int lockedPrice,
+  }) {
+    final live = [
+      for (final hold in holds)
+        if (hold.expiresAt.isAfter(now)) hold,
+    ];
+    if (!open || partySize <= 0 || uid.isEmpty) {
+      return live;
+    }
+    SeatHold? mine;
+    final others = <SeatHold>[];
+    for (final hold in live) {
+      if (hold.uid == uid) {
+        mine ??= hold;
+      } else {
+        others.add(hold);
+      }
+    }
+    if (mine == null) {
+      return live;
+    }
+    final openSeats = capacity - booked - _countHolds(others);
+    if (openSeats < partySize) {
+      return live;
+    }
+    return [
+      ...others,
+      SeatHold(
+        seats: partySize,
+        expiresAt: mine.expiresAt,
         uid: uid,
         lockedPrice: lockedPrice,
       ),

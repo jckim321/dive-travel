@@ -9666,6 +9666,18 @@ abstract class AppLocalizations {
   /// **'결제 이어가기'**
   String get communityFlagContinuePay;
 
+  /// No description provided for @communityFlagResizeAsk.
+  ///
+  /// In ko, this message translates to:
+  /// **'기존 깃발 {from}명을 {to}명으로 바꿀까요?'**
+  String communityFlagResizeAsk(int from, int to);
+
+  /// No description provided for @communityFlagResizeConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기'**
+  String get communityFlagResizeConfirm;
+
   /// No description provided for @communityFlagTaken.
   ///
   /// In ko, this message translates to:

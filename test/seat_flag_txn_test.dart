@@ -375,4 +375,74 @@ void main() {
     stats = await repo.fetchShopStat(shopId);
     expect(stats!.products.singleWhere((p) => p.id == 'p-closed').bookedSeats, 0);
   });
+
+  test('a second plant keeps the old party; replace moves it to 3', () async {
+    final now = DateTime(2026, 10, 23, 12);
+    final repo = await seeded(openProduct(id: 'p-size', capacity: 4));
+    await repo.plantSeatFlag(
+      shopId: shopId,
+      productId: 'p-size',
+      partySize: 1,
+      now: now,
+      uid: 'test-user',
+      lockedPrice: 100000,
+    );
+    final again = await repo.plantSeatFlag(
+      shopId: shopId,
+      productId: 'p-size',
+      partySize: 3,
+      now: now,
+      uid: 'test-user',
+      lockedPrice: 300000,
+    );
+    expect(again, SeatFlagPlant.alreadyHeld);
+    var product = (await repo.fetchShopStat(shopId))!
+        .products
+        .singleWhere((item) => item.id == 'p-size');
+    final hold = product.liveFlagFor('test-user', now)!;
+    expect(hold.seats, 1);
+    expect(hold.lockedPrice, 100000);
+
+    final replaced = await repo.replaceSeatFlag(
+      shopId: shopId,
+      productId: 'p-size',
+      partySize: 3,
+      now: now,
+      uid: 'test-user',
+      lockedPrice: 300000,
+    );
+    expect(replaced, SeatFlagPlant.planted);
+    product = (await repo.fetchShopStat(shopId))!
+        .products
+        .singleWhere((item) => item.id == 'p-size');
+    final next = product.liveFlagFor('test-user', now)!;
+    expect(next.seats, 3);
+    expect(next.lockedPrice, 300000);
+    expect(next.expiresAt, hold.expiresAt);
+    expect(product.flaggedSeatsAt(now), 3);
+    expect(repo.readActiveSeatFlags('test-user'), hasLength(1));
+
+    final saved = await repo.createBooking(
+      uid: 'test-user',
+      shopId: shopId,
+      shopName: 'Shop',
+      productName: 'Open seats p-size',
+      price: 300000,
+      productId: 'p-size',
+      partySize: 3,
+      fromFlag: true,
+      divers: 3,
+      status: BookingStatus.confirmed,
+      paymentStatus: PaymentStatus.captured,
+    );
+    expect(saved, isTrue);
+    final booking = (await repo.watchBookings('test-user').first).single;
+    expect(booking.partySize, 3);
+    expect(booking.divers, 3);
+    expect(booking.price, 300000);
+    product = (await repo.fetchShopStat(shopId))!
+        .products
+        .singleWhere((item) => item.id == 'p-size');
+    expect(product.bookedSeats, 3);
+  });
 }

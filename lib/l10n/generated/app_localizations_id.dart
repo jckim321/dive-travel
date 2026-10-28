@@ -5165,6 +5165,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get communityFlagContinuePay => '결제 이어가기';
 
   @override
+  String communityFlagResizeAsk(int from, int to) {
+    return '기존 깃발 $from명을 $to명으로 바꿀까요?';
+  }
+
+  @override
+  String get communityFlagResizeConfirm => '바꾸기';
+
+  @override
   String get communityFlagTaken => '방금 다른 분이 먼저 잡았어요';
 
   @override

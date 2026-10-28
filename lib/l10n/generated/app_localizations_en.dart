@@ -5291,6 +5291,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get communityFlagContinuePay => 'Continue to pay';
 
   @override
+  String communityFlagResizeAsk(int from, int to) {
+    return 'Change your flag from $from to $to?';
+  }
+
+  @override
+  String get communityFlagResizeConfirm => 'Change';
+
+  @override
   String get communityFlagTaken => 'Someone just took that seat.';
 
   @override

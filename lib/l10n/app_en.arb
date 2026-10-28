@@ -2180,6 +2180,14 @@
   "communityFlagAlready": "You already hold this seat.",
   "communityFlagContinuePayAsk": "You already have a flag. Continue to payment?",
   "communityFlagContinuePay": "Continue to pay",
+  "communityFlagResizeAsk": "Change your flag from {from} to {to}?",
+  "@communityFlagResizeAsk": {
+    "placeholders": {
+      "from": {"type": "int"},
+      "to": {"type": "int"}
+    }
+  },
+  "communityFlagResizeConfirm": "Change",
   "communityFlagTaken": "Someone just took that seat.",
   "communityFlagTooLate": "Too close to the flag deadline to plant a new one.",
   "communityFlagLimitReached": "You can hold at most 3 flags at once.",

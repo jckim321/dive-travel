@@ -731,6 +731,18 @@ abstract class DiverRepository {
     int lockedPrice = 0,
   });
 
+  /// Updates the caller's live flag on this product. Keeps the same expiry.
+  /// Returns [SeatFlagPlant.planted] when the party and locked price change.
+  Future<SeatFlagPlant> replaceSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
+    String optionId = '',
+    String uid = '',
+    int lockedPrice = 0,
+  });
+
   Future<bool> cancelSeatFlag({
     required String uid,
     required String shopId,

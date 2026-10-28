@@ -2172,6 +2172,83 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<SeatFlagPlant> replaceSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
+    String optionId = '',
+    String uid = '',
+    int lockedPrice = 0,
+  }) async {
+    if (uid.isEmpty || partySize <= 0) {
+      return SeatFlagPlant.unavailable;
+    }
+    final hull = shopId.split('--').first;
+    final shopRef = _shops.doc(hull);
+
+    try {
+      return await _db.runTransaction((transaction) async {
+        final shopSnap = await transaction.get(shopRef);
+        final current =
+            ShopProduct.listFrom(hull, shopSnap.data()?['products']);
+        ShopProduct? target;
+        for (final item in current) {
+          if (item.id == productId) {
+            target = item.pruneExpiredHolds(now);
+            break;
+          }
+        }
+        if (target == null || !target.memberHasLiveFlagOnProduct(uid, now)) {
+          return SeatFlagPlant.unavailable;
+        }
+        final resolved = target.memberHasLiveFlag(uid, now, optionId: optionId)
+            ? optionId
+            : target.liveFlagOptionIdFor(uid, now);
+        if (!target.opensEmptySeatsFor(resolved) ||
+            !target.isBoardLiveFor(resolved)) {
+          return SeatFlagPlant.unavailable;
+        }
+        if (target.bookableSeatsFor(uid, now, optionId: resolved) < partySize) {
+          return SeatFlagPlant.taken;
+        }
+        final replaced = target.replaceFlagParty(
+          partySize: partySize,
+          now: now,
+          optionId: resolved,
+          uid: uid,
+          lockedPrice: lockedPrice,
+        );
+        final hold = replaced.liveFlagFor(uid, now, optionId: resolved);
+        if (hold == null || hold.seats != partySize) {
+          return SeatFlagPlant.taken;
+        }
+        transaction.set(
+          shopRef,
+          {
+            'products': [
+              for (final item in current)
+                if (item.id == productId)
+                  replaced.toMap()
+                else
+                  item.pruneExpiredHolds(now).toMap(),
+            ],
+          },
+          SetOptions(merge: true),
+        );
+        return SeatFlagPlant.planted;
+      });
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') {
+        throw StateError(
+          'Firestore rules rejected the shop product write during replaceSeatFlag. Stopped without changing firestore.rules.',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> cancelSeatFlag({
     required String uid,
     required String shopId,

@@ -1484,6 +1484,67 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<SeatFlagPlant> replaceSeatFlag({
+    required String shopId,
+    required String productId,
+    required int partySize,
+    required DateTime now,
+    String optionId = '',
+    String uid = '',
+    int lockedPrice = 0,
+  }) {
+    return _runTxn(() async {
+      if (uid.isEmpty || partySize <= 0) {
+        return SeatFlagPlant.unavailable;
+      }
+      final hull = shopId.split('--').first;
+      final current = _shopStats[hull];
+      if (current == null) {
+        return SeatFlagPlant.unavailable;
+      }
+      ShopProduct? target;
+      for (final item in current.products) {
+        if (item.id == productId) {
+          target = item.pruneExpiredHolds(now);
+          break;
+        }
+      }
+      if (target == null || !target.memberHasLiveFlagOnProduct(uid, now)) {
+        return SeatFlagPlant.unavailable;
+      }
+      final resolved = target.memberHasLiveFlag(uid, now, optionId: optionId)
+          ? optionId
+          : target.liveFlagOptionIdFor(uid, now);
+      if (!target.opensEmptySeatsFor(resolved) ||
+          !target.isBoardLiveFor(resolved)) {
+        return SeatFlagPlant.unavailable;
+      }
+      if (target.bookableSeatsFor(uid, now, optionId: resolved) < partySize) {
+        return SeatFlagPlant.taken;
+      }
+      final replaced = target.replaceFlagParty(
+        partySize: partySize,
+        now: now,
+        optionId: resolved,
+        uid: uid,
+        lockedPrice: lockedPrice,
+      );
+      final hold = replaced.liveFlagFor(uid, now, optionId: resolved);
+      if (hold == null || hold.seats != partySize) {
+        return SeatFlagPlant.taken;
+      }
+      _shopStats[hull] = current.copyWith(
+        products: [
+          for (final item in current.products)
+            if (item.id == productId) replaced else item.pruneExpiredHolds(now),
+        ],
+      );
+      _shopController.add(_shopStats.values.toList());
+      return SeatFlagPlant.planted;
+    });
+  }
+
+  @override
   Future<bool> cancelSeatFlag({
     required String uid,
     required String shopId,

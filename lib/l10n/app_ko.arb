@@ -2753,6 +2753,14 @@
   "communityFlagAlready": "이미 이 자리를 가확정했습니다.",
   "communityFlagContinuePayAsk": "이미 깃발이 있어요. 결제를 이어갈까요?",
   "communityFlagContinuePay": "결제 이어가기",
+  "communityFlagResizeAsk": "기존 깃발 {from}명을 {to}명으로 바꿀까요?",
+  "@communityFlagResizeAsk": {
+    "placeholders": {
+      "from": {"type": "int"},
+      "to": {"type": "int"}
+    }
+  },
+  "communityFlagResizeConfirm": "바꾸기",
   "communityFlagTaken": "방금 다른 분이 먼저 잡았어요",
   "communityFlagTooLate": "깃발 마감이 임박해 새로 꽂을 수 없습니다.",
   "communityFlagLimitReached": "동시에 가질 수 있는 깃발은 최대 3개입니다.",
