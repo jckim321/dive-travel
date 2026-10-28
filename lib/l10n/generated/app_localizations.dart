@@ -5064,6 +5064,18 @@ abstract class AppLocalizations {
   /// **'빈자리 승인 요청을 보냈습니다.'**
   String get sameBoatSeatsSubmitted;
 
+  /// No description provided for @creatorOpenSeatsButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리 열기'**
+  String get creatorOpenSeatsButton;
+
+  /// No description provided for @creatorOpenSeatsSnack.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈자리를 열었어요. 같은배에서 바로 보여요'**
+  String get creatorOpenSeatsSnack;
+
   /// No description provided for @sameBoatSeatsPublished.
   ///
   /// In ko, this message translates to:

@@ -42,6 +42,14 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       !widget.adminBypassApproval &&
       SameBoatSeatOpenLogic.blocksPartnerRequest(widget.product);
 
+  bool _isCreatorSeatOpen(DiverStore store) {
+    if (widget.adminBypassApproval || widget.partnerLiveCopy) {
+      return false;
+    }
+    final uid = store.uid ?? '';
+    return uid.isNotEmpty && widget.product.submittedByUid == uid;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -113,20 +121,27 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         return;
       }
       final next = _seats.applyToProduct(base);
-      await store.saveShopProduct(
-        shopId: next.shopId,
-        product: next,
-        intent: ProductSaveIntent.preserveListing,
-      );
+      final creatorOpen = _isCreatorSeatOpen(store);
+      if (creatorOpen) {
+        await store.openCreatorSeats(product: next);
+      } else {
+        await store.saveShopProduct(
+          shopId: next.shopId,
+          product: next,
+          intent: ProductSaveIntent.preserveListing,
+        );
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.partnerLiveCopy
-                ? l10n.partnerSeatsOpenedSnack
-                : widget.adminBypassApproval
-                    ? l10n.sameBoatSeatsPublished
-                    : l10n.sameBoatSeatsSubmitted,
+            creatorOpen
+                ? l10n.creatorOpenSeatsSnack
+                : widget.partnerLiveCopy
+                    ? l10n.partnerSeatsOpenedSnack
+                    : widget.adminBypassApproval
+                        ? l10n.sameBoatSeatsPublished
+                        : l10n.sameBoatSeatsSubmitted,
           ),
         ),
       );
@@ -142,8 +157,10 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
     final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
     final partnerCopy = widget.partnerLiveCopy;
+    final creatorOpen = _isCreatorSeatOpen(store);
     return Scaffold(
       backgroundColor: partnerCopy ? PartnerTheme.bg : null,
       appBar: AppBar(
@@ -186,9 +203,11 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
                   ? l10n.sameBoatSeatsWaiting
                   : partnerCopy
                       ? l10n.partnerSeatsOpenButton
-                      : widget.adminBypassApproval
-                          ? l10n.sameBoatSeatsPublish
-                          : l10n.sameBoatSeatsSubmit,
+                      : creatorOpen
+                          ? l10n.creatorOpenSeatsButton
+                          : widget.adminBypassApproval
+                              ? l10n.sameBoatSeatsPublish
+                              : l10n.sameBoatSeatsSubmit,
             ),
           ),
         ],

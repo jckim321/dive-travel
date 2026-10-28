@@ -1054,6 +1054,8 @@
   "sameBoatSeatsSubmit": "Request approval",
   "sameBoatSeatsPublish": "Publish to Same-boat",
   "sameBoatSeatsSubmitted": "Leftover-seat request sent.",
+  "creatorOpenSeatsButton": "Open seats",
+  "creatorOpenSeatsSnack": "Seats are open. They show on Same-boat right away.",
   "sameBoatSeatsPublished": "Leftover seats published to Same-boat.",
   "sameBoatSeatsEdit": "Edit seats",
   "sameBoatSeatsWaiting": "Awaiting approval",

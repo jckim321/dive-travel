@@ -111,6 +111,45 @@ class _GatedShopProduct {
   final bool stagedPriceOrNewOptions;
 }
 
+ShopProductOption _optionWithCreatorSeats(
+  ShopProductOption latest,
+  ShopProductOption patch,
+) {
+  return latest.copyWith(
+    openEmptySeats: patch.openEmptySeats,
+    capacity: patch.capacity,
+    bookedSeats: patch.bookedSeats,
+    flagHolds: patch.flagHolds,
+    departureStart: patch.departureStart,
+    flagClosesAt: patch.flagClosesAt,
+    sameBoatStatus: patch.sameBoatStatus,
+    sameBoatOpenedAt: patch.sameBoatOpenedAt,
+    clearDates: patch.departureStart == null && patch.flagClosesAt == null,
+  );
+}
+
+/// Seat inventory from [patch], everything else from the re-read [latest].
+ShopProduct _withCreatorSeatFields(ShopProduct latest, ShopProduct patch) {
+  final byId = {for (final option in patch.options) option.id: option};
+  return latest.copyWith(
+    openEmptySeats: patch.openEmptySeats,
+    capacity: patch.capacity,
+    bookedSeats: patch.bookedSeats,
+    flagHolds: patch.flagHolds,
+    departureStart: patch.departureStart,
+    flagClosesAt: patch.flagClosesAt,
+    sameBoatStatus: patch.sameBoatStatus,
+    sameBoatOpenedAt: patch.sameBoatOpenedAt,
+    options: [
+      for (final option in latest.options)
+        if (byId[option.id] case final incoming?)
+          _optionWithCreatorSeats(option, incoming)
+        else
+          option,
+    ],
+  );
+}
+
 class DiverStore extends ChangeNotifier {
   /// Explore/홈 auto-refresh window for shop stats cache.
   static const shopStatsCacheTtl = Duration(minutes: 5);
@@ -2942,6 +2981,37 @@ class DiverStore extends ChangeNotifier {
       intent: ProductSaveIntent.preserveListing,
     );
     return PartnerOptionDiscardResult.deleted;
+  }
+
+  /// Captain opens leftover seats on their own approved trip.
+  ///
+  /// Reloads the product, then writes departure, headcount, flag deadline,
+  /// and same-boat settings only. Approval and the trip text stay as stored,
+  /// so the seats show on Same-boat without another review.
+  Future<void> openCreatorSeats({required ShopProduct product}) async {
+    final uid = _uid ?? '';
+    if (uid.isEmpty) {
+      throw StateError('Not allowed to edit this shop product');
+    }
+    final latest = await _requireFreshShopProduct(product.shopId, product.id);
+    if (latest.submittedByUid != uid ||
+        latest.publishStatus != ProductPublishStatus.approved) {
+      throw StateError('Not allowed to edit this shop product');
+    }
+    final patched = _withCreatorSeatFields(latest, product);
+    await _repository.saveShopProduct(
+      shopId: patched.shopId,
+      product: patched,
+      clearAbsentFormFields: false,
+      preserveSeatFields: false,
+      recordProductChanges: false,
+    );
+    _upsertLocalShopProduct(patched.shopId, patched);
+    final refreshed = await refreshShopStat(patched.shopId);
+    if (!refreshed) {
+      throw StateError('SHOP_STAT_REFRESH_FAILED');
+    }
+    _upsertLocalShopProduct(patched.shopId, patched);
   }
 
   /// Reloads one shop then returns the product (partner close / seats open).

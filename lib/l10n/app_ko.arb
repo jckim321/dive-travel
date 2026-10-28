@@ -1660,6 +1660,8 @@
   "sameBoatSeatsSubmit": "승인 요청",
   "sameBoatSeatsPublish": "같은배에 바로 게시",
   "sameBoatSeatsSubmitted": "빈자리 승인 요청을 보냈습니다.",
+  "creatorOpenSeatsButton": "빈자리 열기",
+  "creatorOpenSeatsSnack": "빈자리를 열었어요. 같은배에서 바로 보여요",
   "sameBoatSeatsPublished": "같은배에 빈자리를 게시했습니다.",
   "sameBoatSeatsEdit": "빈자리 수정",
   "sameBoatSeatsWaiting": "승인 대기 중",

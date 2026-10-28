@@ -2736,6 +2736,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sameBoatSeatsSubmitted => 'Leftover-seat request sent.';
 
   @override
+  String get creatorOpenSeatsButton => 'Open seats';
+
+  @override
+  String get creatorOpenSeatsSnack =>
+      'Seats are open. They show on Same-boat right away.';
+
+  @override
   String get sameBoatSeatsPublished => 'Leftover seats published to Same-boat.';
 
   @override

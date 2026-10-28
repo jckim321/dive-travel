@@ -2656,6 +2656,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sameBoatSeatsSubmitted => '빈자리 승인 요청을 보냈습니다.';
 
   @override
+  String get creatorOpenSeatsButton => '빈자리 열기';
+
+  @override
+  String get creatorOpenSeatsSnack => '빈자리를 열었어요. 같은배에서 바로 보여요';
+
+  @override
   String get sameBoatSeatsPublished => '같은배에 빈자리를 게시했습니다.';
 
   @override
