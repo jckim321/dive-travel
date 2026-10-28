@@ -67,6 +67,10 @@ void main() {
 
   testWidgets('승인·게시 버튼은 막혀도 글자가 읽힌다', (tester) async {
     await pumpForm(tester, creatorMode: true, partnerMode: false, admin: false);
+    for (var step = 0; step < 4; step++) {
+      await tester.tap(find.byKey(const Key('creator-wizard-next')));
+      await tester.pump();
+    }
     expectReadableSubmit(tester, const Key('partner-product-save'));
 
     await pumpForm(tester, creatorMode: false, partnerMode: false, admin: true);

@@ -3729,6 +3729,42 @@ class AppLocalizationsJa extends AppLocalizations {
   String get creatorWizardStepPrice => '가격';
 
   @override
+  String get creatorWizardStepExtras => '함께 파는 것';
+
+  @override
+  String get creatorWizardStepReview => '확인';
+
+  @override
+  String get creatorWizardSkip => '건너뛰기';
+
+  @override
+  String get creatorWizardAddToTrip => '여행에 더하기';
+
+  @override
+  String get creatorWizardBuySeparate => '따로 구매';
+
+  @override
+  String get creatorWizardDetails => '자세히';
+
+  @override
+  String get creatorWizardAddCard => '항목 추가';
+
+  @override
+  String get creatorWizardOfferName => '이름';
+
+  @override
+  String get creatorWizardRemove => '삭제';
+
+  @override
+  String get creatorWizardDescription => '설명';
+
+  @override
+  String get creatorWizardMissing => '아직 비어 있는 항목';
+
+  @override
+  String get creatorWizardNestedAdd => '하위 옵션 추가';
+
+  @override
   String productFormPleaseEnter(String label, String particle) {
     return '$label$particle 입력해 주세요';
   }

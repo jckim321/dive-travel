@@ -64,6 +64,10 @@ void main() {
       find.byKey(const Key('workbench-diver-price')),
       '180000',
     );
+    await tester.tap(find.byKey(const Key('creator-wizard-next')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('creator-wizard-next')));
+    await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('partner-product-save')));
     await tester.tap(find.byKey(const Key('partner-product-save')));
     await tester.pump();

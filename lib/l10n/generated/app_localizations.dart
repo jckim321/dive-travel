@@ -7056,6 +7056,78 @@ abstract class AppLocalizations {
   /// **'가격'**
   String get creatorWizardStepPrice;
 
+  /// No description provided for @creatorWizardStepExtras.
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 파는 것'**
+  String get creatorWizardStepExtras;
+
+  /// No description provided for @creatorWizardStepReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인'**
+  String get creatorWizardStepReview;
+
+  /// No description provided for @creatorWizardSkip.
+  ///
+  /// In ko, this message translates to:
+  /// **'건너뛰기'**
+  String get creatorWizardSkip;
+
+  /// No description provided for @creatorWizardAddToTrip.
+  ///
+  /// In ko, this message translates to:
+  /// **'여행에 더하기'**
+  String get creatorWizardAddToTrip;
+
+  /// No description provided for @creatorWizardBuySeparate.
+  ///
+  /// In ko, this message translates to:
+  /// **'따로 구매'**
+  String get creatorWizardBuySeparate;
+
+  /// No description provided for @creatorWizardDetails.
+  ///
+  /// In ko, this message translates to:
+  /// **'자세히'**
+  String get creatorWizardDetails;
+
+  /// No description provided for @creatorWizardAddCard.
+  ///
+  /// In ko, this message translates to:
+  /// **'항목 추가'**
+  String get creatorWizardAddCard;
+
+  /// No description provided for @creatorWizardOfferName.
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get creatorWizardOfferName;
+
+  /// No description provided for @creatorWizardRemove.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get creatorWizardRemove;
+
+  /// No description provided for @creatorWizardDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'설명'**
+  String get creatorWizardDescription;
+
+  /// No description provided for @creatorWizardMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 비어 있는 항목'**
+  String get creatorWizardMissing;
+
+  /// No description provided for @creatorWizardNestedAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'하위 옵션 추가'**
+  String get creatorWizardNestedAdd;
+
   /// No description provided for @productFormPleaseEnter.
   ///
   /// In ko, this message translates to:

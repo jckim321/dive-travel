@@ -2140,6 +2140,18 @@
   "creatorWizardStepIntro": "소개",
   "creatorWizardStepSchedule": "일정",
   "creatorWizardStepPrice": "가격",
+  "creatorWizardStepExtras": "함께 파는 것",
+  "creatorWizardStepReview": "확인",
+  "creatorWizardSkip": "건너뛰기",
+  "creatorWizardAddToTrip": "여행에 더하기",
+  "creatorWizardBuySeparate": "따로 구매",
+  "creatorWizardDetails": "자세히",
+  "creatorWizardAddCard": "항목 추가",
+  "creatorWizardOfferName": "이름",
+  "creatorWizardRemove": "삭제",
+  "creatorWizardDescription": "설명",
+  "creatorWizardMissing": "아직 비어 있는 항목",
+  "creatorWizardNestedAdd": "하위 옵션 추가",
   "productFormPleaseEnter": "{label}{particle} 입력해 주세요",
   "@productFormPleaseEnter": {
     "placeholders": {

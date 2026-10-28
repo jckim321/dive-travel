@@ -3845,6 +3845,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creatorWizardStepPrice => 'Price';
 
   @override
+  String get creatorWizardStepExtras => 'Sold with the trip';
+
+  @override
+  String get creatorWizardStepReview => 'Review';
+
+  @override
+  String get creatorWizardSkip => 'Skip';
+
+  @override
+  String get creatorWizardAddToTrip => 'Add to the trip';
+
+  @override
+  String get creatorWizardBuySeparate => 'Buy separately';
+
+  @override
+  String get creatorWizardDetails => 'Details';
+
+  @override
+  String get creatorWizardAddCard => 'Add an item';
+
+  @override
+  String get creatorWizardOfferName => 'Name';
+
+  @override
+  String get creatorWizardRemove => 'Remove';
+
+  @override
+  String get creatorWizardDescription => 'Description';
+
+  @override
+  String get creatorWizardMissing => 'Still empty';
+
+  @override
+  String get creatorWizardNestedAdd => 'Add a nested option';
+
+  @override
   String productFormPleaseEnter(String label, String particle) {
     return 'Please enter $label$particle';
   }

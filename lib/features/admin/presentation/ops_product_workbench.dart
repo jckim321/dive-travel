@@ -10,6 +10,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/partner_product_form_fields.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart'
     show optionHasSeatCommitment;
@@ -22,6 +23,7 @@ import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
+import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
@@ -57,11 +59,65 @@ class OpsProductWorkbench extends StatefulWidget {
   State<OpsProductWorkbench> createState() => _OpsProductWorkbenchState();
 }
 
+class _OfferDetailParts {
+  const _OfferDetailParts({
+    required this.lead,
+    required this.includes,
+    required this.excludes,
+    required this.hasMarkers,
+  });
+
+  final String lead;
+  final String includes;
+  final String excludes;
+  final bool hasMarkers;
+}
+
+_OfferDetailParts _splitOfferDetail(String raw) {
+  final text = raw.trim();
+  final marker = RegExp(r'(?:포함|불포함)\s*[:：]?');
+  final hit = marker.firstMatch(text);
+  if (hit == null) {
+    return _OfferDetailParts(
+      lead: text,
+      includes: '',
+      excludes: '',
+      hasMarkers: false,
+    );
+  }
+  final includeMatch = RegExp(
+    r'포함\s*[:：]?\s*([\s\S]*?)(?=불포함\s*[:：]|$)',
+  ).firstMatch(text);
+  final excludeMatch = RegExp(r'불포함\s*[:：]?\s*([\s\S]*)$').firstMatch(text);
+  return _OfferDetailParts(
+    lead: text.substring(0, hit.start).trim(),
+    includes: includeMatch?.group(1)?.trim() ?? '',
+    excludes: excludeMatch?.group(1)?.trim() ?? '',
+    hasMarkers: true,
+  );
+}
+
+String _packOfferDetail(String lead, String includes, String excludes) {
+  final head = lead.trim();
+  final inc = includes.trim();
+  final exc = excludes.trim();
+  if (inc.isEmpty && exc.isEmpty) {
+    return head;
+  }
+  return [
+    if (head.isNotEmpty) head,
+    if (inc.isNotEmpty) '포함:\n$inc',
+    if (exc.isNotEmpty) '불포함:\n$exc',
+  ].join('\n\n');
+}
+
 class _LineEditors {
   _LineEditors({
     String? id,
     String name = '',
     String description = '',
+    String includes = '',
+    String excludes = '',
     String consumer = '',
     String professional = '',
     this.kind = ProductOptionKind.addon,
@@ -70,6 +126,8 @@ class _LineEditors {
   }) : id = id ?? 'opt-${DateTime.now().microsecondsSinceEpoch}',
        name = TextEditingController(text: name),
        description = TextEditingController(text: description),
+       includes = TextEditingController(text: includes),
+       excludes = TextEditingController(text: excludes),
        consumer = TextEditingController(text: consumer),
        professional = TextEditingController(text: professional),
        consumerFocus = FocusNode(),
@@ -78,6 +136,8 @@ class _LineEditors {
   final String id;
   final TextEditingController name;
   final TextEditingController description;
+  final TextEditingController includes;
+  final TextEditingController excludes;
   final TextEditingController consumer;
   final TextEditingController professional;
   final FocusNode consumerFocus;
@@ -90,6 +150,8 @@ class _LineEditors {
   void dispose() {
     name.dispose();
     description.dispose();
+    includes.dispose();
+    excludes.dispose();
     consumer.dispose();
     professional.dispose();
     consumerFocus.dispose();
@@ -100,7 +162,11 @@ class _LineEditors {
     return ShopProductOption(
       id: id,
       name: name.text.trim(),
-      description: description.text.trim(),
+      description: _packOfferDetail(
+        description.text,
+        includes.text,
+        excludes.text,
+      ),
       consumerPrice: price,
       professionalPrice: parsePositivePrice(professional.text) ?? price,
       kind: kind,
@@ -114,13 +180,16 @@ class _IndividualTicket {
   _IndividualTicket({
     String? id,
     String name = '',
+    String lead = '',
     String consumer = '',
     String includes = '',
     String excludes = '',
     this.bookable = true,
     this.group = '',
+    this.plainDescription = false,
   }) : id = id ?? 'ind-${DateTime.now().microsecondsSinceEpoch}',
        name = TextEditingController(text: name),
+       lead = TextEditingController(text: lead),
        consumer = TextEditingController(text: consumer),
        includes = TextEditingController(text: includes),
        excludes = TextEditingController(text: excludes),
@@ -129,33 +198,27 @@ class _IndividualTicket {
 
   factory _IndividualTicket.fromOption(ShopProductOption option) {
     final raw = option.description.trim();
-    var includes = '';
-    var excludes = '';
-    final includeMatch = RegExp(r'포함\s*[:：]?\s*([\s\S]*?)(?=불포함\s*[:：]|$)')
-        .firstMatch(raw);
-    final excludeMatch = RegExp(r'불포함\s*[:：]?\s*([\s\S]*)$').firstMatch(raw);
-    if (includeMatch != null || excludeMatch != null) {
-      includes = includeMatch?.group(1)?.trim() ?? '';
-      excludes = excludeMatch?.group(1)?.trim() ?? '';
-    } else {
-      includes = raw;
-    }
+    final parts = _splitOfferDetail(raw);
     return _IndividualTicket(
       id: option.id,
       name: option.name,
+      lead: parts.hasMarkers ? parts.lead : '',
       consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
-      includes: includes,
-      excludes: excludes,
+      includes: parts.hasMarkers ? parts.includes : raw,
+      excludes: parts.excludes,
       bookable: option.bookable,
       group: option.group,
+      plainDescription: !parts.hasMarkers && raw.isNotEmpty,
     );
   }
 
   final String id;
   final TextEditingController name;
+  final TextEditingController lead;
   final TextEditingController consumer;
   final TextEditingController includes;
   final TextEditingController excludes;
+  final bool plainDescription;
   final FocusNode consumerFocus;
   final GlobalKey priceKey;
   String? priceError;
@@ -194,14 +257,8 @@ class _IndividualTicket {
     return guests + extra;
   }
 
-  String get descriptionText {
-    final inc = includes.text.trim();
-    final exc = excludes.text.trim();
-    return [
-      if (inc.isNotEmpty) '포함:\n$inc',
-      if (exc.isNotEmpty) '불포함:\n$exc',
-    ].join('\n\n');
-  }
+  String get descriptionText =>
+      _packOfferDetail(lead.text, includes.text, excludes.text);
 
   ShopProductOption toOption() {
     final price = parsePositivePrice(consumer.text) ?? 0;
@@ -230,6 +287,7 @@ class _IndividualTicket {
 
   void dispose() {
     name.dispose();
+    lead.dispose();
     consumer.dispose();
     includes.dispose();
     excludes.dispose();
@@ -260,6 +318,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _rateConsumer = <GuestRole, TextEditingController>{};
   final _addons = <_LineEditors>[];
   final _individuals = <_IndividualTicket>[];
+  final _creatorOfferIds = <String>[];
+  final _creatorDetailsOpen = <String>{};
   final _photoPicker = const DivePhotoPicker();
   final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
@@ -466,7 +526,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ),
       );
     }
-    if (_addons.isEmpty) {
+    if (_addons.isEmpty && !widget.creatorMode) {
       _addons.add(_LineEditors(kind: ProductOptionKind.addon));
     }
     for (final line in _addons) {
@@ -488,6 +548,38 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         );
         ticket.addons.add(line);
         ticket.addonQty[line.id] = 0;
+      }
+    }
+    if (widget.creatorMode) {
+      for (final line in _addons) {
+        final parts = _splitOfferDetail(line.description.text);
+        if (parts.hasMarkers) {
+          line.description.text = parts.lead;
+          line.includes.text = parts.includes;
+          line.excludes.text = parts.excludes;
+        }
+        final formatted = formatWorkbenchWon(line.consumer.text);
+        if (formatted.isNotEmpty) {
+          line.consumer.text = formatted;
+        }
+        _creatorOfferIds.add(line.id);
+      }
+      for (final ticket in _individuals) {
+        if (ticket.plainDescription) {
+          ticket.lead.text = ticket.includes.text;
+          ticket.includes.clear();
+        }
+        final formatted = formatWorkbenchWon(ticket.consumer.text);
+        if (formatted.isNotEmpty) {
+          ticket.consumer.text = formatted;
+        }
+        for (final nested in ticket.addons) {
+          final nestedPrice = formatWorkbenchWon(nested.consumer.text);
+          if (nestedPrice.isNotEmpty) {
+            nested.consumer.text = nestedPrice;
+          }
+        }
+        _creatorOfferIds.add(ticket.id);
       }
     }
     _listen(_name);
@@ -628,11 +720,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           'b:${item.photo!.bytes.length}:${item.photo!.fileName}',
     ].join('|');
     final addonSig = [
-      for (final a in _addons) '${a.name.text}|${a.consumer.text}',
+      for (final a in _addons)
+        '${a.name.text}|${a.consumer.text}|${a.description.text}|${a.includes.text}|${a.excludes.text}',
     ].join(';');
     final ticketSig = [
       for (final t in _individuals)
-        '${t.name.text}|${t.consumer.text}|${t.includes.text}|${t.excludes.text}|${[
+        '${t.name.text}|${t.consumer.text}|${t.lead.text}|${t.includes.text}|${t.excludes.text}|${[
           for (final a in t.addons) '${a.name.text}|${a.consumer.text}',
         ].join(',')}',
     ].join(';');
@@ -1237,8 +1330,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     };
     setState(() {
       _clearPriceErrors();
-      if (widget.creatorMode && target != WorkbenchPriceTarget.option) {
-        _creatorStep = 3;
+      if (widget.creatorMode) {
+        _creatorStep = target == WorkbenchPriceTarget.option ? 4 : 3;
       }
       switch (target) {
         case WorkbenchPriceTarget.diver:
@@ -1280,6 +1373,54 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return existing?.featuredAt;
     }
     return existing?.featuredAt ?? DateTime.now();
+  }
+
+  void _classifyCreatorGroups() {
+    if (!widget.creatorMode) {
+      return;
+    }
+    for (final draft in _addons) {
+      if (draft.name.text.trim().isEmpty) {
+        continue;
+      }
+      draft.group = classifyOptionGroup(draft.name.text);
+    }
+    for (final ticket in _individuals) {
+      if (ticket.name.text.trim().isEmpty) {
+        continue;
+      }
+      ticket.group = classifyOptionGroup(ticket.name.text);
+      for (final nested in ticket.addons) {
+        if (nested.name.text.trim().isEmpty) {
+          continue;
+        }
+        nested.group = classifyOptionGroup(nested.name.text);
+      }
+    }
+  }
+
+  List<ShopProductOption> _assembledOptions({
+    required String name,
+    required int diverPrice,
+  }) {
+    return [
+      ShopProductOption(
+        id: _baseOptionId,
+        name: name,
+        description: _blurb.text.trim(),
+        consumerPrice: diverPrice,
+        professionalPrice: diverPrice,
+        kind: ProductOptionKind.basePackage,
+      ),
+      for (final draft in _addons)
+        if (draft.name.text.trim().isNotEmpty)
+          draft.toOption().copyWith(kind: ProductOptionKind.addon),
+      for (final ticket in _individuals)
+        if (ticket.name.text.trim().isNotEmpty) ...[
+          ticket.toOption(),
+          ...ticket.addonOptions(),
+        ],
+    ];
   }
 
   /// Returns true when Firestore/local save finished successfully.
@@ -1404,24 +1545,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             professional: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
           ),
       ];
-      final options = <ShopProductOption>[
-        ShopProductOption(
-          id: _baseOptionId,
-          name: name,
-          description: _blurb.text.trim(),
-          consumerPrice: diverRate.consumer,
-          professionalPrice: diverRate.professional,
-          kind: ProductOptionKind.basePackage,
-        ),
-        for (final draft in _addons)
-          if (draft.name.text.trim().isNotEmpty)
-            draft.toOption().copyWith(kind: ProductOptionKind.addon),
-        for (final ticket in _individuals)
-          if (ticket.name.text.trim().isNotEmpty) ...[
-            ticket.toOption(),
-            ...ticket.addonOptions(),
-          ],
-      ];
+      _classifyCreatorGroups();
+      final options = _assembledOptions(
+        name: name,
+        diverPrice: diverRate.consumer,
+      );
       var shopId = _shopId;
       if (_namedResort) {
         if (!shopId.startsWith('curated-')) {
@@ -2329,6 +2457,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       1 => l10n.creatorWizardStepIntro,
       2 => l10n.creatorWizardStepSchedule,
       3 => l10n.creatorWizardStepPrice,
+      4 => l10n.creatorWizardStepExtras,
+      5 => l10n.creatorWizardStepReview,
       _ => '',
     };
     return Column(
@@ -2390,7 +2520,11 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 ? null
                 : () => _creatorGo(_creatorStep + 1),
             style: _readableFilledStyle(height: 44),
-            child: Text(l10n.creatorWizardNext),
+            child: Text(
+              _creatorStep == 4 && _creatorOfferIds.isEmpty
+                  ? l10n.creatorWizardSkip
+                  : l10n.creatorWizardNext,
+            ),
           ),
         ),
       ],
@@ -2402,6 +2536,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       1 => _creatorStepIntro(l10n, store),
       2 => _creatorStepSchedule(l10n),
       3 => _creatorStepPrice(l10n),
+      4 => _creatorStepExtras(l10n),
+      5 => _creatorStepReview(l10n),
       _ => SizedBox(
           key: Key('creator-wizard-step-$_creatorStep'),
           height: 8,
@@ -2659,6 +2795,573 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             errorText: _childPriceError,
             onChanged: () => setState(() => _childPriceError = null),
           ),
+        ],
+      ],
+    );
+  }
+
+  Widget _creatorStepExtras(AppLocalizations l10n) {
+    return Column(
+      key: const Key('creator-wizard-step-4'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final id in _creatorOfferIds) ...[
+          _creatorOfferCard(l10n, id),
+          const SizedBox(height: 12),
+        ],
+        OutlinedButton.icon(
+          key: const Key('creator-offer-add'),
+          onPressed: _addCreatorOffer,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: PartnerTheme.text,
+            minimumSize: const Size.fromHeight(44),
+          ),
+          icon: const Icon(Icons.add),
+          label: Text(l10n.creatorWizardAddCard),
+        ),
+      ],
+    );
+  }
+
+  _LineEditors? _creatorAddon(String id) {
+    for (final line in _addons) {
+      if (line.id == id) {
+        return line;
+      }
+    }
+    return null;
+  }
+
+  _IndividualTicket? _creatorTicket(String id) {
+    for (final ticket in _individuals) {
+      if (ticket.id == id) {
+        return ticket;
+      }
+    }
+    return null;
+  }
+
+  void _addCreatorOffer() {
+    final line = _LineEditors(kind: ProductOptionKind.addon);
+    setState(() {
+      _addons.add(line);
+      _addonQty[line.id] = 0;
+      _creatorOfferIds.add(line.id);
+    });
+  }
+
+  void _removeCreatorOffer(String id) {
+    _LineEditors? line;
+    _IndividualTicket? ticket;
+    setState(() {
+      _creatorOfferIds.remove(id);
+      _creatorDetailsOpen.remove(id);
+      final addonIndex = _addons.indexWhere((item) => item.id == id);
+      if (addonIndex >= 0) {
+        line = _addons.removeAt(addonIndex);
+        _addonQty.remove(id);
+        return;
+      }
+      final ticketIndex = _individuals.indexWhere((item) => item.id == id);
+      if (ticketIndex >= 0) {
+        ticket = _individuals.removeAt(ticketIndex);
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      line?.dispose();
+      final dropped = ticket;
+      if (dropped != null) {
+        _dropIndividual(dropped);
+      }
+    });
+  }
+
+  void _setCreatorOfferSeparate(String id, bool separate) {
+    final currentSeparate = _creatorTicket(id) != null;
+    if (currentSeparate == separate) {
+      return;
+    }
+    _LineEditors? dropLine;
+    _IndividualTicket? dropTicket;
+    setState(() {
+      if (separate) {
+        final index = _addons.indexWhere((item) => item.id == id);
+        if (index < 0) {
+          return;
+        }
+        final line = _addons.removeAt(index);
+        _addonQty.remove(id);
+        final ticket = _IndividualTicket(
+          id: line.id,
+          name: line.name.text,
+          lead: line.description.text,
+          consumer: line.consumer.text,
+          includes: line.includes.text,
+          excludes: line.excludes.text,
+          bookable: line.bookable,
+          group: line.group,
+        );
+        _individuals.add(ticket);
+        dropLine = line;
+        return;
+      }
+      final index = _individuals.indexWhere((item) => item.id == id);
+      if (index < 0) {
+        return;
+      }
+      final ticket = _individuals.removeAt(index);
+      final line = _LineEditors(
+        id: ticket.id,
+        name: ticket.name.text,
+        description: ticket.lead.text,
+        includes: ticket.includes.text,
+        excludes: ticket.excludes.text,
+        consumer: ticket.consumer.text,
+        bookable: ticket.bookable,
+        group: ticket.group,
+        kind: ProductOptionKind.addon,
+      );
+      _addons.add(line);
+      _addonQty[line.id] = 0;
+      final at = _creatorOfferIds.indexOf(ticket.id);
+      var cursor = at < 0 ? _creatorOfferIds.length : at + 1;
+      for (final nested in ticket.addons) {
+        nested.kind = ProductOptionKind.addon;
+        _addons.add(nested);
+        _addonQty[nested.id] = 0;
+        if (!_creatorOfferIds.contains(nested.id)) {
+          _creatorOfferIds.insert(cursor, nested.id);
+          cursor += 1;
+        }
+      }
+      ticket.addons.clear();
+      dropTicket = ticket;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      dropLine?.dispose();
+      dropTicket?.dispose();
+    });
+  }
+
+  void _addCreatorNested(String ticketId) {
+    final ticket = _creatorTicket(ticketId);
+    if (ticket == null) {
+      return;
+    }
+    final line = _LineEditors(kind: ProductOptionKind.addon);
+    setState(() {
+      ticket.addons.add(line);
+      ticket.addonQty[line.id] = 0;
+    });
+  }
+
+  void _removeCreatorNested(String ticketId, String nestedId) {
+    final ticket = _creatorTicket(ticketId);
+    if (ticket == null) {
+      return;
+    }
+    _LineEditors? line;
+    setState(() {
+      final index = ticket.addons.indexWhere((item) => item.id == nestedId);
+      if (index < 0) {
+        return;
+      }
+      line = ticket.addons.removeAt(index);
+      ticket.addonQty.remove(nestedId);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => line?.dispose());
+  }
+
+  Widget _creatorOfferText({
+    required String stamp,
+    required TextEditingController controller,
+    required String label,
+    int lines = 1,
+  }) {
+    return _StableField(
+      key: ValueKey(stamp),
+      stamp: stamp,
+      buildField: () => TextField(
+        controller: controller,
+        minLines: lines,
+        maxLines: lines,
+        style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+        cursorColor: PartnerTheme.accent,
+        decoration: _partnerField(label, lines: lines),
+      ),
+    );
+  }
+
+  Widget _creatorOfferCard(AppLocalizations l10n, String id) {
+    final ticket = _creatorTicket(id);
+    final addon = ticket == null ? _creatorAddon(id) : null;
+    if (ticket == null && addon == null) {
+      return const SizedBox.shrink();
+    }
+    final separate = ticket != null;
+    final name = separate ? ticket.name : addon!.name;
+    final price = separate ? ticket.consumer : addon!.consumer;
+    final priceError = separate ? ticket.priceError : addon!.priceError;
+    final priceFocus = separate ? ticket.consumerFocus : addon!.consumerFocus;
+    final priceKey = separate ? ticket.priceKey : addon!.priceKey;
+    final open = _creatorDetailsOpen.contains(id);
+    final mode = separate ? 'separate' : 'addon';
+    return DecoratedBox(
+      key: Key('creator-offer-card-$id'),
+      decoration: BoxDecoration(
+        color: PartnerTheme.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PartnerTheme.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _creatorOfferText(
+                    stamp: 'offer-name-$id-$mode',
+                    controller: name,
+                    label: l10n.creatorWizardOfferName,
+                  ),
+                ),
+                IconButton(
+                  key: Key('creator-offer-remove-$id'),
+                  tooltip: l10n.creatorWizardRemove,
+                  onPressed: () => _removeCreatorOffer(id),
+                  icon: const Icon(Icons.close, color: PartnerTheme.textDim),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            KeyedSubtree(
+              key: priceKey,
+              child: _creatorPriceField(
+                key: Key('creator-offer-price-$id'),
+                focusNode: priceFocus,
+                controller: price,
+                label: l10n.partnerFormBasePrice,
+                errorText: priceError,
+                onChanged: () {
+                  if (priceError != null) {
+                    setState(() {
+                      if (separate) {
+                        ticket.priceError = null;
+                      } else {
+                        addon!.priceError = null;
+                      }
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _creatorModeButton(
+                    key: Key('creator-offer-addon-$id'),
+                    label: l10n.creatorWizardAddToTrip,
+                    selected: !separate,
+                    onPressed: () => _setCreatorOfferSeparate(id, false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _creatorModeButton(
+                    key: Key('creator-offer-individual-$id'),
+                    label: l10n.creatorWizardBuySeparate,
+                    selected: separate,
+                    onPressed: () => _setCreatorOfferSeparate(id, true),
+                  ),
+                ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key('creator-offer-details-$id'),
+                onPressed: () => setState(() {
+                  if (open) {
+                    _creatorDetailsOpen.remove(id);
+                  } else {
+                    _creatorDetailsOpen.add(id);
+                  }
+                }),
+                child: Text(l10n.creatorWizardDetails),
+              ),
+            ),
+            if (open) ...[
+              _creatorOfferText(
+                stamp: 'offer-lead-$id-$mode',
+                controller: separate ? ticket.lead : addon!.description,
+                label: l10n.creatorWizardDescription,
+                lines: 3,
+              ),
+              const SizedBox(height: 8),
+              _creatorOfferText(
+                stamp: 'offer-includes-$id-$mode',
+                controller: separate ? ticket.includes : addon!.includes,
+                label: l10n.productFormIncludes,
+                lines: 3,
+              ),
+              const SizedBox(height: 8),
+              _creatorOfferText(
+                stamp: 'offer-excludes-$id-$mode',
+                controller: separate ? ticket.excludes : addon!.excludes,
+                label: l10n.productFormExcludes,
+                lines: 3,
+              ),
+              if (separate) ...[
+                const SizedBox(height: 8),
+                for (final nested in ticket.addons) ...[
+                  _creatorNestedRow(l10n, ticket.id, nested),
+                  const SizedBox(height: 8),
+                ],
+                OutlinedButton.icon(
+                  key: Key('creator-offer-nested-add-$id'),
+                  onPressed: () => _addCreatorNested(id),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: PartnerTheme.text,
+                  ),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text(l10n.creatorWizardNestedAdd),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _creatorModeButton({
+    required Key key,
+    required String label,
+    required bool selected,
+    required VoidCallback onPressed,
+  }) {
+    return FilledButton(
+      key: key,
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: selected ? PartnerTheme.accent : PartnerTheme.card,
+        foregroundColor: selected ? PartnerTheme.bg : PartnerTheme.text,
+        minimumSize: const Size.fromHeight(40),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+      ),
+      child: Text(label, textAlign: TextAlign.center),
+    );
+  }
+
+  Widget _creatorNestedRow(
+    AppLocalizations l10n,
+    String ticketId,
+    _LineEditors nested,
+  ) {
+    return Column(
+      key: Key('creator-offer-nested-${nested.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _creatorOfferText(
+                stamp: 'nested-name-${nested.id}',
+                controller: nested.name,
+                label: l10n.creatorWizardOfferName,
+              ),
+            ),
+            IconButton(
+              key: Key('creator-offer-nested-remove-${nested.id}'),
+              tooltip: l10n.creatorWizardRemove,
+              onPressed: () => _removeCreatorNested(ticketId, nested.id),
+              icon: const Icon(Icons.close, color: PartnerTheme.textDim),
+            ),
+          ],
+        ),
+        KeyedSubtree(
+          key: nested.priceKey,
+          child: _creatorPriceField(
+            key: Key('creator-offer-nested-price-${nested.id}'),
+            focusNode: nested.consumerFocus,
+            controller: nested.consumer,
+            label: l10n.partnerFormBasePrice,
+            errorText: nested.priceError,
+            onChanged: () {
+              if (nested.priceError != null) {
+                setState(() => nested.priceError = null);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<({String id, String label, int step})> _creatorGaps(
+    AppLocalizations l10n,
+  ) {
+    final gaps = <({String id, String label, int step})>[];
+    if (_resortName.text.trim().isEmpty) {
+      gaps.add((
+        id: 'resort',
+        label: l10n.productFormCuratedResort,
+        step: 1,
+      ));
+    }
+    if (_resortCountry.text.trim().isEmpty) {
+      gaps.add((
+        id: 'country',
+        label: l10n.productFormCuratedCountry,
+        step: 1,
+      ));
+    }
+    if (_resortRegion.text.trim().isEmpty) {
+      gaps.add((
+        id: 'region',
+        label: l10n.productFormCuratedLocation,
+        step: 1,
+      ));
+    }
+    if (_diverPriceValue <= 0) {
+      gaps.add((id: 'diver', label: l10n.partnerFormBasePrice, step: 3));
+    }
+    if (_hasNondivers) {
+      if (parsePositivePrice(_rateConsumer[GuestRole.nondiver]!.text) ==
+          null) {
+        gaps.add((
+          id: 'nondiver',
+          label: l10n.workbenchGuestNondiver,
+          step: 3,
+        ));
+      }
+      if (parsePositivePrice(_rateConsumer[GuestRole.child]!.text) == null) {
+        gaps.add((id: 'child', label: l10n.workbenchGuestChild, step: 3));
+      }
+    }
+    for (final id in _creatorOfferIds) {
+      final addon = _creatorAddon(id);
+      if (addon != null) {
+        if (addon.name.text.trim().isNotEmpty &&
+            parsePositivePrice(addon.consumer.text) == null) {
+          gaps.add((
+            id: 'offer-$id',
+            label: addon.name.text.trim(),
+            step: 4,
+          ));
+        }
+        continue;
+      }
+      final ticket = _creatorTicket(id);
+      if (ticket == null) {
+        continue;
+      }
+      if (ticket.name.text.trim().isNotEmpty &&
+          parsePositivePrice(ticket.consumer.text) == null) {
+        gaps.add((
+          id: 'offer-$id',
+          label: ticket.name.text.trim(),
+          step: 4,
+        ));
+      }
+      for (final nested in ticket.addons) {
+        if (nested.name.text.trim().isNotEmpty &&
+            parsePositivePrice(nested.consumer.text) == null) {
+          gaps.add((
+            id: 'offer-${nested.id}',
+            label: nested.name.text.trim(),
+            step: 4,
+          ));
+        }
+      }
+    }
+    return gaps;
+  }
+
+  Widget _creatorStepReview(AppLocalizations l10n) {
+    final gaps = _creatorGaps(l10n);
+    final name = _resortName.text.trim().isNotEmpty
+        ? _resortName.text.trim()
+        : _name.text.trim();
+    final price = _diverPriceValue;
+    final shopId = _shopId.trim().isEmpty ? 'creator-preview' : _shopId.trim();
+    final product = ShopProduct(
+      id: widget.existing?.id ?? 'creator-preview-product',
+      shopId: shopId,
+      name: name,
+      consumerPrice: price,
+      professionalPrice: price,
+      blurb: _blurb.text.trim(),
+      durationLabel: _durationLabelForSave,
+      coverUrl: _galleryCoverUrl,
+      continent: _continent,
+      meetingPoint: _meeting.text.trim(),
+      includes: _includes.text.trim(),
+      excludes: _excludes.text.trim(),
+      cancellationNote: _cancel.text.trim(),
+      options: _assembledOptions(name: name, diverPrice: price),
+      category: _categoryForSave,
+    );
+    final shop = DiveShop(
+      id: shopId,
+      name: name.isEmpty ? l10n.creatorWizardStepReview : name,
+      location: _resortRegion.text.trim(),
+      country: _resortCountry.text.trim(),
+      continent: _continent,
+      sites: const [],
+      productName: name,
+      stars: 0,
+      rating: 0,
+      reviewCount: 0,
+      amenities: const [],
+      consumerPrice: price,
+      professionalPrice: price,
+      blurb: _blurb.text.trim(),
+      durationLabel: _durationLabelForSave,
+      coverUrl: _galleryCoverUrl,
+    );
+    Uint8List? coverBytes;
+    for (final item in _gallery) {
+      final data = item.photo?.bytes;
+      if (data != null && data.isNotEmpty) {
+        coverBytes = data;
+        break;
+      }
+    }
+    return Column(
+      key: const Key('creator-wizard-step-5'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyedSubtree(
+          key: const Key('creator-wizard-preview'),
+          child: ProductOfferPreview(
+            shop: shop,
+            product: product,
+            quote: TourPriceQuote(amount: price, isProfessional: false),
+            coverBytes: coverBytes,
+          ),
+        ),
+        if (gaps.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            l10n.creatorWizardMissing,
+            style: const TextStyle(
+              color: PartnerTheme.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          for (final gap in gaps)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key('creator-wizard-gap-${gap.id}'),
+                onPressed: () => _creatorGo(gap.step),
+                child: Text(gap.label),
+              ),
+            ),
         ],
       ],
     );
@@ -3562,7 +4265,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                 style: _readableFilledStyle(),
                 child: Text(l10n.briefEdit),
               )
-            else
+            else if (!widget.creatorMode || _creatorStep == 5)
               FilledButton(
                 key: canPublish
                     ? const Key('admin-product-submit')

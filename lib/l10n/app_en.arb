@@ -1578,6 +1578,18 @@
   "creatorWizardStepIntro": "Intro",
   "creatorWizardStepSchedule": "Schedule",
   "creatorWizardStepPrice": "Price",
+  "creatorWizardStepExtras": "Sold with the trip",
+  "creatorWizardStepReview": "Review",
+  "creatorWizardSkip": "Skip",
+  "creatorWizardAddToTrip": "Add to the trip",
+  "creatorWizardBuySeparate": "Buy separately",
+  "creatorWizardDetails": "Details",
+  "creatorWizardAddCard": "Add an item",
+  "creatorWizardOfferName": "Name",
+  "creatorWizardRemove": "Remove",
+  "creatorWizardDescription": "Description",
+  "creatorWizardMissing": "Still empty",
+  "creatorWizardNestedAdd": "Add a nested option",
   "productFormPleaseEnter": "Please enter {label}{particle}",
   "@productFormPleaseEnter": {
     "placeholders": {

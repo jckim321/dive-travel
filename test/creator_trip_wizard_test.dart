@@ -90,6 +90,9 @@ void main() {
     await tester.tap(find.byKey(const Key('creator-wizard-next')));
     await tester.pump();
     expect(find.byKey(const Key('creator-wizard-step-4')), findsOneWidget);
+    expect(find.text(l10n.creatorWizardStepExtras), findsOneWidget);
+    expect(find.byKey(const Key('creator-offer-add')), findsOneWidget);
+    expect(find.text(l10n.creatorWizardSkip), findsOneWidget);
     expect(find.byKey(const Key('partner-form-add-option')), findsNothing);
     expect(find.byKey(const Key('workbench-diver-price')), findsNothing);
 
@@ -97,6 +100,13 @@ void main() {
     await tester.pump();
     expect(find.text(l10n.creatorWizardProgress(5)), findsOneWidget);
     expect(find.byKey(const Key('creator-wizard-step-5')), findsOneWidget);
+    expect(find.byKey(const Key('creator-wizard-preview')), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('shop-book-creator-preview')))
+          .onPressed,
+      isNull,
+    );
     expect(
       tester
           .widget<FilledButton>(find.byKey(const Key('creator-wizard-next')))
@@ -164,7 +174,7 @@ void main() {
       find.byKey(const Key('partner-reject-reason-banner')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('partner-product-save')), findsOneWidget);
+    expect(find.byKey(const Key('partner-product-save')), findsNothing);
   });
 
   testWidgets('관리자 양식은 한 화면이고 마법사 막대가 없다', (tester) async {
