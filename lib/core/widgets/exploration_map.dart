@@ -88,10 +88,6 @@ class ExplorationMap extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const CustomPaint(
-                        key: Key('exploration-map-sun'),
-                        painter: _SunGlowPainter(),
-                      ),
                       const RepaintBoundary(
                         child: CustomPaint(
                           painter: WorldOutlinePainter(
@@ -99,6 +95,10 @@ class ExplorationMap extends StatelessWidget {
                             stroke: _sandStroke,
                           ),
                         ),
+                      ),
+                      const CustomPaint(
+                        key: Key('exploration-map-sun'),
+                        painter: ExplorationSunPainter(),
                       ),
                       for (final region in regions) _marker(region, size),
                       if (regions.isEmpty)
@@ -160,7 +160,7 @@ class ExplorationMap extends StatelessWidget {
       ),
         ),
         const Positioned(
-          right: 2,
+          left: 2,
           top: 0,
           child: IgnorePointer(
             child: CustomPaint(
@@ -234,41 +234,77 @@ class _MapCaption extends StatelessWidget {
   }
 }
 
-/// Soft daylight from the upper right: a glow, a disk, and a few rays.
-class _SunGlowPainter extends CustomPainter {
-  const _SunGlowPainter();
+/// Daylight in the upper-right corner: a larger disk and a fan of rays
+/// that cross the top half of the ocean and the continents under them.
+class ExplorationSunPainter extends CustomPainter {
+  const ExplorationSunPainter();
+
+  static const rayCount = 7;
+  static const rayOpacity = 0.36;
+  static const diskRadius = 22.0;
+
+  static Offset originFor(Size size) => Offset(size.width - 26, 18);
+
+  /// Ends of the fan. The steepest ray reaches the midline of the ocean.
+  static List<Offset> rayEnds(Size size) {
+    final origin = originFor(size);
+    final ends = <Offset>[];
+    for (var i = 0; i < rayCount; i++) {
+      final t = i / (rayCount - 1);
+      final angle = 0.16 + t * 1.28;
+      final midY = size.height * 0.52;
+      final needed = (midY - origin.dy) / math.sin(angle);
+      final length = needed.clamp(size.shortestSide * 0.42, size.width * 0.96);
+      ends.add(
+        origin + Offset(-math.cos(angle) * length, math.sin(angle) * length),
+      );
+    }
+    return ends;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final origin = Offset(size.width - 96, 24);
+    final origin = originFor(size);
+    final glowRadius = size.shortestSide * 0.72;
     final glow = Paint()
-      ..shader = const RadialGradient(
-        colors: [Color(0x99FFF6C8), Color(0x33FFE08A), Color(0x00FFF6C8)],
-      ).createShader(Rect.fromCircle(center: origin, radius: 78));
-    canvas.drawCircle(origin, 78, glow);
+      ..shader = RadialGradient(
+        colors: const [
+          Color(0x99FFF6C8),
+          Color(0x44FFE08A),
+          Color(0x00FFF6C8),
+        ],
+      ).createShader(Rect.fromCircle(center: origin, radius: glowRadius));
+    canvas.drawCircle(origin, glowRadius, glow);
 
+    final halo = Paint()
+      ..color = const Color(0xFFFFF3C4).withValues(alpha: 0.32)
+      ..strokeWidth = 18
+      ..strokeCap = StrokeCap.round;
     final ray = Paint()
-      ..color = const Color(0x2EFFF3C4)
+      ..color = const Color(0xFFFFF6D0).withValues(alpha: rayOpacity)
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 6; i++) {
-      final angle = 0.4 + i * 0.34;
-      final length = i.isEven ? 108.0 : 72.0;
-      canvas.drawLine(
-        origin,
-        origin + Offset(-math.cos(angle) * length, math.sin(angle) * length),
-        ray,
-      );
+    for (final end in rayEnds(size)) {
+      canvas.drawLine(origin, end, halo);
+      canvas.drawLine(origin, end, ray);
     }
-    canvas.drawCircle(origin, 12, Paint()..color = const Color(0xFFFFF6D0));
-    canvas.drawCircle(origin, 7, Paint()..color = const Color(0xFFFFE08A));
+    canvas.drawCircle(
+      origin,
+      diskRadius,
+      Paint()..color = const Color(0xFFFFF8DC),
+    );
+    canvas.drawCircle(
+      origin,
+      diskRadius * 0.58,
+      Paint()..color = const Color(0xFFFFE08A),
+    );
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Mask and face leaning over the top-right brass rim.
+/// Mask and face leaning over the top-left brass rim.
 class _PeekingDiverPainter extends CustomPainter {
   const _PeekingDiverPainter();
 

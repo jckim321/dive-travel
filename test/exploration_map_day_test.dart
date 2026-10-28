@@ -79,7 +79,27 @@ void main() {
     expect(painter.fill, sandFill);
     expect(painter.stroke, sandStroke);
 
-    expect(find.byKey(const Key('exploration-map-sun')), findsOneWidget);
+    final sunPaint = tester.widget<CustomPaint>(
+      find.byKey(const Key('exploration-map-sun')),
+    );
+    expect(sunPaint.painter, isA<ExplorationSunPainter>());
+    expect(ExplorationSunPainter.rayCount, inInclusiveRange(6, 8));
+    expect(ExplorationSunPainter.rayOpacity, inInclusiveRange(0.3, 0.4));
+    expect(ExplorationSunPainter.diskRadius, greaterThan(16));
+    final mapSize = tester.getSize(find.byKey(const Key('exploration-map-sun')));
+    final origin = ExplorationSunPainter.originFor(mapSize);
+    expect(origin.dx, greaterThan(mapSize.width * 0.8));
+    expect(origin.dy, lessThan(mapSize.height * 0.2));
+    final ends = ExplorationSunPainter.rayEnds(mapSize);
+    expect(ends, hasLength(ExplorationSunPainter.rayCount));
+    var lowest = 0.0;
+    for (final end in ends) {
+      expect(end.dx, lessThan(origin.dx));
+      if (end.dy > lowest) {
+        lowest = end.dy;
+      }
+    }
+    expect(lowest, greaterThan(mapSize.height * 0.45));
     expect(find.byKey(const Key('exploration-map-diver')), findsOneWidget);
 
     final title = tester.widget<Text>(find.text('My ocean map'));
@@ -99,9 +119,9 @@ void main() {
     );
     final caption = tester.getRect(find.text('My ocean map'));
     expect(diver.width, closeTo(56, 1));
-    expect(diver.center.dx, greaterThan(card.center.dx));
+    expect(diver.center.dx, lessThan(card.center.dx));
     expect(diver.top, lessThanOrEqualTo(card.top + 2));
-    expect(diver.right, greaterThan(card.right - 8));
+    expect(diver.left, lessThan(card.left + 8));
     expect(diver.bottom, lessThan(caption.top));
 
     final markers = tester
