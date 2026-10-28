@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Horizontal ocean-atlas continent filter with full readable labels.
@@ -56,7 +57,9 @@ class ContinentAtlasRail extends StatelessWidget {
                   selected: selectedId == id,
                   menuOpen: menuId == id,
                   onTap: () => onSelected(id),
-                  onMenu: id == TravelRegionId.all ? null : () => onMenu(id),
+                  onMenu: !exploreFeaturedMenuEnabled || id == TravelRegionId.all
+                      ? null
+                      : () => onMenu(id),
                 );
               },
             ),

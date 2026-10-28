@@ -4,6 +4,9 @@ import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+/// Region chevrons and the featured-country menu. Off until turned back on.
+bool exploreFeaturedMenuEnabled = false;
+
 String travelSeaLabel(AppLocalizations l10n, String seaId) {
   return switch (seaId) {
     TravelSea.indian => l10n.exploreSeaIndian,

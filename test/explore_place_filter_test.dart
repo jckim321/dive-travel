@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -75,7 +76,7 @@ void main() {
     );
   });
 
-  testWidgets('▾는 주요 나라만 열고 원 이름은 권역 전체다', (tester) async {
+  testWidgets('원은 권역 전체만 고르고 ▾와 나라 메뉴는 꺼져 있다', (tester) async {
     tester.view.physicalSize = const Size(800, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -105,18 +106,68 @@ void main() {
     final l10n = AppLocalizations.of(tester.element(find.byType(ExploreScreen)));
     expect(find.byKey(const Key('explore-sea-rail')), findsNothing);
     expect(find.byKey(const Key('explore-country-menu')), findsNothing);
-    expect(find.byKey(const Key('continent-chevron-all')), findsNothing);
-    expect(find.text('▾'), findsWidgets);
+    expect(find.byKey(const Key('continent-chevron-asia')), findsNothing);
+    expect(find.text('▾'), findsNothing);
     expect(find.byKey(const Key('explore-region-row-asia')), findsOneWidget);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     expect(find.text(l10n.exploreNoResults), findsNothing);
     expect(find.text(l10n.exploreCountryEmpty), findsNothing);
 
-    await tester.tap(find.byKey(const Key('continent-filter-asia')));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('continent-atlas-rail')),
+        matching: find.text('아시아'),
+      ),
+    );
     await tester.pump();
     expect(find.byKey(const Key('explore-country-menu')), findsNothing);
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('continent-filter-all')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('explore-search')), '보홀');
+    await tester.pump();
+    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('explore-search'))).controller?.text,
+      '보홀',
+    );
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+  });
+
+  testWidgets('나라 드롭다운 코드는 켜면 주요 나라만 거른다', (tester) async {
+    exploreFeaturedMenuEnabled = true;
+    addTearDown(() => exploreFeaturedMenuEnabled = false);
+
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final store = DiverStore(MemoryDiverRepository.forTest());
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ExploreScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final l10n = AppLocalizations.of(tester.element(find.byType(ExploreScreen)));
 
     await tester.tap(find.byKey(const Key('continent-chevron-asia')));
     await tester.pump();

@@ -113,7 +113,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     _menuRegion = _menuRegion == id ? null : id;
                   }),
                 ),
-                if (_menuRegion != null)
+                if (exploreFeaturedMenuEnabled && _menuRegion != null)
                   ExploreFeaturedMenu(
                     regionId: _menuRegion!,
                     selectedCountryId: _countryId,
