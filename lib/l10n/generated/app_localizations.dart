@@ -1224,6 +1224,24 @@ abstract class AppLocalizations {
   /// **'다이브스타 인증'**
   String get exploreDiveStarCertified;
 
+  /// No description provided for @exploreCardDiveStar.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star {marks}'**
+  String exploreCardDiveStar(String marks);
+
+  /// No description provided for @exploreCardDiveStarRenew.
+  ///
+  /// In ko, this message translates to:
+  /// **'Dive Star 갱신 필요'**
+  String get exploreCardDiveStarRenew;
+
+  /// No description provided for @exploreCardPartner.
+  ///
+  /// In ko, this message translates to:
+  /// **'제휴 파트너'**
+  String get exploreCardPartner;
+
   /// 다이브스타 유효기간이 지났을 때 배지 문구입니다.
   ///
   /// In ko, this message translates to:

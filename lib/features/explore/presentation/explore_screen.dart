@@ -158,13 +158,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       mainAxisSpacing: 18,
                                       crossAxisSpacing: 8,
                                       mainAxisExtent:
-                                          ListingCover.cardExtent(context),
+                                          ListingCover.travelCardExtent(
+                                            context,
+                                          ),
                                     ),
                                 itemBuilder: (context, index) {
                                   final shop = shops[index];
                                   return HomeStayCard(
                                     key: Key('shop-card-${shop.id}'),
                                     shop: shop,
+                                    travelTab: true,
                                     onDetails: () => openResortDetail(
                                       context,
                                       shop.hullId,

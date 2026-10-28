@@ -18,14 +18,21 @@ class HomeStayCard extends StatelessWidget {
     required this.shop,
     required this.onDetails,
     this.coverAspectRatio = ListingCover.aspectRatio,
+    this.travelTab = false,
   });
 
   final DiveShop shop;
   final VoidCallback onDetails;
   final double coverAspectRatio;
 
+  /// Travel-products tab. Home shelves keep the photo-then-caption layout.
+  final bool travelTab;
+
   @override
   Widget build(BuildContext context) {
+    if (travelTab) {
+      return _TravelStayCard(shop: shop, onDetails: onDetails);
+    }
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
@@ -78,24 +85,7 @@ class HomeStayCard extends StatelessWidget {
                   Positioned(
                     top: 2,
                     right: 2,
-                    child: IconButton(
-                      visualDensity: VisualDensity.compact,
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xCCFFFFFF),
-                        foregroundColor:
-                            saved ? const Color(0xFFE11D48) : AppTheme.navy,
-                        minimumSize: const Size(32, 32),
-                      ),
-                      onPressed: () async {
-                        if (!await ensureSignedIn(context)) return;
-                        if (!context.mounted) return;
-                        await store.toggleFavoriteShop(shop.id);
-                      },
-                      icon: Icon(
-                        saved ? Icons.favorite : Icons.favorite_border,
-                        size: 16,
-                      ),
-                    ),
+                    child: _StayHeart(shopId: shop.id, saved: saved),
                   ),
                 ],
               ),
@@ -126,6 +116,207 @@ class HomeStayCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TravelStayCard extends StatelessWidget {
+  const _TravelStayCard({required this.shop, required this.onDetails});
+
+  final DiveShop shop;
+  final VoidCallback onDetails;
+
+  static const _band = Color(0xFFD7EEF8);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final saved = store.isFavoriteShop(shop.id);
+    final region = shop.location.trim().isNotEmpty
+        ? shop.location.trim()
+        : shop.country.trim();
+    final hasReviews = shop.reviewCount > 0;
+
+    return GestureDetector(
+      onTap: onDetails,
+      behavior: HitTestBehavior.opaque,
+      child: CCardProductFrame(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AspectRatio(
+              aspectRatio:
+                  ListingCover.aspectRatio / ListingCover.travelPhotoScale,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ListingCoverPhoto(shop: shop),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x33000000),
+                          Color(0x00000000),
+                          Color(0x22052A4A),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: _TravelBadge(shop: shop),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: _StayHeart(shopId: shop.id, saved: saved),
+                  ),
+                ],
+              ),
+            ),
+            ColoredBox(
+              key: const Key('explore-card-band'),
+              color: _band,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      shop.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        height: 1.2,
+                      ),
+                    ),
+                    if (region.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        region,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.navy,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 2),
+                    Text(
+                      hasReviews
+                          ? '★ ${l10n.exploreRating(shop.rating.toStringAsFixed(1), shop.reviewCount)}'
+                          : l10n.reviewNoReviewsYet,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: hasReviews ? AppTheme.gold : AppTheme.muted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TravelBadge extends StatelessWidget {
+  const _TravelBadge({required this.shop});
+
+  final DiveShop shop;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (shop.isDiveStarExpired) {
+      return Opacity(
+        opacity: 0.45,
+        child: _pill(
+          l10n.exploreCardDiveStarRenew,
+          foreground: AppTheme.gold,
+          background: const Color(0xF2FFFFFF),
+        ),
+      );
+    }
+    if (shop.isDiveStarCertified) {
+      final marks = '★' * shop.stars.clamp(1, 3);
+      return _pill(
+        l10n.exploreCardDiveStar(marks),
+        foreground: AppTheme.gold,
+        background: const Color(0xF2FFFFFF),
+      );
+    }
+    return _pill(
+      l10n.exploreCardPartner,
+      foreground: const Color(0xFF8A939C),
+      background: const Color(0xE6F3F4F6),
+    );
+  }
+
+  Widget _pill(String label, {required Color foreground, required Color background}) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: foreground,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StayHeart extends StatelessWidget {
+  const _StayHeart({required this.shopId, required this.saved});
+
+  final String shopId;
+  final bool saved;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = DiverStoreScope.of(context);
+    return IconButton(
+      visualDensity: VisualDensity.compact,
+      style: IconButton.styleFrom(
+        backgroundColor: const Color(0xCCFFFFFF),
+        foregroundColor: saved ? const Color(0xFFE11D48) : AppTheme.navy,
+        minimumSize: const Size(32, 32),
+      ),
+      onPressed: () async {
+        if (!await ensureSignedIn(context)) return;
+        if (!context.mounted) return;
+        await store.toggleFavoriteShop(shopId);
+      },
+      icon: Icon(
+        saved ? Icons.favorite : Icons.favorite_border,
+        size: 16,
       ),
     );
   }

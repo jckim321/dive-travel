@@ -640,6 +640,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreDiveStarCertified => 'Dive Star certified';
 
   @override
+  String exploreCardDiveStar(String marks) {
+    return 'Dive Star $marks';
+  }
+
+  @override
+  String get exploreCardDiveStarRenew => 'Dive Star renewal needed';
+
+  @override
+  String get exploreCardPartner => 'Partner';
+
+  @override
   String get exploreDiveStarRenewalNeeded => 'Renewal needed';
 
   @override

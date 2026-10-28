@@ -632,6 +632,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreDiveStarCertified => '다이브스타 인증';
 
   @override
+  String exploreCardDiveStar(String marks) {
+    return 'Dive Star $marks';
+  }
+
+  @override
+  String get exploreCardDiveStarRenew => 'Dive Star 갱신 필요';
+
+  @override
+  String get exploreCardPartner => '제휴 파트너';
+
+  @override
   String get exploreDiveStarRenewalNeeded => '갱신 필요';
 
   @override

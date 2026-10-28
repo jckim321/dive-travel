@@ -19,6 +19,17 @@ abstract final class ListingCover {
     // Image + shop name + guest rating line.
     return cellW / aspectRatio + 54;
   }
+
+  /// Travel-tab photo is about 20% taller. The info band sits inside the frame.
+  static const double travelPhotoScale = 1.2;
+
+  static double travelCardExtent(
+    BuildContext context, {
+    double horizontal = 52,
+  }) {
+    final cellW = (MediaQuery.sizeOf(context).width - horizontal) / 2;
+    return cellW * travelPhotoScale + 84;
+  }
 }
 
 class ListingCoverPhoto extends StatelessWidget {
