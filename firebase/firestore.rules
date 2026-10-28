@@ -180,11 +180,16 @@ service cloud.firestore {
         isOwner(userId)
         && !accountClosed()
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked'])
+            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked', 'is_instructor'])
         && (
           !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['member_grade'])
           || ownerPurchaseGradeRaise()
+        )
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['is_verified_pro'])
+          || request.resource.data.is_verified_pro == 'pending'
         )
       );
       allow delete: if isAdmin() || (isOwner(userId) && !accountClosed());
@@ -652,6 +657,7 @@ service cloud.firestore {
         && request.resource.data.partner_uid == request.auth.uid
         && request.resource.data.shop_id is string
         && request.resource.data.shop_id.size() > 0
+        && ownsShop(request.resource.data.shop_id)
         && request.resource.data.company_name is string
         && request.resource.data.contact_name is string
         && request.resource.data.signature_png_base64 is string
@@ -1077,7 +1083,13 @@ service cloud.firestore {
 
     match /posts/{postId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.author_uid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 120
+        && request.resource.data.subtitle is string
+        && request.resource.data.subtitle.size() <= 2000;
       allow update, delete: if isAdmin()
         || (isSignedIn() && resource.data.author_uid == request.auth.uid);
 

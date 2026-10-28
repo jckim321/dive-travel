@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test user_create_privilege.test.js partner_contracts.test.js seat_life.test.js seat_demand.test.js meeting_reports.test.js",
-    "test:emu": "firebase emulators:exec --only firestore --project dive-travel-rules-test \"node --test user_create_privilege.test.js partner_contracts.test.js seat_life.test.js seat_demand.test.js meeting_reports.test.js\""
+    "test": "node --test user_create_privilege.test.js partner_contracts.test.js seat_life.test.js seat_demand.test.js meeting_reports.test.js phase1_client_writes.test.js",
+    "test:emu": "firebase emulators:exec --only firestore --project dive-travel-rules-test \"node --test user_create_privilege.test.js partner_contracts.test.js seat_life.test.js seat_demand.test.js meeting_reports.test.js phase1_client_writes.test.js\""
   },
 
   "devDependencies": {
