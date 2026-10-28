@@ -9,8 +9,10 @@ import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/crafted_trip_seats.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/partner_product_form_fields.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart'
     show optionHasSeatCommitment;
@@ -29,6 +31,7 @@ import 'package:dive_travel_app/features/partner/presentation/partner_back_butto
 import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class OpsProductWorkbench extends StatefulWidget {
@@ -2202,6 +2205,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                       ],
                     ),
                   ),
+                  ..._openSeatsTail(l10n),
                 ],
               ),
             ),
@@ -4275,6 +4279,78 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           onChanged: (next) => setState(() => draft.group = next),
         ),
       ],
+    );
+  }
+
+  List<Widget> _openSeatsTail(AppLocalizations l10n) {
+    if (widget.creatorMode && _creatorStep != 5) {
+      return const [];
+    }
+    final entry = _openSeatsEntry(l10n);
+    if (entry == null) {
+      return const [];
+    }
+    return [
+      const SizedBox(height: 16),
+      entry,
+    ];
+  }
+
+  /// Gold+ only. Own approved trip opens [SameBoatSeatsScreen]; a new or
+  /// not-yet-approved trip of the same diver shows a hint. Hidden otherwise.
+  Widget? _openSeatsEntry(AppLocalizations l10n) {
+    final store = DiverStoreScope.of(context);
+    final uid = store.uid ?? '';
+    final grade = store.stats.memberGrade;
+    if (uid.isEmpty || grade.rank < MemberGrade.gold.rank) {
+      return null;
+    }
+    final existing = widget.existing;
+    if (existing != null && existing.submittedByUid != uid) {
+      return null;
+    }
+    final gate = existing ??
+        ShopProduct(
+          id: 'new',
+          shopId: 'new',
+          name: '',
+          consumerPrice: 0,
+          professionalPrice: 0,
+          submittedByUid: uid,
+          publishStatus: ProductPublishStatus.pending,
+        );
+    if (craftedTripCanOpenSeats(
+      grade: grade,
+      viewerUid: uid,
+      product: gate,
+    )) {
+      final product = existing!;
+      return FilledButton(
+        key: const Key('workbench-open-seats'),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          backgroundColor: AppTheme.ocean,
+          foregroundColor: Colors.white,
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+        onPressed: () {
+          Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (_) => SameBoatSeatsScreen(product: product),
+            ),
+          );
+        },
+        child: Text(l10n.sameBoatSeatsTitle),
+      );
+    }
+    return Text(
+      l10n.workbenchOpenSeatsAfterApproval,
+      key: const Key('workbench-open-seats-hint'),
+      style: const TextStyle(
+        color: PartnerTheme.text,
+        fontWeight: FontWeight.w700,
+        height: 1.35,
+      ),
     );
   }
 

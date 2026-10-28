@@ -5547,6 +5547,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'People needed, a departure date, and a flag deadline are required to open leftover seats.';
 
   @override
+  String get workbenchOpenSeatsAfterApproval =>
+      'You can open leftover seats after this trip is approved.';
+
+  @override
   String get sameBoatRequiredHeadcount => 'People needed to depart';
 
   @override

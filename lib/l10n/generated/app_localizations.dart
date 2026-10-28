@@ -10134,6 +10134,12 @@ abstract class AppLocalizations {
   /// **'빈자리를 열려면 필요 인원·출발일·깃발 마감을 넣으세요.'**
   String get workbenchOpenSeatsNeedFields;
 
+  /// No description provided for @workbenchOpenSeatsAfterApproval.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인되면 빈자리를 열 수 있어요'**
+  String get workbenchOpenSeatsAfterApproval;
+
   /// No description provided for @sameBoatRequiredHeadcount.
   ///
   /// In ko, this message translates to:

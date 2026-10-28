@@ -5400,6 +5400,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workbenchOpenSeatsNeedFields => '빈자리를 열려면 필요 인원·출발일·깃발 마감을 넣으세요.';
 
   @override
+  String get workbenchOpenSeatsAfterApproval => '승인되면 빈자리를 열 수 있어요';
+
+  @override
   String get sameBoatRequiredHeadcount => '출발에 필요한 인원';
 
   @override

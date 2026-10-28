@@ -2265,6 +2265,7 @@
   "workbenchDepartureDate": "Departure date",
   "workbenchFlagDeadline": "Flag deadline",
   "workbenchOpenSeatsNeedFields": "People needed, a departure date, and a flag deadline are required to open leftover seats.",
+  "workbenchOpenSeatsAfterApproval": "You can open leftover seats after this trip is approved.",
   "sameBoatRequiredHeadcount": "People needed to depart",
   "sameBoatBookedReference": "{count} booked on this date",
   "@sameBoatBookedReference": {
