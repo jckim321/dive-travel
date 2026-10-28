@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/payments/payment_gateway.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -362,62 +363,57 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (accountCannotBuy(store)) {
       return;
     }
-    if (!await ensureSignedIn(context)) {
-      return;
-    }
-    if (!mounted || store.uid == null) {
-      return;
-    }
-    final quote = widget.quote;
-    final label = quote.isProfessional
-        ? l10n.exploreProPrice
-        : l10n.exploreConsumerPrice;
-    final amount = _payable(context);
-    final formatted = _priceFormat.format(amount);
-    final product = widget.product;
-    final party = _hasProduct ? _partySize : 1;
-    if (product != null) {
-      // min_guests is legacy / unused by the product form — do not block checkout.
-      if (product.maxGuests > 0 && party > product.maxGuests) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.checkoutGuestsAboveMax(product.maxGuests))),
-        );
-        return;
-      }
-    }
-    final seatOption = _seatOptionId;
-    final opensSeats = _checksSeats;
-    if (opensSeats && product != null) {
-      final room = product.bookableSeatsFor(
-        store.uid ?? '',
-        DateTime.now(),
-        optionId: seatOption,
-      );
-      if (party > room) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.communitySeatsShort)));
-        return;
-      }
-    }
-    final paid = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _SimPayDialog(
-        title: _hasProduct ? _chosenLabels() : widget.shop.name,
-        amount: formatted,
-        sameBoatPayment: opensSeats || widget.fromFlag,
-      ),
-    );
-    if (paid != true || !mounted) {
-      return;
-    }
-    final recordOption = seatOption.isNotEmpty
-        ? seatOption
-        : (widget.presetOptionId.isNotEmpty
-              ? widget.presetOptionId
-              : (_selected.isEmpty ? '' : _selected.first));
-    _paying = true;
+    setState(() => _paying = true);
     try {
+      if (!await ensureSignedIn(context)) {
+        return;
+      }
+      if (!mounted || store.uid == null) {
+        return;
+      }
+      final quote = widget.quote;
+      final label = quote.isProfessional
+          ? l10n.exploreProPrice
+          : l10n.exploreConsumerPrice;
+      final amount = _payable(context);
+      final formatted = _priceFormat.format(amount);
+      final product = widget.product;
+      final party = _hasProduct ? _partySize : 1;
+      if (product != null) {
+        // min_guests is legacy / unused by the product form — do not block checkout.
+        if (product.maxGuests > 0 && party > product.maxGuests) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.checkoutGuestsAboveMax(product.maxGuests))),
+          );
+          return;
+        }
+      }
+      final seatOption = _seatOptionId;
+      final opensSeats = _checksSeats;
+      if (opensSeats && product != null) {
+        final room = product.bookableSeatsFor(
+          store.uid ?? '',
+          DateTime.now(),
+          optionId: seatOption,
+        );
+        if (party > room) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(l10n.communitySeatsShort)));
+          return;
+        }
+      }
+      final paid = await const SimPayGateway().pay(
+        amountWon: amount,
+        title: _hasProduct ? _chosenLabels() : widget.shop.name,
+      );
+      if (!paid || !mounted) {
+        return;
+      }
+      final recordOption = seatOption.isNotEmpty
+          ? seatOption
+          : (widget.presetOptionId.isNotEmpty
+                ? widget.presetOptionId
+                : (_selected.isEmpty ? '' : _selected.first));
       final saved = await store.createBooking(
         shop: widget.shop,
         price: amount,
@@ -465,7 +461,25 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       );
     } finally {
       _paying = false;
+      if (mounted) {
+        setState(() {});
+      }
     }
+  }
+
+  Widget _payButtonChild(String label) {
+    if (!_paying) {
+      return Text(label);
+    }
+    return const SizedBox(
+      key: Key('checkout-pay-progress'),
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color: Colors.white,
+      ),
+    );
   }
 
   @override
@@ -826,7 +840,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   if (!_workbench)
                     FilledButton(
                       key: const Key('explore-checkout-pay'),
-                      onPressed: cannotBuy || !_guestReady ? null : _pay,
+                      onPressed: cannotBuy || !_guestReady || _paying
+                          ? null
+                          : _pay,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppTheme.navy,
                         padding: const EdgeInsets.symmetric(
@@ -834,7 +850,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                           vertical: 14,
                         ),
                       ),
-                      child: Text(l10n.explorePay),
+                      child: _payButtonChild(l10n.explorePay),
                     )
                   else
                     _workbenchFooter(l10n, cannotBuy: cannotBuy),
@@ -916,9 +932,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         Expanded(
           child: FilledButton(
             key: Key(sameBoat ? 'checkout-pay-same-boat' : 'checkout-confirm'),
-            onPressed: cannotBuy || !_guestReady ? null : _pay,
+            onPressed: cannotBuy || !_guestReady || _paying ? null : _pay,
             style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-            child: Text(
+            child: _payButtonChild(
               sameBoat ? l10n.explorePay : l10n.checkoutConfirm,
             ),
           ),
@@ -1724,105 +1740,6 @@ class _DateBox extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SimPayDialog extends StatefulWidget {
-  const _SimPayDialog({
-    required this.title,
-    required this.amount,
-    this.sameBoatPayment = false,
-  });
-
-  final String title;
-  final String amount;
-
-  /// Same-boat / flag checkout uses a different notice than Explore booking.
-  final bool sameBoatPayment;
-
-  @override
-  State<_SimPayDialog> createState() => _SimPayDialogState();
-}
-
-class _SimPayDialogState extends State<_SimPayDialog> {
-  var _phase = 0;
-
-  Future<void> _submit() async {
-    setState(() => _phase = 1);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!mounted) {
-      return;
-    }
-    setState(() => _phase = 2);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final done = _phase == 2;
-    final sameBoat = widget.sameBoatPayment;
-    final titleText = done
-        ? l10n.simPayDoneTitle
-        : (sameBoat ? l10n.simPaySameBoatTitle : l10n.simPayTitle);
-    final bodyText = done
-        ? l10n.simPayDoneBody
-        : (sameBoat ? l10n.simPaySameBoatNotice : l10n.simPayNotice);
-    final actionText = done
-        ? l10n.simPayClose
-        : (sameBoat ? l10n.simPaySameBoatAction : l10n.simPayAction);
-    return AlertDialog(
-      key: const Key('sim-pay-dialog'),
-      title: Text(titleText),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            bodyText,
-            style: const TextStyle(color: AppTheme.muted),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            widget.title,
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            widget.amount,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.navy,
-            ),
-          ),
-          if (_phase == 1) ...[
-            const SizedBox(height: 16),
-            const LinearProgressIndicator(),
-            const SizedBox(height: 8),
-            Text(l10n.simPayProcessing),
-          ],
-        ],
-      ),
-      actions: [
-        if (!done)
-          TextButton(
-            onPressed: _phase == 1
-                ? null
-                : () => Navigator.of(context).pop(false),
-            child: Text(l10n.checkoutBack),
-          ),
-        FilledButton(
-          key: Key(done ? 'sim-pay-done' : 'sim-pay-submit'),
-          onPressed: _phase == 1
-              ? null
-              : done
-              ? () => Navigator.of(context).pop(true)
-              : _submit,
-          style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
-          child: Text(actionText),
-        ),
-      ],
     );
   }
 }

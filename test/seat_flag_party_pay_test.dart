@@ -68,13 +68,6 @@ void main() {
     await tester.ensureVisible(payButton);
     await tester.tap(payButton);
     await tester.pumpAndSettle();
-    expect(find.text('300,000'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('sim-pay-submit')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 800));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('sim-pay-done')));
-    await tester.pumpAndSettle();
   }
 
   Future<void> expectPartyOfThree(MemoryDiverRepository repo, WidgetTester tester) async {
