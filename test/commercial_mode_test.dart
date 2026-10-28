@@ -76,7 +76,7 @@ void main() {
       optionId: 'pkg',
       listingKind: ProductListingKind.diverPlanned,
     );
-    expect(blocked, isFalse);
+    expect(blocked, isNull);
     expect(await repo.watchBookings('test-user').first, isEmpty);
 
     final saved = await repo.createBooking(
@@ -99,7 +99,7 @@ void main() {
         BookingLine(label: '2탱크', amount: 126000),
       ],
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final bookings = await repo.watchBookings('test-user').first;
     expect(bookings, hasLength(1));
     expect(bookings.first.productId, product.id);
@@ -172,7 +172,7 @@ void main() {
         BookingLine(label: '나이트 다이빙', amount: 30000),
       ],
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final bookings = await repo.watchBookings('test-user').first;
     expect(bookings, hasLength(1));
     final booking = bookings.first;

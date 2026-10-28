@@ -954,7 +954,7 @@ class DiverStore extends ChangeNotifier {
     await refreshLogs();
   }
 
-  Future<bool> createBooking({
+  Future<TourBooking?> createBooking({
     required DiveShop shop,
     required int price,
     DateTime? tourDate,
@@ -979,7 +979,7 @@ class DiverStore extends ChangeNotifier {
   }) async {
     final uid = _uid;
     if (uid == null) {
-      return false;
+      return null;
     }
     final hull = shop.id.split('--').first;
     final saved = await _repository.createBooking(
@@ -1008,7 +1008,7 @@ class DiverStore extends ChangeNotifier {
       guestContact: guestContact.trim(),
     );
     unawaited(refreshShopStat(hull));
-    if (saved && fromFlag && productId != null && productId.isNotEmpty) {
+    if (saved != null && fromFlag && productId != null && productId.isNotEmpty) {
       unawaited(
         _recordSeatPay(
           shopId: hull,

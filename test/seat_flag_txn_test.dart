@@ -109,7 +109,7 @@ void main() {
         partySize: 1,
       ),
     ]);
-    expect(results.where((ok) => ok).length, 1);
+    expect(results.where((ok) => ok != null).length, 1);
     final stats = await repo.fetchShopStat(shopId);
     final product = stats!.products.singleWhere((p) => p.id == 'p-race');
     expect(product.bookedSeats, 1);
@@ -246,7 +246,7 @@ void main() {
       partySize: 2,
       fromFlag: true,
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final booking = (await repo.watchBookings('test-user').first).first;
     expect(booking.seatsHeld, 2);
     final stats = await repo.fetchShopStat(shopId);
@@ -284,7 +284,7 @@ void main() {
       productId: 'p-exp',
       partySize: 1,
     );
-    expect(saved, isFalse);
+    expect(saved, isNull);
   });
 
   test('cancel restores seats_held once; legacy bookings skip restore',
@@ -365,7 +365,7 @@ void main() {
       productId: 'p-closed',
       partySize: 2,
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final booking = (await repo.watchBookings('test-user').first).first;
     expect(booking.seatsHeld, 0);
     var stats = await repo.fetchShopStat(shopId);
@@ -435,7 +435,7 @@ void main() {
       status: BookingStatus.confirmed,
       paymentStatus: PaymentStatus.captured,
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final booking = (await repo.watchBookings('test-user').first).single;
     expect(booking.partySize, 3);
     expect(booking.divers, 3);

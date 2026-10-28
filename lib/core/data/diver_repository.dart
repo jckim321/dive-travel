@@ -695,7 +695,8 @@ abstract class DiverRepository {
     int limit = 5,
   });
 
-  Future<bool> createBooking({
+  /// The saved booking, or null when the seat hold could not be taken.
+  Future<TourBooking?> createBooking({
     required String uid,
     required String shopId,
     required String shopName,

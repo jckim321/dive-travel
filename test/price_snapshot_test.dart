@@ -15,7 +15,7 @@ void main() {
       productName: 'Tour',
       price: 45000,
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     final rows = await repo.watchBookings('guest-1').first;
     expect(rows.single.price, 45000);
   });

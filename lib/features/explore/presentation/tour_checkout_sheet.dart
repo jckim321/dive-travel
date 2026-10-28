@@ -13,6 +13,7 @@ import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
+import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> showTourCheckoutSheet({
@@ -376,12 +377,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       if (!mounted || store.uid == null) {
         return;
       }
-      final quote = widget.quote;
-      final label = quote.isProfessional
-          ? l10n.exploreProPrice
-          : l10n.exploreConsumerPrice;
       final amount = _payable(context);
-      final formatted = _priceFormat.format(amount);
       final product = widget.product;
       final party = _hasProduct ? _partySize : 1;
       if (product != null) {
@@ -448,22 +444,18 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       if (!mounted) {
         return;
       }
-      if (!saved) {
+      if (saved == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.exploreBookingNotSaved)),
         );
         return;
       }
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.fromFlag
-                ? l10n.sameBoatSeatConfirmed
-                : l10n.exploreCheckoutDone(label, formatted),
-          ),
-        ),
-      );
+      final navigator = Navigator.of(context);
+      final overlayContext = navigator.overlay?.context;
+      navigator.pop();
+      if (overlayContext != null && overlayContext.mounted) {
+        await openBookingVoucher(overlayContext, saved);
+      }
     } finally {
       _paying = false;
       if (mounted) {
@@ -762,41 +754,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               const SizedBox(height: 12),
                             ],
                             _guestIdentityFields(l10n),
-                            const SizedBox(height: 16),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  l10n.explorePriceWon(formatted),
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  l10n.explorePerTrip,
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: quote.isProfessional
-                                    ? AppTheme.gold
-                                    : AppTheme.navy,
-                              ),
-                            ),
-                            if (quote.hasDiscount)
-                              Text(
-                                l10n.exploreOriginalPrice(
-                                  _priceFormat.format(quote.compareAtAmount!),
-                                ),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                ),
-                              ),
                             const SizedBox(height: 24),
                           ],
                         ),
@@ -815,6 +772,41 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (cannotBuy) const StaffCannotBuyNote(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        l10n.explorePriceWon(formatted),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        l10n.explorePerTrip,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: quote.isProfessional
+                          ? AppTheme.gold
+                          : AppTheme.navy,
+                    ),
+                  ),
+                  if (quote.hasDiscount)
+                    Text(
+                      l10n.exploreOriginalPrice(
+                        _priceFormat.format(quote.compareAtAmount!),
+                      ),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   Text(
                     cancelNote.isNotEmpty
                         ? cancelNote
@@ -1089,10 +1081,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     },
             ),
           const SizedBox(height: 8),
-          Text(
-            l10n.checkoutTotal(_priceFormat.format(_payable(context))),
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
+          _compositionAmounts(),
         ],
       );
     }
@@ -1133,10 +1122,28 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     });
                   },
           ),
-        Text(
-          l10n.checkoutTotal(_priceFormat.format(_payable(context))),
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
+        _compositionAmounts(),
+      ],
+    );
+  }
+
+  Widget _compositionAmounts() {
+    final lines = _booking.lines;
+    if (lines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      children: [
+        for (final line in lines)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                Expanded(child: Text(line.label)),
+                Text(_priceFormat.format(line.amount)),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -1168,11 +1175,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ],
         for (final rate in product.resolvedGuestRates)
           if (rate.enabled) _qtyRow(l10n, rate.role),
-        const SizedBox(height: 8),
-        Text(
-          l10n.checkoutTotal(_priceFormat.format(_payable(context))),
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
       ],
     );
   }

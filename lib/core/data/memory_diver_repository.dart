@@ -1274,7 +1274,7 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<bool> createBooking({
+  Future<TourBooking?> createBooking({
     required String uid,
     required String shopId,
     required String shopName,
@@ -1308,7 +1308,7 @@ class MemoryDiverRepository implements DiverRepository {
       if (productId != null && productId.isNotEmpty && partySize > 0) {
         final current = _shopStats[hullId];
         if (current == null) {
-          return false;
+          return null;
         }
         ShopProduct? target;
         for (final item in current.products) {
@@ -1318,7 +1318,7 @@ class MemoryDiverRepository implements DiverRepository {
           }
         }
         if (target == null) {
-          return false;
+          return null;
         }
         final opens = target.opensEmptySeatsFor(seatKey);
         if (opens) {
@@ -1330,7 +1330,7 @@ class MemoryDiverRepository implements DiverRepository {
             optionId: seatKey,
           );
           if (captured.bookedSeatsFor(seatKey) <= before) {
-            return false;
+            return null;
           }
           seatsHeld = partySize;
           _shopStats[hullId] = current.copyWith(
@@ -1384,7 +1384,7 @@ class MemoryDiverRepository implements DiverRepository {
         debugFailBeforeShopBookingWrite = false;
         _bookings.removeAt(0);
         _bookingController.add(List<TourBooking>.from(_bookings));
-        return false;
+        return null;
       }
       _shopBookings.putIfAbsent(booking.shopId, () => []).insert(
             0,
@@ -1397,7 +1397,7 @@ class MemoryDiverRepository implements DiverRepository {
       if (paymentStatus == PaymentStatus.captured && uid.isNotEmpty) {
         _bumpActivityLocal(uid: uid, purchaseDelta: 1);
       }
-      return true;
+      return booking;
     });
   }
 

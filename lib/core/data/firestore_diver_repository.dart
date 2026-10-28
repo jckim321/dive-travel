@@ -1889,7 +1889,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<bool> createBooking({
+  Future<TourBooking?> createBooking({
     required String uid,
     required String shopId,
     required String shopName,
@@ -1924,7 +1924,7 @@ class FirestoreDiverRepository implements DiverRepository {
     final seatKey = seatOptionId;
 
     try {
-      final ok = await _db.runTransaction((transaction) async {
+      final saved = await _db.runTransaction<TourBooking?>((transaction) async {
         var seatsHeld = 0;
         List<ShopProduct>? currentProducts;
         ShopProduct? capturedProduct;
@@ -1945,7 +1945,7 @@ class FirestoreDiverRepository implements DiverRepository {
             }
           }
           if (target == null) {
-            return false;
+            return null;
           }
           if (target.opensEmptySeatsFor(seatKey)) {
             final before = target.bookedSeatsFor(seatKey);
@@ -1956,7 +1956,7 @@ class FirestoreDiverRepository implements DiverRepository {
               optionId: seatKey,
             );
             if (captured.bookedSeatsFor(seatKey) <= before) {
-              return false;
+              return null;
             }
             seatsHeld = partySize;
             capturedProduct = captured;
@@ -2032,14 +2032,14 @@ class FirestoreDiverRepository implements DiverRepository {
         // User doc keeps name, birth, and contact. Shop doc keeps the name only.
         transaction.set(userBookingRef, userPayload);
         transaction.set(shopBookingRef, shopPayload);
-        return true;
+        return booking;
       });
-      if (ok &&
+      if (saved != null &&
           paymentStatus == PaymentStatus.captured &&
           uid.isNotEmpty) {
         await _bumpActivityAndMaybeUpgrade(uid: uid, purchaseDelta: 1);
       }
-      return ok;
+      return saved;
     } on FirebaseException catch (error) {
       if (error.code == 'permission-denied') {
         throw StateError(

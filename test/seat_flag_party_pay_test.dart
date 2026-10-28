@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/app.dart';
@@ -79,20 +78,7 @@ void main() {
     expect(stats!.products.single.bookedSeats, 3);
 
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
-    await tester.pumpWidget(
-      MaterialApp(
-        locale: const Locale('ko'),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: BookingVoucherScreen(booking: booking),
-      ),
-    );
-    await tester.pump();
+    expect(find.byType(BookingVoucherScreen), findsOneWidget);
     expect(
       find.text(l10n.bookingPartySummary(3, 0, 0, 0)),
       findsOneWidget,

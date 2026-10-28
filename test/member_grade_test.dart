@@ -73,8 +73,8 @@ void main() {
   test('결제 1건만 등급을 올리고 후기와 잠금은 등급을 건드리지 않는다', () async {
     final repo = MemoryDiverRepository.forTest();
     final past = DateTime.now().subtract(const Duration(days: 3));
-    Future<void> pay() {
-      return repo.createBooking(
+    Future<void> pay() async {
+      await repo.createBooking(
         uid: 'test-user',
         shopId: 'grade-shop',
         shopName: '샵',

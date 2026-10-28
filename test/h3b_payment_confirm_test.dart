@@ -123,7 +123,7 @@ void main() {
       status: BookingStatus.confirmed,
       paymentStatus: PaymentStatus.captured,
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
     var stats = await repo.fetchShopStat(shopId);
     expect(
       stats!.products.singleWhere((p) => p.id == 'p-h3b-cancel').bookedSeats,
@@ -162,7 +162,7 @@ void main() {
       status: BookingStatus.confirmed,
       paymentStatus: PaymentStatus.captured,
     );
-    expect(failed, isFalse);
+    expect(failed, isNull);
     expect(await repo.watchBookings('test-user').first, isEmpty);
     expect(await purchaseCount(repo), 0);
 
@@ -176,7 +176,7 @@ void main() {
       status: BookingStatus.confirmed,
       paymentStatus: PaymentStatus.captured,
     );
-    expect(ok, isTrue);
+    expect(ok, isNotNull);
     expect(await purchaseCount(repo), 1);
 
     // Second paid create → +1 again (new booking).

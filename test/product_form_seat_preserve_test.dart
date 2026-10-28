@@ -65,7 +65,7 @@ void main() {
       price: opened.consumerPrice,
       partySize: 1,
     );
-    expect(booked, isTrue);
+    expect(booked, isNotNull);
 
     await tester.enterText(
       find.byKey(const Key('admin-product-name')),

@@ -15,7 +15,7 @@ void main() {
       guestBirthDate: '1990-05-06',
       guestContact: '010-1234-5678',
     );
-    expect(saved, isTrue);
+    expect(saved, isNotNull);
 
     final user = await repo.watchBookings('test-user').first;
     final shop = await repo.fetchShopBookings('hull');
