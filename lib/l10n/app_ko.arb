@@ -2311,6 +2311,14 @@
   "productFormCuratedLocationHint": "예: 필리핀 보홀 팡라오",
   "productFormCuratedCountry": "국가",
   "productFormCuratedCountryHint": "예: 필리핀",
+  "productFormCountryOther": "기타(직접 입력)",
+  "@productFormCountryOther": {
+    "description": "나라 목록에 없을 때 글씨를 직접 적는 선택입니다."
+  },
+  "productFormCountryNoSea": "해역 없음",
+  "@productFormCountryNoSea": {
+    "description": "고른 나라에 해역이 없을 때 권역 옆에 붙는 문구입니다."
+  },
   "productListingKind": "홈 선반",
   "productListingExploreOnly": "미배치 (여행상품만)",
   "productListingDiveStar": "Dive Star 인증",

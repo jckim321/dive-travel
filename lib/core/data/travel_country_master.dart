@@ -636,6 +636,34 @@ abstract final class TravelCountryMaster {
     return false;
   }
 
+  /// Countries whose name or alias contains [raw]. Empty text returns the full list.
+  static List<TravelCountry> search(String raw) {
+    final needle = _normalize(raw);
+    if (needle.isEmpty) {
+      return countries;
+    }
+    return [
+      for (final country in countries)
+        if (_normalize(country.name).contains(needle) ||
+            country.aliases.any((alias) => _normalize(alias).contains(needle)))
+          country,
+    ];
+  }
+
+  /// Alias that contains [raw], when the country name itself does not.
+  static String? aliasHit(TravelCountry country, String raw) {
+    final needle = _normalize(raw);
+    if (needle.isEmpty || _normalize(country.name).contains(needle)) {
+      return null;
+    }
+    for (final alias in country.aliases) {
+      if (_normalize(alias).contains(needle)) {
+        return alias;
+      }
+    }
+    return null;
+  }
+
   static String _normalize(String value) {
     return value.toLowerCase().replaceAll(RegExp(r'[\s\-_,./·]+'), '');
   }

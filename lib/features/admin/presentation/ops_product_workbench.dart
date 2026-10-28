@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/crafted_trip_seats.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -23,6 +24,7 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
+import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
@@ -340,6 +342,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   static const _maxGallery = GalleryLimits.maxProductPhotos;
   late String _shopId;
   late String _continent;
+  late String _continentBaseline;
+  TravelCountry? _pickedCountry;
+  var _countryTouched = false;
+  var _placeSeeded = false;
   late ProductCategory _category;
   /// Partner chips only; false keeps funDive/course/etc. on save (H1b).
   var _categoryChipTouched = false;
@@ -418,6 +424,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
         : (shop?.continent ?? ContinentId.asia);
+    _continentBaseline = _continent;
     // Preserve stored category (funDive/course/…) until a chip is tapped (H1b).
     _category = existing?.category ?? ProductCategory.resortPackage;
     _categoryChipTouched = false;
@@ -637,9 +644,33 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _resortCountry.text.trim().isNotEmpty &&
       _resortRegion.text.trim().isNotEmpty;
 
+  void _seedSavedPlace() {
+    if (_placeSeeded || _countryTouched) {
+      return;
+    }
+    final live = DiverStoreScope.of(context).liveStatsFor(_shopId);
+    if (live == null) {
+      return;
+    }
+    _placeSeeded = true;
+    final savedCountry = (live.country ?? '').trim();
+    final catalogCountry =
+        DiveShopCatalog.byId(_shopId)?.country.trim() ?? '';
+    if (savedCountry.isNotEmpty &&
+        (_resortCountry.text.trim().isEmpty ||
+            _resortCountry.text.trim() == catalogCountry)) {
+      _resortCountry.text = savedCountry;
+    }
+    final savedLocation = (live.location ?? '').trim();
+    if (_resortRegion.text.trim().isEmpty && savedLocation.isNotEmpty) {
+      _resortRegion.text = savedLocation;
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _seedSavedPlace();
     if (_seededCreatorShop || !widget.creatorMode || !_creatorShopPicked) {
       return;
     }
@@ -1735,6 +1766,32 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           creatorUid: widget.creatorMode ? store.uid : null,
         );
       }
+      if (widget.partnerMode && _countryTouched && _shopId.trim().isNotEmpty) {
+        final catalog = DiveShopCatalog.byId(_shopId);
+        final live = store.liveStatsFor(_shopId);
+        String kept(String? liveValue, String? catalogValue) {
+          final fromLive = (liveValue ?? '').trim();
+          if (fromLive.isNotEmpty) {
+            return fromLive;
+          }
+          return (catalogValue ?? '').trim();
+        }
+
+        await store.saveShopProfile(
+          shopId: _shopId,
+          name: kept(live?.name, catalog?.name),
+          location: kept(live?.location, catalog?.location),
+          productName: kept(live?.productName, catalog?.productName),
+          consumerPrice:
+              live?.consumerPrice ?? catalog?.consumerPrice ?? diverRate.consumer,
+          professionalPrice: live?.professionalPrice ??
+              catalog?.professionalPrice ??
+              diverRate.professional,
+          country: _resortCountry.text.trim(),
+          continent: _continent,
+          curated: live?.curated == true,
+        );
+      }
       final productId = existing?.id.isNotEmpty == true
           ? existing!.id
           : (_persistedProductId ??
@@ -2292,14 +2349,26 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final locked = widget.partnerMode || widget.lockedShopId != null;
     final shop = DiveShopCatalog.byId(_shopId);
     if (locked) {
-      return Text(
-        shop?.name ?? _shopId,
-        key: const Key('partner-product-shop'),
-        style: const TextStyle(
-          color: PartnerTheme.text,
-          fontWeight: FontWeight.w800,
-          fontSize: 16,
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            shop?.name ?? _shopId,
+            key: const Key('partner-product-shop'),
+            style: const TextStyle(
+              color: PartnerTheme.text,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          if (widget.partnerMode) ...[
+            const SizedBox(height: 12),
+            KeyedSubtree(
+              key: _resortCountryKey,
+              child: _travelCountryField(l10n, partnerStyle: true),
+            ),
+          ],
+        ],
       );
     }
     final shops = DiveShopCatalog.shops;
@@ -2369,13 +2438,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           const SizedBox(height: 12),
           KeyedSubtree(
             key: _resortCountryKey,
-            child: TextField(
-              controller: _resortCountry,
-              decoration: _field(
-                l10n.productFormCuratedCountry,
-                hint: l10n.productFormCuratedCountryHint,
-              ),
-            ),
+            child: _travelCountryField(l10n, partnerStyle: false),
           ),
           const SizedBox(height: 12),
           KeyedSubtree(
@@ -2469,6 +2532,47 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  Widget _travelCountryField(
+    AppLocalizations l10n, {
+    required bool partnerStyle,
+  }) {
+    final decoration = partnerStyle
+        ? _partnerField(
+            l10n.productFormCuratedCountry,
+            hint: l10n.productFormCuratedCountryHint,
+          )
+        : _field(
+            l10n.productFormCuratedCountry,
+            hint: l10n.productFormCuratedCountryHint,
+          );
+    return TravelCountryField(
+      key: const Key('travel-country-field'),
+      controller: _resortCountry,
+      fieldKey: const Key('product-curated-country'),
+      decoration: decoration,
+      picked: _pickedCountry,
+      style: partnerStyle
+          ? const TextStyle(color: PartnerTheme.text)
+          : null,
+      cursorColor: partnerStyle ? PartnerTheme.accent : null,
+      onEdited: () => _countryTouched = true,
+      onPicked: (country) {
+        setState(() {
+          _pickedCountry = country;
+          _continent = country.regionId;
+          _countryTouched = true;
+        });
+      },
+      onCustom: () {
+        setState(() {
+          _pickedCountry = null;
+          _continent = _continentBaseline;
+          _countryTouched = true;
+        });
+      },
+    );
+  }
+
   Widget _creatorResortFields(AppLocalizations l10n) {
     Widget field({
       required Key key,
@@ -2510,12 +2614,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           hint: l10n.productFormCuratedResortHint,
         ),
         const SizedBox(height: 12),
-        field(
-          key: const Key('product-curated-country'),
-          scrollKey: _resortCountryKey,
-          controller: _resortCountry,
-          label: l10n.productFormCuratedCountry,
-          hint: l10n.productFormCuratedCountryHint,
+        KeyedSubtree(
+          key: _resortCountryKey,
+          child: _travelCountryField(l10n, partnerStyle: true),
         ),
         const SizedBox(height: 12),
         field(

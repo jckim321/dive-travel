@@ -1700,6 +1700,8 @@
   "productFormCuratedLocationHint": "e.g. Panglao, Bohol, Philippines",
   "productFormCuratedCountry": "Country",
   "productFormCuratedCountryHint": "e.g. Philippines",
+  "productFormCountryOther": "Other (type it in)",
+  "productFormCountryNoSea": "No sea",
   "productListingKind": "Home shelf",
   "productListingExploreOnly": "Unplaced (Explore only)",
   "productListingDiveStar": "Dive Star verified",

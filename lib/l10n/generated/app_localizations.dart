@@ -7566,6 +7566,18 @@ abstract class AppLocalizations {
   /// **'예: 필리핀'**
   String get productFormCuratedCountryHint;
 
+  /// 나라 목록에 없을 때 글씨를 직접 적는 선택입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'기타(직접 입력)'**
+  String get productFormCountryOther;
+
+  /// 고른 나라에 해역이 없을 때 권역 옆에 붙는 문구입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'해역 없음'**
+  String get productFormCountryNoSea;
+
   /// No description provided for @productListingKind.
   ///
   /// In ko, this message translates to:

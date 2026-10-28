@@ -4128,6 +4128,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormCuratedCountryHint => 'e.g. Philippines';
 
   @override
+  String get productFormCountryOther => 'Other (type it in)';
+
+  @override
+  String get productFormCountryNoSea => 'No sea';
+
+  @override
   String get productListingKind => 'Home shelf';
 
   @override

@@ -347,6 +347,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
     setState(() => _saving = true);
     final store = _store ?? _storeRead(context);
+    final hull = DiveShopCatalog.byId(widget.shopId);
+    final livePlace = store.liveStatsFor(widget.shopId);
     try {
       final probe = await store.saveShopProfile(
         shopId: widget.shopId,
@@ -374,6 +376,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         checkIn: clampShort(_info.checkIn.text),
         checkOut: clampShort(_info.checkOut.text),
         businessHours: clampShort(_info.businessHours.text),
+        country: (livePlace?.country ?? hull?.country)?.trim(),
+        continent: (livePlace?.continent ?? hull?.continent)?.trim(),
         // Only rewrite gallery/cover when the user edited photos. An empty
         // _slots from a race before live stats loaded used to wipe cover_url.
         gallery: _galleryTouched

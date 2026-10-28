@@ -99,4 +99,26 @@ void main() {
     expect(TravelCountryMaster.match('타히티')?.id, 'frenchPolynesia');
     expect(TravelCountryMaster.match('사이판')?.id, 'northernMariana');
   });
+
+  test('검색은 나라 이름과 별칭을 거르고 권역·해역은 고른 나라에 있다', () {
+    final byAlias = TravelCountryMaster.search('트럭');
+    expect(byAlias.map((country) => country.id), ['chuuk']);
+    expect(TravelCountryMaster.aliasHit(byAlias.single, '트럭'), '트럭');
+    expect(byAlias.single.regionId, TravelRegionId.pacific);
+    expect(byAlias.single.sea, isNull);
+
+    final hawaii = TravelCountryMaster.search('하와이');
+    expect(hawaii.map((country) => country.id), ['usa']);
+    expect(hawaii.single.regionId, TravelRegionId.northAmerica);
+
+    final maldives = TravelCountryMaster.search('몰디');
+    expect(maldives.map((country) => country.id), ['maldives']);
+    expect(maldives.single.sea, TravelSea.indian);
+
+    final india = TravelCountryMaster.search('인도');
+    expect(india.map((country) => country.id), containsAll(['india', 'indonesia']));
+
+    expect(TravelCountryMaster.search('없는나라'), isEmpty);
+    expect(TravelCountryMaster.search(''), TravelCountryMaster.countries);
+  });
 }

@@ -4005,6 +4005,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get productFormCuratedCountryHint => '예: 필리핀';
 
   @override
+  String get productFormCountryOther => '기타(직접 입력)';
+
+  @override
+  String get productFormCountryNoSea => '해역 없음';
+
+  @override
   String get productListingKind => '홈 선반';
 
   @override
