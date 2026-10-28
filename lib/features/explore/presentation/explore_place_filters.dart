@@ -60,52 +60,66 @@ class ExploreCountryMenu extends StatelessWidget {
     return Material(
       color: AppTheme.seaMist,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 188),
-        child: ListView(
-          key: const Key('explore-country-menu'),
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-          children: [
-            if (pacific)
-              for (final zone in _zoneOrder) ...[
-                Padding(
-                  key: Key('explore-zone-$zone'),
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 2),
-                  child: Text(
-                    travelZoneLabel(l10n, zone),
-                    style: const TextStyle(
-                      color: AppTheme.navy,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+        key: const Key('explore-country-menu'),
+        constraints: const BoxConstraints(maxHeight: 240),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (pacific)
+                for (final zone in _zoneOrder) ...[
+                  Padding(
+                    key: Key('explore-zone-$zone'),
+                    padding: const EdgeInsets.only(top: 8, bottom: 6),
+                    child: Text(
+                      travelZoneLabel(l10n, zone),
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final country in countries)
+                        if (country.zone == zone)
+                          _CountryChip(
+                            country: country,
+                            selected: selectedCountryId == country.id,
+                            enabled: countryIdsWithProducts.contains(country.id),
+                            onCountry: onCountry,
+                          ),
+                    ],
+                  ),
+                ]
+              else
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final country in countries)
+                      _CountryChip(
+                        country: country,
+                        selected: selectedCountryId == country.id,
+                        enabled: countryIdsWithProducts.contains(country.id),
+                        onCountry: onCountry,
+                      ),
+                  ],
                 ),
-                for (final country in countries)
-                  if (country.zone == zone)
-                    _CountryTile(
-                      country: country,
-                      selected: selectedCountryId == country.id,
-                      enabled: countryIdsWithProducts.contains(country.id),
-                      onCountry: onCountry,
-                    ),
-              ]
-            else
-              for (final country in countries)
-                _CountryTile(
-                  country: country,
-                  selected: selectedCountryId == country.id,
-                  enabled: countryIdsWithProducts.contains(country.id),
-                  onCountry: onCountry,
-                ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _CountryTile extends StatelessWidget {
-  const _CountryTile({
+class _CountryChip extends StatelessWidget {
+  const _CountryChip({
     required this.country,
     required this.selected,
     required this.enabled,
@@ -119,20 +133,31 @@ class _CountryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fill = selected ? AppTheme.navy : Colors.white;
+    final ink = selected ? Colors.white : AppTheme.navy;
     return Opacity(
       key: Key('explore-country-dim-${country.id}'),
       opacity: enabled ? 1 : 0.38,
-      child: InkWell(
-        key: Key('explore-country-${country.id}'),
-        onTap: enabled ? () => onCountry(country.id) : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Text(
-            country.name,
-            style: TextStyle(
-              color: selected ? AppTheme.navy : AppTheme.muted,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              fontSize: 14,
+      child: Material(
+        color: fill,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+          side: BorderSide(color: selected ? AppTheme.navy : AppTheme.navyMid),
+        ),
+        child: InkWell(
+          key: Key('explore-country-${country.id}'),
+          onTap: enabled ? () => onCountry(country.id) : null,
+          borderRadius: BorderRadius.circular(999),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Text(
+              country.name,
+              softWrap: false,
+              style: TextStyle(
+                color: ink,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
             ),
           ),
         ),
@@ -158,32 +183,66 @@ class ExploreSeaRail extends StatelessWidget {
     final seas = [...TravelSea.all, exploreSeaUnmatched];
 
     return SizedBox(
-      height: 48,
-      child: ListView.separated(
+      height: 44,
+      child: SingleChildScrollView(
         key: const Key('explore-sea-rail'),
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        itemCount: seas.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final id = seas[index];
-          final selected = selectedSeaId == id;
-          return FilterChip(
-            key: Key('explore-sea-$id'),
-            label: Text(travelSeaLabel(l10n, id)),
-            selected: selected,
-            showCheckmark: false,
-            labelStyle: TextStyle(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            for (var index = 0; index < seas.length; index++) ...[
+              if (index > 0) const SizedBox(width: 8),
+              _SeaChip(
+                id: seas[index],
+                label: travelSeaLabel(l10n, seas[index]),
+                selected: selectedSeaId == seas[index],
+                onSelected: () => onSelected(seas[index]),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeaChip extends StatelessWidget {
+  const _SeaChip({
+    required this.id,
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String id;
+  final String label;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: Key('explore-sea-$id'),
+      color: selected ? AppTheme.navy : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+        side: BorderSide(color: selected ? AppTheme.navy : AppTheme.navyMid),
+      ),
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Text(
+            label,
+            softWrap: false,
+            style: TextStyle(
               color: selected ? Colors.white : AppTheme.navy,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
-            selectedColor: AppTheme.navy,
-            backgroundColor: Colors.white,
-            side: const BorderSide(color: AppTheme.navyMid),
-            onSelected: (_) => onSelected(id),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

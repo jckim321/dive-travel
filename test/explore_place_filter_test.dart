@@ -117,6 +117,23 @@ void main() {
 
     final l10n = AppLocalizations.of(tester.element(find.byType(ExploreScreen)));
     expect(find.byKey(const Key('explore-sea-rail')), findsOneWidget);
+    expect(
+      tester.widget<Material>(find.byKey(const Key('explore-sea-indian'))).color,
+      Colors.white,
+    );
+    expect(
+      tester.widget<Material>(find.byKey(const Key('explore-sea-red'))).color,
+      Colors.white,
+    );
+    expect(find.byKey(const Key('explore-region-row-asia')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.text(l10n.exploreNoResults), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const Key('explore-sea-southPacific'))).width,
+      greaterThan(
+        tester.getSize(find.byKey(const Key('explore-sea-red'))).width,
+      ),
+    );
     expect(find.text(l10n.exploreSeaIndian), findsOneWidget);
     expect(find.text(l10n.exploreSeaRed), findsOneWidget);
     expect(find.text(l10n.exploreSeaCaribbean), findsOneWidget);
@@ -127,6 +144,8 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('explore-country-philippines')), findsOneWidget);
+    expect(find.byKey(const Key('explore-country-vietnam')), findsOneWidget);
+    expect(find.byKey(const Key('explore-country-taiwan')), findsOneWidget);
     expect(
       tester
           .widget<Opacity>(find.byKey(const Key('explore-country-dim-korea')))
@@ -205,6 +224,11 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const Key('explore-sea-red')));
     await tester.pump();
+    expect(
+      tester.widget<Material>(find.byKey(const Key('explore-sea-red'))).color,
+      Colors.white,
+    );
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
     await tester.tap(find.byKey(const Key('continent-filter-asia')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('explore-sea-indian')));
@@ -220,5 +244,57 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
     expect(find.text(l10n.exploreNoResults), findsOneWidget);
+  });
+
+  testWidgets('전체는 권역·나라·해역만 풀고 검색어는 남긴다', (tester) async {
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final store = DiverStore(MemoryDiverRepository.forTest());
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ExploreScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('continent-filter-asia')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('explore-country-philippines')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('explore-sea-indian')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('explore-search')), '보홀');
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('continent-filter-all')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('explore-country-menu')), findsNothing);
+    expect(
+      tester.widget<Material>(find.byKey(const Key('explore-sea-indian'))).color,
+      Colors.white,
+    );
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('explore-search'))).controller?.text,
+      '보홀',
+    );
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-maldives-ari')), findsNothing);
   });
 }

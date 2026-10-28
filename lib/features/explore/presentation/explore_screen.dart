@@ -121,6 +121,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   onSelected: (id) => setState(() {
                     _region = id;
                     _countryId = null;
+                    if (id == TravelRegionId.all) {
+                      _seaId = null;
+                    }
                   }),
                 ),
                 if (_region != TravelRegionId.all)
