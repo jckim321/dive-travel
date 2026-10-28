@@ -1141,6 +1141,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }
 
     addCard(
+      Icons.nights_stay_outlined,
+      l10n.productOfferNights,
+      product.derivedDurationLabel,
+    );
+    addCard(
       Icons.place_outlined,
       l10n.productFormMeetingPoint,
       product.meetingPoint,
@@ -1164,6 +1169,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       Icons.remove_circle_outline,
       l10n.productFormExcludes,
       product.excludes,
+    );
+    addCard(
+      Icons.event_busy_outlined,
+      l10n.productFormCancelNote,
+      product.cancellationNote,
     );
     addCard(
       Icons.school_outlined,

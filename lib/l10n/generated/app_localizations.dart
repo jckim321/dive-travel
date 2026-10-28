@@ -7140,6 +7140,18 @@ abstract class AppLocalizations {
   /// **'한 줄 소개'**
   String get productFormSubtitle;
 
+  /// No description provided for @productOfferDetails.
+  ///
+  /// In ko, this message translates to:
+  /// **'자세히 보기'**
+  String get productOfferDetails;
+
+  /// No description provided for @productOfferNights.
+  ///
+  /// In ko, this message translates to:
+  /// **'몇 박 며칠'**
+  String get productOfferNights;
+
   /// No description provided for @productFormSubtitleHint.
   ///
   /// In ko, this message translates to:

@@ -1598,6 +1598,8 @@
     }
   },
   "productFormSubtitle": "One-line pitch",
+  "productOfferDetails": "View details",
+  "productOfferNights": "Nights and days",
   "productFormSubtitleHint": "e.g. Check dive then 2 tanks, same van",
   "productFormDurationHint": "e.g. 2 nights / half-day morning",
   "productFormMeetingPoint": "Meeting point",

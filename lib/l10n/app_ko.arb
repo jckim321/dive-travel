@@ -2160,6 +2160,8 @@
     }
   },
   "productFormSubtitle": "한 줄 소개",
+  "productOfferDetails": "자세히 보기",
+  "productOfferNights": "몇 박 며칠",
   "productFormSubtitleHint": "예: 체크다이브 후 2탱크, 같은 밴 동행",
   "productFormDurationHint": "예: 2박 3일 / 오전 반나절",
   "productFormMeetingPoint": "집결 장소",

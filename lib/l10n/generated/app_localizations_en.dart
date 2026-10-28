@@ -3889,6 +3889,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormSubtitle => 'One-line pitch';
 
   @override
+  String get productOfferDetails => 'View details';
+
+  @override
+  String get productOfferNights => 'Nights and days';
+
+  @override
   String get productFormSubtitleHint =>
       'e.g. Check dive then 2 tanks, same van';
 

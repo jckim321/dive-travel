@@ -3773,6 +3773,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get productFormSubtitle => '한 줄 소개';
 
   @override
+  String get productOfferDetails => '자세히 보기';
+
+  @override
+  String get productOfferNights => '몇 박 며칠';
+
+  @override
   String get productFormSubtitleHint => '예: 체크다이브 후 2탱크, 같은 밴 동행';
 
   @override

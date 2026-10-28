@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -154,6 +155,7 @@ class ProductOfferBox extends StatelessWidget {
               const SizedBox(height: 6),
               Text(shop.blurb, style: theme.textTheme.bodySmall),
             ],
+            _OfferFacts(product: product),
             if (shop.departure != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -338,6 +340,120 @@ class ProductOfferBox extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Collapsed trip facts on the resort product card.
+class _OfferFacts extends StatefulWidget {
+  const _OfferFacts({required this.product});
+
+  final ShopProduct product;
+
+  @override
+  State<_OfferFacts> createState() => _OfferFactsState();
+}
+
+class _OfferFactsState extends State<_OfferFacts> {
+  var _open = false;
+
+  bool get _hasFacts {
+    final product = widget.product;
+    return product.derivedDurationLabel.trim().isNotEmpty ||
+        product.meetingPoint.trim().isNotEmpty ||
+        product.schedule.trim().isNotEmpty ||
+        product.includes.trim().isNotEmpty ||
+        product.excludes.trim().isNotEmpty ||
+        product.cancellationNote.trim().isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasFacts) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context);
+    final product = widget.product;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 4),
+        TextButton(
+          key: Key('product-offer-details-${product.id}'),
+          onPressed: () => setState(() => _open = !_open),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 32),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(l10n.productOfferDetails),
+        ),
+        if (_open) ...[
+          _fact(l10n.productOfferNights, product.derivedDurationLabel),
+          _fact(l10n.productFormMeetingPoint, product.meetingPoint),
+          if (product.schedule.trim().isNotEmpty)
+            _markdown(
+              l10n.creatorWizardStepSchedule,
+              product.schedule.trim(),
+              Key('product-offer-schedule-${product.id}'),
+            ),
+          _fact(l10n.productFormIncludes, product.includes),
+          _fact(l10n.productFormExcludes, product.excludes),
+          _fact(l10n.productFormCancelNote, product.cancellationNote),
+        ],
+      ],
+    );
+  }
+
+  Widget _fact(String title, String body) {
+    final text = body.trim();
+    if (text.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(text, style: theme.textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+
+  Widget _markdown(String title, String markdown, Key key) {
+    final theme = Theme.of(context);
+    return Padding(
+      key: key,
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          MarkdownBody(
+            data: markdown,
+            shrinkWrap: true,
+            softLineBreak: true,
+            styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+              p: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }
