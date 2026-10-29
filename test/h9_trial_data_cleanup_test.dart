@@ -100,7 +100,7 @@ void main() {
     expect(members.any((m) => m.email == AppOwner.email), isTrue);
     expect(repo.createdShopName('jeju-orange-1'), kJejuOrangeShopName);
 
-    await store.runTrialDataDeletion(
+    final result = await store.runTrialDataDeletion(
       selection: const TrialDeleteSelection(
         trialShops: true,
         trialUsers: true,
@@ -114,5 +114,48 @@ void main() {
     expect(members.any((m) => m.email == AppOwner.email), isTrue);
     expect(repo.createdShopName('jeju-orange-1'), isNull);
     expect(repo.createdShopName('trial-shop'), isNull);
+    expect(result.notes, contains('건너뛴 항목: 없음'));
+  });
+
+  test('permission-denied names the collection and the rest still count', () {
+    expect(
+      trialDeleteCollectionName('shops/reef/daily_stats/2026-10-29'),
+      'daily_stats',
+    );
+    expect(
+      trialDeleteCollectionName('shops/reef/partner_contracts/c1/events/e1'),
+      'events',
+    );
+    expect(
+      trialDeleteCollectionName('shops/reef/daily_stats'),
+      'daily_stats',
+    );
+    expect(
+      trialDeleteDeniedNote('shops/reef/daily_stats/2026-10-29'),
+      'permission-denied: daily_stats (shops/reef/daily_stats/2026-10-29)',
+    );
+
+    final ledger = TrialDeleteLedger();
+    ledger.deleted(2, 'shops/reef/bookings');
+    ledger.denied('shops/reef/daily_stats/2026-10-29');
+    ledger.denied('shops/reef/contract_terms/current');
+    ledger.deleted(1, '샵 삭제 reef');
+    ledger.finish();
+
+    expect(ledger.success, 3);
+    expect(ledger.failure, 2);
+    expect(ledger.skipped, [
+      'shops/reef/daily_stats/2026-10-29',
+      'shops/reef/contract_terms/current',
+    ]);
+    expect(
+      ledger.notes,
+      contains(
+        '건너뛴 항목: shops/reef/daily_stats/2026-10-29, shops/reef/contract_terms/current',
+      ),
+    );
+    final result = ledger.toResult();
+    expect(result.successCount, 3);
+    expect(result.skippedPaths, ledger.skipped);
   });
 }

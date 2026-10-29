@@ -964,18 +964,40 @@ class FirestoreDiverRepository implements DiverRepository {
     );
   }
 
-  Future<void> _commitDeletes(
+  /// Deletes [refs]. A permission-denied document is returned and the rest
+  /// of the chunk is deleted one by one. Other errors still throw.
+  Future<List<String>> _commitDeletes(
     List<DocumentReference<Map<String, dynamic>>> refs,
   ) async {
+    final skipped = <String>[];
     const chunk = 400;
     for (var i = 0; i < refs.length; i += chunk) {
-      final batch = _db.batch();
       final end = (i + chunk < refs.length) ? i + chunk : refs.length;
-      for (var j = i; j < end; j++) {
-        batch.delete(refs[j]);
+      final slice = refs.sublist(i, end);
+      try {
+        final batch = _db.batch();
+        for (final ref in slice) {
+          batch.delete(ref);
+        }
+        await batch.commit();
+      } on FirebaseException catch (error) {
+        if (error.code != 'permission-denied') {
+          rethrow;
+        }
+        for (final ref in slice) {
+          try {
+            await ref.delete();
+          } on FirebaseException catch (one) {
+            if (one.code == 'permission-denied') {
+              skipped.add(ref.path);
+              continue;
+            }
+            rethrow;
+          }
+        }
       }
-      await batch.commit();
     }
+    return skipped;
   }
 
   Future<List<DocumentReference<Map<String, dynamic>>>> _listAllRefs(
@@ -1035,7 +1057,15 @@ class FirestoreDiverRepository implements DiverRepository {
     final accounts = <TrialOwnedAccount>[];
     if (selection.includeJejuOrange &&
         snapshot.jejuOrange.protectedShopId != null) {
-      final usersSnap = await _users.get();
+      late final QuerySnapshot<Map<String, dynamic>> usersSnap;
+      try {
+        usersSnap = await _users.get();
+      } on FirebaseException catch (error) {
+        if (error.code == 'permission-denied') {
+          throw StateError(trialDeleteDeniedNote('users'));
+        }
+        rethrow;
+      }
       for (final doc in usersSnap.docs) {
         final data = doc.data();
         accounts.add((
@@ -1054,16 +1084,13 @@ class FirestoreDiverRepository implements DiverRepository {
     );
     final protectedShop = guard.shopId;
     final protectedUids = guard.userUids;
-    final notes = <String>[];
+    final ledger = TrialDeleteLedger();
     if (selection.includeJejuOrange &&
         snapshot.jejuOrange.protectedShopId != null) {
-      notes.add(
+      ledger.note(
         '이번 실행만 제주 오렌지 샵 보호를 풀었습니다. 관리자 본인·서류함·심사 양식·문서 설정은 남깁니다.',
       );
     }
-    final failed = <String>[];
-    var success = 0;
-    var failure = 0;
     var step = 0;
     const totalSteps = 12;
 
@@ -1074,6 +1101,37 @@ class FirestoreDiverRepository implements DiverRepository {
       );
     }
 
+    Future<QuerySnapshot<Map<String, dynamic>>?> readOrSkip(
+      Future<QuerySnapshot<Map<String, dynamic>>> future,
+      String collectionPath,
+    ) async {
+      try {
+        return await future;
+      } on FirebaseException catch (error) {
+        if (error.code != 'permission-denied') {
+          rethrow;
+        }
+        ledger.denied(collectionPath);
+        return null;
+      }
+    }
+
+    Future<List<DocumentReference<Map<String, dynamic>>>> listOrSkip(
+      Query<Map<String, dynamic>> query,
+      String collectionPath, {
+      bool Function(QueryDocumentSnapshot<Map<String, dynamic>> doc)? keep,
+    }) async {
+      try {
+        return await _listAllRefs(query, keep: keep);
+      } on FirebaseException catch (error) {
+        if (error.code != 'permission-denied') {
+          rethrow;
+        }
+        ledger.denied(collectionPath);
+        return const [];
+      }
+    }
+
     Future<void> safeDeleteRefs(
       List<DocumentReference<Map<String, dynamic>>> refs,
       String label,
@@ -1082,19 +1140,24 @@ class FirestoreDiverRepository implements DiverRepository {
         return;
       }
       try {
-        await _commitDeletes(refs);
-        success += refs.length;
-        notes.add('$label ${refs.length}건 삭제');
+        final denied = await _commitDeletes(refs);
+        final deniedSet = denied.toSet();
+        final deleted = refs.where((ref) => !deniedSet.contains(ref.path)).length;
+        ledger.deleted(deleted, label);
+        for (final path in denied) {
+          ledger.denied(path);
+        }
       } catch (e) {
-        failure += refs.length;
-        failed.addAll(refs.map((r) => r.path));
-        notes.add('$label 실패: $e');
+        ledger.failed(refs.map((ref) => ref.path), label, e);
       }
     }
 
     if (selection.partnerEmailOutbox) {
       progress('메일 큐 삭제');
-      final refs = await _listAllRefs(_db.collection('partner_email_outbox'));
+      final refs = await listOrSkip(
+        _db.collection('partner_email_outbox'),
+        'partner_email_outbox',
+      );
       await safeDeleteRefs(refs, 'partner_email_outbox');
     } else {
       progress('메일 큐 건너뜀');
@@ -1102,7 +1165,10 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.diveStarApplications) {
       progress('LOI 신청 삭제');
-      final refs = await _listAllRefs(_db.collection('dive_star_applications'));
+      final refs = await listOrSkip(
+        _db.collection('dive_star_applications'),
+        'dive_star_applications',
+      );
       await safeDeleteRefs(refs, 'dive_star_applications');
     } else {
       progress('LOI 건너뜀');
@@ -1110,12 +1176,17 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.postsAndComments) {
       progress('커뮤니티 댓글·글 삭제');
-      final posts = await _posts.get();
+      final posts = await readOrSkip(_posts.get(), 'posts');
       final commentRefs = <DocumentReference<Map<String, dynamic>>>[];
       final postRefs = <DocumentReference<Map<String, dynamic>>>[];
-      for (final post in posts.docs) {
-        final comments = await post.reference.collection('comments').get();
-        commentRefs.addAll(comments.docs.map((d) => d.reference));
+      for (final post in posts?.docs ?? const []) {
+        final comments = await readOrSkip(
+          post.reference.collection('comments').get(),
+          'posts/${post.id}/comments',
+        );
+        if (comments != null) {
+          commentRefs.addAll(comments.docs.map((d) => d.reference));
+        }
         postRefs.add(post.reference);
       }
       await safeDeleteRefs(commentRefs, 'comments');
@@ -1126,8 +1197,9 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.reviews) {
       progress('후기 삭제');
-      final shopReviewRefs = await _listAllRefs(
+      final shopReviewRefs = await listOrSkip(
         _db.collectionGroup('reviews'),
+        'reviews',
         keep: (doc) {
           final path = doc.reference.path;
           if (protectedShop != null &&
@@ -1144,29 +1216,38 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.userBookings || selection.userLogs || selection.trialUsers) {
       progress('회원 하위 정리');
-      final users = await _users.get();
-      for (final user in users.docs) {
+      final users = await readOrSkip(_users.get(), 'users');
+      for (final user in users?.docs ?? const []) {
         if (protectedUids.contains(user.id)) {
           continue;
         }
         if (selection.userBookings || selection.trialUsers) {
-          final bookings = await user.reference.collection('bookings').get();
+          final bookings = await readOrSkip(
+            user.reference.collection('bookings').get(),
+            'users/${user.id}/bookings',
+          );
           await safeDeleteRefs(
-            bookings.docs.map((d) => d.reference).toList(),
+            bookings?.docs.map((d) => d.reference).toList() ?? const [],
             'users/${user.id}/bookings',
           );
         }
         if (selection.userLogs || selection.trialUsers) {
-          final logs = await user.reference.collection('logs').get();
+          final logs = await readOrSkip(
+            user.reference.collection('logs').get(),
+            'users/${user.id}/logs',
+          );
           await safeDeleteRefs(
-            logs.docs.map((d) => d.reference).toList(),
+            logs?.docs.map((d) => d.reference).toList() ?? const [],
             'users/${user.id}/logs',
           );
         }
         if (selection.reviews || selection.trialUsers) {
-          final reviews = await user.reference.collection('reviews').get();
+          final reviews = await readOrSkip(
+            user.reference.collection('reviews').get(),
+            'users/${user.id}/reviews',
+          );
           await safeDeleteRefs(
-            reviews.docs.map((d) => d.reference).toList(),
+            reviews?.docs.map((d) => d.reference).toList() ?? const [],
             'users/${user.id}/reviews',
           );
         }
@@ -1177,8 +1258,9 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.unconfirmedAssessments) {
       progress('미확정 평가 삭제');
-      final refs = await _listAllRefs(
+      final refs = await listOrSkip(
         _db.collectionGroup('dive_star_assessments'),
+        'dive_star_assessments',
         keep: (doc) {
           if (protectedShop != null &&
               doc.reference.path.startsWith('shops/$protectedShop/')) {
@@ -1193,18 +1275,21 @@ class FirestoreDiverRepository implements DiverRepository {
     }
 
     // Trial shops: bookings → clear products / delete shop
-    final shopDocs = await _shops.get();
+    final shopDocs = await readOrSkip(_shops.get(), 'shops');
     final trialShops = [
-      for (final doc in shopDocs.docs)
+      for (final doc in shopDocs?.docs ?? const [])
         if (protectedShop == null || doc.id != protectedShop) doc,
     ];
 
     if (selection.trialShopBookings || selection.trialShops) {
       progress('시험 샵 예약 삭제');
       for (final shop in trialShops) {
-        final bookings = await shop.reference.collection('bookings').get();
+        final bookings = await readOrSkip(
+          shop.reference.collection('bookings').get(),
+          'shops/${shop.id}/bookings',
+        );
         await safeDeleteRefs(
-          bookings.docs.map((d) => d.reference).toList(),
+          bookings?.docs.map((d) => d.reference).toList() ?? const [],
           'shops/${shop.id}/bookings',
         );
       }
@@ -1220,12 +1305,15 @@ class FirestoreDiverRepository implements DiverRepository {
             'products': <Map<String, dynamic>>[],
             'updated_at': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
-          success += 1;
-          notes.add('shops/${shop.id} products 비움');
+          ledger.deleted(1, 'shops/${shop.id} products');
+        } on FirebaseException catch (error) {
+          if (error.code == 'permission-denied') {
+            ledger.denied(shop.reference.path);
+          } else {
+            ledger.failed([shop.reference.path], 'products 비우기 ${shop.id}', error);
+          }
         } catch (e) {
-          failure += 1;
-          failed.add(shop.reference.path);
-          notes.add('products 비우기 실패 ${shop.id}: $e');
+          ledger.failed([shop.reference.path], 'products 비우기 ${shop.id}', e);
         }
       }
     } else {
@@ -1236,7 +1324,8 @@ class FirestoreDiverRepository implements DiverRepository {
       progress('시험 샵 삭제(주인 해제→하위→샵)');
       for (final shop in trialShops) {
         // Demote owners first (unless protected user).
-        for (final user in (await _users.get()).docs) {
+        final owners = await readOrSkip(_users.get(), 'users');
+        for (final user in owners?.docs ?? const []) {
           if (protectedUids.contains(user.id)) {
             continue;
           }
@@ -1251,42 +1340,58 @@ class FirestoreDiverRepository implements DiverRepository {
               actorUid: actorUid,
               actorName: actorName,
             );
-            success += 1;
-            notes.add('파트너 해제 ${user.id} (샵 ${shop.id})');
+            ledger.deleted(1, '파트너 해제 ${user.id} (샵 ${shop.id})');
+          } on FirebaseException catch (error) {
+            if (error.code == 'permission-denied') {
+              ledger.denied('users/${user.id}');
+            } else {
+              ledger.failed(
+                ['users/${user.id}'],
+                '파트너 해제 ${user.id}',
+                error,
+              );
+            }
           } catch (e) {
-            failure += 1;
-            notes.add('파트너 해제 실패 ${user.id}: $e');
+            ledger.failed(['users/${user.id}'], '파트너 해제 ${user.id}', e);
           }
         }
-        // Remaining deletable children
+        // Remaining deletable children. Confirmed assessments stay.
         for (final sub in ['reviews', 'bookings', 'dive_star_assessments']) {
-          final kids = await shop.reference.collection(sub).get();
+          final kids = await readOrSkip(
+            shop.reference.collection(sub).get(),
+            'shops/${shop.id}/$sub',
+          );
           final refs = <DocumentReference<Map<String, dynamic>>>[];
-          for (final kid in kids.docs) {
+          for (final kid in kids?.docs ?? const []) {
             if (sub == 'dive_star_assessments' &&
                 kid.data()['confirmed'] == true) {
-              notes.add('확정 평가 남김: ${kid.reference.path}');
+              ledger.note('확정 평가 남김: ${kid.reference.path}');
               continue;
             }
             refs.add(kid.reference);
           }
           await safeDeleteRefs(refs, 'shops/${shop.id}/$sub');
         }
-        final contracts =
-            await shop.reference.collection('partner_contracts').get();
-        if (contracts.docs.isNotEmpty) {
-          notes.add(
+        final contracts = await readOrSkip(
+          shop.reference.collection('partner_contracts').get(),
+          'shops/${shop.id}/partner_contracts',
+        );
+        if (contracts != null && contracts.docs.isNotEmpty) {
+          ledger.note(
             '서류함 ${contracts.docs.length}건 남음(shops/${shop.id}) — Console에서 수동 삭제',
           );
         }
         try {
           await shop.reference.delete();
-          success += 1;
-          notes.add('샵 삭제 ${shop.id} (임베디드 상품 포함)');
+          ledger.deleted(1, '샵 삭제 ${shop.id} (임베디드 상품 포함)');
+        } on FirebaseException catch (error) {
+          if (error.code == 'permission-denied') {
+            ledger.denied(shop.reference.path);
+          } else {
+            ledger.failed([shop.reference.path], '샵 삭제 ${shop.id}', error);
+          }
         } catch (e) {
-          failure += 1;
-          failed.add(shop.reference.path);
-          notes.add('샵 삭제 실패 ${shop.id}: $e');
+          ledger.failed([shop.reference.path], '샵 삭제 ${shop.id}', e);
         }
       }
     } else {
@@ -1295,16 +1400,16 @@ class FirestoreDiverRepository implements DiverRepository {
 
     if (selection.trialUsers) {
       progress('시험 회원 문서 삭제');
-      final users = await _users.get();
+      final users = await readOrSkip(_users.get(), 'users');
       final refs = <DocumentReference<Map<String, dynamic>>>[];
-      for (final user in users.docs) {
+      for (final user in users?.docs ?? const []) {
         if (protectedUids.contains(user.id)) {
           continue;
         }
         refs.add(user.reference);
       }
       await safeDeleteRefs(refs, 'users(trial)');
-      notes.add(
+      ledger.note(
         'Auth 계정은 앱에서 못 지웁니다. Firebase Console → Authentication → Users에서 '
         '지운 뒤, 같은 아이디로 로그인하면 빈 users 문서가 다시 생길 수 있습니다.',
       );
@@ -1312,16 +1417,11 @@ class FirestoreDiverRepository implements DiverRepository {
       progress('회원 문서 건너뜀');
     }
 
-    notes.add(
+    ledger.note(
       '서류함(partner_contracts)·확정 평가·R2/Storage 파일·Auth는 앱 삭제 범위 밖일 수 있습니다.',
     );
-
-    return TrialDeleteResult(
-      successCount: success,
-      failureCount: failure,
-      notes: notes,
-      failedIds: failed,
-    );
+    ledger.finish();
+    return ledger.toResult();
   }
 
   List<Map<String, dynamic>> _appendRoleHistory({

@@ -886,6 +886,7 @@ class MemoryDiverRepository implements DiverRepository {
       // unreachable
     }
     notes.add('서류함·확정 평가·R2·Auth는 남을 수 있습니다.');
+    notes.add('건너뛴 항목: 없음');
     return TrialDeleteResult(
       successCount: success,
       failureCount: 0,

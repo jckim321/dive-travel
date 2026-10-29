@@ -227,12 +227,95 @@ class TrialDeleteResult {
     required this.failureCount,
     required this.notes,
     this.failedIds = const [],
+    this.skippedPaths = const [],
   });
 
   final int successCount;
   final int failureCount;
   final List<String> notes;
   final List<String> failedIds;
+
+  /// Document or collection paths skipped after permission-denied.
+  final List<String> skippedPaths;
+}
+
+/// Last collection id in a document path (`shops/a/daily_stats/d` → `daily_stats`)
+/// or a collection path (`shops/a/daily_stats` → `daily_stats`).
+String trialDeleteCollectionName(String path) {
+  final parts = path.split('/').where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) {
+    return path;
+  }
+  if (parts.length.isEven) {
+    return parts[parts.length - 2];
+  }
+  return parts.last;
+}
+
+/// Error line that names the blocked collection and the path.
+String trialDeleteDeniedNote(String path) {
+  final name = trialDeleteCollectionName(path);
+  if (path == name) {
+    return 'permission-denied: $name';
+  }
+  return 'permission-denied: $name ($path)';
+}
+
+/// Counts for one cleanup run. Denied paths are skipped; other deletes continue.
+class TrialDeleteLedger {
+  int success = 0;
+  int failure = 0;
+  final notes = <String>[];
+  final failedIds = <String>[];
+  final skipped = <String>[];
+
+  void deleted(int count, String label) {
+    if (count <= 0) {
+      return;
+    }
+    success += count;
+    notes.add('$label $count건 삭제');
+  }
+
+  void failed(Iterable<String> paths, String label, Object error) {
+    final list = paths.toList();
+    failure += list.isEmpty ? 1 : list.length;
+    failedIds.addAll(list);
+    notes.add('$label 실패: $error');
+  }
+
+  void denied(String path) {
+    failure += 1;
+    failedIds.add(path);
+    skipped.add(path);
+    notes.add(trialDeleteDeniedNote(path));
+  }
+
+  void note(String message) {
+    notes.add(message);
+  }
+
+  void finish() {
+    final unique = <String>[];
+    for (final path in skipped) {
+      if (!unique.contains(path)) {
+        unique.add(path);
+      }
+    }
+    notes.add(
+      unique.isEmpty ? '건너뛴 항목: 없음' : '건너뛴 항목: ${unique.join(', ')}',
+    );
+  }
+
+  TrialDeleteResult toResult() {
+    return TrialDeleteResult(
+      successCount: success,
+      failureCount: failure,
+      notes: notes,
+      failedIds: failedIds,
+      skippedPaths: List<String>.from(skipped),
+    );
+  }
 }
 
 /// Exact display name used to resolve the live protected shop.
