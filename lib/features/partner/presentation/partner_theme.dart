@@ -205,6 +205,10 @@ abstract final class PartnerTheme {
         color: accent,
         circularTrackColor: border,
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: accent,
+        selectionHandleColor: accent,
+      ),
     );
     return base;
   }

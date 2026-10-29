@@ -212,6 +212,10 @@ abstract final class AppTheme {
         onSurface: Colors.white,
       ),
       scaffoldBackgroundColor: navy,
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: gold,
+        selectionHandleColor: gold,
+      ),
     );
   }
 

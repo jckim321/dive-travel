@@ -5,11 +5,28 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
+  test('dark themes use a light caret and the light theme does not', () {
+    expect(
+      AdminConsoleTheme.dark.textSelectionTheme.cursorColor,
+      AdminConsoleTheme.aqua,
+    );
+    expect(
+      PartnerTheme.dark.textSelectionTheme.cursorColor,
+      PartnerTheme.accent,
+    );
+    expect(
+      AppTheme.dark.textSelectionTheme.cursorColor,
+      AppTheme.gold,
+    );
+    expect(AppTheme.light.textSelectionTheme.cursorColor, isNull);
+  });
+
   Future<void> pumpForm(
     WidgetTester tester, {
     required bool creatorMode,

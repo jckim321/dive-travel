@@ -210,6 +210,10 @@ abstract final class AdminConsoleTheme {
         color: aqua,
         linearTrackColor: border,
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: aqua,
+        selectionHandleColor: aqua,
+      ),
     );
   }
 }
