@@ -3370,28 +3370,26 @@ class FirestoreDiverRepository implements DiverRepository {
         .where('owned_shop_id', isEqualTo: id)
         .limit(1)
         .get();
-    if (owners.docs.isEmpty) {
-      throw StateError('NO_CURRENT_OWNER');
-    }
-    final fromRef = owners.docs.first.reference;
+    final fromRef = owners.docs.isEmpty ? null : owners.docs.first.reference;
     final toRef = _userDoc(nextUid);
     final shopRef = _shops.doc(id);
     final safeName = clampOperatingByName(byName, byUid);
     return _db.runTransaction((tx) async {
-      final fromSnap = await tx.get(fromRef);
+      final fromSnap = fromRef == null ? null : await tx.get(fromRef);
       final toSnap = await tx.get(toRef);
       final shopSnap = await tx.get(shopRef);
-      final fromData = fromSnap.data() ?? <String, dynamic>{};
+      final fromData = fromSnap?.data();
       final toData = toSnap.data();
       if (!toSnap.exists || toData == null) {
         throw StateError('OWNER_NOT_FOUND');
       }
-      if (fromRef.id == toRef.id) {
+      if (fromRef != null && fromRef.id == toRef.id) {
         throw StateError('SAME_OWNER');
       }
-      if ((fromData['owned_shop_id'] as String?)?.trim() != id) {
-        throw StateError('NO_CURRENT_OWNER');
-      }
+      final stillOwner = fromRef != null &&
+          fromSnap != null &&
+          fromSnap.exists &&
+          (fromData?['owned_shop_id'] as String?)?.trim() == id;
       final targetAdmin = toData['is_admin'] == true || toData['isAdmin'] == true;
       final targetShop = (toData['owned_shop_id'] as String?)?.trim() ?? '';
       final targetBusiness = toData['is_business'] == true ||
@@ -3403,11 +3401,13 @@ class FirestoreDiverRepository implements DiverRepository {
       if (targetBusiness) {
         throw StateError('OWNER_HAS_SHOP');
       }
-      final fromOwnerId = operatingOwnerHandle(
-        uid: fromRef.id,
-        loginId: (fromData['login_id'] as String?) ?? '',
-        email: (fromData['email'] as String?) ?? '',
-      );
+      final fromOwnerId = stillOwner
+          ? operatingOwnerHandle(
+              uid: fromRef.id,
+              loginId: (fromData?['login_id'] as String?) ?? '',
+              email: (fromData?['email'] as String?) ?? '',
+            )
+          : operatingOwnerNoneId;
       final toOwnerId = operatingOwnerHandle(
         uid: toRef.id,
         loginId: (toData['login_id'] as String?) ?? '',
@@ -3418,26 +3418,28 @@ class FirestoreDiverRepository implements DiverRepository {
       final rename = requested.isNotEmpty && requested != currentName;
       final fromName = rename ? clampOperatingShopName(currentName) : '';
       final toName = rename ? clampOperatingShopName(requested) : '';
-      final fromHistory = _appendRoleHistory(
-        existing: fromData['role_history'],
-        entry: {
-          'at': Timestamp.now(),
-          'by_uid': byUid,
-          'by_name': safeName,
-          'action': 'transfer_owner_from',
-          'from': {
-            'is_business': true,
-            'user_role': fromData['user_role'] ?? 'business',
-            'owned_shop_id': id,
-          },
-          'to': {
-            'is_business': false,
-            'user_role': 'diver',
-            'owned_shop_id': null,
-          },
-          'shop_id': id,
-        },
-      );
+      final fromHistory = stillOwner
+          ? _appendRoleHistory(
+              existing: fromData?['role_history'],
+              entry: {
+                'at': Timestamp.now(),
+                'by_uid': byUid,
+                'by_name': safeName,
+                'action': 'transfer_owner_from',
+                'from': {
+                  'is_business': true,
+                  'user_role': fromData?['user_role'] ?? 'business',
+                  'owned_shop_id': id,
+                },
+                'to': {
+                  'is_business': false,
+                  'user_role': 'diver',
+                  'owned_shop_id': null,
+                },
+                'shop_id': id,
+              },
+            )
+          : null;
       final toHistory = _appendRoleHistory(
         existing: toData['role_history'],
         entry: {
@@ -3458,17 +3460,19 @@ class FirestoreDiverRepository implements DiverRepository {
           'shop_id': id,
         },
       );
-      tx.set(
-        fromRef,
-        {
-          'is_business': false,
-          'user_role': 'diver',
-          'owned_shop_id': FieldValue.delete(),
-          'role_history': fromHistory,
-          'updated_at': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      if (stillOwner && fromHistory != null) {
+        tx.set(
+          fromRef,
+          {
+            'is_business': false,
+            'user_role': 'diver',
+            'owned_shop_id': FieldValue.delete(),
+            'role_history': fromHistory,
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
       tx.set(
         toRef,
         {
@@ -3501,7 +3505,7 @@ class FirestoreDiverRepository implements DiverRepository {
         if (rename) 'to_name': toName,
       });
       return ShopOwnerTransfer(
-        fromUid: fromRef.id,
+        fromUid: stillOwner ? fromRef.id : '',
         toUid: toRef.id,
         fromOwnerId: fromOwnerId,
         toOwnerId: toOwnerId,

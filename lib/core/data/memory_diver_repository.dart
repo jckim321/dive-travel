@@ -2558,18 +2558,17 @@ class MemoryDiverRepository implements DiverRepository {
     final fromIndex = _members.indexWhere(
       (member) => member.ownedShopId.trim() == id,
     );
-    if (fromIndex < 0) {
-      throw StateError('NO_CURRENT_OWNER');
-    }
-    final previous = _members[fromIndex];
-    if (previous.uid == target.uid) {
+    final previous = fromIndex < 0 ? null : _members[fromIndex];
+    if (previous != null && previous.uid == target.uid) {
       throw StateError('SAME_OWNER');
     }
-    final fromOwnerId = operatingOwnerHandle(
-      uid: previous.uid,
-      loginId: previous.loginId,
-      email: previous.email,
-    );
+    final fromOwnerId = previous == null
+        ? operatingOwnerNoneId
+        : operatingOwnerHandle(
+            uid: previous.uid,
+            loginId: previous.loginId,
+            email: previous.email,
+          );
     final toOwnerId = operatingOwnerHandle(
       uid: target.uid,
       loginId: target.loginId,
@@ -2580,17 +2579,19 @@ class MemoryDiverRepository implements DiverRepository {
     final rename = requested.isNotEmpty && requested != currentName;
     final fromName = rename ? clampOperatingShopName(currentName) : '';
     final toName = rename ? clampOperatingShopName(requested) : '';
-    _members[fromIndex] = previous.copyWith(
-      isBusiness: false,
-      userRole: 'diver',
-      clearOwnedShopId: true,
-    );
+    if (previous != null) {
+      _members[fromIndex] = previous.copyWith(
+        isBusiness: false,
+        userRole: 'diver',
+        clearOwnedShopId: true,
+      );
+    }
     _members[toIndex] = target.copyWith(
       isBusiness: true,
       userRole: 'business',
       ownedShopId: id,
     );
-    if (previous.uid == _user?.uid) {
+    if (previous != null && previous.uid == _user?.uid) {
       _isBusiness = false;
       _ownedShopId = null;
     }
@@ -2598,12 +2599,14 @@ class MemoryDiverRepository implements DiverRepository {
       _isBusiness = true;
       _ownedShopId = id;
     }
-    _roleHistory.putIfAbsent(previous.uid, () => []).add({
-      'action': 'transfer_owner_from',
-      'by_uid': byUid,
-      'by_name': byName,
-      'shop_id': id,
-    });
+    if (previous != null) {
+      _roleHistory.putIfAbsent(previous.uid, () => []).add({
+        'action': 'transfer_owner_from',
+        'by_uid': byUid,
+        'by_name': byName,
+        'shop_id': id,
+      });
+    }
     _roleHistory.putIfAbsent(target.uid, () => []).add({
       'action': 'transfer_owner_to',
       'by_uid': byUid,
@@ -2646,7 +2649,7 @@ class MemoryDiverRepository implements DiverRepository {
     _membersController.add(List<MemberAccount>.from(_members));
     _shopController.add(_shopStats.values.toList());
     return ShopOwnerTransfer(
-      fromUid: previous.uid,
+      fromUid: previous?.uid ?? '',
       toUid: target.uid,
       fromOwnerId: fromOwnerId,
       toOwnerId: toOwnerId,

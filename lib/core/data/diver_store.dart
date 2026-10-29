@@ -1724,7 +1724,7 @@ class DiverStore extends ChangeNotifier {
     );
     _members = [
       for (final member in _members)
-        if (member.uid == result.fromUid)
+        if (result.fromUid.isNotEmpty && member.uid == result.fromUid)
           member.copyWith(
             isBusiness: false,
             userRole: 'diver',

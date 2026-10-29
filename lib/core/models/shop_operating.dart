@@ -44,6 +44,11 @@ String clampOperatingNote(String note) {
   return trimmed.substring(0, 500);
 }
 
+/// Written as `from_owner_id` when a shop has no previous owner.
+/// Rules require that field to be 1–80 characters, so the first link
+/// cannot store an empty id.
+const String operatingOwnerNoneId = '(없음)';
+
 /// Login id shown in an owner event. Falls back to the email local-part, then uid.
 /// Rules require 1–80 characters.
 String operatingOwnerHandle({

@@ -176,7 +176,7 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
         .where((member) => member.ownedShopId.trim() == widget.shopId.trim())
         .firstOrNull;
     final fromId = previous == null
-        ? ''
+        ? operatingOwnerNoneId
         : operatingOwnerHandle(
             uid: previous.uid,
             loginId: previous.loginId,

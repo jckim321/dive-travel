@@ -70,6 +70,14 @@ void main() {
       ),
       loginId: 'diver03',
     );
+    await repo.ensureUserDocument(
+      const AppUser(
+        uid: 'guest-solo',
+        email: 'solo@dive.local',
+        displayName: '솔로',
+      ),
+      loginId: 'solo01',
+    );
     final other = await repo.provisionPartner(
       shopName: '다른 리프',
       loginId: 'other01',
@@ -122,22 +130,37 @@ void main() {
         ),
       ),
     );
-    expect(
-      () => repo.transferShopOwner(
-        shopId: 'orphan-reef',
-        toUid: 'guest-1',
-        byUid: 'test-user',
-        byName: '테스트 다이버',
-      ),
-      throwsA(
-        isA<StateError>().having(
-          (error) => '$error',
-          'error',
-          contains('NO_CURRENT_OWNER'),
-        ),
-      ),
+    final firstLink = await repo.transferShopOwner(
+      shopId: 'orphan-reef',
+      toUid: 'guest-solo',
+      byUid: 'test-user',
+      byName: '테스트 다이버',
     );
-    expect(await repo.fetchShopOperatingEvents('orphan-reef'), isEmpty);
+    expect(firstLink.fromUid, isEmpty);
+    expect(firstLink.fromOwnerId, '(없음)');
+    expect(firstLink.toOwnerId, 'solo01');
+    final solo = (await repo.fetchMembers()).singleWhere(
+      (member) => member.uid == 'guest-solo',
+    );
+    expect(solo.isBusiness, isTrue);
+    expect(solo.userRole, 'business');
+    expect(solo.ownedShopId, 'orphan-reef');
+    expect(solo.loginId, 'solo01');
+    final orphan = await repo.fetchShopStat('orphan-reef');
+    expect(orphan?.shopId, 'orphan-reef');
+    expect(orphan?.name, '주인 없는 리프');
+    final orphanEvents = await repo.fetchShopOperatingEvents('orphan-reef');
+    expect(orphanEvents, hasLength(1));
+    expect(orphanEvents.single.kind, 'owner');
+    expect(orphanEvents.single.fromOwnerId, '(없음)');
+    expect(orphanEvents.single.toOwnerId, 'solo01');
+    expect(orphanEvents.single.fromName, isEmpty);
+    expect(orphanEvents.single.toName, isEmpty);
+    final stillOwner = (await repo.fetchMembers()).singleWhere(
+      (member) => member.uid == previousUid,
+    );
+    expect(stillOwner.isBusiness, isTrue);
+    expect(stillOwner.ownedShopId, shopId);
 
     await repo.transferShopOwner(
       shopId: shopId,
@@ -290,5 +313,77 @@ void main() {
     expect(next.ownedShopId, shopId);
     expect(store.liveStatsFor(shopId)?.name, '산호 리프');
     expect(store.liveStatsFor(shopId)?.shopId, shopId);
+  });
+
+  testWidgets('a shop with no owner shows (없음) then the new login id', (tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: 'orphan-reef',
+      name: '주인 없는 리프',
+      location: '세부',
+      productName: '',
+      consumerPrice: 0,
+      professionalPrice: 0,
+    );
+    await repo.ensureUserDocument(
+      const AppUser(
+        uid: 'guest-solo',
+        email: 'solo@dive.local',
+        displayName: '솔로',
+      ),
+      loginId: 'solo01',
+    );
+
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await store.refreshShopStats();
+    await store.ensureAdminInboxLoaded();
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AdminPartnerShopScreen(shopId: 'orphan-reef'),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final search = find.byKey(const Key('admin-partner-owner-search'));
+    await tester.ensureVisible(search);
+    await tester.pump();
+    await tester.enterText(search, 'solo01');
+    await tester.tap(find.byKey(const Key('admin-partner-owner-find')));
+    await tester.pump();
+    expect(find.byKey(const Key('admin-partner-owner-picked')), findsOneWidget);
+
+    final save = find.byKey(const Key('admin-partner-owner-save'));
+    await tester.ensureVisible(save);
+    await tester.pump();
+    await tester.tap(save);
+    await tester.pump();
+    expect(find.textContaining('(없음)'), findsWidgets);
+    expect(find.textContaining('solo01'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('admin-partner-owner-confirm')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('(없음) → solo01'), findsOneWidget);
+    final next = store.members.singleWhere((member) => member.uid == 'guest-solo');
+    expect(next.isBusiness, isTrue);
+    expect(next.ownedShopId, 'orphan-reef');
+    expect(next.userRole, 'business');
+    expect(store.liveStatsFor('orphan-reef')?.shopId, 'orphan-reef');
+    expect(store.liveStatsFor('orphan-reef')?.name, '주인 없는 리프');
   });
 }
