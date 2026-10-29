@@ -2130,6 +2130,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPartnerTierEmpty => 'No partners in this tier.';
 
   @override
+  String get adminPartnerGradeRegular => 'Regular partner';
+
+  @override
+  String get adminPartnerGradeStar1 => '★1';
+
+  @override
+  String get adminPartnerGradeStar2 => '★2';
+
+  @override
+  String get adminPartnerGradeStar3 => '★3';
+
+  @override
+  String get adminPartnerGradeOther => 'Other';
+
+  @override
   String get adminPartnerOpenInstructors => 'Open instructor review';
 
   @override

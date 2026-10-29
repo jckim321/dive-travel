@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partner_shop_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -31,16 +32,30 @@ String partnerShopDisplayName(ShopLiveStats stats) {
   return name.isEmpty ? stats.shopId : name;
 }
 
-enum PartnerTierFilter {
+enum PartnerGradeCard {
   all,
-  reviewPending,
+  regular,
   star1,
   star2,
   star3,
-  needsAction,
+  other,
 }
 
-/// 회원관리 «제휴파트너» — 샵 리스트 + Dive Star / 리뷰전 / 조치필요 칩.
+/// 한 리조트는 한 칸. 활동 중지·계약종료·폐업은 기타, 활동중만 등급.
+/// 등급 0(심사 전)은 일반파트너.
+PartnerGradeCard partnerRosterBucket(ShopLiveStats stats) {
+  if (!stats.operatingStatus.acceptsCustomers) {
+    return PartnerGradeCard.other;
+  }
+  return switch (stats.diveStar) {
+    1 => PartnerGradeCard.star1,
+    2 => PartnerGradeCard.star2,
+    3 => PartnerGradeCard.star3,
+    _ => PartnerGradeCard.regular,
+  };
+}
+
+/// 회원관리 «제휴 리조트» — 등급 카드와 샵 목록.
 class AdminPartnersRosterScreen extends StatefulWidget {
   const AdminPartnersRosterScreen({
     super.key,
@@ -57,7 +72,7 @@ class AdminPartnersRosterScreen extends StatefulWidget {
 }
 
 class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
-  PartnerTierFilter _tier = PartnerTierFilter.all;
+  PartnerGradeCard _grade = PartnerGradeCard.all;
   final _query = TextEditingController();
 
   @override
@@ -80,20 +95,8 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
   }
 
   bool _matches(ShopLiveStats stats) {
-    switch (_tier) {
-      case PartnerTierFilter.all:
-        return true;
-      case PartnerTierFilter.reviewPending:
-        return stats.reviewCount == 0;
-      case PartnerTierFilter.star1:
-        return stats.diveStar == 1;
-      case PartnerTierFilter.star2:
-        return stats.diveStar == 2;
-      case PartnerTierFilter.star3:
-        return stats.diveStar == 3;
-      case PartnerTierFilter.needsAction:
-        return stats.reviewCount == 0 || stats.plaqueStatus == PlaqueStatus.queued;
-    }
+    if (_grade == PartnerGradeCard.all) return true;
+    return partnerRosterBucket(stats) == _grade;
   }
 
   @override
@@ -134,6 +137,14 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                 ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: _GradeGrid(
+                  shops: store.shopStats,
+                  selected: _grade,
+                  onSelect: (grade) => setState(() => _grade = grade),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: TextField(
                   key: const Key('admin-partners-search'),
                   controller: _query,
@@ -146,88 +157,11 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final entry in <(PartnerTierFilter, String)>[
-                        (PartnerTierFilter.all, l10n.adminPartnerTierAll),
-                        (
-                          PartnerTierFilter.needsAction,
-                          l10n.adminMembersNeedsAction,
-                        ),
-                        (
-                          PartnerTierFilter.reviewPending,
-                          l10n.adminPartnerTierReviewPending,
-                        ),
-                      ]) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            key: Key('admin-partner-tier-${entry.$1.name}'),
-                            label: Text(entry.$2),
-                            selected: _tier == entry.$1,
-                            onSelected: (_) =>
-                                setState(() => _tier = entry.$1),
-                          ),
-                        ),
-                      ],
-                      PopupMenuButton<PartnerTierFilter>(
-                        key: const Key('admin-partner-tier-more'),
-                        tooltip: l10n.adminFilterMore,
-                        onSelected: (value) => setState(() => _tier = value),
-                        itemBuilder: (context) => [
-                          for (final entry in <(PartnerTierFilter, String)>[
-                            (
-                              PartnerTierFilter.star1,
-                              l10n.adminPartnerTierStar1,
-                            ),
-                            (
-                              PartnerTierFilter.star2,
-                              l10n.adminPartnerTierStar2,
-                            ),
-                            (
-                              PartnerTierFilter.star3,
-                              l10n.adminPartnerTierStar3,
-                            ),
-                          ])
-                            PopupMenuItem(
-                              value: entry.$1,
-                              child: Text(entry.$2),
-                            ),
-                        ],
-                        child: Chip(
-                          label: Text(
-                            {
-                                  PartnerTierFilter.star1,
-                                  PartnerTierFilter.star2,
-                                  PartnerTierFilter.star3,
-                                }.contains(_tier)
-                                ? switch (_tier) {
-                                    PartnerTierFilter.star1 =>
-                                      l10n.adminPartnerTierStar1,
-                                    PartnerTierFilter.star2 =>
-                                      l10n.adminPartnerTierStar2,
-                                    _ => l10n.adminPartnerTierStar3,
-                                  }
-                                : l10n.adminFilterMore,
-                          ),
-                          avatar: const Icon(Icons.expand_more, size: 16),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                   children: [
-                    if (plaque.isNotEmpty &&
-                        (_tier == PartnerTierFilter.all ||
-                            _tier == PartnerTierFilter.needsAction)) ...[
+                    if (plaque.isNotEmpty && _grade == PartnerGradeCard.all) ...[
                       Text(
                         l10n.adminPlaqueQueue,
                         style: Theme.of(context).textTheme.titleMedium,
@@ -267,6 +201,116 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _GradeGrid extends StatelessWidget {
+  const _GradeGrid({
+    required this.shops,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<ShopLiveStats> shops;
+  final PartnerGradeCard selected;
+  final ValueChanged<PartnerGradeCard> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    int count(PartnerGradeCard card) {
+      return shops.where((shop) => partnerRosterBucket(shop) == card).length;
+    }
+
+    final cards = <_GradeSpec>[
+      _GradeSpec(PartnerGradeCard.all, l10n.adminPartnerTierAll, Icons.circle_outlined, Colors.white, shops.length),
+      _GradeSpec(PartnerGradeCard.regular, l10n.adminPartnerGradeRegular, Icons.storefront_outlined, AdminConsoleTheme.aqua, count(PartnerGradeCard.regular)),
+      _GradeSpec(PartnerGradeCard.star1, l10n.adminPartnerGradeStar1, Icons.star_border, const Color(0xFFD5DEE8), count(PartnerGradeCard.star1)),
+      _GradeSpec(PartnerGradeCard.star2, l10n.adminPartnerGradeStar2, Icons.star_half, const Color(0xFFE2B15A), count(PartnerGradeCard.star2)),
+      _GradeSpec(PartnerGradeCard.star3, l10n.adminPartnerGradeStar3, Icons.star, const Color(0xFFFFB15A), count(PartnerGradeCard.star3)),
+      _GradeSpec(PartnerGradeCard.other, l10n.adminPartnerGradeOther, Icons.pause_circle_outline, AdminConsoleTheme.muted, count(PartnerGradeCard.other)),
+    ];
+    return GridView.count(
+      crossAxisCount: 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      mainAxisExtent: 92,
+      children: [
+        for (final card in cards)
+          _GradeCard(
+            spec: card,
+            selected: selected == card.grade,
+            onTap: () => onSelect(card.grade),
+          ),
+      ],
+    );
+  }
+}
+
+class _GradeSpec {
+  const _GradeSpec(this.grade, this.label, this.icon, this.color, this.count);
+  final PartnerGradeCard grade;
+  final String label;
+  final IconData icon;
+  final Color color;
+  final int count;
+}
+
+class _GradeCard extends StatelessWidget {
+  const _GradeCard({
+    required this.spec,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _GradeSpec spec;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AdminConsoleTheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: Key('admin-partner-grade-${spec.grade.name}'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? const Color(0xFFE2B15A) : AdminConsoleTheme.border,
+              width: selected ? 1.6 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(spec.icon, size: 14, color: spec.color),
+              const SizedBox(height: 4),
+              Text(
+                '${spec.count}',
+                style: TextStyle(
+                  color: spec.color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                spec.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

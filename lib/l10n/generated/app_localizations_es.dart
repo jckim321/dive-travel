@@ -2088,6 +2088,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminPartnerTierEmpty => '이 티어에 해당하는 제휴 파트너가 없습니다.';
 
   @override
+  String get adminPartnerGradeRegular => '일반파트너';
+
+  @override
+  String get adminPartnerGradeStar1 => '★1';
+
+  @override
+  String get adminPartnerGradeStar2 => '★2';
+
+  @override
+  String get adminPartnerGradeStar3 => '★3';
+
+  @override
+  String get adminPartnerGradeOther => '기타';
+
+  @override
   String get adminPartnerOpenInstructors => '강사인증으로';
 
   @override
