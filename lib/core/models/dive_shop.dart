@@ -1,6 +1,5 @@
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
-import 'package:dive_travel_app/core/models/instructor_discount.dart';
 
 /// 제휴 리조트/다이브샵이 등록한 예약 상품입니다.
 class DiveShop {
@@ -255,14 +254,25 @@ class TourPriceQuote {
 }
 
 abstract final class TourPricePolicy {
+  /// Saved instructor price. An empty price (0) is the consumer price.
+  static int shownUnit({required int consumer, required int professional}) {
+    if (professional <= 0) {
+      return consumer;
+    }
+    return professional;
+  }
+
   static TourPriceQuote quote(
     DiveShop shop, {
     required bool isInstructor,
-    InstructorDiscount discount = InstructorDiscount.standard,
   }) {
     if (isInstructor) {
+      final amount = shownUnit(
+        consumer: shop.consumerPrice,
+        professional: shop.professionalPrice,
+      );
       return TourPriceQuote(
-        amount: discount.apply(shop.consumerPrice),
+        amount: amount,
         isProfessional: true,
         compareAtAmount: shop.consumerPrice,
       );

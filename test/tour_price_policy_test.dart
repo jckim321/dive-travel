@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'support/sample_dive_shops.dart';
-import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 
 void main() {
@@ -15,25 +14,30 @@ void main() {
     expect(quote.hasDiscount, isFalse);
   });
 
-  test('강사 세션은 관리자 할인율로 우대가를 계산한다', () {
+  test('강사 카드는 저장된 강사 우대가를 보이고 공통 할인을 쓰지 않는다', () {
     final quote = TourPricePolicy.quote(bohol, isInstructor: true);
     expect(quote.isProfessional, isTrue);
+    expect(quote.amount, bohol.professionalPrice);
     expect(quote.amount, 126000);
     expect(quote.compareAtAmount, 180000);
     expect(quote.hasDiscount, isTrue);
   });
 
-  test('관리자 정액 할인은 소비자가에서 금액을 뺀다', () {
-    const discount = InstructorDiscount(
-      kind: InstructorDiscountKind.amount,
-      value: 20000,
-    );
+  test('강사 우대가가 비어 있으면 소비자가를 보인다', () {
     final quote = TourPricePolicy.quote(
-      bohol,
+      bohol.copyWith(professionalPrice: 0),
       isInstructor: true,
-      discount: discount,
     );
-    expect(quote.amount, 160000);
+    expect(quote.amount, 180000);
+    expect(quote.hasDiscount, isFalse);
+    expect(
+      TourPricePolicy.shownUnit(consumer: 20000, professional: 15000),
+      15000,
+    );
+    expect(
+      TourPricePolicy.shownUnit(consumer: 20000, professional: 0),
+      20000,
+    );
   });
 
   test('포인트 검색과 대륙 필터가 샵 목록을 줄인다', () {

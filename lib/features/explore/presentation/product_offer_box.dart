@@ -275,9 +275,13 @@ class ProductOfferBox extends StatelessWidget {
   }
 
   int _optionPrice(ShopProductOption option) {
-    return quote.isProfessional
-        ? option.professionalPrice
-        : option.consumerPrice;
+    if (!quote.isProfessional) {
+      return option.consumerPrice;
+    }
+    return TourPricePolicy.shownUnit(
+      consumer: option.consumerPrice,
+      professional: option.professionalPrice,
+    );
   }
 
   Widget _offerRow(

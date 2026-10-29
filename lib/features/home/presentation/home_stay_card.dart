@@ -351,6 +351,11 @@ String homeWon(int amount) {
   return '${negative ? '-' : ''}₩$digits';
 }
 
+/// Instructor cards show the saved instructor price. Everyone else sees consumer.
+int homeCardPrice(BuildContext context, DiveShop shop) {
+  return DiverStoreScope.of(context).quoteFor(shop).amount;
+}
+
 String homeDayLabel(DateTime date) {
   final month = date.month.toString().padLeft(2, '0');
   final day = date.day.toString().padLeft(2, '0');
@@ -798,7 +803,7 @@ class HomeSameBoatCard extends StatelessWidget {
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      homeWon(shop.consumerPrice),
+                      homeWon(homeCardPrice(context, shop)),
                       key: Key('home-same-boat-price-${shop.hullId}'),
                       style: const TextStyle(
                         color: AppTheme.navy,
@@ -929,7 +934,7 @@ class HomeCuratedCard extends StatelessWidget {
                       ],
                       const SizedBox(height: 4),
                       Text(
-                        homeWon(shop.consumerPrice),
+                        homeWon(homeCardPrice(context, shop)),
                         key: Key('home-curated-price-${shop.hullId}'),
                         style: const TextStyle(
                           color: AppTheme.gold,
@@ -1092,7 +1097,7 @@ class HomeCaptainCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        homeWon(shop.consumerPrice),
+                        homeWon(homeCardPrice(context, shop)),
                         key: Key('home-captain-price-${shop.hullId}'),
                         style: const TextStyle(
                           color: AppTheme.gold,

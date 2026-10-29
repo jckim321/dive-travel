@@ -785,7 +785,6 @@ class DiverStore extends ChangeNotifier {
     return TourPricePolicy.quote(
       shop,
       isInstructor: _stats.isInstructor,
-      discount: _instructorDiscount,
     );
   }
 

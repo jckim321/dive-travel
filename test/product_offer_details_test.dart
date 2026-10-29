@@ -113,4 +113,83 @@ void main() {
     expect(markdown.data, schedule);
     expect(markdown.softLineBreak, isTrue);
   });
+
+  testWidgets('강사 상세는 저장된 강사 우대가를 보이고 빈 옵션은 소비자가로 보인다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const shop = DiveShop(
+      id: 'curated-1--trip-1',
+      name: '블루홀',
+      location: '팔라완',
+      country: '필리핀',
+      continent: 'asia',
+      sites: [],
+      productName: '블루홀',
+      stars: 0,
+      rating: 0,
+      reviewCount: 0,
+      amenities: [],
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+    );
+    const product = ShopProduct(
+      id: 'trip-1',
+      shopId: 'curated-1',
+      name: '블루홀',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+      options: [
+        ShopProductOption(
+          id: 'night',
+          name: '나이트',
+          consumerPrice: 20000,
+          professionalPrice: 15000,
+        ),
+        ShopProductOption(
+          id: 'gear',
+          name: '장비',
+          consumerPrice: 30000,
+          professionalPrice: 0,
+        ),
+      ],
+    );
+    final quote = TourPricePolicy.quote(shop, isInstructor: true);
+    final repo = MemoryDiverRepository.forTest();
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: ProductOfferBox(
+              shop: shop,
+              product: product,
+              quote: quote,
+              recommended: false,
+              lightest: false,
+              openRooms: 0,
+              onBook: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(quote.amount, 80000);
+    expect(find.text('80,000원'), findsOneWidget);
+    expect(find.text('15,000원'), findsOneWidget);
+    expect(find.text('30,000원'), findsOneWidget);
+    expect(find.text('70,000원'), findsNothing);
+  });
 }

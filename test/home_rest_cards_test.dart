@@ -256,4 +256,47 @@ void main() {
       lessThan(tester.getTopLeft(find.byKey(const Key('home-for-you'))).dy),
     );
   });
+
+  testWidgets('강사 목록 카드는 저장된 강사 우대가를 보이고 30% 할인을 쓰지 않는다', (
+    tester,
+  ) async {
+    const shop = DiveShop(
+      id: 'pro-card',
+      name: '리프',
+      location: '팔라우',
+      country: '팔라우',
+      continent: 'pacific',
+      sites: [],
+      productName: '펀다이빙',
+      stars: 0,
+      rating: 0,
+      reviewCount: 0,
+      amenities: [],
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+    );
+    final repo = MemoryDiverRepository.forTest(isInstructor: true);
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: HomeCuratedCard(shop: shop, onDetails: () {}),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final price = tester.widget<Text>(
+      find.byKey(const Key('home-curated-price-pro-card')),
+    );
+    expect(price.data, '₩80,000');
+  });
 }

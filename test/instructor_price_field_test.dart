@@ -6,7 +6,6 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
-import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/ops_product_workbench.dart';
@@ -135,10 +134,17 @@ void main() {
     final card = TourPricePolicy.quote(
       shop,
       isInstructor: true,
-      discount: InstructorDiscount.standard,
     );
-    expect(card.amount, 70000);
+    expect(card.amount, 80000);
     expect(card.isProfessional, isTrue);
+    expect(
+      TourPricePolicy.shownUnit(consumer: 20000, professional: 15000),
+      15000,
+    );
+    expect(
+      TourPricePolicy.shownUnit(consumer: 20000, professional: 0),
+      20000,
+    );
 
     final charge = CheckoutCharge.resolve(
       fromFlag: false,
