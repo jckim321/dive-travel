@@ -3281,6 +3281,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminTrialSelReviews => '후기(제주 오렌지 제외)';
 
   @override
+  String get adminTrialSelReviewsWithJeju => '후기';
+
+  @override
   String get adminTrialSelUserBookings => '회원 쪽 예약 복사본';
 
   @override
@@ -3300,6 +3303,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get adminTrialSelUsers => '시험 회원 문서(사장님·본인·제주오렌지 주인 제외)';
+
+  @override
+  String get adminTrialSelUsersWithJeju => '시험 회원 문서(사장님·본인 제외)';
+
+  @override
+  String get adminTrialIncludeJeju => '제주 오렌지도 함께 지우기';
+
+  @override
+  String get adminTrialIncludeJejuTitle => '제주 오렌지도 지울까요?';
+
+  @override
+  String get adminTrialIncludeJejuBody =>
+      '이번 삭제에만 제주 오렌지 샵·상품·예약·후기가 포함됩니다. 관리자 본인 계정과 서류함·심사 양식·문서 설정은 그대로 남습니다.';
+
+  @override
+  String get adminTrialIncludeJejuCancel => '취소';
+
+  @override
+  String get adminTrialIncludeJejuConfirm => '함께 지우기';
 
   @override
   String get adminDocsHint =>

@@ -3369,6 +3369,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminTrialSelReviews => 'Reviews (except Jeju Orange)';
 
   @override
+  String get adminTrialSelReviewsWithJeju => 'Reviews';
+
+  @override
   String get adminTrialSelUserBookings => 'User booking copies';
 
   @override
@@ -3390,6 +3393,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminTrialSelUsers =>
       'Trial user docs (except owner/self/Jeju Orange owners)';
+
+  @override
+  String get adminTrialSelUsersWithJeju =>
+      'Trial user docs (except owner and self)';
+
+  @override
+  String get adminTrialIncludeJeju => 'Also delete Jeju Orange';
+
+  @override
+  String get adminTrialIncludeJejuTitle => 'Delete Jeju Orange too?';
+
+  @override
+  String get adminTrialIncludeJejuBody =>
+      'This run only includes the Jeju Orange shop, its products, bookings, and reviews. Your admin account, the document vault, review forms, and document settings stay.';
+
+  @override
+  String get adminTrialIncludeJejuCancel => 'Cancel';
+
+  @override
+  String get adminTrialIncludeJejuConfirm => 'Delete with it';
 
   @override
   String get adminDocsHint =>

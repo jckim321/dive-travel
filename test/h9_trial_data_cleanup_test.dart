@@ -44,6 +44,17 @@ void main() {
       ),
       throwsA(isA<StateError>()),
     );
+    expect(
+      () => store.runTrialDataDeletion(
+        selection: const TrialDeleteSelection(
+          trialShops: true,
+          includeJejuOrange: true,
+        ),
+        confirmPhrase: kTrialDeleteConfirmPhrase,
+        backupAcknowledged: true,
+      ),
+      throwsA(isA<StateError>()),
+    );
   });
 
   test('trial shop delete skips protected jeju orange shop', () async {
@@ -63,5 +74,45 @@ void main() {
     final after = await store.fetchTrialDataCounts();
     expect(after.jejuOrange.shopId, 'jeju-orange-1');
     expect(repo.roleHistoryFor('x'), isEmpty); // no accidental history
+  });
+
+  test('include jeju orange deletes that shop and its partner, not the admin', () async {
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    repo.seedShopName('jeju-orange-1', kJejuOrangeShopName);
+    repo.seedShopName('trial-shop', '시험 샵');
+    final store = DiverStore(repo);
+    await repo.signIn(email: AppOwner.email, password: 'x');
+    await pumpEventQueue();
+    await repo.promoteMemberToPartner(
+      uid: 'pending-instructor',
+      shopId: 'jeju-orange-1',
+      actorUid: store.uid!,
+      actorName: 'admin',
+    );
+
+    await store.runTrialDataDeletion(
+      selection: const TrialDeleteSelection(trialUsers: true),
+      confirmPhrase: kTrialDeleteConfirmPhrase,
+      backupAcknowledged: true,
+    );
+    var members = await repo.fetchMembers();
+    expect(members.map((m) => m.uid), contains('pending-instructor'));
+    expect(members.any((m) => m.email == AppOwner.email), isTrue);
+    expect(repo.createdShopName('jeju-orange-1'), kJejuOrangeShopName);
+
+    await store.runTrialDataDeletion(
+      selection: const TrialDeleteSelection(
+        trialShops: true,
+        trialUsers: true,
+        includeJejuOrange: true,
+      ),
+      confirmPhrase: kTrialDeleteConfirmPhrase,
+      backupAcknowledged: true,
+    );
+    members = await repo.fetchMembers();
+    expect(members.map((m) => m.uid), isNot(contains('pending-instructor')));
+    expect(members.any((m) => m.email == AppOwner.email), isTrue);
+    expect(repo.createdShopName('jeju-orange-1'), isNull);
+    expect(repo.createdShopName('trial-shop'), isNull);
   });
 }

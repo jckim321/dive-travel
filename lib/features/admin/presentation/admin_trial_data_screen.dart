@@ -43,6 +43,41 @@ class _AdminTrialDataScreenState extends State<AdminTrialDataScreen> {
     super.dispose();
   }
 
+  Future<void> _toggleIncludeJeju(bool next) async {
+    if (!next) {
+      setState(() {
+        _selection = _selection.copyWith(includeJejuOrange: false);
+      });
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const Key('admin-trial-include-jeju-dialog'),
+        title: Text(l10n.adminTrialIncludeJejuTitle),
+        content: Text(l10n.adminTrialIncludeJejuBody),
+        actions: [
+          TextButton(
+            key: const Key('admin-trial-include-jeju-cancel'),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.adminTrialIncludeJejuCancel),
+          ),
+          FilledButton(
+            key: const Key('admin-trial-include-jeju-confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.adminTrialIncludeJejuConfirm),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      setState(() {
+        _selection = _selection.copyWith(includeJejuOrange: true);
+      });
+    }
+  }
+
   Future<void> _refresh() async {
     setState(() {
       _loading = true;
@@ -123,6 +158,7 @@ class _AdminTrialDataScreenState extends State<AdminTrialDataScreen> {
         _lastResult = result;
         _deleting = false;
         _confirm.clear();
+        _selection = _selection.copyWith(includeJejuOrange: false);
       });
       await _refresh();
     } catch (e) {
@@ -167,6 +203,15 @@ class _AdminTrialDataScreenState extends State<AdminTrialDataScreen> {
           Text(l10n.adminTrialLimitsBody, style: theme.textTheme.bodySmall),
           const SizedBox(height: 12),
           if (snap != null) _JejuBanner(resolve: snap.jejuOrange, l10n: l10n),
+          if (snap?.jejuOrange.protectedShopId != null) ...[
+            SwitchListTile(
+              key: const Key('admin-trial-include-jeju'),
+              contentPadding: EdgeInsets.zero,
+              value: _selection.includeJejuOrange,
+              onChanged: deleteLocked ? null : _toggleIncludeJeju,
+              title: Text(l10n.adminTrialIncludeJeju),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -295,7 +340,9 @@ class _AdminTrialDataScreenState extends State<AdminTrialDataScreen> {
       ),
       tile(
         key: const Key('admin-trial-sel-reviews'),
-        title: l10n.adminTrialSelReviews,
+        title: _selection.includeJejuOrange
+            ? l10n.adminTrialSelReviewsWithJeju
+            : l10n.adminTrialSelReviews,
         value: _selection.reviews,
         onChanged: (v) =>
             setState(() => _selection = _selection.copyWith(reviews: v)),
@@ -348,7 +395,9 @@ class _AdminTrialDataScreenState extends State<AdminTrialDataScreen> {
       ),
       tile(
         key: const Key('admin-trial-sel-users'),
-        title: l10n.adminTrialSelUsers,
+        title: _selection.includeJejuOrange
+            ? l10n.adminTrialSelUsersWithJeju
+            : l10n.adminTrialSelUsers,
         value: _selection.trialUsers,
         onChanged: (v) =>
             setState(() => _selection = _selection.copyWith(trialUsers: v)),

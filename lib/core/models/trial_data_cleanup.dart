@@ -1,3 +1,5 @@
+import 'package:dive_travel_app/core/constants/app_constants.dart';
+
 /// H9 admin trial-data inspection / selective delete models.
 
 enum TrialDataBucket {
@@ -98,6 +100,7 @@ class TrialDeleteSelection {
     this.trialShops = false,
     this.trialUsers = false,
     this.unconfirmedAssessments = false,
+    this.includeJejuOrange = false,
   });
 
   final bool partnerEmailOutbox;
@@ -111,6 +114,9 @@ class TrialDeleteSelection {
   final bool trialShops;
   final bool trialUsers;
   final bool unconfirmedAssessments;
+
+  /// This run only. Does not count as a delete group by itself.
+  final bool includeJejuOrange;
 
   bool get anySelected =>
       partnerEmailOutbox ||
@@ -137,6 +143,7 @@ class TrialDeleteSelection {
     bool? trialShops,
     bool? trialUsers,
     bool? unconfirmedAssessments,
+    bool? includeJejuOrange,
   }) {
     return TrialDeleteSelection(
       partnerEmailOutbox: partnerEmailOutbox ?? this.partnerEmailOutbox,
@@ -152,8 +159,52 @@ class TrialDeleteSelection {
       trialUsers: trialUsers ?? this.trialUsers,
       unconfirmedAssessments:
           unconfirmedAssessments ?? this.unconfirmedAssessments,
+      includeJejuOrange: includeJejuOrange ?? this.includeJejuOrange,
     );
   }
+}
+
+typedef TrialOwnedAccount = ({String uid, String email, String ownedShopId});
+
+/// Shop and member ids skipped by one cleanup run.
+class TrialDeletionGuard {
+  const TrialDeletionGuard({required this.shopId, required this.userUids});
+
+  final String? shopId;
+  final Set<String> userUids;
+}
+
+/// Exact Jeju Orange is skipped unless [includeJejuOrange] is set for this run.
+/// The signed-in admin and the app owner stay protected either way.
+TrialDeletionGuard trialDeletionGuard({
+  required TrialDataSnapshot snapshot,
+  required bool includeJejuOrange,
+  required String actorUid,
+  required String actorEmail,
+  Iterable<TrialOwnedAccount> accounts = const [],
+}) {
+  final exact = snapshot.jejuOrange.protectedShopId;
+  if (!includeJejuOrange || exact == null) {
+    return TrialDeletionGuard(
+      shopId: exact,
+      userUids: snapshot.protectedUserUids,
+    );
+  }
+  final actorMail = actorEmail.trim().toLowerCase();
+  final uids = {...snapshot.protectedUserUids, actorUid};
+  for (final account in accounts) {
+    if (account.ownedShopId.trim() != exact) {
+      continue;
+    }
+    final email = account.email.trim().toLowerCase();
+    final keep = account.uid == actorUid ||
+        AppOwner.isOwnerEmail(email) ||
+        (actorMail.isNotEmpty && email == actorMail);
+    if (!keep) {
+      uids.remove(account.uid);
+    }
+  }
+  return TrialDeletionGuard(shopId: null, userUids: uids);
 }
 
 class TrialDeleteProgress {

@@ -6174,6 +6174,12 @@ abstract class AppLocalizations {
   /// **'후기(제주 오렌지 제외)'**
   String get adminTrialSelReviews;
 
+  /// No description provided for @adminTrialSelReviewsWithJeju.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기'**
+  String get adminTrialSelReviewsWithJeju;
+
   /// No description provided for @adminTrialSelUserBookings.
   ///
   /// In ko, this message translates to:
@@ -6215,6 +6221,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'시험 회원 문서(사장님·본인·제주오렌지 주인 제외)'**
   String get adminTrialSelUsers;
+
+  /// No description provided for @adminTrialSelUsersWithJeju.
+  ///
+  /// In ko, this message translates to:
+  /// **'시험 회원 문서(사장님·본인 제외)'**
+  String get adminTrialSelUsersWithJeju;
+
+  /// No description provided for @adminTrialIncludeJeju.
+  ///
+  /// In ko, this message translates to:
+  /// **'제주 오렌지도 함께 지우기'**
+  String get adminTrialIncludeJeju;
+
+  /// No description provided for @adminTrialIncludeJejuTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'제주 오렌지도 지울까요?'**
+  String get adminTrialIncludeJejuTitle;
+
+  /// No description provided for @adminTrialIncludeJejuBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 삭제에만 제주 오렌지 샵·상품·예약·후기가 포함됩니다. 관리자 본인 계정과 서류함·심사 양식·문서 설정은 그대로 남습니다.'**
+  String get adminTrialIncludeJejuBody;
+
+  /// No description provided for @adminTrialIncludeJejuCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get adminTrialIncludeJejuCancel;
+
+  /// No description provided for @adminTrialIncludeJejuConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 지우기'**
+  String get adminTrialIncludeJejuConfirm;
 
   /// No description provided for @adminDocsHint.
   ///

@@ -1032,9 +1032,35 @@ class FirestoreDiverRepository implements DiverRepository {
     if (snapshot.jejuOrange.blocksDeletion) {
       throw StateError('JEJU_ORANGE_AMBIGUOUS');
     }
-    final protectedShop = snapshot.jejuOrange.protectedShopId;
-    final protectedUids = snapshot.protectedUserUids;
+    final accounts = <TrialOwnedAccount>[];
+    if (selection.includeJejuOrange &&
+        snapshot.jejuOrange.protectedShopId != null) {
+      final usersSnap = await _users.get();
+      for (final doc in usersSnap.docs) {
+        final data = doc.data();
+        accounts.add((
+          uid: doc.id,
+          email: (data['email'] as String?) ?? '',
+          ownedShopId: (data['owned_shop_id'] as String?) ?? '',
+        ));
+      }
+    }
+    final guard = trialDeletionGuard(
+      snapshot: snapshot,
+      includeJejuOrange: selection.includeJejuOrange,
+      actorUid: actorUid,
+      actorEmail: actorEmail,
+      accounts: accounts,
+    );
+    final protectedShop = guard.shopId;
+    final protectedUids = guard.userUids;
     final notes = <String>[];
+    if (selection.includeJejuOrange &&
+        snapshot.jejuOrange.protectedShopId != null) {
+      notes.add(
+        '이번 실행만 제주 오렌지 샵 보호를 풀었습니다. 관리자 본인·서류함·심사 양식·문서 설정은 남깁니다.',
+      );
+    }
     final failed = <String>[];
     var success = 0;
     var failure = 0;

@@ -837,13 +837,32 @@ class MemoryDiverRepository implements DiverRepository {
     if (snap.jejuOrange.blocksDeletion) {
       throw StateError('JEJU_ORANGE_AMBIGUOUS');
     }
+    final guard = trialDeletionGuard(
+      snapshot: snap,
+      includeJejuOrange: selection.includeJejuOrange,
+      actorUid: actorUid,
+      actorEmail: actorEmail,
+      accounts: [
+        for (final member in _members)
+          (
+            uid: member.uid,
+            email: member.email,
+            ownedShopId: member.ownedShopId,
+          ),
+      ],
+    );
+    final protected = guard.shopId;
     onProgress?.call(
       const TrialDeleteProgress(message: 'memory delete', done: 1, total: 1),
     );
     final notes = <String>[];
+    if (selection.includeJejuOrange && snap.jejuOrange.protectedShopId != null) {
+      notes.add(
+        '이번 실행만 제주 오렌지 샵 보호를 풀었습니다. 관리자 본인·서류함·심사 양식·문서 설정은 남깁니다.',
+      );
+    }
     var success = 0;
     if (selection.trialShops) {
-      final protected = snap.jejuOrange.protectedShopId;
       final removeIds = [
         for (final id in _createdShops.keys)
           if (protected == null || id != protected) id,
@@ -857,7 +876,7 @@ class MemoryDiverRepository implements DiverRepository {
     }
     if (selection.trialUsers) {
       final before = _members.length;
-      _members.removeWhere((m) => !snap.protectedUserUids.contains(m.uid));
+      _members.removeWhere((m) => !guard.userUids.contains(m.uid));
       success += before - _members.length;
       notes.add(
         'Auth 계정은 앱에서 못 지웁니다. Console → Authentication → Users에서 지우세요.',
