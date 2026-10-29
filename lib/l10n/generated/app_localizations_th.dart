@@ -1712,7 +1712,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminFilterMore => '더 보기';
 
   @override
-  String get adminMembersSubGeneral => '일반회원';
+  String get adminMembersSubGeneral => '회원';
 
   @override
   String get adminMembersSubDivers => '다이버';
@@ -1721,7 +1721,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminMembersSubInstructors => '강사인증';
 
   @override
-  String get adminMembersSubPartners => '제휴파트너';
+  String get adminMembersSubPartners => '제휴 리조트';
 
   @override
   String get adminPartnersSearch => '파트너·샵 검색';

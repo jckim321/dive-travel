@@ -1769,7 +1769,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminMembersSubInstructors => 'Instructor review';
 
   @override
-  String get adminMembersSubPartners => 'Partners';
+  String get adminMembersSubPartners => 'Partner resorts';
 
   @override
   String get adminPartnersSearch => 'Search partners / shops';

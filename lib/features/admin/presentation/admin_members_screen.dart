@@ -72,16 +72,8 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   }
 
   bool _inFilter(MemberAccount member) {
-    return switch (_filter) {
-      _MemberFilter.all => true,
-      _MemberFilter.silver => _isStoredGrade(member, MemberGrade.silver),
-      _MemberFilter.gold => _isStoredGrade(member, MemberGrade.gold),
-      _MemberFilter.diamond => _isStoredGrade(member, MemberGrade.diamond),
-      _MemberFilter.platinum => _isStoredGrade(member, MemberGrade.platinum),
-      _MemberFilter.instructor => member.isInstructor,
-      _MemberFilter.partner => member.isBusiness,
-      _MemberFilter.admin => member.isAdmin,
-    };
+    if (_filter == _MemberFilter.all) return true;
+    return memberRosterBucket(member) == _filter;
   }
 
   @override
@@ -252,8 +244,17 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
   }
 }
 
-bool _isStoredGrade(MemberAccount member, MemberGrade grade) {
-  return !member.isInstructor && member.grade == grade;
+/// 줄의 구분과 같다. 관리자, 제휴파트너, 강사, 그다음 구매자 등급.
+_MemberFilter memberRosterBucket(MemberAccount member) {
+  if (member.isAdmin) return _MemberFilter.admin;
+  if (member.isBusiness) return _MemberFilter.partner;
+  if (member.isInstructor) return _MemberFilter.instructor;
+  return switch (member.grade) {
+    MemberGrade.silver => _MemberFilter.silver,
+    MemberGrade.gold => _MemberFilter.gold,
+    MemberGrade.diamond => _MemberFilter.diamond,
+    MemberGrade.platinum => _MemberFilter.platinum,
+  };
 }
 
 bool _matchesQuery(MemberAccount member, String q) {
@@ -343,18 +344,19 @@ class _CountGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final counts = countDisplayGrades([
-      for (final member in members) (grade: member.grade, isInstructor: member.isInstructor),
-    ]);
+    int bucketCount(_MemberFilter filter) {
+      return members.where((member) => memberRosterBucket(member) == filter).length;
+    }
+
     final cards = <_StatSpec>[
       _StatSpec(_MemberFilter.all, '전체', Icons.circle_outlined, Colors.white, members.length),
-      _StatSpec(_MemberFilter.silver, '실버', Icons.diamond_outlined, const Color(0xFFD5DEE8), counts[ProfileDisplayGrade.silver] ?? 0),
-      _StatSpec(_MemberFilter.gold, '골드', Icons.diamond, const Color(0xFFE2B15A), counts[ProfileDisplayGrade.gold] ?? 0),
-      _StatSpec(_MemberFilter.diamond, '다이아몬드', Icons.diamond_outlined, const Color(0xFF7EC8FF), counts[ProfileDisplayGrade.diamond] ?? 0),
-      _StatSpec(_MemberFilter.platinum, '플래티넘', Icons.diamond_outlined, const Color(0xFFC9B6FF), counts[ProfileDisplayGrade.platinum] ?? 0),
-      _StatSpec(_MemberFilter.instructor, '강사', Icons.school_outlined, const Color(0xFF7DDEA0), counts[ProfileDisplayGrade.instructor] ?? 0),
-      _StatSpec(_MemberFilter.partner, '제휴파트너', Icons.storefront_outlined, AdminConsoleTheme.aqua, members.where((m) => m.isBusiness).length),
-      _StatSpec(_MemberFilter.admin, '관리자', Icons.favorite_border, const Color(0xFFFFB15A), members.where((m) => m.isAdmin).length),
+      _StatSpec(_MemberFilter.silver, '실버', Icons.diamond_outlined, const Color(0xFFD5DEE8), bucketCount(_MemberFilter.silver)),
+      _StatSpec(_MemberFilter.gold, '골드', Icons.diamond, const Color(0xFFE2B15A), bucketCount(_MemberFilter.gold)),
+      _StatSpec(_MemberFilter.diamond, '다이아몬드', Icons.diamond_outlined, const Color(0xFF7EC8FF), bucketCount(_MemberFilter.diamond)),
+      _StatSpec(_MemberFilter.platinum, '플래티넘', Icons.diamond_outlined, const Color(0xFFC9B6FF), bucketCount(_MemberFilter.platinum)),
+      _StatSpec(_MemberFilter.instructor, '강사', Icons.school_outlined, const Color(0xFF7DDEA0), bucketCount(_MemberFilter.instructor)),
+      _StatSpec(_MemberFilter.partner, '제휴파트너', Icons.storefront_outlined, AdminConsoleTheme.aqua, bucketCount(_MemberFilter.partner)),
+      _StatSpec(_MemberFilter.admin, '관리자', Icons.favorite_border, const Color(0xFFFFB15A), bucketCount(_MemberFilter.admin)),
     ];
     return GridView.count(
       crossAxisCount: 4,
@@ -1104,16 +1106,18 @@ String memberShownGradeLabel(AppLocalizations l10n, MemberAccount member) {
 }
 
 bool _kindSelected(MemberAccount member, _MenuChoice choice) {
+  final bucket = memberRosterBucket(member);
   return switch (choice.kind) {
-    _ChoiceKind.admin => member.isAdmin,
-    _ChoiceKind.partner => !member.isAdmin && member.isBusiness,
-    _ChoiceKind.instructor =>
-      !member.isAdmin && !member.isBusiness && member.isInstructor,
-    _ChoiceKind.grade =>
-      !member.isAdmin &&
-          !member.isBusiness &&
-          !member.isInstructor &&
-          member.grade == choice.grade,
+    _ChoiceKind.admin => bucket == _MemberFilter.admin,
+    _ChoiceKind.partner => bucket == _MemberFilter.partner,
+    _ChoiceKind.instructor => bucket == _MemberFilter.instructor,
+    _ChoiceKind.grade => switch (choice.grade) {
+        MemberGrade.silver => bucket == _MemberFilter.silver,
+        MemberGrade.gold => bucket == _MemberFilter.gold,
+        MemberGrade.diamond => bucket == _MemberFilter.diamond,
+        MemberGrade.platinum => bucket == _MemberFilter.platinum,
+        null => false,
+      },
   };
 }
 

@@ -155,7 +155,8 @@ void main() {
 
     expect(_cardCount(tester, 'platinum'), '0');
     expect(_cardCount(tester, 'instructor'), '1');
-    expect(_cardCount(tester, 'silver'), '1');
+    expect(_cardCount(tester, 'silver'), '0');
+    expect(_cardCount(tester, 'admin'), '1');
     expect(find.byKey(const Key('admin-member-badge-admin-test-user')), findsNothing);
     expect(find.byKey(const Key('admin-member-badge-partner-test-user')), findsNothing);
     expect(
@@ -197,7 +198,8 @@ void main() {
     expect(promoted.isInstructor, isTrue);
     expect(promoted.grade, MemberGrade.silver);
     expect(_cardCount(tester, 'silver'), '0');
-    expect(_cardCount(tester, 'instructor'), '1');
+    expect(_cardCount(tester, 'instructor'), '0');
+    expect(_cardCount(tester, 'admin'), '1');
   });
 
   testWidgets('파트너를 일반 구분으로 바꾸면 해제만 하고 등급과 구매는 남긴다', (tester) async {
