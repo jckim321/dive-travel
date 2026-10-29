@@ -274,18 +274,102 @@ service cloud.firestore {
             || request.resource.data.dive_star_expires_at is timestamp);
     }
 
+    function operatingFieldKeys() {
+      return ['operating_status', 'operating_note'];
+    }
+
+    function operatingStatusValue(value) {
+      return value in ['active', 'paused', 'contract_ended', 'closed'];
+    }
+
+    // Create may omit both keys. A present value still has to be well formed.
+    function operatingFieldsAbsent() {
+      return !('operating_status' in request.resource.data)
+        && !('operating_note' in request.resource.data);
+    }
+
+    function operatingFieldsValidOnCreate() {
+      return (!('operating_status' in request.resource.data)
+          || operatingStatusValue(request.resource.data.operating_status))
+        && (!('operating_note' in request.resource.data)
+            || (request.resource.data.operating_note is string
+                && request.resource.data.operating_note.size() <= 500));
+    }
+
+    // Only keys whose value changes in this write. A merge that leaves them
+    // out does not list them here.
+    function operatingFieldsUnchanged() {
+      return !request.resource.data.diff(resource.data)
+        .affectedKeys().hasAny(operatingFieldKeys());
+    }
+
+    function operatingFieldsValidOnUpdate() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return (!changed.hasAny(['operating_status'])
+          || operatingStatusValue(request.resource.data.operating_status))
+        && (!changed.hasAny(['operating_note'])
+            || (request.resource.data.operating_note is string
+                && request.resource.data.operating_note.size() <= 500));
+    }
+
+    function operatingEventText(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function operatingEventOk() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'at', 'by_uid', 'by_name', 'kind',
+          'from_status', 'to_status', 'note',
+          'from_name', 'to_name',
+          'from_owner_id', 'to_owner_id'
+        ])
+        && data.keys().hasAll(['at', 'by_uid', 'by_name', 'kind'])
+        && data.at == request.time
+        && data.by_uid == request.auth.uid
+        && operatingEventText(data.by_name, 1, 80)
+        && data.kind in ['status', 'owner']
+        && (
+          (data.kind == 'status'
+            && data.keys().hasAll(['from_status', 'to_status', 'note'])
+            && operatingStatusValue(data.from_status)
+            && operatingStatusValue(data.to_status)
+            && operatingEventText(data.note, 0, 500))
+          || (data.kind == 'owner'
+            && data.keys().hasAll(['from_owner_id', 'to_owner_id'])
+            && operatingEventText(data.from_owner_id, 1, 80)
+            && operatingEventText(data.to_owner_id, 1, 80)
+            && (!('note' in data) || operatingEventText(data.note, 0, 500))
+            && (!('from_name' in data) || operatingEventText(data.from_name, 0, 120))
+            && (!('to_name' in data) || operatingEventText(data.to_name, 0, 120))
+            && (!('from_status' in data) || operatingStatusValue(data.from_status))
+            && (!('to_status' in data) || operatingStatusValue(data.to_status)))
+        );
+    }
+
     match /shops/{shopId} {
       allow read: if true;
       // Grade fields: admin only. Other shop fields (avg_*, products, plaque…):
       // signed-in users may update when grade keys are unchanged (review path).
+      // operating_status / operating_note: admin only when this write changes them.
       allow create: if isSignedIn()
         && diveStarGradeFieldsValid()
-        && (isAdmin() || diveStarGradeFieldsAbsent());
+        && (isAdmin() || diveStarGradeFieldsAbsent())
+        && operatingFieldsValidOnCreate()
+        && (isAdmin() || operatingFieldsAbsent());
       allow update: if isSignedIn()
         && diveStarGradeFieldsValid()
-        && (isAdmin() || diveStarGradeFieldsUnchanged());
+        && (isAdmin() || diveStarGradeFieldsUnchanged())
+        && operatingFieldsValidOnUpdate()
+        && (isAdmin() || operatingFieldsUnchanged());
       // H9: admin trial-data cleanup may remove shops.
       allow delete: if isAdmin();
+
+      match /operating_events/{eventId} {
+        allow read: if isAdmin();
+        allow create: if isAdmin() && operatingEventOk();
+        allow update, delete: if false;
+      }
 
       match /reviews/{reviewId} {
         allow read: if true;
