@@ -62,9 +62,13 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
   ) {
     return Object.hashAll([
       hull.name,
+      hull.country,
       hull.intro,
       hull.address,
       hull.location,
+      live?.name,
+      live?.country,
+      live?.location,
       hull.coverUrl,
       hull.galleryUrls.join('|'),
       hull.amenities.join('|'),

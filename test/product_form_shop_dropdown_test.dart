@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -59,6 +60,9 @@ void main() {
     expect(dropdown.initialValue, isNull);
     expect(find.text(l10n.productFormPickShop), findsOneWidget);
     expect(find.text(sampleDiveShops.first.name), findsNothing);
+    expect(dropdown.decoration.fillColor, PartnerTheme.bg);
+    final hint = tester.widget<Text>(find.text(l10n.productFormPickShop));
+    expect(hint.style?.color, PartnerTheme.textDim);
 
     await tester.ensureVisible(find.byKey(const Key('admin-product-submit')));
     await tester.tap(find.byKey(const Key('admin-product-submit')));
@@ -111,7 +115,26 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.productFormDirectSelect), findsOneWidget);
+    expect(
+      DefaultTextStyle.of(
+        tester.element(find.text(l10n.productFormDirectSelect).last),
+      ).style.color,
+      PartnerTheme.text,
+    );
     expect(l10n.productFormDirectSelect, '기획스페셜 (앱에 없는 리조트)');
     expect(find.text('직접선택'), findsNothing);
+    await tester.tap(find.text(l10n.productFormDirectSelect).last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    void expectDarkField(Key key) {
+      final field = tester.widget<TextField>(find.byKey(key));
+      expect(field.style?.color, PartnerTheme.text);
+      expect(field.decoration?.fillColor, PartnerTheme.bg);
+    }
+
+    expectDarkField(const Key('product-curated-resort'));
+    expectDarkField(const Key('product-curated-country'));
+    expectDarkField(const Key('product-curated-region'));
   });
 }

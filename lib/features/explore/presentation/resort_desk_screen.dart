@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -15,6 +16,7 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -42,6 +44,14 @@ class _DeskPalette {
       partnerMode ? PartnerTheme.border : const Color(0xFFE6EBEF);
   Color get inputBorder =>
       partnerMode ? PartnerTheme.borderStrong : const Color(0xFFBDBDBD);
+
+  /// Admin desk is a light form. Text must stay navy even when the route is
+  /// pushed from the dark admin console, or the white fields look blank.
+  TextStyle get fieldStyle => TextStyle(
+        color: partnerMode ? PartnerTheme.text : AppTheme.navy,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      );
 }
 
 class ResortDeskScreen extends StatefulWidget {
@@ -62,9 +72,12 @@ class ResortDeskScreen extends StatefulWidget {
 
 class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _name = TextEditingController();
+  final _country = TextEditingController();
   final _location = TextEditingController();
   final _address = TextEditingController();
   final _intro = TextEditingController();
+  String? _continent;
+  TravelCountry? _pickedCountry;
   final _info = ResortDeskInfoDraft();
   final _mainScroll = ScrollController();
   final _sideScroll = ScrollController();
@@ -151,6 +164,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         DiveShopCatalog.byId(widget.shopId);
     final live = store.liveStatsFor(widget.shopId);
     _name.text = live?.name ?? hull?.name ?? '';
+    _country.text = (live?.country ?? hull?.country ?? '').trim();
+    _continent = (live?.continent ?? hull?.continent)?.trim();
+    _pickedCountry = TravelCountryMaster.match(_country.text);
     _location.text = live?.location ?? hull?.location ?? '';
     _address.text = live?.address ?? hull?.address ?? '';
     _intro.text = live?.intro ?? hull?.intro ?? '';
@@ -240,6 +256,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _mainScroll.dispose();
     _sideScroll.dispose();
     _name.dispose();
+    _country.dispose();
     _location.dispose();
     _address.dispose();
     _intro.dispose();
@@ -347,13 +364,18 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
     setState(() => _saving = true);
     final store = _store ?? _storeRead(context);
-    final hull = DiveShopCatalog.byId(widget.shopId);
-    final livePlace = store.liveStatsFor(widget.shopId);
+    final typedCountry = _country.text.trim();
+    final picked = _pickedCountry;
+    final matched = picked != null && picked.name == typedCountry
+        ? picked
+        : TravelCountryMaster.match(typedCountry);
     try {
       final probe = await store.saveShopProfile(
         shopId: widget.shopId,
         name: name,
         location: _location.text,
+        country: typedCountry,
+        continent: (matched?.regionId ?? _continent)?.trim(),
         productName: _listingProductName,
         consumerPrice: _listingConsumerPrice,
         professionalPrice: _listingProfessionalPrice,
@@ -376,8 +398,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         checkIn: clampShort(_info.checkIn.text),
         checkOut: clampShort(_info.checkOut.text),
         businessHours: clampShort(_info.businessHours.text),
-        country: (livePlace?.country ?? hull?.country)?.trim(),
-        continent: (livePlace?.continent ?? hull?.continent)?.trim(),
         // Only rewrite gallery/cover when the user edited photos. An empty
         // _slots from a race before live stats loaded used to wipe cover_url.
         gallery: _galleryTouched
@@ -541,6 +561,25 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 palette: palette,
                 hint: l10n.exploreDeskHint,
                 name: _name,
+                countryField: TravelCountryField(
+                  controller: _country,
+                  fieldKey: const Key('resort-country-field'),
+                  picked: _pickedCountry,
+                  style: palette.fieldStyle,
+                  cursorColor: palette.primary,
+                  decoration: _deskInputDecoration(
+                    palette: palette,
+                    label: l10n.productFormCuratedCountry,
+                    required: true,
+                  ),
+                  onPicked: (country) {
+                    setState(() {
+                      _pickedCountry = country;
+                      _continent = country.regionId;
+                    });
+                  },
+                  onCustom: () => setState(() => _pickedCountry = null),
+                ),
                 location: _location,
                 address: _address,
                 intro: _intro,
@@ -643,7 +682,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     if (widget.partnerMode) {
       return PartnerTheme.wrap(scaffold);
     }
-    return scaffold;
+    // The admin console theme is dark. Without this, white fields inherit
+    // pale text and the name, country, and region look locked.
+    return Theme(data: AppTheme.light, child: scaffold);
   }
 }
 
@@ -657,9 +698,21 @@ InputDecoration _deskInputDecoration({
     borderRadius: BorderRadius.circular(4),
     borderSide: BorderSide(color: palette.inputBorder),
   );
+  final labelColor =
+      palette.partnerMode ? PartnerTheme.textDim : AppTheme.navy;
   return InputDecoration(
-    label: required ? _RequiredLabel(label) : Text(label),
+    label: required
+        ? _RequiredLabel(label, color: labelColor)
+        : Text(
+            label,
+            style: TextStyle(color: labelColor, fontWeight: FontWeight.w600),
+          ),
     hintText: hint,
+    labelStyle: TextStyle(
+      color: labelColor,
+      fontWeight: FontWeight.w600,
+    ),
+    hintStyle: TextStyle(color: palette.muted),
     filled: true,
     fillColor: palette.surface,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -673,14 +726,16 @@ InputDecoration _deskInputDecoration({
 }
 
 class _RequiredLabel extends StatelessWidget {
-  const _RequiredLabel(this.text);
+  const _RequiredLabel(this.text, {required this.color});
 
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Text.rich(
       TextSpan(
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
         children: [
           TextSpan(text: text),
           const TextSpan(
@@ -795,6 +850,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.palette,
     required this.hint,
     required this.name,
+    required this.countryField,
     required this.location,
     required this.address,
     required this.intro,
@@ -812,6 +868,7 @@ class _DeskMainColumn extends StatelessWidget {
   final _DeskPalette palette;
   final String hint;
   final TextEditingController name;
+  final Widget countryField;
   final TextEditingController location;
   final TextEditingController address;
   final TextEditingController intro;
@@ -841,11 +898,14 @@ class _DeskMainColumn extends StatelessWidget {
         BookingFormSection(
           step: '1',
           title: '기본 정보',
-          subtitle: '리조트 이름·위치·소개를 관리합니다.',
+          subtitle: '리조트 이름·국가·지역·소개를 관리합니다.',
           child: Column(
             children: [
               TextField(
+                key: const Key('resort-name-field'),
                 controller: name,
+                style: palette.fieldStyle,
+                cursorColor: palette.primary,
                 decoration: _deskInputDecoration(
                   palette: palette,
                   label: l10n.partnerShopName,
@@ -853,17 +913,25 @@ class _DeskMainColumn extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
+              countryField,
+              const SizedBox(height: 14),
               TextField(
+                key: const Key('resort-region-field'),
                 controller: location,
+                style: palette.fieldStyle,
+                cursorColor: palette.primary,
                 decoration: _deskInputDecoration(
                   palette: palette,
-                  label: l10n.partnerShopLocation,
+                  label: l10n.productFormCuratedLocation,
+                  hint: l10n.productFormCuratedLocationHint,
                   required: true,
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: address,
+                style: palette.fieldStyle,
+                cursorColor: palette.primary,
                 decoration: _deskInputDecoration(
                   palette: palette,
                   label: l10n.exploreResortAddress,
@@ -874,6 +942,8 @@ class _DeskMainColumn extends StatelessWidget {
               TextField(
                 key: const Key('resort-intro-field'),
                 controller: intro,
+                style: palette.fieldStyle,
+                cursorColor: palette.primary,
                 maxLines: 5,
                 maxLength: kMaxIntroBody,
                 decoration: _deskInputDecoration(

@@ -2378,8 +2378,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         DropdownButtonFormField<String>(
           key: ValueKey('admin-product-shop-$_namedResort-$shopValue'),
           initialValue: shopValue,
-          hint: Text(l10n.productFormPickShop),
-          decoration: _field(l10n.productFormShopHint),
+          isExpanded: true,
+          hint: Text(
+            l10n.productFormPickShop,
+            style: const TextStyle(color: PartnerTheme.textDim, fontSize: 16),
+          ),
+          style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
+          dropdownColor: PartnerTheme.card,
+          iconEnabledColor: PartnerTheme.text,
+          decoration: _partnerField(l10n.productFormShopHint),
           items: [
             DropdownMenuItem(
               value: _kDirectShop,
@@ -2423,7 +2430,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             child: TextField(
               key: const Key('product-curated-resort'),
               controller: _resortName,
-              decoration: _field(
+              style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
+              cursorColor: PartnerTheme.accent,
+              decoration: _partnerField(
                 l10n.productFormCuratedResort,
                 hint: l10n.productFormCuratedResortHint,
               ),
@@ -2432,14 +2441,17 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           const SizedBox(height: 12),
           KeyedSubtree(
             key: _resortCountryKey,
-            child: _travelCountryField(l10n, partnerStyle: false),
+            child: _travelCountryField(l10n, partnerStyle: true),
           ),
           const SizedBox(height: 12),
           KeyedSubtree(
             key: _resortRegionKey,
             child: TextField(
+              key: const Key('product-curated-region'),
               controller: _resortRegion,
-              decoration: _field(
+              style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
+              cursorColor: PartnerTheme.accent,
+              decoration: _partnerField(
                 l10n.productFormCuratedLocation,
                 hint: l10n.productFormCuratedLocationHint,
               ),

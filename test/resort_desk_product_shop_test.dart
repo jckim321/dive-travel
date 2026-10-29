@@ -97,7 +97,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(
       tester.widget<Text>(find.byKey(const Key('partner-product-shop'))).data,
-      _palau,
+      '팔라우 펀다이빙',
     );
   });
 

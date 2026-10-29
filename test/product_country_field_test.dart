@@ -289,12 +289,21 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final store = DiverStore(
-      MemoryDiverRepository.forTest(
-        isBusiness: true,
-        ownedShopId: AppConstants.defaultPartnerShopId,
-      ),
+    final repo = MemoryDiverRepository.forTest(
+      isBusiness: true,
+      ownedShopId: AppConstants.defaultPartnerShopId,
     );
+    await repo.saveShopProfile(
+      shopId: AppConstants.defaultPartnerShopId,
+      name: '보홀 오션 하이드아웃',
+      location: '필리핀 보홀',
+      country: '필리핀',
+      continent: TravelRegionId.asia,
+      productName: '펀다이빙',
+      consumerPrice: 1,
+      professionalPrice: 1,
+    );
+    final store = DiverStore(repo);
     addTearDown(store.dispose);
     await tester.pumpWidget(
       DiverStoreScope(
