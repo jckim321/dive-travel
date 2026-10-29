@@ -75,10 +75,29 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
       live?.checkIn,
       live?.checkOut,
       live?.businessHours,
-      live?.accessRoutes.length,
-      live?.nearbySpots.length,
+      live?.operatingStatus,
+      live?.intro,
+      for (final route in live?.accessRoutes ?? const <AccessRoute>[])
+        '${route.from}|${route.duration}|${route.cost}|${route.tips}',
+      for (final spot in live?.nearbySpots ?? const <NearbySpot>[])
+        '${spot.name}|${spot.distance}|${spot.blurb}',
       for (final p in products)
-        Object.hash(p.id, p.name, p.consumerPrice, p.coverUrl, p.options.length),
+        Object.hash(
+          p.id,
+          p.name,
+          p.consumerPrice,
+          p.professionalPrice,
+          p.blurb,
+          p.schedule,
+          p.meetingPoint,
+          p.coverUrl,
+          p.active,
+          p.publishStatus,
+          [
+            for (final option in p.options)
+              '${option.id}|${option.name}|${option.consumerPrice}|${option.professionalPrice}',
+          ].join(';'),
+        ),
     ]);
   }
 

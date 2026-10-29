@@ -222,6 +222,12 @@ class DiverStore extends ChangeNotifier {
   List<SameBoatAlert> _seatAlerts = const [];
   List<DiveLog> _logs = const [];
   List<ShopLiveStats> _shopStats = const [];
+
+  /// Last local write for each shop. A follow-up read can still be the
+  /// pre-save cache; these echoes stay on screen until that read catches up.
+  final _echoProfile = <String, ShopLiveStats>{};
+  final _echoOperating = <String, ({ShopOperatingStatus status, String note})>{};
+  final _echoProducts = <String, Map<String, ShopProduct>>{};
   List<TourBooking> _bookings = const [];
   List<PendingInstructor> _pendingInstructors = const [];
   List<MemberAccount> _members = const [];
@@ -1662,14 +1668,71 @@ class DiverStore extends ChangeNotifier {
     if (uid.isEmpty) {
       throw StateError('NOT_SIGNED_IN');
     }
-    await _repository.setShopOperatingStatus(
-      shopId: shopId,
-      status: status,
-      note: note,
-      byUid: uid,
-      byName: clampOperatingByName(_stats.displayName, uid),
-    );
-    await refreshShopStat(shopId);
+    final id = shopId.trim();
+    final safeNote = clampOperatingNote(note);
+    final previous = liveStatsFor(id);
+    _writeOperatingLocal(id, status, safeNote);
+    _echoOperating[id] = (status: status, note: safeNote);
+    notifyListeners();
+    try {
+      await _repository.setShopOperatingStatus(
+        shopId: id,
+        status: status,
+        note: safeNote,
+        byUid: uid,
+        byName: clampOperatingByName(_stats.displayName, uid),
+      );
+    } catch (error) {
+      _echoOperating.remove(id);
+      if (previous == null) {
+        _shopStats = [
+          for (final item in _shopStats)
+            if (item.shopId != id) item,
+        ];
+      } else {
+        _writeOperatingLocal(
+          id,
+          previous.operatingStatus,
+          previous.operatingNote,
+        );
+      }
+      notifyListeners();
+      rethrow;
+    }
+    await refreshShopStat(id);
+  }
+
+  void _writeOperatingLocal(
+    String shopId,
+    ShopOperatingStatus status,
+    String note,
+  ) {
+    final index = _shopStats.indexWhere((item) => item.shopId == shopId);
+    if (index < 0) {
+      _shopStats = [
+        ..._shopStats,
+        ShopLiveStats(
+          shopId: shopId,
+          reviewCount: 0,
+          avgSafety: 0,
+          avgGuide: 0,
+          avgBoat: 0,
+          avgOverall: 0,
+          diveStar: 0,
+          operatingStatus: status,
+          operatingNote: note,
+        ),
+      ];
+    } else {
+      final next = [..._shopStats];
+      next[index] = next[index].copyWith(
+        operatingStatus: status,
+        operatingNote: note,
+        setOperatingNote: true,
+      );
+      _shopStats = next;
+    }
+    _shopStatsLoaded = true;
   }
 
   Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId) {
@@ -2504,6 +2567,7 @@ class DiverStore extends ChangeNotifier {
       _shopStats = [..._shopStats, patched];
     }
     _shopStatsLoaded = true;
+    _echoProfile[id] = patched;
   }
 
   /// Products this diver submitted from My (departure desk).
@@ -2688,6 +2752,7 @@ class DiverStore extends ChangeNotifier {
     }
     _shopStats = next;
     _shopStatsLoaded = true;
+    (_echoProducts[id] ??= {})[product.id] = product;
     notifyListeners();
   }
 
@@ -3386,6 +3451,136 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  bool _hasSaveEcho(String shopId) {
+    return _echoProfile.containsKey(shopId) ||
+        _echoOperating.containsKey(shopId) ||
+        _echoProducts.containsKey(shopId);
+  }
+
+  /// Keep a just-saved profile, status, or product when [fetched] is older.
+  ShopLiveStats _withSaveEcho(ShopLiveStats fetched) {
+    var next = fetched;
+    final id = fetched.shopId;
+    final profile = _echoProfile[id];
+    if (profile != null) {
+      if (_profileEchoMatches(next, profile)) {
+        _echoProfile.remove(id);
+      } else {
+        next = next.copyWith(
+          name: profile.name,
+          location: profile.location,
+          intro: profile.intro,
+          address: profile.address,
+          productName: profile.productName,
+          consumerPrice: profile.consumerPrice,
+          professionalPrice: profile.professionalPrice,
+          country: profile.country,
+          continent: profile.continent,
+          curated: profile.curated,
+          mapUrl: profile.mapUrl,
+          nearestHub: profile.nearestHub,
+          accessRoutes: profile.accessRoutes,
+          featureBlurb: profile.featureBlurb,
+          featureTags: profile.featureTags,
+          nearbySpots: profile.nearbySpots,
+          localContact: profile.localContact,
+          checkIn: profile.checkIn,
+          checkOut: profile.checkOut,
+          businessHours: profile.businessHours,
+          amenities: profile.amenities,
+          coverUrl: profile.coverUrl,
+          clearCoverUrl: (profile.coverUrl ?? '').isEmpty,
+          galleryUrls: profile.galleryUrls,
+        );
+      }
+    }
+    final operating = _echoOperating[id];
+    if (operating != null) {
+      if (next.operatingStatus == operating.status &&
+          next.operatingNote == operating.note) {
+        _echoOperating.remove(id);
+      } else {
+        next = next.copyWith(
+          operatingStatus: operating.status,
+          operatingNote: operating.note,
+          setOperatingNote: true,
+        );
+      }
+    }
+    final pendingProducts = _echoProducts[id];
+    if (pendingProducts != null) {
+      final merged = [...next.products];
+      final matched = <String>[];
+      var replaced = false;
+      for (final pending in pendingProducts.values) {
+        final index = merged.indexWhere((item) => item.id == pending.id);
+        if (index >= 0 && _productEchoMatches(merged[index], pending)) {
+          matched.add(pending.id);
+          continue;
+        }
+        replaced = true;
+        if (index < 0) {
+          merged.add(pending);
+        } else {
+          merged[index] = pending;
+        }
+      }
+      for (final productId in matched) {
+        pendingProducts.remove(productId);
+      }
+      if (pendingProducts.isEmpty) {
+        _echoProducts.remove(id);
+      }
+      if (replaced) {
+        next = next.copyWith(products: merged);
+      }
+    }
+    return next;
+  }
+
+  bool _profileEchoMatches(ShopLiveStats fetched, ShopLiveStats saved) {
+    return fetched.name == saved.name &&
+        fetched.location == saved.location &&
+        fetched.intro == saved.intro &&
+        fetched.address == saved.address &&
+        fetched.productName == saved.productName &&
+        fetched.consumerPrice == saved.consumerPrice &&
+        fetched.professionalPrice == saved.professionalPrice &&
+        fetched.country == saved.country &&
+        fetched.continent == saved.continent &&
+        fetched.mapUrl == saved.mapUrl &&
+        fetched.nearestHub == saved.nearestHub &&
+        fetched.featureBlurb == saved.featureBlurb &&
+        fetched.localContact == saved.localContact &&
+        fetched.checkIn == saved.checkIn &&
+        fetched.checkOut == saved.checkOut &&
+        fetched.businessHours == saved.businessHours &&
+        fetched.coverUrl == saved.coverUrl;
+  }
+
+  bool _productEchoMatches(ShopProduct fetched, ShopProduct saved) {
+    return fetched.name == saved.name &&
+        fetched.consumerPrice == saved.consumerPrice &&
+        fetched.professionalPrice == saved.professionalPrice &&
+        fetched.blurb == saved.blurb &&
+        fetched.schedule == saved.schedule &&
+        fetched.meetingPoint == saved.meetingPoint &&
+        fetched.active == saved.active &&
+        fetched.publishStatus == saved.publishStatus &&
+        fetched.sameBoatStatus == saved.sameBoatStatus &&
+        fetched.openEmptySeats == saved.openEmptySeats &&
+        _optionEcho(fetched) == _optionEcho(saved);
+  }
+
+  String _optionEcho(ShopProduct product) {
+    return [
+      for (final option in product.options)
+        '${option.id}:${option.name}:${option.consumerPrice}:'
+            '${option.professionalPrice}:${option.sameBoatStatus.name}:'
+            '${option.openEmptySeats}',
+    ].join('|');
+  }
+
   ShopLiveStats? liveStatsFor(String shopId) {
     for (final stats in _shopStats) {
       if (stats.shopId == shopId) {
@@ -3429,11 +3624,18 @@ class DiverStore extends ChangeNotifier {
   Future<void> _refreshShopStatsBody() async {
     try {
       final stats = await _repository.fetchShopStats();
-      _shopStats = stats;
+      final previous = _shopStats;
+      final fetchedIds = {for (final item in stats) item.shopId};
+      _shopStats = [
+        for (final item in stats) _withSaveEcho(item),
+        for (final item in previous)
+          if (!fetchedIds.contains(item.shopId) && _hasSaveEcho(item.shopId))
+            item,
+      ];
       _shopStatsLoaded = true;
       _shopStatsFetchedAt = DateTime.now();
       notifyListeners();
-      unawaited(_hydrateShopCovers(stats));
+      unawaited(_hydrateShopCovers(_shopStats));
     } catch (error, stackTrace) {
       debugPrint('샵 통계 로드 실패: $error');
       debugPrint('$stackTrace');
@@ -3454,16 +3656,17 @@ class DiverStore extends ChangeNotifier {
         return false;
       }
       final next = [..._shopStats];
+      final echoed = _withSaveEcho(updated);
       final index = next.indexWhere((item) => item.shopId == id);
       if (index >= 0) {
-        next[index] = updated;
+        next[index] = echoed;
       } else {
-        next.add(updated);
+        next.add(echoed);
       }
       _shopStats = next;
       _shopStatsLoaded = true;
       notifyListeners();
-      unawaited(_hydrateShopCovers([updated]));
+      unawaited(_hydrateShopCovers([echoed]));
       return true;
     } catch (error, stackTrace) {
       debugPrint('샵 통계 단건 갱신 실패: $error');
