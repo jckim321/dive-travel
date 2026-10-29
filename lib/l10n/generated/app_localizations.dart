@@ -3324,6 +3324,102 @@ abstract class AppLocalizations {
   /// **'파트너·샵 검색'**
   String get adminPartnersSearch;
 
+  /// No description provided for @shopOperatingActive.
+  ///
+  /// In ko, this message translates to:
+  /// **'활동중'**
+  String get shopOperatingActive;
+
+  /// No description provided for @shopOperatingPaused.
+  ///
+  /// In ko, this message translates to:
+  /// **'활동중지'**
+  String get shopOperatingPaused;
+
+  /// No description provided for @shopOperatingContractEnded.
+  ///
+  /// In ko, this message translates to:
+  /// **'계약종료'**
+  String get shopOperatingContractEnded;
+
+  /// No description provided for @shopOperatingClosed.
+  ///
+  /// In ko, this message translates to:
+  /// **'폐업'**
+  String get shopOperatingClosed;
+
+  /// No description provided for @adminPartnerStatus.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태'**
+  String get adminPartnerStatus;
+
+  /// No description provided for @adminPartnerRepresentative.
+  ///
+  /// In ko, this message translates to:
+  /// **'대표'**
+  String get adminPartnerRepresentative;
+
+  /// No description provided for @adminPartnerLoginId.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이디'**
+  String get adminPartnerLoginId;
+
+  /// No description provided for @adminPartnerOperatingNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'사유 메모'**
+  String get adminPartnerOperatingNote;
+
+  /// No description provided for @adminPartnerOperatingNoteHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태 변경 사유'**
+  String get adminPartnerOperatingNoteHint;
+
+  /// No description provided for @adminPartnerOperatingSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태 저장'**
+  String get adminPartnerOperatingSave;
+
+  /// No description provided for @adminPartnerOperatingSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태를 저장했습니다.'**
+  String get adminPartnerOperatingSaved;
+
+  /// No description provided for @adminPartnerOperatingFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태를 저장하지 못했습니다.'**
+  String get adminPartnerOperatingFailed;
+
+  /// No description provided for @adminPartnerHistory.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경 이력'**
+  String get adminPartnerHistory;
+
+  /// No description provided for @adminPartnerHistoryEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경 이력이 없습니다.'**
+  String get adminPartnerHistoryEmpty;
+
+  /// No description provided for @adminPartnerProductsHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 리조트 상품'**
+  String get adminPartnerProductsHeading;
+
+  /// No description provided for @adminPartnerProductsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 상품이 없습니다.'**
+  String get adminPartnerProductsEmpty;
+
   /// No description provided for @adminProductsSearch.
   ///
   /// In ko, this message translates to:

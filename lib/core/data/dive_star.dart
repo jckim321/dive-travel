@@ -109,6 +109,7 @@ class ShopLiveStats {
     this.galleryUrls = const [],
     this.amenities = const [],
     this.operatingStatus = ShopOperatingStatus.active,
+    this.operatingNote = '',
   });
 
   factory ShopLiveStats.fromDocument(String id, Map<String, dynamic> data) {
@@ -177,6 +178,7 @@ class ShopLiveStats {
           if (item is String && item.trim().isNotEmpty) item.trim(),
       ],
       operatingStatus: ShopOperatingStatus.parse(data['operating_status']),
+      operatingNote: (data['operating_note'] as String?)?.trim() ?? '',
     );
   }
 
@@ -223,6 +225,9 @@ class ShopLiveStats {
 
   /// Missing Firestore field reads as [ShopOperatingStatus.active].
   final ShopOperatingStatus operatingStatus;
+
+  /// Admin reason memo. Empty when the shop has never stored one.
+  final String operatingNote;
 
   /// Ordered resort photos. First becomes [coverUrl] after save.
   List<String> get displayGallery {
@@ -283,6 +288,8 @@ class ShopLiveStats {
     List<String>? galleryUrls,
     List<String>? amenities,
     ShopOperatingStatus? operatingStatus,
+    String? operatingNote,
+    bool setOperatingNote = false,
   }) {
     return ShopLiveStats(
       shopId: shopId,
@@ -326,6 +333,9 @@ class ShopLiveStats {
       galleryUrls: galleryUrls ?? this.galleryUrls,
       amenities: amenities ?? this.amenities,
       operatingStatus: operatingStatus ?? this.operatingStatus,
+      operatingNote: setOperatingNote
+          ? (operatingNote ?? '')
+          : this.operatingNote,
     );
   }
 }

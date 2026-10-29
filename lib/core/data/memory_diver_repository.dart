@@ -1763,6 +1763,7 @@ class MemoryDiverRepository implements DiverRepository {
       plaqueStatus: current?.plaqueStatus ?? PlaqueStatus.none,
       operatingStatus:
           current?.operatingStatus ?? ShopOperatingStatus.active,
+      operatingNote: current?.operatingNote ?? '',
       name: current?.name,
       location: current?.location,
       country: current?.country,
@@ -1900,6 +1901,7 @@ class MemoryDiverRepository implements DiverRepository {
         diveStarExpiresAt: current.diveStarExpiresAt,
         plaqueStatus: current.plaqueStatus,
         operatingStatus: current.operatingStatus,
+        operatingNote: current.operatingNote,
         name: current.name,
         location: current.location,
         country: current.country,
@@ -1993,6 +1995,7 @@ class MemoryDiverRepository implements DiverRepository {
         diveStarExpiresAt: current.diveStarExpiresAt,
         plaqueStatus: current.plaqueStatus,
         operatingStatus: current.operatingStatus,
+        operatingNote: current.operatingNote,
         name: current.name,
         location: current.location,
         country: current.country,
@@ -2467,6 +2470,65 @@ class MemoryDiverRepository implements DiverRepository {
       );
     }
     _shopController.add(_shopStats.values.toList());
+  }
+
+  final _operatingEvents = <String, List<ShopOperatingEvent>>{};
+  var _operatingEventSeq = 0;
+
+  @override
+  Future<void> setShopOperatingStatus({
+    required String shopId,
+    required ShopOperatingStatus status,
+    required String note,
+    required String byUid,
+    required String byName,
+  }) async {
+    final id = shopId.trim();
+    final safeNote = clampOperatingNote(note);
+    final safeName = clampOperatingByName(byName, byUid);
+    final current = _shopStats[id];
+    final from = current?.operatingStatus ?? ShopOperatingStatus.active;
+    if (current == null) {
+      _shopStats[id] = ShopLiveStats(
+        shopId: id,
+        reviewCount: 0,
+        avgSafety: 0,
+        avgGuide: 0,
+        avgBoat: 0,
+        avgOverall: 0,
+        diveStar: 0,
+        operatingStatus: status,
+        operatingNote: safeNote,
+      );
+    } else {
+      _shopStats[id] = current.copyWith(
+        operatingStatus: status,
+        operatingNote: safeNote,
+        setOperatingNote: true,
+      );
+    }
+    _operatingEventSeq += 1;
+    final events = _operatingEvents.putIfAbsent(id, () => []);
+    events.insert(
+      0,
+      ShopOperatingEvent(
+        id: 'operating-$_operatingEventSeq',
+        at: DateTime.now().toUtc(),
+        byUid: byUid,
+        byName: safeName,
+        kind: 'status',
+        fromStatus: from,
+        toStatus: status,
+        note: safeNote,
+      ),
+    );
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
+  Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId) async {
+    final events = _operatingEvents[shopId.trim()] ?? const <ShopOperatingEvent>[];
+    return List<ShopOperatingEvent>.from(events);
   }
 
   @override

@@ -3321,6 +3321,58 @@ class FirestoreDiverRepository implements DiverRepository {
     }, SetOptions(merge: true));
   }
 
+  @override
+  Future<void> setShopOperatingStatus({
+    required String shopId,
+    required ShopOperatingStatus status,
+    required String note,
+    required String byUid,
+    required String byName,
+  }) async {
+    final id = shopId.trim();
+    final safeNote = clampOperatingNote(note);
+    final safeName = clampOperatingByName(byName, byUid);
+    final shopRef = _shops.doc(id);
+    final snap = await shopRef.get();
+    final from = ShopOperatingStatus.parse(snap.data()?['operating_status']);
+    final batch = _db.batch();
+    batch.set(shopRef, {
+      'operating_status': status.firestoreValue,
+      'operating_note': safeNote,
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    batch.set(shopRef.collection('operating_events').doc(), {
+      'at': FieldValue.serverTimestamp(),
+      'by_uid': byUid,
+      'by_name': safeName,
+      'kind': 'status',
+      'from_status': from.firestoreValue,
+      'to_status': status.firestoreValue,
+      'note': safeNote,
+    });
+    await batch.commit();
+  }
+
+  @override
+  Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId) async {
+    final snap = await _shops
+        .doc(shopId.trim())
+        .collection('operating_events')
+        .orderBy('at', descending: true)
+        .limit(50)
+        .get();
+    return [
+      for (final doc in snap.docs)
+        ShopOperatingEvent.fromMap(
+          doc.id,
+          doc.data(),
+          at: doc.data()['at'] is Timestamp
+              ? (doc.data()['at'] as Timestamp).toDate()
+              : DateTime.now(),
+        ),
+    ];
+  }
+
   CollectionReference<Map<String, dynamic>> get _diveStarForms =>
       _db.collection('dive_star_forms');
 

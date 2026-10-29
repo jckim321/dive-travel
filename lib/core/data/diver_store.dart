@@ -47,6 +47,7 @@ import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/product_publish_guard.dart';
 import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
+import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
@@ -1650,6 +1651,29 @@ class DiverStore extends ChangeNotifier {
   }) async {
     await _repository.setInternalScore(shopId: shopId, score: score);
     await refreshShopStat(shopId);
+  }
+
+  Future<void> setShopOperatingStatus({
+    required String shopId,
+    required ShopOperatingStatus status,
+    required String note,
+  }) async {
+    final uid = _uid?.trim() ?? '';
+    if (uid.isEmpty) {
+      throw StateError('NOT_SIGNED_IN');
+    }
+    await _repository.setShopOperatingStatus(
+      shopId: shopId,
+      status: status,
+      note: note,
+      byUid: uid,
+      byName: clampOperatingByName(_stats.displayName, uid),
+    );
+    await refreshShopStat(shopId);
+  }
+
+  Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId) {
+    return _repository.fetchShopOperatingEvents(shopId);
   }
 
   Future<void> setDiveStarGrade({

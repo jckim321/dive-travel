@@ -1775,6 +1775,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPartnersSearch => 'Search partners / shops';
 
   @override
+  String get shopOperatingActive => 'Active';
+
+  @override
+  String get shopOperatingPaused => 'Paused';
+
+  @override
+  String get shopOperatingContractEnded => 'Contract ended';
+
+  @override
+  String get shopOperatingClosed => 'Closed';
+
+  @override
+  String get adminPartnerStatus => 'Status';
+
+  @override
+  String get adminPartnerRepresentative => 'Representative';
+
+  @override
+  String get adminPartnerLoginId => 'Login ID';
+
+  @override
+  String get adminPartnerOperatingNote => 'Reason';
+
+  @override
+  String get adminPartnerOperatingNoteHint => 'Why the status changed';
+
+  @override
+  String get adminPartnerOperatingSave => 'Save status';
+
+  @override
+  String get adminPartnerOperatingSaved => 'Status saved.';
+
+  @override
+  String get adminPartnerOperatingFailed => 'Could not save the status.';
+
+  @override
+  String get adminPartnerHistory => 'History';
+
+  @override
+  String get adminPartnerHistoryEmpty => 'No history yet.';
+
+  @override
+  String get adminPartnerProductsHeading => 'This resort\'s products';
+
+  @override
+  String get adminPartnerProductsEmpty => 'No products yet.';
+
+  @override
   String get adminProductsSearch => 'Search products';
 
   @override

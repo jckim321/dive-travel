@@ -26,6 +26,7 @@ import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
+import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
@@ -329,6 +330,18 @@ abstract class DiverRepository {
     required DateTime reviewedAt,
     required DateTime expiresAt,
   });
+
+  /// Admin-only. Writes `operating_status` / `operating_note` and one
+  /// `operating_events` status row.
+  Future<void> setShopOperatingStatus({
+    required String shopId,
+    required ShopOperatingStatus status,
+    required String note,
+    required String byUid,
+    required String byName,
+  });
+
+  Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId);
 
   /// Active audit form (seeds v1 once if missing).
   Future<DiveStarForm> ensureActiveDiveStarForm();

@@ -1712,6 +1712,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPartnersSearch => '파트너·샵 검색';
 
   @override
+  String get shopOperatingActive => '활동중';
+
+  @override
+  String get shopOperatingPaused => '활동중지';
+
+  @override
+  String get shopOperatingContractEnded => '계약종료';
+
+  @override
+  String get shopOperatingClosed => '폐업';
+
+  @override
+  String get adminPartnerStatus => '상태';
+
+  @override
+  String get adminPartnerRepresentative => '대표';
+
+  @override
+  String get adminPartnerLoginId => '아이디';
+
+  @override
+  String get adminPartnerOperatingNote => '사유 메모';
+
+  @override
+  String get adminPartnerOperatingNoteHint => '상태 변경 사유';
+
+  @override
+  String get adminPartnerOperatingSave => '상태 저장';
+
+  @override
+  String get adminPartnerOperatingSaved => '상태를 저장했습니다.';
+
+  @override
+  String get adminPartnerOperatingFailed => '상태를 저장하지 못했습니다.';
+
+  @override
+  String get adminPartnerHistory => '변경 이력';
+
+  @override
+  String get adminPartnerHistoryEmpty => '변경 이력이 없습니다.';
+
+  @override
+  String get adminPartnerProductsHeading => '이 리조트 상품';
+
+  @override
+  String get adminPartnerProductsEmpty => '등록된 상품이 없습니다.';
+
+  @override
   String get adminProductsSearch => '상품 검색';
 
   @override
