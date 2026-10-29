@@ -4689,7 +4689,7 @@ class FirestoreDiverRepository implements DiverRepository {
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
     String? creatorUid,
-    bool partnerProfile = false,
+    bool adminSave = false,
   }) async {
     final catalog = DiveShopCatalog.byId(shopId);
     String? coverUrl;
@@ -4746,9 +4746,7 @@ class FirestoreDiverRepository implements DiverRepository {
     );
     final nextRate = RefundPolicy.defaultCommissionRate;
     final writeCommission = RefundPolicy.shopProfileWritesCommissionRate(
-      partnerProfile: partnerProfile,
-      stored: data?['commission_rate'],
-      next: nextRate,
+      adminSave: adminSave,
     );
     await ref.set({
       'name': name.trim(),

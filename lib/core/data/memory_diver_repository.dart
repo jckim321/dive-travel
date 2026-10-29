@@ -3811,7 +3811,7 @@ class MemoryDiverRepository implements DiverRepository {
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
     String? creatorUid,
-    bool partnerProfile = false,
+    bool adminSave = false,
   }) async {
     if (mapUrl != null && !isShopMapUrlValid(mapUrl)) {
       throw StateError('INVALID_MAP_URL');
@@ -3874,11 +3874,8 @@ class MemoryDiverRepository implements DiverRepository {
       creatorUid: creatorUid,
     );
     final nextRate = RefundPolicy.defaultCommissionRate;
-    // A missing shop has no stored rate. Partner creates still record the default.
     final writeCommissionOnDoc = RefundPolicy.shopProfileWritesCommissionRate(
-      partnerProfile: partnerProfile,
-      stored: current?.commissionRate,
-      next: nextRate,
+      adminSave: adminSave,
     );
     debugLastProfileFields = {
       if (writeCreator) 'creator_uid',

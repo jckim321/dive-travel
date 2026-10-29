@@ -6,32 +6,12 @@ import 'package:dive_travel_app/core/data/refund_policy.dart';
 void main() {
   test('commission and creator uid rules follow the document', () {
     expect(
-      RefundPolicy.shopProfileWritesCommissionRate(
-        partnerProfile: false,
-        stored: 0.12,
-      ),
+      RefundPolicy.shopProfileWritesCommissionRate(adminSave: true),
       isTrue,
     );
     expect(
-      RefundPolicy.shopProfileWritesCommissionRate(
-        partnerProfile: true,
-        stored: null,
-      ),
-      isTrue,
-    );
-    expect(
-      RefundPolicy.shopProfileWritesCommissionRate(
-        partnerProfile: true,
-        stored: 0.12,
-      ),
+      RefundPolicy.shopProfileWritesCommissionRate(adminSave: false),
       isFalse,
-    );
-    expect(
-      RefundPolicy.shopProfileWritesCommissionRate(
-        partnerProfile: true,
-        stored: 0.2,
-      ),
-      isTrue,
     );
     expect(
       RefundPolicy.shopProfileWritesCreatorUid(
@@ -72,6 +52,7 @@ void main() {
       creatorUid: 'captain-1',
     );
     expect(repo.debugLastProfileFields, contains('creator_uid'));
+    expect(repo.debugLastProfileFields, isNot(contains('commission_rate')));
     expect((await repo.fetchShopStat('curated-1'))?.creatorUid, 'captain-1');
 
     await repo.saveShopProfile(
@@ -85,12 +66,13 @@ void main() {
       creatorUid: 'other',
     );
     expect(repo.debugLastProfileFields, isNot(contains('creator_uid')));
+    expect(repo.debugLastProfileFields, isNot(contains('commission_rate')));
     final saved = await repo.fetchShopStat('curated-1');
     expect(saved?.creatorUid, 'captain-1');
     expect(saved?.name, '다른 이름');
   });
 
-  test('partner profile save skips an unchanged commission rate', () async {
+  test('partner profile save never writes commission rate', () async {
     final repo = MemoryDiverRepository.forTest(
       isBusiness: true,
       ownedShopId: 'reef',
@@ -102,10 +84,9 @@ void main() {
       productName: '펀',
       consumerPrice: 1,
       professionalPrice: 1,
-      partnerProfile: true,
     );
-    expect(repo.debugLastProfileFields, contains('commission_rate'));
-    expect((await repo.fetchShopStat('reef'))?.commissionRate, 0.12);
+    expect(repo.debugLastProfileFields, isNot(contains('commission_rate')));
+    expect(repo.debugLastProfileFields, isNot(contains('creator_uid')));
 
     await repo.saveShopProfile(
       shopId: 'reef',
@@ -114,12 +95,26 @@ void main() {
       productName: '펀',
       consumerPrice: 2,
       professionalPrice: 1,
-      partnerProfile: true,
     );
     expect(repo.debugLastProfileFields, isNot(contains('commission_rate')));
     final saved = await repo.fetchShopStat('reef');
-    expect(saved?.commissionRate, 0.12);
     expect(saved?.consumerPrice, 2);
     expect(saved?.creatorUid, isEmpty);
+  });
+
+  test('admin profile save writes commission rate', () async {
+    final repo = MemoryDiverRepository.forTest();
+    await repo.saveShopProfile(
+      shopId: 'reef',
+      name: '리프',
+      location: '세부',
+      productName: '펀',
+      consumerPrice: 1,
+      professionalPrice: 1,
+      adminSave: true,
+    );
+    expect(repo.debugLastProfileFields, contains('commission_rate'));
+    expect(repo.debugLastProfileFields, isNot(contains('creator_uid')));
+    expect((await repo.fetchShopStat('reef'))?.commissionRate, 0.12);
   });
 }

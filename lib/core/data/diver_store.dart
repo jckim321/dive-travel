@@ -2473,7 +2473,7 @@ class DiverStore extends ChangeNotifier {
       removeCover: removeCover,
       gallery: gallery,
       creatorUid: isCreatorProposal ? _uid : null,
-      partnerProfile: isOwnerPartner && !_stats.isAdmin,
+      adminSave: _stats.isAdmin,
     );
     writeSw.stop();
     _patchLocalShopProfile(

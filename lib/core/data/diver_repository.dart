@@ -634,9 +634,8 @@ abstract class DiverRepository {
     /// Signed-in captain uid. Written only when this call creates a
     /// `curated-` shop. Existing documents keep their `creator_uid`.
     String? creatorUid,
-    /// Partner resort-text saves include `commission_rate` only when it
-    /// differs from the stored value.
-    bool partnerProfile = false,
+    /// Admin saves write `commission_rate`. Captain and partner saves omit it.
+    bool adminSave = false,
   });
 
   Future<void> saveShopProduct({
