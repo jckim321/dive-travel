@@ -554,14 +554,19 @@ class FirestoreDiverRepository implements DiverRepository {
     );
   }
 
-  /// Named app only. Web sets in-memory auth persistence before create or sign-in.
-  /// Stops before the users doc when the default app user changes.
+  /// Named secondary app only. The default app stays the admin.
+  /// Web sets in-memory auth persistence before create or sign-in.
+  /// The named app is kept: deleting it terminates its Firestore client, and
+  /// the next create on this screen reuses that dead client.
   Future<ProvisionedDiver> _createDiverOnSecondary(PartnerDiverDraft draft) async {
     final adminUid = FirebaseAuth.instance.currentUser?.uid;
     final app = await _partnerProvisionApp();
     final auth = FirebaseAuth.instanceFor(app: app);
     try {
       await _partnerAuthPersistence(auth);
+      if (auth.currentUser != null) {
+        await auth.signOut();
+      }
       UserCredential credential;
       var createdAuth = false;
       if (draft.signInExisting) {
@@ -603,9 +608,6 @@ class FirestoreDiverRepository implements DiverRepository {
     } finally {
       try {
         await auth.signOut();
-      } catch (_) {}
-      try {
-        await app.delete();
       } catch (_) {}
     }
   }

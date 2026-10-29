@@ -35,6 +35,18 @@ void main() {
     expect(_storedBlob(repo, member), isNot(contains(password)));
     expect((await repo.currentAuthUser())?.uid, sessionUid);
     expect(sessionUid, isNot(result.uid));
+
+    final second = await store.provisionPartnerAccount(
+      shopName: 'Reef House',
+      loginId: 'reef01',
+      password: password,
+    );
+    expect(second.createdAccount, isTrue);
+    expect(second.uid, isNot(result.uid));
+    expect((await repo.currentAuthUser())?.uid, sessionUid);
+    final secondMember = store.members.firstWhere((item) => item.uid == second.uid);
+    expect(secondMember.isBusiness, isTrue);
+    expect(secondMember.ownedShopId, 'reef-house');
   });
 
   test('several shops with the same name create no account', () async {
