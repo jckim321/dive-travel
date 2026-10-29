@@ -26,12 +26,16 @@ class AdminProductsScreen extends StatefulWidget {
     super.key,
     this.embedded = false,
     this.partnerMode = false,
+    this.partnerShopId,
     this.filterShopId,
     this.onClearShopFilter,
   });
 
   final bool embedded;
   final bool partnerMode;
+
+  /// Resort the partner menu should manage. Empty uses the signed-in shop.
+  final String? partnerShopId;
   final String? filterShopId;
   final VoidCallback? onClearShopFilter;
 
@@ -53,7 +57,10 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   @override
   Widget build(BuildContext context) {
     if (widget.partnerMode) {
-      return PartnerProductMenuScreen(embedded: widget.embedded);
+      return PartnerProductMenuScreen(
+        embedded: widget.embedded,
+        shopId: widget.partnerShopId,
+      );
     }
 
     final l10n = AppLocalizations.of(context);

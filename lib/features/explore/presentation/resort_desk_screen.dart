@@ -461,7 +461,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   void _openProductManagement() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const AdminProductsScreen(partnerMode: true),
+        builder: (_) => AdminProductsScreen(
+          partnerMode: true,
+          partnerShopId: widget.shopId,
+        ),
       ),
     );
   }

@@ -9,9 +9,16 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Partner product list (시안 20): master cards with individuals / add-ons.
 class PartnerProductsScreen extends StatelessWidget {
-  const PartnerProductsScreen({super.key, this.embedded = false});
+  const PartnerProductsScreen({
+    super.key,
+    this.embedded = false,
+    this.shopId,
+  });
 
   final bool embedded;
+
+  /// When set, the list is this resort. Empty uses the signed-in shop.
+  final String? shopId;
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +36,11 @@ class PartnerProductsScreen extends StatelessWidget {
         body: ListenableBuilder(
           listenable: store,
           builder: (context, _) {
-            final owned = store.partnerOwnedShopId;
-            final products = store.productsForShop(owned);
+            final passed = shopId?.trim() ?? '';
+            final managedShopId = passed.isNotEmpty
+                ? passed
+                : store.partnerOwnedShopId;
+            final products = store.productsForShop(managedShopId);
 
             return ListView(
               key: const Key('partner-products'),
@@ -38,13 +48,13 @@ class PartnerProductsScreen extends StatelessWidget {
               children: [
                 if (products.isEmpty)
                   _EmptyProductsCard(
-                    onRegister: () => _openRegister(context, owned),
+                    onRegister: () => _openRegister(context, managedShopId),
                   )
                 else ...[
                   for (final product in products) ...[
                     PartnerProductCard(
                       product: product,
-                      shopId: owned,
+                      shopId: managedShopId,
                     ),
                     const SizedBox(height: 10),
                   ],

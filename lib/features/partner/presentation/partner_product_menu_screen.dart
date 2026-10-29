@@ -11,9 +11,17 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Partner product hub (시안 19): register / list / open seats.
 class PartnerProductMenuScreen extends StatelessWidget {
-  const PartnerProductMenuScreen({super.key, this.embedded = false});
+  const PartnerProductMenuScreen({
+    super.key,
+    this.embedded = false,
+    this.shopId,
+  });
 
   final bool embedded;
+
+  /// When set, menu, list, seats, and registration use this resort.
+  /// Empty keeps the signed-in partner's linked resort.
+  final String? shopId;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +40,11 @@ class PartnerProductMenuScreen extends StatelessWidget {
           child: ListenableBuilder(
             listenable: store,
             builder: (context, _) {
-              final shopId = store.partnerOwnedShopId;
-              final products = store.productsForShop(shopId);
+              final passed = shopId?.trim() ?? '';
+              final managedShopId = passed.isNotEmpty
+                  ? passed
+                  : store.partnerOwnedShopId;
+              final products = store.productsForShop(managedShopId);
               final counts = partnerProductFilterCounts(products);
               final openSeats = partnerOpenSameBoatSeatTotal(products);
 
@@ -53,7 +64,7 @@ class PartnerProductMenuScreen extends StatelessWidget {
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => TravelProductRegistrationScreen(
-                          lockedShopId: shopId,
+                          lockedShopId: managedShopId,
                           partnerMode: true,
                         ),
                       ),
@@ -69,7 +80,8 @@ class PartnerProductMenuScreen extends StatelessWidget {
                     icon: Icons.list_alt_outlined,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const PartnerProductsScreen(),
+                        builder: (_) =>
+                            PartnerProductsScreen(shopId: managedShopId),
                       ),
                     ),
                   ),
@@ -84,7 +96,7 @@ class PartnerProductMenuScreen extends StatelessWidget {
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                            PartnerOpenSeatsPickerScreen(shopId: shopId),
+                            PartnerOpenSeatsPickerScreen(shopId: managedShopId),
                       ),
                     ),
                   ),
