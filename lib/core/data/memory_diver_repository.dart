@@ -4260,6 +4260,26 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> deleteEmptyPartnerShop(String shopId) async {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      throw StateError('SHOP_ID_EMPTY');
+    }
+    if (_members.any((member) => member.ownedShopId.trim() == id)) {
+      throw StateError('SHOP_HAS_OWNER');
+    }
+    if ((_shopBookings[id] ?? const []).isNotEmpty) {
+      throw StateError('SHOP_HAS_BOOKINGS');
+    }
+    if ((_shopReviews[id] ?? const []).isNotEmpty ||
+        (_shopStats[id]?.reviewCount ?? 0) > 0) {
+      throw StateError('SHOP_HAS_REVIEWS');
+    }
+    _shopStats.remove(id);
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
   Future<List<TourBooking>> fetchShopBookings(String shopId) async {
     return List<TourBooking>.from(_shopBookings[shopId] ?? const []);
   }

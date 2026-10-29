@@ -700,6 +700,10 @@ abstract class DiverRepository {
 
   Future<List<TourBooking>> fetchShopBookings(String shopId);
 
+  /// Deletes the shop document when it has no owner, no bookings, and no reviews.
+  /// Throws [StateError] `SHOP_HAS_OWNER`, `SHOP_HAS_BOOKINGS`, or `SHOP_HAS_REVIEWS`.
+  Future<void> deleteEmptyPartnerShop(String shopId);
+
   /// Shop bookings whose `created_at` is in `[start, end)`.
   Future<List<TourBooking>> fetchShopBookingsCreatedBetween({
     required String shopId,

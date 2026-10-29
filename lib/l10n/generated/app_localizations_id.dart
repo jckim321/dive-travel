@@ -1770,6 +1770,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminPartnerOperatingFailed => '상태를 저장하지 못했습니다.';
 
   @override
+  String get adminPartnerDelete => '삭제';
+
+  @override
+  String get adminPartnerDeleteBlocked => '상태 변경(폐업 등)을 쓰세요';
+
+  @override
+  String get adminPartnerDeleteTitle => '이 리조트를 삭제할까요?';
+
+  @override
+  String get adminPartnerDeleteBody => '목록에서 바로 빠집니다. 이 작업은 되돌릴 수 없습니다.';
+
+  @override
+  String get adminPartnerDeleteFailed => '삭제하지 못했습니다.';
+
+  @override
   String get adminPartnerHistory => '변경 이력';
 
   @override

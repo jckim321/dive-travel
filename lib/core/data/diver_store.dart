@@ -1701,6 +1701,29 @@ class DiverStore extends ChangeNotifier {
     await refreshShopStat(id);
   }
 
+  /// Drops an ownerless shop with no bookings and no reviews from the roster.
+  Future<void> deleteEmptyPartnerShop(String shopId) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final id = shopId.trim();
+    final previous = liveStatsFor(id);
+    _shopStats = [
+      for (final item in _shopStats)
+        if (item.shopId != id) item,
+    ];
+    notifyListeners();
+    try {
+      await _repository.deleteEmptyPartnerShop(id);
+    } catch (error) {
+      if (previous != null && !_shopStats.any((item) => item.shopId == id)) {
+        _shopStats = [..._shopStats, previous];
+      }
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Moves [owned_shop_id] to [toUid] and writes one owner history row.
   Future<void> transferShopOwner({
     required String shopId,
@@ -3895,6 +3918,10 @@ class DiverStore extends ChangeNotifier {
     } finally {
       _adminInboxRefresh = null;
     }
+  }
+
+  Future<List<TourBooking>> fetchShopBookings(String shopId) {
+    return _repository.fetchShopBookings(shopId);
   }
 
   /// Range read for the admin overview. Does not fill the bookings menu cache.

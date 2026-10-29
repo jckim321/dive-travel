@@ -11,6 +11,15 @@ import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_asse
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+/// 소유주, 예약, 후기가 모두 없을 때만 샵 문서를 지운다.
+bool partnerResortCanDelete({
+  required bool hasOwner,
+  required int bookingCount,
+  required int reviewCount,
+}) {
+  return !hasOwner && bookingCount == 0 && reviewCount == 0;
+}
+
 String shopOperatingStatusLabel(
   AppLocalizations l10n,
   ShopOperatingStatus status,
@@ -56,6 +65,9 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
   MemberAccount? _ownerMatch;
   String? _ownerError;
   var _events = const <ShopOperatingEvent>[];
+  var _bookingCount = 0;
+  var _countsReady = false;
+  var _deleting = false;
 
   @override
   void initState() {
@@ -79,6 +91,18 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
     _status = stats?.operatingStatus ?? ShopOperatingStatus.active;
     _note.text = stats?.operatingNote ?? '';
     unawaited(_loadEvents());
+    unawaited(_loadBookingCount());
+  }
+
+  Future<void> _loadBookingCount() async {
+    final count = (await DiverStoreScope.of(context).fetchShopBookings(widget.shopId)).length;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _bookingCount = count;
+      _countsReady = true;
+    });
   }
 
   @override
@@ -259,6 +283,54 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
     }
   }
 
+  Future<void> _deleteShop() async {
+    if (_deleting) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.adminPartnerDeleteTitle),
+          content: Text(l10n.adminPartnerDeleteBody),
+          actions: [
+            TextButton(
+              key: const Key('admin-partner-delete-cancel'),
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.adminHqClose),
+            ),
+            FilledButton(
+              key: const Key('admin-partner-delete-confirm'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.adminPartnerDelete),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _deleting = true);
+    final store = DiverStoreScope.of(context);
+    try {
+      await store.deleteEmptyPartnerShop(widget.shopId);
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminPartnerDeleteFailed)),
+      );
+    }
+  }
+
   Future<void> _editInternalScore(ShopLiveStats? stats) async {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
@@ -319,6 +391,15 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
         final name = (stats?.name ?? '').trim();
         final title = name.isEmpty ? widget.shopId : name;
         final products = stats?.products ?? const [];
+        final hasOwner = store.members.any(
+          (member) => member.ownedShopId.trim() == widget.shopId.trim(),
+        );
+        final canDelete = _countsReady &&
+            partnerResortCanDelete(
+              hasOwner: hasOwner,
+              bookingCount: _bookingCount,
+              reviewCount: stats?.reviewCount ?? 0,
+            );
         return Scaffold(
           appBar: AppBar(title: Text(title)),
           body: ListView(
@@ -361,6 +442,24 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
                 onPressed: _saving ? null : _save,
                 child: Text(l10n.adminPartnerOperatingSave),
               ),
+              const SizedBox(height: 8),
+              FilledButton(
+                key: const Key('admin-partner-delete'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF8E2F2F),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: canDelete && !_deleting ? _deleteShop : null,
+                child: Text(l10n.adminPartnerDelete),
+              ),
+              if (_countsReady && !canDelete)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    l10n.adminPartnerDeleteBlocked,
+                    key: const Key('admin-partner-delete-blocked'),
+                  ),
+                ),
               const SizedBox(height: 16),
               Text(
                 l10n.adminPartnerChangeOwner,

@@ -3396,6 +3396,36 @@ abstract class AppLocalizations {
   /// **'상태를 저장하지 못했습니다.'**
   String get adminPartnerOperatingFailed;
 
+  /// No description provided for @adminPartnerDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get adminPartnerDelete;
+
+  /// No description provided for @adminPartnerDeleteBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'상태 변경(폐업 등)을 쓰세요'**
+  String get adminPartnerDeleteBlocked;
+
+  /// No description provided for @adminPartnerDeleteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 리조트를 삭제할까요?'**
+  String get adminPartnerDeleteTitle;
+
+  /// No description provided for @adminPartnerDeleteBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록에서 바로 빠집니다. 이 작업은 되돌릴 수 없습니다.'**
+  String get adminPartnerDeleteBody;
+
+  /// No description provided for @adminPartnerDeleteFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제하지 못했습니다.'**
+  String get adminPartnerDeleteFailed;
+
   /// No description provided for @adminPartnerHistory.
   ///
   /// In ko, this message translates to:

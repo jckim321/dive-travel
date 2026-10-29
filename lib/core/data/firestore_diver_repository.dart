@@ -5162,6 +5162,32 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> deleteEmptyPartnerShop(String shopId) async {
+    final id = shopId.trim();
+    if (id.isEmpty) {
+      throw StateError('SHOP_ID_EMPTY');
+    }
+    final members = await fetchMembers();
+    if (members.any((member) => member.ownedShopId.trim() == id)) {
+      throw StateError('SHOP_HAS_OWNER');
+    }
+    final bookings = await _shopBookings(id).limit(1).get();
+    if (bookings.docs.isNotEmpty) {
+      throw StateError('SHOP_HAS_BOOKINGS');
+    }
+    final reviews = await _shops.doc(id).collection('reviews').limit(1).get();
+    if (reviews.docs.isNotEmpty) {
+      throw StateError('SHOP_HAS_REVIEWS');
+    }
+    final shop = await _shops.doc(id).get();
+    final reviewCount = (shop.data()?['review_count'] as num?)?.toInt() ?? 0;
+    if (reviewCount > 0) {
+      throw StateError('SHOP_HAS_REVIEWS');
+    }
+    await _shops.doc(id).delete();
+  }
+
+  @override
   Future<List<TourBooking>> fetchShopBookings(String shopId) async {
     final snapshot = await _shopBookings(shopId).get();
     final bookings = [

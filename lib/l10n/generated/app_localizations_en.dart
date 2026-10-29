@@ -1811,6 +1811,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPartnerOperatingFailed => 'Could not save the status.';
 
   @override
+  String get adminPartnerDelete => 'Delete';
+
+  @override
+  String get adminPartnerDeleteBlocked =>
+      'Use a status change, such as closed, instead.';
+
+  @override
+  String get adminPartnerDeleteTitle => 'Delete this resort?';
+
+  @override
+  String get adminPartnerDeleteBody =>
+      'It leaves the list immediately. This cannot be undone.';
+
+  @override
+  String get adminPartnerDeleteFailed => 'Could not delete the resort.';
+
+  @override
   String get adminPartnerHistory => 'History';
 
   @override
