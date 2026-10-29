@@ -93,6 +93,43 @@ void main() {
     expect(_cardCount(tester, 'star3'), 1);
     expect(_cardCount(tester, 'other'), 3);
 
+    const yellow = Color(0xFFFFE14A);
+    for (final entry in const {'star1': 1, 'star2': 2, 'star3': 3}.entries) {
+      final card = find.byKey(Key('admin-partner-grade-${entry.key}'));
+      final icons = tester.widgetList<Icon>(
+        find.descendant(of: card, matching: find.byIcon(Icons.star)),
+      );
+      expect(icons, hasLength(entry.value), reason: entry.key);
+      for (final icon in icons) {
+        expect(icon.color, yellow);
+      }
+      expect(
+        find.descendant(of: card, matching: find.text('다이브스타')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('admin-partner-grade-regular')),
+        matching: find.text('일반파트너'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('admin-partner-grade-other')),
+        matching: find.text('기타'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('admin-partner-grade-regular')),
+        matching: find.byIcon(Icons.star),
+      ),
+      findsNothing,
+    );
+
     const expected = {
       'regular': ['plain-reef'],
       'star1': ['one-star'],

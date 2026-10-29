@@ -226,9 +226,9 @@ class _GradeGrid extends StatelessWidget {
     final cards = <_GradeSpec>[
       _GradeSpec(PartnerGradeCard.all, l10n.adminPartnerTierAll, Icons.circle_outlined, Colors.white, shops.length),
       _GradeSpec(PartnerGradeCard.regular, l10n.adminPartnerGradeRegular, Icons.storefront_outlined, AdminConsoleTheme.aqua, count(PartnerGradeCard.regular)),
-      _GradeSpec(PartnerGradeCard.star1, l10n.adminPartnerGradeStar1, Icons.star_border, const Color(0xFFD5DEE8), count(PartnerGradeCard.star1)),
-      _GradeSpec(PartnerGradeCard.star2, l10n.adminPartnerGradeStar2, Icons.star_half, const Color(0xFFE2B15A), count(PartnerGradeCard.star2)),
-      _GradeSpec(PartnerGradeCard.star3, l10n.adminPartnerGradeStar3, Icons.star, const Color(0xFFFFB15A), count(PartnerGradeCard.star3)),
+      _GradeSpec(PartnerGradeCard.star1, l10n.adminPartnerGradeDiveStar, Icons.star, _diveStarYellow, count(PartnerGradeCard.star1), stars: 1),
+      _GradeSpec(PartnerGradeCard.star2, l10n.adminPartnerGradeDiveStar, Icons.star, _diveStarYellow, count(PartnerGradeCard.star2), stars: 2),
+      _GradeSpec(PartnerGradeCard.star3, l10n.adminPartnerGradeDiveStar, Icons.star, _diveStarYellow, count(PartnerGradeCard.star3), stars: 3),
       _GradeSpec(PartnerGradeCard.other, l10n.adminPartnerGradeOther, Icons.pause_circle_outline, AdminConsoleTheme.muted, count(PartnerGradeCard.other)),
     ];
     return GridView.count(
@@ -250,13 +250,26 @@ class _GradeGrid extends StatelessWidget {
   }
 }
 
+const _diveStarYellow = Color(0xFFFFE14A);
+
 class _GradeSpec {
-  const _GradeSpec(this.grade, this.label, this.icon, this.color, this.count);
+  const _GradeSpec(
+    this.grade,
+    this.label,
+    this.icon,
+    this.color,
+    this.count, {
+    this.stars = 0,
+  });
+
   final PartnerGradeCard grade;
   final String label;
   final IconData icon;
   final Color color;
   final int count;
+
+  /// 다이브스타 카드만 숫자 위에 이 개수만큼 노란 별을 그린다.
+  final int stars;
 }
 
 class _GradeCard extends StatelessWidget {
@@ -291,7 +304,20 @@ class _GradeCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(spec.icon, size: 14, color: spec.color),
+              spec.stars > 0
+                  ? FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (var i = 0; i < spec.stars; i++) ...[
+                            if (i > 0) const SizedBox(width: 1),
+                            const Icon(Icons.star, size: 14, color: _diveStarYellow),
+                          ],
+                        ],
+                      ),
+                    )
+                  : Icon(spec.icon, size: 14, color: spec.color),
               const SizedBox(height: 4),
               Text(
                 '${spec.count}',

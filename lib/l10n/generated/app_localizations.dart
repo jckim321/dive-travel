@@ -3984,23 +3984,11 @@ abstract class AppLocalizations {
   /// **'일반파트너'**
   String get adminPartnerGradeRegular;
 
-  /// No description provided for @adminPartnerGradeStar1.
+  /// No description provided for @adminPartnerGradeDiveStar.
   ///
   /// In ko, this message translates to:
-  /// **'★1'**
-  String get adminPartnerGradeStar1;
-
-  /// No description provided for @adminPartnerGradeStar2.
-  ///
-  /// In ko, this message translates to:
-  /// **'★2'**
-  String get adminPartnerGradeStar2;
-
-  /// No description provided for @adminPartnerGradeStar3.
-  ///
-  /// In ko, this message translates to:
-  /// **'★3'**
-  String get adminPartnerGradeStar3;
+  /// **'다이브스타'**
+  String get adminPartnerGradeDiveStar;
 
   /// No description provided for @adminPartnerGradeOther.
   ///

@@ -2066,13 +2066,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminPartnerGradeRegular => '일반파트너';
 
   @override
-  String get adminPartnerGradeStar1 => '★1';
-
-  @override
-  String get adminPartnerGradeStar2 => '★2';
-
-  @override
-  String get adminPartnerGradeStar3 => '★3';
+  String get adminPartnerGradeDiveStar => '다이브스타';
 
   @override
   String get adminPartnerGradeOther => '기타';

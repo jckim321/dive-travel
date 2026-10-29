@@ -2133,13 +2133,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPartnerGradeRegular => 'Regular partner';
 
   @override
-  String get adminPartnerGradeStar1 => '★1';
-
-  @override
-  String get adminPartnerGradeStar2 => '★2';
-
-  @override
-  String get adminPartnerGradeStar3 => '★3';
+  String get adminPartnerGradeDiveStar => 'Dive Star';
 
   @override
   String get adminPartnerGradeOther => 'Other';
