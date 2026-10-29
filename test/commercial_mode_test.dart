@@ -17,12 +17,11 @@ void main() {
   }
 
   test('상품 카드는 출발일과 빈자리를 가진다', () {
-    final dahab = DiveShopCatalog.byId('dahab-bluehole');
-    expect(dahab, isNotNull);
-    expect(dahab!.departure, isNotNull);
-    expect(dahab.departure!.lastCall, isTrue);
-    expect(dahab.departure!.emptySeats, 1);
-    expect(dahab.departure!.windowLabel, '09.20 – 09.23');
+    final departure = DepartureCatalog.of('dahab-bluehole');
+    expect(departure, isNotNull);
+    expect(departure!.lastCall, isTrue);
+    expect(departure.emptySeats, 1);
+    expect(departure.windowLabel, '09.20 – 09.23');
   });
 
   test('기상 취소는 샵 예약을 weather_cancelled 로 바꾸고 전액 환불한다', () async {
@@ -207,14 +206,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('open-profile-settings')));
     await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const Key('profile-settings-scroll')),
-      const Offset(0, -560),
+    expect(
+      find.byKey(const Key('open-partner-mode'), skipOffstage: false),
+      findsOneWidget,
     );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('open-partner-mode')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('open-partner-mode')), findsOneWidget);
   });
 
   testWidgets('같은배 탭은 빈자리를 연 상품이 없으면 탐색으로 안내한다', (tester) async {

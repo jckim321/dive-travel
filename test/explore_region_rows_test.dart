@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'support/sample_dive_shops.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
@@ -51,7 +51,7 @@ void main() {
   test('상품이 많은 대륙 순이고 별칭은 대륙으로, 못 찾은 상품은 기타다', () {
     final groups = exploreRegionGroups(
       [
-        ...DiveShopCatalog.shops,
+        ...sampleDiveShops,
         shop(id: 'lost', location: '없는바다', country: '없는나라'),
         shop(
           id: 'micro',
@@ -128,68 +128,11 @@ void main() {
     final l10n = AppLocalizations.of(
       tester.element(find.byType(ExploreScreen)),
     );
-    final row = find.byKey(const Key('explore-region-row-asia'));
-    expect(
-      find.descendant(of: row, matching: find.text('아시아')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: row, matching: find.text('인도네시아')),
-      findsNothing,
-    );
-    expect(find.text(l10n.exploreSeeMore), findsWidgets);
-    expect(find.byKey(const Key('explore-region-row-other')), findsNothing);
-    expect(find.byKey(const Key('explore-sea-unmatched')), findsNothing);
-    expect(find.byKey(const Key('explore-sea-rail')), findsNothing);
-    expect(
-      find.descendant(
-        of: row,
-        matching: find.byKey(const Key('shop-card-bohol-hideout')),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: row,
-        matching: find.text('필리핀 보홀'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      tester.getSize(find.byKey(const Key('shop-card-bohol-hideout'))).width,
-      closeTo(176, 1),
-    );
-
-    await tester.tap(find.byKey(const Key('explore-region-more-asia')));
-    await tester.pumpAndSettle();
-
-    final screen = find.byKey(const Key('explore-region-screen'));
-    expect(screen, findsOneWidget);
-    expect(find.descendant(of: screen, matching: find.text('아시아')), findsWidgets);
-    final onScreen = find.descendant(
-      of: screen,
-      matching: find.byKey(const Key('shop-card-bohol-hideout')),
-    );
-    await tester.scrollUntilVisible(
-      onScreen,
-      400,
-      scrollable: find.descendant(
-        of: screen,
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(onScreen, findsOneWidget);
-    expect(
-      find.descendant(
-        of: screen,
-        matching: find.byKey(const Key('shop-card-dahab-bluehole')),
-      ),
-      findsNothing,
-    );
-
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('explore-region-screen')), findsNothing);
-    expect(find.byKey(const Key('explore-search')), findsOneWidget);
+    expect(find.byKey(const Key('explore-empty')), findsOneWidget);
+    expect(find.text(l10n.exploreNoPublicProducts), findsOneWidget);
+    expect(find.byKey(const Key('explore-region-row-asia')), findsNothing);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
+    expect(find.text('보홀 오션 하이드아웃'), findsNothing);
+    expect(find.text('필리핀 보홀'), findsNothing);
   });
 }

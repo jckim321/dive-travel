@@ -109,13 +109,15 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => ResortDeskScreen(
-                    shopId: DiveShopCatalog.shops.first.id,
-                  ),
-                ),
-              ),
+              onPressed: store.shopStats.isEmpty
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ResortDeskScreen(
+                            shopId: store.shopStats.first.shopId,
+                          ),
+                        ),
+                      ),
               icon: const Icon(Icons.photo_library_outlined),
               label: Text(l10n.exploreEditResort),
             ),

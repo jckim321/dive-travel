@@ -650,6 +650,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreNoResults => 'No shops match that search.';
 
   @override
+  String get exploreNoPublicProducts => 'No public trips yet.';
+
+  @override
+  String get adminShopsEmpty => 'No public shops yet.';
+
+  @override
+  String get shopPickerEmpty => 'No shops in the database.';
+
+  @override
   String get exploreCountryEmpty => 'No trips listed here yet';
 
   @override

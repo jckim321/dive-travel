@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/constants/app_constants.dart';
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -16,7 +15,7 @@ class AdminWeatherScreen extends StatefulWidget {
 }
 
 class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
-  String _shopId = AppConstants.defaultPartnerShopId;
+  String? _shopId;
   DateTime _date = DateTime.now();
 
   @override
@@ -27,25 +26,41 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
     return adminScreenShell(
       embedded: widget.embedded,
       title: l10n.weatherAdminTitle,
-      body: ListView(
+      body: ListenableBuilder(
+        listenable: store,
+        builder: (context, _) {
+          final shops = store.shopStats;
+          final selected = shops.any((shop) => shop.shopId == _shopId)
+              ? _shopId
+              : null;
+          return ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(l10n.weatherAdminBody),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            key: const Key('weather-shop'),
-            initialValue: _shopId,
-            items: [
-              for (final shop in DiveShopCatalog.shops)
-                DropdownMenuItem(value: shop.id, child: Text(shop.name)),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _shopId = value);
-              }
-            },
-            decoration: InputDecoration(labelText: l10n.partnerShopName),
-          ),
+          if (shops.isEmpty)
+            Text(
+              l10n.shopPickerEmpty,
+              key: const Key('weather-shop-empty'),
+            )
+          else
+            DropdownButtonFormField<String>(
+              key: const Key('weather-shop'),
+              initialValue: selected,
+              items: [
+                for (final shop in shops)
+                  DropdownMenuItem(
+                    value: shop.shopId,
+                    child: Text(_weatherShopLabel(shop)),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _shopId = value);
+                }
+              },
+              decoration: InputDecoration(labelText: l10n.partnerShopName),
+            ),
           const SizedBox(height: 12),
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -67,9 +82,11 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
           const SizedBox(height: 16),
           FilledButton.icon(
             key: const Key('weather-cancel-submit'),
-            onPressed: () async {
+            onPressed: selected == null
+                ? null
+                : () async {
               await store.cancelBookingsForWeather(
-                shopId: _shopId,
+                shopId: selected,
                 tourDate: _date,
               );
               if (context.mounted) {
@@ -82,7 +99,14 @@ class _AdminWeatherScreenState extends State<AdminWeatherScreen> {
             label: Text(l10n.weatherCancel),
           ),
         ],
+      );
+        },
       ),
     );
   }
+}
+
+String _weatherShopLabel(ShopLiveStats stats) {
+  final name = stats.name?.trim() ?? '';
+  return name.isEmpty ? stats.shopId : name;
 }

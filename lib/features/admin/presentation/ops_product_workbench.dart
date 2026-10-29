@@ -6,7 +6,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
@@ -420,10 +419,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     // H1a: ignore legacy price_revision / pending_options (do not overlay).
     final existing = widget.existing;
     _shopId = widget.lockedShopId ?? existing?.shopId ?? '';
-    final shop = DiveShopCatalog.byId(_shopId);
     _continent = existing?.continent.isNotEmpty == true
         ? existing!.continent
-        : (shop?.continent ?? ContinentId.asia);
+        : ContinentId.asia;
     _continentBaseline = _continent;
     // Preserve stored category (funDive/course/…) until a chip is tapped (H1b).
     _category = existing?.category ?? ProductCategory.resortPackage;
@@ -433,9 +431,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _persistedProductId =
         existing?.id.isNotEmpty == true ? existing!.id : null;
     _name = TextEditingController(text: existing?.name ?? '');
-    _resortName = TextEditingController(text: shop?.name ?? '');
-    _resortCountry = TextEditingController(text: shop?.country ?? '');
-    _resortRegion = TextEditingController(text: shop?.location ?? '');
+    _resortName = TextEditingController();
+    _resortCountry = TextEditingController();
+    _resortRegion = TextEditingController();
     if (widget.creatorMode &&
         _resortName.text.trim().isEmpty &&
         (existing?.name ?? '').trim().isNotEmpty) {
@@ -444,10 +442,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _creatorResortExpanded = !_creatorResortComplete;
     _blurb = TextEditingController(text: existing?.blurb ?? '');
     final meetingSeed = (existing?.meetingPoint ?? '').trim();
-    final addressSeed = (shop?.address ?? '').trim();
-    _meeting = TextEditingController(
-      text: meetingSeed.isNotEmpty ? meetingSeed : addressSeed,
-    );
+    _meeting = TextEditingController(text: meetingSeed);
     _detailBody = TextEditingController(text: _seedDetailBody(existing));
     _cancel = TextEditingController(text: existing?.cancellationNote ?? '');
     _includes = TextEditingController(text: existing?.includes ?? '');
@@ -654,11 +649,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     _placeSeeded = true;
     final savedCountry = (live.country ?? '').trim();
-    final catalogCountry =
-        DiveShopCatalog.byId(_shopId)?.country.trim() ?? '';
-    if (savedCountry.isNotEmpty &&
-        (_resortCountry.text.trim().isEmpty ||
-            _resortCountry.text.trim() == catalogCountry)) {
+    if (savedCountry.isNotEmpty && _resortCountry.text.trim().isEmpty) {
       _resortCountry.text = savedCountry;
     }
     final savedLocation = (live.location ?? '').trim();
@@ -1767,26 +1758,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         );
       }
       if (widget.partnerMode && _countryTouched && _shopId.trim().isNotEmpty) {
-        final catalog = DiveShopCatalog.byId(_shopId);
         final live = store.liveStatsFor(_shopId);
-        String kept(String? liveValue, String? catalogValue) {
-          final fromLive = (liveValue ?? '').trim();
-          if (fromLive.isNotEmpty) {
-            return fromLive;
-          }
-          return (catalogValue ?? '').trim();
+        String kept(String? liveValue) {
+          return (liveValue ?? '').trim();
         }
 
         await store.saveShopProfile(
           shopId: _shopId,
-          name: kept(live?.name, catalog?.name),
-          location: kept(live?.location, catalog?.location),
-          productName: kept(live?.productName, catalog?.productName),
-          consumerPrice:
-              live?.consumerPrice ?? catalog?.consumerPrice ?? diverRate.consumer,
-          professionalPrice: live?.professionalPrice ??
-              catalog?.professionalPrice ??
-              diverRate.professional,
+          name: kept(live?.name),
+          location: kept(live?.location),
+          productName: kept(live?.productName),
+          consumerPrice: live?.consumerPrice ?? diverRate.consumer,
+          professionalPrice:
+              live?.professionalPrice ?? diverRate.professional,
           country: _resortCountry.text.trim(),
           continent: _continent,
           curated: live?.curated == true,
@@ -2346,14 +2330,18 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         child: _creatorShopLine(l10n),
       );
     }
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
     final locked = widget.partnerMode || widget.lockedShopId != null;
-    final shop = DiveShopCatalog.byId(_shopId);
+    final liveShop = store.liveStatsFor(_shopId);
+    final liveName = liveShop?.name?.trim() ?? '';
     if (locked) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            shop?.name ?? _shopId,
+            liveName.isEmpty ? _shopId : liveName,
             key: const Key('partner-product-shop'),
             style: const TextStyle(
               color: PartnerTheme.text,
@@ -2371,14 +2359,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         ],
       );
     }
-    final shops = DiveShopCatalog.shops;
+    final shops = store.shopStats;
+    final known = shops.any((item) => item.shopId == _shopId);
     final String? shopValue = _namedResort
         ? _kDirectShop
-        : (shops.any((item) => item.id == _shopId)
+        : (known
               ? _shopId
-              : (widget.existing == null
+              : (widget.existing == null || _shopId.isEmpty
                     ? null
-                    : (shops.isNotEmpty ? shops.first.id : _kDirectShop)));
+                    : _shopId));
     return KeyedSubtree(
       key: _adminShopKey,
       child: KeyedSubtree(
@@ -2397,7 +2386,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               child: Text(l10n.productFormDirectSelect),
             ),
             for (final item in shops)
-              DropdownMenuItem(value: item.id, child: Text(item.name)),
+              DropdownMenuItem(
+                value: item.shopId,
+                child: Text(_dbShopLabel(item)),
+              ),
+            if (!known && shopValue != null && shopValue != _kDirectShop)
+              DropdownMenuItem(value: shopValue, child: Text(shopValue)),
           ],
           onChanged: (value) {
             if (value == null) {
@@ -2405,16 +2399,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             }
             setState(() {
               if (value == _kDirectShop) {
-                final current = DiveShopCatalog.byId(_shopId);
+                final current = store.liveStatsFor(_shopId);
                 _namedResort = true;
                 if (_resortName.text.trim().isEmpty) {
-                  _resortName.text = current?.name ?? '';
+                  _resortName.text = current?.name?.trim() ?? '';
                 }
                 if (_resortCountry.text.trim().isEmpty) {
-                  _resortCountry.text = current?.country ?? '';
+                  _resortCountry.text = current?.country?.trim() ?? '';
                 }
                 if (_resortRegion.text.trim().isEmpty) {
-                  _resortRegion.text = current?.location ?? '';
+                  _resortRegion.text = current?.location?.trim() ?? '';
                 }
                 return;
               }
@@ -2456,6 +2450,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ),
       ),
     );
+      },
+    );
+  }
+
+  String _dbShopLabel(ShopLiveStats stats) {
+    final name = stats.name?.trim() ?? '';
+    return name.isEmpty ? stats.shopId : name;
   }
 
   Widget _creatorShopLine(AppLocalizations l10n) {
@@ -4834,23 +4835,25 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
 
   void _applyCatalogShop(String shopId, {required DiverStore store}) {
-    final next = DiveShopCatalog.byId(shopId);
     final live = store.liveStatsFor(shopId);
     _shopId = shopId;
     _namedResort = false;
-    if (next != null) {
-      _continent = next.continent;
-      if (_resortName.text.trim().isEmpty) {
-        _resortName.text = next.name;
-      }
-      if (_resortCountry.text.trim().isEmpty) {
-        _resortCountry.text = next.country;
-      }
-      if (_resortRegion.text.trim().isEmpty) {
-        _resortRegion.text = next.location;
-      }
+    final name = live?.name?.trim() ?? '';
+    final country = live?.country?.trim() ?? '';
+    final location = live?.location?.trim() ?? '';
+    if (name.isNotEmpty && _resortName.text.trim().isEmpty) {
+      _resortName.text = name;
     }
-    final address = (live?.address ?? next?.address ?? '').trim();
+    if (country.isNotEmpty && _resortCountry.text.trim().isEmpty) {
+      _resortCountry.text = country;
+    }
+    if (location.isNotEmpty && _resortRegion.text.trim().isEmpty) {
+      _resortRegion.text = location;
+    }
+    if ((live?.continent?.trim().isNotEmpty ?? false)) {
+      _continent = live!.continent!.trim();
+    }
+    final address = (live?.address ?? '').trim();
     if (address.isNotEmpty) {
       _meeting.text = address;
     }

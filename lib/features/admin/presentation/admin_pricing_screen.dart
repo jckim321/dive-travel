@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
@@ -65,7 +64,7 @@ class _AdminPricingScreenState extends State<AdminPricingScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final sample = DiveShopCatalog.shops.first.consumerPrice;
+    const sample = 180000;
     final preview = _draft.apply(sample);
 
     return adminScreenShell(

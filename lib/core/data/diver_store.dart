@@ -789,8 +789,8 @@ class DiverStore extends ChangeNotifier {
   List<DiveShop> listingsOnHull(String hullId) {
     final live = liveStatsFor(hullId);
     return [
-      for (final shop in DiveShopCatalog.listingsOnHull(shops, hullId))
-        shop.withLiveProduct(live),
+      for (final shop in shops)
+        if (shop.hullId == hullId) shop.withLiveProduct(live),
     ];
   }
 

@@ -1260,6 +1260,24 @@ abstract class AppLocalizations {
   /// **'검색과 일치하는 샵이 없습니다.'**
   String get exploreNoResults;
 
+  /// No description provided for @exploreNoPublicProducts.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개된 여행상품이 없습니다.'**
+  String get exploreNoPublicProducts;
+
+  /// No description provided for @adminShopsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개된 샵이 없습니다.'**
+  String get adminShopsEmpty;
+
+  /// No description provided for @shopPickerEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 샵이 없습니다.'**
+  String get shopPickerEmpty;
+
   /// 고른 나라에 등록된 상품이 없을 때 안내입니다.
   ///
   /// In ko, this message translates to:

@@ -167,10 +167,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   child: Text(
                                     _countryLabel != null
                                         ? l10n.exploreCountryEmpty
-                                        : l10n.exploreNoResults,
+                                        : needle.isEmpty
+                                            ? l10n.exploreNoPublicProducts
+                                            : l10n.exploreNoResults,
                                     key: _countryLabel != null
                                         ? const Key('explore-country-empty')
-                                        : null,
+                                        : needle.isEmpty
+                                            ? const Key('explore-empty')
+                                            : const Key('explore-no-results'),
                                   ),
                                 ),
                               ),
@@ -275,12 +279,5 @@ class _ExploreRegionRow extends StatelessWidget {
 
 bool _showsOnExplore(DiveShop shop, DiverStore store) {
   final live = store.liveStatsFor(shop.hullId);
-  final hasPublic =
-      live?.products.any((product) => product.isListedPublicly) ?? false;
-  if (hasPublic) {
-    return true;
-  }
-  // Once any live product exists, hide empty catalog shells so new
-  // registrations aren't buried under seed resorts on PC/web.
-  return !store.hasAnyPublicProduct;
+  return live?.products.any((product) => product.isListedPublicly) ?? false;
 }

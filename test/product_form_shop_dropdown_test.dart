@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'support/sample_dive_shops.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -14,12 +14,15 @@ void main() {
   Future<void> pumpForm(
     WidgetTester tester, {
     ShopProduct? existing,
+    MemoryDiverRepository? repo,
   }) async {
     tester.view.physicalSize = const Size(900, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final store = DiverStore(MemoryDiverRepository.forTest(isAdmin: true));
+    final store = DiverStore(
+      repo ?? MemoryDiverRepository.forTest(isAdmin: true),
+    );
     addTearDown(store.dispose);
     await tester.pumpWidget(
       DiverStoreScope(
@@ -55,7 +58,7 @@ void main() {
     final dropdown = shopDropdown(tester);
     expect(dropdown.initialValue, isNull);
     expect(find.text(l10n.productFormPickShop), findsOneWidget);
-    expect(find.text(DiveShopCatalog.shops.first.name), findsNothing);
+    expect(find.text(sampleDiveShops.first.name), findsNothing);
 
     await tester.ensureVisible(find.byKey(const Key('admin-product-submit')));
     await tester.tap(find.byKey(const Key('admin-product-submit')));
@@ -67,9 +70,20 @@ void main() {
 
   testWidgets('기존 상품 수정은 저장된 샵을 그대로 보여 준다', (tester) async {
     const shopId = AppConstants.defaultPartnerShopId;
-    final shop = DiveShopCatalog.byId(shopId)!;
+    const shopName = '보홀 테스트 리조트';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: shopName,
+      location: '필리핀 보홀',
+      country: '필리핀',
+      productName: '펀다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+    );
     await pumpForm(
       tester,
+      repo: repo,
       existing: ShopProduct(
         id: 'keep-shop',
         shopId: shopId,
@@ -81,7 +95,7 @@ void main() {
     );
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     expect(shopDropdown(tester).initialValue, shopId);
-    expect(find.text(shop.name), findsOneWidget);
+    expect(find.text(shopName), findsOneWidget);
     expect(find.text(l10n.productFormPickShop), findsNothing);
   });
 

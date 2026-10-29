@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/operation_review_policy.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
@@ -72,7 +72,7 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
         _waterTemp.text = '${existing.details.waterTempC}';
       }
     } else {
-      _shopId = widget.shopId ?? DiveShopCatalog.shops.first.id;
+      _shopId = widget.shopId ?? '';
       _bookingId = widget.bookingId?.trim();
       if (_bookingId != null && _bookingId!.isEmpty) {
         _bookingId = null;
@@ -402,7 +402,14 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final shops = DiveShopCatalog.shops;
+    final store = DiverStoreScope.of(context);
+    return ListenableBuilder(
+      listenable: store,
+      builder: (context, _) {
+    final shops = store.shopStats;
+    final selected = shops.any((shop) => shop.shopId == _shopId)
+        ? _shopId
+        : null;
     final blocked = !_isEditing && _gateMessage != null;
 
     return Scaffold(
@@ -417,16 +424,25 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
+          if (shops.isEmpty)
+            Text(
+              l10n.shopPickerEmpty,
+              key: const Key('review-shop-empty'),
+            )
+          else
+            DropdownButtonFormField<String>(
             key: const Key('review-shop'),
-            initialValue: _shopId,
+            initialValue: selected,
             decoration: InputDecoration(
               labelText: l10n.reviewShopLabel,
               border: const OutlineInputBorder(),
             ),
             items: [
               for (final shop in shops)
-                DropdownMenuItem(value: shop.id, child: Text(shop.name)),
+                DropdownMenuItem(
+                  value: shop.shopId,
+                  child: Text(_shopStatsLabel(shop)),
+                ),
             ],
             onChanged: _isEditing ||
                     widget.shopId != null ||
@@ -625,6 +641,8 @@ class _OperationReviewScreenState extends State<OperationReviewScreen> {
         ],
       ),
     );
+      },
+    );
   }
 }
 
@@ -739,10 +757,22 @@ Future<bool?> openOperationReview(
   );
 }
 
-DiveShop? shopForSite(String siteName) {
-  final hits = DiveShopCatalog.search(
-    query: siteName,
-    continent: ContinentFilter.all,
-  );
-  return hits.isEmpty ? null : hits.first;
+DiveShop? shopForSite(String siteName, Iterable<DiveShop> shops) {
+  final needle = siteName.trim().toLowerCase();
+  if (needle.isEmpty) {
+    return null;
+  }
+  for (final shop in shops) {
+    final named = shop.name.toLowerCase().contains(needle) ||
+        shop.sites.any((site) => site.toLowerCase().contains(needle));
+    if (named) {
+      return shop;
+    }
+  }
+  return null;
+}
+
+String _shopStatsLabel(ShopLiveStats stats) {
+  final name = stats.name?.trim() ?? '';
+  return name.isEmpty ? stats.shopId : name;
 }

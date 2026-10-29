@@ -642,6 +642,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreNoResults => 'Tidak ada toko yang cocok.';
 
   @override
+  String get exploreNoPublicProducts => '공개된 여행상품이 없습니다.';
+
+  @override
+  String get adminShopsEmpty => '공개된 샵이 없습니다.';
+
+  @override
+  String get shopPickerEmpty => '등록된 샵이 없습니다.';
+
+  @override
   String get exploreCountryEmpty => '아직 등록된 상품이 없어요';
 
   @override

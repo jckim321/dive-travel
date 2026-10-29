@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
@@ -71,8 +70,9 @@ class AdminShopsScreen extends StatelessWidget {
               else
                 for (final stats in plaque) ...[
                   _PlaqueTile(
-                    shop: DiveShopCatalog.byId(stats.shopId),
+                    shop: null,
                     shopId: stats.shopId,
+                    liveName: stats.name,
                     stars: stats.diveStar,
                     rating: stats.avgOverall,
                     reviewCount: stats.reviewCount,
@@ -87,7 +87,13 @@ class AdminShopsScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              for (final shop in shops) ...[
+              if (shops.isEmpty)
+                Text(
+                  l10n.adminShopsEmpty,
+                  key: const Key('admin-shops-empty'),
+                )
+              else
+                for (final shop in shops) ...[
                 _ShopMonitorTile(
                   shop: shop,
                   live: store.liveStatsFor(shop.hullId) ??
@@ -108,6 +114,7 @@ class _PlaqueTile extends StatelessWidget {
   const _PlaqueTile({
     required this.shop,
     required this.shopId,
+    this.liveName,
     required this.stars,
     required this.rating,
     required this.reviewCount,
@@ -117,6 +124,7 @@ class _PlaqueTile extends StatelessWidget {
 
   final DiveShop? shop;
   final String shopId;
+  final String? liveName;
   final int stars;
   final double rating;
   final int reviewCount;
@@ -127,7 +135,8 @@ class _PlaqueTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
-    final name = shop?.name ?? shopId;
+    final trimmed = liveName?.trim() ?? '';
+    final name = trimmed.isNotEmpty ? trimmed : (shop?.name ?? shopId);
     final statusLabel = switch (status) {
       PlaqueStatus.queued => l10n.adminPlaqueQueued,
       PlaqueStatus.shipped => l10n.adminPlaqueShipped,

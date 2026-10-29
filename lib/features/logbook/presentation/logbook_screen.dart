@@ -143,7 +143,10 @@ class _LogbookScreenState extends State<LogbookScreen> {
                         );
                       },
                       onReview: () {
-                        final matched = shopForSite(logs[i].siteName);
+                        final matched = shopForSite(
+                          logs[i].siteName,
+                          store.shops,
+                        );
                         openOperationReview(
                           context,
                           shopId: matched?.id,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'support/sample_dive_shops.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -46,14 +46,14 @@ void main() {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     expect(find.byKey(const Key('admin-product-name')), findsNothing);
     expect(find.text(l10n.productFormDirectSelect), findsNothing);
-    expect(find.text(DiveShopCatalog.shops.first.name), findsNothing);
+    expect(find.text(sampleDiveShops.first.name), findsNothing);
 
     await tester.tap(find.byKey(const Key('creator-product-shop')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text(l10n.productFormCreatorShop), findsOneWidget);
     expect(find.text(l10n.productFormDirectSelect), findsNothing);
-    expect(find.text(DiveShopCatalog.shops.first.name), findsNothing);
+    expect(find.text(sampleDiveShops.first.name), findsNothing);
 
     await tester.tap(find.text(l10n.productFormCreatorShop));
     await tester.pump();

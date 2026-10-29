@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
@@ -108,8 +109,10 @@ void main() {
     expect(find.byKey(const Key('explore-country-menu')), findsNothing);
     expect(find.byKey(const Key('continent-chevron-asia')), findsNothing);
     expect(find.text('▾'), findsNothing);
-    expect(find.byKey(const Key('explore-region-row-asia')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
+    expect(find.byKey(const Key('explore-region-row-asia')), findsNothing);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
+    expect(find.byKey(const Key('explore-empty')), findsOneWidget);
+    expect(find.text(l10n.exploreNoPublicProducts), findsOneWidget);
     expect(find.text(l10n.exploreNoResults), findsNothing);
     expect(find.text(l10n.exploreCountryEmpty), findsNothing);
 
@@ -121,8 +124,8 @@ void main() {
     );
     await tester.pump();
     expect(find.byKey(const Key('explore-country-menu')), findsNothing);
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
+    expect(find.text('보홀 오션 하이드아웃'), findsNothing);
 
     await tester.tap(find.byKey(const Key('continent-filter-all')));
     await tester.pump();
@@ -133,8 +136,9 @@ void main() {
       tester.widget<TextField>(find.byKey(const Key('explore-search'))).controller?.text,
       '보홀',
     );
-    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsOneWidget);
-    expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
+    expect(find.byKey(const Key('explore-no-results')), findsOneWidget);
+    expect(find.byKey(const Key('shop-card-bohol-hideout')), findsNothing);
+    expect(find.text('보홀 오션 하이드아웃'), findsNothing);
   });
 
   testWidgets('나라 드롭다운 코드는 켜면 주요 나라만 거른다', (tester) async {
@@ -146,7 +150,24 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final store = DiverStore(MemoryDiverRepository.forTest());
+    final repo = MemoryDiverRepository.forTest();
+    await _seedPublicShop(
+      repo,
+      id: 'bohol-hideout',
+      name: '보홀 오션 하이드아웃',
+      location: '필리핀 보홀',
+      country: '필리핀',
+      continent: ContinentId.asia,
+    );
+    await _seedPublicShop(
+      repo,
+      id: 'kerama-okinawa',
+      name: '케라마 아일랜드 다이브',
+      location: '일본 오키나와',
+      country: '일본',
+      continent: ContinentId.asia,
+    );
+    final store = DiverStore(repo);
     addTearDown(store.dispose);
     await tester.pumpWidget(
       DiverStoreScope(
@@ -165,7 +186,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     final l10n = AppLocalizations.of(tester.element(find.byType(ExploreScreen)));
 
@@ -272,6 +293,38 @@ void main() {
     expect(find.byKey(const Key('shop-card-palau-rock-islands')), findsNothing);
 
   });
+}
+
+Future<void> _seedPublicShop(
+  MemoryDiverRepository repo, {
+  required String id,
+  required String name,
+  required String location,
+  required String country,
+  required String continent,
+}) async {
+  await repo.saveShopProfile(
+    shopId: id,
+    name: name,
+    location: location,
+    country: country,
+    continent: continent,
+    productName: '펀다이빙',
+    consumerPrice: 100000,
+    professionalPrice: 80000,
+  );
+  await repo.saveShopProduct(
+    shopId: id,
+    product: ShopProduct(
+      id: 'p-$id',
+      shopId: id,
+      name: '펀다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+      publishStatus: ProductPublishStatus.approved,
+      active: true,
+    ),
+  );
 }
 
 Color _chipColor(WidgetTester tester, Finder chip) {

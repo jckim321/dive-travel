@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
-import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'support/sample_dive_shops.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
@@ -57,7 +57,7 @@ void main() {
     );
 
     Future<void> profile(String shopId) {
-      final hull = DiveShopCatalog.shops.firstWhere((shop) => shop.id == shopId);
+      final hull = sampleDiveShop(shopId)!;
       return repo.saveShopProfile(
         shopId: shopId,
         name: hull.name,

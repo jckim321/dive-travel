@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
+import 'support/sample_dive_shops.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 
 void main() {
-  final bohol = DiveShopCatalog.shops.firstWhere((shop) => shop.id == 'bohol-hideout');
+  final bohol = sampleDiveShop('bohol-hideout')!;
 
   test('일반 다이버는 샵이 등록한 소비자가를 그대로 본다', () {
     final quote = TourPricePolicy.quote(bohol, isInstructor: false);
@@ -36,17 +37,25 @@ void main() {
   });
 
   test('포인트 검색과 대륙 필터가 샵 목록을 줄인다', () {
-    final palau = DiveShopCatalog.search(query: '팔라우', continent: ContinentFilter.all);
+    final palau = DiveShopCatalog.search(
+      query: '팔라우',
+      continent: ContinentFilter.all,
+      source: sampleDiveShops,
+    );
     expect(palau, hasLength(1));
     expect(palau.single.id, 'palau-rock-islands');
 
-    final africa = DiveShopCatalog.search(query: '', continent: 'africa');
+    final africa = DiveShopCatalog.search(
+      query: '',
+      continent: 'africa',
+      source: sampleDiveShops,
+    );
     expect(africa.map((shop) => shop.id), ['dahab-bluehole']);
   });
 
   test('리조트 안에서는 기본 상품과 메뉴 상품이 같이 나온다', () {
     final listings = DiveShopCatalog.listingsOnHull(
-      DiveShopCatalog.shops,
+      sampleDiveShops,
       'bohol-hideout',
     );
     expect(

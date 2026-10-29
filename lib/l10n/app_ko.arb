@@ -538,6 +538,9 @@
     "description": "일반 다이버 결제 시트 보조 문구입니다."
   },
   "exploreNoResults": "검색과 일치하는 샵이 없습니다.",
+  "exploreNoPublicProducts": "공개된 여행상품이 없습니다.",
+  "adminShopsEmpty": "공개된 샵이 없습니다.",
+  "shopPickerEmpty": "등록된 샵이 없습니다.",
   "@exploreNoResults": {
     "description": "검색 결과가 없을 때 문구입니다."
   },

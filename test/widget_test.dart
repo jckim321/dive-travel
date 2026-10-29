@@ -232,8 +232,9 @@ void main() {
     await tester.enterText(find.byKey(const Key('explore-search')), '팔라우');
     await tester.pumpAndSettle();
 
-    expect(find.text('팔라우 록아일랜드 다이브'), findsOneWidget);
+    expect(find.text('팔라우 록아일랜드 다이브'), findsNothing);
     expect(find.text('보홀 오션 하이드아웃'), findsNothing);
+    expect(find.byKey(const Key('explore-no-results')), findsOneWidget);
   });
 
   testWidgets('여행상품 대륙 아틀라스 라벨이 전부 보이고 예약 목록은 없다', (WidgetTester tester) async {
