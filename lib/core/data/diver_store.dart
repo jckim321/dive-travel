@@ -388,7 +388,8 @@ class DiverStore extends ChangeNotifier {
   List<ShopProduct> _sameBoatProducts() {
     return [
       for (final stats in _shopStats)
-        for (final product in stats.products) product,
+        if (stats.operatingStatus.acceptsCustomers)
+          for (final product in stats.products) product,
     ];
   }
 
@@ -701,6 +702,9 @@ class DiverStore extends ChangeNotifier {
     }
     var count = 0;
     for (final stats in _shopStats) {
+      if (!stats.operatingStatus.acceptsCustomers) {
+        continue;
+      }
       for (final product in _dedupedProducts(stats.products)) {
         if (product.isListedPublicly && product.listingKind == kind) {
           count++;

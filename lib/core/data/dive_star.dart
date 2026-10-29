@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
+import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
@@ -107,6 +108,7 @@ class ShopLiveStats {
     this.coverUrl,
     this.galleryUrls = const [],
     this.amenities = const [],
+    this.operatingStatus = ShopOperatingStatus.active,
   });
 
   factory ShopLiveStats.fromDocument(String id, Map<String, dynamic> data) {
@@ -174,6 +176,7 @@ class ShopLiveStats {
         for (final item in (data['amenities'] as List<dynamic>? ?? const []))
           if (item is String && item.trim().isNotEmpty) item.trim(),
       ],
+      operatingStatus: ShopOperatingStatus.parse(data['operating_status']),
     );
   }
 
@@ -217,6 +220,9 @@ class ShopLiveStats {
   final String? coverUrl;
   final List<String> galleryUrls;
   final List<String> amenities;
+
+  /// Missing Firestore field reads as [ShopOperatingStatus.active].
+  final ShopOperatingStatus operatingStatus;
 
   /// Ordered resort photos. First becomes [coverUrl] after save.
   List<String> get displayGallery {
@@ -276,6 +282,7 @@ class ShopLiveStats {
     bool clearCoverUrl = false,
     List<String>? galleryUrls,
     List<String>? amenities,
+    ShopOperatingStatus? operatingStatus,
   }) {
     return ShopLiveStats(
       shopId: shopId,
@@ -318,6 +325,7 @@ class ShopLiveStats {
       coverUrl: clearCoverUrl ? null : (coverUrl ?? this.coverUrl),
       galleryUrls: galleryUrls ?? this.galleryUrls,
       amenities: amenities ?? this.amenities,
+      operatingStatus: operatingStatus ?? this.operatingStatus,
     );
   }
 }

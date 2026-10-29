@@ -89,8 +89,9 @@ abstract final class DiveShopCatalog {
       }
       final hasPublic = stats.products.any((p) => p.isListedPublicly);
       // Contract-free/creator-proposed resorts must not surface until an
-      // admin approves at least one product.
-      if (!hasPublic) {
+      // admin approves at least one product. Paused, ended, and closed
+      // shops stay off customer lists even when a product is public.
+      if (!hasPublic || !stats.operatingStatus.acceptsCustomers) {
         continue;
       }
       appendShop(

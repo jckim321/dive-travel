@@ -16,6 +16,7 @@ import 'package:dive_travel_app/firebase_options.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
+import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/data/partner_provision.dart';
@@ -2056,10 +2057,14 @@ class FirestoreDiverRepository implements DiverRepository {
         ShopProduct? capturedProduct;
         List<ActiveSeatFlag>? nextFlags;
 
+        final shopSnap = await transaction.get(shopRef);
+        if (!shopAcceptsNewBusiness(shopSnap.data())) {
+          return null;
+        }
+
         final needsSeats =
             productId != null && productId.isNotEmpty && partySize > 0;
         if (needsSeats) {
-          final shopSnap = await transaction.get(shopRef);
           final userSnap = await transaction.get(userRef);
           currentProducts =
               ShopProduct.listFrom(hullId, shopSnap.data()?['products']);
@@ -2196,6 +2201,9 @@ class FirestoreDiverRepository implements DiverRepository {
     try {
       return await _db.runTransaction((transaction) async {
         final shopSnap = await transaction.get(shopRef);
+        if (!shopAcceptsNewBusiness(shopSnap.data())) {
+          return SeatFlagPlant.unavailable;
+        }
         final userSnap = await transaction.get(userRef);
         final current =
             ShopProduct.listFrom(hull, shopSnap.data()?['products']);

@@ -279,5 +279,8 @@ class _ExploreRegionRow extends StatelessWidget {
 
 bool _showsOnExplore(DiveShop shop, DiverStore store) {
   final live = store.liveStatsFor(shop.hullId);
-  return live?.products.any((product) => product.isListedPublicly) ?? false;
+  if (live == null || !live.operatingStatus.acceptsCustomers) {
+    return false;
+  }
+  return live.products.any((product) => product.isListedPublicly);
 }

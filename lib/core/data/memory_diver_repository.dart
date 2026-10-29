@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/member_profile_repair.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
+import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_snapshot.dart';
 import 'package:dive_travel_app/core/models/same_boat_alert.dart';
@@ -208,6 +209,16 @@ class MemoryDiverRepository implements DiverRepository {
 
   List<ActiveSeatFlag> _flagsFor(String uid) =>
       List<ActiveSeatFlag>.from(_activeSeatFlags[uid] ?? const []);
+
+  /// Test helper: mark a seeded shop paused, ended, or closed.
+  void debugSetOperatingStatus(String shopId, ShopOperatingStatus status) {
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    _shopStats[shopId] = current.copyWith(operatingStatus: status);
+    _shopController.add(_shopStats.values.toList());
+  }
 
   /// Test helper: seed expired / live flag index rows without planting on a shop.
   void seedActiveSeatFlags(String uid, List<ActiveSeatFlag> flags) {
@@ -1321,6 +1332,10 @@ class MemoryDiverRepository implements DiverRepository {
   }) {
     return _runTxn(() async {
       final hullId = shopId.split('--').first;
+      final shopRecord = _shopStats[hullId];
+      if (shopRecord != null && !shopRecord.operatingStatus.acceptsCustomers) {
+        return null;
+      }
       final now = DateTime.now();
       final seatKey = seatOptionId;
       var seatsHeld = 0;
@@ -1437,7 +1452,7 @@ class MemoryDiverRepository implements DiverRepository {
       }
       final hull = shopId.split('--').first;
       final current = _shopStats[hull];
-      if (current == null) {
+      if (current == null || !current.operatingStatus.acceptsCustomers) {
         return SeatFlagPlant.unavailable;
       }
       ShopProduct? target;
@@ -1746,6 +1761,8 @@ class MemoryDiverRepository implements DiverRepository {
       diveStarReviewedAt: current?.diveStarReviewedAt,
       diveStarExpiresAt: current?.diveStarExpiresAt,
       plaqueStatus: current?.plaqueStatus ?? PlaqueStatus.none,
+      operatingStatus:
+          current?.operatingStatus ?? ShopOperatingStatus.active,
       name: current?.name,
       location: current?.location,
       country: current?.country,
@@ -1882,6 +1899,7 @@ class MemoryDiverRepository implements DiverRepository {
         diveStarReviewedAt: current.diveStarReviewedAt,
         diveStarExpiresAt: current.diveStarExpiresAt,
         plaqueStatus: current.plaqueStatus,
+        operatingStatus: current.operatingStatus,
         name: current.name,
         location: current.location,
         country: current.country,
@@ -1974,6 +1992,7 @@ class MemoryDiverRepository implements DiverRepository {
         diveStarReviewedAt: current.diveStarReviewedAt,
         diveStarExpiresAt: current.diveStarExpiresAt,
         plaqueStatus: current.plaqueStatus,
+        operatingStatus: current.operatingStatus,
         name: current.name,
         location: current.location,
         country: current.country,
