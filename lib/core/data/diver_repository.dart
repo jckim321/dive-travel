@@ -631,6 +631,12 @@ abstract class DiverRepository {
     String? coverContentType,
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
+    /// Signed-in captain uid. Written only when this call creates a
+    /// `curated-` shop. Existing documents keep their `creator_uid`.
+    String? creatorUid,
+    /// Partner resort-text saves include `commission_rate` only when it
+    /// differs from the stored value.
+    bool partnerProfile = false,
   });
 
   Future<void> saveShopProduct({

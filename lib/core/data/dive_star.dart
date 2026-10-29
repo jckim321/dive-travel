@@ -91,6 +91,7 @@ class ShopLiveStats {
     this.consumerPrice,
     this.professionalPrice,
     this.commissionRate = 0.12,
+    this.creatorUid = '',
     this.internalScore = 0,
     this.products = const [],
     this.intro,
@@ -144,6 +145,7 @@ class ShopLiveStats {
       professionalPrice: (data['professional_price'] as num?)?.toInt(),
       commissionRate:
           (data['commission_rate'] as num?)?.toDouble() ?? 0.12,
+      creatorUid: (data['creator_uid'] as String?)?.trim() ?? '',
       internalScore: (data['internal_score'] as num?)?.toInt() ?? 0,
       products: ShopProduct.listFrom(id, data['products']),
       intro: data['intro'] as String?,
@@ -203,6 +205,9 @@ class ShopLiveStats {
   final int? consumerPrice;
   final int? professionalPrice;
   final double commissionRate;
+
+  /// Captain who first created a `curated-` shop. Empty on older documents.
+  final String creatorUid;
 
   /// Admin-only partner quality score (0–100), separate from Dive Star reviews.
   final int internalScore;
@@ -269,6 +274,7 @@ class ShopLiveStats {
     int? consumerPrice,
     int? professionalPrice,
     double? commissionRate,
+    String? creatorUid,
     int? internalScore,
     List<ShopProduct>? products,
     String? intro,
@@ -315,6 +321,7 @@ class ShopLiveStats {
       consumerPrice: consumerPrice ?? this.consumerPrice,
       professionalPrice: professionalPrice ?? this.professionalPrice,
       commissionRate: commissionRate ?? this.commissionRate,
+      creatorUid: creatorUid ?? this.creatorUid,
       internalScore: internalScore ?? this.internalScore,
       products: products ?? this.products,
       intro: intro ?? this.intro,

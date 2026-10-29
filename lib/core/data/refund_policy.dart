@@ -21,6 +21,35 @@ abstract final class RefundPolicy {
   static const double maxCommissionRate = 0.15;
   static const double defaultCommissionRate = 0.12;
 
+  /// Partner profile saves omit [commission_rate] when the document already
+  /// has this value, so a later admin-only rule does not see a no-op change.
+  static bool shopProfileWritesCommissionRate({
+    required bool partnerProfile,
+    required Object? stored,
+    double next = defaultCommissionRate,
+  }) {
+    if (!partnerProfile) {
+      return true;
+    }
+    if (stored is! num) {
+      return true;
+    }
+    return (stored.toDouble() - next).abs() > 0.0000001;
+  }
+
+  /// First create of a captain `curated-` shop records the signed-in uid.
+  /// An existing document keeps whatever `creator_uid` it already has.
+  static bool shopProfileWritesCreatorUid({
+    required bool documentExists,
+    required String shopId,
+    required String? creatorUid,
+  }) {
+    final uid = creatorUid?.trim() ?? '';
+    return !documentExists &&
+        shopId.startsWith('curated-') &&
+        uid.isNotEmpty;
+  }
+
   static DateTime dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
 

@@ -4688,6 +4688,8 @@ class FirestoreDiverRepository implements DiverRepository {
     String? coverContentType,
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
+    String? creatorUid,
+    bool partnerProfile = false,
   }) async {
     final catalog = DiveShopCatalog.byId(shopId);
     String? coverUrl;
@@ -4715,12 +4717,13 @@ class FirestoreDiverRepository implements DiverRepository {
     }
 
     final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final data = snap.data();
     // Unit prices stay. When the country resolves to a new region, only the
     // continent key on each product is rewritten.
     List<dynamic>? nextProducts;
     if (continent != null) {
-      final snap = await ref.get();
-      final raw = snap.data()?['products'];
+      final raw = data?['products'];
       if (raw is List) {
         final region = continent.trim();
         nextProducts = [
@@ -4735,6 +4738,18 @@ class FirestoreDiverRepository implements DiverRepository {
         ];
       }
     }
+    final creator = creatorUid?.trim() ?? '';
+    final writeCreator = RefundPolicy.shopProfileWritesCreatorUid(
+      documentExists: snap.exists,
+      shopId: shopId,
+      creatorUid: creator,
+    );
+    final nextRate = RefundPolicy.defaultCommissionRate;
+    final writeCommission = RefundPolicy.shopProfileWritesCommissionRate(
+      partnerProfile: partnerProfile,
+      stored: data?['commission_rate'],
+      next: nextRate,
+    );
     await ref.set({
       'name': name.trim(),
       'location': location.trim(),
@@ -4777,7 +4792,8 @@ class FirestoreDiverRepository implements DiverRepository {
       'continent': (continent ?? catalog?.continent)?.trim(),
       if (nextProducts != null) 'products': nextProducts,
       if (curated != null) 'curated': curated,
-      'commission_rate': RefundPolicy.defaultCommissionRate,
+      if (writeCreator) 'creator_uid': creator,
+      if (writeCommission) 'commission_rate': nextRate,
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

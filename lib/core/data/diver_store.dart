@@ -2472,6 +2472,8 @@ class DiverStore extends ChangeNotifier {
       coverContentType: coverContentType,
       removeCover: removeCover,
       gallery: gallery,
+      creatorUid: isCreatorProposal ? _uid : null,
+      partnerProfile: isOwnerPartner && !_stats.isAdmin,
     );
     writeSw.stop();
     _patchLocalShopProfile(
@@ -2499,6 +2501,7 @@ class DiverStore extends ChangeNotifier {
       curated: curated,
       removeCover: removeCover,
       gallery: gallery,
+      stampCreator: isCreatorProposal,
     );
     notifyListeners();
     // Do not block the save UX on the follow-up read.
@@ -2543,6 +2546,7 @@ class DiverStore extends ChangeNotifier {
     bool? curated,
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
+    bool stampCreator = false,
   }) {
     final id = shopId.trim();
     if (id.isEmpty) {
@@ -2613,6 +2617,11 @@ class DiverStore extends ChangeNotifier {
           continent: continent?.trim() ?? catalog?.continent,
           products: nextProducts,
           curated: curated,
+          creatorUid: previous == null &&
+                  stampCreator &&
+                  (_uid ?? '').trim().isNotEmpty
+              ? _uid!.trim()
+              : null,
           coverUrl: nextCover,
           clearCoverUrl: clearCover,
           galleryUrls: nextGallery,

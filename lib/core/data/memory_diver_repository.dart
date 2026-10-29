@@ -3810,6 +3810,8 @@ class MemoryDiverRepository implements DiverRepository {
     String? coverContentType,
     bool removeCover = false,
     List<ShopGallerySlot>? gallery,
+    String? creatorUid,
+    bool partnerProfile = false,
   }) async {
     if (mapUrl != null && !isShopMapUrlValid(mapUrl)) {
       throw StateError('INVALID_MAP_URL');
@@ -3865,6 +3867,23 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
 
+    final documentExists = current != null;
+    final writeCreator = RefundPolicy.shopProfileWritesCreatorUid(
+      documentExists: documentExists,
+      shopId: shopId,
+      creatorUid: creatorUid,
+    );
+    final nextRate = RefundPolicy.defaultCommissionRate;
+    // A missing shop has no stored rate. Partner creates still record the default.
+    final writeCommissionOnDoc = RefundPolicy.shopProfileWritesCommissionRate(
+      partnerProfile: partnerProfile,
+      stored: current?.commissionRate,
+      next: nextRate,
+    );
+    debugLastProfileFields = {
+      if (writeCreator) 'creator_uid',
+      if (writeCommissionOnDoc) 'commission_rate',
+    };
     _shopStats[shopId] =
         (current ??
                 ShopLiveStats(
@@ -3877,6 +3896,8 @@ class MemoryDiverRepository implements DiverRepository {
                   diveStar: 0,
                 ))
             .copyWith(
+              creatorUid: writeCreator ? creatorUid!.trim() : null,
+              commissionRate: writeCommissionOnDoc ? nextRate : null,
               name: name,
               location: location,
               country: country ?? current?.country,
@@ -3905,6 +3926,10 @@ class MemoryDiverRepository implements DiverRepository {
             );
     _shopController.add(_shopStats.values.toList());
   }
+
+  /// Keys this profile save actually included. Tests check captain uid and
+  /// partner commission omission.
+  Set<String> debugLastProfileFields = {};
 
   /// Raw product maps so merge can preserve unknown / legacy keys in tests.
   final _productRawByShop = <String, Map<String, Map<String, dynamic>>>{};

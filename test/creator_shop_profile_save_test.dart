@@ -82,6 +82,7 @@ void main() {
     expect(curated, isNotEmpty);
     expect(curated.single.name, '없는 리조트');
     expect(curated.single.curated, isTrue);
+    expect(curated.single.creatorUid, 'test-user');
     expect(curated.single.productName, '없는 리조트');
     expect(curated.single.products.single.name, '없는 리조트');
   });
