@@ -248,19 +248,10 @@ service cloud.firestore {
       }
     }
 
-    function diveStarGradeKeys() {
-      return ['dive_star_grade', 'dive_star_reviewed_at', 'dive_star_expires_at'];
-    }
-
     function diveStarGradeFieldsAbsent() {
       return !('dive_star_grade' in request.resource.data)
         && !('dive_star_reviewed_at' in request.resource.data)
         && !('dive_star_expires_at' in request.resource.data);
-    }
-
-    function diveStarGradeFieldsUnchanged() {
-      return !request.resource.data.diff(resource.data)
-        .affectedKeys().hasAny(diveStarGradeKeys());
     }
 
     function diveStarGradeFieldsValid() {
@@ -272,10 +263,6 @@ service cloud.firestore {
             || request.resource.data.dive_star_reviewed_at is timestamp)
         && (!('dive_star_expires_at' in request.resource.data)
             || request.resource.data.dive_star_expires_at is timestamp);
-    }
-
-    function operatingFieldKeys() {
-      return ['operating_status', 'operating_note'];
     }
 
     function operatingStatusValue(value) {
@@ -296,13 +283,6 @@ service cloud.firestore {
                 && request.resource.data.operating_note.size() <= 500));
     }
 
-    // Only keys whose value changes in this write. A merge that leaves them
-    // out does not list them here.
-    function operatingFieldsUnchanged() {
-      return !request.resource.data.diff(resource.data)
-        .affectedKeys().hasAny(operatingFieldKeys());
-    }
-
     function operatingFieldsValidOnUpdate() {
       let changed = request.resource.data.diff(resource.data).affectedKeys();
       return (!changed.hasAny(['operating_status'])
@@ -310,6 +290,63 @@ service cloud.firestore {
         && (!changed.hasAny(['operating_note'])
             || (request.resource.data.operating_note is string
                 && request.resource.data.operating_note.size() <= 500));
+    }
+
+    function shopChangedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // Admin only, and only when this write actually changes the key.
+    // creator_uid is included so a later update cannot replace the captain.
+    function adminOnlyShopKeys() {
+      return [
+        'plaque_status', 'internal_score',
+        'dive_star_grade', 'dive_star_reviewed_at', 'dive_star_expires_at',
+        'operating_status', 'operating_note',
+        'commission_rate', 'creator_uid'
+      ];
+    }
+
+    function adminOnlyShopKeysOk() {
+      return !shopChangedKeys().hasAny(adminOnlyShopKeys()) || isAdmin();
+    }
+
+    // Resort text and prices. Captain identity is the uid already stored
+    // on the document, not the uid in this request.
+    function profileShopKeys() {
+      return [
+        'curated', 'consumer_price', 'professional_price',
+        'name', 'location', 'country', 'continent', 'product_name',
+        'intro', 'address', 'amenities', 'map_url', 'nearest_hub',
+        'access_routes', 'feature_blurb', 'feature_tags', 'nearby_spots',
+        'local_contact', 'check_in', 'check_out', 'business_hours',
+        'gallery_urls', 'cover_url'
+      ];
+    }
+
+    function isShopCaptain() {
+      return resource.data.get('creator_uid', '') == request.auth.uid;
+    }
+
+    function profileShopKeysOk(shopId) {
+      return !shopChangedKeys().hasAny(profileShopKeys())
+        || isAdmin()
+        || ownsShop(shopId)
+        || isShopCaptain();
+    }
+
+    // Non-admin create: a new curated shop for the signed-in captain.
+    // Grade, operating, plaque, internal score, and commission stay absent.
+    function captainShopCreate(shopId) {
+      let data = request.resource.data;
+      return shopId.matches('^curated-.+')
+        && data.curated == true
+        && data.creator_uid == request.auth.uid
+        && diveStarGradeFieldsAbsent()
+        && operatingFieldsAbsent()
+        && !('plaque_status' in data)
+        && !('internal_score' in data)
+        && !('commission_rate' in data);
     }
 
     function operatingEventText(value, min, max) {
@@ -349,19 +386,20 @@ service cloud.firestore {
 
     match /shops/{shopId} {
       allow read: if true;
-      // Grade fields: admin only. Other shop fields (avg_*, products, plaque…):
-      // signed-in users may update when grade keys are unchanged (review path).
-      // operating_status / operating_note: admin only when this write changes them.
+      // Admin may create any shop. Anyone else may create only their own
+      // curated- shop, without grade, operating, plaque, score, or commission.
+      // Update: admin-only keys and profile keys are checked with affectedKeys.
+      // review_count, sum_*, avg_*, safety_pass, products, updated_at stay
+      // open to any signed-in user.
       allow create: if isSignedIn()
         && diveStarGradeFieldsValid()
-        && (isAdmin() || diveStarGradeFieldsAbsent())
         && operatingFieldsValidOnCreate()
-        && (isAdmin() || operatingFieldsAbsent());
+        && (isAdmin() || captainShopCreate(shopId));
       allow update: if isSignedIn()
         && diveStarGradeFieldsValid()
-        && (isAdmin() || diveStarGradeFieldsUnchanged())
         && operatingFieldsValidOnUpdate()
-        && (isAdmin() || operatingFieldsUnchanged());
+        && adminOnlyShopKeysOk()
+        && profileShopKeysOk(shopId);
       // H9: admin trial-data cleanup may remove shops.
       allow delete: if isAdmin();
 
