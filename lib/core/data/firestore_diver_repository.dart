@@ -4552,7 +4552,26 @@ class FirestoreDiverRepository implements DiverRepository {
     }
 
     final ref = _shops.doc(shopId);
-    // Never read or write products[] here — unit prices live in the workbench.
+    // Unit prices stay. When the country resolves to a new region, only the
+    // continent key on each product is rewritten.
+    List<dynamic>? nextProducts;
+    if (continent != null) {
+      final snap = await ref.get();
+      final raw = snap.data()?['products'];
+      if (raw is List) {
+        final region = continent.trim();
+        nextProducts = [
+          for (final item in raw)
+            if (item is Map)
+              {
+                ...Map<String, dynamic>.from(item),
+                'continent': region,
+              }
+            else
+              item,
+        ];
+      }
+    }
     await ref.set({
       'name': name.trim(),
       'location': location.trim(),
@@ -4593,6 +4612,7 @@ class FirestoreDiverRepository implements DiverRepository {
         'cover_url': FieldValue.delete(),
       'country': (country ?? catalog?.country)?.trim(),
       'continent': (continent ?? catalog?.continent)?.trim(),
+      if (nextProducts != null) 'products': nextProducts,
       if (curated != null) 'curated': curated,
       'commission_rate': RefundPolicy.defaultCommissionRate,
       'updated_at': FieldValue.serverTimestamp(),

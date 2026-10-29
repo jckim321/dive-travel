@@ -88,6 +88,7 @@ class DiveShop {
     String? name,
     String? location,
     String? country,
+    String? continent,
     String? productName,
     int? stars,
     double? rating,
@@ -110,7 +111,7 @@ class DiveShop {
       name: name ?? this.name,
       location: location ?? this.location,
       country: country ?? this.country,
-      continent: continent,
+      continent: continent ?? this.continent,
       sites: sites,
       productName: productName ?? this.productName,
       stars: stars ?? this.stars,
@@ -144,8 +145,10 @@ class DiveShop {
     }
     final liveCover = live.coverUrl;
     final liveCountry = live.country?.trim() ?? '';
+    final liveContinent = live.continent?.trim() ?? '';
     return copyWith(
       country: liveCountry.isEmpty ? null : liveCountry,
+      continent: liveContinent.isEmpty ? null : liveContinent,
       stars: live.diveStar,
       diveStarExpiresAt: live.diveStarExpiresAt,
       clearDiveStarExpiresAt: live.diveStarExpiresAt == null,

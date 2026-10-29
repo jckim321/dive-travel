@@ -102,9 +102,7 @@ abstract final class DiveShopCatalog {
               : stats.shopId,
           location: stats.location?.trim() ?? '',
           country: stats.country?.trim() ?? '',
-          continent: stats.continent?.trim().isNotEmpty == true
-              ? stats.continent!.trim()
-              : ContinentId.asia,
+          continent: stats.continent?.trim() ?? '',
           sites: const [],
           productName: stats.productName ?? '',
           stars: stats.diveStar,

@@ -18,7 +18,8 @@ const exploreOtherRegionId = 'other';
 
 /// Bundle shops by the six travel regions in [TravelCountryMaster].
 /// Country text is matched through aliases. A bare zone name such as
-/// 미크로네시아 still lands in the Pacific. Unmatched shops trail as 기타.
+/// 미크로네시아 still lands in the Pacific. When no place text matches, an
+/// explicit travel-region id on the shop is used. Unmatched shops trail as 기타.
 /// Regions with no shops are omitted.
 List<ExploreRegionGroup> exploreRegionGroups(
   List<DiveShop> shops, {

@@ -2520,6 +2520,13 @@ class DiverStore extends ChangeNotifier {
       nextGallery = const [];
       clearCover = true;
     }
+    final region = continent?.trim();
+    final nextProducts = region == null
+        ? null
+        : [
+            for (final product in previous?.products ?? const <ShopProduct>[])
+              product.copyWith(continent: region),
+          ];
     final patched = (previous ??
             ShopLiveStats(
               shopId: id,
@@ -2553,6 +2560,7 @@ class DiverStore extends ChangeNotifier {
           businessHours: businessHours?.trim(),
           country: country?.trim() ?? catalog?.country,
           continent: continent?.trim() ?? catalog?.continent,
+          products: nextProducts,
           curated: curated,
           coverUrl: nextCover,
           clearCoverUrl: clearCover,

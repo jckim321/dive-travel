@@ -3719,8 +3719,23 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
 
-    // Keep existing products list — never rewrite from profile save.
-    final products = current?.products ?? const <ShopProduct>[];
+    // Prices stay. A new country rewrites only each product's continent.
+    final region = continent?.trim();
+    final previousProducts = current?.products ?? const <ShopProduct>[];
+    final products = region == null
+        ? previousProducts
+        : [
+            for (final product in previousProducts)
+              product.copyWith(continent: region),
+          ];
+    if (region != null) {
+      final raws = _productRawByShop[shopId];
+      if (raws != null) {
+        for (final raw in raws.values) {
+          raw['continent'] = region;
+        }
+      }
+    }
 
     _shopStats[shopId] =
         (current ??

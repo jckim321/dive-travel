@@ -739,17 +739,32 @@ TravelCountry? travelCountryForShop(DiveShop shop) {
   return null;
 }
 
-/// Match a shop's country, then its place text, against the master list.
-String? travelRegionForShop(DiveShop shop) {
-  final country = travelCountryForShop(shop);
-  if (country != null) {
-    return country.regionId;
+/// A saved shop continent that is one of the six travel regions.
+/// Ocean/passport ids such as oceania and americas are not travel regions.
+String? explicitTravelRegion(String raw) {
+  final id = raw.trim();
+  if (id.isEmpty || id == TravelRegionId.all) {
+    return null;
   }
-  for (final raw in [shop.country, shop.location, ...shop.sites]) {
+  if (TravelRegionId.menu.contains(id)) {
+    return id;
+  }
+  return null;
+}
+
+/// Country text wins. A leftover place name cannot keep the previous region
+/// once the country field itself resolves. When no place text matches, an
+/// explicit travel-region id stored on the shop is used.
+String? travelRegionForShop(DiveShop shop) {
+  final fromCountry = TravelCountryMaster.regionIdFor(shop.country);
+  if (fromCountry != null) {
+    return fromCountry;
+  }
+  for (final raw in [shop.location, ...shop.sites]) {
     final id = TravelCountryMaster.regionIdFor(raw);
     if (id != null) {
       return id;
     }
   }
-  return null;
+  return explicitTravelRegion(shop.continent);
 }

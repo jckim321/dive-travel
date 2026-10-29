@@ -5,8 +5,10 @@ import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
+import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -226,5 +228,90 @@ void main() {
     expect(textOf(const Key('resort-name-field')), '푸른 리프');
     expect(textOf(const Key('resort-country-field')), '필리핀');
     expect(textOf(const Key('resort-region-field')), '보홀');
+  });
+
+  testWidgets('국가를 필리핀으로 바꾸면 권역이 아시아로 다시 정해진다', (tester) async {
+    tester.view.physicalSize = const Size(1100, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const shopId = 'malta-reef';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: '몰타 리프',
+      location: '몰타',
+      country: '몰타',
+      continent: TravelRegionId.europe,
+      productName: '몰타 다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+    );
+    await repo.saveShopProduct(
+      shopId: shopId,
+      product: ShopProduct(
+        id: 'p-malta',
+        shopId: shopId,
+        name: '몰타 다이빙',
+        consumerPrice: 100000,
+        professionalPrice: 80000,
+        continent: TravelRegionId.europe,
+        publishStatus: ProductPublishStatus.approved,
+        active: true,
+      ),
+    );
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(store: store, child: const SizedBox()),
+    );
+    await store.refreshShopStats();
+    await tester.pump();
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AdminConsoleTheme.dark,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ResortDeskScreen(shopId: shopId),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.enterText(
+      find.byKey(const Key('resort-country-field')),
+      '필리핀',
+    );
+    await tester.tap(find.byKey(const Key('resort-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final live = store.liveStatsFor(shopId);
+    expect(live?.country, '필리핀');
+    expect(live?.location, '몰타');
+    expect(live?.continent, TravelRegionId.asia);
+    expect(live?.products.single.continent, TravelRegionId.asia);
+
+    final listed = store.shops.singleWhere((shop) => shop.hullId == shopId);
+    expect(listed.country, '필리핀');
+    expect(travelRegionForShop(listed), TravelRegionId.asia);
+    expect(
+      exploreShopMatches(shop: listed, regionId: TravelRegionId.asia),
+      isTrue,
+    );
+    expect(
+      exploreShopMatches(shop: listed, regionId: TravelRegionId.europe),
+      isFalse,
+    );
+    expect(
+      exploreShopMatches(shop: listed, regionId: TravelRegionId.all),
+      isTrue,
+    );
   });
 }

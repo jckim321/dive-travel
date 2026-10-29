@@ -423,17 +423,21 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     setState(() => _saving = true);
     final store = _store ?? _storeRead(context);
     final typedCountry = _country.text.trim();
-    final picked = _pickedCountry;
-    final matched = picked != null && picked.name == typedCountry
-        ? picked
-        : TravelCountryMaster.match(typedCountry);
+    final matched = TravelCountryMaster.match(typedCountry);
+    final savedCountry = matched?.name ?? typedCountry;
+    final region = matched?.regionId ?? '';
+    _pickedCountry = matched;
+    _continent = region.isEmpty ? null : region;
+    if (matched != null && typedCountry != matched.name) {
+      _country.text = matched.name;
+    }
     try {
       final probe = await store.saveShopProfile(
         shopId: widget.shopId,
         name: name,
         location: _location.text,
-        country: typedCountry,
-        continent: (matched?.regionId ?? _continent)?.trim(),
+        country: savedCountry,
+        continent: region,
         productName: _listingProductName,
         consumerPrice: _listingConsumerPrice,
         professionalPrice: _listingProfessionalPrice,

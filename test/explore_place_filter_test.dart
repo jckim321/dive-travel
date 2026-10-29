@@ -19,13 +19,14 @@ void main() {
     required String id,
     required String country,
     String location = '',
+    String continent = '',
   }) {
     return DiveShop(
       id: id,
       name: id,
       location: location,
       country: country,
-      continent: ContinentId.asia,
+      continent: continent,
       sites: const [],
       productName: '펀다이빙',
       stars: 0,
@@ -67,6 +68,31 @@ void main() {
     );
     expect(
       exploreShopMatches(shop: lost, regionId: TravelRegionId.asia),
+      isFalse,
+    );
+    final savedAsia = shop(
+      id: 'saved-asia',
+      country: '없는나라',
+      location: '없는바다',
+      continent: TravelRegionId.asia,
+    );
+    final moved = shop(
+      id: 'moved',
+      country: '필리핀',
+      location: '몰타',
+      continent: TravelRegionId.europe,
+    );
+    expect(
+      exploreShopMatches(shop: savedAsia, regionId: TravelRegionId.asia),
+      isTrue,
+    );
+    expect(
+      exploreShopMatches(shop: savedAsia, regionId: TravelRegionId.europe),
+      isFalse,
+    );
+    expect(travelRegionForShop(moved), TravelRegionId.asia);
+    expect(
+      exploreShopMatches(shop: moved, regionId: TravelRegionId.europe),
       isFalse,
     );
     expect(travelCountryForShop(zone), isNull);
