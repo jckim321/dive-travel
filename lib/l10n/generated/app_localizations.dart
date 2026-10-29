@@ -7656,6 +7656,12 @@ abstract class AppLocalizations {
   /// **'옵션 강사 우대가'**
   String get productFormOptionPro;
 
+  /// No description provided for @productFormProPriceHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'비워 두면 소비자가와 같습니다.'**
+  String get productFormProPriceHint;
+
   /// No description provided for @productFormAddOption.
   ///
   /// In ko, this message translates to:

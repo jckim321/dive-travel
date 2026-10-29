@@ -4050,6 +4050,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get productFormOptionPro => '옵션 강사 우대가';
 
   @override
+  String get productFormProPriceHint => '비워 두면 소비자가와 같습니다.';
+
+  @override
   String get productFormAddOption => '구성 옵션 추가';
 
   @override

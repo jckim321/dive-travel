@@ -4172,6 +4172,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productFormOptionPro => 'Pro price';
 
   @override
+  String get productFormProPriceHint => 'Leave blank to use the guest price.';
+
+  @override
   String get productFormAddOption => 'Add option';
 
   @override

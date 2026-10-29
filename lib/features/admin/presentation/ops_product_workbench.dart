@@ -101,6 +101,17 @@ _OfferDetailParts _splitOfferDetail(String raw) {
   );
 }
 
+/// Blank instructor price means "same as the consumer price".
+String instructorPriceDraft({
+  required int consumer,
+  required int professional,
+}) {
+  if (professional <= 0 || professional == consumer) {
+    return '';
+  }
+  return '$professional';
+}
+
 String _packOfferDetail(String lead, String includes, String excludes) {
   final head = lead.trim();
   final inc = includes.trim();
@@ -186,6 +197,7 @@ class _IndividualTicket {
     String name = '',
     String lead = '',
     String consumer = '',
+    String professional = '',
     String includes = '',
     String excludes = '',
     this.bookable = true,
@@ -195,6 +207,7 @@ class _IndividualTicket {
        name = TextEditingController(text: name),
        lead = TextEditingController(text: lead),
        consumer = TextEditingController(text: consumer),
+       professional = TextEditingController(text: professional),
        includes = TextEditingController(text: includes),
        excludes = TextEditingController(text: excludes),
        consumerFocus = FocusNode(),
@@ -208,6 +221,10 @@ class _IndividualTicket {
       name: option.name,
       lead: parts.hasMarkers ? parts.lead : '',
       consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
+      professional: instructorPriceDraft(
+        consumer: option.consumerPrice,
+        professional: option.professionalPrice,
+      ),
       includes: parts.hasMarkers ? parts.includes : raw,
       excludes: parts.excludes,
       bookable: option.bookable,
@@ -220,6 +237,7 @@ class _IndividualTicket {
   final TextEditingController name;
   final TextEditingController lead;
   final TextEditingController consumer;
+  final TextEditingController professional;
   final TextEditingController includes;
   final TextEditingController excludes;
   final bool plainDescription;
@@ -271,7 +289,7 @@ class _IndividualTicket {
       name: name.text.trim(),
       description: descriptionText,
       consumerPrice: price,
-      professionalPrice: price,
+      professionalPrice: parsePositivePrice(professional.text) ?? price,
       kind: ProductOptionKind.individual,
       bookable: bookable,
       group: normalizeOptionGroup(group),
@@ -293,6 +311,7 @@ class _IndividualTicket {
     name.dispose();
     lead.dispose();
     consumer.dispose();
+    professional.dispose();
     includes.dispose();
     excludes.dispose();
     consumerFocus.dispose();
@@ -320,6 +339,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   late final TextEditingController _cancel;
   final _rateEnabled = <GuestRole, bool>{};
   final _rateConsumer = <GuestRole, TextEditingController>{};
+  late final TextEditingController _diverProfessional;
   final _addons = <_LineEditors>[];
   final _individuals = <_IndividualTicket>[];
   final _creatorOfferIds = <String>[];
@@ -486,6 +506,19 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   : ''),
       );
     }
+    final diverSaved = existing?.guestRates
+        .where((rate) => rate.role == GuestRole.diver)
+        .firstOrNull;
+    final diverConsumerSaved =
+        diverSaved?.consumer ?? existing?.consumerPrice ?? 0;
+    final diverProSaved =
+        diverSaved?.professional ?? existing?.professionalPrice ?? 0;
+    _diverProfessional = TextEditingController(
+      text: instructorPriceDraft(
+        consumer: diverConsumerSaved,
+        professional: diverProSaved,
+      ),
+    );
     _hasNondivers =
         (_rateEnabled[GuestRole.nondiver] ?? false) ||
         (_rateEnabled[GuestRole.child] ?? false);
@@ -526,9 +559,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           name: option.name,
           description: option.description,
           consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
-          professional: option.professionalPrice > 0
-              ? '${option.professionalPrice}'
-              : '',
+          professional: instructorPriceDraft(
+            consumer: option.consumerPrice,
+            professional: option.professionalPrice,
+          ),
           kind: option.kind,
           bookable: option.bookable,
           group: option.group,
@@ -548,9 +582,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           name: option.name,
           description: option.description,
           consumer: option.consumerPrice > 0 ? '${option.consumerPrice}' : '',
-          professional: option.professionalPrice > 0
-              ? '${option.professionalPrice}'
-              : '',
+          professional: instructorPriceDraft(
+            consumer: option.consumerPrice,
+            professional: option.professionalPrice,
+          ),
           kind: ProductOptionKind.addon,
           bookable: option.bookable,
           group: option.group,
@@ -598,6 +633,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _trackDraft(_excludes);
     _trackDraft(_resortName);
     _trackDraft(_rateConsumer[GuestRole.diver]!);
+    _trackDraft(_diverProfessional);
     _trackDraft(_rateConsumer[GuestRole.nondiver]!);
     _trackDraft(_rateConsumer[GuestRole.child]!);
     if (widget.creatorMode) {
@@ -774,12 +810,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ].join('|');
     final addonSig = [
       for (final a in _addons)
-        '${a.name.text}|${a.consumer.text}|${a.description.text}|${a.includes.text}|${a.excludes.text}',
+        '${a.name.text}|${a.consumer.text}|${a.professional.text}|${a.description.text}|${a.includes.text}|${a.excludes.text}',
     ].join(';');
     final ticketSig = [
       for (final t in _individuals)
-        '${t.name.text}|${t.consumer.text}|${t.lead.text}|${t.includes.text}|${t.excludes.text}|${[
-          for (final a in t.addons) '${a.name.text}|${a.consumer.text}',
+        '${t.name.text}|${t.consumer.text}|${t.professional.text}|${t.lead.text}|${t.includes.text}|${t.excludes.text}|${[
+          for (final a in t.addons) '${a.name.text}|${a.consumer.text}|${a.professional.text}',
         ].join(',')}',
     ].join(';');
     return [
@@ -797,6 +833,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _departureStart?.toIso8601String() ?? '',
       _hasNondivers,
       _rateConsumer[GuestRole.diver]?.text ?? '',
+      _diverProfessional.text,
       _rateConsumer[GuestRole.nondiver]?.text ?? '',
       _rateConsumer[GuestRole.child]?.text ?? '',
       _namedResort,
@@ -1026,6 +1063,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _bindCreatorAutosave(ticket.name);
     _bindCreatorAutosave(ticket.lead);
     _bindCreatorAutosave(ticket.consumer);
+    _bindCreatorAutosave(ticket.professional);
     _bindCreatorAutosave(ticket.includes);
     _bindCreatorAutosave(ticket.excludes);
     for (final line in ticket.addons) {
@@ -1037,6 +1075,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _unbindCreatorAutosave(ticket.name);
     _unbindCreatorAutosave(ticket.lead);
     _unbindCreatorAutosave(ticket.consumer);
+    _unbindCreatorAutosave(ticket.professional);
     _unbindCreatorAutosave(ticket.includes);
     _unbindCreatorAutosave(ticket.excludes);
     for (final line in ticket.addons) {
@@ -1134,6 +1173,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     for (final controller in _rateConsumer.values) {
       controller.dispose();
     }
+    _diverProfessional.dispose();
     for (final item in _addons) {
       item.dispose();
     }
@@ -1586,7 +1626,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         name: name,
         description: _blurb.text.trim(),
         consumerPrice: diverPrice,
-        professionalPrice: diverPrice,
+        professionalPrice:
+            parsePositivePrice(_diverProfessional.text) ?? diverPrice,
         kind: ProductOptionKind.basePackage,
       ),
       for (final draft in _addons)
@@ -1710,11 +1751,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       final sessionUid = store.uid ?? '';
       final diverConsumer =
           parsePositivePrice(_rateConsumer[GuestRole.diver]!.text) ?? 0;
+      final diverPro =
+          parsePositivePrice(_diverProfessional.text) ?? diverConsumer;
       final diverRate = GuestRate(
         role: GuestRole.diver,
         enabled: _rateEnabled[GuestRole.diver] ?? true,
         consumer: diverConsumer,
-        professional: diverConsumer,
+        professional: diverPro,
       );
       final guestRates = [
         for (final role in GuestRole.values)
@@ -1726,7 +1769,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               GuestRole.infant => false,
             },
             consumer: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
-            professional: parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
+            professional: role == GuestRole.diver
+                ? diverPro
+                : parsePositivePrice(_rateConsumer[role]!.text) ?? 0,
           ),
       ];
       _classifyCreatorGroups();
@@ -3893,6 +3938,24 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  Widget _instructorPriceField({
+    required Key key,
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+  }) {
+    return TextField(
+      key: key,
+      controller: controller,
+      keyboardType: TextInputType.number,
+      maxLength: kWorkbenchPriceInputMaxLength,
+      inputFormatters: _priceInputFormatters,
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: _partnerField(label, hint: hint).copyWith(counterText: ''),
+    );
+  }
+
   Widget _partnerPricingSection(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3918,20 +3981,36 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         const SizedBox(height: 8),
         KeyedSubtree(
           key: _diverPriceFieldKey,
-          child: TextField(
-            key: const Key('workbench-diver-price'),
-            focusNode: _diverPriceFocus,
-            controller: _rateConsumer[GuestRole.diver],
-            keyboardType: TextInputType.number,
-            maxLength: kWorkbenchPriceInputMaxLength,
-            inputFormatters: _priceInputFormatters,
-            style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-            cursorColor: PartnerTheme.accent,
-            decoration: _partnerField(
-              l10n.partnerFormBasePrice,
-              errorText: _diverPriceError,
-            ).copyWith(counterText: ''),
-            onChanged: (_) => setState(() => _diverPriceError = null),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('workbench-diver-price'),
+                  focusNode: _diverPriceFocus,
+                  controller: _rateConsumer[GuestRole.diver],
+                  keyboardType: TextInputType.number,
+                  maxLength: kWorkbenchPriceInputMaxLength,
+                  inputFormatters: _priceInputFormatters,
+                  style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+                  cursorColor: PartnerTheme.accent,
+                  decoration: _partnerField(
+                    l10n.partnerFormBasePrice,
+                    errorText: _diverPriceError,
+                  ).copyWith(counterText: ''),
+                  onChanged: (_) => setState(() => _diverPriceError = null),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _instructorPriceField(
+                  key: const Key('workbench-diver-pro-price'),
+                  controller: _diverProfessional,
+                  label: l10n.exploreProPrice,
+                  hint: l10n.productFormProPriceHint,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -4168,6 +4247,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: _instructorPriceField(
+                    key: ValueKey('addon-pro-${draft.id}'),
+                    controller: draft.professional,
+                    label: l10n.productFormOptionPro,
+                    hint: l10n.productFormProPriceHint,
+                  ),
+                ),
                 IconButton(
                   onPressed: () {
                     if (_closeOptionInsteadOfRemove(draft)) {
@@ -4248,30 +4337,46 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               onChanged: (next) => setState(() => ticket.group = next),
             ),
             const SizedBox(height: 8),
-            KeyedSubtree(
-              key: ticket.priceKey,
-              child: _StableField(
-                key: ValueKey('individual-price-slot-${ticket.id}'),
-                stamp: ticket.priceError,
-                buildField: () => TextField(
-                  key: ValueKey('partner-form-individual-price-${ticket.id}'),
-                  focusNode: ticket.consumerFocus,
-                  controller: ticket.consumer,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: _priceInputFormatters,
-                  cursorColor: PartnerTheme.accent,
-                  style: const TextStyle(color: PartnerTheme.text),
-                  decoration: _partnerField(
-                    l10n.partnerFormBasePrice,
-                    errorText: ticket.priceError,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: KeyedSubtree(
+                    key: ticket.priceKey,
+                    child: _StableField(
+                      key: ValueKey('individual-price-slot-${ticket.id}'),
+                      stamp: ticket.priceError,
+                      buildField: () => TextField(
+                        key: ValueKey('partner-form-individual-price-${ticket.id}'),
+                        focusNode: ticket.consumerFocus,
+                        controller: ticket.consumer,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: _priceInputFormatters,
+                        cursorColor: PartnerTheme.accent,
+                        style: const TextStyle(color: PartnerTheme.text),
+                        decoration: _partnerField(
+                          l10n.partnerFormBasePrice,
+                          errorText: ticket.priceError,
+                        ),
+                        onChanged: (_) {
+                          if (ticket.priceError != null) {
+                            setState(() => ticket.priceError = null);
+                          }
+                        },
+                      ),
+                    ),
                   ),
-                  onChanged: (_) {
-                    if (ticket.priceError != null) {
-                      setState(() => ticket.priceError = null);
-                    }
-                  },
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _instructorPriceField(
+                    key: ValueKey('individual-pro-${ticket.id}'),
+                    controller: ticket.professional,
+                    label: l10n.exploreProPrice,
+                    hint: l10n.productFormProPriceHint,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             _StableField(
@@ -4376,6 +4481,15 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                     },
                   ),
                 ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _instructorPriceField(
+                key: ValueKey('nested-addon-pro-${draft.id}'),
+                controller: draft.professional,
+                label: l10n.productFormOptionPro,
+                hint: l10n.productFormProPriceHint,
               ),
             ),
             IconButton(

@@ -1715,6 +1715,7 @@
   "productFormOptionDesc": "Option details",
   "productFormOptionConsumer": "Guest price",
   "productFormOptionPro": "Pro price",
+  "productFormProPriceHint": "Leave blank to use the guest price.",
   "productFormAddOption": "Add option",
   "productFormRemoveOption": "Remove option",
   "productFormPhotoHint": "Square (1:1) preferred for cards and detail.",
