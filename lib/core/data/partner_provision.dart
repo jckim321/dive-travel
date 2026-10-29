@@ -75,6 +75,72 @@ class PartnerProvisionResult {
   bool get needsChoice => choices.length > 1;
 }
 
+/// Which provision write failed. [none] is a check before those writes.
+enum PartnerProvisionStep { none, shop, account, link }
+
+/// The step that failed, plus the underlying code and message.
+class PartnerProvisionFailure implements Exception {
+  const PartnerProvisionFailure({
+    required this.step,
+    required this.code,
+    required this.message,
+    this.accountCreated = false,
+  });
+
+  factory PartnerProvisionFailure.wrap(
+    Object error, {
+    PartnerProvisionStep step = PartnerProvisionStep.none,
+    bool accountCreated = false,
+  }) {
+    if (error is PartnerProvisionFailure) {
+      return error;
+    }
+    return PartnerProvisionFailure(
+      step: step,
+      code: partnerProvisionErrorCode(error),
+      message: partnerProvisionErrorMessage(error),
+      accountCreated: accountCreated,
+    );
+  }
+
+  final PartnerProvisionStep step;
+  final String code;
+  final String message;
+  final bool accountCreated;
+}
+
+String partnerProvisionErrorCode(Object error) {
+  if (error is StateError) {
+    return error.message;
+  }
+  final code = _field(error, 'code');
+  if (code is String && code.trim().isNotEmpty) {
+    return code.trim();
+  }
+  return error.runtimeType.toString();
+}
+
+String partnerProvisionErrorMessage(Object error) {
+  if (error is StateError) {
+    return error.message;
+  }
+  final message = _field(error, 'message');
+  if (message is String && message.trim().isNotEmpty) {
+    return message.trim();
+  }
+  final text = '$error'.trim();
+  return text.isEmpty ? partnerProvisionErrorCode(error) : text;
+}
+
+Object? _field(Object error, String name) {
+  try {
+    final dynamic blown = error;
+    return name == 'code' ? blown.code : blown.message;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Validate, resolve one shop hull, create a diver only when missing, then
 /// promote that hull. Does not write the password anywhere.
 Future<PartnerProvisionResult> runPartnerProvision({
@@ -114,7 +180,7 @@ Future<PartnerProvisionResult> runPartnerProvision({
   if (selected.isNotEmpty) {
     hull = partnerShopHull(selected);
   } else {
-    final shop = await ensureShop(name);
+    final shop = await _guard(PartnerProvisionStep.shop, () => ensureShop(name));
     if (shop.needsChoice) {
       return PartnerProvisionResult.choose(shop.choices);
     }
@@ -123,7 +189,10 @@ Future<PartnerProvisionResult> runPartnerProvision({
   if (hull.isEmpty || hull.contains('--')) {
     throw StateError('SHOP_HULL_EMPTY');
   }
-  final existing = await findLogin(stored);
+  final existing = await _guard(
+    PartnerProvisionStep.account,
+    () => findLogin(stored),
+  );
   if (existing != null && existing.isBusiness) {
     if (partnerShopHull(existing.ownedShopId) == hull) {
       return PartnerProvisionResult.ready(
@@ -136,24 +205,33 @@ Future<PartnerProvisionResult> runPartnerProvision({
     }
     throw StateError('ALREADY_PARTNER');
   }
-  if (await hullClaimedByOther(hull, existing?.uid ?? '')) {
+  if (await _guard(
+    PartnerProvisionStep.account,
+    () => hullClaimedByOther(hull, existing?.uid ?? ''),
+  )) {
     throw StateError('SHOP_ALREADY_OWNED');
   }
   final adminUid = primaryUid();
   late final String uid;
   var createdAccount = false;
   if (existing == null || !existing.hasUserDoc) {
-    final made = await createDiver(
-      PartnerDiverDraft(
-        email: email,
-        password: password,
-        displayName: name,
-        storedLoginId: stored,
-        signInExisting: existing != null && !existing.hasUserDoc,
-      ),
-    );
+    final made = await _guard(PartnerProvisionStep.account, () {
+      return createDiver(
+        PartnerDiverDraft(
+          email: email,
+          password: password,
+          displayName: name,
+          storedLoginId: stored,
+          signInExisting: existing != null && !existing.hasUserDoc,
+        ),
+      );
+    });
     if (primaryUid() != adminUid) {
-      throw StateError('ADMIN_SESSION_LOST');
+      throw const PartnerProvisionFailure(
+        step: PartnerProvisionStep.account,
+        code: 'ADMIN_SESSION_LOST',
+        message: 'ADMIN_SESSION_LOST',
+      );
     }
     uid = made.uid;
     createdAccount = made.createdAuth;
@@ -167,8 +245,12 @@ Future<PartnerProvisionResult> runPartnerProvision({
       actorUid: actorUid,
       actorName: actorName,
     );
-  } catch (_) {
-    throw StateError(createdAccount ? 'ACCOUNT_CREATED' : 'PROMOTE_FAILED');
+  } catch (error) {
+    throw PartnerProvisionFailure.wrap(
+      error,
+      step: PartnerProvisionStep.link,
+      accountCreated: createdAccount,
+    );
   }
   return PartnerProvisionResult.ready(
     loginId: stored,
@@ -187,6 +269,17 @@ String generatePartnerPassword() {
     12,
     (_) => alphabet[random.nextInt(alphabet.length)],
   ).join();
+}
+
+Future<T> _guard<T>(
+  PartnerProvisionStep step,
+  Future<T> Function() body,
+) async {
+  try {
+    return await body();
+  } catch (error) {
+    throw PartnerProvisionFailure.wrap(error, step: step);
+  }
 }
 
 String _loginIssueCode(NameTagIssue issue) {

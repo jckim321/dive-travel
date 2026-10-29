@@ -14,6 +14,20 @@ void main() {
     expect(generatePartnerPassword().length, 12);
   });
 
+  test('a shop failure shows the step, code, and message', () {
+    final text = partnerCreateFailureText(
+      const PartnerProvisionFailure(
+        step: PartnerProvisionStep.shop,
+        code: 'permission-denied',
+        message: 'Missing or insufficient permissions.',
+      ),
+    );
+    expect(text, contains('샵 만들기'));
+    expect(text, contains('permission-denied'));
+    expect(text, contains('Missing or insufficient permissions.'));
+    expect(text, isNot(contains('만들지 못했어요')));
+  });
+
   test('fixPartnerShopHull keeps the partner and drops the product suffix', () async {
     final repo = MemoryDiverRepository.forTest(isAdmin: true);
     await repo.promoteMemberToPartner(
@@ -124,6 +138,8 @@ void main() {
 
     expect(find.byKey(const Key('admin-create-partner-failure')), findsOneWidget);
     expect(find.textContaining('계정은 만들어졌어요'), findsOneWidget);
+    expect(find.textContaining('회원 연결'), findsOneWidget);
+    expect(find.textContaining('PROMOTE_FAILED'), findsOneWidget);
     expect(find.text('임시 비밀번호 wave-pass-2'), findsOneWidget);
     harness.dispose();
   });

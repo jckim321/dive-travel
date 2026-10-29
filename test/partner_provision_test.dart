@@ -69,11 +69,10 @@ void main() {
         actorName: 'Admin',
       ),
       throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          'ACCOUNT_CREATED',
-        ),
+        isA<PartnerProvisionFailure>()
+            .having((error) => error.step, 'step', PartnerProvisionStep.link)
+            .having((error) => error.code, 'code', 'PROMOTE_FAILED')
+            .having((error) => error.accountCreated, 'accountCreated', isTrue),
       ),
     );
     expect(repo.partnerAuthCreateCount, 1);
@@ -127,15 +126,57 @@ void main() {
         primaryUid: () => adminUid,
       ),
       throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          'ADMIN_SESSION_LOST',
-        ),
+        isA<PartnerProvisionFailure>()
+            .having((error) => error.step, 'step', PartnerProvisionStep.account)
+            .having((error) => error.code, 'code', 'ADMIN_SESSION_LOST'),
       ),
     );
     expect(promoted, isFalse);
   });
+
+  test('a shop create failure keeps the step, code, and message', () async {
+    await expectLater(
+      runPartnerProvision(
+        shopName: 'Ocean Dive',
+        loginId: loginId,
+        password: password,
+        actorUid: 'admin-1',
+        actorName: 'Admin',
+        ensureShop: (_) async => throw const _CodedFailure(
+          'permission-denied',
+          'Missing or insufficient permissions.',
+        ),
+        findLogin: (_) async => null,
+        hullClaimedByOther: (hullId, exceptUid) async => false,
+        createDiver: (draft) async =>
+            const ProvisionedDiver(uid: 'new-diver', createdAuth: true),
+        promote: ({
+          required uid,
+          required hullId,
+          required actorUid,
+          required actorName,
+        }) async {},
+        primaryUid: () => 'admin-1',
+      ),
+      throwsA(
+        isA<PartnerProvisionFailure>()
+            .having((error) => error.step, 'step', PartnerProvisionStep.shop)
+            .having((error) => error.code, 'code', 'permission-denied')
+            .having(
+              (error) => error.message,
+              'message',
+              'Missing or insufficient permissions.',
+            ),
+      ),
+    );
+  });
+}
+
+class _CodedFailure {
+  const _CodedFailure(this.code, this.message);
+
+  final String code;
+  final String message;
 }
 
 String _storedBlob(MemoryDiverRepository repo, MemberAccount member) {

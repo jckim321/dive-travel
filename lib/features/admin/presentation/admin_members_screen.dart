@@ -1198,6 +1198,31 @@ String _provisionMessage(String code) {
   };
 }
 
+/// Step, error code, and message shown in the create-partner dialog.
+String partnerCreateFailureText(PartnerProvisionFailure error) {
+  final step = switch (error.step) {
+    PartnerProvisionStep.shop => '샵 만들기',
+    PartnerProvisionStep.account => '로그인 계정 만들기',
+    PartnerProvisionStep.link => '회원 연결',
+    PartnerProvisionStep.none => '',
+  };
+  final friendly = _provisionMessage(error.code);
+  final generic = friendly.startsWith('만들지 못했어요');
+  final lines = <String>[
+    if (step.isNotEmpty) step,
+    if (!generic) friendly,
+    if (error.code.isNotEmpty) error.code,
+    if (error.message.isNotEmpty &&
+        error.message != error.code &&
+        error.message != friendly)
+      error.message,
+  ];
+  if (lines.isEmpty) {
+    return friendly;
+  }
+  return lines.join('\n');
+}
+
 class _CreatePartnerDialog extends StatefulWidget {
   const _CreatePartnerDialog({required this.store});
 
@@ -1271,17 +1296,17 @@ class _CreatePartnerDialogState extends State<_CreatePartnerDialog> {
       });
     } catch (error) {
       if (!mounted) return;
-      final code = error is StateError ? '${error.message}' : '';
+      final failure = PartnerProvisionFailure.wrap(error);
+      final detail = partnerCreateFailureText(failure);
       setState(() {
         _busy = false;
-        if (code == 'ACCOUNT_CREATED') {
+        if (failure.accountCreated) {
           _done = true;
           _loginShown = AuthIdentity.storedLoginId(_login.text);
           _passwordShown = _password.text;
-          _failure =
-              '계정은 만들어졌어요. 파트너 지정은 실패했어요. 같은 아이디로 다시 누르면 지정만 이어 갑니다.';
+          _failure = '계정은 만들어졌어요. 회원 연결은 실패했어요.\n$detail';
         } else {
-          _error = _provisionMessage(code);
+          _error = detail;
         }
       });
     }
