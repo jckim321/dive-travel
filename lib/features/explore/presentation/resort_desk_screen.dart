@@ -88,6 +88,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   final _photoPicker = const DivePhotoPicker();
   final List<BookingGalleryItem> _slots = [];
   var _seeded = false;
+  var _askedStats = false;
+  var _nameTouched = false;
+  var _countryTouched = false;
+  var _regionTouched = false;
   var _galleryTouched = false;
   var _gallerySeedDone = false;
   var _saving = false;
@@ -130,6 +134,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final live = store.liveStatsFor(widget.shopId);
     final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
         DiveShopCatalog.byId(widget.shopId);
+    final placeChanged = _applySavedPlace(live, hull);
     if (!_gallerySeedDone &&
         !_galleryTouched &&
         _slots.isEmpty &&
@@ -139,12 +144,61 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     }
     final primary = _primaryProduct(live);
     final sig = _optionsSignature(primary);
-    if (sig != _optionsSig || _cachedPrimary == null) {
+    if (sig != _optionsSig || _cachedPrimary == null || placeChanged) {
       setState(() {
         _optionsSig = sig;
         _cachedPrimary = primary;
       });
     }
+  }
+
+  /// Fills shop name, country, and region once the saved shop is available.
+  /// A field the user already edited stays as they left it.
+  bool _applySavedPlace(ShopLiveStats? live, DiveShop? hull) {
+    String saved(String? primary, String? fallback) {
+      final first = (primary ?? '').trim();
+      if (first.isNotEmpty) {
+        return first;
+      }
+      final second = (fallback ?? '').trim();
+      if (second.isEmpty || second == widget.shopId) {
+        return '';
+      }
+      return second;
+    }
+
+    var changed = false;
+    if (!_nameTouched && _name.text.trim().isEmpty) {
+      final name = saved(live?.name, hull?.name);
+      if (name.isNotEmpty) {
+        _name.text = name;
+        changed = true;
+      }
+    }
+    if (!_countryTouched && _country.text.trim().isEmpty) {
+      final country = saved(live?.country, hull?.country);
+      if (country.isNotEmpty) {
+        _country.text = country;
+        _pickedCountry = TravelCountryMaster.match(country);
+        changed = true;
+      }
+    }
+    if (!_regionTouched && _location.text.trim().isEmpty) {
+      final region = saved(live?.location, hull?.location);
+      if (region.isNotEmpty) {
+        _location.text = region;
+        changed = true;
+      }
+    }
+    if ((_continent ?? '').trim().isEmpty) {
+      final continent =
+          (_pickedCountry?.regionId ?? live?.continent ?? hull?.continent)
+              ?.trim();
+      if (continent != null && continent.isNotEmpty) {
+        _continent = continent;
+      }
+    }
+    return changed;
   }
 
   @override
@@ -156,6 +210,14 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       _storeListening = true;
       store.addListener(_handleStoreTick);
     }
+    if (!_askedStats) {
+      _askedStats = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(store.ensureShopStatsLoaded());
+        }
+      });
+    }
     if (_seeded) {
       return;
     }
@@ -163,11 +225,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final hull = store.listingsOnHull(widget.shopId).firstOrNull ??
         DiveShopCatalog.byId(widget.shopId);
     final live = store.liveStatsFor(widget.shopId);
-    _name.text = live?.name ?? hull?.name ?? '';
-    _country.text = (live?.country ?? hull?.country ?? '').trim();
-    _continent = (live?.continent ?? hull?.continent)?.trim();
-    _pickedCountry = TravelCountryMaster.match(_country.text);
-    _location.text = live?.location ?? hull?.location ?? '';
+    _applySavedPlace(live, hull);
     _address.text = live?.address ?? hull?.address ?? '';
     _intro.text = live?.intro ?? hull?.intro ?? '';
     _listingProductName = live?.productName ?? hull?.productName ?? '';
@@ -561,6 +619,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 palette: palette,
                 hint: l10n.exploreDeskHint,
                 name: _name,
+                onNameEdited: () => _nameTouched = true,
                 countryField: TravelCountryField(
                   controller: _country,
                   fieldKey: const Key('resort-country-field'),
@@ -572,15 +631,21 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     label: l10n.productFormCuratedCountry,
                     required: true,
                   ),
+                  onEdited: () => _countryTouched = true,
                   onPicked: (country) {
+                    _countryTouched = true;
                     setState(() {
                       _pickedCountry = country;
                       _continent = country.regionId;
                     });
                   },
-                  onCustom: () => setState(() => _pickedCountry = null),
+                  onCustom: () {
+                    _countryTouched = true;
+                    setState(() => _pickedCountry = null);
+                  },
                 ),
                 location: _location,
+                onRegionEdited: () => _regionTouched = true,
                 address: _address,
                 intro: _intro,
                 info: _info,
@@ -850,8 +915,10 @@ class _DeskMainColumn extends StatelessWidget {
     required this.palette,
     required this.hint,
     required this.name,
+    required this.onNameEdited,
     required this.countryField,
     required this.location,
+    required this.onRegionEdited,
     required this.address,
     required this.intro,
     required this.info,
@@ -868,8 +935,10 @@ class _DeskMainColumn extends StatelessWidget {
   final _DeskPalette palette;
   final String hint;
   final TextEditingController name;
+  final VoidCallback onNameEdited;
   final Widget countryField;
   final TextEditingController location;
+  final VoidCallback onRegionEdited;
   final TextEditingController address;
   final TextEditingController intro;
   final ResortDeskInfoDraft info;
@@ -906,6 +975,7 @@ class _DeskMainColumn extends StatelessWidget {
                 controller: name,
                 style: palette.fieldStyle,
                 cursorColor: palette.primary,
+                onChanged: (_) => onNameEdited(),
                 decoration: _deskInputDecoration(
                   palette: palette,
                   label: l10n.partnerShopName,
@@ -920,6 +990,7 @@ class _DeskMainColumn extends StatelessWidget {
                 controller: location,
                 style: palette.fieldStyle,
                 cursorColor: palette.primary,
+                onChanged: (_) => onRegionEdited(),
                 decoration: _deskInputDecoration(
                   palette: palette,
                   label: l10n.productFormCuratedLocation,

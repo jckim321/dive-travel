@@ -105,4 +105,126 @@ void main() {
       '새 리프',
     );
   });
+
+  testWidgets('샵 목록이 늦게 도착해도 빈 이름·국가·지역을 저장된 값으로 채운다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1100, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const shopId = 'late-reef';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(store: store, child: const SizedBox()),
+    );
+    await store.refreshShopStats();
+    await tester.pump();
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AdminConsoleTheme.dark,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ResortDeskScreen(shopId: shopId),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    String textOf(Key key) {
+      return tester.widget<TextField>(find.byKey(key)).controller?.text ?? '';
+    }
+
+    expect(textOf(const Key('resort-name-field')), isEmpty);
+    expect(textOf(const Key('resort-country-field')), isEmpty);
+    expect(textOf(const Key('resort-region-field')), isEmpty);
+
+    await tester.enterText(
+      find.byKey(const Key('resort-name-field')),
+      '직접 입력',
+    );
+
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: '푸른 리프',
+      location: '보홀',
+      country: '필리핀',
+      continent: TravelRegionId.asia,
+      productName: '펀다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+      intro: '옛 소개',
+    );
+    await store.refreshShopStats();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(textOf(const Key('resort-name-field')), '직접 입력');
+    expect(textOf(const Key('resort-country-field')), '필리핀');
+    expect(textOf(const Key('resort-region-field')), '보홀');
+  });
+
+  testWidgets('아직 입력하지 않은 이름도 저장된 샵 이름으로 채워진다', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1100, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const shopId = 'late-name';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(store: store, child: const SizedBox()),
+    );
+    await store.refreshShopStats();
+    await tester.pump();
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AdminConsoleTheme.dark,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ResortDeskScreen(shopId: shopId),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: '푸른 리프',
+      location: '보홀',
+      country: '필리핀',
+      continent: TravelRegionId.asia,
+      productName: '펀다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+      intro: '옛 소개',
+    );
+    await store.refreshShopStats();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    String textOf(Key key) {
+      return tester.widget<TextField>(find.byKey(key)).controller?.text ?? '';
+    }
+
+    expect(textOf(const Key('resort-name-field')), '푸른 리프');
+    expect(textOf(const Key('resort-country-field')), '필리핀');
+    expect(textOf(const Key('resort-region-field')), '보홀');
+  });
 }
