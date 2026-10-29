@@ -12,7 +12,6 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
-import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -106,20 +105,6 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
               ),
               icon: const Icon(Icons.add_box_outlined),
               label: Text(l10n.adminProductsTitle),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: store.shopStats.isEmpty
-                  ? null
-                  : () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => ResortDeskScreen(
-                            shopId: store.shopStats.first.shopId,
-                          ),
-                        ),
-                      ),
-              icon: const Icon(Icons.photo_library_outlined),
-              label: Text(l10n.exploreEditResort),
             ),
             const SizedBox(height: 24),
             Text(
