@@ -98,12 +98,38 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
             if (_inFilter(member) && _matchesQuery(member, q)) member,
         ]..sort(compareMembersByRecentLogin);
         final missing = [for (final m in visible) if (m.missingProfile) m];
+        final pending = store.pendingInstructors;
+        final pendingUids = {for (final item in pending) item.uid};
         return Material(
           color: AdminConsoleTheme.bg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _Header(embedded: widget.embedded),
+              if (pending.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Material(
+                    color: const Color(0xFF3D3218),
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      key: const Key('admin-members-pending-banner'),
+                      onTap: widget.onOpenInstructors,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        child: Text(
+                          '강사 인증 대기 ${pending.length}건 ›',
+                          key: const Key('admin-members-pending-banner-label'),
+                          style: const TextStyle(
+                            color: Color(0xFFE2B15A),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -199,6 +225,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     for (final member in visible)
                       _MemberRow(
                         member: member,
+                        pendingVerification: pendingUids.contains(member.uid),
                         onOpen: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -414,10 +441,15 @@ class _StatCard extends StatelessWidget {
 }
 
 class _MemberRow extends StatelessWidget {
-  const _MemberRow({required this.member, required this.onOpen});
+  const _MemberRow({
+    required this.member,
+    required this.onOpen,
+    this.pendingVerification = false,
+  });
 
   final MemberAccount member;
   final VoidCallback onOpen;
+  final bool pendingVerification;
 
   @override
   Widget build(BuildContext context) {
@@ -472,6 +504,18 @@ class _MemberRow extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (pendingVerification) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '인증 대기',
+                        key: Key('admin-member-pending-${member.uid}'),
+                        style: const TextStyle(
+                          color: Color(0xFFE2B15A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                     if (member.loginBlocked)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
