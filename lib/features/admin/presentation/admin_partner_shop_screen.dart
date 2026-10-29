@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_dive_star_assessment_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
@@ -46,10 +47,26 @@ class AdminPartnerShopScreen extends StatefulWidget {
 
 class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
   final _note = TextEditingController();
+  final _ownerQuery = TextEditingController();
+  final _ownerName = TextEditingController();
   var _status = ShopOperatingStatus.active;
   var _seeded = false;
   var _saving = false;
+  var _ownerSaving = false;
+  MemberAccount? _ownerMatch;
+  String? _ownerError;
   var _events = const <ShopOperatingEvent>[];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureAdminInboxLoaded());
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -67,6 +84,8 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
   @override
   void dispose() {
     _note.dispose();
+    _ownerQuery.dispose();
+    _ownerName.dispose();
     super.dispose();
   }
 
@@ -111,6 +130,131 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.adminPartnerOperatingFailed)),
+      );
+    }
+  }
+
+  void _findOwner() {
+    final l10n = AppLocalizations.of(context);
+    final query = _ownerQuery.text.trim().toLowerCase();
+    final store = DiverStoreScope.of(context);
+    MemberAccount? match;
+    if (query.isNotEmpty) {
+      for (final member in store.members) {
+        if (member.listHandle.trim().toLowerCase() == query) {
+          match = member;
+          break;
+        }
+      }
+    }
+    String? error;
+    if (match == null) {
+      error = l10n.adminPartnerOwnerNotFound;
+    } else if (match.isAdmin) {
+      error = l10n.adminPartnerOwnerRejectedAdmin;
+      match = null;
+    } else if (match.isBusiness || match.ownedShopId.trim().isNotEmpty) {
+      error = l10n.adminPartnerOwnerRejectedShop;
+      match = null;
+    }
+    setState(() {
+      _ownerMatch = match;
+      _ownerError = error;
+    });
+  }
+
+  Future<void> _transferOwner(String currentName) async {
+    final match = _ownerMatch;
+    if (match == null || _ownerSaving) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final store = DiverStoreScope.of(context);
+    final requested = _ownerName.text.trim();
+    final rename = requested.isNotEmpty && requested != currentName.trim();
+    final previous = store.members
+        .where((member) => member.ownedShopId.trim() == widget.shopId.trim())
+        .firstOrNull;
+    final fromId = previous == null
+        ? ''
+        : operatingOwnerHandle(
+            uid: previous.uid,
+            loginId: previous.loginId,
+            email: previous.email,
+          );
+    final toId = operatingOwnerHandle(
+      uid: match.uid,
+      loginId: match.loginId,
+      email: match.email,
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.adminPartnerOwnerConfirmTitle),
+          content: Text(
+            [
+              l10n.adminPartnerOwnerConfirmBody(fromId, toId),
+              if (rename) '$currentName → $requested',
+            ].join('\n'),
+          ),
+          actions: [
+            TextButton(
+              key: const Key('admin-partner-owner-cancel'),
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.adminHqClose),
+            ),
+            FilledButton(
+              key: const Key('admin-partner-owner-confirm'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.adminPartnerOwnerConfirm),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _ownerSaving = true);
+    try {
+      await store.transferShopOwner(
+        shopId: widget.shopId,
+        toUid: match.uid,
+        shopName: rename ? requested : null,
+      );
+      final events = await store.fetchShopOperatingEvents(widget.shopId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _events = events;
+        _ownerSaving = false;
+        _ownerMatch = null;
+        _ownerError = null;
+        _ownerQuery.clear();
+        _ownerName.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminPartnerOwnerSaved)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final raw = '$error';
+      final message = raw.contains('OWNER_IS_ADMIN')
+          ? l10n.adminPartnerOwnerRejectedAdmin
+          : raw.contains('OWNER_HAS_SHOP') || raw.contains('SAME_OWNER')
+              ? l10n.adminPartnerOwnerRejectedShop
+              : raw.contains('NO_CURRENT_OWNER')
+                  ? l10n.adminPartnerOwnerNoCurrent
+                  : raw.contains('OWNER_NOT_FOUND')
+                      ? l10n.adminPartnerOwnerNotFound
+                      : l10n.adminPartnerOwnerFailed;
+      setState(() => _ownerSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
       );
     }
   }
@@ -218,6 +362,65 @@ class _AdminPartnerShopScreenState extends State<AdminPartnerShopScreen> {
                 child: Text(l10n.adminPartnerOperatingSave),
               ),
               const SizedBox(height: 16),
+              Text(
+                l10n.adminPartnerChangeOwner,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('admin-partner-owner-search'),
+                controller: _ownerQuery,
+                decoration: InputDecoration(
+                  labelText: l10n.adminPartnerLoginId,
+                  hintText: l10n.adminPartnerOwnerSearchHint,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (_) {
+                  if (_ownerMatch != null || _ownerError != null) {
+                    setState(() {
+                      _ownerMatch = null;
+                      _ownerError = null;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton(
+                  key: const Key('admin-partner-owner-find'),
+                  onPressed: _ownerSaving ? null : _findOwner,
+                  child: Text(l10n.adminPartnerOwnerFind),
+                ),
+              ),
+              if (_ownerError != null)
+                Text(
+                  _ownerError!,
+                  key: const Key('admin-partner-owner-error'),
+                ),
+              if (_ownerMatch != null)
+                Text(
+                  _ownerMatch!.listHandle,
+                  key: const Key('admin-partner-owner-picked'),
+                ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('admin-partner-owner-name'),
+                controller: _ownerName,
+                decoration: InputDecoration(
+                  labelText: l10n.adminPartnerOwnerName,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                key: const Key('admin-partner-owner-save'),
+                onPressed: _ownerMatch == null || _ownerSaving
+                    ? null
+                    : () => _transferOwner(title),
+                child: Text(l10n.adminPartnerChangeOwner),
+              ),
+              const SizedBox(height: 16),
               OutlinedButton(
                 key: const Key('admin-partner-edit-resort'),
                 onPressed: () {
@@ -305,23 +508,29 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final line = event.kind == 'status' &&
-            event.fromStatus != null &&
-            event.toStatus != null
+    final statusLine = event.kind == 'status' &&
+        event.fromStatus != null &&
+        event.toStatus != null;
+    final line = statusLine
         ? '${shopOperatingStatusLabel(l10n, event.fromStatus!)} → '
             '${shopOperatingStatusLabel(l10n, event.toStatus!)}'
         : '${event.fromOwnerId} → ${event.toOwnerId}';
+    final nameLine = !statusLine &&
+            (event.fromName.isNotEmpty || event.toName.isNotEmpty)
+        ? '${event.fromName} → ${event.toName}'
+        : '';
     return Card(
       key: Key('admin-partner-event-${event.id}'),
       child: ListTile(
         title: Text(line),
         subtitle: Text(
           [
+            if (nameLine.isNotEmpty) nameLine,
             if (event.note.trim().isNotEmpty) event.note.trim(),
             '${event.byName} · ${formatShopOperatingStamp(event.at)}',
           ].join('\n'),
         ),
-        isThreeLine: event.note.trim().isNotEmpty,
+        isThreeLine: nameLine.isNotEmpty || event.note.trim().isNotEmpty,
       ),
     );
   }

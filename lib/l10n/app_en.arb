@@ -618,6 +618,25 @@
   "adminPartnerOperatingFailed": "Could not save the status.",
   "adminPartnerHistory": "History",
   "adminPartnerHistoryEmpty": "No history yet.",
+  "adminPartnerChangeOwner": "Change owner",
+  "adminPartnerOwnerSearchHint": "New owner's login ID",
+  "adminPartnerOwnerFind": "Find",
+  "adminPartnerOwnerNotFound": "No member with that login ID.",
+  "adminPartnerOwnerRejectedAdmin": "Admins cannot become the owner.",
+  "adminPartnerOwnerRejectedShop": "This member is already linked to a shop.",
+  "adminPartnerOwnerName": "Shop name (optional)",
+  "adminPartnerOwnerConfirmTitle": "Change the owner?",
+  "adminPartnerOwnerConfirmBody": "Unlink {fromId} and assign {toId} as the new owner.",
+  "@adminPartnerOwnerConfirmBody": {
+    "placeholders": {
+      "fromId": {"type": "String"},
+      "toId": {"type": "String"}
+    }
+  },
+  "adminPartnerOwnerConfirm": "Change",
+  "adminPartnerOwnerSaved": "Owner updated.",
+  "adminPartnerOwnerFailed": "Could not change the owner.",
+  "adminPartnerOwnerNoCurrent": "This shop has no current owner, so the history row cannot be saved.",
   "adminPartnerProductsHeading": "This resort's products",
   "adminPartnerProductsEmpty": "No products yet.",
   "adminProductsSearch": "Search products",

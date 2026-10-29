@@ -3354,6 +3354,165 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<ShopOwnerTransfer> transferShopOwner({
+    required String shopId,
+    required String toUid,
+    required String byUid,
+    required String byName,
+    String? shopName,
+  }) async {
+    final id = shopId.trim();
+    final nextUid = toUid.trim();
+    if (id.isEmpty || nextUid.isEmpty) {
+      throw StateError('OWNER_NOT_FOUND');
+    }
+    final owners = await _users
+        .where('owned_shop_id', isEqualTo: id)
+        .limit(1)
+        .get();
+    if (owners.docs.isEmpty) {
+      throw StateError('NO_CURRENT_OWNER');
+    }
+    final fromRef = owners.docs.first.reference;
+    final toRef = _userDoc(nextUid);
+    final shopRef = _shops.doc(id);
+    final safeName = clampOperatingByName(byName, byUid);
+    return _db.runTransaction((tx) async {
+      final fromSnap = await tx.get(fromRef);
+      final toSnap = await tx.get(toRef);
+      final shopSnap = await tx.get(shopRef);
+      final fromData = fromSnap.data() ?? <String, dynamic>{};
+      final toData = toSnap.data();
+      if (!toSnap.exists || toData == null) {
+        throw StateError('OWNER_NOT_FOUND');
+      }
+      if (fromRef.id == toRef.id) {
+        throw StateError('SAME_OWNER');
+      }
+      if ((fromData['owned_shop_id'] as String?)?.trim() != id) {
+        throw StateError('NO_CURRENT_OWNER');
+      }
+      final targetAdmin = toData['is_admin'] == true || toData['isAdmin'] == true;
+      final targetShop = (toData['owned_shop_id'] as String?)?.trim() ?? '';
+      final targetBusiness = toData['is_business'] == true ||
+          toData['isBusiness'] == true ||
+          targetShop.isNotEmpty;
+      if (targetAdmin) {
+        throw StateError('OWNER_IS_ADMIN');
+      }
+      if (targetBusiness) {
+        throw StateError('OWNER_HAS_SHOP');
+      }
+      final fromOwnerId = operatingOwnerHandle(
+        uid: fromRef.id,
+        loginId: (fromData['login_id'] as String?) ?? '',
+        email: (fromData['email'] as String?) ?? '',
+      );
+      final toOwnerId = operatingOwnerHandle(
+        uid: toRef.id,
+        loginId: (toData['login_id'] as String?) ?? '',
+        email: (toData['email'] as String?) ?? '',
+      );
+      final currentName = (shopSnap.data()?['name'] as String?)?.trim() ?? '';
+      final requested = (shopName ?? '').trim();
+      final rename = requested.isNotEmpty && requested != currentName;
+      final fromName = rename ? clampOperatingShopName(currentName) : '';
+      final toName = rename ? clampOperatingShopName(requested) : '';
+      final fromHistory = _appendRoleHistory(
+        existing: fromData['role_history'],
+        entry: {
+          'at': Timestamp.now(),
+          'by_uid': byUid,
+          'by_name': safeName,
+          'action': 'transfer_owner_from',
+          'from': {
+            'is_business': true,
+            'user_role': fromData['user_role'] ?? 'business',
+            'owned_shop_id': id,
+          },
+          'to': {
+            'is_business': false,
+            'user_role': 'diver',
+            'owned_shop_id': null,
+          },
+          'shop_id': id,
+        },
+      );
+      final toHistory = _appendRoleHistory(
+        existing: toData['role_history'],
+        entry: {
+          'at': Timestamp.now(),
+          'by_uid': byUid,
+          'by_name': safeName,
+          'action': 'transfer_owner_to',
+          'from': {
+            'is_business': false,
+            'user_role': toData['user_role'] ?? 'diver',
+            'owned_shop_id': toData['owned_shop_id'],
+          },
+          'to': {
+            'is_business': true,
+            'user_role': 'business',
+            'owned_shop_id': id,
+          },
+          'shop_id': id,
+        },
+      );
+      tx.set(
+        fromRef,
+        {
+          'is_business': false,
+          'user_role': 'diver',
+          'owned_shop_id': FieldValue.delete(),
+          'role_history': fromHistory,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      tx.set(
+        toRef,
+        {
+          'is_business': true,
+          'user_role': 'business',
+          'owned_shop_id': id,
+          'role_history': toHistory,
+          'updated_at': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+      if (rename) {
+        tx.set(
+          shopRef,
+          {
+            'name': requested,
+            'updated_at': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+      tx.set(shopRef.collection('operating_events').doc(), {
+        'at': FieldValue.serverTimestamp(),
+        'by_uid': byUid,
+        'by_name': safeName,
+        'kind': 'owner',
+        'from_owner_id': fromOwnerId,
+        'to_owner_id': toOwnerId,
+        if (rename) 'from_name': fromName,
+        if (rename) 'to_name': toName,
+      });
+      return ShopOwnerTransfer(
+        fromUid: fromRef.id,
+        toUid: toRef.id,
+        fromOwnerId: fromOwnerId,
+        toOwnerId: toOwnerId,
+        fromName: fromName,
+        toName: toName,
+        appliedName: rename ? requested : '',
+      );
+    });
+  }
+
+  @override
   Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId) async {
     final snap = await _shops
         .doc(shopId.trim())

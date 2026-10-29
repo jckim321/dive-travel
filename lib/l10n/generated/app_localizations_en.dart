@@ -1817,6 +1817,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPartnerHistoryEmpty => 'No history yet.';
 
   @override
+  String get adminPartnerChangeOwner => 'Change owner';
+
+  @override
+  String get adminPartnerOwnerSearchHint => 'New owner\'s login ID';
+
+  @override
+  String get adminPartnerOwnerFind => 'Find';
+
+  @override
+  String get adminPartnerOwnerNotFound => 'No member with that login ID.';
+
+  @override
+  String get adminPartnerOwnerRejectedAdmin =>
+      'Admins cannot become the owner.';
+
+  @override
+  String get adminPartnerOwnerRejectedShop =>
+      'This member is already linked to a shop.';
+
+  @override
+  String get adminPartnerOwnerName => 'Shop name (optional)';
+
+  @override
+  String get adminPartnerOwnerConfirmTitle => 'Change the owner?';
+
+  @override
+  String adminPartnerOwnerConfirmBody(String fromId, String toId) {
+    return 'Unlink $fromId and assign $toId as the new owner.';
+  }
+
+  @override
+  String get adminPartnerOwnerConfirm => 'Change';
+
+  @override
+  String get adminPartnerOwnerSaved => 'Owner updated.';
+
+  @override
+  String get adminPartnerOwnerFailed => 'Could not change the owner.';
+
+  @override
+  String get adminPartnerOwnerNoCurrent =>
+      'This shop has no current owner, so the history row cannot be saved.';
+
+  @override
   String get adminPartnerProductsHeading => 'This resort\'s products';
 
   @override

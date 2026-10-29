@@ -44,6 +44,65 @@ String clampOperatingNote(String note) {
   return trimmed.substring(0, 500);
 }
 
+/// Login id shown in an owner event. Falls back to the email local-part, then uid.
+/// Rules require 1–80 characters.
+String operatingOwnerHandle({
+  required String uid,
+  String loginId = '',
+  String email = '',
+}) {
+  var value = loginId.trim();
+  if (value.isEmpty) {
+    final mail = email.trim();
+    final at = mail.indexOf('@');
+    value = (at <= 0 ? mail : mail.substring(0, at)).trim();
+  }
+  if (value.isEmpty) {
+    value = uid.trim();
+  }
+  if (value.length > 80) {
+    value = value.substring(0, 80);
+  }
+  if (value.isEmpty) {
+    throw StateError('OWNER_ID_EMPTY');
+  }
+  return value;
+}
+
+/// Shop names copied onto an owner event are limited to 120 characters.
+String clampOperatingShopName(String name) {
+  final trimmed = name.trim();
+  if (trimmed.length <= 120) {
+    return trimmed;
+  }
+  return trimmed.substring(0, 120);
+}
+
+/// Result of moving `owned_shop_id` from one member to another.
+class ShopOwnerTransfer {
+  const ShopOwnerTransfer({
+    required this.fromUid,
+    required this.toUid,
+    required this.fromOwnerId,
+    required this.toOwnerId,
+    this.fromName = '',
+    this.toName = '',
+    this.appliedName = '',
+  });
+
+  final String fromUid;
+  final String toUid;
+  final String fromOwnerId;
+  final String toOwnerId;
+  final String fromName;
+  final String toName;
+
+  /// Full shop name written on the shop document. Empty when the name stays.
+  final String appliedName;
+
+  bool get renamed => appliedName.isNotEmpty;
+}
+
 /// Event `by_name` must be 1–80 characters.
 String clampOperatingByName(String name, String uid) {
   var value = name.trim();
@@ -72,6 +131,8 @@ class ShopOperatingEvent {
     this.note = '',
     this.fromOwnerId = '',
     this.toOwnerId = '',
+    this.fromName = '',
+    this.toName = '',
   });
 
   final String id;
@@ -86,6 +147,8 @@ class ShopOperatingEvent {
   final String note;
   final String fromOwnerId;
   final String toOwnerId;
+  final String fromName;
+  final String toName;
 
   factory ShopOperatingEvent.fromMap(
     String id,
@@ -110,6 +173,8 @@ class ShopOperatingEvent {
       note: (data['note'] as String?) ?? '',
       fromOwnerId: (data['from_owner_id'] as String?)?.trim() ?? '',
       toOwnerId: (data['to_owner_id'] as String?)?.trim() ?? '',
+      fromName: (data['from_name'] as String?)?.trim() ?? '',
+      toName: (data['to_name'] as String?)?.trim() ?? '',
     );
   }
 }

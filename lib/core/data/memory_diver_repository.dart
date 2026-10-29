@@ -2532,6 +2532,131 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<ShopOwnerTransfer> transferShopOwner({
+    required String shopId,
+    required String toUid,
+    required String byUid,
+    required String byName,
+    String? shopName,
+  }) async {
+    final id = shopId.trim();
+    final nextUid = toUid.trim();
+    if (id.isEmpty || nextUid.isEmpty) {
+      throw StateError('OWNER_NOT_FOUND');
+    }
+    final toIndex = _members.indexWhere((member) => member.uid == nextUid);
+    if (toIndex < 0) {
+      throw StateError('OWNER_NOT_FOUND');
+    }
+    final target = _members[toIndex];
+    if (target.isAdmin) {
+      throw StateError('OWNER_IS_ADMIN');
+    }
+    if (target.isBusiness || target.ownedShopId.trim().isNotEmpty) {
+      throw StateError('OWNER_HAS_SHOP');
+    }
+    final fromIndex = _members.indexWhere(
+      (member) => member.ownedShopId.trim() == id,
+    );
+    if (fromIndex < 0) {
+      throw StateError('NO_CURRENT_OWNER');
+    }
+    final previous = _members[fromIndex];
+    if (previous.uid == target.uid) {
+      throw StateError('SAME_OWNER');
+    }
+    final fromOwnerId = operatingOwnerHandle(
+      uid: previous.uid,
+      loginId: previous.loginId,
+      email: previous.email,
+    );
+    final toOwnerId = operatingOwnerHandle(
+      uid: target.uid,
+      loginId: target.loginId,
+      email: target.email,
+    );
+    final currentName = (_shopStats[id]?.name ?? '').trim();
+    final requested = (shopName ?? '').trim();
+    final rename = requested.isNotEmpty && requested != currentName;
+    final fromName = rename ? clampOperatingShopName(currentName) : '';
+    final toName = rename ? clampOperatingShopName(requested) : '';
+    _members[fromIndex] = previous.copyWith(
+      isBusiness: false,
+      userRole: 'diver',
+      clearOwnedShopId: true,
+    );
+    _members[toIndex] = target.copyWith(
+      isBusiness: true,
+      userRole: 'business',
+      ownedShopId: id,
+    );
+    if (previous.uid == _user?.uid) {
+      _isBusiness = false;
+      _ownedShopId = null;
+    }
+    if (target.uid == _user?.uid) {
+      _isBusiness = true;
+      _ownedShopId = id;
+    }
+    _roleHistory.putIfAbsent(previous.uid, () => []).add({
+      'action': 'transfer_owner_from',
+      'by_uid': byUid,
+      'by_name': byName,
+      'shop_id': id,
+    });
+    _roleHistory.putIfAbsent(target.uid, () => []).add({
+      'action': 'transfer_owner_to',
+      'by_uid': byUid,
+      'by_name': byName,
+      'shop_id': id,
+    });
+    if (rename) {
+      final current = _shopStats[id];
+      if (current == null) {
+        _shopStats[id] = ShopLiveStats(
+          shopId: id,
+          name: requested,
+          reviewCount: 0,
+          avgSafety: 0,
+          avgGuide: 0,
+          avgBoat: 0,
+          avgOverall: 0,
+          diveStar: 0,
+        );
+      } else {
+        _shopStats[id] = current.copyWith(name: requested);
+      }
+    }
+    _operatingEventSeq += 1;
+    final events = _operatingEvents.putIfAbsent(id, () => []);
+    events.insert(
+      0,
+      ShopOperatingEvent(
+        id: 'operating-$_operatingEventSeq',
+        at: DateTime.now().toUtc(),
+        byUid: byUid,
+        byName: clampOperatingByName(byName, byUid),
+        kind: 'owner',
+        fromOwnerId: fromOwnerId,
+        toOwnerId: toOwnerId,
+        fromName: fromName,
+        toName: toName,
+      ),
+    );
+    _membersController.add(List<MemberAccount>.from(_members));
+    _shopController.add(_shopStats.values.toList());
+    return ShopOwnerTransfer(
+      fromUid: previous.uid,
+      toUid: target.uid,
+      fromOwnerId: fromOwnerId,
+      toOwnerId: toOwnerId,
+      fromName: fromName,
+      toName: toName,
+      appliedName: rename ? requested : '',
+    );
+  }
+
+  @override
   Future<DiveStarForm> ensureActiveDiveStarForm() async {
     for (final form in _formsByVersion.values) {
       if (form.active) {

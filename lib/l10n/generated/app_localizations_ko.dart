@@ -1766,6 +1766,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get adminPartnerHistoryEmpty => '변경 이력이 없습니다.';
 
   @override
+  String get adminPartnerChangeOwner => '소유주 변경';
+
+  @override
+  String get adminPartnerOwnerSearchHint => '새 소유주 아이디';
+
+  @override
+  String get adminPartnerOwnerFind => '찾기';
+
+  @override
+  String get adminPartnerOwnerNotFound => '해당 아이디의 회원이 없습니다.';
+
+  @override
+  String get adminPartnerOwnerRejectedAdmin => '관리자는 소유주로 지정할 수 없습니다.';
+
+  @override
+  String get adminPartnerOwnerRejectedShop => '이미 다른 샵이 연결된 회원입니다.';
+
+  @override
+  String get adminPartnerOwnerName => '샵 이름 (선택)';
+
+  @override
+  String get adminPartnerOwnerConfirmTitle => '소유주를 변경할까요?';
+
+  @override
+  String adminPartnerOwnerConfirmBody(String fromId, String toId) {
+    return '$fromId 연결을 끊고 $toId를 새 소유주로 지정합니다.';
+  }
+
+  @override
+  String get adminPartnerOwnerConfirm => '변경';
+
+  @override
+  String get adminPartnerOwnerSaved => '소유주를 변경했습니다.';
+
+  @override
+  String get adminPartnerOwnerFailed => '소유주를 변경하지 못했습니다.';
+
+  @override
+  String get adminPartnerOwnerNoCurrent => '현재 소유주가 없어 변경 이력을 남길 수 없습니다.';
+
+  @override
   String get adminPartnerProductsHeading => '이 리조트 상품';
 
   @override

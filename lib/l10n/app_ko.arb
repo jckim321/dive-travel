@@ -1270,6 +1270,25 @@
   "adminPartnerOperatingFailed": "상태를 저장하지 못했습니다.",
   "adminPartnerHistory": "변경 이력",
   "adminPartnerHistoryEmpty": "변경 이력이 없습니다.",
+  "adminPartnerChangeOwner": "소유주 변경",
+  "adminPartnerOwnerSearchHint": "새 소유주 아이디",
+  "adminPartnerOwnerFind": "찾기",
+  "adminPartnerOwnerNotFound": "해당 아이디의 회원이 없습니다.",
+  "adminPartnerOwnerRejectedAdmin": "관리자는 소유주로 지정할 수 없습니다.",
+  "adminPartnerOwnerRejectedShop": "이미 다른 샵이 연결된 회원입니다.",
+  "adminPartnerOwnerName": "샵 이름 (선택)",
+  "adminPartnerOwnerConfirmTitle": "소유주를 변경할까요?",
+  "adminPartnerOwnerConfirmBody": "{fromId} 연결을 끊고 {toId}를 새 소유주로 지정합니다.",
+  "@adminPartnerOwnerConfirmBody": {
+    "placeholders": {
+      "fromId": {"type": "String"},
+      "toId": {"type": "String"}
+    }
+  },
+  "adminPartnerOwnerConfirm": "변경",
+  "adminPartnerOwnerSaved": "소유주를 변경했습니다.",
+  "adminPartnerOwnerFailed": "소유주를 변경하지 못했습니다.",
+  "adminPartnerOwnerNoCurrent": "현재 소유주가 없어 변경 이력을 남길 수 없습니다.",
   "adminPartnerProductsHeading": "이 리조트 상품",
   "adminPartnerProductsEmpty": "등록된 상품이 없습니다.",
   "adminProductsSearch": "상품 검색",

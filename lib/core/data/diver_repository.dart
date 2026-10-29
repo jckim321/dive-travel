@@ -343,6 +343,16 @@ abstract class DiverRepository {
 
   Future<List<ShopOperatingEvent>> fetchShopOperatingEvents(String shopId);
 
+  /// Moves shop ownership in one write. Shop id, reviews, grade, and bookings
+  /// stay. [shopName] is applied only when it differs from the current name.
+  Future<ShopOwnerTransfer> transferShopOwner({
+    required String shopId,
+    required String toUid,
+    required String byUid,
+    required String byName,
+    String? shopName,
+  });
+
   /// Active audit form (seeds v1 once if missing).
   Future<DiveStarForm> ensureActiveDiveStarForm();
 

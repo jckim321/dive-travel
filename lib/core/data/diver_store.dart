@@ -1701,6 +1701,57 @@ class DiverStore extends ChangeNotifier {
     await refreshShopStat(id);
   }
 
+  /// Moves [owned_shop_id] to [toUid] and writes one owner history row.
+  Future<void> transferShopOwner({
+    required String shopId,
+    required String toUid,
+    String? shopName,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    final uid = _uid?.trim() ?? '';
+    if (uid.isEmpty) {
+      throw StateError('NOT_SIGNED_IN');
+    }
+    final id = shopId.trim();
+    final result = await _repository.transferShopOwner(
+      shopId: id,
+      toUid: toUid,
+      byUid: uid,
+      byName: clampOperatingByName(_stats.displayName, uid),
+      shopName: shopName,
+    );
+    _members = [
+      for (final member in _members)
+        if (member.uid == result.fromUid)
+          member.copyWith(
+            isBusiness: false,
+            userRole: 'diver',
+            clearOwnedShopId: true,
+          )
+        else if (member.uid == result.toUid)
+          member.copyWith(
+            isBusiness: true,
+            userRole: 'business',
+            ownedShopId: id,
+          )
+        else
+          member,
+    ];
+    if (result.renamed) {
+      final index = _shopStats.indexWhere((item) => item.shopId == id);
+      if (index >= 0) {
+        final next = [..._shopStats];
+        next[index] = next[index].copyWith(name: result.appliedName);
+        _shopStats = next;
+      }
+    }
+    notifyListeners();
+    await refreshShopStat(id);
+    unawaited(refreshAdminInbox());
+  }
+
   void _writeOperatingLocal(
     String shopId,
     ShopOperatingStatus status,

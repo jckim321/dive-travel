@@ -3408,6 +3408,84 @@ abstract class AppLocalizations {
   /// **'변경 이력이 없습니다.'**
   String get adminPartnerHistoryEmpty;
 
+  /// No description provided for @adminPartnerChangeOwner.
+  ///
+  /// In ko, this message translates to:
+  /// **'소유주 변경'**
+  String get adminPartnerChangeOwner;
+
+  /// No description provided for @adminPartnerOwnerSearchHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 소유주 아이디'**
+  String get adminPartnerOwnerSearchHint;
+
+  /// No description provided for @adminPartnerOwnerFind.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾기'**
+  String get adminPartnerOwnerFind;
+
+  /// No description provided for @adminPartnerOwnerNotFound.
+  ///
+  /// In ko, this message translates to:
+  /// **'해당 아이디의 회원이 없습니다.'**
+  String get adminPartnerOwnerNotFound;
+
+  /// No description provided for @adminPartnerOwnerRejectedAdmin.
+  ///
+  /// In ko, this message translates to:
+  /// **'관리자는 소유주로 지정할 수 없습니다.'**
+  String get adminPartnerOwnerRejectedAdmin;
+
+  /// No description provided for @adminPartnerOwnerRejectedShop.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 다른 샵이 연결된 회원입니다.'**
+  String get adminPartnerOwnerRejectedShop;
+
+  /// No description provided for @adminPartnerOwnerName.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 이름 (선택)'**
+  String get adminPartnerOwnerName;
+
+  /// No description provided for @adminPartnerOwnerConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'소유주를 변경할까요?'**
+  String get adminPartnerOwnerConfirmTitle;
+
+  /// No description provided for @adminPartnerOwnerConfirmBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{fromId} 연결을 끊고 {toId}를 새 소유주로 지정합니다.'**
+  String adminPartnerOwnerConfirmBody(String fromId, String toId);
+
+  /// No description provided for @adminPartnerOwnerConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경'**
+  String get adminPartnerOwnerConfirm;
+
+  /// No description provided for @adminPartnerOwnerSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'소유주를 변경했습니다.'**
+  String get adminPartnerOwnerSaved;
+
+  /// No description provided for @adminPartnerOwnerFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'소유주를 변경하지 못했습니다.'**
+  String get adminPartnerOwnerFailed;
+
+  /// No description provided for @adminPartnerOwnerNoCurrent.
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 소유주가 없어 변경 이력을 남길 수 없습니다.'**
+  String get adminPartnerOwnerNoCurrent;
+
   /// No description provided for @adminPartnerProductsHeading.
   ///
   /// In ko, this message translates to:
