@@ -82,6 +82,28 @@ void main() {
     );
     await tester.pump();
 
+    final scroll = find.byKey(const Key('admin-partners-scroll'));
+    expect(scroll, findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(
+      find.descendant(
+        of: scroll,
+        matching: find.byKey(const Key('admin-partner-grade-all')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: scroll, matching: find.byKey(const Key('admin-partners-search'))),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: scroll,
+        matching: find.byKey(const Key('admin-partner-row-plain-reef')),
+      ),
+      findsOneWidget,
+    );
+
     const grades = ['regular', 'star1', 'star2', 'star3', 'other'];
     final total = _cardCount(tester, 'all');
     final sum = grades.fold<int>(0, (sum, grade) => sum + _cardCount(tester, grade));

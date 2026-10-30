@@ -135,66 +135,64 @@ class _AdminPartnersRosterScreenState extends State<AdminPartnersRosterScreen> {
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: _GradeGrid(
-                  shops: store.shopStats,
-                  selected: _grade,
-                  onSelect: (grade) => setState(() => _grade = grade),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                child: TextField(
-                  key: const Key('admin-partners-search'),
-                  controller: _query,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: l10n.adminPartnersSearch,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                  children: [
-                    if (plaque.isNotEmpty && _grade == PartnerGradeCard.all) ...[
-                      Text(
-                        l10n.adminPlaqueQueue,
-                        style: Theme.of(context).textTheme.titleMedium,
+                child: SingleChildScrollView(
+                  key: const Key('admin-partners-scroll'),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _GradeGrid(
+                        shops: store.shopStats,
+                        selected: _grade,
+                        onSelect: (grade) => setState(() => _grade = grade),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        key: const Key('admin-partners-search'),
+                        controller: _query,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: l10n.adminPartnersSearch,
+                          border: const OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
                       const SizedBox(height: 8),
-                      for (final stats in plaque) ...[
-                        _RosterPlaqueTile(
-                          shopId: stats.shopId,
-                          stars: stats.diveStar,
-                          rating: stats.avgOverall,
-                          reviewCount: stats.reviewCount,
-                          status: stats.plaqueStatus,
-                          internalScore: stats.internalScore,
+                      if (plaque.isNotEmpty && _grade == PartnerGradeCard.all) ...[
+                        Text(
+                          l10n.adminPlaqueQueue,
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        const SizedBox(height: 6),
+                        for (final stats in plaque) ...[
+                          _RosterPlaqueTile(
+                            shopId: stats.shopId,
+                            stars: stats.diveStar,
+                            rating: stats.avgOverall,
+                            reviewCount: stats.reviewCount,
+                            status: stats.plaqueStatus,
+                            internalScore: stats.internalScore,
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         const SizedBox(height: 8),
                       ],
-                      const SizedBox(height: 12),
+                      if (filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 24),
+                          child: Center(child: Text(l10n.adminPartnerTierEmpty)),
+                        )
+                      else
+                        for (final stats in filtered)
+                          _RosterShopTile(
+                            stats: stats,
+                            owner: partnerMemberForShop(store.members, stats.shopId),
+                            onOpenProducts: widget.onOpenProducts,
+                          ),
                     ],
-                    if (filtered.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 24),
-                        child: Center(child: Text(l10n.adminPartnerTierEmpty)),
-                      )
-                    else
-                      for (final stats in filtered) ...[
-                        _RosterShopTile(
-                          stats: stats,
-                          owner: partnerMemberForShop(store.members, stats.shopId),
-                          onOpenProducts: widget.onOpenProducts,
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -434,12 +432,25 @@ class _RosterShopTile extends StatelessWidget {
     final handle = _shown(owner?.listHandle ?? '');
     final status = shopOperatingStatusLabel(l10n, stats.operatingStatus);
     return Card(
+      margin: const EdgeInsets.only(bottom: 4),
       child: ListTile(
         key: Key('admin-partner-row-${stats.shopId}'),
-        title: Text(partnerShopDisplayName(stats)),
+        visualDensity: VisualDensity.compact,
+        minVerticalPadding: 2,
+        minTileHeight: 48,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        title: Text(
+          partnerShopDisplayName(stats),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.15),
+        ),
         subtitle: Text(
           '${l10n.adminPartnerRepresentative} $rep · '
           '${l10n.adminPartnerLoginId} $handle · $status',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12, height: 1.2),
         ),
         onTap: () {
           Navigator.of(context).push(
