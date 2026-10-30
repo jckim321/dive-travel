@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
+import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/partner_provision.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
@@ -46,7 +47,9 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
     _applyFocus(widget.focusUid);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(DiverStoreScope.of(context).ensureAdminInboxLoaded());
+      final store = DiverStoreScope.of(context);
+      unawaited(store.ensureAdminInboxLoaded());
+      unawaited(store.ensureShopStatsLoaded());
     });
   }
 
@@ -90,7 +93,13 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
         ];
         final visible = [
           for (final member in active)
-            if (_inFilter(member) && _matchesQuery(member, q)) member,
+            if (_inFilter(member) &&
+                _matchesQuery(
+                  member,
+                  q,
+                  memberResortName(member, store.shopStats),
+                ))
+              member,
         ]..sort(compareMembersByRecentLogin);
         final missing = [for (final m in visible) if (m.missingProfile) m];
         final pending = store.pendingInstructors;
@@ -163,7 +172,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                       onChanged: (_) => setState(() {}),
                       style: const TextStyle(color: AdminConsoleTheme.text),
                       decoration: InputDecoration(
-                        hintText: '이름·아이디·이메일로 찾기',
+                        hintText: '이름·아이디·리조트·이메일로 찾기',
                         hintStyle: const TextStyle(color: AdminConsoleTheme.muted),
                         prefixIcon: const Icon(Icons.search, color: AdminConsoleTheme.muted),
                         filled: true,
@@ -220,6 +229,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     for (final member in visible)
                       _MemberRow(
                         member: member,
+                        resortName: memberResortName(member, store.shopStats),
                         pendingVerification: pendingUids.contains(member.uid),
                         onOpen: () {
                           Navigator.of(context).push(
@@ -260,13 +270,27 @@ _MemberFilter memberRosterBucket(MemberAccount member) {
   };
 }
 
-bool _matchesQuery(MemberAccount member, String q) {
+/// 연결된 리조트의 저장된 이름. 없거나 이름이 비어 있으면 빈 문자열.
+String memberResortName(MemberAccount member, List<ShopLiveStats> shops) {
+  final id = member.ownedShopId.trim();
+  if (id.isEmpty) return '';
+  for (final shop in shops) {
+    if (shop.shopId == id) {
+      return (shop.name ?? '').trim();
+    }
+  }
+  return '';
+}
+
+bool _matchesQuery(MemberAccount member, String q, String resortName) {
   if (q.isEmpty) return true;
+  final resort = resortName.trim().toLowerCase();
   return member.displayName.toLowerCase().contains(q) ||
       member.loginId.toLowerCase().contains(q) ||
       member.listHandle.toLowerCase().contains(q) ||
       member.email.toLowerCase().contains(q) ||
-      member.uid.toLowerCase().contains(q);
+      member.uid.toLowerCase().contains(q) ||
+      (resort.isNotEmpty && resort.contains(q));
 }
 
 String _filterLabel(_MemberFilter filter) {
@@ -449,11 +473,13 @@ class _MemberRow extends StatelessWidget {
   const _MemberRow({
     required this.member,
     required this.onOpen,
+    this.resortName = '',
     this.pendingVerification = false,
   });
 
   final MemberAccount member;
   final VoidCallback onOpen;
+  final String resortName;
   final bool pendingVerification;
 
   @override
@@ -466,6 +492,11 @@ class _MemberRow extends StatelessWidget {
         : member.displayName.trim();
     final initial = title == '(이름 없음)' ? '?' : title.characters.first;
     final showHandle = !placeholder && handle.isNotEmpty;
+    final partner = memberRosterBucket(member) == _MemberFilter.partner;
+    final resort = resortName.trim();
+    final subtitle = partner && resort.isNotEmpty
+        ? (handle.isEmpty ? resort : '$handle · $resort')
+        : (showHandle ? handle : '');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -495,9 +526,9 @@ class _MemberRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                           ),
-                          if (showHandle)
+                          if (subtitle.isNotEmpty)
                             Text(
-                              handle,
+                              subtitle,
                               key: Key('admin-member-login-${member.uid}'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

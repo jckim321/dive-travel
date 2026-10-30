@@ -148,4 +148,79 @@ void main() {
     await search('only.mail@dive.test', 'blank-name');
     await search('pending-instructor', 'pending-instructor');
   });
+
+  testWidgets('제휴파트너 줄은 아이디와 리조트 이름이고, 리조트 이름으로 찾는다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.ensureUserDocument(
+      const AppUser(uid: 'partner-named', email: 'reef@dive.test', displayName: '리프장'),
+      loginId: 'reefboss',
+    );
+    await repo.promoteMemberToPartner(
+      uid: 'partner-named',
+      shopId: 'reef-shop',
+      actorUid: 'test-user',
+      actorName: '테스트 다이버',
+    );
+    await repo.saveShopProfile(
+      shopId: 'reef-shop',
+      name: '푸른 리프',
+      location: '세부',
+      productName: '펀',
+      consumerPrice: 1,
+      professionalPrice: 1,
+    );
+    await repo.ensureUserDocument(
+      const AppUser(uid: 'partner-bare', email: 'bare@dive.test', displayName: '혼자'),
+      loginId: 'solo',
+    );
+    await repo.promoteMemberToPartner(
+      uid: 'partner-bare',
+      shopId: 'missing-shop',
+      actorUid: 'test-user',
+      actorName: '테스트 다이버',
+    );
+
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await store.ensureAdminInboxLoaded();
+    await store.refreshShopStats();
+
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AdminConsoleTheme.dark,
+          home: const AdminMembersScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('admin-member-login-partner-named'))).data,
+      'reefboss · 푸른 리프',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('admin-member-login-partner-bare'))).data,
+      'solo',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('admin-member-login-test-user'))).data,
+      'test',
+    );
+
+    await tester.enterText(find.byKey(const Key('admin-members-search')), '푸른 리프');
+    await tester.pump();
+    expect(find.byKey(const Key('admin-member-name-partner-named')), findsOneWidget);
+    expect(find.byKey(const Key('admin-member-name-partner-bare')), findsNothing);
+    expect(find.byKey(const Key('admin-member-name-test-user')), findsNothing);
+  });
 }
