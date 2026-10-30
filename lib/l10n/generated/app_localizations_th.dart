@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -128,13 +129,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeStyleFirstOcean => 'นักดำน้ำที่กำลังเปิดทะเลแรก';
 
   @override
-  String get homeStyleFirstOceanBody => 'ยังไม่มีแสตมป์ เริ่มที่เอเชียแล้วล็อกกับทริปจะต่อกัน';
+  String get homeStyleFirstOceanBody =>
+      'ยังไม่มีแสตมป์ เริ่มที่เอเชียแล้วล็อกกับทริปจะต่อกัน';
 
   @override
   String get homeStyleHomeContinent => 'นักดำน้ำที่ลงลึกในทะเลเดียว';
 
   @override
-  String get homeStyleHomeContinentBody => 'มีทะเลประจำแล้ว เปิดทวีปอื่นเพื่อขยายแผนที่';
+  String get homeStyleHomeContinentBody =>
+      'มีทะเลประจำแล้ว เปิดทวีปอื่นเพื่อขยายแผนที่';
 
   @override
   String get homeStyleCollector => 'นักสำรวจที่สะสมมหาสมุทร';
@@ -152,7 +155,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeStylePro => 'อินสตรักเตอร์สายโปร';
 
   @override
-  String get homeStyleProBody => 'เปิดทวีปใหม่ด้วยราคาโปร ซ้อนการสอนกับการเดินทาง';
+  String get homeStyleProBody =>
+      'เปิดทวีปใหม่ด้วยราคาโปร ซ้อนการสอนกับการเดินทาง';
 
   @override
   String get homeNextOceanTitle => 'ทะเลที่จะเปิดต่อไป';
@@ -266,7 +270,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logbookMemoLabel => 'บันทึกสั้น ๆ';
 
   @override
-  String get logbookSelfRegisterHint => 'บันทึกโดยไม่ต้องลายเซ็นครู เป็นบันทึกการเดินทางทันที';
+  String get logbookSelfRegisterHint =>
+      'บันทึกโดยไม่ต้องลายเซ็นครู เป็นบันทึกการเดินทางทันที';
 
   @override
   String get logbookSelfRegistered => 'บันทึกเดินทาง · ลงทะเบียนเอง';
@@ -281,13 +286,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logbookTankRackTitle => 'ถัง 10 ใบสู่การ์ดเมทัล';
 
   @override
-  String get logbookTankRackHint => 'ถังละ 10 ล็อก ความลึกคือบันทึก ไม่ใช่การแข่ง';
+  String get logbookTankRackHint =>
+      'ถังละ 10 ล็อก ความลึกคือบันทึก ไม่ใช่การแข่ง';
 
   @override
   String get logbookCenturyTitle => '100 ถึง 1,000 · ช่วงถัดไป';
 
   @override
-  String get logbookCenturyHint => 'ครบ 100 ได้บัตรเมทัล ต่อไปเปลี่ยนสีถึง 1,000';
+  String get logbookCenturyHint =>
+      'ครบ 100 ได้บัตรเมทัล ต่อไปเปลี่ยนสีถึง 1,000';
 
   @override
   String logbookCenturyLeft(int count, int target) {
@@ -331,7 +338,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logbookSac => 'BMV';
 
   @override
-  String get logbookSacHint => 'BMV คำนวณจากความลึกเฉลี่ย เวลา แรงดันที่ใช้ และขนาดถัง';
+  String get logbookSacHint =>
+      'BMV คำนวณจากความลึกเฉลี่ย เวลา แรงดันที่ใช้ และขนาดถัง';
 
   @override
   String get logbookMix => 'แก๊ส';
@@ -379,7 +387,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logbookPhotoSection => 'รูปทดสอบใต้น้ำ';
 
   @override
-  String get logbookPhotoHint => 'เลือกจากแกลเลอรีหรือคอมพิวเตอร์ หรือใช้รูปทดสอบ';
+  String get logbookPhotoHint =>
+      'เลือกจากแกลเลอรีหรือคอมพิวเตอร์ หรือใช้รูปทดสอบ';
 
   @override
   String get logbookAttachPhoto => 'เลือกจากเครื่อง';
@@ -396,7 +405,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logbookPhotoRemove => 'ลบรูป';
 
   @override
-  String get logbookPhotoMissingConfig => 'ใส่คีย์ Cloudflare R2 ใน r2_config.dart ก่อนอัปโหลดรูป';
+  String get logbookPhotoMissingConfig =>
+      'ใส่คีย์ Cloudflare R2 ใน r2_config.dart ก่อนอัปโหลดรูป';
 
   @override
   String get logbookUploading => 'กำลังอัปโหลด...';
@@ -480,7 +490,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreSeaSouthPacific => '남태평양';
 
   @override
-  String get exploreProBanner => 'ยืนยันอินสตรักเตอร์แล้ว · แสดงราคาโปรทุกสินค้า';
+  String get exploreProBanner =>
+      'ยืนยันอินสตรักเตอร์แล้ว · แสดงราคาโปรทุกสินค้า';
 
   @override
   String get exploreConsumerBanner => 'ราคาทั่วไป · จองด้วยชำระในแอป';
@@ -524,7 +535,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get simPaySameBoatTitle => '결제 확인';
 
   @override
-  String get simPaySameBoatNotice => '테스트 결제입니다. 실제 결제는 아직 연결되지 않았습니다. 결제 완료 시 자리가 확정됩니다.';
+  String get simPaySameBoatNotice =>
+      '테스트 결제입니다. 실제 결제는 아직 연결되지 않았습니다. 결제 완료 시 자리가 확정됩니다.';
 
   @override
   String get simPaySameBoatAction => '결제하기';
@@ -558,7 +570,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreWeatherRefundTitle => '기상 취소 전액 환불';
 
   @override
-  String get exploreWeatherRefundBody => '샵이 날씨로 출항을 취소하면 결제한 금액 전액을 돌려드립니다. 이건 마케팅 문구가 아니라 상품 조건입니다.';
+  String get exploreWeatherRefundBody =>
+      '샵이 날씨로 출항을 취소하면 결제한 금액 전액을 돌려드립니다. 이건 마케팅 문구가 아니라 상품 조건입니다.';
 
   @override
   String exploreHostedBy(String shop) {
@@ -575,7 +588,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreListingSafetyTitle => 'ทะเลที่ปลอดภัยก่อน';
 
   @override
-  String get exploreListingSafetyBody => 'ความลึกไม่ใช่ของโอ้อวด ไกด์ เรือ อุปกรณ์มาก่อน';
+  String get exploreListingSafetyBody =>
+      'ความลึกไม่ใช่ของโอ้อวด ไกด์ เรือ อุปกรณ์มาก่อน';
 
   @override
   String get exploreRareFind => 'รีสอร์ต Dive Star ที่หาได้ยาก';
@@ -604,7 +618,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get exploreBookingNotSaved => '자리를 확보하지 못해 예약을 만들지 않았습니다. 빈자리를 다시 확인해 주세요.';
+  String get exploreBookingNotSaved =>
+      '자리를 확보하지 못해 예약을 만들지 않았습니다. 빈자리를 다시 확인해 주세요.';
 
   @override
   String exploreCheckoutDone(String label, String price) {
@@ -759,10 +774,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get reviewSaved => '후기가 저장되었습니다.';
 
   @override
-  String get reviewSavedProductIdMissing => '이 예약에 상품 정보가 없어 상품 카드 별점은 올라가지 않았습니다.';
+  String get reviewSavedProductIdMissing =>
+      '이 예약에 상품 정보가 없어 상품 카드 별점은 올라가지 않았습니다.';
 
   @override
-  String get reviewSavedProductNotFound => '샵에서 해당 상품을 찾지 못해 상품 카드 별점은 올라가지 않았습니다.';
+  String get reviewSavedProductNotFound =>
+      '샵에서 해당 상품을 찾지 못해 상품 카드 별점은 올라가지 않았습니다.';
 
   @override
   String get reviewSaveFailed => '후기 저장에 실패했습니다.';
@@ -913,7 +930,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get proTitle => '강사 프로 자격증 인증';
 
   @override
-  String get proBody => 'PADI/SSI 등 강사 C-Card 사진을 올리면 관리자 검토를 기다립니다. 승인되면 예약 단가가 강사 우대가로 바뀝니다.';
+  String get proBody =>
+      'PADI/SSI 등 강사 C-Card 사진을 올리면 관리자 검토를 기다립니다. 승인되면 예약 단가가 강사 우대가로 바뀝니다.';
 
   @override
   String get proAgency => '자격 발행 기관';
@@ -943,7 +961,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityTitle => 'หาบัดดี้';
 
   @override
-  String get communityHostMileage => 'รวบรวมครูแล้วจองสำเร็จ หัวหน้าทริปได้ไมล์';
+  String get communityHostMileage =>
+      'รวบรวมครูแล้วจองสำเร็จ หัวหน้าทริปได้ไมล์';
 
   @override
   String get profileTitle => 'หน้าของฉัน';
@@ -964,7 +983,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileCaptainTripTitle => '캡틴의 새 여행';
 
   @override
-  String get profileCraftNeedsGold => '골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.';
+  String get profileCraftNeedsGold =>
+      '골드 이상부터 여행을 짤 수 있습니다. 첫 여행을 결제하면 골드가 됩니다.';
 
   @override
   String get profileCraftStatusPending => '승인 대기';
@@ -985,7 +1005,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productFormNotInList => '목록에 없는 리조트';
 
   @override
-  String get productFormCreatorShopHint => '대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.';
+  String get productFormCreatorShopHint =>
+      '대륙을 고른 뒤 리조트를 선택하세요. 목록에 없으면 직접 이름을 적을 수 있습니다.';
 
   @override
   String get profileMyOceanKicker => 'MY OCEAN';
@@ -1098,7 +1119,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get myReviewDeleteTitle => '후기를 삭제할까요?';
 
   @override
-  String get myReviewDeleteBody => '삭제하면 리조트·상품 별점에서 이 후기가 빠지고, 같은 예약에 후기를 다시 쓸 수 있습니다.';
+  String get myReviewDeleteBody =>
+      '삭제하면 리조트·상품 별점에서 이 후기가 빠지고, 같은 예약에 후기를 다시 쓸 수 있습니다.';
 
   @override
   String get myReviewDeleteAction => '후기 삭제';
@@ -1227,7 +1249,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get devRolesTitle => '테스트 역할 전환';
 
   @override
-  String get devRolesHint => '소유자 계정 전용. Firestore is_admin은 유지하고, 화면만 일반·파트너·관리자로 바꿉니다.';
+  String get devRolesHint =>
+      '소유자 계정 전용. Firestore is_admin은 유지하고, 화면만 일반·파트너·관리자로 바꿉니다.';
 
   @override
   String get devRolesDiver => '일반 회원';
@@ -1287,7 +1310,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get metalCardDialogTitle => 'มาสเตอร์ 100 ล็อก';
 
   @override
-  String get metalCardDialogBody => 'การจัดส่งการ์ดฟรีจะเชื่อมในขั้นที่ 2 ตอนนี้เป็นหน้าฉลอง';
+  String get metalCardDialogBody =>
+      'การจัดส่งการ์ดฟรีจะเชื่อมในขั้นที่ 2 ตอนนี้เป็นหน้าฉลอง';
 
   @override
   String get metalCardDialogClose => 'ตกลง';
@@ -1452,7 +1476,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileNationalityNeedConsent => '국적을 저장하려면 동의가 필요해요';
 
   @override
-  String get authWelcome => 'สมัครแล้วใช้ล็อก Same Tide และการจองได้ทันที ผู้ดูแลปรับระดับตามกิจกรรม';
+  String get authWelcome =>
+      'สมัครแล้วใช้ล็อก Same Tide และการจองได้ทันที ผู้ดูแลปรับระดับตามกิจกรรม';
 
   @override
   String get authEmail => 'อีเมล';
@@ -1494,7 +1519,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authResetPasswordSent => 'ส่งอีเมลรีเซ็ตรหัสผ่านแล้ว';
 
   @override
-  String get authPasswordResetHiddenHint => '출시 전까지 비밀번호 찾기는 제공하지 않습니다. 필요하면 관리자에게 문의해 주세요.';
+  String get authPasswordResetHiddenHint =>
+      '출시 전까지 비밀번호 찾기는 제공하지 않습니다. 필요하면 관리자에게 문의해 주세요.';
 
   @override
   String get authErrorEmailInUse => 'อีเมลนี้ถูกใช้แล้ว';
@@ -1521,10 +1547,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authErrorGeneric => 'เข้าสู่ระบบไม่สำเร็จ';
 
   @override
-  String get authErrorOperationNotAllowed => 'ยังไม่ได้เปิดอีเมล/รหัสผ่าน ใน Firebase Authentication';
+  String get authErrorOperationNotAllowed =>
+      'ยังไม่ได้เปิดอีเมล/รหัสผ่าน ใน Firebase Authentication';
 
   @override
-  String get authErrorFirestore => 'สร้างบัญชีแล้ว แต่บันทึกโปรไฟล์ Firestore ไม่ได้';
+  String get authErrorFirestore =>
+      'สร้างบัญชีแล้ว แต่บันทึกโปรไฟล์ Firestore ไม่ได้';
 
   @override
   String get profilePasswordTitle => '비밀번호 변경';
@@ -1566,7 +1594,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get firebaseSetupTitle => 'ต้องเชื่อม Firebase';
 
   @override
-  String get firebaseSetupBody => 'สร้างโปรเจกต์ DiveTravelApp เปิด Email/Password และ Firestore แล้วรัน flutterfire configure';
+  String get firebaseSetupBody =>
+      'สร้างโปรเจกต์ DiveTravelApp เปิด Email/Password และ Firestore แล้วรัน flutterfire configure';
 
   @override
   String get adminMode => 'โหมดผู้ดูแล';
@@ -1634,7 +1663,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDashboardTitle => 'แดชบอร์ดผู้ดูแล';
 
   @override
-  String get adminDashboardSubtitle => 'ควบคุมการยืนยันอินสตรักเตอร์, Dive Star และโพสต์';
+  String get adminDashboardSubtitle =>
+      'ควบคุมการยืนยันอินสตรักเตอร์, Dive Star และโพสต์';
 
   @override
   String get adminHqTitle => 'Dive Travel HQ';
@@ -1717,7 +1747,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminMemberDeleteTitle => '회원을 삭제할까요?';
 
   @override
-  String get adminMemberDeleteBody => '휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.';
+  String get adminMemberDeleteBody =>
+      '휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.';
 
   @override
   String get adminMemberDeleteConfirm => '삭제';
@@ -1898,7 +1929,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPostsCommunityShort => '커뮤니티 글';
 
   @override
-  String get adminGradeMixInstructorNote => '강사 인증이 된 회원은 강사로 보입니다. 저장된 등급은 그대로입니다.';
+  String get adminGradeMixInstructorNote =>
+      '강사 인증이 된 회원은 강사로 보입니다. 저장된 등급은 그대로입니다.';
 
   @override
   String get adminMembersGradeAll => '전체';
@@ -2046,7 +2078,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminMembersRoleDiver => '일반회원';
 
   @override
-  String get adminMembersLeftoverPartnerHint => '관리자인데 파트너 플래그가 남아 있습니다. 「파트너 해제」로 정리하세요.';
+  String get adminMembersLeftoverPartnerHint =>
+      '관리자인데 파트너 플래그가 남아 있습니다. 「파트너 해제」로 정리하세요.';
 
   @override
   String get adminMembersPromotePartner => '파트너로 승격';
@@ -2413,7 +2446,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminMembersTitle => 'สมาชิก';
 
   @override
-  String get adminMembersSubtitle => 'ค้นหาสมาชิกและปรับระดับ ซิลเวอร์ / โกลด์ / ไดมอนด์ / แพลทินัม';
+  String get adminMembersSubtitle =>
+      'ค้นหาสมาชิกและปรับระดับ ซิลเวอร์ / โกลด์ / ไดมอนด์ / แพลทินัม';
 
   @override
   String get adminMembersSearch => 'ค้นหาชื่อหรืออีเมล';
@@ -2450,7 +2484,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminInstructorsTitle => 'อนุมัติใบรับรอง';
 
   @override
-  String get adminInstructorsSubtitle => 'ตรวจ C-Card บน R2 เมื่ออนุมัติจะเปิดราคาโปร';
+  String get adminInstructorsSubtitle =>
+      'ตรวจ C-Card บน R2 เมื่ออนุมัติจะเปิดราคาโปร';
 
   @override
   String adminInstructorAgency(String agency) {
@@ -2470,7 +2505,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminShopsTitle => 'Dive Star · ร้านพันธมิตร';
 
   @override
-  String get adminPartnersGradeHint => '다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.';
+  String get adminPartnersGradeHint =>
+      '다이브스타 등급은 관리자가 심사 양식으로 점수·게이트를 입력한 뒤 「등급 확정」할 때 부여됩니다. 수동 「등급 수정」도 가능합니다.';
 
   @override
   String get adminShopsSubtitle => 'ติดตามคะแนนปฏิบัติการ ดาว และการส่งป้าย';
@@ -2479,7 +2515,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminProductsTitle => '여행상품 등록';
 
   @override
-  String get adminProductsSubtitle => '등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.';
+  String get adminProductsSubtitle =>
+      '등록하면 여행상품 메뉴에 최근순으로 올라갑니다. 홈 노출은 홈 큐레이션에서 고릅니다.';
 
   @override
   String get adminProductsTab => '상품';
@@ -2534,7 +2571,12 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String seatBriefConclusionSelling(String who, int views, int flags, int pays) {
+  String seatBriefConclusionSelling(
+    String who,
+    int views,
+    int flags,
+    int pays,
+  ) {
     return '$who 조회 $views · 깃발 $flags · 결제 $pays. 잘 팔리고 있어요';
   }
 
@@ -2698,7 +2740,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerMeetingSend => '보내기';
 
   @override
-  String get partnerMeetingLock => '다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요';
+  String get partnerMeetingLock =>
+      '다른 파트너의 이름과 숫자는 자동으로 빠져요. 회원 이름·연락처는 들어가지 않아요';
 
   @override
   String get partnerMeetingNoShop => '선택할 파트너 샵이 없어요';
@@ -2762,7 +2805,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminSameBoatHint => '등록자가 연 빈자리만 표시합니다. 깃발 지정은 여기서 하지 않습니다.';
 
   @override
-  String get adminSameBoatApproveHint => '빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.';
+  String get adminSameBoatApproveHint =>
+      '빈자리 신청을 승인하면 같은배 메뉴에 올라갑니다. 깃발을 꽂으면 결제 시한까지 좌석이 잠깁니다.';
 
   @override
   String get adminSameBoatPendingQueue => '빈자리 승인 대기';
@@ -2833,28 +2877,33 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sameBoatHubSearchHint => '상품 이름 검색';
 
   @override
-  String get sameBoatSeatsHint => '기본 상품과 개별 상품에 빈자리를 열고, 출발일·깃발 마감을 넣은 뒤 관리자 승인을 요청합니다.';
+  String get sameBoatSeatsHint =>
+      '기본 상품과 개별 상품에 빈자리를 열고, 출발일·깃발 마감을 넣은 뒤 관리자 승인을 요청합니다.';
 
   @override
   String get sameBoatSeatsHubHint => '상품을 고른 뒤 빈자리 수·출발일·깃발 마감을 정해 같은배에 신청합니다.';
 
   @override
-  String get sameBoatSeatsNoProducts => '빈자리를 열 수 있는 승인된 상품이 없습니다. 관리자가 상품을 승인한 뒤 빈자리를 열 수 있습니다.';
+  String get sameBoatSeatsNoProducts =>
+      '빈자리를 열 수 있는 승인된 상품이 없습니다. 관리자가 상품을 승인한 뒤 빈자리를 열 수 있습니다.';
 
   @override
   String get sameBoatHubAwaitingPublishTitle => '상품 승인 대기';
 
   @override
-  String get sameBoatHubAwaitingPublishHint => '아직 공개되지 않은 상품입니다. 좌석 신청은 승인된 상품만 가능합니다.';
+  String get sameBoatHubAwaitingPublishHint =>
+      '아직 공개되지 않은 상품입니다. 좌석 신청은 승인된 상품만 가능합니다.';
 
   @override
   String get sameBoatHubAwaitingPublishEmpty => '승인 대기 중인 상품이 없습니다.';
 
   @override
-  String get partnerProductListEmpty => '등록한 상품이 없습니다. 저장하면 이 목록에 「승인 대기」로 나타납니다.';
+  String get partnerProductListEmpty =>
+      '등록한 상품이 없습니다. 저장하면 이 목록에 「승인 대기」로 나타납니다.';
 
   @override
-  String get shopStatRefreshFailed => '저장은 됐지만 목록을 새로고치지 못했습니다. 당겨서 새로고침하거나 화면을 다시 열어 주세요.';
+  String get shopStatRefreshFailed =>
+      '저장은 됐지만 목록을 새로고치지 못했습니다. 당겨서 새로고침하거나 화면을 다시 열어 주세요.';
 
   @override
   String get sameBoatSeatsSubmit => '승인 요청';
@@ -2923,7 +2972,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sameBoatIndividualSeats => '개별 상품 빈자리';
 
   @override
-  String get sameBoatHoldPriorityHint => '다이버 깃발은 이 깃발 마감과 심은 뒤 24시간 중 더 빠른 시각까지 잠깁니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.';
+  String get sameBoatHoldPriorityHint =>
+      '다이버 깃발은 이 깃발 마감과 심은 뒤 24시간 중 더 빠른 시각까지 잠깁니다. 그 안에 결제하지 않으면 자리가 다시 열립니다.';
 
   @override
   String get workbenchFlagDeadlineRequired => '깃발 마감일을 정해 주세요.';
@@ -3002,7 +3052,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarAssessmentTitle => '다이브스타 심사';
 
   @override
-  String get adminDiveStarAssessmentHint => '저장하면 합계와 후보 등급만 계산됩니다. 손님 화면에 보이는 별은 「등급 확정」을 눌러야 바뀝니다.';
+  String get adminDiveStarAssessmentHint =>
+      '저장하면 합계와 후보 등급만 계산됩니다. 손님 화면에 보이는 별은 「등급 확정」을 눌러야 바뀝니다.';
 
   @override
   String get adminDiveStarAssessmentFormSection => '새 심사 입력';
@@ -3026,13 +3077,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarTrialTitle => '다이브스타 심사 (v2 시험)';
 
   @override
-  String get adminDiveStarTrialHint => '초안 v2 양식으로 미리보기만 합니다. 저장은 3단계에서 됩니다. 지금 활성 양식은 v1로 유지됩니다.';
+  String get adminDiveStarTrialHint =>
+      '초안 v2 양식으로 미리보기만 합니다. 저장은 3단계에서 됩니다. 지금 활성 양식은 v1로 유지됩니다.';
 
   @override
-  String get adminDiveStarTrialNoDraft => '항목이 있는 v2 초안 양식이 없습니다. 먼저 「심사 양식 가져오기」로 저장하세요.';
+  String get adminDiveStarTrialNoDraft =>
+      '항목이 있는 v2 초안 양식이 없습니다. 먼저 「심사 양식 가져오기」로 저장하세요.';
 
   @override
-  String get adminDiveStarTrialSaveLocked => '시험 모드에서는 저장할 수 없습니다. 3단계에서 저장됩니다.';
+  String get adminDiveStarTrialSaveLocked =>
+      '시험 모드에서는 저장할 수 없습니다. 3단계에서 저장됩니다.';
 
   @override
   String get adminDiveStarFillMaxScores => '모든 항목 만점으로 채우기';
@@ -3243,7 +3297,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarFormImportTitle => '다이브스타 양식 가져오기';
 
   @override
-  String get adminDiveStarFormImportHint => '양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 준비가 되면 「사용 중으로 전환」으로 활성 양식을 바꿀 수 있습니다.';
+  String get adminDiveStarFormImportHint =>
+      '양식 JSON을 붙여넣어 초안(비활성)으로 저장합니다. 준비가 되면 「사용 중으로 전환」으로 활성 양식을 바꿀 수 있습니다.';
 
   @override
   String get adminDiveStarFormImportPasteLabel => '양식 JSON';
@@ -3286,7 +3341,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarFormListSection => '저장된 양식';
 
   @override
-  String get adminDiveStarFormListEmpty => '아직 Firestore에 양식이 없습니다(심사를 열면 v1이 시드됩니다).';
+  String get adminDiveStarFormListEmpty =>
+      '아직 Firestore에 양식이 없습니다(심사를 열면 v1이 시드됩니다).';
 
   @override
   String adminDiveStarFormListLoadError(String detail) {
@@ -3303,7 +3359,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDiveStarFormActivate => '이 양식을 사용 중으로 전환';
 
   @override
-  String get adminDiveStarFormActivateLockedHint => '3단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.';
+  String get adminDiveStarFormActivateLockedHint =>
+      '3단계 완료 후 사용 가능합니다. 지금은 활성 양식이 v1로 유지됩니다.';
 
   @override
   String adminDiveStarFormActivated(String version) {
@@ -3325,10 +3382,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminTrialDataTitle => '시험 데이터 점검·정리';
 
   @override
-  String get adminTrialPrelaunchBanner => '출시 전 삭제 예정 기능 — 운영 데이터가 아닙니다. 백업 후 사용하세요.';
+  String get adminTrialPrelaunchBanner =>
+      '출시 전 삭제 예정 기능 — 운영 데이터가 아닙니다. 백업 후 사용하세요.';
 
   @override
-  String get adminTrialLimitsBody => '한계: Firebase Auth 로그인 계정은 앱에서 못 지웁니다(Console → Authentication → Users). users 문서만 지우면 같은 아이디로 다시 로그인할 때 빈 회원 문서가 생길 수 있으니, 시험 계정은 Firestore 삭제 후 Console에서 Auth도 지우세요. R2·Storage 사진 파일은 문서와 별개로 남을 수 있습니다. 서류함(partner_contracts)은 규칙상 앱 삭제 불가 — Console에서 수동 삭제하세요. 하위 컬렉션은 부모와 함께 자동 삭제되지 않습니다.';
+  String get adminTrialLimitsBody =>
+      '한계: Firebase Auth 로그인 계정은 앱에서 못 지웁니다(Console → Authentication → Users). users 문서만 지우면 같은 아이디로 다시 로그인할 때 빈 회원 문서가 생길 수 있으니, 시험 계정은 Firestore 삭제 후 Console에서 Auth도 지우세요. R2·Storage 사진 파일은 문서와 별개로 남을 수 있습니다. 서류함(partner_contracts)은 규칙상 앱 삭제 불가 — Console에서 수동 삭제하세요. 하위 컬렉션은 부모와 함께 자동 삭제되지 않습니다.';
 
   @override
   String get adminTrialRefresh => '건수 새로고침';
@@ -3354,16 +3413,19 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get adminTrialJejuMissing => '「제주 오렌지」 샵을 찾지 못했습니다. 보호 샵 없이 시험 삭제가 가능하니 주의하세요.';
+  String get adminTrialJejuMissing =>
+      '「제주 오렌지」 샵을 찾지 못했습니다. 보호 샵 없이 시험 삭제가 가능하니 주의하세요.';
 
   @override
-  String get adminTrialJejuAmbiguous => '「제주 오렌지」와 비슷한 샵이 여러 개입니다. 목록을 확인한 뒤 Console에서 정리하고 다시 열어 주세요. 삭제를 잠갔습니다.';
+  String get adminTrialJejuAmbiguous =>
+      '「제주 오렌지」와 비슷한 샵이 여러 개입니다. 목록을 확인한 뒤 Console에서 정리하고 다시 열어 주세요. 삭제를 잠갔습니다.';
 
   @override
   String get adminTrialDeleteTitle => '선택 삭제';
 
   @override
-  String get adminTrialDeleteHint => '보호 항목은 체크할 수 없습니다. 실행 전 건수를 다시 읽고, 확인 문구를 정확히 입력하세요.';
+  String get adminTrialDeleteHint =>
+      '보호 항목은 체크할 수 없습니다. 실행 전 건수를 다시 읽고, 확인 문구를 정확히 입력하세요.';
 
   @override
   String get adminTrialBackupCheck => '백업(또는 Export)은 했습니다';
@@ -3431,7 +3493,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminTrialIncludeJejuTitle => '제주 오렌지도 지울까요?';
 
   @override
-  String get adminTrialIncludeJejuBody => '이번 삭제에만 제주 오렌지 샵·상품·예약·후기가 포함됩니다. 관리자 본인 계정과 서류함·심사 양식·문서 설정은 그대로 남습니다.';
+  String get adminTrialIncludeJejuBody =>
+      '이번 삭제에만 제주 오렌지 샵·상품·예약·후기가 포함됩니다. 관리자 본인 계정과 서류함·심사 양식·문서 설정은 그대로 남습니다.';
 
   @override
   String get adminTrialIncludeJejuCancel => '취소';
@@ -3440,7 +3503,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminTrialIncludeJejuConfirm => '함께 지우기';
 
   @override
-  String get adminDocsHint => '파트너에게 보낼 공개 안내서·신청서를 보관하고 공유합니다. 내부용 파일은 여기에 넣지 마세요.';
+  String get adminDocsHint =>
+      '파트너에게 보낼 공개 안내서·신청서를 보관하고 공유합니다. 내부용 파일은 여기에 넣지 마세요.';
 
   @override
   String get adminDocsListSection => '문서 목록';
@@ -3564,7 +3628,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDocConfigTitle => '채널·문구 설정';
 
   @override
-  String get adminDocConfigChannelsHint => '국가별 추천 채널을 쉼표로 적어 주세요. (예: kakao, email, share)';
+  String get adminDocConfigChannelsHint =>
+      '국가별 추천 채널을 쉼표로 적어 주세요. (예: kakao, email, share)';
 
   @override
   String get adminDocConfigChannelsKr => '한국 (KR)';
@@ -3582,7 +3647,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDocConfigChannelsDefault => '그 외 (DEFAULT)';
 
   @override
-  String get adminDocConfigTemplatesHint => '발송 문구 템플릿. 자리표시자: 파트너명, 링크 (영문 partner_name, link)';
+  String get adminDocConfigTemplatesHint =>
+      '발송 문구 템플릿. 자리표시자: 파트너명, 링크 (영문 partner_name, link)';
 
   @override
   String get adminDocConfigKoSubject => '한국어 제목';
@@ -3597,7 +3663,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminDocConfigEnBody => 'English body';
 
   @override
-  String get adminDocConfigPlaceholders => '자리표시자 예: 중괄호+파트너명, 중괄호+링크, partner_name, link';
+  String get adminDocConfigPlaceholders =>
+      '자리표시자 예: 중괄호+파트너명, 중괄호+링크, partner_name, link';
 
   @override
   String get adminDocConfigSaved => '채널·문구 설정을 저장했습니다.';
@@ -3618,7 +3685,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerLoiTitle => '참여 의향서';
 
   @override
-  String get partnerLoiHint => '샵 정보를 입력하고 손가락으로 서명한 뒤 제출하세요. PDF가 만들어지고 다이브트래블에 접수됩니다.';
+  String get partnerLoiHint =>
+      '샵 정보를 입력하고 손가락으로 서명한 뒤 제출하세요. PDF가 만들어지고 다이브트래블에 접수됩니다.';
 
   @override
   String get partnerLoiCompany => '회사·샵 이름';
@@ -3697,13 +3765,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminAppsTitle => '다이브스타 신청';
 
   @override
-  String get adminAppsHint => '의향서 접수와 파트너 진행 상태를 관리합니다. 이메일은 큐에 쌓이며, Cloud Functions 연동 전까지는 mailto로 보냅니다.';
+  String get adminAppsHint =>
+      '의향서 접수와 파트너 진행 상태를 관리합니다. 이메일은 큐에 쌓이며, Cloud Functions 연동 전까지는 mailto로 보냅니다.';
 
   @override
   String get adminAppsReminderSection => '리마인더 대상';
 
   @override
-  String get adminAppsEmailServerNote => '서버 메일 발송은 아직 없습니다. 리마인더는 메일 앱을 열고 큐에 기록합니다.';
+  String get adminAppsEmailServerNote =>
+      '서버 메일 발송은 아직 없습니다. 리마인더는 메일 앱을 열고 큐에 기록합니다.';
 
   @override
   String get adminAppsReminderEmpty => '기한이 된 리마인더가 없습니다.';
@@ -3855,7 +3925,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get partnerResubmitUnchanged => '반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.';
+  String get partnerResubmitUnchanged =>
+      '반려 후 달라진 내용이 없어요. 반려 사유를 확인하고 고친 뒤 다시 요청해 주세요.';
 
   @override
   String get partnerResubmitSoftWarnTitle => '관련 항목이 그대로예요';
@@ -3908,7 +3979,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPendingChangeUnknown => '비교 불가';
 
   @override
-  String get adminProductSubmitHint => '저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.';
+  String get adminProductSubmitHint =>
+      '저장하면 승인 대기열로 올라갑니다. 최종 노출은 관리자 승인 후입니다.';
 
   @override
   String get adminProductSubmitted => '승인 요청이 접수되었습니다.';
@@ -3917,7 +3989,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productFormHeroTitle => '여행상품을 등록하세요';
 
   @override
-  String get productFormHeroBody => '대륙 → 샵 → 상세 일정 → 구성 옵션 순으로 채우면 손님 화면에 바로 쓸 수 있습니다.';
+  String get productFormHeroBody =>
+      '대륙 → 샵 → 상세 일정 → 구성 옵션 순으로 채우면 손님 화면에 바로 쓸 수 있습니다.';
 
   @override
   String get productFormSectionLocation => '위치';
@@ -3994,7 +4067,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get creatorWizardStepReview => '확인';
 
   @override
-  String get creatorWizardReviewHint => '승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.';
+  String get creatorWizardReviewHint =>
+      '승인 요청을 누르면 저장돼요. 관리자 승인 후 마이 > 내 캡틴 카드에서 『빈자리 열기』로 날짜와 인원을 정할 수 있어요.';
 
   @override
   String get creatorWizardSubmitted => '승인 요청을 보냈어요. 승인되면 마이에서 빈자리를 열 수 있어요';
@@ -4092,7 +4166,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productFormCancelHint => '출발 N일 전 규정 등';
 
   @override
-  String get productFormOptionsHint => '룸타입, 탱크 수, 장비, 트랜스퍼처럼 손님이 고르는 구성을 추가하세요.';
+  String get productFormOptionsHint =>
+      '룸타입, 탱크 수, 장비, 트랜스퍼처럼 손님이 고르는 구성을 추가하세요.';
 
   @override
   String get productFormOptionName => '옵션명';
@@ -4128,7 +4203,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get productFormSourceCurated => '직접 기획';
 
   @override
-  String get productFormSourceHint => '제휴 리조트는 카탈로그에서 고릅니다. 직접 기획은 계약 전에도 리조트 이름을 직접 적어 상품을 만들 수 있습니다.';
+  String get productFormSourceHint =>
+      '제휴 리조트는 카탈로그에서 고릅니다. 직접 기획은 계약 전에도 리조트 이름을 직접 적어 상품을 만들 수 있습니다.';
 
   @override
   String get productFormCuratedResort => '리조트(샵) 이름';
@@ -4206,7 +4282,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerProductPublished => '상품이 게시되었습니다.';
 
   @override
-  String get partnerFormSoftGuide => '필수 표시만 적으면 저장돼요. 나머지는 비워도 괜찮아요. 운영팀이 함께 채워 드려요.';
+  String get partnerFormSoftGuide =>
+      '필수 표시만 적으면 저장돼요. 나머지는 비워도 괜찮아요. 운영팀이 함께 채워 드려요.';
 
   @override
   String get partnerFormSectionBasics => '기본 정보';
@@ -4216,6 +4293,24 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get partnerFormSectionPublish => '게시';
+
+  @override
+  String get partnerFormBoxBasics => '기본정보';
+
+  @override
+  String get partnerFormBoxPricePhoto => '가격·사진';
+
+  @override
+  String get partnerFormBoxOptions => '옵션';
+
+  @override
+  String get partnerFormBoxIndividuals => '개별상품';
+
+  @override
+  String get partnerFormBoxIncludes => '포함·불포함';
+
+  @override
+  String get partnerFormBoxPublish => '공개';
 
   @override
   String get partnerFormRequiredBadge => '필수';
@@ -4272,7 +4367,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerFormPreviewBadge => '게시하면 바로 공개';
 
   @override
-  String get partnerFormSameBoatNote => '같은배 빈자리는 상품 게시 후 따로 열 수 있어요. 열면 고객 화면에 바로 보여요.';
+  String get partnerFormSameBoatNote =>
+      '같은배 빈자리는 상품 게시 후 따로 열 수 있어요. 열면 고객 화면에 바로 보여요.';
 
   @override
   String get partnerFormCancelPolicy => '취소·환불 규정';
@@ -4281,7 +4377,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerPriceSwingTitle => '가격이 크게 바뀌었어요';
 
   @override
-  String get partnerPriceSwingBody => '기본가·옵션·비다이버·아동·전문가 가격 중 ±30% 이상 변경된 항목이 있습니다. 그대로 반영할까요?';
+  String get partnerPriceSwingBody =>
+      '기본가·옵션·비다이버·아동·전문가 가격 중 ±30% 이상 변경된 항목이 있습니다. 그대로 반영할까요?';
 
   @override
   String get partnerPriceSwingConfirm => '반영하기';
@@ -4329,7 +4426,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get partnerProductMenuFocNote => '할인과 강사 FOC는 계약서 기준으로 앱이 알아서 적용해요.\n바꾸려면 운영팀과 협의해 주세요.';
+  String get partnerProductMenuFocNote =>
+      '할인과 강사 FOC는 계약서 기준으로 앱이 알아서 적용해요.\n바꾸려면 운영팀과 협의해 주세요.';
 
   @override
   String get partnerProductBadgeBasic => '기본 상품';
@@ -4353,10 +4451,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerProductAddOptionIndividual => '+ 옵션 · 개별 상품 추가';
 
   @override
-  String get partnerProductListFooter => '기본 상품 한 개 안에 개별 상품과 옵션이 모두 모여 있어요. 줄마다 바로 고치거나 폐기할 수 있어요.';
+  String get partnerProductListFooter =>
+      '기본 상품 한 개 안에 개별 상품과 옵션이 모두 모여 있어요. 줄마다 바로 고치거나 폐기할 수 있어요.';
 
   @override
-  String get partnerProductsEmptyH2 => '아직 등록한 상품이 없어요. 첫 상품을 올리면 고객 화면에 바로 보여요.';
+  String get partnerProductsEmptyH2 =>
+      '아직 등록한 상품이 없어요. 첫 상품을 올리면 고객 화면에 바로 보여요.';
 
   @override
   String get partnerProductsEmptyCtaH2 => '첫 상품 올리기';
@@ -4373,7 +4473,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerProductDiscardConfirmTitle => '이 항목을 폐기할까요?';
 
   @override
-  String get partnerProductDiscardConfirmBody => '목록에서 삭제됩니다. 예약·홀드가 있으면 삭제 대신 닫힙니다.';
+  String get partnerProductDiscardConfirmBody =>
+      '목록에서 삭제됩니다. 예약·홀드가 있으면 삭제 대신 닫힙니다.';
 
   @override
   String get partnerProductDiscardClosedSnack => '예약·홀드가 있어 삭제 대신 닫았습니다.';
@@ -4403,7 +4504,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerExit => '나가기';
 
   @override
-  String get partnerProductsGuide => '저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.';
+  String get partnerProductsGuide =>
+      '저장하면 바로 탐색·같은배에 반영됩니다. 작성 중 상품은 임시 저장할 수 있어요.';
 
   @override
   String get partnerProductFilterAll => '전체';
@@ -4458,7 +4560,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerOwnProductsOnly => '파트너는 본인 샵 상품만 등록·수정할 수 있습니다.';
 
   @override
-  String get partnerProductPendingHint => '대기 중에도 목록에서 보고 수정할 수 있고, 같은배 신청과 여행상품 노출은 관리자 승인 후입니다.';
+  String get partnerProductPendingHint =>
+      '대기 중에도 목록에서 보고 수정할 수 있고, 같은배 신청과 여행상품 노출은 관리자 승인 후입니다.';
 
   @override
   String get adminPlaqueQueue => 'รายการส่งป้ายจริง';
@@ -4488,7 +4591,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPricingTitle => '정산·할인';
 
   @override
-  String get adminPricingSubtitle => '일반 다이버는 소비자가, 강사는 여기서 정한 할인율 또는 정액이 적용됩니다.';
+  String get adminPricingSubtitle =>
+      '일반 다이버는 소비자가, 강사는 여기서 정한 할인율 또는 정액이 적용됩니다.';
 
   @override
   String get adminPricingPercent => '할인율';
@@ -4517,7 +4621,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminPostsTitle => 'ทัวร์และโพสต์บัดดี้';
 
   @override
-  String get adminPostsSubtitle => 'ตรวจสินค้าและโพสต์บัดดี้ ซ่อนหรือลบโพสต์ปลอม/ผิดกฎหมาย';
+  String get adminPostsSubtitle =>
+      'ตรวจสินค้าและโพสต์บัดดี้ ซ่อนหรือลบโพสต์ปลอม/ผิดกฎหมาย';
 
   @override
   String get adminHidePost => 'ซ่อน';
@@ -4848,7 +4953,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerStatsPrivacyNote => '개인을 식별할 수 없는 집계만 보여 줍니다.';
 
   @override
-  String get partnerSettlementSimPayNote => '지금은 모의결제(SimPay) 기준 금액입니다. 실결제 연동 후 정산액이 확정됩니다.';
+  String get partnerSettlementSimPayNote =>
+      '지금은 모의결제(SimPay) 기준 금액입니다. 실결제 연동 후 정산액이 확정됩니다.';
 
   @override
   String partnerSettlementMonthLabel(int year, int month) {
@@ -4953,10 +5059,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityTideHeadline => '같은배 동승하기';
 
   @override
-  String get communityTideBody => '팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.';
+  String get communityTideBody =>
+      '팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.';
 
   @override
-  String get communityTideSafety => '물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.';
+  String get communityTideSafety =>
+      '물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.';
 
   @override
   String get communityStatOpenSeats => '빈자리';
@@ -5011,7 +5119,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get communityFlagOneSeat => '깃발을 꽂을 인원만큼 결제시한까지 좌석이 잠깁니다. 결제 화면에서 인원은 바꿀 수 없습니다.';
+  String get communityFlagOneSeat =>
+      '깃발을 꽂을 인원만큼 결제시한까지 좌석이 잠깁니다. 결제 화면에서 인원은 바꿀 수 없습니다.';
 
   @override
   String communityFlagPartyAsk(int open) {
@@ -5095,7 +5204,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreEditResort => '리조트 글 수정';
 
   @override
-  String get exploreDeskHint => '현지 샵과 관리자가 같은 글을 고칩니다. 저장하면 여행상품 상세에 바로 반영됩니다.';
+  String get exploreDeskHint =>
+      '현지 샵과 관리자가 같은 글을 고칩니다. 저장하면 여행상품 상세에 바로 반영됩니다.';
 
   @override
   String exploreOpenRooms(int count) {
@@ -5112,7 +5222,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreCoverPhoto => '대표 이미지';
 
   @override
-  String get exploreCoverPhotoHint => 'Booking.com·아고다처럼 큰 대표컷 + 작은 사진 격자로 보여 줍니다. 첫 장이 대표 이미지입니다.';
+  String get exploreCoverPhotoHint =>
+      'Booking.com·아고다처럼 큰 대표컷 + 작은 사진 격자로 보여 줍니다. 첫 장이 대표 이미지입니다.';
 
   @override
   String get exploreGalleryTitle => '리조트 사진';
@@ -5412,7 +5523,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get communityDesignPreview => '디자인 확인용';
 
   @override
-  String get communityDesignPreviewFlag => '샘플 카드예요. 제휴파트너가 빈자리를 열면 여기서 깃발을 꽂을 수 있어요';
+  String get communityDesignPreviewFlag =>
+      '샘플 카드예요. 제휴파트너가 빈자리를 열면 여기서 깃발을 꽂을 수 있어요';
 
   @override
   String get profileGuestLoginPrompt => '로그인하고 내 여행을 확인해요';
@@ -5442,7 +5554,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get weatherAdminTitle => 'สิทธิ์ยกเลิกอากาศ';
 
   @override
-  String get weatherAdminBody => 'ตั้งสถานะวันนั้นเป็น weather_cancelled และคืนเงิน 100%';
+  String get weatherAdminBody =>
+      'ตั้งสถานะวันนั้นเป็น weather_cancelled และคืนเงิน 100%';
 
   @override
   String get weatherTourDate => 'วันทัวร์';
@@ -5562,10 +5675,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workbenchGuestPreviewTitle => '고객 구매 화면 예시';
 
   @override
-  String get workbenchGuestPreviewHint => '저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.';
+  String get workbenchGuestPreviewHint =>
+      '저장되지 않는 예시입니다. 실제 인원은 고객이 구매할 때 고릅니다.';
 
   @override
-  String get workbenchPriceRevisionPendingBanner => '가격·신규 옵션 변경은 관리자 승인을 기다리는 중이에요. 그 외 수정은 이미 공개 상품에 반영되었어요.';
+  String get workbenchPriceRevisionPendingBanner =>
+      '가격·신규 옵션 변경은 관리자 승인을 기다리는 중이에요. 그 외 수정은 이미 공개 상품에 반영되었어요.';
 
   @override
   String workbenchPriceRevisionRejectedBanner(String note) {
@@ -5573,13 +5688,16 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get workbenchPriceRevisionStaged => '가격·새 옵션은 관리자 승인 뒤에 반영돼요. 나머지는 바로 반영되었어요';
+  String get workbenchPriceRevisionStaged =>
+      '가격·새 옵션은 관리자 승인 뒤에 반영돼요. 나머지는 바로 반영되었어요';
 
   @override
-  String get workbenchOptionClosedNotDeleted => '예약·홀드가 있는 옵션이라 삭제 대신 예약 마감 처리했어요.';
+  String get workbenchOptionClosedNotDeleted =>
+      '예약·홀드가 있는 옵션이라 삭제 대신 예약 마감 처리했어요.';
 
   @override
-  String get workbenchPhotoUploadFailed => '사진 업로드에 실패했습니다. 연결·R2 설정을 확인한 뒤 다시 저장하세요. 상품은 저장되지 않았습니다.';
+  String get workbenchPhotoUploadFailed =>
+      '사진 업로드에 실패했습니다. 연결·R2 설정을 확인한 뒤 다시 저장하세요. 상품은 저장되지 않았습니다.';
 
   @override
   String get workbenchPhotoLoadFailed => '사진을 불러오지 못했어요';
@@ -5623,7 +5741,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workbenchOpenSeats => '같은배에 빈자리 열기';
 
   @override
-  String get workbenchOpenSeatsHint => '이미 팀이 있는데 같은 기간에 인원을 더 뽑을 때만 켭니다. 끄면 일반 상품입니다.';
+  String get workbenchOpenSeatsHint =>
+      '이미 팀이 있는데 같은 기간에 인원을 더 뽑을 때만 켭니다. 끄면 일반 상품입니다.';
 
   @override
   String get workbenchSeatCount => '총 인원';
@@ -5670,7 +5789,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sameBoatAskAdminToChange => '변경은 관리자에게 문의하세요.';
 
   @override
-  String get sameBoatPendingAfterSave => '같은배 노출은 관리자 승인 후입니다. (관리자 → 샵 → 같은배 모니터)';
+  String get sameBoatPendingAfterSave =>
+      '같은배 노출은 관리자 승인 후입니다. (관리자 → 샵 → 같은배 모니터)';
 
   @override
   String get briefSectionSameBoat => '같은배 빈자리';
@@ -5966,7 +6086,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get briefShopInfoOpen => '리조트 소개 열기';
 
   @override
-  String get briefSameBoatPartnerHint => '같은배 빈자리는 상품을 게시한 뒤, 상품 관리에서 바로 열 수 있어요.';
+  String get briefSameBoatPartnerHint =>
+      '같은배 빈자리는 상품을 게시한 뒤, 상품 관리에서 바로 열 수 있어요.';
 
   @override
   String get briefTempSaveNeedPhoto => '사진을 한 장 이상 넣어 주세요.';
@@ -6161,7 +6282,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminOverviewChangeCapacity => '좌석';
 
   @override
-  String adminOverviewChangeLine(String name, String label, int before, int after) {
+  String adminOverviewChangeLine(
+    String name,
+    String label,
+    int before,
+    int after,
+  ) {
     return '$name $label $before→$after';
   }
 
@@ -6505,10 +6631,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get adminReportHeading => '경영보고서';
 
   @override
-  String get adminReportBasisBody => '계산 기준: 접수일. 총 결제는 결제된 건 전체(이후 취소 포함)이고, 환불은 취소·기상취소의 환불액입니다. 순매출 = 총 결제 − 환불. 지금은 모의결제(SimPay) 기간입니다.';
+  String get adminReportBasisBody =>
+      '계산 기준: 접수일. 총 결제는 결제된 건 전체(이후 취소 포함)이고, 환불은 취소·기상취소의 환불액입니다. 순매출 = 총 결제 − 환불. 지금은 모의결제(SimPay) 기간입니다.';
 
   @override
-  String get adminReportFontLicense => 'Noto Sans KR는 SIL Open Font License(OFL)입니다.';
+  String get adminReportFontLicense =>
+      'Noto Sans KR는 SIL Open Font License(OFL)입니다.';
 
   @override
   String get adminReportPrinting => 'PDF를 준비하고 있습니다.';

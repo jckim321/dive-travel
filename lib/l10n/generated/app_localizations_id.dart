@@ -4303,6 +4303,24 @@ class AppLocalizationsId extends AppLocalizations {
   String get partnerFormSectionPublish => '게시';
 
   @override
+  String get partnerFormBoxBasics => '기본정보';
+
+  @override
+  String get partnerFormBoxPricePhoto => '가격·사진';
+
+  @override
+  String get partnerFormBoxOptions => '옵션';
+
+  @override
+  String get partnerFormBoxIndividuals => '개별상품';
+
+  @override
+  String get partnerFormBoxIncludes => '포함·불포함';
+
+  @override
+  String get partnerFormBoxPublish => '공개';
+
+  @override
   String get partnerFormRequiredBadge => '필수';
 
   @override

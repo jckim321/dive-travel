@@ -8094,6 +8094,42 @@ abstract class AppLocalizations {
   /// **'게시'**
   String get partnerFormSectionPublish;
 
+  /// No description provided for @partnerFormBoxBasics.
+  ///
+  /// In ko, this message translates to:
+  /// **'기본정보'**
+  String get partnerFormBoxBasics;
+
+  /// No description provided for @partnerFormBoxPricePhoto.
+  ///
+  /// In ko, this message translates to:
+  /// **'가격·사진'**
+  String get partnerFormBoxPricePhoto;
+
+  /// No description provided for @partnerFormBoxOptions.
+  ///
+  /// In ko, this message translates to:
+  /// **'옵션'**
+  String get partnerFormBoxOptions;
+
+  /// No description provided for @partnerFormBoxIndividuals.
+  ///
+  /// In ko, this message translates to:
+  /// **'개별상품'**
+  String get partnerFormBoxIndividuals;
+
+  /// No description provided for @partnerFormBoxIncludes.
+  ///
+  /// In ko, this message translates to:
+  /// **'포함·불포함'**
+  String get partnerFormBoxIncludes;
+
+  /// No description provided for @partnerFormBoxPublish.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개'**
+  String get partnerFormBoxPublish;
+
   /// No description provided for @partnerFormRequiredBadge.
   ///
   /// In ko, this message translates to:

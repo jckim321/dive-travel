@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -126,6 +127,11 @@ void main() {
   });
 
   testWidgets('option name without price is blocked', (tester) async {
+    tester.view.physicalSize = const Size(900, 5200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final l10n = await loadKo();
     await pumpPartnerForm(tester);
     await tester.enterText(
@@ -206,5 +212,96 @@ void main() {
     );
     expect(nights.controller?.text ?? '', isEmpty);
     expect(days.controller?.text ?? '', isEmpty);
+  });
+
+  testWidgets('섹션 박스로 나뉘고 옵션 카드와 개별상품 카드가 같다', (tester) async {
+    tester.view.physicalSize = const Size(900, 5200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await pumpPartnerForm(tester);
+
+    const sections = [
+      Key('partner-form-section-basics'),
+      Key('partner-form-section-price'),
+      Key('partner-form-section-options'),
+      Key('partner-form-section-individuals'),
+      Key('partner-form-section-includes'),
+      Key('partner-form-section-publish'),
+    ];
+    const titles = ['기본정보', '가격·사진', '옵션', '개별상품', '포함·불포함', '공개'];
+    for (var i = 0; i < sections.length; i++) {
+      expect(
+        find.descendant(of: find.byKey(sections[i]), matching: find.text(titles[i])),
+        findsOneWidget,
+      );
+      if (i > 0) {
+        expect(
+          tester.getTopLeft(find.byKey(sections[i - 1])).dy,
+          lessThan(tester.getTopLeft(find.byKey(sections[i])).dy),
+        );
+      }
+    }
+    expect(
+      find.descendant(
+        of: find.byKey(sections[0]),
+        matching: find.byKey(const Key('partner-product-name')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(sections[1]),
+        matching: find.byKey(const Key('workbench-diver-price')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(sections[1]),
+        matching: find.byKey(const Key('product-photo-add')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(sections[5]),
+        matching: find.byKey(const Key('partner-form-preview-card')),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('partner-form-add-individual')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('partner-form-add-individual')));
+    await tester.pump();
+
+    Material card(String prefix) {
+      return tester.widget<Material>(
+        find.byWidgetPredicate((widget) {
+          final key = widget.key;
+          return widget is Material &&
+              key is ValueKey<String> &&
+              key.value.startsWith(prefix);
+        }),
+      );
+    }
+
+    final option = card('addon-row-');
+    final individual = card('individual-row-');
+    expect(option.color, PartnerTheme.bg);
+    expect(individual.color, option.color);
+    expect(individual.shape, option.shape);
+    expect(
+      tester.widget<Padding>(find.descendant(
+        of: find.byKey(option.key!),
+        matching: find.byType(Padding),
+      ).first).padding,
+      tester.widget<Padding>(find.descendant(
+        of: find.byKey(individual.key!),
+        matching: find.byType(Padding),
+      ).first).padding,
+    );
   });
 }

@@ -2278,6 +2278,45 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                         if (widget.creatorMode) ...[
                           _creatorProgress(l10n),
                           _creatorStepBody(l10n, store),
+                        ] else if (widget.partnerMode) ...[
+                          _partnerGuideBanner(l10n),
+                          const SizedBox(height: 16),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-basics'),
+                            title: l10n.partnerFormBoxBasics,
+                            children: [
+                              _shopLine(l10n, store),
+                              const SizedBox(height: 12),
+                              _partnerBasicsSection(l10n),
+                            ],
+                          ),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-price'),
+                            title: l10n.partnerFormBoxPricePhoto,
+                            children: [_partnerPricePhotoBlock(l10n)],
+                          ),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-options'),
+                            title: l10n.partnerFormBoxOptions,
+                            children: [_partnerOptionsBlock(l10n, titled: false)],
+                          ),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-individuals'),
+                            title: l10n.partnerFormBoxIndividuals,
+                            children: [
+                              _partnerIndividualsBlock(l10n, titled: false),
+                            ],
+                          ),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-includes'),
+                            title: l10n.partnerFormBoxIncludes,
+                            children: [_partnerIncludesBlock(l10n)],
+                          ),
+                          _partnerFormBox(
+                            boxKey: const Key('partner-form-section-publish'),
+                            title: l10n.partnerFormBoxPublish,
+                            children: [_partnerPublishSection(l10n)],
+                          ),
                         ] else ...[
                           _shopLine(l10n, store),
                           const SizedBox(height: 16),
@@ -2711,6 +2750,64 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             fontSize: 13,
             height: 1.35,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _partnerFormBox({
+    required Key boxKey,
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Material(
+        key: boxKey,
+        color: PartnerTheme.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: PartnerTheme.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: PartnerTheme.text,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 옵션 카드와 개별상품 카드가 같이 쓰는 틀.
+  Widget _partnerEntryCard({
+    required Key key,
+    required List<Widget> children,
+  }) {
+    return Material(
+      key: key,
+      color: PartnerTheme.bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: PartnerTheme.borderStrong),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
         ),
       ),
     );
@@ -3960,6 +4057,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _partnerPricePhotoBlock(l10n),
+        const SizedBox(height: 14),
+        _partnerOptionsBlock(l10n, titled: true),
+        const SizedBox(height: 16),
+        _partnerIndividualsBlock(l10n, titled: true),
+        const SizedBox(height: 14),
+        _partnerIncludesBlock(l10n),
+      ],
+    );
+  }
+
+  Widget _partnerPricePhotoBlock(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Row(
           children: [
             Text(
@@ -4066,62 +4178,80 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             onChanged: (_) => setState(() => _childPriceError = null),
           ),
         ],
-        const SizedBox(height: 14),
-        KeyedSubtree(
-          key: _partnerAddonsKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.productFormSectionOptions,
-                style: const TextStyle(
-                  color: PartnerTheme.text,
-                  fontWeight: FontWeight.w700,
-                ),
+      ],
+    );
+  }
+
+  Widget _partnerOptionsBlock(AppLocalizations l10n, {required bool titled}) {
+    return KeyedSubtree(
+      key: _partnerAddonsKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (titled) ...[
+            Text(
+              l10n.productFormSectionOptions,
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 8),
-              for (var i = 0; i < _addons.length; i++) ...[
-                _partnerAddonRow(l10n, i),
-                const SizedBox(height: 8),
-              ],
-              OutlinedButton(
-                key: const Key('partner-form-add-option'),
-                onPressed: () {
-                  final line = _LineEditors(kind: ProductOptionKind.addon);
-                  setState(() => _addons.add(line));
-                },
-                child: Text(l10n.partnerFormAddOption),
-              ),
-            ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          for (var i = 0; i < _addons.length; i++) ...[
+            _partnerAddonRow(l10n, i),
+            const SizedBox(height: 8),
+          ],
+          OutlinedButton(
+            key: const Key('partner-form-add-option'),
+            onPressed: () {
+              final line = _LineEditors(kind: ProductOptionKind.addon);
+              setState(() => _addons.add(line));
+            },
+            child: Text(l10n.partnerFormAddOption),
           ),
-        ),
-        const SizedBox(height: 16),
-        KeyedSubtree(
-          key: _partnerIndividualsKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.bookingEntryIndividuals,
-                style: const TextStyle(
-                  color: PartnerTheme.text,
-                  fontWeight: FontWeight.w700,
-                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _partnerIndividualsBlock(
+    AppLocalizations l10n, {
+    required bool titled,
+  }) {
+    return KeyedSubtree(
+      key: _partnerIndividualsKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (titled) ...[
+            Text(
+              l10n.bookingEntryIndividuals,
+              style: const TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 8),
-              for (var i = 0; i < _individuals.length; i++) ...[
-                _partnerIndividualCard(l10n, i),
-                const SizedBox(height: 8),
-              ],
-              OutlinedButton(
-                key: const Key('partner-form-add-individual'),
-                onPressed: _addIndividualTicket,
-                child: Text(l10n.partnerFormAddIndividual),
-              ),
-            ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          for (var i = 0; i < _individuals.length; i++) ...[
+            _partnerIndividualCard(l10n, i),
+            const SizedBox(height: 8),
+          ],
+          OutlinedButton(
+            key: const Key('partner-form-add-individual'),
+            onPressed: _addIndividualTicket,
+            child: Text(l10n.partnerFormAddIndividual),
           ),
-        ),
-        const SizedBox(height: 14),
+        ],
+      ),
+    );
+  }
+
+  Widget _partnerIncludesBlock(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         TextField(
           controller: _includes,
           minLines: 2,
@@ -4192,6 +4322,95 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _partnerAddonRow(AppLocalizations l10n, int index) {
     final draft = _addons[index];
+    final name = _StableField(
+      key: ValueKey('addon-name-slot-${draft.id}'),
+      stamp: 0,
+      buildField: () => TextField(
+        key: ValueKey('addon-name-${draft.id}'),
+        controller: draft.name,
+        cursorColor: PartnerTheme.accent,
+        style: const TextStyle(color: PartnerTheme.text),
+        decoration: _partnerField(l10n.productFormOptionName),
+      ),
+    );
+    final price = KeyedSubtree(
+      key: draft.priceKey,
+      child: _StableField(
+        key: ValueKey('addon-price-slot-${draft.id}'),
+        stamp: draft.priceError,
+        buildField: () => TextField(
+          key: ValueKey('addon-price-${draft.id}'),
+          focusNode: draft.consumerFocus,
+          controller: draft.consumer,
+          keyboardType: TextInputType.number,
+          inputFormatters: _priceInputFormatters,
+          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(
+            l10n.productFormOptionConsumer,
+            errorText: draft.priceError,
+          ),
+          onChanged: (_) {
+            if (draft.priceError != null) {
+              setState(() => draft.priceError = null);
+            }
+          },
+        ),
+      ),
+    );
+    final pro = _instructorPriceField(
+      key: ValueKey('addon-pro-${draft.id}'),
+      controller: draft.professional,
+      label: l10n.productFormOptionPro,
+      hint: l10n.productFormProPriceHint,
+    );
+    final remove = IconButton(
+      onPressed: () {
+        if (_closeOptionInsteadOfRemove(draft)) {
+          setState(() {});
+          return;
+        }
+        setState(() {
+          draft.dispose();
+          _addons.removeAt(index);
+        });
+      },
+      icon: const Icon(
+        Icons.delete_outline,
+        color: PartnerTheme.textDim,
+      ),
+    );
+    final group = _optionGroupMenu(
+      id: draft.id,
+      value: draft.group,
+      partner: true,
+      onChanged: (next) => setState(() => draft.group = next),
+    );
+    if (widget.partnerMode) {
+      return _partnerEntryCard(
+        key: ValueKey('addon-row-${draft.id}'),
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: name),
+              remove,
+            ],
+          ),
+          const SizedBox(height: 8),
+          group,
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: price),
+              const SizedBox(width: 8),
+              Expanded(child: pro),
+            ],
+          ),
+        ],
+      );
+    }
     return Material(
       key: ValueKey('addon-row-${draft.id}'),
       color: PartnerTheme.card,
@@ -4204,84 +4423,16 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: _StableField(
-                    key: ValueKey('addon-name-slot-${draft.id}'),
-                    stamp: 0,
-                    buildField: () => TextField(
-                      key: ValueKey('addon-name-${draft.id}'),
-                      controller: draft.name,
-                      cursorColor: PartnerTheme.accent,
-                      style: const TextStyle(color: PartnerTheme.text),
-                      decoration: _partnerField(l10n.productFormOptionName),
-                    ),
-                  ),
-                ),
+                Expanded(flex: 3, child: name),
                 const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: KeyedSubtree(
-                    key: draft.priceKey,
-                    child: _StableField(
-                      key: ValueKey('addon-price-slot-${draft.id}'),
-                      stamp: draft.priceError,
-                      buildField: () => TextField(
-                        key: ValueKey('addon-price-${draft.id}'),
-                        focusNode: draft.consumerFocus,
-                        controller: draft.consumer,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: _priceInputFormatters,
-                        cursorColor: PartnerTheme.accent,
-                        style: const TextStyle(color: PartnerTheme.text),
-                        decoration: _partnerField(
-                          l10n.productFormOptionConsumer,
-                          errorText: draft.priceError,
-                        ),
-                        onChanged: (_) {
-                          if (draft.priceError != null) {
-                            setState(() => draft.priceError = null);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(flex: 2, child: price),
                 const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: _instructorPriceField(
-                    key: ValueKey('addon-pro-${draft.id}'),
-                    controller: draft.professional,
-                    label: l10n.productFormOptionPro,
-                    hint: l10n.productFormProPriceHint,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    if (_closeOptionInsteadOfRemove(draft)) {
-                      setState(() {});
-                      return;
-                    }
-                    setState(() {
-                      draft.dispose();
-                      _addons.removeAt(index);
-                    });
-                  },
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: PartnerTheme.textDim,
-                  ),
-                ),
+                Expanded(flex: 2, child: pro),
+                remove,
               ],
             ),
             const SizedBox(height: 8),
-            _optionGroupMenu(
-              id: draft.id,
-              value: draft.group,
-              partner: true,
-              onChanged: (next) => setState(() => draft.group = next),
-            ),
+            group,
           ],
         ),
       ),
@@ -4290,15 +4441,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _partnerIndividualCard(AppLocalizations l10n, int index) {
     final ticket = _individuals[index];
-    return Material(
-      key: ValueKey('individual-row-${ticket.id}'),
-      color: PartnerTheme.card,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final fields = <Widget>[
             Row(
               children: [
                 Expanded(
@@ -4424,7 +4567,22 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               },
               child: Text(l10n.partnerFormIndividualOptions),
             ),
-          ],
+    ];
+    if (widget.partnerMode) {
+      return _partnerEntryCard(
+        key: ValueKey('individual-row-${ticket.id}'),
+        children: fields,
+      );
+    }
+    return Material(
+      key: ValueKey('individual-row-${ticket.id}'),
+      color: PartnerTheme.card,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: fields,
         ),
       ),
     );

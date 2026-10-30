@@ -4412,6 +4412,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerFormSectionPublish => 'Publish';
 
   @override
+  String get partnerFormBoxBasics => 'Basic info';
+
+  @override
+  String get partnerFormBoxPricePhoto => 'Price & photos';
+
+  @override
+  String get partnerFormBoxOptions => 'Options';
+
+  @override
+  String get partnerFormBoxIndividuals => 'Individual products';
+
+  @override
+  String get partnerFormBoxIncludes => 'Included & excluded';
+
+  @override
+  String get partnerFormBoxPublish => 'Public';
+
+  @override
   String get partnerFormRequiredBadge => 'Required';
 
   @override
