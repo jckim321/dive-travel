@@ -55,7 +55,7 @@ abstract class DiverRepository {
   /// Auth 세션의 현재 사용자. 없으면 null.
   Future<AppUser?> currentAuthUser();
 
-  /// 차단 또는 탈퇴 처리된 계정.
+  /// 차단, 탈퇴, 또는 소프트 삭제된 계정.
   Future<bool> isLoginBlocked(String uid);
 
   Future<void> sendPasswordReset(String email);
@@ -299,13 +299,29 @@ abstract class DiverRepository {
     required String actorUid,
   });
 
+  /// 본인(`actorUid` == `uid`)이면 `ADMIN_SELF`.
   Future<void> setAccountBlocked({
     required String uid,
     required bool blocked,
+    required String actorUid,
   });
 
   /// 이름·연락처를 지우고 탈퇴 시각을 남깁니다. 예약 문서는 유지합니다.
-  Future<void> withdrawMember(String uid);
+  /// 본인이면 `ADMIN_SELF`. 리조트 연결이 있으면 `SHOP_LINKED`.
+  Future<void> withdrawMember({
+    required String uid,
+    required String actorUid,
+  });
+
+  /// `deleted_at`만 기록합니다. 이름, 리조트 연결, 예약 문서는 그대로 둡니다.
+  /// 본인이면 `ADMIN_SELF`. 리조트 연결이 있으면 `SHOP_LINKED`.
+  Future<void> softDeleteMember({
+    required String uid,
+    required String actorUid,
+  });
+
+  /// `deleted_at`만 지웁니다.
+  Future<void> restoreDeletedMember(String uid);
 
   Future<void> unlockMemberGrade(String uid);
 

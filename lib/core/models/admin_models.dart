@@ -212,6 +212,7 @@ class MemberAccount {
     this.phone = '',
     this.accountBlocked = false,
     this.withdrawnAt,
+    this.deletedAt,
   });
 
   final String uid;
@@ -236,7 +237,11 @@ class MemberAccount {
   final bool accountBlocked;
   final DateTime? withdrawnAt;
 
-  bool get loginBlocked => accountBlocked || withdrawnAt != null;
+  /// Soft-delete stamp. Purge is `deletedAt` plus 30 days.
+  final DateTime? deletedAt;
+
+  bool get loginBlocked =>
+      accountBlocked || withdrawnAt != null || deletedAt != null;
 
   bool get missingProfile => displayName.trim().isEmpty;
 
@@ -283,7 +288,9 @@ class MemberAccount {
     String? phone,
     bool? accountBlocked,
     DateTime? withdrawnAt,
+    DateTime? deletedAt,
     bool clearWithdrawn = false,
+    bool clearDeleted = false,
     bool clearOwnedShopId = false,
   }) {
     return MemberAccount(
@@ -308,6 +315,7 @@ class MemberAccount {
       phone: phone ?? this.phone,
       accountBlocked: accountBlocked ?? this.accountBlocked,
       withdrawnAt: clearWithdrawn ? null : (withdrawnAt ?? this.withdrawnAt),
+      deletedAt: clearDeleted ? null : (deletedAt ?? this.deletedAt),
     );
   }
 }

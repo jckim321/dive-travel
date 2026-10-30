@@ -26,7 +26,33 @@ service cloud.firestore {
         && (
           userDoc().get('account_blocked', false) == true
           || userDoc().get('withdrawn_at', false) != false
+          || userDoc().get('deleted_at', false) != false
         );
+    }
+
+    // Withdraw or soft-delete. Clearing the stamp (restore) is not a close.
+    function writesCloseStamp() {
+      return (
+          request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['withdrawn_at'])
+          && request.resource.data.get('withdrawn_at', null) is timestamp
+        ) || (
+          request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['deleted_at'])
+          && request.resource.data.get('deleted_at', null) is timestamp
+        );
+    }
+
+    function resortLinked() {
+      return resource.data.get('owned_shop_id', '') is string
+        && resource.data.get('owned_shop_id', '').size() > 0;
+    }
+
+    // userId must be passed in. Match wildcards are not in scope for helpers.
+    function selfClosureTouch(userId) {
+      return request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['account_blocked', 'withdrawn_at', 'deleted_at']);
     }
 
     function isBusiness() {
@@ -135,6 +161,7 @@ service cloud.firestore {
         && (!('account_blocked' in request.resource.data)
           || request.resource.data.account_blocked == false)
         && !('withdrawn_at' in request.resource.data)
+        && !('deleted_at' in request.resource.data)
         && !('isAdmin' in request.resource.data)
         && !('isBusiness' in request.resource.data)
         && !('ownedShopId' in request.resource.data);
@@ -176,11 +203,15 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) && userCreatePrivilegeOk();
-      allow update: if isAdmin() || (
+      allow update: if (
+        isAdmin()
+        && !selfClosureTouch(userId)
+        && !(writesCloseStamp() && resortLinked())
+      ) || (
         isOwner(userId)
         && !accountClosed()
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'member_grade_locked'])
+            .hasAny(['is_admin', 'is_business', 'user_role', 'owned_shop_id', 'account_blocked', 'withdrawn_at', 'deleted_at', 'member_grade_locked'])
         && (
           !request.resource.data.diff(resource.data).affectedKeys()
               .hasAny(['is_instructor'])
@@ -197,7 +228,8 @@ service cloud.firestore {
           || request.resource.data.is_verified_pro == 'pending'
         )
       );
-      allow delete: if isAdmin() || (isOwner(userId) && !accountClosed());
+      allow delete: if (isAdmin() && request.auth.uid != userId)
+        || (isOwner(userId) && !isAdmin() && !accountClosed());
 
       match /logs/{logId} {
         allow get, list: if isOwner(userId) || isAdmin();

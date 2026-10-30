@@ -12,7 +12,7 @@ void main() {
     final members = await repo.fetchMembers();
     expect(members.map((m) => m.uid), contains(user!.uid));
 
-    await repo.withdrawMember(user.uid);
+    await repo.withdrawMember(uid: user.uid, actorUid: 'staff-actor');
     expect((await repo.fetchMembers()).single.displayName, isEmpty);
     await repo.signOut();
 
@@ -27,7 +27,11 @@ void main() {
     final again = MemoryDiverRepository();
     await again.signIn(email: 'wave@dive.test', password: 'secret12');
     final uid = (await again.currentAuthUser())!.uid;
-    await again.setAccountBlocked(uid: uid, blocked: true);
+    await again.setAccountBlocked(
+      uid: uid,
+      blocked: true,
+      actorUid: 'staff-actor',
+    );
     await again.signOut();
     final blocked = SessionController(again);
     addTearDown(blocked.dispose);

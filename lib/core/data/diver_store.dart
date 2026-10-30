@@ -1330,14 +1330,26 @@ class DiverStore extends ChangeNotifier {
     required String uid,
     required bool blocked,
   }) {
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
     return _commitMemberChange(
       uid: uid,
       patch: (member) => member.copyWith(accountBlocked: blocked),
-      write: () => _repository.setAccountBlocked(uid: uid, blocked: blocked),
+      write: () => _repository.setAccountBlocked(
+        uid: uid,
+        blocked: blocked,
+        actorUid: actorUid,
+      ),
     );
   }
 
   Future<void> withdrawMember(String uid) {
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
     return _commitMemberChange(
       uid: uid,
       patch: (member) => member.copyWith(
@@ -1345,7 +1357,27 @@ class DiverStore extends ChangeNotifier {
         phone: '',
         withdrawnAt: DateTime.now().toUtc(),
       ),
-      write: () => _repository.withdrawMember(uid),
+      write: () => _repository.withdrawMember(uid: uid, actorUid: actorUid),
+    );
+  }
+
+  Future<void> softDeleteMember(String uid) {
+    final actorUid = _uid;
+    if (actorUid == null || actorUid.isEmpty) {
+      throw StateError('Signed-in admin required');
+    }
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(deletedAt: DateTime.now().toUtc()),
+      write: () => _repository.softDeleteMember(uid: uid, actorUid: actorUid),
+    );
+  }
+
+  Future<void> restoreDeletedMember(String uid) {
+    return _commitMemberChange(
+      uid: uid,
+      patch: (member) => member.copyWith(clearDeleted: true),
+      write: () => _repository.restoreDeletedMember(uid),
     );
   }
 

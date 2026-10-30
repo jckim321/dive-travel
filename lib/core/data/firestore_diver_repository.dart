@@ -218,7 +218,9 @@ class FirestoreDiverRepository implements DiverRepository {
     final snap = await _userDoc(uid).get();
     if (!snap.exists) return false;
     final data = snap.data() ?? {};
-    return data['account_blocked'] == true || data['withdrawn_at'] != null;
+    return data['account_blocked'] == true ||
+        data['withdrawn_at'] != null ||
+        data['deleted_at'] != null;
   }
 
   @override
@@ -1463,7 +1465,8 @@ class FirestoreDiverRepository implements DiverRepository {
     final existing = snapshot.data();
     if (snapshot.exists &&
         (existing?['account_blocked'] == true ||
-            existing?['withdrawn_at'] != null)) {
+            existing?['withdrawn_at'] != null ||
+            existing?['deleted_at'] != null)) {
       return;
     }
     final existingName = existing?['display_name'] as String?;
@@ -3118,6 +3121,9 @@ class FirestoreDiverRepository implements DiverRepository {
       withdrawnAt: data['withdrawn_at'] is Timestamp
           ? (data['withdrawn_at'] as Timestamp).toDate()
           : null,
+      deletedAt: data['deleted_at'] is Timestamp
+          ? (data['deleted_at'] as Timestamp).toDate()
+          : null,
       createdAt: createdAt,
       lastSeenAt: lastSeenAt,
       nationality: normalizeNationalityCode(data['nationality'] as String?) ??
@@ -3204,11 +3210,27 @@ class FirestoreDiverRepository implements DiverRepository {
     }, SetOptions(merge: true));
   }
 
+  void _rejectSelf(String uid, String actorUid) {
+    if (actorUid == uid) {
+      throw StateError('ADMIN_SELF');
+    }
+  }
+
+  Future<void> _rejectLinkedResort(String uid) async {
+    final data = (await _userDoc(uid).get()).data();
+    final owned = (data?['owned_shop_id'] as String?)?.trim() ?? '';
+    if (owned.isNotEmpty) {
+      throw StateError('SHOP_LINKED');
+    }
+  }
+
   @override
   Future<void> setAccountBlocked({
     required String uid,
     required bool blocked,
+    required String actorUid,
   }) {
+    _rejectSelf(uid, actorUid);
     return _userDoc(uid).set({
       'account_blocked': blocked,
       'blocked_at': blocked ? FieldValue.serverTimestamp() : FieldValue.delete(),
@@ -3217,11 +3239,37 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> withdrawMember(String uid) {
-    return _userDoc(uid).set({
+  Future<void> withdrawMember({
+    required String uid,
+    required String actorUid,
+  }) async {
+    _rejectSelf(uid, actorUid);
+    await _rejectLinkedResort(uid);
+    await _userDoc(uid).set({
       'withdrawn_at': FieldValue.serverTimestamp(),
       'display_name': '',
       'phone': FieldValue.delete(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> softDeleteMember({
+    required String uid,
+    required String actorUid,
+  }) async {
+    _rejectSelf(uid, actorUid);
+    await _rejectLinkedResort(uid);
+    await _userDoc(uid).set({
+      'deleted_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> restoreDeletedMember(String uid) {
+    return _userDoc(uid).set({
+      'deleted_at': FieldValue.delete(),
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

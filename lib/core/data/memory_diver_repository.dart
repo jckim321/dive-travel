@@ -400,11 +400,14 @@ class MemoryDiverRepository implements DiverRepository {
 
   final _blocked = <String, bool>{};
   final _withdrawnAt = <String, DateTime>{};
+  final _deletedAt = <String, DateTime>{};
   final _phones = <String, String>{};
 
   @override
   Future<bool> isLoginBlocked(String uid) async {
-    return _blocked[uid] == true || _withdrawnAt.containsKey(uid);
+    return _blocked[uid] == true ||
+        _withdrawnAt.containsKey(uid) ||
+        _deletedAt.containsKey(uid);
   }
 
   @override
@@ -928,6 +931,9 @@ class MemoryDiverRepository implements DiverRepository {
     bool? marketingOptIn,
   }) async {
     debugEnsureCount += 1;
+    if (_deletedAt.containsKey(user.uid)) {
+      return;
+    }
     final id = (loginId ?? '').trim().toLowerCase();
     if (id.isNotEmpty) {
       _loginIds[user.uid] = id;
@@ -985,6 +991,7 @@ class MemoryDiverRepository implements DiverRepository {
           phone: closed ? '' : (_phones[user.uid] ?? ''),
           accountBlocked: _blocked[user.uid] == true,
           withdrawnAt: _withdrawnAt[user.uid],
+          deletedAt: _deletedAt[user.uid],
         ),
       );
       _membersController.add(List<MemberAccount>.from(_members));
@@ -2276,11 +2283,27 @@ class MemoryDiverRepository implements DiverRepository {
     }
   }
 
+  void _rejectSelf(String uid, String actorUid) {
+    if (actorUid == uid) {
+      throw StateError('ADMIN_SELF');
+    }
+  }
+
+  void _rejectLinkedResort(String uid) {
+    final index = _members.indexWhere((m) => m.uid == uid);
+    final owned = index < 0 ? '' : _members[index].ownedShopId.trim();
+    if (owned.isNotEmpty) {
+      throw StateError('SHOP_LINKED');
+    }
+  }
+
   @override
   Future<void> setAccountBlocked({
     required String uid,
     required bool blocked,
+    required String actorUid,
   }) async {
+    _rejectSelf(uid, actorUid);
     if (blocked) {
       _blocked[uid] = true;
     } else {
@@ -2294,7 +2317,12 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
-  Future<void> withdrawMember(String uid) async {
+  Future<void> withdrawMember({
+    required String uid,
+    required String actorUid,
+  }) async {
+    _rejectSelf(uid, actorUid);
+    _rejectLinkedResort(uid);
     _withdrawnAt[uid] = DateTime.now().toUtc();
     _phones.remove(uid);
     final index = _members.indexWhere((m) => m.uid == uid);
@@ -2304,6 +2332,31 @@ class MemoryDiverRepository implements DiverRepository {
         phone: '',
         withdrawnAt: _withdrawnAt[uid],
       );
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+  }
+
+  @override
+  Future<void> softDeleteMember({
+    required String uid,
+    required String actorUid,
+  }) async {
+    _rejectSelf(uid, actorUid);
+    _rejectLinkedResort(uid);
+    _deletedAt[uid] = DateTime.now().toUtc();
+    final index = _members.indexWhere((m) => m.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(deletedAt: _deletedAt[uid]);
+      _membersController.add(List<MemberAccount>.from(_members));
+    }
+  }
+
+  @override
+  Future<void> restoreDeletedMember(String uid) async {
+    _deletedAt.remove(uid);
+    final index = _members.indexWhere((m) => m.uid == uid);
+    if (index >= 0) {
+      _members[index] = _members[index].copyWith(clearDeleted: true);
       _membersController.add(List<MemberAccount>.from(_members));
     }
   }
