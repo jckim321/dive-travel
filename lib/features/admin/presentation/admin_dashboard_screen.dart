@@ -13,6 +13,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_settlement_his
 import 'package:dive_travel_app/features/admin/presentation/admin_stats_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_report_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_instructors_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/admin_members_archive_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_members_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_partners_roster_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_pricing_screen.dart';
@@ -53,7 +54,7 @@ enum _AdminHub {
   tools,
 }
 
-enum _MembersSub { general, partners, instructors, applications }
+enum _MembersSub { general, partners, instructors, applications, archive }
 
 enum _DiveStarSub { applications, review, forms }
 
@@ -368,16 +369,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               l10n.adminMembersSubGeneral,
               l10n.adminMembersSubPartners,
               l10n.partnerApplyTitle,
+              l10n.adminMembersSubArchive,
             ],
             keys: const [
               Key('admin-sub-divers'),
               Key('admin-sub-partners'),
               Key('admin-sub-partner-applications'),
+              Key('admin-sub-archive'),
             ],
             badges: [pending, plaque],
             selected: switch (_membersSub) {
               _MembersSub.partners => 1,
               _MembersSub.applications => 2,
+              _MembersSub.archive => 3,
               _MembersSub.general || _MembersSub.instructors => 0,
             },
             onSelect: (i) => _go(
@@ -385,6 +389,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               sub: switch (i) {
                 1 => _MembersSub.partners,
                 2 => _MembersSub.applications,
+                3 => _MembersSub.archive,
                 _ => _MembersSub.general,
               },
             ),
@@ -619,6 +624,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _MembersSub.partners => AdminPartnersRosterScreen(
             embedded: true,
             onOpenProducts: _openShopProducts,
+          ),
+          _MembersSub.archive => const AdminMembersArchiveScreen(
+            embedded: true,
           ),
         };
       case _AdminHub.diveStar:

@@ -1772,6 +1772,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminMembersSubPartners => 'Partner resorts';
 
   @override
+  String get adminMembersSubArchive => 'Archive';
+
+  @override
+  String get adminMemberArchiveBlocked => 'Blocked';
+
+  @override
+  String get adminMemberArchiveWithdrawn => 'Withdrawn';
+
+  @override
+  String get adminMemberArchiveTrash => 'Trash';
+
+  @override
+  String get adminMemberDeleteSubtitle =>
+      'Kept in the archive trash for 30 days. You can restore them before then.';
+
+  @override
+  String get adminMemberDeleteTitle => 'Delete this member?';
+
+  @override
+  String get adminMemberDeleteBody =>
+      'They stay in the trash for 30 days. You can restore them before then, and they are removed automatically afterward. Paid booking records stay.';
+
+  @override
+  String get adminMemberDeleteConfirm => 'Delete';
+
+  @override
+  String get adminMemberSelfDenied =>
+      'You cannot block, withdraw, or delete your own account.';
+
+  @override
+  String get adminMemberShopLinked =>
+      'Clear the resort link before withdrawing or deleting this member.';
+
+  @override
+  String get adminMemberRestore => 'Restore';
+
+  @override
+  String get adminMemberRestoreSubtitle =>
+      'Move them out of the trash and back to active members.';
+
+  @override
+  String adminMemberPurgeRemaining(int days) {
+    return '$days days until automatic deletion';
+  }
+
+  @override
+  String get adminMemberPurgeDue => 'Waiting for automatic deletion';
+
+  @override
+  String get adminMemberWithdrawnOnly =>
+      'Withdrawn members can only be viewed.';
+
+  @override
   String get adminPartnersSearch => 'Search partners / shops';
 
   @override

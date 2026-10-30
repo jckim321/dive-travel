@@ -84,9 +84,12 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
       animation: store,
       builder: (context, _) {
         final q = _query.text.trim().toLowerCase();
-        final all = store.members;
+        final active = [
+          for (final member in store.members)
+            if (!member.loginBlocked) member,
+        ];
         final visible = [
-          for (final member in all)
+          for (final member in active)
             if (_inFilter(member) && _matchesQuery(member, q)) member,
         ]..sort(compareMembersByRecentLogin);
         final missing = [for (final m in visible) if (m.missingProfile) m];
@@ -129,7 +132,7 @@ class _AdminMembersScreenState extends State<AdminMembersScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                     _CountGrid(
-                      members: all,
+                      members: active,
                       filter: _filter,
                       onSelect: (filter) => setState(() => _filter = filter),
                     ),
@@ -847,74 +850,7 @@ class AdminMemberDetailScreen extends StatelessWidget {
                       ],
                       const Text('계정 관리', style: TextStyle(color: AdminConsoleTheme.muted)),
                       const SizedBox(height: 8),
-                      _actionTile(
-                        key: Key('admin-member-block-${shown.uid}'),
-                        icon: Icons.pause_circle_outline,
-                        title: shown.accountBlocked ? '차단 해제' : '차단하기',
-                        subtitle: '로그인을 막아요. 언제든 풀 수 있어요.',
-                        color: const Color(0xFFE2B15A),
-                        onTap: () async {
-                          try {
-                            await store.setAccountBlocked(
-                              uid: shown.uid,
-                              blocked: !shown.accountBlocked,
-                            );
-                          } catch (_) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('반영하지 못해서 이전 상태로 되돌렸어요.'),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      _actionTile(
-                        key: Key('admin-member-withdraw-${shown.uid}'),
-                        icon: Icons.waving_hand_outlined,
-                        title: '탈퇴 처리',
-                        subtitle: '이름·연락처를 지우고 예약 기록만 남겨요.',
-                        color: const Color(0xFFE2B15A),
-                        onTap: shown.withdrawnAt != null
-                            ? null
-                            : () async {
-                                final ok = await showDialog<bool>(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text('탈퇴 처리'),
-                                    content: const Text('이름과 연락처를 지웁니다. 예약 기록은 남습니다.'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
-                                      FilledButton(
-                                        key: Key('admin-member-withdraw-confirm-${shown.uid}'),
-                                        onPressed: () => Navigator.pop(ctx, true),
-                                        child: const Text('탈퇴 처리'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (ok == true) {
-                                  try {
-                                    await store.withdrawMember(shown.uid);
-                                  } catch (_) {
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('반영하지 못해서 이전 상태로 되돌렸어요.'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                      ),
-                      _actionTile(
-                        key: Key('admin-member-delete-${shown.uid}'),
-                        icon: Icons.delete_outline,
-                        title: '삭제하기',
-                        subtitle: '계정과 정보를 완전히 지워요. 되돌릴 수 없어요.',
-                        color: AdminConsoleTheme.danger,
-                        onTap: null,
-                      ),
+                      ..._accountActions(context, store, shown),
                       const SizedBox(height: 12),
                       const Text(
                         '구분은 위 목록의 칸에서 바꿔요.',
@@ -926,6 +862,207 @@ class AdminMemberDetailScreen extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+List<Widget> _accountActions(
+  BuildContext context,
+  DiverStore store,
+  MemberAccount shown,
+) {
+  final l10n = AppLocalizations.of(context);
+  final self = store.uid == shown.uid;
+  final linked = shown.ownedShopId.trim().isNotEmpty;
+  final deletedAt = shown.deletedAt;
+  if (deletedAt != null) {
+    final days = memberPurgeDaysRemaining(deletedAt, DateTime.now());
+    return [
+      Text(
+        days == 0
+            ? l10n.adminMemberPurgeDue
+            : l10n.adminMemberPurgeRemaining(days),
+        key: Key('admin-member-purge-days-${shown.uid}'),
+        style: const TextStyle(color: AdminConsoleTheme.muted),
+      ),
+      const SizedBox(height: 8),
+      _actionTile(
+        key: Key('admin-member-restore-${shown.uid}'),
+        icon: Icons.restore,
+        title: l10n.adminMemberRestore,
+        subtitle: l10n.adminMemberRestoreSubtitle,
+        color: AdminConsoleTheme.aqua,
+        onTap: () async {
+          try {
+            await store.restoreDeletedMember(shown.uid);
+            if (context.mounted) Navigator.pop(context);
+          } catch (error) {
+            _showClosureError(context, error);
+          }
+        },
+      ),
+    ];
+  }
+  if (shown.withdrawnAt != null) {
+    return [
+      Text(
+        l10n.adminMemberWithdrawnOnly,
+        key: Key('admin-member-withdrawn-only-${shown.uid}'),
+        style: const TextStyle(color: AdminConsoleTheme.muted),
+      ),
+    ];
+  }
+  if (shown.accountBlocked) {
+    return [
+      if (self)
+        Text(
+          l10n.adminMemberSelfDenied,
+          key: Key('admin-member-self-denied-${shown.uid}'),
+          style: const TextStyle(color: AdminConsoleTheme.danger, fontSize: 12),
+        ),
+      _actionTile(
+        key: Key('admin-member-block-${shown.uid}'),
+        icon: Icons.pause_circle_outline,
+        title: '차단 해제',
+        subtitle: '로그인을 다시 허용해요.',
+        color: const Color(0xFFE2B15A),
+        onTap: self
+            ? null
+            : () async {
+                try {
+                  await store.setAccountBlocked(uid: shown.uid, blocked: false);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (error) {
+                  _showClosureError(context, error);
+                }
+              },
+      ),
+    ];
+  }
+  return [
+    if (self)
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          l10n.adminMemberSelfDenied,
+          key: Key('admin-member-self-denied-${shown.uid}'),
+          style: const TextStyle(color: AdminConsoleTheme.danger, fontSize: 12),
+        ),
+      ),
+    if (!self && linked)
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          l10n.adminMemberShopLinked,
+          key: Key('admin-member-shop-linked-${shown.uid}'),
+          style: const TextStyle(color: AdminConsoleTheme.muted, fontSize: 12),
+        ),
+      ),
+    _actionTile(
+      key: Key('admin-member-block-${shown.uid}'),
+      icon: Icons.pause_circle_outline,
+      title: '차단하기',
+      subtitle: '로그인을 막아요. 언제든 풀 수 있어요.',
+      color: const Color(0xFFE2B15A),
+      onTap: self
+          ? null
+          : () async {
+              try {
+                await store.setAccountBlocked(uid: shown.uid, blocked: true);
+                if (context.mounted) Navigator.pop(context);
+              } catch (error) {
+                _showClosureError(context, error);
+              }
+            },
+    ),
+    _actionTile(
+      key: Key('admin-member-withdraw-${shown.uid}'),
+      icon: Icons.waving_hand_outlined,
+      title: '탈퇴 처리',
+      subtitle: '이름·연락처를 지우고 예약 기록만 남겨요.',
+      color: const Color(0xFFE2B15A),
+      onTap: self || linked ? null : () => _confirmWithdraw(context, store, shown),
+    ),
+    _actionTile(
+      key: Key('admin-member-delete-${shown.uid}'),
+      icon: Icons.delete_outline,
+      title: '삭제하기',
+      subtitle: l10n.adminMemberDeleteSubtitle,
+      color: AdminConsoleTheme.danger,
+      onTap: self || linked ? null : () => _confirmSoftDelete(context, store, shown),
+    ),
+  ];
+}
+
+void _showClosureError(BuildContext context, Object error) {
+  if (!context.mounted) return;
+  final l10n = AppLocalizations.of(context);
+  final text = error.toString();
+  final message = text.contains('ADMIN_SELF')
+      ? l10n.adminMemberSelfDenied
+      : text.contains('SHOP_LINKED')
+          ? l10n.adminMemberShopLinked
+          : '반영하지 못해서 이전 상태로 되돌렸어요.';
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+Future<void> _confirmWithdraw(
+  BuildContext context,
+  DiverStore store,
+  MemberAccount shown,
+) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('탈퇴 처리'),
+      content: const Text('이름과 연락처를 지웁니다. 예약 기록은 남습니다.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
+        FilledButton(
+          key: Key('admin-member-withdraw-confirm-${shown.uid}'),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('탈퇴 처리'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await store.withdrawMember(shown.uid);
+    if (context.mounted) Navigator.pop(context);
+  } catch (error) {
+    if (!context.mounted) return;
+    _showClosureError(context, error);
+  }
+}
+
+Future<void> _confirmSoftDelete(
+  BuildContext context,
+  DiverStore store,
+  MemberAccount shown,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.adminMemberDeleteTitle),
+      content: Text(l10n.adminMemberDeleteBody),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
+        FilledButton(
+          key: Key('admin-member-delete-confirm-${shown.uid}'),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l10n.adminMemberDeleteConfirm),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return;
+  try {
+    await store.softDeleteMember(shown.uid);
+    if (context.mounted) Navigator.pop(context);
+  } catch (error) {
+    if (!context.mounted) return;
+    _showClosureError(context, error);
   }
 }
 

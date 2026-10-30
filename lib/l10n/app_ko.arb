@@ -1255,6 +1255,26 @@
   "adminMembersSubDivers": "다이버",
   "adminMembersSubInstructors": "강사인증",
   "adminMembersSubPartners": "제휴 리조트",
+  "adminMembersSubArchive": "보관함",
+  "adminMemberArchiveBlocked": "차단",
+  "adminMemberArchiveWithdrawn": "탈퇴",
+  "adminMemberArchiveTrash": "휴지통",
+  "adminMemberDeleteSubtitle": "보관함 휴지통에 30일 보관해요. 그 전에 복구할 수 있어요.",
+  "adminMemberDeleteTitle": "회원을 삭제할까요?",
+  "adminMemberDeleteBody": "휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.",
+  "adminMemberDeleteConfirm": "삭제",
+  "adminMemberSelfDenied": "본인 계정은 차단·탈퇴·삭제할 수 없어요.",
+  "adminMemberShopLinked": "리조트 연결을 정리한 뒤에 탈퇴·삭제할 수 있어요.",
+  "adminMemberRestore": "복구",
+  "adminMemberRestoreSubtitle": "휴지통에서 꺼내 다시 활동 중으로 돌려요.",
+  "adminMemberPurgeRemaining": "자동 삭제까지 {days}일",
+  "@adminMemberPurgeRemaining": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "adminMemberPurgeDue": "자동 삭제를 기다리는 중",
+  "adminMemberWithdrawnOnly": "탈퇴한 회원은 조회만 할 수 있어요.",
   "adminPartnersSearch": "파트너·샵 검색",
   "shopOperatingActive": "활동중",
   "shopOperatingPaused": "활동중지",

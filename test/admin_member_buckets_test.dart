@@ -64,6 +64,12 @@ void main() {
     );
     await _add(repo: repo, uid: 'gem', name: '다이아', grade: MemberGrade.diamond);
     await _add(repo: repo, uid: 'top', name: '플래티넘', grade: MemberGrade.platinum);
+    await _add(repo: repo, uid: 'closed', name: '차단회원');
+    await repo.setAccountBlocked(
+      uid: 'closed',
+      blocked: true,
+      actorUid: 'test-user',
+    );
 
     final store = DiverStore(repo);
     addTearDown(store.dispose);
@@ -97,6 +103,7 @@ void main() {
     final sum = filters.fold<int>(0, (sum, filter) => sum + _cardCount(tester, filter));
     expect(total, 7);
     expect(sum, total);
+    expect(find.byKey(const Key('admin-member-name-closed')), findsNothing);
 
     const expected = {
       'all': [

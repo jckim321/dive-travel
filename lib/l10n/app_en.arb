@@ -603,6 +603,26 @@
   "adminMembersSubDivers": "Divers",
   "adminMembersSubInstructors": "Instructor review",
   "adminMembersSubPartners": "Partner resorts",
+  "adminMembersSubArchive": "Archive",
+  "adminMemberArchiveBlocked": "Blocked",
+  "adminMemberArchiveWithdrawn": "Withdrawn",
+  "adminMemberArchiveTrash": "Trash",
+  "adminMemberDeleteSubtitle": "Kept in the archive trash for 30 days. You can restore them before then.",
+  "adminMemberDeleteTitle": "Delete this member?",
+  "adminMemberDeleteBody": "They stay in the trash for 30 days. You can restore them before then, and they are removed automatically afterward. Paid booking records stay.",
+  "adminMemberDeleteConfirm": "Delete",
+  "adminMemberSelfDenied": "You cannot block, withdraw, or delete your own account.",
+  "adminMemberShopLinked": "Clear the resort link before withdrawing or deleting this member.",
+  "adminMemberRestore": "Restore",
+  "adminMemberRestoreSubtitle": "Move them out of the trash and back to active members.",
+  "adminMemberPurgeRemaining": "{days} days until automatic deletion",
+  "@adminMemberPurgeRemaining": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "adminMemberPurgeDue": "Waiting for automatic deletion",
+  "adminMemberWithdrawnOnly": "Withdrawn members can only be viewed.",
   "adminPartnersSearch": "Search partners / shops",
   "shopOperatingActive": "Active",
   "shopOperatingPaused": "Paused",

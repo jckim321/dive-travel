@@ -3318,6 +3318,96 @@ abstract class AppLocalizations {
   /// **'제휴 리조트'**
   String get adminMembersSubPartners;
 
+  /// No description provided for @adminMembersSubArchive.
+  ///
+  /// In ko, this message translates to:
+  /// **'보관함'**
+  String get adminMembersSubArchive;
+
+  /// No description provided for @adminMemberArchiveBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단'**
+  String get adminMemberArchiveBlocked;
+
+  /// No description provided for @adminMemberArchiveWithdrawn.
+  ///
+  /// In ko, this message translates to:
+  /// **'탈퇴'**
+  String get adminMemberArchiveWithdrawn;
+
+  /// No description provided for @adminMemberArchiveTrash.
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통'**
+  String get adminMemberArchiveTrash;
+
+  /// No description provided for @adminMemberDeleteSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'보관함 휴지통에 30일 보관해요. 그 전에 복구할 수 있어요.'**
+  String get adminMemberDeleteSubtitle;
+
+  /// No description provided for @adminMemberDeleteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원을 삭제할까요?'**
+  String get adminMemberDeleteTitle;
+
+  /// No description provided for @adminMemberDeleteBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.'**
+  String get adminMemberDeleteBody;
+
+  /// No description provided for @adminMemberDeleteConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get adminMemberDeleteConfirm;
+
+  /// No description provided for @adminMemberSelfDenied.
+  ///
+  /// In ko, this message translates to:
+  /// **'본인 계정은 차단·탈퇴·삭제할 수 없어요.'**
+  String get adminMemberSelfDenied;
+
+  /// No description provided for @adminMemberShopLinked.
+  ///
+  /// In ko, this message translates to:
+  /// **'리조트 연결을 정리한 뒤에 탈퇴·삭제할 수 있어요.'**
+  String get adminMemberShopLinked;
+
+  /// No description provided for @adminMemberRestore.
+  ///
+  /// In ko, this message translates to:
+  /// **'복구'**
+  String get adminMemberRestore;
+
+  /// No description provided for @adminMemberRestoreSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통에서 꺼내 다시 활동 중으로 돌려요.'**
+  String get adminMemberRestoreSubtitle;
+
+  /// No description provided for @adminMemberPurgeRemaining.
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 삭제까지 {days}일'**
+  String adminMemberPurgeRemaining(int days);
+
+  /// No description provided for @adminMemberPurgeDue.
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 삭제를 기다리는 중'**
+  String get adminMemberPurgeDue;
+
+  /// No description provided for @adminMemberWithdrawnOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'탈퇴한 회원은 조회만 할 수 있어요.'**
+  String get adminMemberWithdrawnOnly;
+
   /// No description provided for @adminPartnersSearch.
   ///
   /// In ko, this message translates to:

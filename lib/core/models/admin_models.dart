@@ -320,6 +320,25 @@ class MemberAccount {
   }
 }
 
+/// 보관함 칸. 한 사람은 삭제, 탈퇴, 차단 순으로 한 칸에만 들어간다.
+enum MemberArchiveGroup { blocked, withdrawn, trash }
+
+MemberArchiveGroup? memberArchiveGroup(MemberAccount member) {
+  if (member.deletedAt != null) return MemberArchiveGroup.trash;
+  if (member.withdrawnAt != null) return MemberArchiveGroup.withdrawn;
+  if (member.accountBlocked) return MemberArchiveGroup.blocked;
+  return null;
+}
+
+/// 휴지통에 넣은 시각부터 30일이 되기까지 남은 날. 지난 날은 0.
+int memberPurgeDaysRemaining(DateTime deletedAt, DateTime now) {
+  final left = deletedAt.toUtc().add(const Duration(days: 30)).difference(now.toUtc());
+  if (left <= Duration.zero) return 0;
+  final days = left.inDays;
+  final partial = left - Duration(days: days);
+  return partial > Duration.zero ? days + 1 : days;
+}
+
 /// 최근 로그인 시각이 있는 회원이 앞이고, 없으면 가입 시각이 늦은 순.
 int compareMembersByRecentLogin(MemberAccount a, MemberAccount b) {
   final aSeen = a.lastSeenAt;

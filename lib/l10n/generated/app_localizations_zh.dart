@@ -1709,6 +1709,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get adminMembersSubPartners => '제휴 리조트';
 
   @override
+  String get adminMembersSubArchive => '보관함';
+
+  @override
+  String get adminMemberArchiveBlocked => '차단';
+
+  @override
+  String get adminMemberArchiveWithdrawn => '탈퇴';
+
+  @override
+  String get adminMemberArchiveTrash => '휴지통';
+
+  @override
+  String get adminMemberDeleteSubtitle => '보관함 휴지통에 30일 보관해요. 그 전에 복구할 수 있어요.';
+
+  @override
+  String get adminMemberDeleteTitle => '회원을 삭제할까요?';
+
+  @override
+  String get adminMemberDeleteBody =>
+      '휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.';
+
+  @override
+  String get adminMemberDeleteConfirm => '삭제';
+
+  @override
+  String get adminMemberSelfDenied => '본인 계정은 차단·탈퇴·삭제할 수 없어요.';
+
+  @override
+  String get adminMemberShopLinked => '리조트 연결을 정리한 뒤에 탈퇴·삭제할 수 있어요.';
+
+  @override
+  String get adminMemberRestore => '복구';
+
+  @override
+  String get adminMemberRestoreSubtitle => '휴지통에서 꺼내 다시 활동 중으로 돌려요.';
+
+  @override
+  String adminMemberPurgeRemaining(int days) {
+    return '자동 삭제까지 $days일';
+  }
+
+  @override
+  String get adminMemberPurgeDue => '자동 삭제를 기다리는 중';
+
+  @override
+  String get adminMemberWithdrawnOnly => '탈퇴한 회원은 조회만 할 수 있어요.';
+
+  @override
   String get adminPartnersSearch => '파트너·샵 검색';
 
   @override
