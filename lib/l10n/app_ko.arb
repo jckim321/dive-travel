@@ -1259,6 +1259,12 @@
   "adminMemberArchiveBlocked": "차단",
   "adminMemberArchiveWithdrawn": "탈퇴",
   "adminMemberArchiveTrash": "휴지통",
+  "adminMemberArchiveDaysLeft": "{days}일 남음",
+  "@adminMemberArchiveDaysLeft": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "adminMemberDeleteSubtitle": "보관함 휴지통에 30일 보관해요. 그 전에 복구할 수 있어요.",
   "adminMemberDeleteTitle": "회원을 삭제할까요?",
   "adminMemberDeleteBody": "휴지통에 30일 보관합니다. 그 전에는 복구할 수 있고, 이후에는 자동으로 지워집니다. 결제된 예약 기록은 남습니다.",

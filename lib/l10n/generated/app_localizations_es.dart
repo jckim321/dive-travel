@@ -1746,6 +1746,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminMemberArchiveTrash => '휴지통';
 
   @override
+  String adminMemberArchiveDaysLeft(int days) {
+    return '$days일 남음';
+  }
+
+  @override
   String get adminMemberDeleteSubtitle => '보관함 휴지통에 30일 보관해요. 그 전에 복구할 수 있어요.';
 
   @override

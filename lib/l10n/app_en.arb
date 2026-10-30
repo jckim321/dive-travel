@@ -607,6 +607,12 @@
   "adminMemberArchiveBlocked": "Blocked",
   "adminMemberArchiveWithdrawn": "Withdrawn",
   "adminMemberArchiveTrash": "Trash",
+  "adminMemberArchiveDaysLeft": "{days} days left",
+  "@adminMemberArchiveDaysLeft": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
   "adminMemberDeleteSubtitle": "Kept in the archive trash for 30 days. You can restore them before then.",
   "adminMemberDeleteTitle": "Delete this member?",
   "adminMemberDeleteBody": "They stay in the trash for 30 days. You can restore them before then, and they are removed automatically afterward. Paid booking records stay.",

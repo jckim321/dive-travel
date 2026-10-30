@@ -86,6 +86,7 @@ void main() {
     await tester.tap(find.byKey(const Key('admin-archive-filter-trash')));
     await tester.pump();
     expect(find.byKey(const Key('admin-member-name-gone-1')), findsOneWidget);
+    expect(find.text('휴지통 · 30일 남음'), findsOneWidget);
     expect(find.byKey(const Key('admin-member-name-blocked-1')), findsNothing);
     expect(find.byKey(const Key('admin-member-name-left-1')), findsNothing);
 

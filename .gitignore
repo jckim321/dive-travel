@@ -60,6 +60,7 @@ lib/core/config/r2_secrets.dart
 
 # Firestore rules unit tests (Node)
 firebase/rules-tests/node_modules/
+functions/node_modules/
 firebase/rules-tests/.tools/
 firestore-debug.log
 firebase-debug.log

@@ -3342,6 +3342,12 @@ abstract class AppLocalizations {
   /// **'휴지통'**
   String get adminMemberArchiveTrash;
 
+  /// No description provided for @adminMemberArchiveDaysLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'{days}일 남음'**
+  String adminMemberArchiveDaysLeft(int days);
+
   /// No description provided for @adminMemberDeleteSubtitle.
   ///
   /// In ko, this message translates to:

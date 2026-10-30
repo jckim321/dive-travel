@@ -1784,6 +1784,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminMemberArchiveTrash => 'Trash';
 
   @override
+  String adminMemberArchiveDaysLeft(int days) {
+    return '$days days left';
+  }
+
+  @override
   String get adminMemberDeleteSubtitle =>
       'Kept in the archive trash for 30 days. You can restore them before then.';
 

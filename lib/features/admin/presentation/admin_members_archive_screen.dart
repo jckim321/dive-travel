@@ -124,7 +124,8 @@ class _AdminMembersArchiveScreenState extends State<AdminMembersArchiveScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          _groupLabel(l10n, memberArchiveGroup(member)!),
+                          _rowSubtitle(l10n, member),
+                          key: Key('admin-archive-days-${member.uid}'),
                           style: const TextStyle(color: AdminConsoleTheme.muted),
                         ),
                       ),
@@ -164,6 +165,15 @@ String _groupLabel(AppLocalizations l10n, MemberArchiveGroup group) {
     MemberArchiveGroup.withdrawn => l10n.adminMemberArchiveWithdrawn,
     MemberArchiveGroup.trash => l10n.adminMemberArchiveTrash,
   };
+}
+
+String _rowSubtitle(AppLocalizations l10n, MemberAccount member) {
+  final group = memberArchiveGroup(member)!;
+  final label = _groupLabel(l10n, group);
+  final deletedAt = member.deletedAt;
+  if (group != MemberArchiveGroup.trash || deletedAt == null) return label;
+  final days = memberPurgeDaysRemaining(deletedAt, DateTime.now());
+  return '$label · ${l10n.adminMemberArchiveDaysLeft(days)}';
 }
 
 class _ArchiveGrid extends StatelessWidget {
