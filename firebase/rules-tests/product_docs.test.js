@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -173,6 +174,22 @@ describe('shops/{shopId}/products/{productId}', { concurrency: 1 }, () => {
     await assertFails(
       productRef(testEnv.authenticatedContext('owner-b').firestore()).delete(),
     );
+  });
+
+  it('lets a signed-out client read products with a collection group query', async () => {
+    await seedShopAndPeople();
+    const db = testEnv.unauthenticatedContext().firestore();
+    const snap = await assertSucceeds(db.collectionGroup('products').get());
+    assert.equal(snap.size, 1);
+    assert.equal(snap.docs[0].id, 'fun-dive');
+  });
+
+  it('still denies a signed-out client from creating, updating, or deleting a product', async () => {
+    await seedShopAndPeople();
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(productRef(db, 'shop-a', 'extra').set(productDoc({ id: 'extra' })));
+    await assertFails(productRef(db).set({ name: '바꿔치기' }, { merge: true }));
+    await assertFails(productRef(db).delete());
   });
 
   it('still lets a signed-in stranger rewrite the parent products array', async () => {

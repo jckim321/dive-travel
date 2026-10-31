@@ -437,6 +437,11 @@ service cloud.firestore {
         );
     }
 
+    // Collection-group reads. Writes stay on the shop product match below.
+    match /{path=**}/products/{productId} {
+      allow read: if true;
+    }
+
     match /shops/{shopId} {
       allow read: if true;
       // Admin may create any shop. Anyone else may create only their own
