@@ -78,6 +78,14 @@ bool _hostAllowed(String host, String path) {
 
 bool isShopMapUrlValid(String raw) => validateShopMapUrl(raw) == null;
 
+/// Google Maps search for a resort address. Nothing is written to `map_url`.
+Uri googleMapsSearchUri(String query) {
+  return Uri.https('www.google.com', '/maps/search/', {
+    'api': '1',
+    'query': query.trim(),
+  });
+}
+
 String clampShort(String raw, [int max = kMaxShortLine]) {
   final t = raw.trim();
   if (t.length <= max) {

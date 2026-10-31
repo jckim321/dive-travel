@@ -19,6 +19,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_products_scree
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
@@ -404,8 +405,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
 
-    final mapError = validateShopMapUrl(_info.mapUrl.text);
-    if (mapError != null) {
+    if (!widget.partnerMode) {
+      final mapError = validateShopMapUrl(_info.mapUrl.text);
+      if (mapError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -417,7 +419,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           ),
         ),
       );
-      return;
+        return;
+      }
     }
 
     setState(() => _saving = true);
@@ -447,7 +450,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           for (final item in _info.amenities.take(kMaxAmenities))
             if (item.trim().isNotEmpty) clampShort(item),
         ],
-        mapUrl: _info.mapUrl.text.trim(),
+        mapUrl: widget.partnerMode ? null : _info.mapUrl.text.trim(),
         nearestHub: clampShort(_info.nearestHub.text),
         accessRoutes: _info.builtRoutes(),
         featureBlurb: clampShort(_info.featureBlurb.text, kMaxShortLine * 2),
@@ -538,6 +541,18 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   static String _formatSaveSeconds(Duration d) =>
       (d.inMilliseconds / 1000).toStringAsFixed(1);
 
+  Future<void> _openMapSearch() async {
+    final query = _address.text.trim();
+    if (query.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('주소를 입력한 뒤 지도 검색을 누르세요.')),
+      );
+      return;
+    }
+    final uri = googleMapsSearchUri(query);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   void _openPreview() => openResortDetail(context, widget.shopId);
 
   void _openProductManagement() {
@@ -624,6 +639,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 hint: l10n.exploreDeskHint,
                 name: _name,
                 onNameEdited: () => _nameTouched = true,
+                country: _country,
                 countryField: TravelCountryField(
                   controller: _country,
                   fieldKey: const Key('resort-country-field'),
@@ -654,6 +670,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 intro: _intro,
                 info: _info,
                 onInfoChanged: () => setState(() {}),
+                onMapSearch: () => unawaited(_openMapSearch()),
+                onTempSave: _saving ? null : () => unawaited(_saveProfile()),
+                saving: _saving,
                 slots: _slots,
                 onAddPhotos: _addPhotos,
                 onTestPhoto: _useTestPhoto,
@@ -920,6 +939,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.hint,
     required this.name,
     required this.onNameEdited,
+    required this.country,
     required this.countryField,
     required this.location,
     required this.onRegionEdited,
@@ -927,6 +947,9 @@ class _DeskMainColumn extends StatelessWidget {
     required this.intro,
     required this.info,
     required this.onInfoChanged,
+    required this.onMapSearch,
+    required this.onTempSave,
+    required this.saving,
     required this.slots,
     required this.onAddPhotos,
     required this.onTestPhoto,
@@ -940,6 +963,7 @@ class _DeskMainColumn extends StatelessWidget {
   final String hint;
   final TextEditingController name;
   final VoidCallback onNameEdited;
+  final TextEditingController country;
   final Widget countryField;
   final TextEditingController location;
   final VoidCallback onRegionEdited;
@@ -947,6 +971,9 @@ class _DeskMainColumn extends StatelessWidget {
   final TextEditingController intro;
   final ResortDeskInfoDraft info;
   final VoidCallback onInfoChanged;
+  final VoidCallback onMapSearch;
+  final VoidCallback? onTempSave;
+  final bool saving;
   final List<BookingGalleryItem> slots;
   final VoidCallback onAddPhotos;
   final VoidCallback onTestPhoto;
@@ -961,6 +988,39 @@ class _DeskMainColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (palette.partnerMode)
+          PartnerResortInfoForm(
+            fieldStyle: palette.fieldStyle,
+            name: name,
+            onNameEdited: onNameEdited,
+            countryField: countryField,
+            country: country,
+            location: location,
+            onRegionEdited: onRegionEdited,
+            address: address,
+            onMapSearch: onMapSearch,
+            intro: intro,
+            info: info,
+            onInfoChanged: onInfoChanged,
+            slots: slots,
+            photos: RepaintBoundary(
+              child: BookingGalleryEditor(
+                items: slots,
+                onAdd: onAddPhotos,
+                onTest: onTestPhoto,
+                onRemove: onRemovePhoto,
+                onMakeCover: onMakeCover,
+                maxItems: _kMaxGallery,
+                fieldKey: const Key('resort-cover-field'),
+                attachKey: const Key('resort-cover-field-attach'),
+                testKey: const Key('resort-cover-field-test'),
+              ),
+            ),
+            saving: saving,
+            onTempSave: onTempSave,
+            onSave: onTempSave,
+          )
+        else ...[
         Text(
           hint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1050,6 +1110,7 @@ class _DeskMainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
+        ],
         const SizedBox(height: 16),
         BookingFormSection(
           step: '8',
