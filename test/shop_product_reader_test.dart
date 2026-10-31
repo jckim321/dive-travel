@@ -76,6 +76,28 @@ void main() {
     expect(read.listsOnSameBoat, isTrue);
   });
 
+  test('a shop with one document and two array products keeps the array-only row', () {
+    final arrayOnly = ShopProduct(
+      id: 'array-only',
+      shopId: 'shop-1',
+      name: '배열만',
+      consumerPrice: 30000,
+      professionalPrice: 20000,
+      bookedSeats: 3,
+    );
+    final read = productsForReaders(
+      arrayProducts: [arrayProduct(), arrayOnly],
+      documentProducts: [documentProduct()],
+    );
+    expect(read.map((product) => product.id), ['seat-1', 'array-only']);
+    expect(read.first.name, '문서 이름');
+    expect(read.first.consumerPrice, 90000);
+    expect(read.first.bookedSeats, 2);
+    expect(read.first.flagHolds.single.uid, 'guest');
+    expect(read.last.name, '배열만');
+    expect(read.last.bookedSeats, 3);
+  });
+
   test('a shop with no product documents keeps the array', () {
     final array = arrayProduct();
     final read = productsForReaders(

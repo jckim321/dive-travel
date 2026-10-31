@@ -5,9 +5,10 @@ bool isCustomerShelfProduct(ShopProduct product) {
   return product.isListedPublicly && !product.openEmptySeats;
 }
 
-/// Reader catalog: product documents when the shop has any, otherwise the
-/// shop `products` array. `booked_seats` and `flag_holds` always come from
-/// the array row with the same id, including option rows.
+/// Reader catalog merges product documents with the shop `products` array
+/// by id. A shared id uses the document. Array rows with no document stay.
+/// `booked_seats` and `flag_holds` always come from the array row with the
+/// same id, including option rows.
 List<ShopProduct> productsForReaders({
   required List<ShopProduct> arrayProducts,
   required List<ShopProduct> documentProducts,
@@ -16,9 +17,12 @@ List<ShopProduct> productsForReaders({
     return arrayProducts;
   }
   final seats = {for (final product in arrayProducts) product.id: product};
+  final documentIds = {for (final document in documentProducts) document.id};
   return [
     for (final document in documentProducts)
       _withArraySeats(document, seats[document.id]),
+    for (final array in arrayProducts)
+      if (!documentIds.contains(array.id)) array,
   ];
 }
 
