@@ -12,7 +12,8 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 /// Optional empty-seat products under the regular product boxes.
 ///
 /// A product is in this section only when `open_empty_seats` is true.
-/// There is no stored return date.
+/// The return day is departure plus nights read from `duration_label`.
+/// It is not stored.
 class PartnerEmptySeatProducts extends StatefulWidget {
   const PartnerEmptySeatProducts({super.key, required this.shopId});
 
@@ -43,7 +44,12 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         const <ShopProduct>[];
     _boxes.addAll([
       for (final product in products)
-        if (product.openEmptySeats) _EmptySeatDraft.fromProduct(product, _day),
+        if (product.openEmptySeats)
+          _EmptySeatDraft.fromProduct(
+            product,
+            _day,
+            onDeparture: _onDeparture,
+          ),
     ]);
   }
 
@@ -65,7 +71,11 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       ..addAll([
         for (final product in products)
           if (product.openEmptySeats)
-            _EmptySeatDraft.fromProduct(product, _day),
+            _EmptySeatDraft.fromProduct(
+              product,
+              _day,
+              onDeparture: _onDeparture,
+            ),
       ]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
@@ -74,8 +84,14 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     });
   }
 
+  void _onDeparture() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   void _addBox() {
-    final draft = _EmptySeatDraft.empty();
+    final draft = _EmptySeatDraft.empty(onDeparture: _onDeparture);
     setState(() {
       _boxes.add(draft);
       _expanded.add(draft.id);
@@ -280,14 +296,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 decoration: _field('남은 자리'),
               ),
               const SizedBox(height: 10),
-              TextField(
-                key: Key('partner-empty-return-${box.id}'),
-                controller: box.returning,
-                keyboardType: TextInputType.datetime,
-                style: const TextStyle(color: PartnerTheme.text),
-                cursorColor: PartnerTheme.accent,
-                decoration: _field('돌아오는 날'),
-              ),
+              _returnReadout(box),
               const SizedBox(height: 10),
               ShopProductBox(
                 keyPrefix: 'empty-${box.id}',
@@ -304,6 +313,40 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _returnReadout(_EmptySeatDraft box) {
+    final nights = nightsInDurationLabel(box.source?.durationLabel ?? '');
+    if (nights == null) {
+      return Text(
+        '기간을 먼저 입력하세요',
+        key: Key('partner-empty-return-${box.id}'),
+        style: const TextStyle(color: PartnerTheme.textDim, fontSize: 14),
+      );
+    }
+    final back = returnDayFromDeparture(
+      departureText: box.departure.text,
+      nights: nights,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '돌아오는 날',
+          style: TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          back == null ? '' : _day.format(back),
+          key: Key('partner-empty-return-${box.id}'),
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 
@@ -392,6 +435,29 @@ InputDecoration _field(String label) {
   );
 }
 
+/// Nights written in a duration label, such as `3박 4일`.
+/// Days-only or freeform text has no night count.
+int? nightsInDurationLabel(String? label) {
+  final match = RegExp(r'(\d+)\s*박').firstMatch((label ?? '').trim());
+  if (match == null) {
+    return null;
+  }
+  return int.tryParse(match.group(1)!);
+}
+
+/// Calendar day [nights] after the departure text. Not a stored field.
+DateTime? returnDayFromDeparture({
+  required String departureText,
+  required int nights,
+}) {
+  final start = DateTime.tryParse(departureText.trim());
+  if (start == null) {
+    return null;
+  }
+  final day = DateTime(start.year, start.month, start.day);
+  return day.add(Duration(days: nights));
+}
+
 class _EmptySeatDraft {
   _EmptySeatDraft({
     required this.id,
@@ -400,15 +466,21 @@ class _EmptySeatDraft {
     required this.consumer,
     required this.includes,
     required this.departure,
-    required this.returning,
     required this.remaining,
     required this.addons,
     required this.individuals,
     required this.listOnSameBoat,
     required this.sameBoatLocked,
-  });
+    required this.onDeparture,
+  }) {
+    departure.addListener(onDeparture);
+  }
 
-  factory _EmptySeatDraft.fromProduct(ShopProduct product, DateFormat day) {
+  factory _EmptySeatDraft.fromProduct(
+    ShopProduct product,
+    DateFormat day, {
+    required VoidCallback onDeparture,
+  }) {
     final departure = product.departureStart;
     final booked = product.bookedSeats;
     final left = product.capacity > booked ? product.capacity - booked : 0;
@@ -423,8 +495,8 @@ class _EmptySeatDraft {
       departure: TextEditingController(
         text: departure == null ? '' : day.format(departure.toLocal()),
       ),
-      returning: TextEditingController(),
       remaining: TextEditingController(text: left > 0 ? '$left' : ''),
+      onDeparture: onDeparture,
       addons: [
         for (final option in product.options)
           if (option.kind != ProductOptionKind.individual)
@@ -439,7 +511,7 @@ class _EmptySeatDraft {
     );
   }
 
-  factory _EmptySeatDraft.empty() {
+  factory _EmptySeatDraft.empty({required VoidCallback onDeparture}) {
     return _EmptySeatDraft(
       id: 'p-${DateTime.now().microsecondsSinceEpoch}',
       source: null,
@@ -447,12 +519,12 @@ class _EmptySeatDraft {
       consumer: TextEditingController(),
       includes: TextEditingController(),
       departure: TextEditingController(),
-      returning: TextEditingController(),
       remaining: TextEditingController(),
       addons: [],
       individuals: const [],
       listOnSameBoat: false,
       sameBoatLocked: false,
+      onDeparture: onDeparture,
     );
   }
 
@@ -462,12 +534,12 @@ class _EmptySeatDraft {
   final TextEditingController consumer;
   final TextEditingController includes;
   final TextEditingController departure;
-  final TextEditingController returning;
   final TextEditingController remaining;
   final List<_SeatOptionDraft> addons;
   final List<ShopProductOption> individuals;
   bool listOnSameBoat;
   final bool sameBoatLocked;
+  final VoidCallback onDeparture;
 
   bool get isUntouchedNew =>
       source == null &&
@@ -478,8 +550,8 @@ class _EmptySeatDraft {
     name.dispose();
     consumer.dispose();
     includes.dispose();
+    departure.removeListener(onDeparture);
     departure.dispose();
-    returning.dispose();
     remaining.dispose();
     for (final addon in addons) {
       addon.dispose();

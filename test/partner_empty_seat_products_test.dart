@@ -54,8 +54,22 @@ void main() {
         openEmptySeats: true,
         capacity: 4,
         bookedSeats: 1,
+        durationLabel: '3박 4일',
         departureStart: DateTime(2026, 11, 2),
         sameBoatStatus: SameBoatStatus.closed,
+      ),
+    );
+    await repo.saveShopProduct(
+      shopId: shopId,
+      product: const ShopProduct(
+        id: 'seat-free',
+        shopId: shopId,
+        name: '기간 없는 빈자리',
+        consumerPrice: 60000,
+        professionalPrice: 50000,
+        openEmptySeats: true,
+        durationLabel: '3일',
+        capacity: 2,
       ),
     );
     final store = DiverStore(repo);
@@ -102,7 +116,14 @@ void main() {
       find.byKey(const Key('empty-seat-1-shop-product-box-date')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('partner-empty-return-seat-1')), findsOneWidget);
+    expect(
+      tester.widget(find.byKey(const Key('partner-empty-return-seat-1'))),
+      isA<Text>(),
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('partner-empty-return-seat-1'))).data,
+      '2026-11-05',
+    );
     expect(
       tester
           .widget<TextField>(find.byKey(const Key('partner-empty-remaining-seat-1')))
@@ -121,11 +142,6 @@ void main() {
       find.byKey(const Key('partner-empty-remaining-seat-1')),
       '5',
     );
-    await tester.ensureVisible(find.byKey(const Key('partner-empty-return-seat-1')));
-    await tester.enterText(
-      find.byKey(const Key('partner-empty-return-seat-1')),
-      '2026-11-08',
-    );
     await tester.ensureVisible(
       find.byKey(const Key('empty-seat-1-shop-product-box-date')),
     );
@@ -134,6 +150,16 @@ void main() {
       '2026-11-05',
     );
     await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('partner-empty-return-seat-1'))).data,
+      '2026-11-08',
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('partner-empty-expand-seat-free')));
+    await tester.tap(find.byKey(const Key('partner-empty-expand-seat-free')));
+    await tester.pump();
+    expect(find.text('기간을 먼저 입력하세요'), findsOneWidget);
+    expect(find.text('돌아오는 날'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const Key('partner-empty-save')));
     await tester.tap(find.byKey(const Key('partner-empty-save')));
@@ -151,6 +177,7 @@ void main() {
     expect(saved.departureStart?.year, 2026);
     expect(saved.departureStart?.month, 11);
     expect(saved.departureStart?.day, 5);
+    expect(saved.durationLabel, '3박 4일');
     expect(saved.toMap().containsKey('return_date'), isFalse);
     expect(saved.toMap().containsKey('departure_end'), isFalse);
     expect(regular.name, '일반 펀다이빙');
