@@ -95,10 +95,10 @@ void main() {
     await tester.tap(find.byKey(const Key('partner-menu-register')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(
-      tester.widget<Text>(find.byKey(const Key('partner-product-shop'))).data,
-      '팔라우 펀다이빙',
-    );
+    final desk = tester.widget<ResortDeskScreen>(find.byType(ResortDeskScreen).last);
+    expect(desk.shopId, _palau);
+    expect(desk.partnerMode, isTrue);
+    expect(find.byKey(const Key('partner-regular-products')), findsOneWidget);
   });
 
   testWidgets('제휴파트너 메뉴는 연결 리조트 상품을 그대로 보여 준다', (tester) async {

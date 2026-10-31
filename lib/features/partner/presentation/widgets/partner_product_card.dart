@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_product_entry.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
@@ -235,8 +235,8 @@ class PartnerProductCard extends StatelessWidget {
   }) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => TravelProductRegistrationScreen(
-          lockedShopId: shopId,
+        builder: (_) => resortRegistrationEntry(
+          shopId: shopId,
           partnerMode: true,
           existing: product,
           startEditing: true,

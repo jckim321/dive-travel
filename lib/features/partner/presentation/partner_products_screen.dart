@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_product_entry.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/partner/presentation/widgets/partner_product_card.dart';
@@ -80,8 +80,8 @@ class PartnerProductsScreen extends StatelessWidget {
   Future<void> _openRegister(BuildContext context, String shopId) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => TravelProductRegistrationScreen(
-          lockedShopId: shopId,
+        builder: (_) => resortRegistrationEntry(
+          shopId: shopId,
           partnerMode: true,
         ),
       ),

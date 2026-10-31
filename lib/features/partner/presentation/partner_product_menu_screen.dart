@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_product_entry.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_open_seats_picker_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_list_logic.dart';
@@ -63,8 +63,8 @@ class PartnerProductMenuScreen extends StatelessWidget {
                     icon: Icons.add_box_outlined,
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => TravelProductRegistrationScreen(
-                          lockedShopId: managedShopId,
+                        builder: (_) => resortRegistrationEntry(
+                          shopId: managedShopId,
                           partnerMode: true,
                         ),
                       ),

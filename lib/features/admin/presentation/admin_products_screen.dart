@@ -12,6 +12,7 @@ import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_product_entry.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -296,8 +297,8 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                   ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => TravelProductRegistrationScreen(
-                        existing: product,
+                      builder: (_) => resortProductEditor(
+                        product: product,
                         startEditing: true,
                       ),
                     ),
@@ -629,8 +630,7 @@ class _PendingProductTileState extends State<_PendingProductTile> {
             ? null
             : () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) =>
-                        TravelProductRegistrationScreen(existing: product),
+                    builder: (_) => resortProductEditor(product: product),
                   ),
                 ),
         child: Padding(
