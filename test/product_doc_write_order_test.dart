@@ -48,4 +48,79 @@ void main() {
     final shop = await repo.fetchShopStat(shopId);
     expect(shop?.products.single.consumerPrice, 100000);
   });
+
+  test('deletes the product document before the shop array', () async {
+    final repo = MemoryDiverRepository();
+    await repo.saveShopProduct(shopId: shopId, product: product());
+    await repo.deleteShopProduct(shopId: shopId, productId: 'fun-dive');
+
+    expect(repo.readProductDoc(shopId, 'fun-dive'), isNull);
+    final shop = await repo.fetchShopStat(shopId);
+    expect(shop?.products, isEmpty);
+  });
+
+  test('leaves the shop array when the product document delete fails', () async {
+    final repo = MemoryDiverRepository();
+    await repo.saveShopProduct(shopId: shopId, product: product());
+    repo.debugFailProductDocWrite = true;
+
+    await expectLater(
+      repo.deleteShopProduct(shopId: shopId, productId: 'fun-dive'),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'PRODUCT_DOC_WRITE_FAILED',
+        ),
+      ),
+    );
+
+    expect(repo.readProductDoc(shopId, 'fun-dive')?['consumer_price'], 100000);
+    final shop = await repo.fetchShopStat(shopId);
+    expect(shop?.products, hasLength(1));
+  });
+
+  test('updates the product document before the shop array publish status',
+      () async {
+    final repo = MemoryDiverRepository();
+    await repo.saveShopProduct(shopId: shopId, product: product());
+    await repo.setShopProductPublishStatus(
+      shopId: shopId,
+      productId: 'fun-dive',
+      status: ProductPublishStatus.draft,
+    );
+
+    expect(repo.readProductDoc(shopId, 'fun-dive')?['publish_status'], 'draft');
+    final shop = await repo.fetchShopStat(shopId);
+    expect(shop?.products.single.publishStatus, ProductPublishStatus.draft);
+  });
+
+  test('leaves publish status on the array when the product document write fails',
+      () async {
+    final repo = MemoryDiverRepository();
+    await repo.saveShopProduct(shopId: shopId, product: product());
+    repo.debugFailProductDocWrite = true;
+
+    await expectLater(
+      repo.setShopProductPublishStatus(
+        shopId: shopId,
+        productId: 'fun-dive',
+        status: ProductPublishStatus.draft,
+      ),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          'PRODUCT_DOC_WRITE_FAILED',
+        ),
+      ),
+    );
+
+    expect(
+      repo.readProductDoc(shopId, 'fun-dive')?['publish_status'],
+      'approved',
+    );
+    final shop = await repo.fetchShopStat(shopId);
+    expect(shop?.products.single.publishStatus, ProductPublishStatus.approved);
+  });
 }

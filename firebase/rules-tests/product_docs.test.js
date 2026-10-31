@@ -150,6 +150,31 @@ describe('shops/{shopId}/products/{productId}', { concurrency: 1 }, () => {
     await assertFails(productRef(db).set({ consumer_price: 1 }, { merge: true }));
   });
 
+  it('lets admin, owner, and parent creator delete a product', async () => {
+    await seedShopAndPeople();
+    await assertSucceeds(
+      productRef(testEnv.authenticatedContext('admin-a').firestore()).delete(),
+    );
+    await seed('shops/shop-a/products/fun-dive', productDoc({ creator_uid: 'stranger' }));
+    await assertSucceeds(
+      productRef(testEnv.authenticatedContext('owner-a').firestore()).delete(),
+    );
+    await seed('shops/shop-a/products/fun-dive', productDoc({ creator_uid: 'stranger' }));
+    await assertSucceeds(
+      productRef(testEnv.authenticatedContext('captain-a').firestore()).delete(),
+    );
+  });
+
+  it('denies product delete for a stranger and for another shop owner', async () => {
+    await seedShopAndPeople();
+    await assertFails(
+      productRef(testEnv.authenticatedContext('stranger').firestore()).delete(),
+    );
+    await assertFails(
+      productRef(testEnv.authenticatedContext('owner-b').firestore()).delete(),
+    );
+  });
+
   it('still lets a signed-in stranger rewrite the parent products array', async () => {
     await seedShopAndPeople();
     const db = testEnv.authenticatedContext('stranger').firestore();

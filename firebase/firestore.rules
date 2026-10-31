@@ -463,7 +463,7 @@ service cloud.firestore {
         allow create: if canWriteShopProduct(shopId);
         allow update: if canWriteShopProduct(shopId)
           && productPriceKeysOk(shopId);
-        allow delete: if false;
+        allow delete: if canWriteShopProduct(shopId);
       }
 
       match /operating_events/{eventId} {

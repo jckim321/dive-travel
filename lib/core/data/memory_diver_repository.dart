@@ -4010,6 +4010,13 @@ class MemoryDiverRepository implements DiverRepository {
         Map<String, dynamic>.from(data);
   }
 
+  void _deleteProductDoc(String shopId, String productId) {
+    if (debugFailProductDocWrite) {
+      throw StateError('PRODUCT_DOC_WRITE_FAILED');
+    }
+    _productDocs[shopId]?.remove(productId);
+  }
+
   /// Test helper: stash extra raw keys on a product before [saveShopProduct].
   void seedProductRawOverlay(
     String shopId,
@@ -4277,6 +4284,8 @@ class MemoryDiverRepository implements DiverRepository {
     if (current == null) {
       return;
     }
+    _deleteProductDoc(shopId, productId);
+    _productRawByShop[shopId]?.remove(productId);
     _shopStats[shopId] = current.copyWith(
       products: [
         for (final item in current.products)
@@ -4298,18 +4307,28 @@ class MemoryDiverRepository implements DiverRepository {
     if (current == null) {
       return;
     }
-    final products = [
-      for (final item in current.products)
-        if (item.id == productId)
-          ProductPublishGuard.applyStatusChange(
-            product: item,
-            status: status,
-            reviewNote: reviewNote,
-            reasonTags: reasonTags,
-          )
-        else
-          item,
-    ];
+    ShopProduct? updated;
+    final products = <ShopProduct>[];
+    for (final item in current.products) {
+      if (item.id == productId) {
+        updated = ProductPublishGuard.applyStatusChange(
+          product: item,
+          status: status,
+          reviewNote: reviewNote,
+          reasonTags: reasonTags,
+        );
+        products.add(updated);
+      } else {
+        products.add(item);
+      }
+    }
+    if (updated != null) {
+      _writeProductDoc(shopId, productId, updated.toMap());
+      final raw = _productRawByShop[shopId]?[productId];
+      if (raw != null) {
+        _productRawByShop[shopId]![productId] = {...raw, ...updated.toMap()};
+      }
+    }
     _shopStats[shopId] = current.copyWith(products: products);
     _shopController.add(_shopStats.values.toList());
   }

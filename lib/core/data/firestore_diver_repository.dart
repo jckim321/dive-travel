@@ -5154,6 +5154,8 @@ class FirestoreDiverRepository implements DiverRepository {
       for (final item in current)
         if (item.id != productId) item,
     ];
+    // Document first. The shop array is updated only after this succeeds.
+    await ref.collection('products').doc(productId).delete();
     await ref.set({
       'products': [for (final item in next) item.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
@@ -5171,18 +5173,25 @@ class FirestoreDiverRepository implements DiverRepository {
     final ref = _shops.doc(shopId);
     final snap = await ref.get();
     final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
-    final next = [
-      for (final item in current)
-        if (item.id == productId)
-          ProductPublishGuard.applyStatusChange(
-            product: item,
-            status: status,
-            reviewNote: reviewNote,
-            reasonTags: reasonTags,
-          )
-        else
-          item,
-    ];
+    ShopProduct? updated;
+    final next = <ShopProduct>[];
+    for (final item in current) {
+      if (item.id == productId) {
+        updated = ProductPublishGuard.applyStatusChange(
+          product: item,
+          status: status,
+          reviewNote: reviewNote,
+          reasonTags: reasonTags,
+        );
+        next.add(updated);
+      } else {
+        next.add(item);
+      }
+    }
+    // Document first. The shop array is updated only after this succeeds.
+    if (updated != null) {
+      await ref.collection('products').doc(productId).set(updated.toMap());
+    }
     await ref.set({
       'products': [for (final item in next) item.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
