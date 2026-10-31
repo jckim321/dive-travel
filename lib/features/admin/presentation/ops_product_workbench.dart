@@ -23,6 +23,7 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/product_reject_dialog.dart';
+import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_gallery_preserve.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
@@ -2290,27 +2291,22 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                               _partnerBasicsSection(l10n),
                             ],
                           ),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-price'),
-                            title: l10n.partnerFormBoxPricePhoto,
-                            children: [_partnerPricePhotoBlock(l10n)],
-                          ),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-options'),
-                            title: l10n.partnerFormBoxOptions,
-                            children: [_partnerOptionsBlock(l10n, titled: false)],
-                          ),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-individuals'),
-                            title: l10n.partnerFormBoxIndividuals,
-                            children: [
-                              _partnerIndividualsBlock(l10n, titled: false),
-                            ],
-                          ),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-includes'),
-                            title: l10n.partnerFormBoxIncludes,
-                            children: [_partnerIncludesBlock(l10n)],
+                          ShopProductBox(
+                            priceTitle: l10n.partnerFormBoxPricePhoto,
+                            optionsTitle: l10n.partnerFormBoxOptions,
+                            includesTitle: l10n.partnerFormBoxIncludes,
+                            priceAndPhotos: _partnerPricePhotoBlock(l10n),
+                            options: _partnerOptionsBlock(l10n, titled: false),
+                            includes: _partnerIncludesBlock(l10n),
+                            betweenOptionsAndIncludes: _partnerFormBox(
+                              boxKey: const Key(
+                                'partner-form-section-individuals',
+                              ),
+                              title: l10n.partnerFormBoxIndividuals,
+                              children: [
+                                _partnerIndividualsBlock(l10n, titled: false),
+                              ],
+                            ),
                           ),
                           _partnerFormBox(
                             boxKey: const Key('partner-form-section-publish'),
