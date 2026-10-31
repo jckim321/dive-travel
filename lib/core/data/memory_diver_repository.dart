@@ -135,6 +135,9 @@ class MemoryDiverRepository implements DiverRepository {
   /// Test-only pause before [saveShopProduct] writes.
   Future<void> Function()? debugDelayShopProductSave;
 
+  /// Test-only: the product document write throws and the shop array stays.
+  bool debugFailProductDocWrite = false;
+
   /// When set for this shop, [fetchShopStat] returns it instead of storage.
   ShopLiveStats? debugFetchShopStatOverride;
   bool _isInstructor = false;
@@ -3984,6 +3987,29 @@ class MemoryDiverRepository implements DiverRepository {
   /// Raw product maps so merge can preserve unknown / legacy keys in tests.
   final _productRawByShop = <String, Map<String, Map<String, dynamic>>>{};
 
+  /// Copy of shops/{id}/products/{id}. Written before the shop products array.
+  final _productDocs = <String, Map<String, Map<String, dynamic>>>{};
+
+  Map<String, dynamic>? readProductDoc(String shopId, String productId) {
+    final stored = _productDocs[shopId]?[productId];
+    if (stored == null) {
+      return null;
+    }
+    return Map<String, dynamic>.from(stored);
+  }
+
+  void _writeProductDoc(
+    String shopId,
+    String productId,
+    Map<String, dynamic> data,
+  ) {
+    if (debugFailProductDocWrite) {
+      throw StateError('PRODUCT_DOC_WRITE_FAILED');
+    }
+    _productDocs.putIfAbsent(shopId, () => {})[productId] =
+        Map<String, dynamic>.from(data);
+  }
+
   /// Test helper: stash extra raw keys on a product before [saveShopProduct].
   void seedProductRawOverlay(
     String shopId,
@@ -4078,6 +4104,7 @@ class MemoryDiverRepository implements DiverRepository {
       clearAbsentFormFields: clearAbsentFormFields,
       preserveSeatFields: preserveSeatFields,
     );
+    _writeProductDoc(shopId, toPersist.id, merged);
     byId[toPersist.id] = merged;
     final parsed = ShopProduct.fromMap(shopId, merged);
     final products = [

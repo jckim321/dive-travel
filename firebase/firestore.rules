@@ -360,6 +360,27 @@ service cloud.firestore {
       return resource.data.get('creator_uid', '') == request.auth.uid;
     }
 
+    // Product docs must not be trusted for identity. Captain means the parent
+    // shop document's creator_uid, not a field stored on the product.
+    function parentShopCaptain(shopId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/shops/$(shopId))
+        && get(/databases/$(database)/documents/shops/$(shopId)).data.get('creator_uid', '') == request.auth.uid;
+    }
+
+    function canWriteShopProduct(shopId) {
+      return isAdmin() || ownsShop(shopId) || parentShopCaptain(shopId);
+    }
+
+    // Price keys follow the same three writers. resource is null on create,
+    // so the diff runs only when a product document already exists.
+    function productPriceKeysOk(shopId) {
+      return resource == null
+        || !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['consumer_price', 'professional_price'])
+        || canWriteShopProduct(shopId);
+    }
+
     function profileShopKeysOk(shopId) {
       return !shopChangedKeys().hasAny(profileShopKeys())
         || isAdmin()
@@ -434,6 +455,16 @@ service cloud.firestore {
         && profileShopKeysOk(shopId);
       // H9: admin trial-data cleanup may remove shops.
       allow delete: if isAdmin();
+
+      match /products/{productId} {
+        // Public read matches the parent shop. Identity is the user doc or the
+        // parent shop's creator_uid, never a field on this product document.
+        allow read: if true;
+        allow create: if canWriteShopProduct(shopId);
+        allow update: if canWriteShopProduct(shopId)
+          && productPriceKeysOk(shopId);
+        allow delete: if false;
+      }
 
       match /operating_events/{eventId} {
         allow read: if isAdmin();

@@ -4907,6 +4907,12 @@ class FirestoreDiverRepository implements DiverRepository {
         ? saved.coverUrl
         : (snap.data()?['cover_url'] as String? ?? '');
     final written = current[saved.id];
+    if (written == null) {
+      throw StateError('PRODUCT_DOC_WRITE_FAILED');
+    }
+    // Subcollection first. The shop products array is written only after this
+    // succeeds, so a denied product document leaves the array unchanged.
+    await ref.collection('products').doc(saved.id).set(written);
     final previousProduct = previousRaw == null
         ? null
         : ShopProduct.fromMap(shopId, previousRaw);
