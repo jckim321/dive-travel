@@ -45,7 +45,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final store = DiverStoreScope.of(context);
     final products = store.liveStatsFor(widget.shopId)?.products ?? const [];
     _boxes.addAll([
-      for (final product in products) _RegularProductDraft.fromProduct(product),
+      for (final product in products)
+        if (!product.openEmptySeats) _RegularProductDraft.fromProduct(product),
     ]);
   }
 
@@ -64,7 +65,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     _boxes
       ..clear()
       ..addAll([
-        for (final product in products) _RegularProductDraft.fromProduct(product),
+        for (final product in products)
+          if (!product.openEmptySeats)
+            _RegularProductDraft.fromProduct(product),
       ]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
@@ -177,7 +180,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           key: const Key('partner-regular-add'),
           onPressed: _saving ? null : _addBox,
           icon: const Icon(Icons.add),
-          label: const Text('+ 상품 박스 추가'),
+          label: const Text('상품 박스 추가'),
           style: OutlinedButton.styleFrom(
             foregroundColor: PartnerTheme.text,
             minimumSize: const Size.fromHeight(48),
