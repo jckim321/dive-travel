@@ -14,6 +14,7 @@ import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> showTourCheckoutSheet({
@@ -158,6 +159,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final departure = widget.product?.departureStart;
     if (departure != null) {
       _tourDate = departure;
+    }
+    if (_buyerPicksDeparture) {
+      _tourDate = buyerDepartureDay(now: DateTime.now(), preferred: _tourDate);
     }
     if (widget.lockedPartySize > 0) {
       _qtyDiver = widget.lockedPartySize;
@@ -315,26 +319,42 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   Future<void> _pickDate() async {
+    final today = calendarDay(DateTime.now());
+    var initial = calendarDay(_tourDate);
+    if (initial.isBefore(today)) initial = today;
+    final last = today.add(const Duration(days: 180));
+    if (initial.isAfter(last)) initial = last;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _tourDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 180)),
+      initialDate: initial,
+      firstDate: today,
+      lastDate: last,
     );
-    if (picked != null) {
-      setState(() => _tourDate = picked);
+    if (picked != null && mounted) {
+      setState(() => _tourDate = calendarDay(picked));
     }
   }
 
   int get _partySize => _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
 
+  bool get _buyerPicksDeparture {
+    final product = widget.product;
+    if (product == null || widget.fromFlag) return false;
+    return !product.openEmptySeats;
+  }
+
+  DateTime? get _buyerReturn {
+    if (!_buyerPicksDeparture) return null;
+    return buyerReturnDay(
+      departure: _tourDate,
+      durationLabel: widget.product?.durationLabel,
+    );
+  }
+
   bool get _dateLocked {
-    if (widget.product?.departureStart != null) {
-      return true;
-    }
-    if (widget.product != null) {
-      return false;
-    }
+    if (_buyerPicksDeparture) return false;
+    if (widget.product?.departureStart != null) return true;
+    if (widget.product != null) return false;
     return widget.shop.departure != null;
   }
 
@@ -727,12 +747,38 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                               children: [
                                 Expanded(
                                   child: _DateBox(
-                                    label: l10n.weatherTourDate,
-                                    value: DateFormat('yyyy.MM.dd')
-                                        .format(_tourDate),
+                                    key: Key(
+                                      _buyerPicksDeparture
+                                          ? 'checkout-departure-date'
+                                          : 'checkout-tour-date',
+                                    ),
+                                    label: _buyerPicksDeparture
+                                        ? '출발일'
+                                        : l10n.weatherTourDate,
+                                    value: DateFormat(
+                                      'yyyy.MM.dd',
+                                    ).format(_tourDate),
+                                    valueKey: const Key(
+                                      'checkout-departure-value',
+                                    ),
                                     onTap: _dateLocked ? null : _pickDate,
                                   ),
                                 ),
+                                if (_buyerReturn != null) ...[
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _DateBox(
+                                      key: const Key('checkout-return-date'),
+                                      label: '돌아오는 날',
+                                      value: DateFormat(
+                                        'yyyy.MM.dd',
+                                      ).format(_buyerReturn!),
+                                      valueKey: const Key(
+                                        'checkout-return-value',
+                                      ),
+                                    ),
+                                  ),
+                                ],
                                 if (!_hasProduct) ...[
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -1530,10 +1576,17 @@ class _MarkdownDetailCard extends StatelessWidget {
 }
 
 class _DateBox extends StatelessWidget {
-  const _DateBox({required this.label, required this.value, this.onTap});
+  const _DateBox({
+    super.key,
+    required this.label,
+    required this.value,
+    this.valueKey,
+    this.onTap,
+  });
 
   final String label;
   final String value;
+  final Key? valueKey;
   final VoidCallback? onTap;
 
   @override
@@ -1564,6 +1617,7 @@ class _DateBox extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 value,
+                key: valueKey,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

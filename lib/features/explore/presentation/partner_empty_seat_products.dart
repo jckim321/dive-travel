@@ -445,6 +445,27 @@ int? nightsInDurationLabel(String? label) {
   return int.tryParse(match.group(1)!);
 }
 
+DateTime calendarDay(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+/// Today when [preferred] is missing or already past. Later days stay.
+DateTime buyerDepartureDay({required DateTime now, DateTime? preferred}) {
+  final today = calendarDay(now);
+  if (preferred == null) return today;
+  final day = calendarDay(preferred);
+  return day.isBefore(today) ? today : day;
+}
+
+/// Calendar day [nights] after [departure]. Null when the label has no 박.
+DateTime? buyerReturnDay({
+  required DateTime departure,
+  required String? durationLabel,
+}) {
+  final nights = nightsInDurationLabel(durationLabel);
+  if (nights == null) return null;
+  return calendarDay(departure).add(Duration(days: nights));
+}
+
 /// Calendar day [nights] after the departure text. Not a stored field.
 DateTime? returnDayFromDeparture({
   required String departureText,

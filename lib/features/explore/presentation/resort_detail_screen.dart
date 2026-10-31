@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
@@ -278,6 +279,28 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
                 shop: hull,
                 productId: hero?.id,
                 photoUrls: _heroPhotoUrls(products),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                key: const Key('resort-book'),
+                onPressed: () => _openRegularProducts(
+                  context,
+                  store: store,
+                  hull: hull,
+                  products: products,
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.ocean,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: const Text(
+                  '이 리조트 예약하러 가기',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -688,6 +711,87 @@ List<ShopProduct> _resortShelfProducts(ShopLiveStats? live) => [
       for (final product in live?.readerProducts ?? const <ShopProduct>[])
         if (isCustomerShelfProduct(product)) product,
     ];
+
+void _openRegularProducts(
+  BuildContext context, {
+  required DiverStore store,
+  required DiveShop hull,
+  required List<ShopProduct> products,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (context) => _RegularProductPicker(
+        store: store,
+        hull: hull,
+        products: [
+          for (final product in products)
+            if (isCustomerShelfProduct(product)) product,
+        ],
+      ),
+    ),
+  );
+}
+
+class _RegularProductPicker extends StatelessWidget {
+  const _RegularProductPicker({
+    required this.store,
+    required this.hull,
+    required this.products,
+  });
+
+  final DiverStore store;
+  final DiveShop hull;
+  final List<ShopProduct> products;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: const Key('resort-book-products'),
+      appBar: AppBar(title: Text(hull.name)),
+      body: products.isEmpty
+          ? const Center(child: Text('예약할 일반 상품이 없습니다.'))
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              itemCount: products.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                final price = NumberFormat('#,###', 'en_US')
+                    .format(product.consumerPrice);
+                return Material(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFE4E8EE)),
+                  ),
+                  child: ListTile(
+                    key: Key('resort-book-product-${product.id}'),
+                    title: Text(
+                      product.name,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: Text(
+                      product.durationLabel.trim().isEmpty
+                          ? '₩$price'
+                          : '${product.durationLabel} · ₩$price',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      final card = store.listingCardForProduct(hull, product);
+                      showTourCheckoutSheet(
+                        context: context,
+                        shop: card,
+                        quote: store.quoteFor(card),
+                        product: _paymentProduct(store, hull.hullId, product),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
 
 /// Checkout keeps the shop-array product. The detail list may be a document.
 ShopProduct _paymentProduct(
