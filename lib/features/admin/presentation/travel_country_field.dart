@@ -19,6 +19,7 @@ class TravelCountryField extends StatefulWidget {
     this.picked,
     this.style,
     this.cursorColor,
+    this.showAssignment = true,
   });
 
   final TextEditingController controller;
@@ -30,6 +31,9 @@ class TravelCountryField extends StatefulWidget {
   final TravelCountry? picked;
   final TextStyle? style;
   final Color? cursorColor;
+
+  /// Region and sea line under the field. Partner resort info hides it.
+  final bool showAssignment;
 
   @override
   State<TravelCountryField> createState() => _TravelCountryFieldState();
@@ -93,7 +97,7 @@ class _TravelCountryFieldState extends State<TravelCountryField> {
     final query = widget.controller.text;
     final matches = TravelCountryMaster.search(query);
     final picked = widget.picked;
-    final assignment = picked == null
+    final assignment = !widget.showAssignment || picked == null
         ? null
         : _assignmentLabel(l10n, picked);
 

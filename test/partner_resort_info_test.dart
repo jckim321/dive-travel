@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -16,6 +17,13 @@ void main() {
     expect(uri.path, '/maps/search/');
     expect(uri.queryParameters['query'], '보홀 팡라오');
     expect(uri.queryParameters['api'], '1');
+  });
+
+  test('preview place writes a shared country and region once', () {
+    expect(partnerPreviewPlace('필리핀', '팡라오'), '필리핀 · 팡라오');
+    expect(partnerPreviewPlace('필리핀', '필리핀'), '필리핀');
+    expect(partnerPreviewPlace('필리핀', '필리핀 보홀'), '필리핀 보홀');
+    expect(partnerPreviewPlace('', ''), '국가 · 지역');
   });
 
   testWidgets('partner resort info keeps the product block and drops the map URL field', (
@@ -74,6 +82,41 @@ void main() {
     expect(find.byKey(const Key('partner-resort-map-search')), findsOneWidget);
     expect(find.text('구글·네이버·카카오 지도 링크'), findsNothing);
     expect(find.byKey(const Key('partner-regular-products')), findsOneWidget);
+    expect(find.text('게시 설정'), findsNothing);
+    expect(find.byKey(const Key('resort-save')), findsNothing);
+    expect(find.byKey(const Key('partner-resort-temp-save')), findsOneWidget);
+    expect(find.byKey(const Key('partner-resort-save')), findsOneWidget);
+    expect(find.text('아시아 · 해역 없음'), findsNothing);
+    expect(find.byKey(const Key('product-country-assignment')), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('resort-region-field')))
+          .decoration
+          ?.labelText,
+      '지역',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('partner-resort-preview-place'))).data,
+      '필리핀 · 팡라오',
+    );
+    expect(find.textContaining('주차'), findsOneWidget);
+    expect(find.textContaining('에어컨'), findsOneWidget);
+    expect(find.textContaining('공항 픽업'), findsOneWidget);
+    expect(find.textContaining('장비 세척장'), findsOneWidget);
+    expect(find.textContaining('짐 보관'), findsOneWidget);
+    expect(find.textContaining('풀장'), findsOneWidget);
+    expect(find.byKey(const Key('partner-resort-preview-book')), findsOneWidget);
+    expect(find.byKey(const Key('resort-cover-field-test')), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const Key('resort-region-field')),
+      '필리핀',
+    );
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('partner-resort-preview-place'))).data,
+      '필리핀',
+    );
 
     await tester.enterText(
       find.byKey(const Key('resort-intro-field')),
@@ -88,5 +131,46 @@ void main() {
     expect(live?.mapUrl, mapUrl);
     expect(live?.consumerPrice, 120000);
     expect(live?.name, '보홀 리조트');
+  });
+
+  testWidgets('an admin on the partner resort screen still sees the test photo', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 6400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const shopId = 'partner-resort-admin';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: '관리 리조트',
+      location: '세부',
+      country: '필리핀',
+      productName: '펀다이빙',
+      consumerPrice: 100000,
+      professionalPrice: 80000,
+    );
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AppTheme.light,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ResortDeskScreen(shopId: shopId, partnerMode: true),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byKey(const Key('resort-cover-field-test')), findsOneWidget);
+    expect(find.text('게시 설정'), findsNothing);
+    expect(find.byKey(const Key('resort-save')), findsNothing);
   });
 }

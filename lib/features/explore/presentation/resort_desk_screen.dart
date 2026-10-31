@@ -614,20 +614,22 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton(
-              key: const Key('resort-save'),
-              onPressed: _saving ? null : _saveProfile,
-              style: FilledButton.styleFrom(
-                backgroundColor: palette.primary,
-                foregroundColor: palette.onPrimary,
-                minimumSize: const Size(88, 40),
+          if (!widget.partnerMode) ...[
+            const SizedBox(width: 4),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: FilledButton(
+                key: const Key('resort-save'),
+                onPressed: _saving ? null : _saveProfile,
+                style: FilledButton.styleFrom(
+                  backgroundColor: palette.primary,
+                  foregroundColor: palette.onPrimary,
+                  minimumSize: const Size(88, 40),
+                ),
+                child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
               ),
-              child: Text(_saving ? l10n.exploreSaving : l10n.partnerSave),
             ),
-          ),
+          ],
         ],
       ),
       body: Stack(
@@ -664,6 +666,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     _countryTouched = true;
                     setState(() => _pickedCountry = null);
                   },
+                  showAssignment: !widget.partnerMode,
                 ),
                 location: _location,
                 onRegionEdited: () => _regionTouched = true,
@@ -689,6 +692,14 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onSave: _saveProfile,
                 onPreview: _openPreview,
               );
+              if (widget.partnerMode) {
+                return ListView(
+                  key: const Key('resort-desk'),
+                  controller: _mainScroll,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  children: [main],
+                );
+              }
               if (!wide) {
                 return ListView(
                   key: const Key('resort-desk'),
@@ -1011,7 +1022,9 @@ class _DeskMainColumn extends StatelessWidget {
               child: BookingGalleryEditor(
                 items: slots,
                 onAdd: onAddPhotos,
-                onTest: onTestPhoto,
+                onTest: DiverStoreScope.of(context).stats.isAdmin
+                    ? onTestPhoto
+                    : null,
                 onRemove: onRemovePhoto,
                 onMakeCover: onMakeCover,
                 maxItems: _kMaxGallery,

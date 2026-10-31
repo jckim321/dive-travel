@@ -17,6 +17,15 @@ const _kAmenityPresets = <String>[
   '세탁',
 ];
 
+const _kPartnerAmenityPresets = <String>[
+  ..._kAmenityPresets,
+  '주차',
+  '에어컨',
+  '공항 픽업',
+  '장비 세척장',
+  '짐 보관',
+];
+
 const _kAmenityEmoji = <String, String>{
   '풀장': '🏊',
   '와이파이': '📶',
@@ -26,6 +35,11 @@ const _kAmenityEmoji = <String, String>{
   '쇼어 다이빙': '🏖️',
   '스피드보트': '🚤',
   '세탁': '🧺',
+  '주차': '🅿️',
+  '에어컨': '❄️',
+  '공항 픽업': '🚐',
+  '장비 세척장': '🚿',
+  '짐 보관': '🧳',
 };
 
 const _kTransportLabels = <String, String>{
@@ -731,7 +745,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                   onRegionEdited();
                   onInfoChanged();
                 },
-                decoration: _field('권역'),
+                decoration: _field('지역'),
               ),
               const SizedBox(height: 12),
               Row(
@@ -836,7 +850,7 @@ class PartnerResortInfoForm extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (final preset in _kAmenityPresets)
+              for (final preset in _kPartnerAmenityPresets)
                 FilterChip(
                   label: Text('${_kAmenityEmoji[preset] ?? ''} $preset'),
                   selected: info.amenities.contains(preset),
@@ -868,7 +882,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   for (final item in info.amenities)
-                    if (!_kAmenityPresets.contains(item))
+                    if (!_kPartnerAmenityPresets.contains(item))
                       InputChip(
                         label: Text(item),
                         onDeleted: () {
@@ -1220,26 +1234,59 @@ class _ListPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final place = [
-      if (country.isNotEmpty) country,
-      if (region.isNotEmpty) region,
-    ].join(' · ');
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: _CoverPreview(item: cover),
-      title: Text(
-        name.isEmpty ? '리조트 이름' : name,
-        style: const TextStyle(
-          color: PartnerTheme.text,
-          fontWeight: FontWeight.w800,
+    final place = partnerPreviewPlace(country, region);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: _CoverPreview(item: cover),
+          title: Text(
+            name.isEmpty ? '리조트 이름' : name,
+            style: const TextStyle(
+              color: PartnerTheme.text,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            place,
+            key: const Key('partner-resort-preview-place'),
+            style: const TextStyle(color: PartnerTheme.textDim),
+          ),
         ),
-      ),
-      subtitle: Text(
-        place.isEmpty ? '국가 · 권역' : place,
-        style: const TextStyle(color: PartnerTheme.textDim),
-      ),
+        const SizedBox(height: 8),
+        FilledButton(
+          key: const Key('partner-resort-preview-book'),
+          onPressed: () {},
+          style: FilledButton.styleFrom(
+            backgroundColor: PartnerTheme.accent,
+            foregroundColor: PartnerTheme.bg,
+            minimumSize: const Size.fromHeight(44),
+          ),
+          child: const Text('이 리조트 예약하러 가기'),
+        ),
+      ],
     );
   }
+}
+
+/// Country and region share one line. The same phrase is written once.
+String partnerPreviewPlace(String country, String region) {
+  final left = country.trim();
+  final right = region.trim();
+  if (left.isEmpty && right.isEmpty) {
+    return '국가 · 지역';
+  }
+  if (left.isEmpty) {
+    return right;
+  }
+  if (right.isEmpty) {
+    return left;
+  }
+  if (left == right || right.contains(left) || left.contains(right)) {
+    return left.length >= right.length ? left : right;
+  }
+  return '$left · $right';
 }
 
 Widget _box({
