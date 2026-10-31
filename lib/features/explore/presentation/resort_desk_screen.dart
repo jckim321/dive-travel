@@ -406,24 +406,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       return;
     }
 
-    if (!widget.partnerMode) {
-      final mapError = validateShopMapUrl(_info.mapUrl.text);
-      if (mapError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            mapError == 'map_url_https_only'
-                ? '지도 링크는 https로 시작하는 주소만 저장할 수 있어요.'
-                : mapError == 'map_url_domain'
-                    ? '구글·네이버·카카오 지도 링크만 저장할 수 있어요.'
-                    : '지도 링크 형식을 확인해 주세요.',
-          ),
-        ),
-      );
-        return;
-      }
-    }
-
     setState(() => _saving = true);
     final store = _store ?? _storeRead(context);
     final typedCountry = _country.text.trim();
@@ -451,7 +433,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           for (final item in _info.amenities.take(kMaxAmenities))
             if (item.trim().isNotEmpty) clampShort(item),
         ],
-        mapUrl: widget.partnerMode ? null : _info.mapUrl.text.trim(),
+        mapUrl: null,
         nearestHub: clampShort(_info.nearestHub.text),
         accessRoutes: _info.builtRoutes(),
         featureBlurb: clampShort(_info.featureBlurb.text, kMaxShortLine * 2),
@@ -637,9 +619,9 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final wide = constraints.maxWidth >= 980;
+              final formPalette = _DeskPalette(true);
               final main = _DeskMainColumn(
                 palette: palette,
-                hint: l10n.exploreDeskHint,
                 name: _name,
                 onNameEdited: () => _nameTouched = true,
                 country: _country,
@@ -647,10 +629,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                   controller: _country,
                   fieldKey: const Key('resort-country-field'),
                   picked: _pickedCountry,
-                  style: palette.fieldStyle,
-                  cursorColor: palette.primary,
+                  style: formPalette.fieldStyle,
+                  cursorColor: formPalette.primary,
                   decoration: _deskInputDecoration(
-                    palette: palette,
+                    palette: formPalette,
                     label: l10n.productFormCuratedCountry,
                     required: true,
                   ),
@@ -666,7 +648,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     _countryTouched = true;
                     setState(() => _pickedCountry = null);
                   },
-                  showAssignment: !widget.partnerMode,
+                  showAssignment: false,
                 ),
                 location: _location,
                 onRegionEdited: () => _regionTouched = true,
@@ -949,7 +931,6 @@ class _DeskStickySidebar extends StatelessWidget {
 class _DeskMainColumn extends StatelessWidget {
   const _DeskMainColumn({
     required this.palette,
-    required this.hint,
     required this.name,
     required this.onNameEdited,
     required this.country,
@@ -974,7 +955,6 @@ class _DeskMainColumn extends StatelessWidget {
   });
 
   final _DeskPalette palette;
-  final String hint;
   final TextEditingController name;
   final VoidCallback onNameEdited;
   final TextEditingController country;
@@ -999,13 +979,15 @@ class _DeskMainColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (palette.partnerMode)
-          PartnerResortInfoForm(
-            fieldStyle: palette.fieldStyle,
+        PartnerResortInfoForm(
+            fieldStyle: const TextStyle(
+              color: PartnerTheme.text,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
             name: name,
             onNameEdited: onNameEdited,
             countryField: countryField,
@@ -1022,9 +1004,10 @@ class _DeskMainColumn extends StatelessWidget {
               child: BookingGalleryEditor(
                 items: slots,
                 onAdd: onAddPhotos,
-                onTest: DiverStoreScope.of(context).stats.isAdmin
-                    ? onTestPhoto
-                    : null,
+                onTest: palette.partnerMode &&
+                        !DiverStoreScope.of(context).stats.isAdmin
+                    ? null
+                    : onTestPhoto,
                 onRemove: onRemovePhoto,
                 onMakeCover: onMakeCover,
                 maxItems: _kMaxGallery,
@@ -1036,97 +1019,10 @@ class _DeskMainColumn extends StatelessWidget {
             saving: saving,
             onTempSave: onTempSave,
             onSave: onTempSave,
-          )
-        else ...[
-        Text(
-          hint,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: palette.muted,
-              ),
-        ),
-        const SizedBox(height: 16),
-        BookingFormSection(
-          step: '1',
-          title: '기본 정보',
-          subtitle: '리조트 이름·국가·지역·소개를 관리합니다.',
-          child: Column(
-            children: [
-              TextField(
-                key: const Key('resort-name-field'),
-                controller: name,
-                style: palette.fieldStyle,
-                cursorColor: palette.primary,
-                onChanged: (_) => onNameEdited(),
-                decoration: _deskInputDecoration(
-                  palette: palette,
-                  label: l10n.partnerShopName,
-                  required: true,
-                ),
-              ),
-              const SizedBox(height: 14),
-              countryField,
-              const SizedBox(height: 14),
-              TextField(
-                key: const Key('resort-region-field'),
-                controller: location,
-                style: palette.fieldStyle,
-                cursorColor: palette.primary,
-                onChanged: (_) => onRegionEdited(),
-                decoration: _deskInputDecoration(
-                  palette: palette,
-                  label: l10n.productFormCuratedLocation,
-                  hint: l10n.productFormCuratedLocationHint,
-                  required: true,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: address,
-                style: palette.fieldStyle,
-                cursorColor: palette.primary,
-                decoration: _deskInputDecoration(
-                  palette: palette,
-                  label: l10n.exploreResortAddress,
-                  hint: '국가·도시 예: 괌, 이집트 다합 (홈 지도는 로그 지역에 불이 켜집니다)',
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                key: const Key('resort-intro-field'),
-                controller: intro,
-                style: palette.fieldStyle,
-                cursorColor: palette.primary,
-                maxLines: 5,
-                maxLength: kMaxIntroBody,
-                decoration: _deskInputDecoration(
-                  palette: palette,
-                  label: l10n.exploreResortIntro,
-                ),
-              ),
-            ],
           ),
-        ),
-        const SizedBox(height: 16),
-        BookingFormSection(
-          step: '1b',
-          title: '미디어 (사진)',
-          subtitle: l10n.exploreCoverPhotoHint,
-          child: RepaintBoundary(
-            child: BookingGalleryEditor(
-              items: slots,
-              onAdd: onAddPhotos,
-              onTest: onTestPhoto,
-              onRemove: onRemovePhoto,
-              onMakeCover: onMakeCover,
-              maxItems: _kMaxGallery,
-              fieldKey: const Key('resort-cover-field'),
-              attachKey: const Key('resort-cover-field-attach'),
-              testKey: const Key('resort-cover-field-test'),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
+        if (!palette.partnerMode) ...[
+          const SizedBox(height: 16),
+          ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
         const SizedBox(height: 16),
         if (palette.partnerMode)

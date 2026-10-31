@@ -6,10 +6,10 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_console_theme.dart';
 import 'package:dive_travel_app/features/explore/presentation/explore_shop_query.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -33,6 +33,7 @@ void main() {
       consumerPrice: 100000,
       professionalPrice: 80000,
       intro: '옛 소개',
+      mapUrl: 'https://maps.google.com/maps?q=bohol',
     );
     final store = DiverStore(repo);
     addTearDown(store.dispose);
@@ -69,13 +70,18 @@ void main() {
     expect(name.readOnly, isFalse);
     expect(region.readOnly, isFalse);
     expect(country.readOnly, isFalse);
-    expect(name.style?.color, AppTheme.navy);
-    expect(region.style?.color, AppTheme.navy);
-    expect(country.style?.color, AppTheme.navy);
-    expect(name.decoration?.fillColor, Colors.white);
+    expect(name.style?.color, PartnerTheme.text);
+    expect(region.style?.color, PartnerTheme.text);
+    expect(country.style?.color, PartnerTheme.text);
+    expect(name.decoration?.fillColor, PartnerTheme.bg);
     expect(name.controller?.text, '푸른 리프');
     expect(country.controller?.text, '필리핀');
     expect(region.controller?.text, '보홀');
+    expect(find.byKey(const Key('partner-resort-info')), findsOneWidget);
+    expect(find.byKey(const Key('partner-resort-map-search')), findsOneWidget);
+    expect(find.text('구글·네이버·카카오 지도 링크'), findsNothing);
+    expect(find.byKey(const Key('resort-cover-field-test')), findsOneWidget);
+    expect(find.text('연락·운영'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('resort-name-field')), '새 리프');
     await tester.enterText(
@@ -100,6 +106,7 @@ void main() {
     expect(live?.location, '코로르');
     expect(live?.continent, TravelRegionId.pacific);
     expect(live?.intro, '새 소개');
+    expect(live?.mapUrl, 'https://maps.google.com/maps?q=bohol');
     expect(
       tester.widget<TextField>(find.byKey(const Key('resort-name-field')))
           .controller
