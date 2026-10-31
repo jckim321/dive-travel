@@ -18,6 +18,7 @@ import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_regular_products.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -678,6 +679,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onTestPhoto: _useTestPhoto,
                 onRemovePhoto: _removeAt,
                 onMakeCover: _makeCover,
+                shopId: widget.shopId,
                 primaryProduct: primary,
                 onOpenProductManagement: _openProductManagement,
               );
@@ -955,6 +957,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.onTestPhoto,
     required this.onRemovePhoto,
     required this.onMakeCover,
+    required this.shopId,
     required this.primaryProduct,
     required this.onOpenProductManagement,
   });
@@ -979,6 +982,7 @@ class _DeskMainColumn extends StatelessWidget {
   final VoidCallback onTestPhoto;
   final ValueChanged<int> onRemovePhoto;
   final ValueChanged<int> onMakeCover;
+  final String shopId;
   final ShopProduct primaryProduct;
   final VoidCallback onOpenProductManagement;
 
@@ -1112,7 +1116,10 @@ class _DeskMainColumn extends StatelessWidget {
         ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
         const SizedBox(height: 16),
-        BookingFormSection(
+        if (palette.partnerMode)
+          PartnerRegularProducts(shopId: shopId)
+        else
+          BookingFormSection(
           step: '8',
           title: '상품 가격·옵션',
           subtitle: '가격과 옵션은 상품 관리에서 수정하세요.',

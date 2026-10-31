@@ -19,6 +19,7 @@ class ShopProductBox extends StatelessWidget {
     this.betweenOptionsAndIncludes,
     this.showDate = false,
     this.dateController,
+    this.keyPrefix = '',
   });
 
   final String priceTitle;
@@ -35,20 +36,26 @@ class ShopProductBox extends StatelessWidget {
   final bool showDate;
   final TextEditingController? dateController;
 
+  /// Empty keeps the original keys. A prefix makes each box unique.
+  final String keyPrefix;
+
+  Key _key(String name) =>
+      Key(keyPrefix.isEmpty ? name : '$keyPrefix-$name');
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Column(
-      key: const Key('shop-product-box'),
+      key: _key('shop-product-box'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showDate)
           _sectionBox(
-            boxKey: const Key('shop-product-box-date-section'),
+            boxKey: _key('shop-product-box-date-section'),
             title: l10n.workbenchDepartureDate,
             children: [
               TextField(
-                key: const Key('shop-product-box-date'),
+                key: _key('shop-product-box-date'),
                 controller: dateController,
                 keyboardType: TextInputType.datetime,
                 style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
@@ -58,18 +65,18 @@ class ShopProductBox extends StatelessWidget {
             ],
           ),
         _sectionBox(
-          boxKey: const Key('partner-form-section-price'),
+          boxKey: _key('partner-form-section-price'),
           title: priceTitle,
           children: [priceAndPhotos],
         ),
         _sectionBox(
-          boxKey: const Key('partner-form-section-options'),
+          boxKey: _key('partner-form-section-options'),
           title: optionsTitle,
           children: [options],
         ),
         ?betweenOptionsAndIncludes,
         _sectionBox(
-          boxKey: const Key('partner-form-section-includes'),
+          boxKey: _key('partner-form-section-includes'),
           title: includesTitle,
           children: [includes],
         ),

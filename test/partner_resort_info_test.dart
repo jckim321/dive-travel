@@ -73,7 +73,7 @@ void main() {
     expect(find.text('목록 미리보기'), findsOneWidget);
     expect(find.byKey(const Key('partner-resort-map-search')), findsOneWidget);
     expect(find.text('구글·네이버·카카오 지도 링크'), findsNothing);
-    expect(find.byKey(const Key('partner-product-form')), findsOneWidget);
+    expect(find.byKey(const Key('partner-regular-products')), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('resort-intro-field')),
