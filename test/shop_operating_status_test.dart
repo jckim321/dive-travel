@@ -7,6 +7,20 @@ import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
+ShopProduct _shelfTrip(String shopId) {
+  return ShopProduct(
+    id: 'shelf',
+    shopId: shopId,
+    name: '리조트 펀다이빙',
+    consumerPrice: 120000,
+    professionalPrice: 90000,
+    publishStatus: ProductPublishStatus.approved,
+    active: true,
+    listingKind: ProductListingKind.diveStar,
+    submittedAt: DateTime(2026, 10, 2),
+  );
+}
+
 ShopProduct _publicTrip(String shopId) {
   return ShopProduct(
     id: 'trip',
@@ -65,6 +79,7 @@ void main() {
       consumerPrice: 100000,
       professionalPrice: 80000,
     );
+    await repo.saveShopProduct(shopId: shopId, product: _shelfTrip(shopId));
     await repo.saveShopProduct(shopId: shopId, product: _publicTrip(shopId));
 
     final store = DiverStore(repo);

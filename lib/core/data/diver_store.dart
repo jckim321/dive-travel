@@ -49,6 +49,7 @@ import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
@@ -396,7 +397,7 @@ class DiverStore extends ChangeNotifier {
     return [
       for (final stats in _shopStats)
         if (stats.operatingStatus.acceptsCustomers)
-          for (final product in stats.products) product,
+          for (final product in stats.readerProducts) product,
     ];
   }
 
@@ -659,8 +660,9 @@ class DiverStore extends ChangeNotifier {
       }
       final stats = statsByShop[hull.hullId];
       final matches = [
-        for (final product in _dedupedProducts(stats?.products ?? const []))
-          if (product.isListedPublicly && product.listingKind == kind) product,
+        for (final product in _dedupedProducts(stats?.readerProducts ?? const []))
+          if (isCustomerShelfProduct(product) && product.listingKind == kind)
+            product,
       ];
       if (matches.isEmpty) {
         continue;
@@ -712,8 +714,8 @@ class DiverStore extends ChangeNotifier {
       if (!stats.operatingStatus.acceptsCustomers) {
         continue;
       }
-      for (final product in _dedupedProducts(stats.products)) {
-        if (product.isListedPublicly && product.listingKind == kind) {
+      for (final product in _dedupedProducts(stats.readerProducts)) {
+        if (isCustomerShelfProduct(product) && product.listingKind == kind) {
           count++;
         }
       }
@@ -752,10 +754,10 @@ class DiverStore extends ChangeNotifier {
 
   /// Newest public product time on a hull (explore / home recent sort).
   DateTime latestPublicProductAt(String hullId) {
-    final products = liveStatsFor(hullId)?.products ?? const <ShopProduct>[];
+    final products = liveStatsFor(hullId)?.readerProducts ?? const <ShopProduct>[];
     var best = DateTime.fromMillisecondsSinceEpoch(0);
     for (final product in products) {
-      if (!product.isListedPublicly) {
+      if (!isCustomerShelfProduct(product)) {
         continue;
       }
       final at = product.submittedAt;

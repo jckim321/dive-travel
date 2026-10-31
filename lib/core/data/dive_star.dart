@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
 /// Legacy helper: once used to auto-grade shops from operation-review averages.
@@ -111,6 +112,7 @@ class ShopLiveStats {
     this.amenities = const [],
     this.operatingStatus = ShopOperatingStatus.active,
     this.operatingNote = '',
+    this.documentProducts,
   });
 
   factory ShopLiveStats.fromDocument(String id, Map<String, dynamic> data) {
@@ -234,6 +236,16 @@ class ShopLiveStats {
   /// Admin reason memo. Empty when the shop has never stored one.
   final String operatingNote;
 
+  /// Product documents for the public readers. Null or empty means this shop
+  /// has no documents, so [readerProducts] is the shop array. Seat counts are
+  /// taken from [products] when the list is read.
+  final List<ShopProduct>? documentProducts;
+
+  List<ShopProduct> get readerProducts => productsForReaders(
+        arrayProducts: products,
+        documentProducts: documentProducts ?? const [],
+      );
+
   /// Ordered resort photos. First becomes [coverUrl] after save.
   List<String> get displayGallery {
     if (galleryUrls.isNotEmpty) {
@@ -296,6 +308,7 @@ class ShopLiveStats {
     ShopOperatingStatus? operatingStatus,
     String? operatingNote,
     bool setOperatingNote = false,
+    List<ShopProduct>? documentProducts,
   }) {
     return ShopLiveStats(
       shopId: shopId,
@@ -343,6 +356,7 @@ class ShopLiveStats {
       operatingNote: setOperatingNote
           ? (operatingNote ?? '')
           : this.operatingNote,
+      documentProducts: documentProducts ?? this.documentProducts,
     );
   }
 }

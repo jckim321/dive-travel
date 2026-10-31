@@ -1285,7 +1285,7 @@ class MemoryDiverRepository implements DiverRepository {
   @override
   Future<List<ShopLiveStats>> fetchShopStats() async {
     fetchShopStatsCalls += 1;
-    return _shopStats.values.toList();
+    return _statsForReaders();
   }
 
   @override
@@ -1295,13 +1295,44 @@ class MemoryDiverRepository implements DiverRepository {
     if (override != null && override.shopId == id) {
       return override;
     }
-    return _shopStats[id];
+    final stats = _shopStats[id];
+    if (stats == null) {
+      return null;
+    }
+    return _attachProductDocs(stats);
   }
 
   @override
   Stream<List<ShopLiveStats>> watchShopStats() async* {
-    yield _shopStats.values.toList();
-    yield* _shopController.stream;
+    yield _statsForReaders();
+    yield* _shopController.stream.map((_) => _statsForReaders());
+  }
+
+  List<ShopLiveStats> _statsForReaders() => [
+        for (final stats in _shopStats.values) _attachProductDocs(stats),
+      ];
+
+  ShopLiveStats _attachProductDocs(ShopLiveStats stats) {
+    final raw = _productDocs[stats.shopId];
+    if (raw == null || raw.isEmpty) {
+      return stats;
+    }
+    final docs = <ShopProduct>[];
+    for (final entry in raw.entries) {
+      final map = Map<String, dynamic>.from(entry.value);
+      if ((map['id'] as String?)?.trim().isEmpty != false) {
+        map['id'] = entry.key;
+      }
+      final product = ShopProduct.fromMap(stats.shopId, map);
+      if (product.id.isEmpty) {
+        continue;
+      }
+      docs.add(product);
+    }
+    if (docs.isEmpty) {
+      return stats;
+    }
+    return stats.copyWith(documentProducts: docs);
   }
 
   @override
@@ -3989,6 +4020,15 @@ class MemoryDiverRepository implements DiverRepository {
 
   /// Copy of shops/{id}/products/{id}. Written before the shop products array.
   final _productDocs = <String, Map<String, Map<String, dynamic>>>{};
+
+  /// Test helper: replace one product document without touching the shop array.
+  void debugSetProductDoc(
+    String shopId,
+    String productId,
+    Map<String, dynamic> data,
+  ) {
+    _writeProductDoc(shopId, productId, {...data, 'id': productId});
+  }
 
   Map<String, dynamic>? readProductDoc(String shopId, String productId) {
     final stored = _productDocs[shopId]?[productId];

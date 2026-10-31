@@ -715,7 +715,7 @@ class HomeSameBoatCard extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final product = homeListingProduct(
       shop,
-      store.liveStatsFor(shop.hullId)?.products ?? const [],
+      store.liveStatsFor(shop.hullId)?.readerProducts ?? const [],
     );
     final facts = homeBoatFacts(shop, product);
     final title = shop.productName.trim().isNotEmpty
@@ -976,7 +976,7 @@ class HomeCaptainCard extends StatelessWidget {
     final store = DiverStoreScope.of(context);
     final product = homeListingProduct(
       shop,
-      store.liveStatsFor(shop.hullId)?.products ?? const [],
+      store.liveStatsFor(shop.hullId)?.readerProducts ?? const [],
     );
     final identity = homeCaptainIdentity(
       submittedByUid: product?.submittedByUid ?? '',

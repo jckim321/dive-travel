@@ -1883,9 +1883,13 @@ class FirestoreDiverRepository implements DiverRepository {
   @override
   Future<List<ShopLiveStats>> fetchShopStats() async {
     final snapshot = await _shops.get();
+    final docs = await _productDocsByShop();
     return [
       for (final doc in snapshot.docs)
-        ShopLiveStats.fromDocument(doc.id, doc.data()),
+        _attachProductDocs(
+          ShopLiveStats.fromDocument(doc.id, doc.data()),
+          docs[doc.id],
+        ),
     ];
   }
 
@@ -1899,17 +1903,73 @@ class FirestoreDiverRepository implements DiverRepository {
     if (!doc.exists) {
       return null;
     }
-    return ShopLiveStats.fromDocument(doc.id, doc.data() ?? {});
+    final products = await doc.reference.collection('products').get();
+    return _attachProductDocs(
+      ShopLiveStats.fromDocument(doc.id, doc.data() ?? {}),
+      _productsFromDocs(doc.id, products.docs),
+    );
   }
 
   @override
   Stream<List<ShopLiveStats>> watchShopStats() {
-    return _shops.snapshots().map((snapshot) {
+    return _shops.snapshots().asyncMap((snapshot) async {
+      final docs = await _productDocsByShop();
       return [
         for (final doc in snapshot.docs)
-          ShopLiveStats.fromDocument(doc.id, doc.data()),
+          _attachProductDocs(
+            ShopLiveStats.fromDocument(doc.id, doc.data()),
+            docs[doc.id],
+          ),
       ];
     });
+  }
+
+  Future<Map<String, List<ShopProduct>>> _productDocsByShop() async {
+    final snap = await _db.collectionGroup('products').get();
+    final grouped = <String, List<ShopProduct>>{};
+    for (final doc in snap.docs) {
+      final shop = doc.reference.parent.parent;
+      if (shop == null || shop.parent.id != 'shops') {
+        continue;
+      }
+      grouped.putIfAbsent(shop.id, () => []).addAll(
+        _productsFromDocs(shop.id, [doc]),
+      );
+    }
+    return grouped;
+  }
+
+  List<ShopProduct> _productsFromDocs(
+    String shopId,
+    Iterable<DocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final products = <ShopProduct>[];
+    for (final doc in docs) {
+      final data = doc.data();
+      if (data == null) {
+        continue;
+      }
+      final map = Map<String, dynamic>.from(data);
+      if ((map['id'] as String?)?.trim().isEmpty != false) {
+        map['id'] = doc.id;
+      }
+      final product = ShopProduct.fromMap(shopId, map);
+      if (product.id.isEmpty) {
+        continue;
+      }
+      products.add(product);
+    }
+    return products;
+  }
+
+  ShopLiveStats _attachProductDocs(
+    ShopLiveStats stats,
+    List<ShopProduct>? docs,
+  ) {
+    if (docs == null || docs.isEmpty) {
+      return stats;
+    }
+    return stats.copyWith(documentProducts: docs);
   }
 
   CollectionReference<Map<String, dynamic>> _shopBookings(String shopId) =>

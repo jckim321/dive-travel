@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
@@ -117,7 +118,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     }
     final hull = listings.first;
     final live = store.liveStatsFor(hull.hullId);
-    final products = live?.products ?? const <ShopProduct>[];
+    final products = _resortShelfProducts(live);
     final sig = _detailSignature(hull, live, products);
     if (sig != _contentSig) {
       setState(() => _contentSig = sig);
@@ -140,7 +141,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
         _contentSig = _detailSignature(
           hull,
           live,
-          live?.products ?? const <ShopProduct>[],
+          _resortShelfProducts(live),
         );
       }
     }
@@ -215,7 +216,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     final canEdit =
         store.stats.isAdmin ||
         (store.stats.isBusiness && owned == hull.hullId);
-    final products = live?.products ?? const <ShopProduct>[];
+    final products = _resortShelfProducts(live);
     final rooms = SameBoatBoard.offers(products).length;
     final hero = _heroProduct(products);
     final ratingValue = hero != null && hero.guestReviewCount > 0
@@ -672,7 +673,7 @@ List<Widget> _productBoxes({
             context: context,
             shop: shop,
             quote: store.quoteFor(shop),
-            product: product,
+            product: _paymentProduct(store, hull.hullId, product),
             presetOptionId: presetOptionId,
           );
         },
@@ -681,6 +682,25 @@ List<Widget> _productBoxes({
     out.add(const SizedBox(height: 12));
   }
   return out;
+}
+
+List<ShopProduct> _resortShelfProducts(ShopLiveStats? live) => [
+      for (final product in live?.readerProducts ?? const <ShopProduct>[])
+        if (isCustomerShelfProduct(product)) product,
+    ];
+
+/// Checkout keeps the shop-array product. The detail list may be a document.
+ShopProduct _paymentProduct(
+  DiverStore store,
+  String shopId,
+  ShopProduct shown,
+) {
+  for (final item in store.liveStatsFor(shopId)?.products ?? const <ShopProduct>[]) {
+    if (item.id == shown.id) {
+      return item;
+    }
+  }
+  return shown;
 }
 
 /// Prefer live public products (id-stable). Fall back to catalog SKUs.

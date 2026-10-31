@@ -104,7 +104,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
       if (stats.shopId != review.shopId) {
         continue;
       }
-      for (final product in stats.products) {
+      for (final product in stats.readerProducts) {
         if (product.id == review.productId) {
           return product.name;
         }

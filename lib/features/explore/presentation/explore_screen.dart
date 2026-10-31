@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/explore/presentation/continent_atlas_rail.dart';
@@ -282,5 +283,5 @@ bool _showsOnExplore(DiveShop shop, DiverStore store) {
   if (live == null || !live.operatingStatus.acceptsCustomers) {
     return false;
   }
-  return live.products.any((product) => product.isListedPublicly);
+  return live.readerProducts.any(isCustomerShelfProduct);
 }

@@ -2,6 +2,7 @@ import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/models/dive_region.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 
 /// Live shop helpers. Sample resorts live in test code, not on screens.
 abstract final class DiveShopCatalog {
@@ -42,8 +43,8 @@ abstract final class DiveShopCatalog {
       // so Explore/Home do not repeat the same product across the grid.
       final products = <ShopProduct>[];
       final seenProductIds = <String>{};
-      for (final product in stats?.products ?? const <ShopProduct>[]) {
-        if (!product.isListedPublicly || !seenProductIds.add(product.id)) {
+      for (final product in stats?.readerProducts ?? const <ShopProduct>[]) {
+        if (!isCustomerShelfProduct(product) || !seenProductIds.add(product.id)) {
           continue;
         }
         products.add(product);
@@ -87,7 +88,7 @@ abstract final class DiveShopCatalog {
       if (!seen.add(stats.shopId)) {
         continue;
       }
-      final hasPublic = stats.products.any((p) => p.isListedPublicly);
+      final hasPublic = stats.readerProducts.any(isCustomerShelfProduct);
       // Contract-free/creator-proposed resorts must not surface until an
       // admin approves at least one product. Paused, ended, and closed
       // shops stay off customer lists even when a product is public.
