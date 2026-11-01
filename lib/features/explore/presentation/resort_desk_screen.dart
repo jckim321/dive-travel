@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
@@ -15,7 +14,6 @@ import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
-import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
@@ -100,9 +98,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   var _saving = false;
   DiverStore? _store;
   var _storeListening = false;
-  /// Cached primary product for the read-only options table.
-  ShopProduct? _cachedPrimary;
-  int _optionsSig = 0;
 
   /// Read store without registering an InheritedNotifier dependency (avoids
   /// full-scaffold rebuild on every [refreshShopStat] after profile save).
@@ -110,23 +105,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     final scope = context.getInheritedWidgetOfExactType<DiverStoreScope>();
     assert(scope != null, 'DiverStoreScope가 위젯 트리에 없습니다.');
     return scope!.notifier!;
-  }
-
-  static int _optionsSignature(ShopProduct product) {
-    return Object.hashAll([
-      product.id,
-      product.name,
-      product.consumerPrice,
-      product.professionalPrice,
-      for (final option in product.options)
-        Object.hash(
-          option.id,
-          option.name,
-          option.description,
-          option.consumerPrice,
-          option.professionalPrice,
-        ),
-    ]);
   }
 
   void _handleStoreTick() {
@@ -145,13 +123,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       setState(() => _seedGallery(store, live, hull, markDone: true));
       return;
     }
-    final primary = _primaryProduct(live);
-    final sig = _optionsSignature(primary);
-    if (sig != _optionsSig || _cachedPrimary == null || placeChanged) {
-      setState(() {
-        _optionsSig = sig;
-        _cachedPrimary = primary;
-      });
+    if (placeChanged) {
+      setState(() {});
     }
   }
 
@@ -252,8 +225,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       nearbySpots: live?.nearbySpots ?? const [],
     );
     _seedGallery(store, live, hull);
-    _cachedPrimary = _primaryProduct(live);
-    _optionsSig = _optionsSignature(_cachedPrimary!);
   }
 
   void _seedGallery(
@@ -539,40 +510,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
 
   void _openPreview() => openResortDetail(context, widget.shopId);
 
-  void _openProductManagement() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => AdminProductsScreen(
-          partnerMode: true,
-          partnerShopId: widget.shopId,
-        ),
-      ),
-    );
-  }
-
-  ShopProduct _primaryProduct(ShopLiveStats? live) {
-    final products = live?.products ?? const <ShopProduct>[];
-    if (products.isNotEmpty) {
-      return products.first;
-    }
-    final fallbackName = _listingProductName.trim().isNotEmpty
-        ? _listingProductName.trim()
-        : (_name.text.trim().isEmpty ? '기본 상품' : _name.text.trim());
-    return ShopProduct(
-      id: 'p-${widget.shopId}-default',
-      shopId: widget.shopId,
-      name: fallbackName,
-      consumerPrice: _listingConsumerPrice,
-      professionalPrice: _listingProfessionalPrice,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final palette = _DeskPalette(widget.partnerMode);
-    final primary = _cachedPrimary ??
-        _primaryProduct((_store ?? _storeRead(context)).liveStatsFor(widget.shopId));
 
     final scaffold = Scaffold(
       backgroundColor: palette.bg,
@@ -666,8 +607,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onRemovePhoto: _removeAt,
                 onMakeCover: _makeCover,
                 shopId: widget.shopId,
-                primaryProduct: primary,
-                onOpenProductManagement: _openProductManagement,
               );
               final side = _DeskStickySidebar(
                 palette: palette,
@@ -905,23 +844,6 @@ class _DeskStickySidebar extends StatelessWidget {
               icon: const Icon(Icons.visibility_outlined, size: 18),
               label: const Text('미리보기'),
             ),
-            const SizedBox(height: 20),
-            const Divider(height: 1),
-            const SizedBox(height: 16),
-            Text(
-              '상품 가격',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '가격과 옵션은 상품 관리에서 수정하세요. 이 화면은 리조트 소개만 저장합니다.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: palette.muted,
-                    height: 1.35,
-                  ),
-            ),
           ],
         ),
       ),
@@ -951,8 +873,6 @@ class _DeskMainColumn extends StatelessWidget {
     required this.onRemovePhoto,
     required this.onMakeCover,
     required this.shopId,
-    required this.primaryProduct,
-    required this.onOpenProductManagement,
   });
 
   final _DeskPalette palette;
@@ -975,8 +895,6 @@ class _DeskMainColumn extends StatelessWidget {
   final ValueChanged<int> onRemovePhoto;
   final ValueChanged<int> onMakeCover;
   final String shopId;
-  final ShopProduct primaryProduct;
-  final VoidCallback onOpenProductManagement;
 
   @override
   Widget build(BuildContext context) {
@@ -1026,218 +944,10 @@ class _DeskMainColumn extends StatelessWidget {
           ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
         const SizedBox(height: 16),
-        if (palette.partnerMode) ...[
-          PartnerRegularProducts(shopId: shopId),
-          const SizedBox(height: 16),
-          PartnerEmptySeatProducts(shopId: shopId),
-        ] else
-          BookingFormSection(
-          step: '8',
-          title: '상품 가격·옵션',
-          subtitle: '가격과 옵션은 상품 관리에서 수정하세요.',
-          trailing: FilledButton.tonalIcon(
-            key: const Key('partner-product-form'),
-            onPressed: onOpenProductManagement,
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('상품 관리에서 수정'),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: palette.softFill,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: palette.softBorder),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    '대표 상품명·가격 칸은 여기서 바꾸지 않습니다. '
-                    '상품 관리에서 수정한 내용이 손님 화면에 반영됩니다.',
-                    style: TextStyle(color: palette.muted, height: 1.35),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              RepaintBoundary(
-                child: _OptionAdminTable(
-                  palette: palette,
-                  options: primaryProduct.options,
-                ),
-              ),
-            ],
-          ),
-        ),
+        PartnerRegularProducts(shopId: shopId),
+        const SizedBox(height: 16),
+        PartnerEmptySeatProducts(shopId: shopId),
       ],
-    );
-  }
-}
-
-class _OptionAdminTable extends StatelessWidget {
-  const _OptionAdminTable({
-    required this.palette,
-    required this.options,
-  });
-
-  final _DeskPalette palette;
-  final List<ShopProductOption> options;
-
-  static final _price = NumberFormat('#,###');
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    if (options.isEmpty) {
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: palette.softFill,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: palette.softBorder),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-          child: Column(
-            children: [
-              Icon(Icons.tune_outlined, color: palette.muted),
-              const SizedBox(height: 10),
-              Text(
-                l10n.productFormOptionsHint,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: palette.muted,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '상품 관리에서 옵션을 추가하세요.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: palette.muted,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: palette.softBorder),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: palette.softFill,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(13)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    '옵션명',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: palette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    l10n.exploreConsumerPrice,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: palette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    l10n.exploreProPrice,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: palette.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          for (var i = 0; i < options.length; i++) ...[
-            if (i > 0) const Divider(height: 1),
-            _OptionAdminRow(
-              palette: palette,
-              option: options[i],
-              price: _price,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OptionAdminRow extends StatelessWidget {
-  const _OptionAdminRow({
-    required this.palette,
-    required this.option,
-    required this.price,
-  });
-
-  final _DeskPalette palette;
-  final ShopProductOption option;
-  final NumberFormat price;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: palette.surface,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    option.name,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  if (option.description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      option.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: palette.muted,
-                          ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text('${price.format(option.consumerPrice)}원'),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text('${price.format(option.professionalPrice)}원'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

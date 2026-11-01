@@ -52,13 +52,11 @@ Future<void> _openDesk(WidgetTester tester, DiverStore store, String shopId) asy
     ),
   );
   await tester.pump();
-  await tester.tap(find.byKey(const Key('partner-product-form')));
-  await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
 }
 
 void main() {
-  testWidgets('관리자가 편집 중인 리조트의 상품 메뉴·목록·빈자리·등록을 연다', (tester) async {
+  testWidgets('관리자 리조트 글 수정은 그 리조트의 상품 박스를 보여 준다', (tester) async {
     tester.view.physicalSize = const Size(900, 4800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -67,38 +65,17 @@ void main() {
     final repo = await _seeded();
     final store = DiverStore(repo);
     addTearDown(store.dispose);
+    await store.refreshShopStats();
 
     await _openDesk(tester, store, _palau);
-    expect(find.byKey(const Key('partner-product-menu')), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('partner-menu-list')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.text('팔라우 펀다이빙'), findsWidgets);
-    expect(find.text('보홀 펀다이빙'), findsNothing);
-    expect(find.byKey(const Key('partner-products-empty')), findsNothing);
-
-    tester.state<NavigatorState>(find.byType(Navigator)).pop();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    await tester.tap(find.byKey(const Key('partner-menu-seats')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.text('팔라우 펀다이빙'), findsWidgets);
-    expect(find.text('보홀 펀다이빙'), findsNothing);
-
-    tester.state<NavigatorState>(find.byType(Navigator)).pop();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    await tester.tap(find.byKey(const Key('partner-menu-register')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    final desk = tester.widget<ResortDeskScreen>(find.byType(ResortDeskScreen).last);
-    expect(desk.shopId, _palau);
-    expect(desk.partnerMode, isTrue);
     expect(find.byKey(const Key('partner-regular-products')), findsOneWidget);
+    expect(find.byKey(const Key('partner-empty-seat-products')), findsOneWidget);
+    expect(find.byKey(const Key('partner-regular-card-palau-fun')), findsOneWidget);
+    expect(find.text('팔라우 펀다이빙'), findsWidgets);
+    expect(find.text('보홀 펀다이빙'), findsNothing);
+    expect(find.byKey(const Key('partner-product-form')), findsNothing);
+    expect(find.text('상품 관리에서 수정'), findsNothing);
+    expect(find.text('상품 가격·옵션'), findsNothing);
   });
 
   testWidgets('제휴파트너 메뉴는 연결 리조트 상품을 그대로 보여 준다', (tester) async {
