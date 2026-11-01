@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_products_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_same_boat_monitor_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_product_menu_screen.dart';
@@ -158,7 +159,9 @@ void main() {
     await tester.tap(find.text('기획 몰타'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(TravelProductRegistrationScreen), findsOneWidget);
+    expect(find.byType(PlannerTripScreen), findsOneWidget);
+    expect(find.text('기획 몰타'), findsWidgets);
+    expect(find.byType(TravelProductRegistrationScreen), findsNothing);
     expect(find.byType(ResortDeskScreen), findsNothing);
 
     tester.state<NavigatorState>(find.byType(Navigator)).pop();
@@ -168,7 +171,9 @@ void main() {
     await tester.tap(find.text('내가 짜는 다합'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(TravelProductRegistrationScreen), findsOneWidget);
+    expect(find.byType(PlannerTripScreen), findsOneWidget);
+    expect(find.text('내가 짜는 다합'), findsWidgets);
+    expect(find.byType(TravelProductRegistrationScreen), findsNothing);
     expect(find.byType(ResortDeskScreen), findsNothing);
   });
 

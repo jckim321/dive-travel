@@ -38,13 +38,41 @@ String plannerDurationLabel(String startText, String endText) {
   return '$nights박 ${nights + 1}일';
 }
 
-/// New planned trip. Saving writes one hidden `curated-` shop and its product
-/// document. Opening it from a menu, and publishing it, come later.
+/// `2026.11.18` for the planner date fields.
+String formatPlannerDay(DateTime day) {
+  final local = day.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  final date = local.day.toString().padLeft(2, '0');
+  return '${local.year}.$month.$date';
+}
+
+int? _nightsInLabel(String label) {
+  final match = RegExp(r'(\d+)\s*박').firstMatch(label);
+  if (match == null) {
+    return null;
+  }
+  return int.tryParse(match.group(1)!);
+}
+
+String _nextShopId(ShopProduct? existing) {
+  final shopId = existing?.shopId.trim() ?? '';
+  if (shopId.startsWith('curated-')) {
+    return shopId;
+  }
+  return 'curated-${DateTime.now().millisecondsSinceEpoch}';
+}
+
+/// New or existing planned trip. Saving a new trip writes one hidden
+/// `curated-` shop and its product document. An existing `curated-` trip
+/// keeps that shop and its open or hidden state.
 class PlannerTripScreen extends StatefulWidget {
-  const PlannerTripScreen({super.key, this.pickCover});
+  const PlannerTripScreen({super.key, this.pickCover, this.existing});
 
   /// Test hook. Null uses the device photo picker.
   final Future<PickedPhoto?> Function()? pickCover;
+
+  /// Opens that trip for editing when it already has a shop and product.
+  final ShopProduct? existing;
 
   @override
   State<PlannerTripScreen> createState() => _PlannerTripScreenState();
@@ -68,12 +96,70 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _saving = false;
   String? _shopId;
   String? _productId;
+  var _placeSeeded = false;
 
   @override
   void initState() {
     super.initState();
+    final existing = widget.existing;
+    if (existing != null) {
+      final shopId = existing.shopId.trim();
+      if (shopId.startsWith('curated-')) {
+        _shopId = shopId;
+        _productId = existing.id;
+      }
+      _title.text = existing.name;
+      _blurb.text = existing.blurb;
+      _story.text = existing.schedule;
+      _productName.text = existing.name;
+      if (existing.consumerPrice > 0) {
+        _price.text = '${existing.consumerPrice}';
+      }
+      final start = existing.departureStart?.toLocal();
+      if (start != null) {
+        _start.text = formatPlannerDay(start);
+        final nights = _nightsInLabel(existing.durationLabel);
+        if (nights != null && nights > 0) {
+          _end.text = formatPlannerDay(start.add(Duration(days: nights)));
+        } else if (existing.durationLabel.trim() == '1일') {
+          _end.text = _start.text;
+        }
+      }
+      _includes.text = existing.includes;
+      _excludes.text = existing.excludes;
+      for (final option in existing.options) {
+        if (option.kind == ProductOptionKind.individual) {
+          continue;
+        }
+        _options.add(_PlannerOption.fromOption(option));
+      }
+    }
     _start.addListener(_onDates);
     _end.addListener(_onDates);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final existing = widget.existing;
+    if (existing == null || _placeSeeded) {
+      return;
+    }
+    final live = DiverStoreScope.of(context).liveStatsFor(existing.shopId);
+    if (live == null) {
+      return;
+    }
+    _placeSeeded = true;
+    final shopName = (live.name ?? '').trim();
+    if (shopName.isNotEmpty) {
+      _title.text = shopName;
+    }
+    final location = (live.location ?? '').trim();
+    final country = (live.country ?? '').trim();
+    final region = location.isNotEmpty ? location : country;
+    if (region.isNotEmpty) {
+      _region.text = region;
+    }
   }
 
   void _onDates() {
@@ -131,14 +217,25 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
-    final shopId = _shopId ??= 'curated-${DateTime.now().millisecondsSinceEpoch}';
-    final productId = _productId ??= 'p-$shopId';
+    final existing = widget.existing;
+    final shopId = _shopId ??= _nextShopId(existing);
+    final productId = _productId ??=
+        existing != null && existing.shopId.trim() == shopId
+            ? existing.id
+            : 'p-$shopId';
     final region = _region.text.trim();
     final productName = _productName.text.trim().isEmpty
         ? title
         : _productName.text.trim();
     final duration = plannerDurationLabel(_start.text, _end.text);
     final departure = parsePlannerDay(_start.text);
+    final admin = store.stats.isAdmin;
+    final keptKind = existing == null
+        ? ProductListingKind.curated
+        : existing.listingKind == ProductListingKind.diverPlanned ||
+                existing.listingKind == ProductListingKind.curated
+            ? existing.listingKind
+            : ProductListingKind.curated;
     try {
       await store.saveShopProfile(
         shopId: shopId,
@@ -153,6 +250,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         coverBytes: _cover?.bytes,
         coverFileName: _cover?.fileName,
         coverContentType: _cover?.contentType,
+        creatorProposal: !admin,
+        creatorUid: !admin ? store.uid : null,
       );
       await store.saveShopProduct(
         shopId: shopId,
@@ -162,15 +261,18 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           name: productName,
           consumerPrice: price,
           professionalPrice: price,
-          active: false,
+          active: existing?.active ?? false,
           blurb: _blurb.text.trim(),
           durationLabel: duration,
           schedule: _story.text.trim(),
           includes: _includes.text.trim(),
           excludes: _excludes.text.trim(),
           departureStart: departure,
-          listingKind: ProductListingKind.curated,
-          publishStatus: ProductPublishStatus.draft,
+          listingKind: keptKind,
+          publishStatus: existing?.publishStatus ?? ProductPublishStatus.draft,
+          submittedByUid: (existing?.submittedByUid.isNotEmpty ?? false)
+              ? existing!.submittedByUid
+              : (store.uid ?? ''),
           options: [
             for (final option in _options)
               if (option.name.text.trim().isNotEmpty)
@@ -183,8 +285,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           ],
         ),
         // keepEditing leaves departure_start off the write (it is a seat key).
-        // preserveListing stores the dates and leaves this draft hidden.
+        // preserveListing stores the dates and leaves an existing trip's
+        // open or hidden state as it was.
         intent: ProductSaveIntent.preserveListing,
+        creatorSubmission: !admin,
+        submitterUid: store.uid,
         photoBytes: _cover?.bytes,
         photoFileName: _cover?.fileName,
         photoContentType: _cover?.contentType,
@@ -657,10 +762,18 @@ InputDecoration _field(String label, {String? hint}) {
 }
 
 class _PlannerOption {
-  _PlannerOption()
-      : id = 'opt-${DateTime.now().microsecondsSinceEpoch}',
-        name = TextEditingController(),
-        price = TextEditingController();
+  _PlannerOption({String? id, String name = '', int price = 0})
+      : id = id ?? 'opt-${DateTime.now().microsecondsSinceEpoch}',
+        name = TextEditingController(text: name),
+        price = TextEditingController(text: price > 0 ? '$price' : '');
+
+  factory _PlannerOption.fromOption(ShopProductOption option) {
+    return _PlannerOption(
+      id: option.id,
+      name: option.name,
+      price: option.consumerPrice,
+    );
+  }
 
   final String id;
   final TextEditingController name;

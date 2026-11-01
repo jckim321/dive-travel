@@ -4,7 +4,7 @@ import 'package:dive_travel_app/core/models/crafted_trip_seats.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -24,11 +24,7 @@ class MyCraftedTripsSection extends StatelessWidget {
   Future<void> _openCraft(BuildContext context, {ShopProduct? existing}) {
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => TravelProductRegistrationScreen(
-          creatorMode: true,
-          existing: existing,
-          startEditing: true,
-        ),
+        builder: (_) => PlannerTripScreen(existing: existing),
       ),
     );
   }

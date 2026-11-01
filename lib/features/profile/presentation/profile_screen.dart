@@ -14,7 +14,7 @@ import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/core/widgets/passport_stamps.dart';
 import 'package:dive_travel_app/core/widgets/tank_gauge.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/core/models/same_boat_search.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
@@ -264,9 +264,7 @@ class ProfileScreen extends StatelessWidget {
                             Navigator.of(context).push<void>(
                               MaterialPageRoute<void>(
                                 builder: (_) =>
-                                    const TravelProductRegistrationScreen(
-                                      creatorMode: true,
-                                    ),
+                                    const PlannerTripScreen(),
                               ),
                             );
                           },

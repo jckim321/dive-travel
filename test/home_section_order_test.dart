@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/home_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -151,6 +152,7 @@ void main() {
     await tester.tap(find.byKey(const Key('home-become-captain')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text(l10n.profileCaptainTripTitle), findsOneWidget);
+    expect(find.byType(PlannerTripScreen), findsOneWidget);
+    expect(find.text('기획 여행 만들기'), findsOneWidget);
   });
 }

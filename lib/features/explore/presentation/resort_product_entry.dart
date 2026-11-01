@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_form_focus.dart';
@@ -18,8 +19,7 @@ bool productBelongsToResort(ShopProduct product) {
   return true;
 }
 
-/// Resort products open the resort desk. Planned trips and trips without a
-/// shop keep the existing registration form.
+/// Resort products open the resort desk. Planned trips open the planner.
 Widget resortProductEditor({
   required ShopProduct product,
   bool startEditing = false,
@@ -33,13 +33,7 @@ Widget resortProductEditor({
       partnerMode: partnerMode,
     );
   }
-  return TravelProductRegistrationScreen(
-    existing: product,
-    startEditing: startEditing,
-    partnerMode: partnerMode,
-    lockedShopId: lockShop ? product.shopId : null,
-    partnerFocus: partnerFocus,
-  );
+  return PlannerTripScreen(existing: product);
 }
 
 /// Registering against a resort shop opens that shop's desk.

@@ -226,4 +226,89 @@ void main() {
     expect(curated.single.documentProducts!.single.consumerPrice, 0);
     expect(curated.single.documentProducts!.single.isListedPublicly, isFalse);
   });
+
+  testWidgets('기존 curated 기획 상품을 고쳐도 같은 샵이고 열림 상태는 유지된다', (tester) async {
+    tester.view.physicalSize = const Size(1100, 6400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const shopId = 'curated-whale';
+    final repo = MemoryDiverRepository.forTest(isAdmin: true);
+    await repo.saveShopProfile(
+      shopId: shopId,
+      name: '고래를 만나는 여행',
+      location: '몰디브 · 아리환',
+      country: '몰디브',
+      productName: '고래 리조트',
+      consumerPrice: 890000,
+      professionalPrice: 890000,
+      curated: true,
+    );
+    final existing = ShopProduct(
+      id: 'whale-1',
+      shopId: shopId,
+      name: '고래 리조트',
+      consumerPrice: 890000,
+      professionalPrice: 890000,
+      blurb: '세 번',
+      schedule: '아침 고래',
+      durationLabel: '12박 13일',
+      departureStart: DateTime(2026, 11, 18),
+      includes: '보트',
+      listingKind: ProductListingKind.curated,
+      publishStatus: ProductPublishStatus.approved,
+      active: true,
+      options: const [
+        ShopProductOption(
+          id: 'adult',
+          name: '성인 1인',
+          consumerPrice: 120000,
+          professionalPrice: 120000,
+        ),
+      ],
+    );
+    await repo.saveShopProduct(shopId: shopId, product: existing);
+    final store = DiverStore(repo);
+    addTearDown(store.dispose);
+    await store.refreshShopStats();
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: MaterialApp(
+          theme: AppTheme.light,
+          locale: AppConstants.defaultLocale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: PlannerTripScreen(existing: existing),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('고래를 만나는 여행'), findsWidgets);
+    expect(find.text('몰디브 · 아리환'), findsWidgets);
+    expect(find.text('아침 고래'), findsWidgets);
+    expect(find.text('2026.11.18'), findsWidgets);
+    expect(find.text('2026.11.30'), findsWidgets);
+    expect(find.text('성인 1인'), findsWidgets);
+
+    await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
+    await tester.tap(find.byKey(const Key('planner-trip-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final curated = (await repo.fetchShopStats())
+        .where((shop) => shop.shopId.startsWith('curated-'))
+        .toList();
+    expect(curated, hasLength(1));
+    expect(curated.single.shopId, shopId);
+    final doc = curated.single.documentProducts!.single;
+    expect(doc.id, 'whale-1');
+    expect(doc.schedule, '저녁에도 고래');
+    expect(doc.publishStatus, ProductPublishStatus.approved);
+    expect(doc.active, isTrue);
+    expect(doc.listingKind, ProductListingKind.curated);
+    expect(doc.options.single.id, 'adult');
+  });
 }

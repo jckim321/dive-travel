@@ -9,7 +9,7 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/exploration_map.dart';
 import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
-import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/for_you_section.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
@@ -41,9 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openCaptainForm(BuildContext context) {
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => const TravelProductRegistrationScreen(
-          creatorMode: true,
-        ),
+        builder: (_) => const PlannerTripScreen(),
       ),
     );
   }
