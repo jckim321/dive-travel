@@ -22,6 +22,7 @@ class ShopProductBox extends StatelessWidget {
     this.endDateController,
     this.dateSectionTitle,
     this.endDateLabel = '종료일',
+    this.footer,
     this.keyPrefix = '',
   });
 
@@ -45,6 +46,9 @@ class ShopProductBox extends StatelessWidget {
   /// Replaces the departure heading when the box shows a start and an end.
   final String? dateSectionTitle;
   final String endDateLabel;
+
+  /// Extra block under the includes box. The partner form leaves this null.
+  final Widget? footer;
 
   /// Empty keeps the original keys. A prefix makes each box unique.
   final String keyPrefix;
@@ -121,6 +125,7 @@ class ShopProductBox extends StatelessWidget {
           title: includesTitle,
           children: [includes],
         ),
+        ?footer,
       ],
     );
   }

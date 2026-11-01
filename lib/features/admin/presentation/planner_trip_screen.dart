@@ -94,6 +94,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
 
   PickedPhoto? _cover;
   var _saving = false;
+  var _open = false;
+  var _adminHidden = false;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -133,6 +135,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         }
         _options.add(_PlannerOption.fromOption(option));
       }
+      _adminHidden = existing.sameBoatStatus == SameBoatStatus.hidden;
+      _open = existing.isListedPublicly && !_adminHidden;
     }
     _start.addListener(_onDates);
     _end.addListener(_onDates);
@@ -209,9 +213,24 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final price = parsePositivePrice(_price.text) ?? 0;
+    final storeForLock = DiverStoreScope.of(context);
+    final locked = _adminHidden && !storeForLock.stats.isAdmin;
+    if (_open && !locked && price <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
+      );
+      return;
+    }
     if (!temp && price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
+      );
+      return;
+    }
+    final departure = parsePlannerDay(_start.text);
+    if (_open && !locked && departure == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('출발일을 입력하세요.')),
       );
       return;
     }
@@ -228,7 +247,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         ? title
         : _productName.text.trim();
     final duration = plannerDurationLabel(_start.text, _end.text);
-    final departure = parsePlannerDay(_start.text);
     final admin = store.stats.isAdmin;
     final keptKind = existing == null
         ? ProductListingKind.curated
@@ -270,6 +288,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           departureStart: departure,
           listingKind: keptKind,
           publishStatus: existing?.publishStatus ?? ProductPublishStatus.draft,
+          sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
+          openEmptySeats: existing?.openEmptySeats ?? false,
+          capacity: existing?.capacity ?? 0,
+          bookedSeats: existing?.bookedSeats ?? 0,
+          flagHolds: existing?.flagHolds ?? const [],
+          sameBoatOpenedAt: existing?.sameBoatOpenedAt,
+          featuredAt: existing?.featuredAt,
           submittedByUid: (existing?.submittedByUid.isNotEmpty ?? false)
               ? existing!.submittedByUid
               : (store.uid ?? ''),
@@ -294,15 +319,28 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         photoFileName: _cover?.fileName,
         photoContentType: _cover?.contentType,
       );
+      final keepHidden = _adminHidden && !_open;
+      if (!keepHidden) {
+        await store.setPlannedTripOpen(
+          shopId: shopId,
+          productId: productId,
+          open: _open,
+        );
+      }
       if (!mounted) {
         return;
       }
+      final shown = _open && !keepHidden;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            temp
-                ? '임시 저장했습니다. 손님 화면에는 아직 나오지 않습니다.'
-                : '저장했습니다. 손님 화면에는 아직 나오지 않습니다.',
+            shown
+                ? (temp
+                    ? '임시 저장했습니다. 손님 목록·홈·같은배에 나옵니다.'
+                    : '저장했습니다. 손님 목록·홈·같은배에 나옵니다.')
+                : (temp
+                    ? '임시 저장했습니다. 손님 화면에는 아직 나오지 않습니다.'
+                    : '저장했습니다. 손님 화면에는 아직 나오지 않습니다.'),
           ),
         ),
       );
@@ -324,6 +362,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final duration = plannerDurationLabel(_start.text, _end.text);
+    final admin = DiverStoreScope.of(context).stats.isAdmin;
+    final locked = _adminHidden && !admin;
     return Theme(
       data: PartnerTheme.dark,
       child: Scaffold(
@@ -353,7 +393,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        '저장해도 손님 화면에는 아직 나오지 않습니다.',
+                        '열림을 켜면 손님 목록·홈·같은배에 바로 나옵니다.',
                         style: TextStyle(color: PartnerTheme.textDim, height: 1.4),
                       ),
                       const SizedBox(height: 16),
@@ -431,6 +471,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                             priceAndPhotos: _priceBlock(),
                             options: _optionsBlock(l10n),
                             includes: _includesBlock(),
+                            footer: _openSwitch(locked),
                           ),
                         ],
                       ),
@@ -476,6 +517,24 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _openSwitch(bool locked) {
+    return SwitchListTile(
+      key: const Key('planner-trip-open'),
+      contentPadding: EdgeInsets.zero,
+      title: const Text('열림'),
+      subtitle: _adminHidden
+          ? const Text(
+              '관리자가 잠시 숨김',
+              key: Key('planner-trip-admin-hidden'),
+            )
+          : const Text('켜면 손님 목록·홈·같은배에 바로 나옵니다.'),
+      value: locked ? false : _open,
+      onChanged: locked || _saving
+          ? null
+          : (value) => setState(() => _open = value),
     );
   }
 

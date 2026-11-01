@@ -1,8 +1,17 @@
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
-/// Public resort shelves. Empty-seat products stay on the same-boat board.
+/// Public guest shelves (explore and home).
+/// Partner empty-seat products stay on the same-boat board only.
+/// A planned trip can be on the shelf and the same-boat board together.
 bool isCustomerShelfProduct(ShopProduct product) {
-  return product.isListedPublicly && !product.openEmptySeats;
+  if (!product.isListedPublicly) {
+    return false;
+  }
+  if (!product.openEmptySeats) {
+    return true;
+  }
+  return product.listingKind == ProductListingKind.curated ||
+      product.listingKind == ProductListingKind.diverPlanned;
 }
 
 /// Reader catalog merges product documents with the shop `products` array

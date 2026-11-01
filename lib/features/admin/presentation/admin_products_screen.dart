@@ -286,14 +286,41 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                     product,
                     color: widget.embedded ? AdminConsoleTheme.muted : null,
                   ),
-                  trailing: IconButton(
-                    key: Key('delete-product-${product.id}'),
-                    tooltip: l10n.adminProductDelete,
-                    onPressed: () => _confirmDeleteProduct(context, product),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: widget.embedded ? AdminConsoleTheme.muted : null,
-                    ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (store.stats.isAdmin && _isPlannedTrip(product))
+                        TextButton(
+                          key: Key(
+                            product.sameBoatStatus == SameBoatStatus.hidden
+                                ? 'admin-planner-unhide-${product.id}'
+                                : 'admin-planner-hide-${product.id}',
+                          ),
+                          onPressed: () => _setPlannedHidden(
+                            context,
+                            product,
+                            hidden: product.sameBoatStatus !=
+                                SameBoatStatus.hidden,
+                          ),
+                          child: Text(
+                            product.sameBoatStatus == SameBoatStatus.hidden
+                                ? '숨김 해제'
+                                : '숨김',
+                          ),
+                        ),
+                      IconButton(
+                        key: Key('delete-product-${product.id}'),
+                        tooltip: l10n.adminProductDelete,
+                        onPressed: () =>
+                            _confirmDeleteProduct(context, product),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: widget.embedded
+                              ? AdminConsoleTheme.muted
+                              : null,
+                        ),
+                      ),
+                    ],
                   ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -317,6 +344,27 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _setPlannedHidden(
+    BuildContext context,
+    ShopProduct product, {
+    required bool hidden,
+  }) async {
+    final store = DiverStoreScope.of(context);
+    try {
+      await store.setPlannedTripAdminHidden(
+        shopId: product.shopId,
+        productId: product.id,
+        hidden: hidden,
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+    }
   }
 
   bool _matchesSource(ShopProduct product) {
@@ -343,6 +391,12 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
         product.publishStatus == ProductPublishStatus.draft,
     };
   }
+}
+
+bool _isPlannedTrip(ShopProduct product) {
+  final source = classifyAdminProductSource(product);
+  return source == AdminProductSource.curatedSpecial ||
+      source == AdminProductSource.diverDiy;
 }
 
 enum AdminProductSource { partner, diverDiy, curatedSpecial, unknown }

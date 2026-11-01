@@ -156,12 +156,15 @@ class _CraftedTripCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final status = switch (product.publishStatus) {
-      ProductPublishStatus.pending => l10n.profileCraftStatusPending,
-      ProductPublishStatus.approved => l10n.profileCraftStatusLive,
-      ProductPublishStatus.rejected => l10n.profileCraftStatusRejected,
-      ProductPublishStatus.draft => l10n.profileCraftStatusPending,
-    };
+    final adminHidden = product.sameBoatStatus == SameBoatStatus.hidden;
+    final status = adminHidden
+        ? '관리자가 잠시 숨김'
+        : switch (product.publishStatus) {
+            ProductPublishStatus.pending => l10n.profileCraftStatusPending,
+            ProductPublishStatus.approved => l10n.profileCraftStatusLive,
+            ProductPublishStatus.rejected => l10n.profileCraftStatusRejected,
+            ProductPublishStatus.draft => l10n.profileCraftStatusPending,
+          };
     final accent = switch (product.publishStatus) {
       ProductPublishStatus.approved => AppTheme.ocean,
       ProductPublishStatus.rejected => const Color(0xFFB45309),

@@ -141,6 +141,24 @@ void main() {
     );
   });
 
+  test('an open planned trip stays on the guest shelf and on same boat', () {
+    final planned = ShopProduct(
+      id: 'plan-1',
+      shopId: 'curated-1',
+      name: '기획 고래',
+      consumerPrice: 100000,
+      professionalPrice: 100000,
+      listingKind: ProductListingKind.curated,
+      openEmptySeats: true,
+      capacity: 1,
+      departureStart: DateTime.utc(2027, 6, 1),
+      sameBoatStatus: SameBoatStatus.approved,
+    );
+    expect(isCustomerShelfProduct(planned), isTrue);
+    expect(planned.listsOnSameBoat, isTrue);
+    expect(isCustomerShelfProduct(documentProduct()), isFalse);
+  });
+
   test('memory fetch reads documents and leaves array seats in place', () async {
     const shopId = 'reader-shop';
     final repo = MemoryDiverRepository.forTest();

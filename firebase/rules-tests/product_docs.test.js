@@ -192,6 +192,50 @@ describe('shops/{shopId}/products/{productId}', { concurrency: 1 }, () => {
     await assertFails(productRef(db).delete());
   });
 
+  it('lets the parent creator publish a product and mirror that onto the shop array', async () => {
+    await seedShopAndPeople();
+    const db = testEnv.authenticatedContext('captain-a').firestore();
+    await assertSucceeds(productRef(db).set({
+      publish_status: 'approved',
+      active: true,
+      same_boat_status: 'approved',
+      open_empty_seats: true,
+      capacity: 1,
+    }, { merge: true }));
+    await assertSucceeds(db.collection('shops').doc('shop-a').set({
+      products: [{
+        id: 'fun-dive',
+        publish_status: 'approved',
+        active: true,
+        same_boat_status: 'approved',
+        open_empty_seats: true,
+        capacity: 1,
+        consumer_price: 100000,
+        professional_price: 80000,
+      }],
+    }, { merge: true }));
+  });
+
+  it('lets an admin hide a product and mirror that hide onto the shop array', async () => {
+    await seedShopAndPeople();
+    const db = testEnv.authenticatedContext('admin-a').firestore();
+    await assertSucceeds(productRef(db).set({
+      publish_status: 'draft',
+      active: false,
+      same_boat_status: 'hidden',
+    }, { merge: true }));
+    await assertSucceeds(db.collection('shops').doc('shop-a').set({
+      products: [{
+        id: 'fun-dive',
+        publish_status: 'draft',
+        active: false,
+        same_boat_status: 'hidden',
+        consumer_price: 100000,
+        professional_price: 80000,
+      }],
+    }, { merge: true }));
+  });
+
   it('still lets a signed-in stranger rewrite the parent products array', async () => {
     await seedShopAndPeople();
     const db = testEnv.authenticatedContext('stranger').firestore();

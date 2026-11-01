@@ -3126,6 +3126,13 @@ class DiverStore extends ChangeNotifier {
     if (current == null) {
       throw StateError('Product not found');
     }
+    if (!_stats.isAdmin && current.sameBoatStatus.isPartnerLocked) {
+      throw StateError(
+        current.sameBoatStatus == SameBoatStatus.hidden
+            ? '관리자가 잠시 숨김'
+            : 'Not allowed',
+      );
+    }
     final next = SameBoatSeatOpenLogic.applyAdminStatus(current, status);
     // Show the new row before the write. A failed write puts the old row back.
     _upsertLocalShopProduct(shopId, next);
@@ -3147,6 +3154,139 @@ class DiverStore extends ChangeNotifier {
     if (status == SameBoatStatus.approved) {
       unawaited(_recordSeatOpens(next));
     }
+  }
+
+  /// Planned-trip 열림. On publishes with no review queue. Off takes it down.
+  /// A creator cannot clear an admin hide.
+  Future<void> setPlannedTripOpen({
+    required String shopId,
+    required String productId,
+    required bool open,
+  }) async {
+    final current = _findShopProduct(shopId, productId);
+    if (current == null) {
+      throw StateError('Product not found');
+    }
+    final admin = _stats.isAdmin;
+    if (!admin && !_isPlannedTripCaptain(shopId)) {
+      throw StateError('Not allowed');
+    }
+    if (!admin && current.sameBoatStatus == SameBoatStatus.hidden) {
+      throw StateError('관리자가 잠시 숨김');
+    }
+    final ShopProduct written;
+    final ProductPublishStatus status;
+    if (open) {
+      if (current.departureStart == null) {
+        throw StateError('출발일을 입력하세요.');
+      }
+      ProductPublishGuard.ensureCanApprove(current);
+      final kind = current.listingKind == ProductListingKind.diverPlanned
+          ? ProductListingKind.diverPlanned
+          : ProductListingKind.curated;
+      written = current.copyWith(
+        openEmptySeats: true,
+        capacity: current.capacity > 0 ? current.capacity : 1,
+        sameBoatStatus: SameBoatStatus.approved,
+        sameBoatOpenedAt: current.sameBoatOpenedAt ?? DateTime.now(),
+        listingKind: kind,
+        featuredAt: current.featuredAt ?? DateTime.now(),
+      );
+      status = ProductPublishStatus.approved;
+    } else {
+      final closed = SameBoatSeatOpenLogic.statusWhenClosed(
+        isAdmin: admin,
+        previous: current.sameBoatStatus,
+      );
+      written = SameBoatSeatOpenLogic.applyAdminStatus(current, closed);
+      status = ProductPublishStatus.draft;
+    }
+    await _repository.saveShopProduct(
+      shopId: shopId,
+      product: written,
+      clearAbsentFormFields: false,
+      preserveSeatFields: false,
+      recordProductChanges: false,
+    );
+    await _repository.setShopProductPublishStatus(
+      shopId: shopId,
+      productId: productId,
+      status: status,
+    );
+    final live = ProductPublishGuard.applyStatusChange(
+      product: written,
+      status: status,
+    );
+    _upsertLocalShopProduct(shopId, live);
+    final refreshed = await refreshShopStat(shopId);
+    if (!refreshed) {
+      _upsertLocalShopProduct(shopId, live);
+    }
+  }
+
+  /// Admin hide for a planned trip. Hidden stays off guest surfaces, and the
+  /// creator cannot clear it. Unhide publishes it again.
+  Future<void> setPlannedTripAdminHidden({
+    required String shopId,
+    required String productId,
+    required bool hidden,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    if (hidden) {
+      await setSameBoatStatus(
+        shopId: shopId,
+        productId: productId,
+        status: SameBoatStatus.hidden,
+      );
+      await _repository.setShopProductPublishStatus(
+        shopId: shopId,
+        productId: productId,
+        status: ProductPublishStatus.draft,
+      );
+    } else {
+      await setSameBoatStatus(
+        shopId: shopId,
+        productId: productId,
+        status: SameBoatStatus.approved,
+      );
+      await _repository.setShopProductPublishStatus(
+        shopId: shopId,
+        productId: productId,
+        status: ProductPublishStatus.approved,
+      );
+    }
+    final current = _findShopProduct(shopId, productId);
+    if (current != null) {
+      final live = ProductPublishGuard.applyStatusChange(
+        product: current,
+        status: hidden
+            ? ProductPublishStatus.draft
+            : ProductPublishStatus.approved,
+      );
+      _upsertLocalShopProduct(shopId, live);
+    }
+    final refreshed = await refreshShopStat(shopId);
+    if (!refreshed && current != null) {
+      _upsertLocalShopProduct(
+        shopId,
+        ProductPublishGuard.applyStatusChange(
+          product: current,
+          status: hidden
+              ? ProductPublishStatus.draft
+              : ProductPublishStatus.approved,
+        ),
+      );
+    }
+  }
+
+  bool _isPlannedTripCaptain(String shopId) {
+    final uid = (_uid ?? '').trim();
+    if (uid.isEmpty) {
+      return false;
+    }
+    return liveStatsFor(shopId)?.creatorUid == uid;
   }
 
   Future<void> deleteShopProduct({

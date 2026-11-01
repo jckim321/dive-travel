@@ -70,7 +70,9 @@ void main() {
     await open(tester);
     expect(find.byKey(const Key('planner-trip-screen')), findsOneWidget);
     expect(find.text('기획 여행 만들기'), findsOneWidget);
-    expect(find.textContaining('손님 화면에는 아직'), findsWidgets);
+    expect(find.byKey(const Key('planner-trip-open')), findsOneWidget);
+    expect(find.text('열림'), findsOneWidget);
+    expect(find.textContaining('손님 목록·홈·같은배'), findsWidgets);
     expect(find.textContaining('바로 올라갑니다'), findsNothing);
     expect(find.byIcon(Icons.format_bold), findsNothing);
 
