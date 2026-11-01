@@ -19,6 +19,9 @@ class ShopProductBox extends StatelessWidget {
     this.betweenOptionsAndIncludes,
     this.showDate = false,
     this.dateController,
+    this.endDateController,
+    this.dateSectionTitle,
+    this.endDateLabel = '종료일',
     this.keyPrefix = '',
   });
 
@@ -36,6 +39,13 @@ class ShopProductBox extends StatelessWidget {
   final bool showDate;
   final TextEditingController? dateController;
 
+  /// Second date. Omitted on the partner form, which keeps one departure field.
+  final TextEditingController? endDateController;
+
+  /// Replaces the departure heading when the box shows a start and an end.
+  final String? dateSectionTitle;
+  final String endDateLabel;
+
   /// Empty keeps the original keys. A prefix makes each box unique.
   final String keyPrefix;
 
@@ -52,16 +62,47 @@ class ShopProductBox extends StatelessWidget {
         if (showDate)
           _sectionBox(
             boxKey: _key('shop-product-box-date-section'),
-            title: l10n.workbenchDepartureDate,
+            title: dateSectionTitle ?? l10n.workbenchDepartureDate,
             children: [
-              TextField(
-                key: _key('shop-product-box-date'),
-                controller: dateController,
-                keyboardType: TextInputType.datetime,
-                style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-                cursorColor: PartnerTheme.accent,
-                decoration: _dateField(l10n.workbenchDepartureDate),
-              ),
+              if (endDateController == null)
+                _dateFieldBox(
+                  fieldKey: _key('shop-product-box-date'),
+                  controller: dateController,
+                  label: l10n.workbenchDepartureDate,
+                )
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final start = _dateFieldBox(
+                      fieldKey: _key('shop-product-box-date'),
+                      controller: dateController,
+                      label: l10n.workbenchDepartureDate,
+                    );
+                    final end = _dateFieldBox(
+                      fieldKey: _key('shop-product-box-end-date'),
+                      controller: endDateController,
+                      label: endDateLabel,
+                    );
+                    if (constraints.maxWidth < 520) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          start,
+                          const SizedBox(height: 10),
+                          end,
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: start),
+                        const SizedBox(width: 10),
+                        Expanded(child: end),
+                      ],
+                    );
+                  },
+                ),
             ],
           ),
         _sectionBox(
@@ -118,6 +159,21 @@ Widget _sectionBox({
         ),
       ),
     ),
+  );
+}
+
+Widget _dateFieldBox({
+  required Key fieldKey,
+  required TextEditingController? controller,
+  required String label,
+}) {
+  return TextField(
+    key: fieldKey,
+    controller: controller,
+    keyboardType: TextInputType.datetime,
+    style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+    cursorColor: PartnerTheme.accent,
+    decoration: _dateField(label),
   );
 }
 

@@ -46,9 +46,41 @@ void main() {
   testWidgets('date field shows when showDate is on', (tester) async {
     await pumpBox(tester, showDate: true);
     expect(find.byKey(const Key('shop-product-box-date')), findsOneWidget);
+    expect(find.byKey(const Key('shop-product-box-end-date')), findsNothing);
     expect(find.text('출발일'), findsWidgets);
     final date = tester.getTopLeft(find.byKey(const Key('shop-product-box-date'))).dy;
     final price = tester.getTopLeft(find.byKey(const Key('partner-form-section-price'))).dy;
     expect(date, lessThan(price));
+  });
+
+  testWidgets('a return date appears only when the box is given one', (tester) async {
+    final end = TextEditingController();
+    addTearDown(end.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: AppConstants.defaultLocale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: ShopProductBox(
+            showDate: true,
+            endDateController: end,
+            dateSectionTitle: '날짜',
+            priceTitle: '가격·사진',
+            optionsTitle: '옵션',
+            includesTitle: '포함·불포함',
+            priceAndPhotos: const Text('가격'),
+            options: const Text('옵션줄'),
+            includes: const Text('포함'),
+          ),
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('shop-product-box-date')), findsOneWidget);
+    expect(find.byKey(const Key('shop-product-box-end-date')), findsOneWidget);
+    expect(find.text('날짜'), findsOneWidget);
+    final start = tester.getTopLeft(find.byKey(const Key('shop-product-box-date'))).dy;
+    final price = tester.getTopLeft(find.byKey(const Key('partner-form-section-price'))).dy;
+    expect(start, lessThan(price));
   });
 }
