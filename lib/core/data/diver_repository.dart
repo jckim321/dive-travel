@@ -654,6 +654,14 @@ abstract class DiverRepository {
     bool adminSave = false,
   });
 
+  /// Uploads one story photo with the same R2 path the shop gallery uses.
+  Future<String> uploadStoryPhoto({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+  });
+
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,

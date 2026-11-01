@@ -4072,6 +4072,20 @@ class MemoryDiverRepository implements DiverRepository {
     return _productRawByShop[shopId]?[productId];
   }
 
+  var _storyPhotoSeq = 0;
+
+  @override
+  Future<String> uploadStoryPhoto({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+  }) async {
+    final n = _storyPhotoSeq;
+    _storyPhotoSeq += 1;
+    return 'memory://story-photo-$shopId-$n';
+  }
+
   @override
   Future<void> saveShopProduct({
     required String shopId,

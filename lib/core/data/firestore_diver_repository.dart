@@ -4907,6 +4907,30 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<String> uploadStoryPhoto({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+  }) async {
+    final urls = await uploadGallerySlots(
+      gallery: [
+        ShopGallerySlot(
+          bytes: bytes,
+          fileName: fileName,
+          contentType: contentType,
+        ),
+      ],
+      keyPrefix: 'shops/$shopId/story',
+      upload: _photos.upload,
+    );
+    if (urls.isEmpty) {
+      throw StateError('사진을 올리지 못했습니다.');
+    }
+    return urls.single;
+  }
+
+  @override
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,

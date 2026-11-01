@@ -2735,6 +2735,20 @@ class DiverStore extends ChangeNotifier {
   String get partnerOwnedShopId =>
       stats.ownedShopId ?? AppConstants.defaultPartnerShopId;
 
+  Future<String> uploadStoryPhoto({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+  }) {
+    return _repository.uploadStoryPhoto(
+      shopId: shopId,
+      bytes: bytes,
+      fileName: fileName,
+      contentType: contentType,
+    );
+  }
+
   Future<ShopProductSaveResult> saveShopProduct({
     required String shopId,
     required ShopProduct product,

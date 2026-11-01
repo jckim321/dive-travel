@@ -242,6 +242,11 @@ void main() {
                     StoryBlock(kind: StoryBlockKind.quote, text: '숙소의 식사'),
                     StoryBlock(kind: StoryBlockKind.list, text: '보트\n식사'),
                     StoryBlock(kind: StoryBlockKind.divider),
+                    StoryBlock(
+                      kind: StoryBlockKind.photo,
+                      url: 'memory://story-photo-whale',
+                      text: '옆에서 본 고래',
+                    ),
                   ],
                 ),
                 quote: const TourPriceQuote(amount: 100000, isProfessional: false),
@@ -263,5 +268,7 @@ void main() {
     expect(find.textContaining('보트'), findsOneWidget);
     expect(find.byType(Divider), findsWidgets);
     expect(find.byType(MarkdownBody), findsNothing);
+    expect(find.text('옆에서 본 고래'), findsOneWidget);
+    expect(find.byKey(const Key('story-photo-4')), findsOneWidget);
   });
 }

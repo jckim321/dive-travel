@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/story_block.dart';
+import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 
 /// Block editor for a planned-trip story.
 /// Wide screens show the full toolbar. Narrow screens show bold, heading,
 /// and list, and keep the rest behind 더보기.
 class StoryBlockEditor extends StatefulWidget {
-  const StoryBlockEditor({super.key, required this.initial, required this.onChanged});
+  const StoryBlockEditor({
+    super.key,
+    required this.initial,
+    required this.onChanged,
+    this.pickPhoto,
+    this.uploadPhoto,
+  });
 
   final List<StoryBlock> initial;
   final ValueChanged<List<StoryBlock>> onChanged;
+
+  /// Null uses the device photo picker.
+  final Future<PickedPhoto?> Function()? pickPhoto;
+
+  /// Uploads one photo the same way the shop gallery does, and returns its URL.
+  final Future<String> Function(PickedPhoto photo)? uploadPhoto;
 
   @override
   State<StoryBlockEditor> createState() => _StoryBlockEditorState();
@@ -20,13 +33,14 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   late List<StoryBlock> _blocks;
   late List<TextEditingController> _controllers;
   var _focus = 0;
+  var _busy = false;
 
   @override
   void initState() {
     super.initState();
     _blocks = [
       for (final block in widget.initial)
-        StoryBlock(kind: block.kind, text: block.text),
+        StoryBlock(kind: block.kind, text: block.text, url: block.url),
     ];
     if (_blocks.isEmpty) {
       _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
@@ -47,7 +61,11 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   void _emit() {
     widget.onChanged([
       for (var i = 0; i < _blocks.length; i++)
-        StoryBlock(kind: _blocks[i].kind, text: _controllers[i].text),
+        StoryBlock(
+          kind: _blocks[i].kind,
+          text: _controllers[i].text,
+          url: _blocks[i].url,
+        ),
     ]);
   }
 
@@ -55,7 +73,15 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     final index = _focus.clamp(0, _blocks.length - 1);
     final text = _controllers[index].text;
     final current = _blocks[index].kind;
-    if (current == kind) {
+    if (current == kind || current == StoryBlockKind.photo) {
+      if (current == StoryBlockKind.photo && current != kind) {
+        setState(() {
+          _blocks.insert(index + 1, StoryBlock(kind: kind));
+          _controllers.insert(index + 1, TextEditingController());
+          _focus = index + 1;
+        });
+        _emit();
+      }
       return;
     }
     setState(() {
@@ -72,7 +98,11 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   }
 
   void _toggleMark(String marker) {
-    final controller = _controllers[_focus.clamp(0, _controllers.length - 1)];
+    final index = _focus.clamp(0, _controllers.length - 1);
+    if (_blocks[index].kind == StoryBlockKind.photo) {
+      return;
+    }
+    final controller = _controllers[index];
     final text = controller.text;
     var start = controller.selection.start;
     var end = controller.selection.end;
@@ -189,7 +219,9 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             '구분선',
             () => _applyKind(StoryBlockKind.divider),
           ),
-          _icon(const Key('planner-story-photo'), Icons.image_outlined, '사진', _soon),
+          _icon(const Key('planner-story-photo'), Icons.image_outlined, '사진', () {
+            _addPhoto();
+          }),
           _icon(const Key('planner-story-video'), Icons.videocam_outlined, '동영상', _soon),
           _icon(const Key('planner-story-map'), Icons.map_outlined, '지도', _soon),
         ],
@@ -230,10 +262,104 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       case 'paragraph':
         _applyKind(StoryBlockKind.paragraph);
       case 'photo':
+        _addPhoto();
       case 'video':
       case 'map':
         _soon();
     }
+  }
+
+  void _snack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _addPhoto() async {
+    if (_busy) {
+      return;
+    }
+    if (StoryBlock.photoCount(_blocks) >= StoryBlock.maxPhotos) {
+      _snack('사진은 30장까지 올릴 수 있습니다.');
+      return;
+    }
+    final pick = widget.pickPhoto ?? const DivePhotoPicker().pick;
+    final picked = await pick();
+    if (!mounted || picked == null) {
+      return;
+    }
+    if (StoryBlock.photoCount(_blocks) >= StoryBlock.maxPhotos) {
+      _snack('사진은 30장까지 올릴 수 있습니다.');
+      return;
+    }
+    final upload = widget.uploadPhoto;
+    if (upload == null) {
+      _snack('사진을 올리지 못했습니다.');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final url = (await upload(picked)).trim();
+      if (!mounted) {
+        return;
+      }
+      if (url.isEmpty) {
+        _snack('사진을 올리지 못했습니다.');
+        return;
+      }
+      _insertPhoto(url);
+    } catch (error) {
+      if (mounted) {
+        _snack('$error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  void _insertPhoto(String url) {
+    final index = _blocks.isEmpty ? -1 : _focus.clamp(0, _blocks.length - 1);
+    final at = index + 1;
+    setState(() {
+      _blocks.insert(at, StoryBlock(kind: StoryBlockKind.photo, url: url));
+      _controllers.insert(at, TextEditingController());
+      _focus = at;
+    });
+    _emit();
+  }
+
+  void _movePhoto(int index, int delta) {
+    final next = index + delta;
+    if (_blocks[index].kind != StoryBlockKind.photo) {
+      return;
+    }
+    if (next < 0 || next >= _blocks.length) {
+      return;
+    }
+    setState(() {
+      final block = _blocks.removeAt(index);
+      final controller = _controllers.removeAt(index);
+      _blocks.insert(next, block);
+      _controllers.insert(next, controller);
+      _focus = next;
+    });
+    _emit();
+  }
+
+  void _removePhoto(int index) {
+    if (_blocks[index].kind != StoryBlockKind.photo) {
+      return;
+    }
+    setState(() {
+      _controllers.removeAt(index).dispose();
+      _blocks.removeAt(index);
+      if (_blocks.isEmpty) {
+        _blocks.add(const StoryBlock(kind: StoryBlockKind.paragraph));
+        _controllers.add(TextEditingController());
+      }
+      _focus = index.clamp(0, _blocks.length - 1);
+    });
+    _emit();
   }
 
   Widget _icon(Key key, IconData icon, String tooltip, VoidCallback onPressed) {
@@ -251,6 +377,9 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     if (block.kind == StoryBlockKind.divider) {
       return const Divider(color: PartnerTheme.border, height: 24);
     }
+    if (block.kind == StoryBlockKind.photo) {
+      return _photoBlock(index);
+    }
     final style = TextStyle(
       color: PartnerTheme.text,
       height: 1.45,
@@ -258,8 +387,15 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       fontWeight: block.kind == StoryBlockKind.heading ? FontWeight.w800 : FontWeight.w500,
       fontStyle: block.kind == StoryBlockKind.quote ? FontStyle.italic : FontStyle.normal,
     );
+    final firstText = _blocks.indexWhere(
+      (block) =>
+          block.kind != StoryBlockKind.divider &&
+          block.kind != StoryBlockKind.photo,
+    );
     return TextField(
-      key: Key(index == 0 ? 'planner-trip-story' : 'planner-story-block-$index'),
+      key: Key(
+        index == firstText ? 'planner-trip-story' : 'planner-story-block-$index',
+      ),
       controller: _controllers[index],
       minLines: block.kind == StoryBlockKind.heading ? 1 : 2,
       maxLines: 8,
@@ -268,7 +404,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       onTap: () => _focus = index,
       onChanged: (_) => _emit(),
       decoration: InputDecoration(
-        hintText: index == 0 ? '여행 이야기를 적어 주세요' : null,
+        hintText: index == firstText ? '여행 이야기를 적어 주세요' : null,
         filled: true,
         fillColor: PartnerTheme.bg,
         hintStyle: const TextStyle(color: PartnerTheme.textDim),
@@ -295,6 +431,87 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           borderSide: const BorderSide(color: PartnerTheme.accent),
         ),
       ),
+    );
+  }
+
+  Widget _photoBlock(int index) {
+    final url = _blocks[index].url;
+    return Column(
+      key: Key('planner-story-photo-block-$index'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (url.startsWith('memory://') || url.isEmpty)
+          const SizedBox(
+            height: 160,
+            width: double.infinity,
+            child: ColoredBox(color: Color(0xFF12324A)),
+          )
+        else
+          Image.network(
+            url,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: ColoredBox(color: Color(0xFF12324A)),
+            ),
+          ),
+        const SizedBox(height: 6),
+        TextField(
+          key: Key('planner-story-photo-caption-$index'),
+          controller: _controllers[index],
+          maxLines: 1,
+          style: const TextStyle(color: PartnerTheme.text, fontSize: 14),
+          cursorColor: PartnerTheme.accent,
+          onTap: () => _focus = index,
+          onChanged: (_) => _emit(),
+          decoration: InputDecoration(
+            hintText: '한 줄 설명',
+            filled: true,
+            fillColor: PartnerTheme.bg,
+            hintStyle: const TextStyle(color: PartnerTheme.textDim),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: PartnerTheme.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: PartnerTheme.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: PartnerTheme.accent),
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              key: Key('planner-story-photo-up-$index'),
+              tooltip: '위로',
+              onPressed: index == 0 ? null : () => _movePhoto(index, -1),
+              icon: const Icon(Icons.arrow_upward, color: PartnerTheme.text, size: 18),
+            ),
+            IconButton(
+              key: Key('planner-story-photo-down-$index'),
+              tooltip: '아래로',
+              onPressed: index == _blocks.length - 1
+                  ? null
+                  : () => _movePhoto(index, 1),
+              icon: const Icon(Icons.arrow_downward, color: PartnerTheme.text, size: 18),
+            ),
+            IconButton(
+              key: Key('planner-story-photo-delete-$index'),
+              tooltip: '지우기',
+              onPressed: () => _removePhoto(index),
+              icon: const Icon(Icons.delete_outline, color: PartnerTheme.text, size: 18),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
+import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 void main() {
@@ -31,6 +32,19 @@ void main() {
     );
     expect(blocks.single.kind, StoryBlockKind.paragraph);
     expect(blocks.single.text, '아침 고래');
+    final photo = StoryBlock.fromMap({
+      'kind': 'photo',
+      'url': 'https://cdn.example/whale.jpg',
+      'caption': '옆에서 본 고래',
+    });
+    expect(photo.kind, StoryBlockKind.photo);
+    expect(photo.url, 'https://cdn.example/whale.jpg');
+    expect(photo.toMap(), {
+      'kind': 'photo',
+      'url': 'https://cdn.example/whale.jpg',
+      'caption': '옆에서 본 고래',
+    });
+    expect(StoryBlock.photoCount([photo, photo]), 2);
     expect(
       StoryBlock.seed(
         stored: const [
@@ -55,6 +69,7 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(1100, 6400),
     Future<PickedPhoto?> Function()? pickCover,
+    Future<PickedPhoto?> Function()? pickStoryPhoto,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -71,7 +86,10 @@ void main() {
           locale: AppConstants.defaultLocale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: PlannerTripScreen(pickCover: pickCover),
+          home: PlannerTripScreen(
+            pickCover: pickCover,
+            pickStoryPhoto: pickStoryPhoto,
+          ),
         ),
       ),
     );
@@ -348,9 +366,9 @@ void main() {
     expect(doc.options.single.id, 'adult');
   });
 
-  testWidgets('인용은 블록으로 저장되고 사진 버튼은 준비 중이다', (tester) async {
+  testWidgets('인용은 블록으로 저장되고 동영상 버튼은 준비 중이다', (tester) async {
     final opened = await open(tester);
-    await tester.tap(find.byKey(const Key('planner-story-photo')));
+    await tester.tap(find.byKey(const Key('planner-story-video')));
     await tester.pump();
     expect(find.text('준비 중'), findsOneWidget);
     await dismissSnack(tester);
@@ -374,16 +392,124 @@ void main() {
     expect(doc.schedule, '숙소의 식사');
   });
 
-  testWidgets('폰의 더보기 안에 있는 사진은 준비 중이다', (tester) async {
+  testWidgets('폰의 더보기 안에 있는 동영상은 준비 중이다', (tester) async {
     await open(tester, size: const Size(400, 6400));
     await tester.tap(find.byKey(const Key('planner-story-more')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('기울임'), findsOneWidget);
-    expect(find.text('동영상'), findsOneWidget);
-    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '사진'));
+    expect(find.text('사진'), findsOneWidget);
+    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '동영상'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('준비 중'), findsOneWidget);
+  });
+
+  PickedPhoto _storyPhoto() {
+    return PickedPhoto(
+      bytes: Uint8List.fromList(const [1, 2, 3]),
+      fileName: 'whale.jpg',
+      contentType: 'image/jpeg',
+    );
+  }
+
+  testWidgets('사진은 현재 줄 아래에 올라가고 설명과 함께 저장된다', (tester) async {
+    final opened = await open(
+      tester,
+      pickStoryPhoto: () async => _storyPhoto(),
+    );
+    await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
+    await tester.tap(find.byKey(const Key('planner-story-photo')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('planner-story-photo-block-1')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('planner-story-photo-caption-1')),
+      '옆에서 본 고래',
+    );
+    await tester.tap(find.byKey(const Key('planner-story-photo-up-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-photo-block-0')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('planner-story-photo-down-0')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-photo-block-1')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
+    await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    await tester.tap(find.byKey(const Key('planner-trip-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final doc = (await opened.repo.fetchShopStats())
+        .where((shop) => shop.shopId.startsWith('curated-'))
+        .single
+        .documentProducts!
+        .single;
+    final photo = doc.storyBlocks.singleWhere((block) => block.kind == StoryBlockKind.photo);
+    expect(photo.url, startsWith('memory://story-photo-'));
+    expect(photo.caption, '옆에서 본 고래');
+    expect(photo.toMap()['kind'], 'photo');
+    expect(photo.toMap()['caption'], '옆에서 본 고래');
+    expect(doc.storyBlocks.first.kind, StoryBlockKind.paragraph);
+    expect(doc.schedule, '저녁에도 고래\n옆에서 본 고래');
+  });
+
+  testWidgets('사진 블록은 지울 수 있다', (tester) async {
+    await open(tester, pickStoryPhoto: () async => _storyPhoto());
+    await tester.tap(find.byKey(const Key('planner-story-photo')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('planner-story-photo-block-1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('planner-story-photo-delete-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-photo-block-1')), findsNothing);
+  });
+
+  testWidgets('폰의 더보기 사진도 현재 줄 아래에 붙는다', (tester) async {
+    await open(
+      tester,
+      size: const Size(400, 6400),
+      pickStoryPhoto: () async => _storyPhoto(),
+    );
+    await tester.tap(find.byKey(const Key('planner-story-more')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '사진'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('planner-story-photo-block-1')), findsOneWidget);
+    expect(find.text('준비 중'), findsNothing);
+  });
+
+  testWidgets('사진은 30장까지만 올린다', (tester) async {
+    tester.view.physicalSize = const Size(900, 20000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var picked = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StoryBlockEditor(
+            initial: [
+              for (var i = 0; i < StoryBlock.maxPhotos; i++)
+                StoryBlock(kind: StoryBlockKind.photo, url: 'memory://p$i'),
+            ],
+            onChanged: (_) {},
+            pickPhoto: () async {
+              picked = true;
+              return _storyPhoto();
+            },
+            uploadPhoto: (_) async => 'memory://extra',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-photo')));
+    await tester.pump();
+    expect(find.text('사진은 30장까지 올릴 수 있습니다.'), findsOneWidget);
+    expect(picked, isFalse);
+    expect(find.byKey(const Key('planner-story-photo-block-30')), findsNothing);
   });
 }

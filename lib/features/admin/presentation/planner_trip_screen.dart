@@ -68,10 +68,18 @@ String _nextShopId(ShopProduct? existing) {
 /// `curated-` shop and its product document. An existing `curated-` trip
 /// keeps that shop and its open or hidden state.
 class PlannerTripScreen extends StatefulWidget {
-  const PlannerTripScreen({super.key, this.pickCover, this.existing});
+  const PlannerTripScreen({
+    super.key,
+    this.pickCover,
+    this.pickStoryPhoto,
+    this.existing,
+  });
 
   /// Test hook. Null uses the device photo picker.
   final Future<PickedPhoto?> Function()? pickCover;
+
+  /// Test hook for a story photo. Null uses the device photo picker.
+  final Future<PickedPhoto?> Function()? pickStoryPhoto;
 
   /// Opens that trip for editing when it already has a shop and product.
   final ShopProduct? existing;
@@ -207,12 +215,30 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   List<StoryBlock> _savedBlocks() {
     return [
       for (final block in _blocks)
-        if (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty)
+        if (block.kind == StoryBlockKind.photo && block.url.trim().isNotEmpty)
+          StoryBlock(
+            kind: StoryBlockKind.photo,
+            url: block.url.trim(),
+            text: block.text.trim(),
+          )
+        else if (block.kind != StoryBlockKind.photo &&
+            (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty))
           StoryBlock(
             kind: block.kind,
             text: block.kind == StoryBlockKind.divider ? '' : block.text.trim(),
           ),
     ];
+  }
+
+  Future<String> _uploadStoryPhoto(PickedPhoto photo) {
+    final store = DiverStoreScope.of(context);
+    final shopId = _shopId ??= _nextShopId(widget.existing);
+    return store.uploadStoryPhoto(
+      shopId: shopId,
+      bytes: photo.bytes,
+      fileName: photo.fileName,
+      contentType: photo.contentType,
+    );
   }
 
   Future<void> _save({required bool temp}) async {
@@ -457,6 +483,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           StoryBlockEditor(
                             initial: _blocks,
                             onChanged: (blocks) => _blocks = blocks,
+                            pickPhoto: widget.pickStoryPhoto,
+                            uploadPhoto: _uploadStoryPhoto,
                           ),
                         ],
                       ),

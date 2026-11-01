@@ -6,7 +6,8 @@ enum StoryBlockKind {
   paragraph,
   quote,
   list,
-  divider;
+  divider,
+  photo;
 
   static StoryBlockKind parse(Object? raw) {
     final name = raw?.toString() ?? '';
@@ -20,20 +21,41 @@ enum StoryBlockKind {
 }
 
 class StoryBlock {
-  const StoryBlock({required this.kind, this.text = ''});
+  const StoryBlock({required this.kind, this.text = '', this.url = ''});
+
+  /// One story holds at most this many photo blocks.
+  static const maxPhotos = 30;
 
   final StoryBlockKind kind;
   final String text;
 
-  Map<String, dynamic> toMap() => {
+  /// Public photo URL. Only [StoryBlockKind.photo] uses it.
+  final String url;
+
+  /// Caption for a photo. Other blocks keep their words in [text].
+  String get caption => text;
+
+  Map<String, dynamic> toMap() {
+    if (kind == StoryBlockKind.photo) {
+      return {
         'kind': kind.name,
-        'text': text,
+        'url': url,
+        'caption': text,
       };
+    }
+    return {
+      'kind': kind.name,
+      'text': text,
+    };
+  }
 
   static StoryBlock fromMap(Map<String, dynamic> data) {
+    final kind = StoryBlockKind.parse(data['kind']);
+    final caption = data['caption'] as String?;
     return StoryBlock(
-      kind: StoryBlockKind.parse(data['kind']),
-      text: data['text'] as String? ?? '',
+      kind: kind,
+      text: caption ?? (data['text'] as String? ?? ''),
+      url: data['url'] as String? ?? '',
     );
   }
 
@@ -69,9 +91,24 @@ class StoryBlock {
   static String plainText(List<StoryBlock> blocks) {
     return [
       for (final block in blocks)
-        if (block.kind != StoryBlockKind.divider && block.text.trim().isNotEmpty)
+        if (block.kind != StoryBlockKind.divider &&
+            block.kind != StoryBlockKind.photo &&
+            block.text.trim().isNotEmpty)
+          block.text.trim()
+        else if (block.kind == StoryBlockKind.photo &&
+            block.text.trim().isNotEmpty)
           block.text.trim(),
     ].join('\n');
+  }
+
+  static int photoCount(List<StoryBlock> blocks) {
+    var count = 0;
+    for (final block in blocks) {
+      if (block.kind == StoryBlockKind.photo && block.url.trim().isNotEmpty) {
+        count += 1;
+      }
+    }
+    return count;
   }
 }
 
@@ -143,13 +180,13 @@ class StoryBlockView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final block in blocks) ...[
+        for (var i = 0; i < blocks.length; i++) ...[
           const SizedBox(height: 8),
-          switch (block.kind) {
+          switch (blocks[i].kind) {
             StoryBlockKind.heading => Text.rich(
                 TextSpan(
                   children: storyInlineSpans(
-                    block.text,
+                    blocks[i].text,
                     (theme.textTheme.titleMedium ?? body).copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -169,16 +206,17 @@ class StoryBlockView extends StatelessWidget {
                 child: Text.rich(
                   TextSpan(
                     children: storyInlineSpans(
-                      block.text,
+                      blocks[i].text,
                       body.copyWith(fontStyle: FontStyle.italic),
                     ),
                   ),
                 ),
               ),
+            StoryBlockKind.photo => _StoryPhoto(block: blocks[i], index: i),
             StoryBlockKind.list => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final line in block.text.split('\n'))
+                  for (final line in blocks[i].text.split('\n'))
                     if (line.trim().isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 2),
@@ -195,11 +233,57 @@ class StoryBlockView extends StatelessWidget {
               ),
             StoryBlockKind.divider => const Divider(height: 16),
             StoryBlockKind.paragraph => Text.rich(
-                TextSpan(children: storyInlineSpans(block.text, body)),
+                TextSpan(children: storyInlineSpans(blocks[i].text, body)),
               ),
           },
         ],
       ],
+    );
+  }
+}
+
+class _StoryPhoto extends StatelessWidget {
+  const _StoryPhoto({required this.block, required this.index});
+
+  final StoryBlock block;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final caption = block.caption.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _frame(block.url),
+        if (caption.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(caption),
+        ],
+      ],
+    );
+  }
+
+  Widget _frame(String url) {
+    final key = Key('story-photo-$index');
+    if (url.isEmpty || url.startsWith('memory://')) {
+      return SizedBox(
+        key: key,
+        height: 180,
+        width: double.infinity,
+        child: const ColoredBox(color: Color(0xFF12324A)),
+      );
+    }
+    return Image.network(
+      url,
+      key: key,
+      height: 220,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => const SizedBox(
+        height: 180,
+        width: double.infinity,
+        child: ColoredBox(color: Color(0xFF12324A)),
+      ),
     );
   }
 }
