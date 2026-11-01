@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -191,5 +192,76 @@ void main() {
     expect(find.text('15,000원'), findsOneWidget);
     expect(find.text('30,000원'), findsOneWidget);
     expect(find.text('70,000원'), findsNothing);
+  });
+
+  testWidgets('상품 상세는 story_blocks를 제목과 인용으로 보여 준다', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repo = MemoryDiverRepository.forTest();
+    final store = DiverStore(repo);
+    final session = SessionController(repo);
+    addTearDown(store.dispose);
+    addTearDown(session.dispose);
+    await tester.pumpWidget(
+      DiverStoreScope(
+        store: store,
+        child: SessionScope(
+          session: session,
+          child: MaterialApp(
+            theme: AppTheme.light,
+            locale: AppConstants.defaultLocale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ProductOfferBox(
+                shop: const DiveShop(
+                  id: 'curated-1--trip-1',
+                  name: '블루홀',
+                  location: '팔라완',
+                  country: '필리핀',
+                  continent: 'asia',
+                  sites: [],
+                  productName: '블루홀',
+                  stars: 0,
+                  rating: 0,
+                  reviewCount: 0,
+                  amenities: [],
+                  consumerPrice: 100000,
+                  professionalPrice: 80000,
+                ),
+                product: const ShopProduct(
+                  id: 'trip-1',
+                  shopId: 'curated-1',
+                  name: '블루홀',
+                  consumerPrice: 100000,
+                  professionalPrice: 80000,
+                  storyBlocks: [
+                    StoryBlock(kind: StoryBlockKind.heading, text: '카메라 앞의 고래'),
+                    StoryBlock(kind: StoryBlockKind.quote, text: '숙소의 식사'),
+                    StoryBlock(kind: StoryBlockKind.list, text: '보트\n식사'),
+                    StoryBlock(kind: StoryBlockKind.divider),
+                  ],
+                ),
+                quote: const TourPriceQuote(amount: 100000, isProfessional: false),
+                recommended: false,
+                lightest: false,
+                openRooms: 0,
+                onBook: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('product-offer-details-trip-1')));
+    await tester.pump();
+    expect(find.text('카메라 앞의 고래'), findsOneWidget);
+    expect(find.text('숙소의 식사'), findsOneWidget);
+    expect(find.textContaining('보트'), findsOneWidget);
+    expect(find.byType(Divider), findsWidgets);
+    expect(find.byType(MarkdownBody), findsNothing);
   });
 }

@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
+import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -82,7 +84,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _title = TextEditingController();
   final _region = TextEditingController();
   final _blurb = TextEditingController();
-  final _story = TextEditingController();
   final _productName = TextEditingController();
   final _price = TextEditingController();
   final _start = TextEditingController();
@@ -91,6 +92,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _excludes = TextEditingController();
   final List<_PlannerOption> _options = [];
   final _photoPicker = const DivePhotoPicker();
+  List<StoryBlock> _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
 
   PickedPhoto? _cover;
   var _saving = false;
@@ -112,7 +114,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       }
       _title.text = existing.name;
       _blurb.text = existing.blurb;
-      _story.text = existing.schedule;
+      _blocks = StoryBlock.seed(
+        stored: existing.storyBlocks,
+        legacySchedule: existing.schedule,
+      );
       _productName.text = existing.name;
       if (existing.consumerPrice > 0) {
         _price.text = '${existing.consumerPrice}';
@@ -177,7 +182,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     _title.dispose();
     _region.dispose();
     _blurb.dispose();
-    _story.dispose();
     _productName.dispose();
     _price.dispose();
     _start.dispose();
@@ -198,6 +202,17 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     setState(() => _cover = picked);
+  }
+
+  List<StoryBlock> _savedBlocks() {
+    return [
+      for (final block in _blocks)
+        if (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty)
+          StoryBlock(
+            kind: block.kind,
+            text: block.kind == StoryBlockKind.divider ? '' : block.text.trim(),
+          ),
+    ];
   }
 
   Future<void> _save({required bool temp}) async {
@@ -282,7 +297,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           active: existing?.active ?? false,
           blurb: _blurb.text.trim(),
           durationLabel: duration,
-          schedule: _story.text.trim(),
+          schedule: StoryBlock.plainText(_savedBlocks()),
+          storyBlocks: _savedBlocks(),
           includes: _includes.text.trim(),
           excludes: _excludes.text.trim(),
           departureStart: departure,
@@ -438,17 +454,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                         step: '2',
                         title: '여행 이야기',
                         children: [
-                          TextField(
-                            key: const Key('planner-trip-story'),
-                            controller: _story,
-                            minLines: 6,
-                            maxLines: 12,
-                            style: const TextStyle(
-                              color: PartnerTheme.text,
-                              height: 1.45,
-                            ),
-                            cursorColor: PartnerTheme.accent,
-                            decoration: _field('여행 이야기를 적어 주세요'),
+                          StoryBlockEditor(
+                            initial: _blocks,
+                            onChanged: (blocks) => _blocks = blocks,
                           ),
                         ],
                       ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -367,6 +368,7 @@ class _OfferFactsState extends State<_OfferFacts> {
     return product.derivedDurationLabel.trim().isNotEmpty ||
         product.meetingPoint.trim().isNotEmpty ||
         product.schedule.trim().isNotEmpty ||
+        product.storyBlocks.isNotEmpty ||
         product.includes.trim().isNotEmpty ||
         product.excludes.trim().isNotEmpty ||
         product.cancellationNote.trim().isNotEmpty;
@@ -396,7 +398,24 @@ class _OfferFactsState extends State<_OfferFacts> {
         if (_open) ...[
           _fact(l10n.productOfferNights, product.derivedDurationLabel),
           _fact(l10n.productFormMeetingPoint, product.meetingPoint),
-          if (product.schedule.trim().isNotEmpty)
+          if (product.storyBlocks.isNotEmpty)
+            Padding(
+              key: Key('product-offer-story-${product.id}'),
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.creatorWizardStepSchedule,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  StoryBlockView(blocks: product.storyBlocks),
+                ],
+              ),
+            )
+          else if (product.schedule.trim().isNotEmpty)
             _markdown(
               l10n.creatorWizardStepSchedule,
               product.schedule.trim(),

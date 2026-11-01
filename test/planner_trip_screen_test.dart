@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
@@ -22,6 +23,26 @@ void main() {
           (widget.decoration! as InputDecoration).labelText == label,
     );
   }
+
+  test('예전 일정 글은 문단 블록 하나가 된다', () {
+    final blocks = StoryBlock.seed(
+      stored: const [],
+      legacySchedule: '아침 고래',
+    );
+    expect(blocks.single.kind, StoryBlockKind.paragraph);
+    expect(blocks.single.text, '아침 고래');
+    expect(
+      StoryBlock.seed(
+        stored: const [
+          StoryBlock(kind: StoryBlockKind.heading, text: '제목'),
+        ],
+        legacySchedule: '무시',
+      ).single.kind,
+      StoryBlockKind.heading,
+    );
+    final spans = storyInlineSpans('**굵게** *기울임* ++밑줄++', const TextStyle());
+    expect(spans, hasLength(5));
+  });
 
   test('기간은 시작일과 종료일로 박·일을 만든다', () {
     expect(plannerDurationLabel('', ''), isEmpty);
@@ -74,7 +95,9 @@ void main() {
     expect(find.text('열림'), findsOneWidget);
     expect(find.textContaining('손님 목록·홈·같은배'), findsWidgets);
     expect(find.textContaining('바로 올라갑니다'), findsNothing);
-    expect(find.byIcon(Icons.format_bold), findsNothing);
+    expect(find.byKey(const Key('planner-story-bold')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-italic')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-more')), findsNothing);
 
     final basics = tester.getTopLeft(find.byKey(const Key('planner-section-basics'))).dy;
     final story = tester.getTopLeft(find.byKey(const Key('planner-section-story'))).dy;
@@ -109,6 +132,12 @@ void main() {
     final start = tester.getTopLeft(find.byKey(const Key('shop-product-box-date')));
     final end = tester.getTopLeft(find.byKey(const Key('shop-product-box-end-date')));
     expect(end.dy, greaterThan(start.dy + 20));
+    expect(find.byKey(const Key('planner-story-bold')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-heading')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-list')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-more')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-italic')), findsNothing);
+    expect(find.byKey(const Key('planner-story-photo')), findsNothing);
   });
 
   testWidgets('저장은 보이지 않는 curated 샵과 상품 문서 하나만 만든다', (tester) async {
@@ -181,6 +210,9 @@ void main() {
     expect(doc.consumerPrice, 890000);
     expect(doc.blurb, '세 번 만났다');
     expect(doc.schedule, '아침 포인트에서 고래가 왔다');
+    expect(doc.storyBlocks.single.kind, StoryBlockKind.paragraph);
+    expect(doc.storyBlocks.single.text, '아침 포인트에서 고래가 왔다');
+    expect(doc.storyBlocks.single.toMap()['kind'], 'paragraph');
     expect(doc.durationLabel, '12박 13일');
     expect(doc.departureStart, DateTime(2026, 11, 18));
     expect(doc.includes, '숙박, 보트');
@@ -308,9 +340,50 @@ void main() {
     final doc = curated.single.documentProducts!.single;
     expect(doc.id, 'whale-1');
     expect(doc.schedule, '저녁에도 고래');
+    expect(doc.storyBlocks.single.kind, StoryBlockKind.paragraph);
+    expect(doc.storyBlocks.single.text, '저녁에도 고래');
     expect(doc.publishStatus, ProductPublishStatus.approved);
     expect(doc.active, isTrue);
     expect(doc.listingKind, ProductListingKind.curated);
     expect(doc.options.single.id, 'adult');
+  });
+
+  testWidgets('인용은 블록으로 저장되고 사진 버튼은 준비 중이다', (tester) async {
+    final opened = await open(tester);
+    await tester.tap(find.byKey(const Key('planner-story-photo')));
+    await tester.pump();
+    expect(find.text('준비 중'), findsOneWidget);
+    await dismissSnack(tester);
+
+    await tester.tap(find.byKey(const Key('planner-story-quote')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
+    await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    await tester.enterText(find.byKey(const Key('planner-trip-story')), '숙소의 식사');
+    await tester.tap(find.byKey(const Key('planner-trip-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final doc = (await opened.repo.fetchShopStats())
+        .where((shop) => shop.shopId.startsWith('curated-'))
+        .single
+        .documentProducts!
+        .single;
+    expect(doc.storyBlocks.single.kind, StoryBlockKind.quote);
+    expect(doc.storyBlocks.single.text, '숙소의 식사');
+    expect(doc.schedule, '숙소의 식사');
+  });
+
+  testWidgets('폰의 더보기 안에 있는 사진은 준비 중이다', (tester) async {
+    await open(tester, size: const Size(400, 6400));
+    await tester.tap(find.byKey(const Key('planner-story-more')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('기울임'), findsOneWidget);
+    expect(find.text('동영상'), findsOneWidget);
+    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '사진'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text('준비 중'), findsOneWidget);
   });
 }

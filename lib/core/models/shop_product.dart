@@ -2,6 +2,7 @@ import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 
 /// Explore-only vs home shelf placement for an approved product.
 enum ProductListingKind {
@@ -695,6 +696,7 @@ class ShopProduct {
     this.continent = '',
     this.meetingPoint = '',
     this.schedule = '',
+    this.storyBlocks = const [],
     this.includes = '',
     this.excludes = '',
     this.difficulty = '',
@@ -764,6 +766,7 @@ class ShopProduct {
       continent: data['continent'] as String? ?? '',
       meetingPoint: data['meeting_point'] as String? ?? '',
       schedule: data['schedule'] as String? ?? '',
+      storyBlocks: StoryBlock.listFrom(data['story_blocks']),
       includes: data['includes'] as String? ?? '',
       excludes: data['excludes'] as String? ?? '',
       difficulty: data['difficulty'] as String? ?? '',
@@ -823,6 +826,9 @@ class ShopProduct {
   final String continent;
   final String meetingPoint;
   final String schedule;
+
+  /// Planned-trip story. Empty means [schedule] is still the older plain text.
+  final List<StoryBlock> storyBlocks;
   final String includes;
   final String excludes;
   final String difficulty;
@@ -1545,6 +1551,7 @@ class ShopProduct {
     String? continent,
     String? meetingPoint,
     String? schedule,
+    List<StoryBlock>? storyBlocks,
     String? includes,
     String? excludes,
     String? difficulty,
@@ -1597,6 +1604,7 @@ class ShopProduct {
       continent: continent ?? this.continent,
       meetingPoint: meetingPoint ?? this.meetingPoint,
       schedule: schedule ?? this.schedule,
+      storyBlocks: storyBlocks ?? this.storyBlocks,
       includes: includes ?? this.includes,
       excludes: excludes ?? this.excludes,
       difficulty: difficulty ?? this.difficulty,
@@ -1743,6 +1751,8 @@ class ShopProduct {
       if (continent.isNotEmpty) 'continent': continent,
       if (meetingPoint.isNotEmpty) 'meeting_point': meetingPoint,
       if (schedule.isNotEmpty) 'schedule': schedule,
+      if (storyBlocks.isNotEmpty)
+        'story_blocks': [for (final block in storyBlocks) block.toMap()],
       if (includes.isNotEmpty) 'includes': includes,
       if (excludes.isNotEmpty) 'excludes': excludes,
       if (difficulty.isNotEmpty) 'difficulty': difficulty,
@@ -1818,6 +1828,7 @@ class ShopProduct {
     'continent',
     'meeting_point',
     'schedule',
+    'story_blocks',
     'includes',
     'excludes',
     'difficulty',
