@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
+import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
@@ -72,6 +73,7 @@ class PlannerTripScreen extends StatefulWidget {
     super.key,
     this.pickCover,
     this.pickStoryPhoto,
+    this.pickStoryVideo,
     this.existing,
   });
 
@@ -80,6 +82,9 @@ class PlannerTripScreen extends StatefulWidget {
 
   /// Test hook for a story photo. Null uses the device photo picker.
   final Future<PickedPhoto?> Function()? pickStoryPhoto;
+
+  /// Test hook for a story video. Null uses the device video picker.
+  final Future<PickedVideo?> Function()? pickStoryVideo;
 
   /// Opens that trip for editing when it already has a shop and product.
   final ShopProduct? existing;
@@ -215,13 +220,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   List<StoryBlock> _savedBlocks() {
     return [
       for (final block in _blocks)
-        if (block.kind == StoryBlockKind.photo && block.url.trim().isNotEmpty)
+        if (StoryBlock.isMedia(block.kind) && block.url.trim().isNotEmpty)
           StoryBlock(
-            kind: StoryBlockKind.photo,
+            kind: block.kind,
             url: block.url.trim(),
             text: block.text.trim(),
           )
-        else if (block.kind != StoryBlockKind.photo &&
+        else if (!StoryBlock.isMedia(block.kind) &&
             (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty))
           StoryBlock(
             kind: block.kind,
@@ -238,6 +243,25 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       bytes: photo.bytes,
       fileName: photo.fileName,
       contentType: photo.contentType,
+    );
+  }
+
+  Future<String> _uploadStoryVideo(
+    PickedVideo video,
+    void Function(double progress) onProgress,
+  ) {
+    final store = DiverStoreScope.of(context);
+    final shopId = _shopId ??= _nextShopId(widget.existing);
+    return store.uploadStoryVideo(
+      shopId: shopId,
+      bytes: video.bytes,
+      fileName: video.fileName,
+      onProgress: (sent, total) {
+        if (total <= 0) {
+          return;
+        }
+        onProgress(sent / total);
+      },
     );
   }
 
@@ -485,6 +509,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                             onChanged: (blocks) => _blocks = blocks,
                             pickPhoto: widget.pickStoryPhoto,
                             uploadPhoto: _uploadStoryPhoto,
+                            pickVideo: widget.pickStoryVideo,
+                            uploadVideo: _uploadStoryVideo,
                           ),
                         ],
                       ),

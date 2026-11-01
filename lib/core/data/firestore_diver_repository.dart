@@ -4931,6 +4931,23 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<String> uploadStoryVideo({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    void Function(int sent, int total)? onProgress,
+  }) {
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    return _photos.upload(
+      objectKey: 'shops/$shopId/story/$stamp.mp4',
+      bytes: bytes,
+      contentType: 'video/mp4',
+      requirePublicUrl: true,
+      onProgress: onProgress,
+    );
+  }
+
+  @override
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,

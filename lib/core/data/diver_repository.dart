@@ -662,6 +662,14 @@ abstract class DiverRepository {
     required String contentType,
   });
 
+  /// Uploads one story mp4 with the same R2 client the gallery uses.
+  Future<String> uploadStoryVideo({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    void Function(int sent, int total)? onProgress,
+  });
+
   Future<void> saveShopProduct({
     required String shopId,
     required ShopProduct product,

@@ -4,6 +4,7 @@ import 'package:aws_common/aws_common.dart';
 import 'package:aws_signature_v4/aws_signature_v4.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
+import 'package:dive_travel_app/core/storage/r2_browser_put.dart';
 
 class R2UploadException implements Exception {
   const R2UploadException(this.message);
@@ -34,6 +35,7 @@ class R2PhotoStorage {
     required Uint8List bytes,
     required String contentType,
     bool requirePublicUrl = false,
+    void Function(int sent, int total)? onProgress,
   }) async {
     if (!R2Config.isReady) {
       final missing = <String>[
@@ -72,7 +74,37 @@ class R2PhotoStorage {
         credentialScope: _scope,
         serviceConfiguration: S3ServiceConfiguration(),
       );
-      final response = await signed.send().response;
+      final total = bytes.length;
+      // The browser path reports network progress. Photos omit [onProgress]
+      // and keep the signed client.
+      if (onProgress != null) {
+        final status = await putSignedBytes(
+          uri: signed.uri,
+          headers: Map<String, String>.from(signed.headers),
+          bytes: bytes,
+          onProgress: onProgress,
+        );
+        if (status != null) {
+          if (status != 200 && status != 204) {
+            throw R2UploadException(
+              'R2 업로드 실패 ($status). '
+              '웹에서는 버킷 CORS에 GitHub Pages 출처(PUT)가 허용돼 있어야 합니다.',
+            );
+          }
+          onProgress(total, total == 0 ? 1 : total);
+          if (R2Config.hasPublicBase) {
+            return R2Config.publicUrlFor(objectKey);
+          }
+          return await _presignedGetUrl(host: host, path: path);
+        }
+      }
+      final operation = signed.send();
+      if (onProgress != null && total > 0) {
+        operation.requestProgress.listen((sent) {
+          onProgress(sent, total);
+        });
+      }
+      final response = await operation.response;
       if (response.statusCode != 200 && response.statusCode != 204) {
         final decoded = response.decodeBody();
         final body = decoded is String ? decoded : await decoded;
@@ -80,6 +112,9 @@ class R2PhotoStorage {
           'R2 업로드 실패 (${response.statusCode}): $body. '
           '웹에서는 버킷 CORS에 GitHub Pages 출처(PUT)가 허용돼 있어야 합니다.',
         );
+      }
+      if (onProgress != null) {
+        onProgress(total, total == 0 ? 1 : total);
       }
       // Persist the stable public/object path in Firestore. Display may swap
       // to a signed GET when the r2.dev public bucket returns 401.

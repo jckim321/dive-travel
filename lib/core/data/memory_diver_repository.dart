@@ -4086,6 +4086,23 @@ class MemoryDiverRepository implements DiverRepository {
     return 'memory://story-photo-$shopId-$n';
   }
 
+  var _storyVideoSeq = 0;
+
+  @override
+  Future<String> uploadStoryVideo({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final total = bytes.isEmpty ? 1 : bytes.length;
+    onProgress?.call(0, total);
+    onProgress?.call(total, total);
+    final n = _storyVideoSeq;
+    _storyVideoSeq += 1;
+    return 'memory://story-video-$shopId-$n';
+  }
+
   @override
   Future<void> saveShopProduct({
     required String shopId,

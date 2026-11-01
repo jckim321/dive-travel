@@ -195,7 +195,7 @@ void main() {
   });
 
   testWidgets('상품 상세는 story_blocks를 제목과 인용으로 보여 준다', (tester) async {
-    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -247,6 +247,11 @@ void main() {
                       url: 'memory://story-photo-whale',
                       text: '옆에서 본 고래',
                     ),
+                    StoryBlock(
+                      kind: StoryBlockKind.video,
+                      url: 'memory://story-video-whale',
+                      text: '배 위에서 본 고래',
+                    ),
                   ],
                 ),
                 quote: const TourPriceQuote(amount: 100000, isProfessional: false),
@@ -270,5 +275,8 @@ void main() {
     expect(find.byType(MarkdownBody), findsNothing);
     expect(find.text('옆에서 본 고래'), findsOneWidget);
     expect(find.byKey(const Key('story-photo-4')), findsOneWidget);
+    expect(find.text('배 위에서 본 고래'), findsOneWidget);
+    expect(find.byKey(const Key('story-video-5')), findsOneWidget);
+    expect(find.byKey(const Key('story-video-play-5')), findsOneWidget);
   });
 }

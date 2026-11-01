@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 /// One piece of a planned-trip story. Kind plus the written text.
 enum StoryBlockKind {
@@ -7,7 +8,8 @@ enum StoryBlockKind {
   quote,
   list,
   divider,
-  photo;
+  photo,
+  video;
 
   static StoryBlockKind parse(Object? raw) {
     final name = raw?.toString() ?? '';
@@ -26,17 +28,37 @@ class StoryBlock {
   /// One story holds at most this many photo blocks.
   static const maxPhotos = 30;
 
+  /// One story holds at most this many video blocks.
+  static const maxVideos = 3;
+
+  /// One video file must be this size or smaller.
+  static const maxVideoBytes = 100 * 1024 * 1024;
+
   final StoryBlockKind kind;
   final String text;
 
-  /// Public photo URL. Only [StoryBlockKind.photo] uses it.
+  /// Public photo or video URL.
   final String url;
 
-  /// Caption for a photo. Other blocks keep their words in [text].
+  /// Caption for a photo or video. Other blocks keep their words in [text].
   String get caption => text;
 
+  static bool isMedia(StoryBlockKind kind) =>
+      kind == StoryBlockKind.photo || kind == StoryBlockKind.video;
+
+  /// Null when an mp4 of an allowed size can be uploaded.
+  static String? videoRejectReason({required String name, required int size}) {
+    if (!name.trim().toLowerCase().endsWith('.mp4')) {
+      return 'mp4 파일만 올릴 수 있습니다.';
+    }
+    if (size > maxVideoBytes) {
+      return '동영상은 100MB 이하만 올릴 수 있습니다.';
+    }
+    return null;
+  }
+
   Map<String, dynamic> toMap() {
-    if (kind == StoryBlockKind.photo) {
+    if (isMedia(kind)) {
       return {
         'kind': kind.name,
         'url': url,
@@ -92,19 +114,28 @@ class StoryBlock {
     return [
       for (final block in blocks)
         if (block.kind != StoryBlockKind.divider &&
-            block.kind != StoryBlockKind.photo &&
+            !isMedia(block.kind) &&
             block.text.trim().isNotEmpty)
           block.text.trim()
-        else if (block.kind == StoryBlockKind.photo &&
-            block.text.trim().isNotEmpty)
+        else if (isMedia(block.kind) && block.text.trim().isNotEmpty)
           block.text.trim(),
     ].join('\n');
   }
 
-  static int photoCount(List<StoryBlock> blocks) {
+  static int photoCount(List<StoryBlock> blocks) => _mediaCount(
+        blocks,
+        StoryBlockKind.photo,
+      );
+
+  static int videoCount(List<StoryBlock> blocks) => _mediaCount(
+        blocks,
+        StoryBlockKind.video,
+      );
+
+  static int _mediaCount(List<StoryBlock> blocks, StoryBlockKind kind) {
     var count = 0;
     for (final block in blocks) {
-      if (block.kind == StoryBlockKind.photo && block.url.trim().isNotEmpty) {
+      if (block.kind == kind && block.url.trim().isNotEmpty) {
         count += 1;
       }
     }
@@ -213,6 +244,7 @@ class StoryBlockView extends StatelessWidget {
                 ),
               ),
             StoryBlockKind.photo => _StoryPhoto(block: blocks[i], index: i),
+            StoryBlockKind.video => _StoryVideo(block: blocks[i], index: i),
             StoryBlockKind.list => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -284,6 +316,103 @@ class _StoryPhoto extends StatelessWidget {
         width: double.infinity,
         child: ColoredBox(color: Color(0xFF12324A)),
       ),
+    );
+  }
+}
+
+class _StoryVideo extends StatefulWidget {
+  const _StoryVideo({required this.block, required this.index});
+
+  final StoryBlock block;
+  final int index;
+
+  @override
+  State<_StoryVideo> createState() => _StoryVideoState();
+}
+
+class _StoryVideoState extends State<_StoryVideo> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final url = widget.block.url.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return;
+    }
+    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    _controller = controller;
+    controller.initialize().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    }).catchError((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    controller.addListener(_onTick);
+  }
+
+  void _onTick() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_onTick);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final caption = widget.block.caption.trim();
+    final controller = _controller;
+    final ready = controller != null && controller.value.isInitialized;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          key: Key('story-video-${widget.index}'),
+          height: 220,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Color(0xFF12324A)),
+              if (ready) VideoPlayer(controller),
+              Center(
+                child: IconButton(
+                  key: Key('story-video-play-${widget.index}'),
+                  onPressed: ready
+                      ? () {
+                          if (controller.value.isPlaying) {
+                            controller.pause();
+                          } else {
+                            controller.play();
+                          }
+                        }
+                      : null,
+                  icon: Icon(
+                    ready && controller.value.isPlaying
+                        ? Icons.pause_circle_outline
+                        : Icons.play_circle_outline,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (caption.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(caption),
+        ],
+      ],
     );
   }
 }

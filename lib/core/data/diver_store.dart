@@ -2749,6 +2749,20 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
+  Future<String> uploadStoryVideo({
+    required String shopId,
+    required Uint8List bytes,
+    required String fileName,
+    void Function(int sent, int total)? onProgress,
+  }) {
+    return _repository.uploadStoryVideo(
+      shopId: shopId,
+      bytes: bytes,
+      fileName: fileName,
+      onProgress: onProgress,
+    );
+  }
+
   Future<ShopProductSaveResult> saveShopProduct({
     required String shopId,
     required ShopProduct product,

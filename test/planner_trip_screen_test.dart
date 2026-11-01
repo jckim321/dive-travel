@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
+import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
@@ -45,6 +47,29 @@ void main() {
       'caption': '옆에서 본 고래',
     });
     expect(StoryBlock.photoCount([photo, photo]), 2);
+    final video = StoryBlock.fromMap({
+      'kind': 'video',
+      'url': 'https://cdn.example/whale.mp4',
+      'caption': '배 위에서',
+    });
+    expect(video.kind, StoryBlockKind.video);
+    expect(video.toMap()['kind'], 'video');
+    expect(video.toMap()['url'], 'https://cdn.example/whale.mp4');
+    expect(
+      StoryBlock.videoRejectReason(name: 'clip.mov', size: 10),
+      'mp4 파일만 올릴 수 있습니다.',
+    );
+    expect(
+      StoryBlock.videoRejectReason(
+        name: 'clip.mp4',
+        size: StoryBlock.maxVideoBytes + 1,
+      ),
+      '동영상은 100MB 이하만 올릴 수 있습니다.',
+    );
+    expect(
+      StoryBlock.videoRejectReason(name: 'clip.mp4', size: StoryBlock.maxVideoBytes),
+      isNull,
+    );
     expect(
       StoryBlock.seed(
         stored: const [
@@ -70,6 +95,7 @@ void main() {
     Size size = const Size(1100, 6400),
     Future<PickedPhoto?> Function()? pickCover,
     Future<PickedPhoto?> Function()? pickStoryPhoto,
+    Future<PickedVideo?> Function()? pickStoryVideo,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -89,6 +115,7 @@ void main() {
           home: PlannerTripScreen(
             pickCover: pickCover,
             pickStoryPhoto: pickStoryPhoto,
+            pickStoryVideo: pickStoryVideo,
           ),
         ),
       ),
@@ -366,9 +393,9 @@ void main() {
     expect(doc.options.single.id, 'adult');
   });
 
-  testWidgets('인용은 블록으로 저장되고 동영상 버튼은 준비 중이다', (tester) async {
+  testWidgets('인용은 블록으로 저장되고 지도 버튼은 준비 중이다', (tester) async {
     final opened = await open(tester);
-    await tester.tap(find.byKey(const Key('planner-story-video')));
+    await tester.tap(find.byKey(const Key('planner-story-map')));
     await tester.pump();
     expect(find.text('준비 중'), findsOneWidget);
     await dismissSnack(tester);
@@ -392,14 +419,14 @@ void main() {
     expect(doc.schedule, '숙소의 식사');
   });
 
-  testWidgets('폰의 더보기 안에 있는 동영상은 준비 중이다', (tester) async {
+  testWidgets('폰의 더보기 안에 있는 지도는 준비 중이다', (tester) async {
     await open(tester, size: const Size(400, 6400));
     await tester.tap(find.byKey(const Key('planner-story-more')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('기울임'), findsOneWidget);
-    expect(find.text('사진'), findsOneWidget);
-    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '동영상'));
+    expect(find.text('동영상'), findsOneWidget);
+    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '지도'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('준비 중'), findsOneWidget);
@@ -511,5 +538,180 @@ void main() {
     expect(find.text('사진은 30장까지 올릴 수 있습니다.'), findsOneWidget);
     expect(picked, isFalse);
     expect(find.byKey(const Key('planner-story-photo-block-30')), findsNothing);
+  });
+
+  PickedVideo _storyVideo({String name = 'whale.mp4', int? declaredSize}) {
+    return PickedVideo(
+      bytes: Uint8List.fromList(const [1, 2, 3, 4]),
+      fileName: name,
+      declaredSize: declaredSize,
+    );
+  }
+
+  testWidgets('동영상은 현재 줄 아래에 붙고 설명과 함께 저장된다', (tester) async {
+    final opened = await open(
+      tester,
+      pickStoryVideo: () async => _storyVideo(),
+    );
+    await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
+    await tester.tap(find.byKey(const Key('planner-story-video')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('planner-story-video-block-1')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('planner-story-video-caption-1')),
+      '배 위에서 본 고래',
+    );
+    await tester.tap(find.byKey(const Key('planner-story-video-up-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-video-block-0')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('planner-story-video-down-0')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-video-block-1')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
+    await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    await tester.tap(find.byKey(const Key('planner-trip-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final doc = (await opened.repo.fetchShopStats())
+        .where((shop) => shop.shopId.startsWith('curated-'))
+        .single
+        .documentProducts!
+        .single;
+    final video = doc.storyBlocks.singleWhere((block) => block.kind == StoryBlockKind.video);
+    expect(video.url, startsWith('memory://story-video-'));
+    expect(video.caption, '배 위에서 본 고래');
+    expect(video.toMap()['kind'], 'video');
+    expect(video.toMap()['caption'], '배 위에서 본 고래');
+    expect(doc.storyBlocks.first.kind, StoryBlockKind.paragraph);
+  });
+
+  testWidgets('동영상 올리기는 진행률을 보여 준다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final gate = Completer<void>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StoryBlockEditor(
+            initial: const [StoryBlock(kind: StoryBlockKind.paragraph)],
+            onChanged: (_) {},
+            pickVideo: () async => _storyVideo(),
+            uploadVideo: (video, onProgress) async {
+              onProgress(0.4);
+              await gate.future;
+              onProgress(1);
+              return 'memory://story-video-clip';
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-video')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('올리는 중 40%'), findsOneWidget);
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.byKey(const Key('planner-story-video-progress')),
+    );
+    expect(bar.value, 0.4);
+    gate.complete();
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-video-block-1')), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-video-progress')), findsNothing);
+  });
+
+  testWidgets('동영상 블록은 지울 수 있다', (tester) async {
+    await open(tester, pickStoryVideo: () async => _storyVideo());
+    await tester.tap(find.byKey(const Key('planner-story-video')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.byKey(const Key('planner-story-video-delete-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-video-block-1')), findsNothing);
+  });
+
+  testWidgets('mp4가 아니거나 100MB를 넘거나 3개를 넘으면 올리지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var uploads = 0;
+    Future<void> pumpEditor({
+      required List<StoryBlock> initial,
+      required Future<PickedVideo?> Function() pick,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          key: UniqueKey(),
+          home: Scaffold(
+            body: StoryBlockEditor(
+              initial: initial,
+              onChanged: (_) {},
+              pickVideo: pick,
+              uploadVideo: (_, _) async {
+                uploads += 1;
+                return 'memory://story-video-extra';
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('planner-story-video')));
+      await tester.pump();
+      await tester.pump();
+    }
+
+    await pumpEditor(
+      initial: const [StoryBlock(kind: StoryBlockKind.paragraph)],
+      pick: () async => _storyVideo(name: 'clip.mov'),
+    );
+    expect(find.text('mp4 파일만 올릴 수 있습니다.'), findsOneWidget);
+    expect(uploads, 0);
+
+    await pumpEditor(
+      initial: const [StoryBlock(kind: StoryBlockKind.paragraph)],
+      pick: () async => _storyVideo(declaredSize: StoryBlock.maxVideoBytes + 1),
+    );
+    expect(find.text('동영상은 100MB 이하만 올릴 수 있습니다.'), findsOneWidget);
+    expect(uploads, 0);
+
+    var picked = false;
+    await pumpEditor(
+      initial: [
+        for (var i = 0; i < StoryBlock.maxVideos; i++)
+          StoryBlock(kind: StoryBlockKind.video, url: 'memory://v$i'),
+      ],
+      pick: () async {
+        picked = true;
+        return _storyVideo();
+      },
+    );
+    expect(find.text('동영상은 3개까지 올릴 수 있습니다.'), findsOneWidget);
+    expect(picked, isFalse);
+    expect(uploads, 0);
+  });
+
+  testWidgets('폰의 더보기 동영상도 현재 줄 아래에 붙는다', (tester) async {
+    await open(
+      tester,
+      size: const Size(400, 6400),
+      pickStoryVideo: () async => _storyVideo(),
+    );
+    await tester.tap(find.byKey(const Key('planner-story-more')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(PopupMenuItem<String>, '동영상'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('planner-story-video-block-1')), findsOneWidget);
+    expect(find.text('준비 중'), findsNothing);
   });
 }
