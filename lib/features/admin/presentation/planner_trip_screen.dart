@@ -220,13 +220,20 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   List<StoryBlock> _savedBlocks() {
     return [
       for (final block in _blocks)
-        if (StoryBlock.isMedia(block.kind) && block.url.trim().isNotEmpty)
+        if (block.kind == StoryBlockKind.map &&
+            (block.placeName.trim().isNotEmpty || block.text.trim().isNotEmpty))
+          StoryBlock(
+            kind: StoryBlockKind.map,
+            placeName: block.placeName.trim(),
+            text: block.text.trim(),
+          )
+        else if (StoryBlock.isMedia(block.kind) && block.url.trim().isNotEmpty)
           StoryBlock(
             kind: block.kind,
             url: block.url.trim(),
             text: block.text.trim(),
           )
-        else if (!StoryBlock.isMedia(block.kind) &&
+        else if (!StoryBlock.isAtomic(block.kind) &&
             (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty))
           StoryBlock(
             kind: block.kind,

@@ -195,7 +195,7 @@ void main() {
   });
 
   testWidgets('상품 상세는 story_blocks를 제목과 인용으로 보여 준다', (tester) async {
-    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.physicalSize = const Size(800, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -252,6 +252,11 @@ void main() {
                       url: 'memory://story-video-whale',
                       text: '배 위에서 본 고래',
                     ),
+                    StoryBlock(
+                      kind: StoryBlockKind.map,
+                      placeName: '팡라오 비치',
+                      text: '보홀',
+                    ),
                   ],
                 ),
                 quote: const TourPriceQuote(amount: 100000, isProfessional: false),
@@ -278,5 +283,10 @@ void main() {
     expect(find.text('배 위에서 본 고래'), findsOneWidget);
     expect(find.byKey(const Key('story-video-5')), findsOneWidget);
     expect(find.byKey(const Key('story-video-play-5')), findsOneWidget);
+    expect(find.text('팡라오 비치'), findsOneWidget);
+    expect(find.text('보홀'), findsOneWidget);
+    expect(find.byKey(const Key('story-map-6')), findsOneWidget);
+    expect(find.text('지도에서 보기'), findsOneWidget);
+    expect(find.byType(Card), findsWidgets);
   });
 }

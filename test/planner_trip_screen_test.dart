@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/memory_diver_repository.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
@@ -70,6 +71,18 @@ void main() {
       StoryBlock.videoRejectReason(name: 'clip.mp4', size: StoryBlock.maxVideoBytes),
       isNull,
     );
+    final place = StoryBlock.fromMap({
+      'kind': 'map',
+      'name': '팡라오 비치',
+      'address': '보홀',
+    });
+    expect(place.kind, StoryBlockKind.map);
+    expect(place.toMap(), {
+      'kind': 'map',
+      'name': '팡라오 비치',
+      'address': '보홀',
+    });
+    expect(place.mapSearchUri, googleMapsSearchUri('팡라오 비치 보홀'));
     expect(
       StoryBlock.seed(
         stored: const [
@@ -393,13 +406,8 @@ void main() {
     expect(doc.options.single.id, 'adult');
   });
 
-  testWidgets('인용은 블록으로 저장되고 지도 버튼은 준비 중이다', (tester) async {
+  testWidgets('인용은 블록으로 저장된다', (tester) async {
     final opened = await open(tester);
-    await tester.tap(find.byKey(const Key('planner-story-map')));
-    await tester.pump();
-    expect(find.text('준비 중'), findsOneWidget);
-    await dismissSnack(tester);
-
     await tester.tap(find.byKey(const Key('planner-story-quote')));
     await tester.pump();
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
@@ -419,7 +427,7 @@ void main() {
     expect(doc.schedule, '숙소의 식사');
   });
 
-  testWidgets('폰의 더보기 안에 있는 지도는 준비 중이다', (tester) async {
+  testWidgets('폰의 더보기 지도도 현재 줄 아래에 붙는다', (tester) async {
     await open(tester, size: const Size(400, 6400));
     await tester.tap(find.byKey(const Key('planner-story-more')));
     await tester.pump();
@@ -428,8 +436,8 @@ void main() {
     expect(find.text('동영상'), findsOneWidget);
     await tester.tap(find.widgetWithText(PopupMenuItem<String>, '지도'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.text('준비 중'), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-map-block-1')), findsOneWidget);
+    expect(find.text('준비 중'), findsNothing);
   });
 
   PickedPhoto _storyPhoto() {
@@ -713,5 +721,109 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('planner-story-video-block-1')), findsOneWidget);
     expect(find.text('준비 중'), findsNothing);
+  });
+
+  testWidgets('지도는 현재 줄 아래에 붙고 이름과 주소로 저장된다', (tester) async {
+    final opened = await open(tester);
+    await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
+    await tester.tap(find.byKey(const Key('planner-story-map')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-map-block-1')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('planner-story-map-name-1')), '팡라오 비치');
+    await tester.enterText(find.byKey(const Key('planner-story-map-address-1')), '보홀');
+    await tester.tap(find.byKey(const Key('planner-story-map-up-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-map-block-0')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('planner-story-map-down-0')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-map-block-1')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
+    await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    await tester.tap(find.byKey(const Key('planner-trip-save')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final doc = (await opened.repo.fetchShopStats())
+        .where((shop) => shop.shopId.startsWith('curated-'))
+        .single
+        .documentProducts!
+        .single;
+    final place = doc.storyBlocks.singleWhere((block) => block.kind == StoryBlockKind.map);
+    expect(place.toMap(), {
+      'kind': 'map',
+      'name': '팡라오 비치',
+      'address': '보홀',
+    });
+    expect(place.mapSearchUri, googleMapsSearchUri('팡라오 비치 보홀'));
+    expect(doc.storyBlocks.first.kind, StoryBlockKind.paragraph);
+    expect(doc.schedule, '저녁에도 고래\n팡라오 비치\n보홀');
+  });
+
+  testWidgets('지도 검색은 장소 이름과 주소로 연다', (tester) async {
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Uri? opened;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StoryBlockEditor(
+            initial: const [StoryBlock(kind: StoryBlockKind.paragraph)],
+            onChanged: (_) {},
+            openMap: (uri) async {
+              opened = uri;
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-map')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-map-search-1')));
+    await tester.pump();
+    expect(find.text('주소를 입력한 뒤 지도 검색을 누르세요.'), findsOneWidget);
+    expect(opened, isNull);
+    await tester.enterText(find.byKey(const Key('planner-story-map-name-1')), '팡라오 비치');
+    await tester.enterText(find.byKey(const Key('planner-story-map-address-1')), '보홀');
+    await tester.tap(find.byKey(const Key('planner-story-map-search-1')));
+    await tester.pump();
+    expect(opened, googleMapsSearchUri('팡라오 비치 보홀'));
+  });
+
+  testWidgets('지도 블록은 지울 수 있다', (tester) async {
+    await open(tester);
+    await tester.tap(find.byKey(const Key('planner-story-map')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-map-delete-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('planner-story-map-block-1')), findsNothing);
+  });
+
+  testWidgets('지도는 5개까지만 넣는다', (tester) async {
+    tester.view.physicalSize = const Size(900, 8000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StoryBlockEditor(
+            initial: [
+              for (var i = 0; i < StoryBlock.maxMaps; i++)
+                StoryBlock(kind: StoryBlockKind.map, placeName: '장소 $i', text: '주소 $i'),
+            ],
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('planner-story-map')));
+    await tester.pump();
+    expect(find.text('지도는 5개까지 넣을 수 있습니다.'), findsOneWidget);
+    expect(find.byKey(const Key('planner-story-map-block-5')), findsNothing);
   });
 }

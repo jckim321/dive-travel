@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -17,6 +18,7 @@ class StoryBlockEditor extends StatefulWidget {
     this.uploadPhoto,
     this.pickVideo,
     this.uploadVideo,
+    this.openMap,
   });
 
   final List<StoryBlock> initial;
@@ -37,6 +39,9 @@ class StoryBlockEditor extends StatefulWidget {
     void Function(double progress) onProgress,
   )? uploadVideo;
 
+  /// Test hook. Null opens the Google Maps search in the browser.
+  final Future<void> Function(Uri uri)? openMap;
+
   @override
   State<StoryBlockEditor> createState() => _StoryBlockEditorState();
 }
@@ -44,6 +49,7 @@ class StoryBlockEditor extends StatefulWidget {
 class _StoryBlockEditorState extends State<StoryBlockEditor> {
   late List<StoryBlock> _blocks;
   late List<TextEditingController> _controllers;
+  late List<TextEditingController> _placeControllers;
   var _focus = 0;
   var _busy = false;
   double? _videoProgress;
@@ -53,7 +59,12 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     super.initState();
     _blocks = [
       for (final block in widget.initial)
-        StoryBlock(kind: block.kind, text: block.text, url: block.url),
+        StoryBlock(
+          kind: block.kind,
+          text: block.text,
+          url: block.url,
+          placeName: block.placeName,
+        ),
     ];
     if (_blocks.isEmpty) {
       _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
@@ -61,11 +72,17 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     _controllers = [
       for (final block in _blocks) TextEditingController(text: block.text),
     ];
+    _placeControllers = [
+      for (final block in _blocks) TextEditingController(text: block.placeName),
+    ];
   }
 
   @override
   void dispose() {
     for (final controller in _controllers) {
+      controller.dispose();
+    }
+    for (final controller in _placeControllers) {
       controller.dispose();
     }
     super.dispose();
@@ -78,19 +95,25 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           kind: _blocks[i].kind,
           text: _controllers[i].text,
           url: _blocks[i].url,
+          placeName: _placeControllers[i].text,
         ),
     ]);
+  }
+
+  void _insertEditors(int at) {
+    _controllers.insert(at, TextEditingController());
+    _placeControllers.insert(at, TextEditingController());
   }
 
   void _applyKind(StoryBlockKind kind) {
     final index = _focus.clamp(0, _blocks.length - 1);
     final text = _controllers[index].text;
     final current = _blocks[index].kind;
-    if (current == kind || StoryBlock.isMedia(current)) {
-      if (StoryBlock.isMedia(current) && current != kind) {
+    if (current == kind || StoryBlock.isAtomic(current)) {
+      if (StoryBlock.isAtomic(current) && current != kind) {
         setState(() {
           _blocks.insert(index + 1, StoryBlock(kind: kind));
-          _controllers.insert(index + 1, TextEditingController());
+          _insertEditors(index + 1);
           _focus = index + 1;
         });
         _emit();
@@ -103,7 +126,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       } else {
         _blocks.insert(index + 1, const StoryBlock(kind: StoryBlockKind.paragraph));
         _blocks[index + 1] = StoryBlock(kind: kind);
-        _controllers.insert(index + 1, TextEditingController());
+        _insertEditors(index + 1);
         _focus = index + 1;
       }
     });
@@ -112,7 +135,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
 
   void _toggleMark(String marker) {
     final index = _focus.clamp(0, _controllers.length - 1);
-    if (StoryBlock.isMedia(_blocks[index].kind)) {
+    if (StoryBlock.isAtomic(_blocks[index].kind)) {
       return;
     }
     final controller = _controllers[index];
@@ -143,12 +166,6 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       selection: TextSelection.collapsed(offset: start + next.length),
     );
     _emit();
-  }
-
-  void _soon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('준비 중')),
-    );
   }
 
   @override
@@ -254,7 +271,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           _icon(const Key('planner-story-video'), Icons.videocam_outlined, '동영상', () {
             _addVideo();
           }),
-          _icon(const Key('planner-story-map'), Icons.map_outlined, '지도', _soon),
+          _icon(const Key('planner-story-map'), Icons.map_outlined, '지도', _addMap),
         ],
         if (compact)
           PopupMenuButton<String>(
@@ -297,7 +314,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       case 'video':
         _addVideo();
       case 'map':
-        _soon();
+        _addMap();
     }
   }
 
@@ -421,10 +438,43 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     final at = index + 1;
     setState(() {
       _blocks.insert(at, StoryBlock(kind: kind, url: url));
-      _controllers.insert(at, TextEditingController());
+      _insertEditors(at);
       _focus = at;
     });
     _emit();
+  }
+
+  void _addMap() {
+    if (StoryBlock.mapCount(_blocks) >= StoryBlock.maxMaps) {
+      _snack('지도는 5개까지 넣을 수 있습니다.');
+      return;
+    }
+    final index = _blocks.isEmpty ? -1 : _focus.clamp(0, _blocks.length - 1);
+    final at = index + 1;
+    setState(() {
+      _blocks.insert(at, const StoryBlock(kind: StoryBlockKind.map));
+      _insertEditors(at);
+      _focus = at;
+    });
+    _emit();
+  }
+
+  Future<void> _searchMap(int index) async {
+    final uri = StoryBlock(
+      kind: StoryBlockKind.map,
+      placeName: _placeControllers[index].text,
+      text: _controllers[index].text,
+    ).mapSearchUri;
+    if (uri == null) {
+      _snack('주소를 입력한 뒤 지도 검색을 누르세요.');
+      return;
+    }
+    final open = widget.openMap;
+    if (open != null) {
+      await open(uri);
+      return;
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   void _movePhoto(int index, int delta) {
@@ -433,7 +483,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
 
   void _moveMedia(int index, int delta) {
     final next = index + delta;
-    if (!StoryBlock.isMedia(_blocks[index].kind)) {
+    if (!StoryBlock.isAtomic(_blocks[index].kind)) {
       return;
     }
     if (next < 0 || next >= _blocks.length) {
@@ -442,8 +492,10 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     setState(() {
       final block = _blocks.removeAt(index);
       final controller = _controllers.removeAt(index);
+      final place = _placeControllers.removeAt(index);
       _blocks.insert(next, block);
       _controllers.insert(next, controller);
+      _placeControllers.insert(next, place);
       _focus = next;
     });
     _emit();
@@ -454,15 +506,17 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   }
 
   void _removeMedia(int index) {
-    if (!StoryBlock.isMedia(_blocks[index].kind)) {
+    if (!StoryBlock.isAtomic(_blocks[index].kind)) {
       return;
     }
     setState(() {
       _controllers.removeAt(index).dispose();
+      _placeControllers.removeAt(index).dispose();
       _blocks.removeAt(index);
       if (_blocks.isEmpty) {
         _blocks.add(const StoryBlock(kind: StoryBlockKind.paragraph));
         _controllers.add(TextEditingController());
+        _placeControllers.add(TextEditingController());
       }
       _focus = index.clamp(0, _blocks.length - 1);
     });
@@ -490,6 +544,9 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     if (block.kind == StoryBlockKind.video) {
       return _videoBlock(index);
     }
+    if (block.kind == StoryBlockKind.map) {
+      return _mapBlock(index);
+    }
     final style = TextStyle(
       color: PartnerTheme.text,
       height: 1.45,
@@ -500,7 +557,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     final firstText = _blocks.indexWhere(
       (block) =>
           block.kind != StoryBlockKind.divider &&
-          !StoryBlock.isMedia(block.kind),
+          !StoryBlock.isAtomic(block.kind),
     );
     return TextField(
       key: Key(
@@ -694,6 +751,99 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _mapBlock(int index) {
+    return Column(
+      key: Key('planner-story-map-block-$index'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _mapLine(
+          key: Key('planner-story-map-name-$index'),
+          controller: _placeControllers[index],
+          hint: '장소 이름',
+          index: index,
+        ),
+        const SizedBox(height: 6),
+        _mapLine(
+          key: Key('planner-story-map-address-$index'),
+          controller: _controllers[index],
+          hint: '주소',
+          index: index,
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: Key('planner-story-map-search-$index'),
+            onPressed: () {
+              _searchMap(index);
+            },
+            icon: const Icon(Icons.map_outlined, size: 18),
+            label: const Text('지도 검색'),
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              key: Key('planner-story-map-up-$index'),
+              tooltip: '위로',
+              onPressed: index == 0 ? null : () => _moveMedia(index, -1),
+              icon: const Icon(Icons.arrow_upward, color: PartnerTheme.text, size: 18),
+            ),
+            IconButton(
+              key: Key('planner-story-map-down-$index'),
+              tooltip: '아래로',
+              onPressed: index == _blocks.length - 1
+                  ? null
+                  : () => _moveMedia(index, 1),
+              icon: const Icon(Icons.arrow_downward, color: PartnerTheme.text, size: 18),
+            ),
+            IconButton(
+              key: Key('planner-story-map-delete-$index'),
+              tooltip: '지우기',
+              onPressed: () => _removeMedia(index),
+              icon: const Icon(Icons.delete_outline, color: PartnerTheme.text, size: 18),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _mapLine({
+    required Key key,
+    required TextEditingController controller,
+    required String hint,
+    required int index,
+  }) {
+    return TextField(
+      key: key,
+      controller: controller,
+      maxLines: 1,
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 14),
+      cursorColor: PartnerTheme.accent,
+      onTap: () => _focus = index,
+      onChanged: (_) => _emit(),
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: PartnerTheme.bg,
+        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.accent),
+        ),
+      ),
     );
   }
 }

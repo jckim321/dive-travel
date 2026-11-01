@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 
 /// One piece of a planned-trip story. Kind plus the written text.
 enum StoryBlockKind {
@@ -9,7 +12,8 @@ enum StoryBlockKind {
   list,
   divider,
   photo,
-  video;
+  video,
+  map;
 
   static StoryBlockKind parse(Object? raw) {
     final name = raw?.toString() ?? '';
@@ -23,7 +27,12 @@ enum StoryBlockKind {
 }
 
 class StoryBlock {
-  const StoryBlock({required this.kind, this.text = '', this.url = ''});
+  const StoryBlock({
+    required this.kind,
+    this.text = '',
+    this.url = '',
+    this.placeName = '',
+  });
 
   /// One story holds at most this many photo blocks.
   static const maxPhotos = 30;
@@ -34,17 +43,44 @@ class StoryBlock {
   /// One video file must be this size or smaller.
   static const maxVideoBytes = 100 * 1024 * 1024;
 
+  /// One story holds at most this many map blocks.
+  static const maxMaps = 5;
+
   final StoryBlockKind kind;
   final String text;
 
   /// Public photo or video URL.
   final String url;
 
-  /// Caption for a photo or video. Other blocks keep their words in [text].
+  /// Place name for a map block.
+  final String placeName;
+
+  /// Caption for a photo or video. A map stores its address here.
   String get caption => text;
+
+  String get address => text;
 
   static bool isMedia(StoryBlockKind kind) =>
       kind == StoryBlockKind.photo || kind == StoryBlockKind.video;
+
+  /// Photo, video, and map keep their own fields instead of a text body.
+  static bool isAtomic(StoryBlockKind kind) =>
+      isMedia(kind) || kind == StoryBlockKind.map;
+
+  /// Google Maps search for this place. Null until a name or address exists.
+  Uri? get mapSearchUri {
+    if (kind != StoryBlockKind.map) {
+      return null;
+    }
+    final query = [
+      placeName.trim(),
+      text.trim(),
+    ].where((part) => part.isNotEmpty).join(' ');
+    if (query.isEmpty) {
+      return null;
+    }
+    return googleMapsSearchUri(query);
+  }
 
   /// Null when an mp4 of an allowed size can be uploaded.
   static String? videoRejectReason({required String name, required int size}) {
@@ -58,6 +94,13 @@ class StoryBlock {
   }
 
   Map<String, dynamic> toMap() {
+    if (kind == StoryBlockKind.map) {
+      return {
+        'kind': kind.name,
+        'name': placeName,
+        'address': text,
+      };
+    }
     if (isMedia(kind)) {
       return {
         'kind': kind.name,
@@ -74,10 +117,14 @@ class StoryBlock {
   static StoryBlock fromMap(Map<String, dynamic> data) {
     final kind = StoryBlockKind.parse(data['kind']);
     final caption = data['caption'] as String?;
+    final text = kind == StoryBlockKind.map
+        ? (data['address'] as String? ?? data['text'] as String? ?? '')
+        : (caption ?? (data['text'] as String? ?? ''));
     return StoryBlock(
       kind: kind,
-      text: caption ?? (data['text'] as String? ?? ''),
+      text: text,
       url: data['url'] as String? ?? '',
+      placeName: kind == StoryBlockKind.map ? (data['name'] as String? ?? '') : '',
     );
   }
 
@@ -111,15 +158,28 @@ class StoryBlock {
 
   /// Plain text kept on `schedule` so older readers still have the words.
   static String plainText(List<StoryBlock> blocks) {
-    return [
-      for (final block in blocks)
-        if (block.kind != StoryBlockKind.divider &&
-            !isMedia(block.kind) &&
-            block.text.trim().isNotEmpty)
-          block.text.trim()
-        else if (isMedia(block.kind) && block.text.trim().isNotEmpty)
-          block.text.trim(),
-    ].join('\n');
+    final lines = <String>[];
+    for (final block in blocks) {
+      if (block.kind == StoryBlockKind.divider) {
+        continue;
+      }
+      if (block.kind == StoryBlockKind.map) {
+        final name = block.placeName.trim();
+        final address = block.text.trim();
+        if (name.isNotEmpty) {
+          lines.add(name);
+        }
+        if (address.isNotEmpty) {
+          lines.add(address);
+        }
+        continue;
+      }
+      final text = block.text.trim();
+      if (text.isNotEmpty) {
+        lines.add(text);
+      }
+    }
+    return lines.join('\n');
   }
 
   static int photoCount(List<StoryBlock> blocks) => _mediaCount(
@@ -131,6 +191,16 @@ class StoryBlock {
         blocks,
         StoryBlockKind.video,
       );
+
+  static int mapCount(List<StoryBlock> blocks) {
+    var count = 0;
+    for (final block in blocks) {
+      if (block.kind == StoryBlockKind.map) {
+        count += 1;
+      }
+    }
+    return count;
+  }
 
   static int _mediaCount(List<StoryBlock> blocks, StoryBlockKind kind) {
     var count = 0;
@@ -245,6 +315,7 @@ class StoryBlockView extends StatelessWidget {
               ),
             StoryBlockKind.photo => _StoryPhoto(block: blocks[i], index: i),
             StoryBlockKind.video => _StoryVideo(block: blocks[i], index: i),
+            StoryBlockKind.map => _StoryMap(block: blocks[i], index: i),
             StoryBlockKind.list => Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -413,6 +484,54 @@ class _StoryVideoState extends State<_StoryVideo> {
           Text(caption),
         ],
       ],
+    );
+  }
+}
+
+class _StoryMap extends StatelessWidget {
+  const _StoryMap({required this.block, required this.index});
+
+  final StoryBlock block;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = block.placeName.trim();
+    final address = block.address.trim();
+    final uri = block.mapSearchUri;
+    final theme = Theme.of(context);
+    return Card(
+      key: Key('story-map-$index'),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (name.isNotEmpty)
+              Text(
+                name,
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+            if (address.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(address),
+            ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key('story-map-open-$index'),
+                onPressed: uri == null
+                    ? null
+                    : () {
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
+                      },
+                child: const Text('지도에서 보기'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
