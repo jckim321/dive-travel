@@ -7,6 +7,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
+import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
@@ -129,6 +130,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _flagCloseManual = false;
   /// Admin-only trial host for the Tiptap iframe editor.
   var _useNewStoryEditor = false;
+  String _draftStoryHtml = '';
+  Timer? _storyHtmlAutosaveTimer;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -208,7 +211,37 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _markClean();
+        unawaited(_hydrateStoryHtmlFromDoc());
       }
+    });
+  }
+
+  Future<void> _hydrateStoryHtmlFromDoc() async {
+    final source = _source;
+    if (source == null || source.storyHtml.trim().isNotEmpty) {
+      return;
+    }
+    final shopId = (_shopId ?? source.shopId).trim();
+    final productId = (_productId ?? source.id).trim();
+    if (shopId.isEmpty || productId.isEmpty) {
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    String? docHtml;
+    try {
+      docHtml = await store.fetchShopProductStoryHtml(
+        shopId: shopId,
+        productId: productId,
+      );
+    } catch (_) {
+      return;
+    }
+    final html = docHtml?.trim() ?? '';
+    if (!mounted || html.isEmpty) {
+      return;
+    }
+    setState(() {
+      _live = source.copyWith(storyHtml: html);
     });
   }
 
@@ -388,7 +421,74 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     for (final option in _options) {
       option.dispose();
     }
+    _storyHtmlAutosaveTimer?.cancel();
     super.dispose();
+  }
+
+  void _onStoryHtmlChanged(String html) {
+    _draftStoryHtml = html;
+    _storyHtmlAutosaveTimer?.cancel();
+    if (!_useNewStoryEditor) {
+      return;
+    }
+    _storyHtmlAutosaveTimer = Timer(const Duration(seconds: 30), () {
+      unawaited(_saveStoryBody(fromAutosave: true));
+    });
+  }
+
+  Future<void> _toggleNewStoryEditor(bool value) async {
+    if (!value) {
+      setState(() {
+        _useNewStoryEditor = false;
+        _storyHtmlAutosaveTimer?.cancel();
+      });
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    final shopId = (_shopId ?? _source?.shopId ?? '').trim();
+    final productId = (_productId ?? _source?.id ?? '').trim();
+    String docHtml = '';
+    if (shopId.isNotEmpty && productId.isNotEmpty) {
+      try {
+        docHtml =
+            (await store.fetchShopProductStoryHtml(
+              shopId: shopId,
+              productId: productId,
+            ))
+                ?.trim() ??
+            '';
+      } catch (_) {
+        docHtml = '';
+      }
+    }
+    if (!mounted) {
+      return;
+    }
+    if (docHtml.isNotEmpty) {
+      setState(() {
+        _draftStoryHtml = docHtml;
+        _useNewStoryEditor = true;
+        final live = _source;
+        if (live != null) {
+          _live = live.copyWith(storyHtml: docHtml);
+        }
+      });
+      return;
+    }
+    if (storyBlocksHaveMedia(_blocks)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '사진·동영상·지도가 있는 글은 기존 편집기로 수정하세요. 곧 지원됩니다',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _draftStoryHtml = storyBlocksToHtml(_blocks);
+      _useNewStoryEditor = true;
+    });
   }
 
   int _parseNonNegativeInt(String raw) {
@@ -470,8 +570,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     setState(() => _storySaving = true);
     final store = DiverStoreScope.of(context);
     final admin = store.stats.isAdmin;
+    final useHtml = admin && _useNewStoryEditor;
     final blocks = _savedBlocks();
     final schedule = StoryBlock.plainText(blocks);
+    final cleanedHtml =
+        useHtml ? sanitizeStoryHtml(_draftStoryHtml) : '';
     try {
       if (firstSave) {
         final shopId = _shopId ??= _nextShopId(null);
@@ -498,8 +601,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             name: title,
             consumerPrice: 0,
             professionalPrice: 0,
-            schedule: schedule,
-            storyBlocks: blocks,
+            schedule: useHtml ? '' : schedule,
+            storyBlocks: useHtml ? const [] : blocks,
             listingKind: ProductListingKind.curated,
             publishStatus: ProductPublishStatus.draft,
             active: false,
@@ -511,16 +614,31 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           creatorSubmission: !admin,
           submitterUid: store.uid,
         );
+        if (useHtml) {
+          await store.updateShopProductStory(
+            shopId: shopId,
+            productId: productId,
+            storyHtml: cleanedHtml,
+          );
+        }
       } else {
         final source = existing;
         final shopId = _shopId ??= source.shopId;
         final productId = _productId ??= source.id;
-        await store.updateShopProductStory(
-          shopId: shopId,
-          productId: productId,
-          storyBlocks: blocks,
-          schedule: schedule,
-        );
+        if (useHtml) {
+          await store.updateShopProductStory(
+            shopId: shopId,
+            productId: productId,
+            storyHtml: cleanedHtml,
+          );
+        } else {
+          await store.updateShopProductStory(
+            shopId: shopId,
+            productId: productId,
+            storyBlocks: blocks,
+            schedule: schedule,
+          );
+        }
       }
       if (!mounted) {
         return false;
@@ -531,6 +649,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       setState(() {
         if (refreshed != null) {
           _live = refreshed;
+        }
+        if (useHtml) {
+          _draftStoryHtml = cleanedHtml;
         }
         _lastStorySavedAt = DateTime.now();
         _storySaving = false;
@@ -1018,15 +1139,30 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                                 onChanged: _saving
                                     ? null
                                     : (value) {
-                                        setState(() {
-                                          _useNewStoryEditor = value;
-                                        });
+                                        unawaited(_toggleNewStoryEditor(value));
                                       },
                               ),
                               const SizedBox(height: 8),
                             ],
                             if (admin && _useNewStoryEditor)
-                              const TipTapStoryFrame()
+                              TipTapStoryFrame(
+                                initialHtml: _draftStoryHtml,
+                                onHtmlChanged: _onStoryHtmlChanged,
+                              )
+                            else if ((_source?.storyHtml ?? '')
+                                .trim()
+                                .isNotEmpty)
+                              const Padding(
+                                key: Key('planner-story-html-locked'),
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Text(
+                                  '이 글은 새 편집기로 수정하세요',
+                                  style: TextStyle(
+                                    color: PlannerPalette.textDim,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
                             else
                               StoryBlockEditor(
                                 initial: _blocks,

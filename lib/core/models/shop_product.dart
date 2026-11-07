@@ -697,6 +697,7 @@ class ShopProduct {
     this.meetingPoint = '',
     this.schedule = '',
     this.storyBlocks = const [],
+    this.storyHtml = '',
     this.includes = '',
     this.excludes = '',
     this.difficulty = '',
@@ -767,6 +768,7 @@ class ShopProduct {
       meetingPoint: data['meeting_point'] as String? ?? '',
       schedule: data['schedule'] as String? ?? '',
       storyBlocks: StoryBlock.listFrom(data['story_blocks']),
+      storyHtml: data['story_html'] as String? ?? '',
       includes: data['includes'] as String? ?? '',
       excludes: data['excludes'] as String? ?? '',
       difficulty: data['difficulty'] as String? ?? '',
@@ -829,6 +831,9 @@ class ShopProduct {
 
   /// Planned-trip story. Empty means [schedule] is still the older plain text.
   final List<StoryBlock> storyBlocks;
+
+  /// TipTap trial HTML. Product document only — never written to the shop array.
+  final String storyHtml;
   final String includes;
   final String excludes;
   final String difficulty;
@@ -1552,6 +1557,7 @@ class ShopProduct {
     String? meetingPoint,
     String? schedule,
     List<StoryBlock>? storyBlocks,
+    String? storyHtml,
     String? includes,
     String? excludes,
     String? difficulty,
@@ -1605,6 +1611,7 @@ class ShopProduct {
       meetingPoint: meetingPoint ?? this.meetingPoint,
       schedule: schedule ?? this.schedule,
       storyBlocks: storyBlocks ?? this.storyBlocks,
+      storyHtml: storyHtml ?? this.storyHtml,
       includes: includes ?? this.includes,
       excludes: excludes ?? this.excludes,
       difficulty: difficulty ?? this.difficulty,
@@ -1804,6 +1811,10 @@ class ShopProduct {
     };
   }
 
+  /// Product-doc only. Kept off [toMap] so the shop `products` array never
+  /// receives it. [preserveStoryHtml] copies it across full document sets.
+  static const storyHtmlKey = 'story_html';
+
   /// Seat inventory written by the empty-seat screen and bookings.
   /// The product form omits these so a save keeps the document's current values.
   static const seatInventoryKeys = <String>{
@@ -1816,6 +1827,31 @@ class ShopProduct {
     'flag_closes_at',
     'same_boat_opened_at',
   };
+
+  /// Keep an existing product-doc `story_html` when a form save omits it.
+  static Map<String, dynamic> preserveStoryHtml({
+    required Map<String, dynamic> written,
+    Map<String, dynamic>? previousDoc,
+  }) {
+    if (written.containsKey(storyHtmlKey)) {
+      return written;
+    }
+    final html = previousDoc?[storyHtmlKey];
+    if (html is String && html.isNotEmpty) {
+      return {...written, storyHtmlKey: html};
+    }
+    return written;
+  }
+
+  /// Drop `story_html` before writing the shop products array.
+  static Map<String, dynamic> withoutStoryHtml(Map<String, dynamic> raw) {
+    if (!raw.containsKey(storyHtmlKey)) {
+      return raw;
+    }
+    final next = Map<String, dynamic>.from(raw);
+    next.remove(storyHtmlKey);
+    return next;
+  }
 
   /// Optional keys owned by the full product workbench. When absent from
   /// [toMap] (empty), [mergePersistedMap] deletes them so clears stick.

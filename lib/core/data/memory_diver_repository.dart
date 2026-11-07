@@ -4108,8 +4108,9 @@ class MemoryDiverRepository implements DiverRepository {
   Future<void> updateShopProductStory({
     required String shopId,
     required String productId,
-    required List<StoryBlock> storyBlocks,
-    required String schedule,
+    List<StoryBlock>? storyBlocks,
+    String? schedule,
+    String? storyHtml,
   }) async {
     final id = productId.trim();
     if (id.isEmpty) {
@@ -4119,15 +4120,37 @@ class MemoryDiverRepository implements DiverRepository {
     if (previous == null) {
       throw StateError('Product not found');
     }
-    final patch = <String, dynamic>{
-      'story_blocks': [for (final block in storyBlocks) block.toMap()],
-      'schedule': schedule,
-    };
+    final patch = <String, dynamic>{};
+    if (storyBlocks != null) {
+      patch['story_blocks'] = [for (final block in storyBlocks) block.toMap()];
+    }
+    if (schedule != null) {
+      patch['schedule'] = schedule;
+    }
+    if (storyHtml != null) {
+      patch[ShopProduct.storyHtmlKey] = storyHtml;
+    }
+    if (patch.isEmpty) {
+      return;
+    }
     _writeProductDoc(shopId, id, {...previous, ...patch});
     final raw = _productRawByShop[shopId]?[id];
     if (raw != null) {
       _productRawByShop[shopId]![id] = {...raw, ...patch};
     }
+  }
+
+  @override
+  Future<String?> fetchShopProductStoryHtml({
+    required String shopId,
+    required String productId,
+  }) async {
+    final id = productId.trim();
+    if (id.isEmpty) {
+      return null;
+    }
+    final html = _productDocs[shopId]?[id]?[ShopProduct.storyHtmlKey];
+    return html is String ? html : null;
   }
 
   @override
@@ -4203,14 +4226,18 @@ class MemoryDiverRepository implements DiverRepository {
         coverUrl: previousRaw!['cover_url'] as String,
       );
     }
-    final merged = ShopProduct.mergePersistedMap(
+    var merged = ShopProduct.mergePersistedMap(
       previous: previousRaw,
       product: toPersist,
       clearAbsentFormFields: clearAbsentFormFields,
       preserveSeatFields: preserveSeatFields,
     );
+    merged = ShopProduct.preserveStoryHtml(
+      written: merged,
+      previousDoc: _productDocs[shopId]?[toPersist.id],
+    );
     _writeProductDoc(shopId, toPersist.id, merged);
-    byId[toPersist.id] = merged;
+    byId[toPersist.id] = ShopProduct.withoutStoryHtml(merged);
     final parsed = ShopProduct.fromMap(shopId, merged);
     final products = [
       for (final item in current?.products ?? const <ShopProduct>[])
@@ -4421,10 +4448,17 @@ class MemoryDiverRepository implements DiverRepository {
       }
     }
     if (updated != null) {
-      _writeProductDoc(shopId, productId, updated.toMap());
+      final written = ShopProduct.preserveStoryHtml(
+        written: updated.toMap(),
+        previousDoc: _productDocs[shopId]?[productId],
+      );
+      _writeProductDoc(shopId, productId, written);
       final raw = _productRawByShop[shopId]?[productId];
       if (raw != null) {
-        _productRawByShop[shopId]![productId] = {...raw, ...updated.toMap()};
+        _productRawByShop[shopId]![productId] = ShopProduct.withoutStoryHtml({
+          ...raw,
+          ...written,
+        });
       }
     }
     _shopStats[shopId] = current.copyWith(products: products);

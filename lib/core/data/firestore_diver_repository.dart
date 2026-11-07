@@ -5004,17 +5004,26 @@ class FirestoreDiverRepository implements DiverRepository {
       clearAbsentFormFields: clearAbsentFormFields,
       preserveSeatFields: preserveSeatFields,
     );
-    final next = current.values.toList();
     final coverForShop = saved.coverUrl.isNotEmpty
         ? saved.coverUrl
         : (snap.data()?['cover_url'] as String? ?? '');
-    final written = current[saved.id];
+    var written = current[saved.id];
     if (written == null) {
       throw StateError('PRODUCT_DOC_WRITE_FAILED');
     }
+    final productDocRef = ref.collection('products').doc(saved.id);
+    final existingDoc = await productDocRef.get();
+    written = ShopProduct.preserveStoryHtml(
+      written: written,
+      previousDoc: existingDoc.data(),
+    );
+    current[saved.id] = written;
+    final next = [
+      for (final item in current.values) ShopProduct.withoutStoryHtml(item),
+    ];
     // Subcollection first. The shop products array is written only after this
     // succeeds, so a denied product document leaves the array unchanged.
-    await ref.collection('products').doc(saved.id).set(written);
+    await productDocRef.set(written);
     final previousProduct = previousRaw == null
         ? null
         : ShopProduct.fromMap(shopId, previousRaw);
@@ -5248,17 +5257,43 @@ class FirestoreDiverRepository implements DiverRepository {
   Future<void> updateShopProductStory({
     required String shopId,
     required String productId,
-    required List<StoryBlock> storyBlocks,
-    required String schedule,
+    List<StoryBlock>? storyBlocks,
+    String? schedule,
+    String? storyHtml,
   }) async {
     final id = productId.trim();
     if (id.isEmpty) {
       throw StateError('Product id required');
     }
-    await _shops.doc(shopId).collection('products').doc(id).update({
-      'story_blocks': [for (final block in storyBlocks) block.toMap()],
-      'schedule': schedule,
-    });
+    final patch = <String, dynamic>{};
+    if (storyBlocks != null) {
+      patch['story_blocks'] = [for (final block in storyBlocks) block.toMap()];
+    }
+    if (schedule != null) {
+      patch['schedule'] = schedule;
+    }
+    if (storyHtml != null) {
+      patch[ShopProduct.storyHtmlKey] = storyHtml;
+    }
+    if (patch.isEmpty) {
+      return;
+    }
+    await _shops.doc(shopId).collection('products').doc(id).update(patch);
+  }
+
+  @override
+  Future<String?> fetchShopProductStoryHtml({
+    required String shopId,
+    required String productId,
+  }) async {
+    final id = productId.trim();
+    if (id.isEmpty) {
+      return null;
+    }
+    final snap =
+        await _shops.doc(shopId).collection('products').doc(id).get();
+    final html = snap.data()?[ShopProduct.storyHtmlKey];
+    return html is String ? html : null;
   }
 
   @override
@@ -5309,10 +5344,18 @@ class FirestoreDiverRepository implements DiverRepository {
     }
     // Document first. The shop array is updated only after this succeeds.
     if (updated != null) {
-      await ref.collection('products').doc(productId).set(updated.toMap());
+      final docRef = ref.collection('products').doc(productId);
+      final existingDoc = await docRef.get();
+      final written = ShopProduct.preserveStoryHtml(
+        written: updated.toMap(),
+        previousDoc: existingDoc.data(),
+      );
+      await docRef.set(written);
     }
     await ref.set({
-      'products': [for (final item in next) item.toMap()],
+      'products': [
+        for (final item in next) ShopProduct.withoutStoryHtml(item.toMap()),
+      ],
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }

@@ -688,13 +688,21 @@ abstract class DiverRepository {
     bool recordProductChanges = true,
   });
 
-  /// Writes only `story_blocks` and `schedule` on
-  /// `shops/{shopId}/products/{productId}`. Does not touch the shop array.
+  /// Writes story fields on `shops/{shopId}/products/{productId}` only.
+  /// Does not touch the shop array. Pass [storyBlocks]/[schedule] for the
+  /// block editor, or [storyHtml] for the TipTap trial path.
   Future<void> updateShopProductStory({
     required String shopId,
     required String productId,
-    required List<StoryBlock> storyBlocks,
-    required String schedule,
+    List<StoryBlock>? storyBlocks,
+    String? schedule,
+    String? storyHtml,
+  });
+
+  /// Reads `story_html` from `shops/{shopId}/products/{productId}` only.
+  Future<String?> fetchShopProductStoryHtml({
+    required String shopId,
+    required String productId,
   });
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId);

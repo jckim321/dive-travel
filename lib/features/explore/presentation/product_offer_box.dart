@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
@@ -368,6 +371,7 @@ class _OfferFactsState extends State<_OfferFacts> {
     return product.derivedDurationLabel.trim().isNotEmpty ||
         product.meetingPoint.trim().isNotEmpty ||
         product.schedule.trim().isNotEmpty ||
+        product.storyHtml.trim().isNotEmpty ||
         product.storyBlocks.isNotEmpty ||
         product.includes.trim().isNotEmpty ||
         product.excludes.trim().isNotEmpty ||
@@ -398,7 +402,13 @@ class _OfferFactsState extends State<_OfferFacts> {
         if (_open) ...[
           _fact(l10n.productOfferNights, product.derivedDurationLabel),
           _fact(l10n.productFormMeetingPoint, product.meetingPoint),
-          if (product.storyBlocks.isNotEmpty)
+          if (product.storyHtml.trim().isNotEmpty)
+            _storyHtml(
+              l10n.creatorWizardStepSchedule,
+              product.storyHtml.trim(),
+              Key('product-offer-story-html-${product.id}'),
+            )
+          else if (product.storyBlocks.isNotEmpty)
             Padding(
               key: Key('product-offer-story-${product.id}'),
               padding: const EdgeInsets.only(top: 8),
@@ -475,6 +485,65 @@ class _OfferFactsState extends State<_OfferFacts> {
             styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
               p: theme.textTheme.bodySmall,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _storyHtml(String title, String html, Key key) {
+    final theme = Theme.of(context);
+    final body = theme.textTheme.bodySmall;
+    return Padding(
+      key: key,
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Html(
+            data: html,
+            shrinkWrap: true,
+            style: {
+              'body': Style(
+                margin: Margins.zero,
+                padding: HtmlPaddings.zero,
+                fontSize: body?.fontSize != null
+                    ? FontSize(body!.fontSize!)
+                    : null,
+                color: body?.color,
+              ),
+              'p': Style(margin: Margins.only(bottom: 8)),
+              'h1': Style(margin: Margins.only(bottom: 8)),
+              'h2': Style(margin: Margins.only(bottom: 8)),
+              'h3': Style(margin: Margins.only(bottom: 8)),
+              'a': Style(color: const Color(0xFF1565C0)),
+              'blockquote': Style(
+                margin: Margins.symmetric(vertical: 8),
+                padding: HtmlPaddings.only(left: 12),
+                border: const Border(
+                  left: BorderSide(color: Color(0xFF1F4E79), width: 3),
+                ),
+              ),
+            },
+            onLinkTap: (url, attributes, element) {
+              if (url == null || url.trim().isEmpty) {
+                return;
+              }
+              final uri = Uri.tryParse(url.trim());
+              if (uri == null) {
+                return;
+              }
+              unawaited(
+                launchUrl(uri, mode: LaunchMode.externalApplication),
+              );
+            },
           ),
         ],
       ),

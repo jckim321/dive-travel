@@ -2764,18 +2764,20 @@ class DiverStore extends ChangeNotifier {
     );
   }
 
-  /// Product-doc only: `story_blocks` and `schedule`. Does not rewrite seats.
+  /// Product-doc only story fields. Does not rewrite seats or the shop array.
   Future<void> updateShopProductStory({
     required String shopId,
     required String productId,
-    required List<StoryBlock> storyBlocks,
-    required String schedule,
+    List<StoryBlock>? storyBlocks,
+    String? schedule,
+    String? storyHtml,
   }) async {
     await _repository.updateShopProductStory(
       shopId: shopId,
       productId: productId,
       storyBlocks: storyBlocks,
       schedule: schedule,
+      storyHtml: storyHtml,
     );
     final current = _findShopProduct(shopId, productId);
     if (current != null) {
@@ -2784,10 +2786,22 @@ class DiverStore extends ChangeNotifier {
         current.copyWith(
           storyBlocks: storyBlocks,
           schedule: schedule,
+          storyHtml: storyHtml,
         ),
       );
     }
     await refreshShopStat(shopId);
+  }
+
+  /// Product-doc `story_html` only. Null when the document is missing.
+  Future<String?> fetchShopProductStoryHtml({
+    required String shopId,
+    required String productId,
+  }) {
+    return _repository.fetchShopProductStoryHtml(
+      shopId: shopId,
+      productId: productId,
+    );
   }
 
   Future<ShopProductSaveResult> saveShopProduct({
