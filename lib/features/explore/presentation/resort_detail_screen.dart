@@ -100,7 +100,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
           p.active,
           p.publishStatus,
           p.storyHtml.length,
-          Object.hash(p.storyHtml),
+          p.storyHtml.hashCode,
           [
             for (final option in p.options)
               '${option.id}|${option.name}|${option.consumerPrice}|${option.professionalPrice}',
