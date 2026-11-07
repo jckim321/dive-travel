@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -19,6 +21,8 @@ class StoryBlockEditor extends StatefulWidget {
     this.pickVideo,
     this.uploadVideo,
     this.openMap,
+    this.onAutosave,
+    this.lastSavedAt,
   });
 
   final List<StoryBlock> initial;
@@ -42,6 +46,13 @@ class StoryBlockEditor extends StatefulWidget {
   /// Test hook. Null opens the Google Maps search in the browser.
   final Future<void> Function(Uri uri)? openMap;
 
+  /// When set, dirty body text is saved every 30 seconds.
+  /// `true` success, `false` failed (retry), `null` skipped quietly.
+  final Future<bool?> Function()? onAutosave;
+
+  /// Parent updates this after a successful body save so the dirty flag clears.
+  final DateTime? lastSavedAt;
+
   @override
   State<StoryBlockEditor> createState() => _StoryBlockEditorState();
 }
@@ -53,6 +64,11 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   var _focus = 0;
   var _busy = false;
   double? _videoProgress;
+  var _dirty = false;
+  var _autosaving = false;
+  String? _autosaveNotice;
+  Timer? _autosaveTimer;
+  Timer? _retryTimer;
 
   @override
   void initState() {
@@ -78,7 +94,27 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   }
 
   @override
+  void didUpdateWidget(StoryBlockEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.lastSavedAt != null &&
+        widget.lastSavedAt != oldWidget.lastSavedAt) {
+      _dirty = false;
+      _autosaveNotice = null;
+      _retryTimer?.cancel();
+      _retryTimer = null;
+    }
+    if (widget.onAutosave == null && oldWidget.onAutosave != null) {
+      _autosaveTimer?.cancel();
+      _autosaveTimer = null;
+      _retryTimer?.cancel();
+      _retryTimer = null;
+    }
+  }
+
+  @override
   void dispose() {
+    _autosaveTimer?.cancel();
+    _retryTimer?.cancel();
     for (final controller in _controllers) {
       controller.dispose();
     }
@@ -98,6 +134,61 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           placeName: _placeControllers[i].text,
         ),
     ]);
+    _markDirtyForAutosave();
+  }
+
+  void _markDirtyForAutosave() {
+    if (widget.onAutosave == null) {
+      return;
+    }
+    _dirty = true;
+    _autosaveTimer ??= Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(_runAutosave());
+    });
+  }
+
+  Future<void> _runAutosave() async {
+    final save = widget.onAutosave;
+    if (save == null || !_dirty || _autosaving || _busy) {
+      return;
+    }
+    _autosaving = true;
+    try {
+      final ok = await save();
+      if (!mounted) {
+        return;
+      }
+      if (ok == true) {
+        setState(() {
+          _dirty = false;
+          _autosaveNotice = null;
+        });
+        _retryTimer?.cancel();
+        _retryTimer = null;
+      } else if (ok == false) {
+        setState(() {
+          _autosaveNotice = '저장하지 못했습니다. 다시 시도합니다.';
+        });
+        _scheduleRetry();
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _autosaveNotice = '저장하지 못했습니다. 다시 시도합니다.';
+      });
+      _scheduleRetry();
+    } finally {
+      _autosaving = false;
+    }
+  }
+
+  void _scheduleRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = Timer(const Duration(seconds: 5), () {
+      unawaited(_runAutosave());
+    });
   }
 
   void _insertEditors(int at) {
@@ -178,6 +269,17 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _toolbar(compact),
+            if (_autosaveNotice != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _autosaveNotice!,
+                key: const Key('planner-story-autosave-notice'),
+                style: const TextStyle(
+                  color: PartnerTheme.textDim,
+                  fontSize: 12,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             if (_videoProgress != null) ...[
               LinearProgressIndicator(

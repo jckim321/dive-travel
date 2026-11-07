@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -113,17 +115,20 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
 
   PickedPhoto? _cover;
   var _saving = false;
+  var _storySaving = false;
   var _open = false;
   var _adminHidden = false;
   var _bookedLocked = false;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
+  DateTime? _lastStorySavedAt;
 
   /// Last known product on this screen. Starts as [widget.existing] and is
   /// refreshed after each save so a second save keeps seats and listing.
   ShopProduct? _live;
   String _cleanFingerprint = '';
+  String _cleanStoryFingerprint = '';
 
   ShopProduct? get _source => _live ?? widget.existing;
 
@@ -216,7 +221,14 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
   }
 
-  String _fingerprint() {
+  String _storyFingerprint() {
+    return [
+      for (final block in _blocks)
+        '${block.kind.name}|${block.url}|${block.placeName}|${block.text}',
+    ].join('\u001f');
+  }
+
+  String _formFingerprint() {
     return [
       _title.text,
       _region.text,
@@ -231,18 +243,23 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _excludes.text,
       _open ? '1' : '0',
       _cover == null ? '' : 'cover',
-      for (final block in _blocks)
-        '${block.kind.name}|${block.url}|${block.placeName}|${block.text}',
       for (final option in _options)
         '${option.id}|${option.name.text}|${option.price.text}',
     ].join('\u001f');
   }
 
   void _markClean() {
-    _cleanFingerprint = _fingerprint();
+    _cleanFingerprint = _formFingerprint();
+    _cleanStoryFingerprint = _storyFingerprint();
   }
 
-  bool get _isDirty => _fingerprint() != _cleanFingerprint;
+  void _markStoryClean() {
+    _cleanStoryFingerprint = _storyFingerprint();
+  }
+
+  bool get _isDirty =>
+      _formFingerprint() != _cleanFingerprint ||
+      _storyFingerprint() != _cleanStoryFingerprint;
 
   String get _statusLabel {
     if (_adminHidden) {
@@ -362,6 +379,197 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             text: block.kind == StoryBlockKind.divider ? '' : block.text.trim(),
           ),
     ];
+  }
+
+  String _formatStorySavedAt(DateTime at) {
+    final local = at.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '마지막 저장 $month.$day $hour:$minute';
+  }
+
+  Future<bool?> _saveStoryBody({required bool fromAutosave}) async {
+    if (_saving || _storySaving) {
+      return null;
+    }
+    final title = _title.text.trim();
+    final existing = _source;
+    final firstSave = existing == null;
+    if (firstSave && title.isEmpty) {
+      if (!fromAutosave && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('여행 제목을 입력하세요.')),
+        );
+      }
+      return null;
+    }
+    setState(() => _storySaving = true);
+    final store = DiverStoreScope.of(context);
+    final admin = store.stats.isAdmin;
+    final blocks = _savedBlocks();
+    final schedule = StoryBlock.plainText(blocks);
+    try {
+      if (firstSave) {
+        final shopId = _shopId ??= _nextShopId(null);
+        final productId = _productId ??= 'p-$shopId';
+        final region = _region.text.trim();
+        await store.saveShopProfile(
+          shopId: shopId,
+          name: title,
+          location: region,
+          country: region,
+          productName: title,
+          consumerPrice: 0,
+          professionalPrice: 0,
+          curated: true,
+          creatorProposal: !admin,
+          creatorUid: !admin ? store.uid : null,
+        );
+        await store.saveShopProduct(
+          shopId: shopId,
+          product: ShopProduct(
+            id: productId,
+            shopId: shopId,
+            name: title,
+            consumerPrice: 0,
+            professionalPrice: 0,
+            schedule: schedule,
+            storyBlocks: blocks,
+            listingKind: ProductListingKind.curated,
+            publishStatus: ProductPublishStatus.draft,
+            active: false,
+            openEmptySeats: false,
+            sameBoatStatus: SameBoatStatus.closed,
+            submittedByUid: store.uid ?? '',
+          ),
+          intent: ProductSaveIntent.preserveListing,
+          creatorSubmission: !admin,
+          submitterUid: store.uid,
+        );
+      } else {
+        final source = existing;
+        final shopId = _shopId ??= source.shopId;
+        _productId ??= source.id;
+        await store.saveShopProduct(
+          shopId: shopId,
+          product: source.copyWith(
+            schedule: schedule,
+            storyBlocks: blocks,
+          ),
+          intent: ProductSaveIntent.preserveListing,
+          creatorSubmission: !admin,
+          submitterUid: store.uid,
+        );
+      }
+      if (!mounted) {
+        return false;
+      }
+      final shopId = _shopId!;
+      final productId = _productId!;
+      final refreshed = _productFromStore(store, shopId, productId);
+      setState(() {
+        if (refreshed != null) {
+          _live = refreshed;
+        }
+        _lastStorySavedAt = DateTime.now();
+        _storySaving = false;
+        _markStoryClean();
+      });
+      return true;
+    } catch (_) {
+      if (mounted) {
+        setState(() => _storySaving = false);
+      }
+      return false;
+    }
+  }
+
+  Future<void> _previewStory() async {
+    final blocks = _savedBlocks();
+    if (!mounted) {
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('planner-story-preview-dialog'),
+          title: const Text('미리보기'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: blocks.isEmpty
+                  ? const Text(
+                      '아직 본문이 없습니다.',
+                      style: TextStyle(color: PartnerTheme.textDim),
+                    )
+                  : StoryBlockView(
+                      key: const Key('planner-story-preview-view'),
+                      blocks: blocks,
+                    ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              key: const Key('planner-story-preview-close'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('닫기'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _storySectionTrailing() {
+    final saved = _lastStorySavedAt;
+    return Wrap(
+      alignment: WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        Text(
+          key: const Key('planner-story-last-saved'),
+          saved == null ? '아직 본문 저장 없음' : _formatStorySavedAt(saved),
+          style: const TextStyle(
+            color: PartnerTheme.textDim,
+            fontSize: 12,
+          ),
+        ),
+        TextButton(
+          key: const Key('planner-story-preview'),
+          onPressed: _storySaving || _saving ? null : _previewStory,
+          child: const Text('미리보기'),
+        ),
+        FilledButton(
+          key: const Key('planner-story-save-body'),
+          onPressed: _storySaving || _saving
+              ? null
+              : () {
+                  unawaited(() async {
+                    final ok = await _saveStoryBody(fromAutosave: false);
+                    if (ok == false && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('본문을 저장하지 못했습니다. 다시 시도합니다.'),
+                        ),
+                      );
+                    }
+                  }());
+                },
+          style: FilledButton.styleFrom(
+            backgroundColor: PartnerTheme.accent,
+            foregroundColor: PartnerTheme.bg,
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          child: Text(_storySaving ? '저장 중…' : '본문 저장'),
+        ),
+      ],
+    );
   }
 
   Future<String> _uploadStoryPhoto(PickedPhoto photo) {
@@ -564,6 +772,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         }
         _cover = null;
         _saving = false;
+        _lastStorySavedAt = DateTime.now();
         _markClean();
       });
       final shown = wantOpen && !keepHidden;
@@ -675,6 +884,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           sectionKey: const Key('planner-section-story'),
                           step: '2',
                           title: '여행 이야기',
+                          trailing: _storySectionTrailing(),
                           children: [
                             StoryBlockEditor(
                               initial: _blocks,
@@ -683,6 +893,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                               uploadPhoto: _uploadStoryPhoto,
                               pickVideo: widget.pickStoryVideo,
                               uploadVideo: _uploadStoryVideo,
+                              onAutosave: () =>
+                                  _saveStoryBody(fromAutosave: true),
+                              lastSavedAt: _lastStorySavedAt,
                             ),
                           ],
                         ),
@@ -1234,6 +1447,7 @@ Widget _section({
   required String step,
   required String title,
   String? badge,
+  Widget? trailing,
   required List<Widget> children,
 }) {
   return Material(
@@ -1249,6 +1463,7 @@ Widget _section({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 26,
@@ -1278,6 +1493,10 @@ Widget _section({
                   ),
                 ),
               ),
+              if (trailing != null) ...[
+                const SizedBox(width: 8),
+                Flexible(child: trailing),
+              ],
               if (badge != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
