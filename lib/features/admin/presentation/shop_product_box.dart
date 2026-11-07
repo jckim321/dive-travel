@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Price, options, included/excluded text, and photos for one product.
 ///
 /// [showDate] adds a departure-date field. It stays off so the current
 /// partner form keeps its present layout.
+///
+/// [palette] swaps the box chrome. Null keeps the partner dark colors.
 class ShopProductBox extends StatelessWidget {
   const ShopProductBox({
     super.key,
@@ -24,6 +26,7 @@ class ShopProductBox extends StatelessWidget {
     this.endDateLabel = '종료일',
     this.footer,
     this.keyPrefix = '',
+    this.palette,
   });
 
   final String priceTitle;
@@ -53,23 +56,32 @@ class ShopProductBox extends StatelessWidget {
   /// Empty keeps the original keys. A prefix makes each box unique.
   final String keyPrefix;
 
+  /// Planned-trip light chrome. Null keeps partner dark colors.
+  final PlannerPaletteColors? palette;
+
   Key _key(String name) =>
       Key(keyPrefix.isEmpty ? name : '$keyPrefix-$name');
+
+  PlannerPaletteColors get _colors =>
+      palette ?? PlannerPaletteColors.partnerDark;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = _colors;
     return Column(
       key: _key('shop-product-box'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showDate)
           _sectionBox(
+            colors: colors,
             boxKey: _key('shop-product-box-date-section'),
             title: dateSectionTitle ?? l10n.workbenchDepartureDate,
             children: [
               if (endDateController == null)
                 _dateFieldBox(
+                  colors: colors,
                   fieldKey: _key('shop-product-box-date'),
                   controller: dateController,
                   label: l10n.workbenchDepartureDate,
@@ -78,11 +90,13 @@ class ShopProductBox extends StatelessWidget {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final start = _dateFieldBox(
+                      colors: colors,
                       fieldKey: _key('shop-product-box-date'),
                       controller: dateController,
                       label: l10n.workbenchDepartureDate,
                     );
                     final end = _dateFieldBox(
+                      colors: colors,
                       fieldKey: _key('shop-product-box-end-date'),
                       controller: endDateController,
                       label: endDateLabel,
@@ -110,17 +124,20 @@ class ShopProductBox extends StatelessWidget {
             ],
           ),
         _sectionBox(
+          colors: colors,
           boxKey: _key('partner-form-section-price'),
           title: priceTitle,
           children: [priceAndPhotos],
         ),
         _sectionBox(
+          colors: colors,
           boxKey: _key('partner-form-section-options'),
           title: optionsTitle,
           children: [options],
         ),
         ?betweenOptionsAndIncludes,
         _sectionBox(
+          colors: colors,
           boxKey: _key('partner-form-section-includes'),
           title: includesTitle,
           children: [includes],
@@ -132,6 +149,7 @@ class ShopProductBox extends StatelessWidget {
 }
 
 Widget _sectionBox({
+  required PlannerPaletteColors colors,
   required Key boxKey,
   required String title,
   required List<Widget> children,
@@ -140,10 +158,10 @@ Widget _sectionBox({
     padding: const EdgeInsets.only(bottom: 14),
     child: Material(
       key: boxKey,
-      color: PartnerTheme.card,
+      color: colors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: BorderSide(color: colors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -152,8 +170,8 @@ Widget _sectionBox({
           children: [
             Text(
               title,
-              style: const TextStyle(
-                color: PartnerTheme.text,
+              style: TextStyle(
+                color: colors.text,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -168,6 +186,7 @@ Widget _sectionBox({
 }
 
 Widget _dateFieldBox({
+  required PlannerPaletteColors colors,
   required Key fieldKey,
   required TextEditingController? controller,
   required String label,
@@ -176,30 +195,30 @@ Widget _dateFieldBox({
     key: fieldKey,
     controller: controller,
     keyboardType: TextInputType.datetime,
-    style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-    cursorColor: PartnerTheme.accent,
-    decoration: _dateField(label),
+    style: TextStyle(color: colors.text, fontSize: 15),
+    cursorColor: colors.text,
+    decoration: _dateField(colors, label),
   );
 }
 
-InputDecoration _dateField(String label) {
+InputDecoration _dateField(PlannerPaletteColors colors, String label) {
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: PartnerTheme.bg,
-    labelStyle: const TextStyle(color: PartnerTheme.textDim),
+    fillColor: colors.bg,
+    labelStyle: TextStyle(color: colors.textDim),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: BorderSide(color: colors.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: BorderSide(color: colors.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      borderSide: BorderSide(color: colors.accent, width: 1.4),
     ),
   );
 }

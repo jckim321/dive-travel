@@ -8,10 +8,10 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Calendar day from `2026.11.18`, `2026-11-18`, or the same text with a weekday.
@@ -499,7 +499,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               child: blocks.isEmpty
                   ? const Text(
                       '아직 본문이 없습니다.',
-                      style: TextStyle(color: PartnerTheme.textDim),
+                      style: TextStyle(color: PlannerPalette.textDim),
                     )
                   : StoryBlockView(
                       key: const Key('planner-story-preview-view'),
@@ -531,7 +531,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           key: const Key('planner-story-last-saved'),
           saved == null ? '아직 본문 저장 없음' : _formatStorySavedAt(saved),
           style: const TextStyle(
-            color: PartnerTheme.textDim,
+            color: PlannerPalette.textDim,
             fontSize: 12,
           ),
         ),
@@ -557,8 +557,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                   }());
                 },
           style: FilledButton.styleFrom(
-            backgroundColor: PartnerTheme.accent,
-            foregroundColor: PartnerTheme.bg,
+            backgroundColor: PlannerPalette.accent,
+            foregroundColor: PlannerPalette.onAccent,
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
@@ -811,13 +811,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         }
       },
       child: Theme(
-        data: PartnerTheme.dark,
+        data: PlannerPalette.theme,
         child: Scaffold(
           key: const Key('planner-trip-screen'),
-          backgroundColor: PartnerTheme.bg,
+          backgroundColor: PlannerPalette.bg,
           appBar: AppBar(
-            backgroundColor: PartnerTheme.bg,
-            foregroundColor: PartnerTheme.text,
+            backgroundColor: PlannerPalette.bg,
+            foregroundColor: PlannerPalette.text,
             title: const Text('기획 여행 만들기'),
           ),
           body: LayoutBuilder(
@@ -837,7 +837,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                         const Text(
                           '제목·지역·이야기·상품을 적습니다.',
                           key: Key('planner-trip-subtitle'),
-                          style: TextStyle(color: PartnerTheme.textDim, height: 1.4),
+                          style: TextStyle(color: PlannerPalette.textDim, height: 1.4),
                         ),
                         const SizedBox(height: 16),
                         _section(
@@ -869,7 +869,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                             Text(
                               duration.isEmpty ? '기간은 날짜로 자동' : duration,
                               key: const Key('planner-trip-duration'),
-                              style: const TextStyle(color: PartnerTheme.textDim),
+                              style: const TextStyle(color: PlannerPalette.textDim),
                             ),
                             const SizedBox(height: 12),
                             _coverBox(),
@@ -914,6 +914,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                               priceAndPhotos: _priceBlock(),
                               options: _optionsBlock(l10n),
                               includes: _includesBlock(),
+                              palette: PlannerPaletteColors.plannerLight,
                             ),
                           ],
                         ),
@@ -925,7 +926,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             },
           ),
           bottomNavigationBar: Material(
-            color: PartnerTheme.bg,
+            color: PlannerPalette.bg,
             elevation: 8,
             child: SafeArea(
               top: false,
@@ -938,9 +939,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                         key: const Key('planner-trip-temp-save'),
                         onPressed: _saving ? null : () => _save(temp: true),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: PartnerTheme.text,
+                          foregroundColor: PlannerPalette.text,
                           minimumSize: const Size.fromHeight(48),
-                          side: const BorderSide(color: PartnerTheme.border),
+                          side: const BorderSide(color: PlannerPalette.border),
                         ),
                         child: Text(l10n.briefTempSave),
                       ),
@@ -952,8 +953,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                         key: const Key('planner-trip-save'),
                         onPressed: _saving ? null : () => _save(temp: false),
                         style: FilledButton.styleFrom(
-                          backgroundColor: PartnerTheme.accent,
-                          foregroundColor: PartnerTheme.bg,
+                          backgroundColor: PlannerPalette.accent,
+                          foregroundColor: PlannerPalette.onAccent,
                           minimumSize: const Size.fromHeight(48),
                         ),
                         child: Text(
@@ -982,7 +983,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             _adminHidden ? 'planner-trip-admin-hidden' : 'planner-trip-status',
           ),
           style: const TextStyle(
-            color: PartnerTheme.text,
+            color: PlannerPalette.text,
             fontSize: 28,
             fontWeight: FontWeight.w800,
             height: 1.2,
@@ -1051,25 +1052,25 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       labelText: label,
       hintText: hintText,
       filled: true,
-      fillColor: PartnerTheme.bg,
-      labelStyle: const TextStyle(color: PartnerTheme.textDim),
-      hintStyle: const TextStyle(color: PartnerTheme.textDim),
+      fillColor: PlannerPalette.bg,
+      labelStyle: const TextStyle(color: PlannerPalette.textDim),
+      hintStyle: const TextStyle(color: PlannerPalette.textDim),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: PartnerTheme.border),
+        borderSide: const BorderSide(color: PlannerPalette.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: PartnerTheme.border),
+        borderSide: const BorderSide(color: PlannerPalette.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+        borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: PartnerTheme.border),
+        borderSide: const BorderSide(color: PlannerPalette.border),
       ),
     );
   }
@@ -1081,8 +1082,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       enabled: !_saving,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 15),
+      cursorColor: PlannerPalette.text,
       decoration: _plannerFieldDecoration(label: '모집 정원(총 인원)'),
     );
     final bookedField = TextField(
@@ -1091,8 +1092,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       enabled: !_saving && !_bookedLocked,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 15),
+      cursorColor: PlannerPalette.text,
       decoration: _plannerFieldDecoration(
         label: '이미 확정된 인원',
         hintText: '0',
@@ -1102,17 +1103,17 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       key: const Key('planner-same-boat-left'),
       '남은 자리 $_seatsLeft명',
       style: const TextStyle(
-        color: PartnerTheme.text,
+        color: PlannerPalette.text,
         fontWeight: FontWeight.w700,
         fontSize: 15,
       ),
     );
     return Material(
       key: const Key('planner-same-boat-section'),
-      color: PartnerTheme.card,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1122,7 +1123,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             const Text(
               '같은배 모집',
               style: TextStyle(
-                color: PartnerTheme.text,
+                color: PlannerPalette.text,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -1174,10 +1175,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     );
     return Material(
       key: const Key('shop-product-box-date-section'),
-      color: PartnerTheme.card,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1187,7 +1188,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             const Text(
               '날짜',
               style: TextStyle(
-                color: PartnerTheme.text,
+                color: PlannerPalette.text,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -1228,28 +1229,28 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       readOnly: true,
       enableInteractiveSelection: false,
       onTap: _pickDateRange,
-      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 15),
+      cursorColor: PlannerPalette.text,
       decoration: InputDecoration(
         labelText: label,
         hintText: '달력에서 선택',
         filled: true,
-        fillColor: PartnerTheme.bg,
-        labelStyle: const TextStyle(color: PartnerTheme.textDim),
-        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        fillColor: PlannerPalette.bg,
+        labelStyle: const TextStyle(color: PlannerPalette.textDim),
+        hintStyle: const TextStyle(color: PlannerPalette.textDim),
         suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.border),
+          borderSide: const BorderSide(color: PlannerPalette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.border),
+          borderSide: const BorderSide(color: PlannerPalette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+          borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
         ),
       ),
     );
@@ -1288,7 +1289,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           onPressed: _saving
               ? null
               : () => setState(() => _options.add(_PlannerOption())),
-          style: OutlinedButton.styleFrom(foregroundColor: PartnerTheme.text),
+          style: OutlinedButton.styleFrom(foregroundColor: PlannerPalette.text),
           child: Text(l10n.partnerFormAddOption),
         ),
       ],
@@ -1297,10 +1298,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
 
   Widget _optionRow(_PlannerOption option) {
     return Material(
-      color: PartnerTheme.bg,
+      color: PlannerPalette.bg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -1320,7 +1321,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                     _options.remove(option);
                     option.dispose();
                   }),
-                  icon: const Icon(Icons.close, color: PartnerTheme.textDim),
+                  icon: const Icon(Icons.close, color: PlannerPalette.textDim),
                 ),
               ],
             ),
@@ -1362,33 +1363,33 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final cover = _cover;
     return Material(
       key: const Key('planner-trip-cover'),
-      color: PartnerTheme.bg,
+      color: PlannerPalette.bg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
         child: Column(
           children: [
-            const Icon(Icons.photo_outlined, color: PartnerTheme.textDim),
+            const Icon(Icons.photo_outlined, color: PlannerPalette.textDim),
             const SizedBox(height: 8),
             Text(
               cover == null ? '사진을 여기에 놓으세요' : cover.fileName,
               key: const Key('planner-trip-cover-name'),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: PartnerTheme.text),
+              style: const TextStyle(color: PlannerPalette.text),
             ),
             const SizedBox(height: 4),
             const Text(
               '대표 사진',
-              style: TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+              style: TextStyle(color: PlannerPalette.textDim, fontSize: 12),
             ),
             const SizedBox(height: 10),
             OutlinedButton(
               key: const Key('planner-trip-cover-pick'),
               onPressed: _saving ? null : _pickCover,
-              style: OutlinedButton.styleFrom(foregroundColor: PartnerTheme.text),
+              style: OutlinedButton.styleFrom(foregroundColor: PlannerPalette.text),
               child: const Text('파일 선택'),
             ),
           ],
@@ -1431,8 +1432,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       inputFormatters: [
         if (number) FilteringTextInputFormatter.digitsOnly,
       ],
-      style: const TextStyle(color: PartnerTheme.text),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.text,
       decoration: _field(label, hint: hint),
     );
   }
@@ -1448,10 +1449,10 @@ Widget _section({
 }) {
   return Material(
     key: sectionKey,
-    color: PartnerTheme.card,
+    color: PlannerPalette.card,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(color: PartnerTheme.border),
+      side: const BorderSide(color: PlannerPalette.border),
     ),
     child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -1466,13 +1467,13 @@ Widget _section({
                 height: 26,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
-                  color: PartnerTheme.accent,
+                  color: PlannerPalette.accent,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   step,
                   style: const TextStyle(
-                    color: PartnerTheme.bg,
+                    color: PlannerPalette.onAccent,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                   ),
@@ -1483,7 +1484,7 @@ Widget _section({
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: PartnerTheme.text,
+                    color: PlannerPalette.text,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
@@ -1497,13 +1498,13 @@ Widget _section({
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: PartnerTheme.badgeGreenBg,
+                    color: PlannerPalette.badgeGreenBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     badge,
                     style: const TextStyle(
-                      color: PartnerTheme.badgeGreenFg,
+                      color: PlannerPalette.badgeGreenFg,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1524,21 +1525,21 @@ InputDecoration _field(String label, {String? hint}) {
     labelText: label,
     hintText: hint,
     filled: true,
-    fillColor: PartnerTheme.bg,
-    labelStyle: const TextStyle(color: PartnerTheme.textDim),
-    hintStyle: const TextStyle(color: PartnerTheme.textDim),
+    fillColor: PlannerPalette.bg,
+    labelStyle: const TextStyle(color: PlannerPalette.textDim),
+    hintStyle: const TextStyle(color: PlannerPalette.textDim),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
     ),
   );
 }
