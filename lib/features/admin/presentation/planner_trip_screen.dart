@@ -115,11 +115,19 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   String? _productId;
   var _placeSeeded = false;
 
+  /// Last known product on this screen. Starts as [widget.existing] and is
+  /// refreshed after each save so a second save keeps seats and listing.
+  ShopProduct? _live;
+  String _cleanFingerprint = '';
+
+  ShopProduct? get _source => _live ?? widget.existing;
+
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
     if (existing != null) {
+      _live = existing;
       final shopId = existing.shopId.trim();
       if (shopId.startsWith('curated-')) {
         _shopId = shopId;
@@ -158,6 +166,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     _start.addListener(_onDates);
     _end.addListener(_onDates);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _markClean();
+      }
+    });
   }
 
   @override
@@ -182,12 +195,88 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     if (region.isNotEmpty) {
       _region.text = region;
     }
+    _markClean();
   }
 
   void _onDates() {
     if (mounted) {
       setState(() {});
     }
+  }
+
+  String _fingerprint() {
+    return [
+      _title.text,
+      _region.text,
+      _blurb.text,
+      _productName.text,
+      _price.text,
+      _start.text,
+      _end.text,
+      _includes.text,
+      _excludes.text,
+      _open ? '1' : '0',
+      _cover == null ? '' : 'cover',
+      for (final block in _blocks)
+        '${block.kind.name}|${block.url}|${block.placeName}|${block.text}',
+      for (final option in _options)
+        '${option.id}|${option.name.text}|${option.price.text}',
+    ].join('\u001f');
+  }
+
+  void _markClean() {
+    _cleanFingerprint = _fingerprint();
+  }
+
+  bool get _isDirty => _fingerprint() != _cleanFingerprint;
+
+  String get _statusLabel {
+    if (_adminHidden) {
+      return '관리자가 잠시 숨김';
+    }
+    final source = _source;
+    if (source != null && source.isListedPublicly) {
+      return '열림';
+    }
+    return '임시저장';
+  }
+
+  Future<bool> _confirmLeave() async {
+    if (!_isDirty) {
+      return true;
+    }
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('planner-trip-leave-dialog'),
+          title: const Text('나가기'),
+          content: const Text('바꾼 내용이 저장되지 않았습니다. 나가시겠습니까?'),
+          actions: [
+            TextButton(
+              key: const Key('planner-trip-leave-stay'),
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('머무르기'),
+            ),
+            TextButton(
+              key: const Key('planner-trip-leave-go'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('나가기'),
+            ),
+          ],
+        );
+      },
+    );
+    return leave == true;
+  }
+
+  ShopProduct? _productFromStore(DiverStore store, String shopId, String productId) {
+    for (final product in store.productsForShop(shopId)) {
+      if (product.id == productId) {
+        return product;
+      }
+    }
+    return null;
   }
 
   @override
@@ -287,7 +376,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final price = parsePositivePrice(_price.text) ?? 0;
     final storeForLock = DiverStoreScope.of(context);
     final locked = _adminHidden && !storeForLock.stats.isAdmin;
-    if (_open && !locked && price <= 0) {
+    // Temp save always closes. Full save follows the open switch.
+    final wantOpen = temp ? false : (_open && !locked);
+    if (wantOpen && price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
       );
@@ -300,7 +391,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final departure = parsePlannerDay(_start.text);
-    if (_open && !locked && departure == null) {
+    if (wantOpen && departure == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('출발일을 입력하세요.')),
       );
@@ -308,7 +399,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
-    final existing = widget.existing;
+    final existing = _source;
     final shopId = _shopId ??= _nextShopId(existing);
     final productId = _productId ??=
         existing != null && existing.shopId.trim() == shopId
@@ -392,25 +483,33 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         photoFileName: _cover?.fileName,
         photoContentType: _cover?.contentType,
       );
-      final keepHidden = _adminHidden && !_open;
+      final keepHidden = _adminHidden && !wantOpen;
       if (!keepHidden) {
         await store.setPlannedTripOpen(
           shopId: shopId,
           productId: productId,
-          open: _open,
+          open: wantOpen,
         );
       }
       if (!mounted) {
         return;
       }
-      final shown = _open && !keepHidden;
+      final refreshed = _productFromStore(store, shopId, productId);
+      setState(() {
+        if (refreshed != null) {
+          _live = refreshed;
+          _adminHidden = refreshed.sameBoatStatus == SameBoatStatus.hidden;
+        }
+        _cover = null;
+        _saving = false;
+        _markClean();
+      });
+      final shown = wantOpen && !keepHidden;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             shown
-                ? (temp
-                    ? '임시 저장했습니다. 손님 목록·홈·같은배에 나옵니다.'
-                    : '저장했습니다. 손님 목록·홈·같은배에 나옵니다.')
+                ? '저장했습니다. 손님 목록·홈·같은배에 나옵니다.'
                 : (temp
                     ? '임시 저장했습니다. 손님 화면에는 아직 나오지 않습니다.'
                     : '저장했습니다. 손님 화면에는 아직 나오지 않습니다.'),
@@ -424,10 +523,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$error')),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+      setState(() => _saving = false);
     }
   }
 
@@ -437,173 +533,202 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final duration = plannerDurationLabel(_start.text, _end.text);
     final admin = DiverStoreScope.of(context).stats.isAdmin;
     final locked = _adminHidden && !admin;
-    return Theme(
-      data: PartnerTheme.dark,
-      child: Scaffold(
-        key: const Key('planner-trip-screen'),
-        backgroundColor: PartnerTheme.bg,
-        appBar: AppBar(
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) {
+          return;
+        }
+        if (await _confirmLeave() && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Theme(
+        data: PartnerTheme.dark,
+        child: Scaffold(
+          key: const Key('planner-trip-screen'),
           backgroundColor: PartnerTheme.bg,
-          foregroundColor: PartnerTheme.text,
-          title: const Text('기획 여행 만들기'),
-        ),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 720;
-            return Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 920),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        '제목·지역·이야기·상품을 적습니다.',
-                        key: Key('planner-trip-subtitle'),
-                        style: TextStyle(color: PartnerTheme.textDim, height: 1.4),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        '열림을 켜면 손님 목록·홈·같은배에 바로 나옵니다.',
-                        style: TextStyle(color: PartnerTheme.textDim, height: 1.4),
-                      ),
-                      const SizedBox(height: 16),
-                      _section(
-                        sectionKey: const Key('planner-section-basics'),
-                        step: '1',
-                        title: '기본사항',
-                        children: [
-                          _pair(
-                            wide: wide,
-                            a: _text(
-                              key: const Key('planner-trip-title'),
-                              controller: _title,
-                              label: '여행 제목',
-                            ),
-                            b: _text(
-                              key: const Key('planner-trip-region'),
-                              controller: _region,
-                              label: '지역',
-                              hint: '몰디브 · 아리환',
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _text(
-                            key: const Key('planner-trip-blurb'),
-                            controller: _blurb,
-                            label: '한 줄 소개',
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            duration.isEmpty ? '기간은 날짜로 자동' : duration,
-                            key: const Key('planner-trip-duration'),
-                            style: const TextStyle(color: PartnerTheme.textDim),
-                          ),
-                          const SizedBox(height: 12),
-                          _coverBox(),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _section(
-                        sectionKey: const Key('planner-section-story'),
-                        step: '2',
-                        title: '여행 이야기',
-                        children: [
-                          StoryBlockEditor(
-                            initial: _blocks,
-                            onChanged: (blocks) => _blocks = blocks,
-                            pickPhoto: widget.pickStoryPhoto,
-                            uploadPhoto: _uploadStoryPhoto,
-                            pickVideo: widget.pickStoryVideo,
-                            uploadVideo: _uploadStoryVideo,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _section(
-                        sectionKey: const Key('planner-section-product'),
-                        step: '3',
-                        title: '여행 상품 구성',
-                        badge: '상품 박스 하나',
-                        children: [
-                          ShopProductBox(
-                            showDate: true,
-                            dateController: _start,
-                            endDateController: _end,
-                            dateSectionTitle: '날짜',
-                            endDateLabel: '종료일',
-                            priceTitle: '판매가',
-                            optionsTitle: l10n.partnerFormBoxOptions,
-                            includesTitle: l10n.partnerFormBoxIncludes,
-                            priceAndPhotos: _priceBlock(),
-                            options: _optionsBlock(l10n),
-                            includes: _includesBlock(),
-                            footer: _openSwitch(locked),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              key: const Key('planner-trip-temp-save'),
-                              onPressed: _saving ? null : () => _save(temp: true),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: PartnerTheme.text,
-                                minimumSize: const Size.fromHeight(48),
-                                side: const BorderSide(color: PartnerTheme.border),
+          appBar: AppBar(
+            backgroundColor: PartnerTheme.bg,
+            foregroundColor: PartnerTheme.text,
+            title: const Text('기획 여행 만들기'),
+          ),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 720;
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 920),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _statusAndOpen(locked),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '제목·지역·이야기·상품을 적습니다.',
+                          key: Key('planner-trip-subtitle'),
+                          style: TextStyle(color: PartnerTheme.textDim, height: 1.4),
+                        ),
+                        const SizedBox(height: 16),
+                        _section(
+                          sectionKey: const Key('planner-section-basics'),
+                          step: '1',
+                          title: '기본사항',
+                          children: [
+                            _pair(
+                              wide: wide,
+                              a: _text(
+                                key: const Key('planner-trip-title'),
+                                controller: _title,
+                                label: '여행 제목',
                               ),
-                              child: Text(l10n.briefTempSave),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: FilledButton(
-                              key: const Key('planner-trip-save'),
-                              onPressed: _saving ? null : () => _save(temp: false),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: PartnerTheme.accent,
-                                foregroundColor: PartnerTheme.bg,
-                                minimumSize: const Size.fromHeight(48),
-                              ),
-                              child: Text(
-                                _saving ? l10n.exploreSaving : l10n.partnerSave,
-                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              b: _text(
+                                key: const Key('planner-trip-region'),
+                                controller: _region,
+                                label: '지역',
+                                hint: '몰디브 · 아리환',
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(height: 10),
+                            _text(
+                              key: const Key('planner-trip-blurb'),
+                              controller: _blurb,
+                              label: '한 줄 소개',
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              duration.isEmpty ? '기간은 날짜로 자동' : duration,
+                              key: const Key('planner-trip-duration'),
+                              style: const TextStyle(color: PartnerTheme.textDim),
+                            ),
+                            const SizedBox(height: 12),
+                            _coverBox(),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _section(
+                          sectionKey: const Key('planner-section-story'),
+                          step: '2',
+                          title: '여행 이야기',
+                          children: [
+                            StoryBlockEditor(
+                              initial: _blocks,
+                              onChanged: (blocks) => _blocks = blocks,
+                              pickPhoto: widget.pickStoryPhoto,
+                              uploadPhoto: _uploadStoryPhoto,
+                              pickVideo: widget.pickStoryVideo,
+                              uploadVideo: _uploadStoryVideo,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        _section(
+                          sectionKey: const Key('planner-section-product'),
+                          step: '3',
+                          title: '여행 상품 구성',
+                          badge: '상품 박스 하나',
+                          children: [
+                            ShopProductBox(
+                              showDate: true,
+                              dateController: _start,
+                              endDateController: _end,
+                              dateSectionTitle: '날짜',
+                              endDateLabel: '종료일',
+                              priceTitle: '판매가',
+                              optionsTitle: l10n.partnerFormBoxOptions,
+                              includesTitle: l10n.partnerFormBoxIncludes,
+                              priceAndPhotos: _priceBlock(),
+                              options: _optionsBlock(l10n),
+                              includes: _includesBlock(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              );
+            },
+          ),
+          bottomNavigationBar: Material(
+            color: PartnerTheme.bg,
+            elevation: 8,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        key: const Key('planner-trip-temp-save'),
+                        onPressed: _saving ? null : () => _save(temp: true),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: PartnerTheme.text,
+                          minimumSize: const Size.fromHeight(48),
+                          side: const BorderSide(color: PartnerTheme.border),
+                        ),
+                        child: Text(l10n.briefTempSave),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: FilledButton(
+                        key: const Key('planner-trip-save'),
+                        onPressed: _saving ? null : () => _save(temp: false),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: PartnerTheme.accent,
+                          foregroundColor: PartnerTheme.bg,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: Text(
+                          _saving ? l10n.exploreSaving : l10n.partnerSave,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _openSwitch(bool locked) {
-    return SwitchListTile(
-      key: const Key('planner-trip-open'),
-      contentPadding: EdgeInsets.zero,
-      title: const Text('열림'),
-      subtitle: _adminHidden
-          ? const Text(
-              '관리자가 잠시 숨김',
-              key: Key('planner-trip-admin-hidden'),
-            )
-          : const Text('켜면 손님 목록·홈·같은배에 바로 나옵니다.'),
-      value: locked ? false : _open,
-      onChanged: locked || _saving
-          ? null
-          : (value) => setState(() => _open = value),
+  Widget _statusAndOpen(bool locked) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          _statusLabel,
+          key: Key(
+            _adminHidden ? 'planner-trip-admin-hidden' : 'planner-trip-status',
+          ),
+          style: const TextStyle(
+            color: PartnerTheme.text,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          key: const Key('planner-trip-open'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('열림'),
+          subtitle: const Text('켜고 저장하면 손님 목록·홈·같은배에 바로 나옵니다.'),
+          value: locked ? false : _open,
+          onChanged: locked || _saving
+              ? null
+              : (value) => setState(() => _open = value),
+        ),
+      ],
     );
   }
 
