@@ -49,8 +49,10 @@ void main() {
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래를 만나는 5박');
     await tester.enterText(find.byKey(const Key('planner-trip-region')), '몰디브');
     await tester.enterText(find.byKey(const Key('planner-product-price')), '890000');
-    await tester.enterText(find.byKey(const Key('shop-product-box-date')), '2026.11.18');
-    await tester.enterText(find.byKey(const Key('shop-product-box-end-date')), '2026.11.23');
+    tester.widget<TextField>(find.byKey(const Key('shop-product-box-date'))).controller!
+        .text = formatPlannerDay(DateTime(2026, 11, 18));
+    tester.widget<TextField>(find.byKey(const Key('shop-product-box-end-date'))).controller!
+        .text = formatPlannerDay(DateTime(2026, 11, 23));
     await tester.pump();
   }
 
@@ -270,6 +272,7 @@ void main() {
       active: false,
       openEmptySeats: true,
       capacity: 4,
+      durationLabel: '5박 6일',
       departureStart: DateTime(2026, 11, 18),
       sameBoatStatus: SameBoatStatus.hidden,
       submittedByUid: 'test-user',

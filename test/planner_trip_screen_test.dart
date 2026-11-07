@@ -101,7 +101,19 @@ void main() {
     expect(plannerDurationLabel('2026.11.18', '2026.11.30'), '12박 13일');
     expect(plannerDurationLabel('2026-11-18', '2026.11.18 (수)'), '1일');
     expect(plannerDurationLabel('2026.12.01', '2026.11.18'), isEmpty);
+    expect(formatPlannerDay(DateTime(2026, 12, 18)), '2026.12.18 (금)');
   });
+
+  void setPlannerDates(
+    WidgetTester tester, {
+    required DateTime start,
+    required DateTime end,
+  }) {
+    tester.widget<TextField>(find.byKey(const Key('shop-product-box-date'))).controller!
+        .text = formatPlannerDay(start);
+    tester.widget<TextField>(find.byKey(const Key('shop-product-box-end-date'))).controller!
+        .text = formatPlannerDay(end);
+  }
 
   Future<({DiverStore store, MemoryDiverRepository repo})> open(
     WidgetTester tester, {
@@ -176,8 +188,11 @@ void main() {
     expect(region.dx, greaterThan(title.dx));
     expect((region.dy - title.dy).abs(), lessThan(8));
 
-    await tester.enterText(find.byKey(const Key('shop-product-box-date')), '2026.11.18');
-    await tester.enterText(find.byKey(const Key('shop-product-box-end-date')), '2026.11.30');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.pump();
     expect(find.text('12박 13일'), findsOneWidget);
   });
@@ -225,8 +240,11 @@ void main() {
     await tester.enterText(find.byKey(const Key('planner-trip-blurb')), '세 번 만났다');
     await tester.enterText(find.byKey(const Key('planner-trip-story')), '아침 포인트에서 고래가 왔다');
     await tester.enterText(find.byKey(const Key('planner-product-name')), '고래 리조트 5박');
-    await tester.enterText(find.byKey(const Key('shop-product-box-date')), '2026.11.18');
-    await tester.enterText(find.byKey(const Key('shop-product-box-end-date')), '2026.11.30');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.enterText(find.byKey(const Key('planner-includes')), '숙박, 보트');
     await tester.enterText(find.byKey(const Key('planner-excludes')), '항공');
     await tester.pump();
@@ -381,8 +399,8 @@ void main() {
     expect(find.text('고래를 만나는 여행'), findsWidgets);
     expect(find.text('몰디브 · 아리환'), findsWidgets);
     expect(find.text('아침 고래'), findsWidgets);
-    expect(find.text('2026.11.18'), findsWidgets);
-    expect(find.text('2026.11.30'), findsWidgets);
+    expect(find.textContaining('2026.11.18'), findsWidgets);
+    expect(find.textContaining('2026.11.30'), findsWidgets);
     expect(find.text('성인 1인'), findsWidgets);
 
     await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
@@ -413,6 +431,11 @@ void main() {
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
     await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
     await tester.enterText(find.byKey(const Key('planner-trip-story')), '숙소의 식사');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.tap(find.byKey(const Key('planner-trip-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -471,6 +494,11 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
     await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.tap(find.byKey(const Key('planner-trip-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -579,6 +607,11 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
     await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.tap(find.byKey(const Key('planner-trip-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -740,6 +773,11 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('planner-trip-title')), '고래 여행');
     await tester.enterText(find.byKey(const Key('planner-product-price')), '1000');
+    setPlannerDates(
+      tester,
+      start: DateTime(2026, 11, 18),
+      end: DateTime(2026, 11, 30),
+    );
     await tester.tap(find.byKey(const Key('planner-trip-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

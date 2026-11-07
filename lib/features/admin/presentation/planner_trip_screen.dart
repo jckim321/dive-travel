@@ -41,12 +41,14 @@ String plannerDurationLabel(String startText, String endText) {
   return '$nights박 ${nights + 1}일';
 }
 
-/// `2026.11.18` for the planner date fields.
+/// `2026.11.18 (수)` for the planner date fields.
 String formatPlannerDay(DateTime day) {
   final local = day.toLocal();
   final month = local.month.toString().padLeft(2, '0');
   final date = local.day.toString().padLeft(2, '0');
-  return '${local.year}.$month.$date';
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  final weekday = weekdays[local.weekday - 1];
+  return '${local.year}.$month.$date ($weekday)';
 }
 
 int? _nightsInLabel(String label) {
@@ -391,9 +393,17 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final departure = parsePlannerDay(_start.text);
-    if (wantOpen && departure == null) {
+    final returnDay = parsePlannerDay(_end.text);
+    final needDates = wantOpen || !temp;
+    if (needDates && (departure == null || returnDay == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('출발일을 입력하세요.')),
+        const SnackBar(content: Text('출발일과 종료일을 모두 선택하세요.')),
+      );
+      return;
+    }
+    if (departure != null && returnDay != null && returnDay.isBefore(departure)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('종료일은 출발일 이후여야 합니다.')),
       );
       return;
     }
@@ -631,12 +641,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           title: '여행 상품 구성',
                           badge: '상품 박스 하나',
                           children: [
+                            _plannerDateSection(wide),
+                            const SizedBox(height: 12),
                             ShopProductBox(
-                              showDate: true,
-                              dateController: _start,
-                              endDateController: _end,
-                              dateSectionTitle: '날짜',
-                              endDateLabel: '종료일',
+                              showDate: false,
                               priceTitle: '판매가',
                               optionsTitle: l10n.partnerFormBoxOptions,
                               includesTitle: l10n.partnerFormBoxIncludes,
@@ -729,6 +737,140 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               : (value) => setState(() => _open = value),
         ),
       ],
+    );
+  }
+
+  DateTime get _today {
+    final now = DateTime.now().toLocal();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  Future<void> _pickDateRange() async {
+    if (_saving) {
+      return;
+    }
+    final today = _today;
+    final start = parsePlannerDay(_start.text);
+    final end = parsePlannerDay(_end.text);
+    DateTimeRange? initial;
+    if (start != null && end != null && !end.isBefore(start)) {
+      final safeStart = start.isBefore(today) ? today : start;
+      final safeEnd = end.isBefore(safeStart) ? safeStart : end;
+      initial = DateTimeRange(start: safeStart, end: safeEnd);
+    }
+    final picked = await showDateRangePicker(
+      context: context,
+      locale: const Locale('ko'),
+      firstDate: today,
+      lastDate: DateTime(today.year + 5, 12, 31),
+      initialDateRange: initial,
+      helpText: '기간 선택',
+      cancelText: '취소',
+      confirmText: '확인',
+      saveText: '확인',
+      fieldStartLabelText: '출발일',
+      fieldEndLabelText: '종료일',
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _start.text = formatPlannerDay(picked.start);
+      _end.text = formatPlannerDay(picked.end);
+    });
+  }
+
+  Widget _plannerDateSection(bool wide) {
+    final startField = _plannerDateField(
+      key: const Key('shop-product-box-date'),
+      controller: _start,
+      label: '출발일',
+    );
+    final endField = _plannerDateField(
+      key: const Key('shop-product-box-end-date'),
+      controller: _end,
+      label: '종료일',
+    );
+    return Material(
+      key: const Key('shop-product-box-date-section'),
+      color: PartnerTheme.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: PartnerTheme.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '날짜',
+              style: TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (!wide)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  startField,
+                  const SizedBox(height: 10),
+                  endField,
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: startField),
+                  const SizedBox(width: 10),
+                  Expanded(child: endField),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _plannerDateField({
+    required Key key,
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return TextField(
+      key: key,
+      controller: controller,
+      readOnly: true,
+      enableInteractiveSelection: false,
+      onTap: _pickDateRange,
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: '달력에서 선택',
+        filled: true,
+        fillColor: PartnerTheme.bg,
+        labelStyle: const TextStyle(color: PartnerTheme.textDim),
+        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+        ),
+      ),
     );
   }
 
