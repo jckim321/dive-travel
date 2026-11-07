@@ -824,8 +824,202 @@ function formatSavedAt(ms) {
   return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
+/** Mirrors Dart `sanitizeStoryHtml` for draft vs server compare (img: https only). */
+const STORY_HTML_ALLOWED_TAGS = new Set([
+  'p',
+  'h1',
+  'h2',
+  'h3',
+  'strong',
+  'em',
+  'u',
+  's',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'hr',
+  'br',
+  'span',
+  'img',
+  'video',
+])
+const STORY_HTML_ALIGN_TAGS = new Set(['p', 'h1', 'h2', 'h3'])
+const STORY_HTML_TAG_RE = /<!--[\s\S]*?-->|<\/?([a-zA-Z0-9]+)(\s[^>]*)?>/g
+const STORY_HTML_HREF_RE = /href\s*=\s*(["'])(.*?)\1/i
+const STORY_HTML_SRC_RE = /src\s*=\s*(["'])(.*?)\1/i
+const STORY_HTML_WIDTH_RE = /\bwidth\s*=\s*(["']?)(\d+)\1/i
+const STORY_HTML_HEIGHT_RE = /\bheight\s*=\s*(["']?)(\d+)\1/i
+const STORY_HTML_STYLE_RE = /style\s*=\s*(["'])(.*?)\1/i
+const STORY_HTML_HEX_RE =
+  /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+const STORY_HTML_COLOR_RE = /color\s*:\s*(#[0-9a-fA-F]{3,8})\b/i
+const STORY_HTML_ALIGN_RE =
+  /text-align\s*:\s*(left|center|right|justify)\b/i
+
+function escapeStoryAttr(raw) {
+  return String(raw || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function isHttpsStoryUrl(raw) {
+  try {
+    const uri = new URL(String(raw || '').trim())
+    return uri.protocol === 'https:' && !!uri.hostname
+  } catch (_) {
+    return false
+  }
+}
+
+function isHttpOrHttpsStoryUrl(raw) {
+  try {
+    const uri = new URL(String(raw || '').trim())
+    return (
+      (uri.protocol === 'http:' || uri.protocol === 'https:') && !!uri.hostname
+    )
+  } catch (_) {
+    return false
+  }
+}
+
+function sanitizeStoryHtml(raw) {
+  const input = String(raw || '')
+  if (!input.trim()) {
+    return ''
+  }
+  let out = ''
+  let index = 0
+  let imageCount = 0
+  let videoCount = 0
+  let suppressVideoClose = 0
+  STORY_HTML_TAG_RE.lastIndex = 0
+  let match
+  while ((match = STORY_HTML_TAG_RE.exec(input)) !== null) {
+    if (match.index > index) {
+      out += input.slice(index, match.index)
+    }
+    index = match.index + match[0].length
+    const full = match[0]
+    if (full.startsWith('<!--')) {
+      continue
+    }
+    const name = String(match[1] || '').toLowerCase()
+    const closing = full.startsWith('</')
+    const attrs = match[2] || ''
+    if (!STORY_HTML_ALLOWED_TAGS.has(name)) {
+      continue
+    }
+    if (name === 'br' || name === 'hr') {
+      out += `<${name}>`
+      continue
+    }
+    if (name === 'img') {
+      if (closing) {
+        continue
+      }
+      if (imageCount >= MAX_STORY_PHOTOS) {
+        continue
+      }
+      const srcMatch = STORY_HTML_SRC_RE.exec(attrs)
+      const src = srcMatch ? String(srcMatch[2] || '').trim() : ''
+      if (!isHttpsStoryUrl(src)) {
+        continue
+      }
+      const width = STORY_HTML_WIDTH_RE.exec(attrs)?.[2]
+      const height = STORY_HTML_HEIGHT_RE.exec(attrs)?.[2]
+      const styleMatch = STORY_HTML_STYLE_RE.exec(attrs)
+      const style = styleMatch ? styleMatch[2] || '' : ''
+      const alignMatch = STORY_HTML_ALIGN_RE.exec(style)
+      const align = alignMatch ? String(alignMatch[1] || '').toLowerCase() : ''
+      let tag = `<img src="${escapeStoryAttr(src)}"`
+      if (width) {
+        tag += ` width="${width}"`
+      }
+      if (height) {
+        tag += ` height="${height}"`
+      }
+      if (align === 'left' || align === 'center' || align === 'right') {
+        tag += ` style="text-align: ${align}"`
+      }
+      tag += '>'
+      out += tag
+      imageCount += 1
+      continue
+    }
+    if (name === 'video') {
+      if (closing) {
+        if (suppressVideoClose > 0) {
+          suppressVideoClose -= 1
+          continue
+        }
+        out += '</video>'
+        continue
+      }
+      if (videoCount >= MAX_STORY_VIDEOS) {
+        suppressVideoClose += 1
+        continue
+      }
+      const srcMatch = STORY_HTML_SRC_RE.exec(attrs)
+      const src = srcMatch ? String(srcMatch[2] || '').trim() : ''
+      if (!isHttpsStoryUrl(src)) {
+        suppressVideoClose += 1
+        continue
+      }
+      out += `<video src="${escapeStoryAttr(src)}" controls>`
+      videoCount += 1
+      continue
+    }
+    if (closing) {
+      out += `</${name}>`
+      continue
+    }
+    if (name === 'a') {
+      const hrefMatch = STORY_HTML_HREF_RE.exec(attrs)
+      const href = hrefMatch ? String(hrefMatch[2] || '').trim() : ''
+      if (!isHttpOrHttpsStoryUrl(href)) {
+        continue
+      }
+      out += `<a href="${escapeStoryAttr(href)}">`
+      continue
+    }
+    if (name === 'span') {
+      const styleMatch = STORY_HTML_STYLE_RE.exec(attrs)
+      const style = styleMatch ? styleMatch[2] || '' : ''
+      const colorMatch = STORY_HTML_COLOR_RE.exec(style)
+      const color = colorMatch ? String(colorMatch[1] || '').trim() : ''
+      if (!STORY_HTML_HEX_RE.test(color)) {
+        continue
+      }
+      out += `<span style="color: ${color}">`
+      continue
+    }
+    if (STORY_HTML_ALIGN_TAGS.has(name)) {
+      const styleMatch = STORY_HTML_STYLE_RE.exec(attrs)
+      const style = styleMatch ? styleMatch[2] || '' : ''
+      const alignMatch = STORY_HTML_ALIGN_RE.exec(style)
+      const align = alignMatch ? String(alignMatch[1] || '').toLowerCase() : ''
+      if (align) {
+        out += `<${name} style="text-align: ${align}">`
+      } else {
+        out += `<${name}>`
+      }
+      continue
+    }
+    out += `<${name}>`
+  }
+  if (index < input.length) {
+    out += input.slice(index)
+  }
+  return out.trim()
+}
+
 function normalizeStoryHtml(html) {
-  return String(html || '').trim()
+  return sanitizeStoryHtml(html)
 }
 
 function countStoryImages(html) {
@@ -1272,6 +1466,7 @@ function boot() {
       applyingContent = false
       queueMicrotask(() => {
         suppressDraftSave = false
+        scheduleHeightReport()
       })
     }
   }
@@ -1346,14 +1541,16 @@ function boot() {
     if (!storageKey) {
       return
     }
-    const body = html || '<p></p>'
+    const body = sanitizeStoryHtml(html || '<p></p>') || '<p></p>'
     try {
       await addVersion(storageKey, body)
-      await saveDraft(storageKey, body)
+      // Clear local draft so the next setContent does not re-prompt restore.
+      await clearDraft(storageKey)
       await setMeta(storageKey, { lastSavedAt: Date.now() })
       if (storageKey !== NEW_PRODUCT_STORAGE_KEY) {
         await clearDraft(NEW_PRODUCT_STORAGE_KEY)
       }
+      applyEditorHtml(body, { emitUpdate: false })
     } catch (_) {
       // IndexedDB unavailable — skip quietly.
     }
@@ -1423,6 +1620,16 @@ function boot() {
     document.body.appendChild(overlay)
   }
 
+  function blurEditorForAppPicker() {
+    try {
+      editor.commands.blur()
+    } catch (_) {}
+    const active = document.activeElement
+    if (active && typeof active.blur === 'function') {
+      active.blur()
+    }
+  }
+
   const storyActions = {
     insertDaySchedule,
     showVersions,
@@ -1432,6 +1639,7 @@ function boot() {
         return
       }
       const sel = capturePhotoSelection()
+      blurEditorForAppPicker()
       post('pickPhoto', { from: sel.from, to: sel.to })
     },
     pickVideo() {
@@ -1448,6 +1656,7 @@ function boot() {
       pendingVideoPlaceholderId = id
       const at = deleteRangeIfNeeded(sel.from, sel.to)
       insertPlaceholderAt(at, id)
+      blurEditorForAppPicker()
       post('pickVideo', { from: sel.from, to: sel.to, id })
     },
     pickMap() {
@@ -1457,6 +1666,7 @@ function boot() {
       }
       const sel = readSelection()
       pendingMapSelection = sel
+      blurEditorForAppPicker()
       post('pickMap', { from: sel.from, to: sel.to })
     },
   }
@@ -1553,12 +1763,60 @@ function boot() {
       const html = editor.getHTML()
       post('contentChanged', { html })
       scheduleDraftSave(html)
+      scheduleHeightReport()
     },
   })
 
   buildToolbar(editor, mount, storyActions)
   mount.insertBefore(mount.querySelector('.toolbar'), surface)
   mount.appendChild(bubbleMenuEl)
+
+  const MIN_EDITOR_HEIGHT = 360
+  let heightReportTimer = null
+  let lastReportedHeight = 0
+
+  function measureEditorHeight() {
+    const app = document.getElementById('app')
+    const shellH = mount.getBoundingClientRect().height
+    const appPad = app
+      ? parseFloat(getComputedStyle(app).paddingTop || '0') +
+        parseFloat(getComputedStyle(app).paddingBottom || '0')
+      : 16
+    return Math.max(MIN_EDITOR_HEIGHT, Math.ceil(shellH + appPad))
+  }
+
+  function reportEditorHeight(force = false) {
+    const height = measureEditorHeight()
+    if (!force && Math.abs(height - lastReportedHeight) < 2) {
+      return
+    }
+    lastReportedHeight = height
+    post('editorHeight', { height })
+  }
+
+  function scheduleHeightReport() {
+    if (heightReportTimer) {
+      clearTimeout(heightReportTimer)
+    }
+    heightReportTimer = setTimeout(() => {
+      heightReportTimer = null
+      reportEditorHeight()
+    }, 50)
+  }
+
+  if (typeof ResizeObserver !== 'undefined') {
+    const heightObserver = new ResizeObserver(() => scheduleHeightReport())
+    heightObserver.observe(mount)
+  }
+  surface.addEventListener(
+    'load',
+    (event) => {
+      if (event.target && event.target.tagName === 'IMG') {
+        scheduleHeightReport()
+      }
+    },
+    true,
+  )
 
   window.addEventListener('message', (event) => {
     const data = event.data
@@ -1622,6 +1880,7 @@ function boot() {
       pendingPhotoSelection = null
       const { from, to } = resolveInsertRange(data, saved)
       insertImageAt(from, url, to)
+      scheduleHeightReport()
       return
     }
     if (data.type === 'insertVideo') {
@@ -1643,10 +1902,12 @@ function boot() {
       pendingVideoPlaceholderId = null
       if (placeholderId && findPlaceholder(placeholderId)) {
         replacePlaceholderWithVideo(placeholderId, url)
+        scheduleHeightReport()
         return
       }
       const { from, to } = resolveInsertRange(data, saved)
       insertVideoAt(from, url, to)
+      scheduleHeightReport()
       return
     }
     if (data.type === 'insertMap') {
@@ -1667,10 +1928,13 @@ function boot() {
       const { from, to } = resolveInsertRange(data, saved)
       const label = [name, address].filter(Boolean).join(' · ')
       insertMapAt(from, href, label, to)
+      scheduleHeightReport()
     }
   })
 
   post('ready', { html: editor.getHTML() })
+  reportEditorHeight(true)
+  queueMicrotask(() => reportEditorHeight(true))
 }
 
 if (document.readyState === 'loading') {

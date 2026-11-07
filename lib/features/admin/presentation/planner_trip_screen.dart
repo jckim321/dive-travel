@@ -317,6 +317,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   }
 
   String _storyFingerprint() {
+    if (_useNewStoryEditor) {
+      return sanitizeStoryHtml(_draftStoryHtml);
+    }
     return [
       for (final block in _blocks)
         '${block.kind.name}|${block.url}|${block.placeName}|${block.text}',
@@ -430,14 +433,18 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   }
 
   void _onStoryHtmlChanged(String html) {
+    final wasDirty = _isDirty;
     _draftStoryHtml = html;
     _storyHtmlAutosaveTimer?.cancel();
-    if (!_useNewStoryEditor) {
-      return;
+    if (_useNewStoryEditor) {
+      _storyHtmlAutosaveTimer = Timer(const Duration(seconds: 30), () {
+        unawaited(_saveStoryBody(fromAutosave: true));
+      });
     }
-    _storyHtmlAutosaveTimer = Timer(const Duration(seconds: 30), () {
-      unawaited(_saveStoryBody(fromAutosave: true));
-    });
+    // Refresh PopScope canPop when TipTap HTML dirtiness flips.
+    if (mounted && wasDirty != _isDirty) {
+      setState(() {});
+    }
   }
 
   Future<void> _toggleNewStoryEditor(bool value) async {
@@ -658,7 +665,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       final shopId = _shopId!;
       final productId = _productId!;
       final refreshed = _productFromStore(store, shopId, productId);
-      if (useHtml && !fromAutosave) {
+      if (useHtml) {
         _tipTapController.setStorageKey(_tipTapStorageKey);
         _tipTapController.notifySaveSucceeded(cleanedHtml);
       }
@@ -1095,6 +1102,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               TextField(
                 key: const Key('planner-tiptap-map-name'),
                 controller: nameController,
+                autofocus: true,
                 decoration: const InputDecoration(labelText: '장소 이름'),
               ),
               TextField(
@@ -1273,6 +1281,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final region = _region.text.trim();
     final duration = plannerDurationLabel(_start.text, _end.text);
     final admin = store.stats.isAdmin;
+    final useHtml = admin && _useNewStoryEditor;
+    final cleanedHtml =
+        useHtml ? sanitizeStoryHtml(_draftStoryHtml) : '';
     final keptKind = existing == null
         ? ProductListingKind.curated
         : existing.listingKind == ProductListingKind.diverPlanned ||
@@ -1346,6 +1357,14 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         photoFileName: _cover?.fileName,
         photoContentType: _cover?.contentType,
       );
+      if (useHtml) {
+        // Story HTML only — does not rewrite seats or prices.
+        await store.updateShopProductStory(
+          shopId: shopId,
+          productId: productId,
+          storyHtml: cleanedHtml,
+        );
+      }
       final keepHidden = _adminHidden && !wantOpen;
       if (!keepHidden) {
         await store.setPlannedTripOpen(
@@ -1358,6 +1377,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         return;
       }
       final refreshed = _productFromStore(store, shopId, productId);
+      if (useHtml) {
+        _tipTapController.setStorageKey(_tipTapStorageKey);
+        _tipTapController.notifySaveSucceeded(cleanedHtml);
+      }
       setState(() {
         if (refreshed != null) {
           _live = refreshed;
@@ -1369,23 +1392,26 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               '${refreshed.bookedSeats < 0 ? 0 : refreshed.bookedSeats}';
           _bookedLocked = refreshed.bookedSeats > 0;
         }
+        if (useHtml) {
+          _draftStoryHtml = cleanedHtml;
+        }
         _cover = null;
         _saving = false;
         _lastStorySavedAt = DateTime.now();
         _markClean();
       });
-      final shown = wantOpen && !keepHidden;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            shown
-                ? '저장했습니다. 손님 목록·홈·같은배에 나옵니다.'
-                : (temp
-                    ? '임시 저장했습니다. 손님 화면에는 아직 나오지 않습니다.'
-                    : '저장했습니다. 손님 화면에는 아직 나오지 않습니다.'),
+      if (temp) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('임시 저장했습니다. 손님 화면에는 아직 나오지 않습니다.'),
           ),
-        ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장했습니다')),
       );
+      Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
         return;
@@ -1682,7 +1708,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           key: const Key('planner-trip-open'),
           contentPadding: EdgeInsets.zero,
           title: const Text('열림'),
-          subtitle: const Text('켜고 저장하면 손님 목록·홈·같은배에 바로 나옵니다.'),
+          subtitle: Text(
+            (locked ? false : _open)
+                ? '손님에게 공개 중입니다'
+                : '켜고 저장하면 손님 목록·홈·같은배에 바로 나옵니다.',
+          ),
           value: locked ? false : _open,
           onChanged: locked || _saving
               ? null

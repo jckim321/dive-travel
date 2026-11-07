@@ -17,26 +17,26 @@
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      height: 100%;
+      height: auto;
+      min-height: 0;
       background: var(--bg);
       color: var(--text);
       font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      overflow: hidden;
     }
     #app {
-      height: 100%;
+      height: auto;
       display: flex;
       flex-direction: column;
       padding: 8px;
     }
     .editor-shell {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 0;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      overflow: hidden;
+      overflow: visible;
     }
     .toolbar {
       display: flex;
@@ -66,8 +66,7 @@
       background: #e8eef5;
     }
     .editor-surface {
-      flex: 1;
-      overflow: auto;
+      overflow: visible;
       padding: 12px 14px;
     }
     .ProseMirror {
@@ -75,6 +74,7 @@
       min-height: 220px;
       line-height: 1.55;
       font-size: 15px;
+      overflow: visible;
     }
     .ProseMirror p { margin: 0 0 0.75em; }
     .ProseMirror h1,

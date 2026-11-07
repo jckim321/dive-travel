@@ -63,7 +63,7 @@ class TipTapStoryFrame extends StatefulWidget {
     this.onUploadPhoto,
     this.onPickVideo,
     this.onPickMap,
-    this.height = 420,
+    this.height = 360,
   });
 
   final TipTapStoryFrameController? controller;
@@ -84,6 +84,8 @@ class TipTapStoryFrame extends StatefulWidget {
 
   /// App collects place name/address and returns a Google Maps search card.
   final Future<TipTapMapPlace?> Function()? onPickMap;
+
+  /// Minimum / initial iframe height. Grows with editor content via postMessage.
   final double height;
 
   @override
@@ -92,6 +94,7 @@ class TipTapStoryFrame extends StatefulWidget {
 
 class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   static var _seq = 0;
+  static const _minHeight = 360.0;
 
   late final String _viewType;
   html.IFrameElement? _iframe;
@@ -100,6 +103,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   var _pickingPhoto = false;
   var _pickingVideo = false;
   var _pickingMap = false;
+  late double _frameHeight;
   final _uploadingIds = <String>{};
   /// Editor selection saved with pick*; echoed on insert* after the picker/dialog.
   int? _pendingPhotoFrom;
@@ -114,6 +118,8 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   void initState() {
     super.initState();
     widget.controller?._state = this;
+    _frameHeight =
+        widget.height < _minHeight ? _minHeight : widget.height;
     _seq += 1;
     _viewType = 'dive-travel-tiptap-$_seq';
     final src = Uri.base.resolve('editor/index.html').toString();
@@ -182,6 +188,18 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       widget.onHtmlChanged?.call(htmlText);
       return;
     }
+    if (type == 'editorHeight') {
+      final height = _readMessageDouble(data, 'height');
+      if (height == null || !mounted) {
+        return;
+      }
+      final next = height < _minHeight ? _minHeight : height;
+      if ((next - _frameHeight).abs() < 1) {
+        return;
+      }
+      setState(() => _frameHeight = next);
+      return;
+    }
     if (type == 'pickPhoto') {
       _pendingPhotoFrom = _readMessageInt(data, 'from');
       _pendingPhotoTo = _readMessageInt(data, 'to');
@@ -226,6 +244,46 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
     return null;
   }
 
+  double? _readMessageDouble(dynamic data, String key) {
+    try {
+      final value = data[key];
+      if (value is double) {
+        return value;
+      }
+      if (value is num) {
+        return value.toDouble();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Blur iframe focus and block pointer/keyboard capture while app pickers run.
+  void _lockIframeInput() {
+    final iframe = _iframe;
+    if (iframe == null) {
+      return;
+    }
+    iframe.tabIndex = -1;
+    iframe.style.pointerEvents = 'none';
+    try {
+      final active = iframe.contentDocument?.activeElement;
+      if (active is html.HtmlElement) {
+        active.blur();
+      }
+      iframe.contentWindow?.blur();
+    } catch (_) {}
+    iframe.blur();
+  }
+
+  void _unlockIframeInput() {
+    final iframe = _iframe;
+    if (iframe == null) {
+      return;
+    }
+    iframe.style.pointerEvents = '';
+    iframe.tabIndex = 0;
+  }
+
   Future<void> _handlePickPhoto() async {
     if (_pickingPhoto) {
       return;
@@ -237,6 +295,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       return;
     }
     _pickingPhoto = true;
+    _lockIframeInput();
     try {
       final url = (await pick())?.trim() ?? '';
       if (!mounted || url.isEmpty) {
@@ -246,6 +305,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       }
       _postInsertPhoto(url);
     } finally {
+      _unlockIframeInput();
       _pickingPhoto = false;
     }
   }
@@ -307,11 +367,13 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       return;
     }
     _pickingVideo = true;
+    _lockIframeInput();
     try {
       final url = (await pick())?.trim() ?? '';
       // Empty url still posts so the editor can remove the 「올리는 중」 placeholder.
       _postInsertVideo(url);
     } finally {
+      _unlockIframeInput();
       _pickingVideo = false;
     }
   }
@@ -326,6 +388,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       return;
     }
     _pickingMap = true;
+    _lockIframeInput();
     try {
       final place = await pick();
       if (!mounted || place == null) {
@@ -339,6 +402,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       }
       _postInsertMap(place);
     } finally {
+      _unlockIframeInput();
       _pickingMap = false;
     }
   }
@@ -503,7 +567,7 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   Widget build(BuildContext context) {
     return SizedBox(
       key: const Key('planner-tiptap-frame'),
-      height: widget.height,
+      height: _frameHeight,
       width: double.infinity,
       child: HtmlElementView(viewType: _viewType),
     );
