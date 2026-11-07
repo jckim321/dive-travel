@@ -313,3 +313,84 @@ export function createBubbleMenuExtension(element) {
     },
   })
 }
+
+/** Preset image widths (px). Matches sanitizeStoryHtml digit width attrs. */
+const IMAGE_SIZE_PRESETS = [
+  { label: '작게', width: 160 },
+  { label: '중간', width: 320 },
+  { label: '크게', width: 480 },
+  { label: '원본', width: null },
+]
+
+/** Floating controls when an image node is selected. */
+export function createImageBubbleMenuElement(getEditor) {
+  const root = document.createElement('div')
+  root.className = 'bubble-menu image-bubble-menu'
+  root.style.display = 'none'
+
+  const addBtn = (label, title, onClick) => {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.textContent = label
+    btn.title = title
+    btn.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      onClick()
+    })
+    root.appendChild(btn)
+    return btn
+  }
+
+  for (const preset of IMAGE_SIZE_PRESETS) {
+    addBtn(preset.label, `사진 크기: ${preset.label}`, () => {
+      const editor = getEditor()
+      if (!editor?.isActive('image')) {
+        return
+      }
+      if (preset.width == null) {
+        editor
+          .chain()
+          .focus()
+          .updateAttributes('image', { width: null, height: null })
+          .run()
+        return
+      }
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('image', { width: preset.width, height: null })
+        .run()
+    })
+  }
+
+  addBtn('좌', '사진 왼쪽 정렬', () => {
+    getEditor()?.chain().focus().setTextAlign('left').run()
+  })
+  addBtn('중', '사진 가운데 정렬', () => {
+    getEditor()?.chain().focus().setTextAlign('center').run()
+  })
+  addBtn('우', '사진 오른쪽 정렬', () => {
+    getEditor()?.chain().focus().setTextAlign('right').run()
+  })
+
+  return root
+}
+
+export function createImageBubbleMenuExtension(element) {
+  return BubbleMenu.configure({
+    element,
+    pluginKey: new PluginKey('diveTravelImageBubble'),
+    options: {
+      placement: 'top',
+      offset: 8,
+      flip: true,
+      shift: true,
+    },
+    shouldShow: ({ editor }) => {
+      if (!editor.isEditable) {
+        return false
+      }
+      return editor.isActive('image')
+    },
+  })
+}

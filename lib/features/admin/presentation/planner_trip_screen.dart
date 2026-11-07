@@ -13,7 +13,6 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
-import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
@@ -119,7 +118,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _excludes = TextEditingController();
   final List<_PlannerOption> _options = [];
   final _photoPicker = const DivePhotoPicker();
-  List<StoryBlock> _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
 
   TravelCountry? _pickedCountry;
   PickedPhoto? _cover;
@@ -130,9 +128,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _bookedLocked = false;
   /// False keeps the flag-close field tied to departure − 7 days (or today).
   var _flagCloseManual = false;
-  /// Admin-only trial host for the Tiptap iframe editor.
-  var _useNewStoryEditor = false;
   String _draftStoryHtml = '';
+  /// True when the product only has legacy [ShopProduct.storyBlocks] (no HTML).
+  var _showLegacyStoryBlocksNotice = false;
   Timer? _storyHtmlAutosaveTimer;
   double? _tipTapVideoProgress;
   final _tipTapController = TipTapStoryFrameController();
@@ -162,10 +160,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       }
       _title.text = existing.name;
       _blurb.text = existing.blurb;
-      _blocks = StoryBlock.seed(
-        stored: existing.storyBlocks,
-        legacySchedule: existing.schedule,
-      );
+      final existingHtml = existing.storyHtml.trim();
+      if (existingHtml.isNotEmpty) {
+        _draftStoryHtml = existing.storyHtml;
+      } else if (existing.storyBlocks.isNotEmpty) {
+        _showLegacyStoryBlocksNotice = true;
+      }
       if (existing.consumerPrice > 0) {
         _price.text = '${existing.consumerPrice}';
       }
@@ -222,7 +222,17 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
 
   Future<void> _hydrateStoryHtmlFromDoc() async {
     final source = _source;
-    if (source == null || source.storyHtml.trim().isNotEmpty) {
+    if (source == null) {
+      return;
+    }
+    if (source.storyHtml.trim().isNotEmpty) {
+      if (_draftStoryHtml.trim().isEmpty) {
+        setState(() {
+          _draftStoryHtml = source.storyHtml;
+          _showLegacyStoryBlocksNotice = false;
+          _markStoryClean();
+        });
+      }
       return;
     }
     final shopId = (_shopId ?? source.shopId).trim();
@@ -245,7 +255,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     setState(() {
+      _draftStoryHtml = html;
+      _showLegacyStoryBlocksNotice = false;
       _live = source.copyWith(storyHtml: html);
+      _markStoryClean();
     });
   }
 
@@ -316,15 +329,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
   }
 
-  String _storyFingerprint() {
-    if (_useNewStoryEditor) {
-      return sanitizeStoryHtml(_draftStoryHtml);
-    }
-    return [
-      for (final block in _blocks)
-        '${block.kind.name}|${block.url}|${block.placeName}|${block.text}',
-    ].join('\u001f');
-  }
+  String _storyFingerprint() => sanitizeStoryHtml(_draftStoryHtml);
 
   String _formFingerprint() {
     return [
@@ -436,78 +441,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final wasDirty = _isDirty;
     _draftStoryHtml = html;
     _storyHtmlAutosaveTimer?.cancel();
-    if (_useNewStoryEditor) {
-      _storyHtmlAutosaveTimer = Timer(const Duration(seconds: 30), () {
-        unawaited(_saveStoryBody(fromAutosave: true));
-      });
-    }
+    _storyHtmlAutosaveTimer = Timer(const Duration(seconds: 30), () {
+      unawaited(_saveStoryBody(fromAutosave: true));
+    });
     // Refresh PopScope canPop when TipTap HTML dirtiness flips.
     if (mounted && wasDirty != _isDirty) {
       setState(() {});
     }
-  }
-
-  Future<void> _toggleNewStoryEditor(bool value) async {
-    if (!value) {
-      setState(() {
-        _useNewStoryEditor = false;
-        _storyHtmlAutosaveTimer?.cancel();
-      });
-      return;
-    }
-    final store = DiverStoreScope.of(context);
-    final shopId = (_shopId ?? _source?.shopId ?? '').trim();
-    final productId = (_productId ?? _source?.id ?? '').trim();
-    String docHtml = '';
-    if (shopId.isNotEmpty && productId.isNotEmpty) {
-      try {
-        docHtml =
-            (await store.fetchShopProductStoryHtml(
-              shopId: shopId,
-              productId: productId,
-            ))
-                ?.trim() ??
-            '';
-      } catch (_) {
-        if (!mounted) {
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('글을 불러오지 못했습니다. 잠시 뒤 다시 시도하세요'),
-          ),
-        );
-        return;
-      }
-    }
-    if (!mounted) {
-      return;
-    }
-    if (docHtml.isNotEmpty) {
-      setState(() {
-        _draftStoryHtml = docHtml;
-        _useNewStoryEditor = true;
-        final live = _source;
-        if (live != null) {
-          _live = live.copyWith(storyHtml: docHtml);
-        }
-      });
-      return;
-    }
-    if (storyBlocksHaveMedia(_blocks)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '사진·동영상·지도가 있는 글은 기존 편집기로 수정하세요. 곧 지원됩니다',
-          ),
-        ),
-      );
-      return;
-    }
-    setState(() {
-      _draftStoryHtml = storyBlocksToHtml(_blocks);
-      _useNewStoryEditor = true;
-    });
   }
 
   int _parseNonNegativeInt(String raw) {
@@ -537,31 +477,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     setState(() => _cover = picked);
   }
 
-  List<StoryBlock> _savedBlocks() {
-    return [
-      for (final block in _blocks)
-        if (block.kind == StoryBlockKind.map &&
-            (block.placeName.trim().isNotEmpty || block.text.trim().isNotEmpty))
-          StoryBlock(
-            kind: StoryBlockKind.map,
-            placeName: block.placeName.trim(),
-            text: block.text.trim(),
-          )
-        else if (StoryBlock.isMedia(block.kind) && block.url.trim().isNotEmpty)
-          StoryBlock(
-            kind: block.kind,
-            url: block.url.trim(),
-            text: block.text.trim(),
-          )
-        else if (!StoryBlock.isAtomic(block.kind) &&
-            (block.kind == StoryBlockKind.divider || block.text.trim().isNotEmpty))
-          StoryBlock(
-            kind: block.kind,
-            text: block.kind == StoryBlockKind.divider ? '' : block.text.trim(),
-          ),
-    ];
-  }
-
   String _formatStorySavedAt(DateTime at) {
     final local = at.toLocal();
     final month = local.month.toString().padLeft(2, '0');
@@ -589,11 +504,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     setState(() => _storySaving = true);
     final store = DiverStoreScope.of(context);
     final admin = store.stats.isAdmin;
-    final useHtml = admin && _useNewStoryEditor;
-    final blocks = _savedBlocks();
-    final schedule = StoryBlock.plainText(blocks);
-    final cleanedHtml =
-        useHtml ? sanitizeStoryHtml(_draftStoryHtml) : '';
+    final cleanedHtml = sanitizeStoryHtml(_draftStoryHtml);
     try {
       if (firstSave) {
         final shopId = _shopId ??= _nextShopId(null);
@@ -620,8 +531,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             name: title,
             consumerPrice: 0,
             professionalPrice: 0,
-            schedule: useHtml ? '' : schedule,
-            storyBlocks: useHtml ? const [] : blocks,
             listingKind: ProductListingKind.curated,
             publishStatus: ProductPublishStatus.draft,
             active: false,
@@ -633,31 +542,20 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           creatorSubmission: !admin,
           submitterUid: store.uid,
         );
-        if (useHtml) {
-          await store.updateShopProductStory(
-            shopId: shopId,
-            productId: productId,
-            storyHtml: cleanedHtml,
-          );
-        }
+        await store.updateShopProductStory(
+          shopId: shopId,
+          productId: productId,
+          storyHtml: cleanedHtml,
+        );
       } else {
         final source = existing;
         final shopId = _shopId ??= source.shopId;
         final productId = _productId ??= source.id;
-        if (useHtml) {
-          await store.updateShopProductStory(
-            shopId: shopId,
-            productId: productId,
-            storyHtml: cleanedHtml,
-          );
-        } else {
-          await store.updateShopProductStory(
-            shopId: shopId,
-            productId: productId,
-            storyBlocks: blocks,
-            schedule: schedule,
-          );
-        }
+        await store.updateShopProductStory(
+          shopId: shopId,
+          productId: productId,
+          storyHtml: cleanedHtml,
+        );
       }
       if (!mounted) {
         return false;
@@ -665,17 +563,14 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       final shopId = _shopId!;
       final productId = _productId!;
       final refreshed = _productFromStore(store, shopId, productId);
-      if (useHtml) {
-        _tipTapController.setStorageKey(_tipTapStorageKey);
-        _tipTapController.notifySaveSucceeded(cleanedHtml);
-      }
+      _tipTapController.setStorageKey(_tipTapStorageKey);
+      _tipTapController.notifySaveSucceeded(cleanedHtml);
       setState(() {
         if (refreshed != null) {
           _live = refreshed;
         }
-        if (useHtml) {
-          _draftStoryHtml = cleanedHtml;
-        }
+        _draftStoryHtml = cleanedHtml;
+        _showLegacyStoryBlocksNotice = false;
         _lastStorySavedAt = DateTime.now();
         _storySaving = false;
         _markStoryClean();
@@ -690,49 +585,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   }
 
   Future<void> _previewStory() async {
-    final store = DiverStoreScope.of(context);
-    final useHtml = store.stats.isAdmin && _useNewStoryEditor;
     if (!mounted) {
       return;
     }
-    if (useHtml) {
-      await _previewStoryHtml(_draftStoryHtml);
-      return;
-    }
-    final blocks = _savedBlocks();
-    if (!mounted) {
-      return;
-    }
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          key: const Key('planner-story-preview-dialog'),
-          title: const Text('미리보기'),
-          content: SizedBox(
-            width: 420,
-            child: SingleChildScrollView(
-              child: blocks.isEmpty
-                  ? const Text(
-                      '아직 본문이 없습니다.',
-                      style: TextStyle(color: PlannerPalette.textDim),
-                    )
-                  : StoryBlockView(
-                      key: const Key('planner-story-preview-view'),
-                      blocks: blocks,
-                    ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              key: const Key('planner-story-preview-close'),
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('닫기'),
-            ),
-          ],
-        );
-      },
-    );
+    await _previewStoryHtml(_draftStoryHtml);
   }
 
   Future<void> _previewStoryHtml(String rawHtml) async {
@@ -1099,6 +955,16 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text(
+                key: Key('planner-tiptap-map-hint'),
+                '본문에 저장되어, 손님이 누르면 구글 지도가 열립니다',
+                style: TextStyle(
+                  color: PlannerPalette.textDim,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
               TextField(
                 key: const Key('planner-tiptap-map-name'),
                 controller: nameController,
@@ -1281,9 +1147,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final region = _region.text.trim();
     final duration = plannerDurationLabel(_start.text, _end.text);
     final admin = store.stats.isAdmin;
-    final useHtml = admin && _useNewStoryEditor;
-    final cleanedHtml =
-        useHtml ? sanitizeStoryHtml(_draftStoryHtml) : '';
+    final cleanedHtml = sanitizeStoryHtml(_draftStoryHtml);
     final keptKind = existing == null
         ? ProductListingKind.curated
         : existing.listingKind == ProductListingKind.diverPlanned ||
@@ -1318,8 +1182,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           active: existing?.active ?? false,
           blurb: _blurb.text.trim(),
           durationLabel: duration,
-          schedule: StoryBlock.plainText(_savedBlocks()),
-          storyBlocks: _savedBlocks(),
           includes: _includes.text.trim(),
           excludes: _excludes.text.trim(),
           departureStart: departure,
@@ -1357,14 +1219,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         photoFileName: _cover?.fileName,
         photoContentType: _cover?.contentType,
       );
-      if (useHtml) {
-        // Story HTML only — does not rewrite seats or prices.
-        await store.updateShopProductStory(
-          shopId: shopId,
-          productId: productId,
-          storyHtml: cleanedHtml,
-        );
-      }
+      // Story HTML only — does not rewrite seats or prices.
+      await store.updateShopProductStory(
+        shopId: shopId,
+        productId: productId,
+        storyHtml: cleanedHtml,
+      );
       final keepHidden = _adminHidden && !wantOpen;
       if (!keepHidden) {
         await store.setPlannedTripOpen(
@@ -1377,10 +1237,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         return;
       }
       final refreshed = _productFromStore(store, shopId, productId);
-      if (useHtml) {
-        _tipTapController.setStorageKey(_tipTapStorageKey);
-        _tipTapController.notifySaveSucceeded(cleanedHtml);
-      }
+      _tipTapController.setStorageKey(_tipTapStorageKey);
+      _tipTapController.notifySaveSucceeded(cleanedHtml);
       setState(() {
         if (refreshed != null) {
           _live = refreshed;
@@ -1392,9 +1250,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               '${refreshed.bookedSeats < 0 ? 0 : refreshed.bookedSeats}';
           _bookedLocked = refreshed.bookedSeats > 0;
         }
-        if (useHtml) {
-          _draftStoryHtml = cleanedHtml;
-        }
+        _draftStoryHtml = cleanedHtml;
+        _showLegacyStoryBlocksNotice = false;
         _cover = null;
         _saving = false;
         _lastStorySavedAt = DateTime.now();
@@ -1528,85 +1385,50 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           title: '여행 이야기',
                           trailing: _storySectionTrailing(),
                           children: [
-                            if (admin) ...[
-                              SwitchListTile(
-                                key: const Key('planner-new-editor-switch'),
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text(
-                                  '새 편집기(시험)',
-                                  style: TextStyle(
-                                    color: PlannerPalette.text,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                value: _useNewStoryEditor,
-                                onChanged: _saving
-                                    ? null
-                                    : (value) {
-                                        unawaited(_toggleNewStoryEditor(value));
-                                      },
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            if (admin && _useNewStoryEditor) ...[
-                              if (_tipTapVideoProgress != null) ...[
-                                LinearProgressIndicator(
-                                  key: const Key(
-                                    'planner-tiptap-video-progress',
-                                  ),
-                                  value: _tipTapVideoProgress,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    '올리는 중 ${(_tipTapVideoProgress! * 100).round()}%',
-                                    key: const Key(
-                                      'planner-tiptap-video-progress-label',
-                                    ),
-                                    style: const TextStyle(
-                                      color: PlannerPalette.textDim,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              TipTapStoryFrame(
-                                controller: _tipTapController,
-                                storageKey: _tipTapStorageKey,
-                                initialHtml: _draftStoryHtml,
-                                onHtmlChanged: _onStoryHtmlChanged,
-                                onPickPhoto: _pickTipTapStoryPhoto,
-                                onUploadPhoto: _uploadTipTapStoryPhotoBytes,
-                                onPickVideo: _pickTipTapStoryVideo,
-                                onPickMap: _pickTipTapStoryMap,
-                              ),
-                            ]
-                            else if ((_source?.storyHtml ?? '')
-                                .trim()
-                                .isNotEmpty)
+                            if (_showLegacyStoryBlocksNotice) ...[
                               const Padding(
-                                key: Key('planner-story-html-locked'),
-                                padding: EdgeInsets.symmetric(vertical: 8),
+                                key: Key('planner-legacy-story-blocks-notice'),
+                                padding: EdgeInsets.only(bottom: 8),
                                 child: Text(
-                                  '이 글은 새 편집기로 수정하세요',
+                                  '이전 편집기로 쓴 글은 이어 쓸 수 없습니다. 새로 작성해 주세요',
                                   style: TextStyle(
                                     color: PlannerPalette.textDim,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              )
-                            else
-                              StoryBlockEditor(
-                                initial: _blocks,
-                                onChanged: (blocks) => _blocks = blocks,
-                                pickPhoto: widget.pickStoryPhoto,
-                                uploadPhoto: _uploadStoryPhoto,
-                                pickVideo: widget.pickStoryVideo,
-                                uploadVideo: _uploadStoryVideo,
-                                onAutosave: () =>
-                                    _saveStoryBody(fromAutosave: true),
-                                lastSavedAt: _lastStorySavedAt,
                               ),
+                            ],
+                            if (_tipTapVideoProgress != null) ...[
+                              LinearProgressIndicator(
+                                key: const Key(
+                                  'planner-tiptap-video-progress',
+                                ),
+                                value: _tipTapVideoProgress,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '올리는 중 ${(_tipTapVideoProgress! * 100).round()}%',
+                                  key: const Key(
+                                    'planner-tiptap-video-progress-label',
+                                  ),
+                                  style: const TextStyle(
+                                    color: PlannerPalette.textDim,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            TipTapStoryFrame(
+                              controller: _tipTapController,
+                              storageKey: _tipTapStorageKey,
+                              initialHtml: _draftStoryHtml,
+                              onHtmlChanged: _onStoryHtmlChanged,
+                              onPickPhoto: _pickTipTapStoryPhoto,
+                              onUploadPhoto: _uploadTipTapStoryPhotoBytes,
+                              onPickVideo: _pickTipTapStoryVideo,
+                              onPickMap: _pickTipTapStoryMap,
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
@@ -2132,6 +1954,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           controller: _includes,
           label: '포함',
           lines: 3,
+          multiline: true,
         ),
         const SizedBox(height: 8),
         _text(
@@ -2139,6 +1962,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           controller: _excludes,
           label: '불포함',
           lines: 3,
+          multiline: true,
         ),
       ],
     );
@@ -2271,13 +2095,19 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     String? hint,
     bool number = false,
     int lines = 1,
+    bool multiline = false,
   }) {
     return TextField(
       key: key,
       controller: controller,
       minLines: lines,
       maxLines: lines,
-      keyboardType: number ? TextInputType.number : TextInputType.text,
+      keyboardType: number
+          ? TextInputType.number
+          : multiline
+              ? TextInputType.multiline
+              : TextInputType.text,
+      textInputAction: multiline ? TextInputAction.newline : null,
       inputFormatters: [
         if (number) FilteringTextInputFormatter.digitsOnly,
       ],

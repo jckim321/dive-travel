@@ -200,6 +200,25 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       setState(() => _frameHeight = next);
       return;
     }
+    if (type == 'editorWheel') {
+      final deltaY = _readMessageDouble(data, 'deltaY');
+      if (deltaY == null || !mounted) {
+        return;
+      }
+      final scrollable = Scrollable.maybeOf(context);
+      if (scrollable == null) {
+        return;
+      }
+      final position = scrollable.position;
+      final next = (position.pixels + deltaY).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      );
+      if (next != position.pixels) {
+        position.jumpTo(next);
+      }
+      return;
+    }
     if (type == 'pickPhoto') {
       _pendingPhotoFrom = _readMessageInt(data, 'from');
       _pendingPhotoTo = _readMessageInt(data, 'to');

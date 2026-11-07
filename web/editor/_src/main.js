@@ -1,12 +1,14 @@
 import { Editor, Node, mergeAttributes } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
-import { TextStyle } from '@tiptap/extension-text-style'
+import { TextStyle, FontSize } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import TextAlign from '@tiptap/extension-text-align'
 import Image from '@tiptap/extension-image'
 import {
   createBubbleMenuElement,
   createBubbleMenuExtension,
+  createImageBubbleMenuElement,
+  createImageBubbleMenuExtension,
   createSlashCommandsExtension,
 } from './slash_bubble.js'
 import {
@@ -63,6 +65,16 @@ const StoryVideo = Node.create({
     }
   },
 })
+
+/** Allowed span font-size values (px). Keep in sync with Dart storyHtmlFontSizesPx. */
+const STORY_FONT_SIZES_PX = [14, 16, 20, 26]
+
+const FONT_SIZE_OPTIONS = [
+  { label: '작게', value: '14px' },
+  { label: '보통', value: '' },
+  { label: '크게', value: '20px' },
+  { label: '아주 크게', value: '26px' },
+]
 
 const COLORS = [
   { label: '기본', value: '' },
@@ -296,6 +308,57 @@ function applyColor(el, color) {
   }
 }
 
+function extractFontSizePx(styleText) {
+  const match = /(?:^|;)\s*font-size\s*:\s*([^;]+)/i.exec(styleText || '')
+  if (!match) {
+    return null
+  }
+  const raw = String(match[1] || '').trim().toLowerCase()
+  const px = /^(\d+(?:\.\d+)?)\s*px$/.exec(raw)
+  if (px) {
+    return Number.parseFloat(px[1])
+  }
+  const pt = /^(\d+(?:\.\d+)?)\s*pt$/.exec(raw)
+  if (pt) {
+    return Number.parseFloat(pt[1]) * (96 / 72)
+  }
+  const em = /^(\d+(?:\.\d+)?)\s*em$/.exec(raw)
+  if (em) {
+    return Number.parseFloat(em[1]) * 16
+  }
+  return null
+}
+
+/** Snap to 14 / 16 / 20 / 26, or null to drop the size. */
+function snapStoryFontSizePx(value) {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return null
+  }
+  let best = STORY_FONT_SIZES_PX[0]
+  let bestDist = Math.abs(value - best)
+  for (const size of STORY_FONT_SIZES_PX) {
+    const dist = Math.abs(value - size)
+    if (dist < bestDist) {
+      best = size
+      bestDist = dist
+    }
+  }
+  return best
+}
+
+function applySpanStyles(el, color, fontSizePx) {
+  const parts = []
+  if (color) {
+    parts.push(`color: ${color}`)
+  }
+  if (fontSizePx) {
+    parts.push(`font-size: ${fontSizePx}px`)
+  }
+  if (parts.length) {
+    el.setAttribute('style', parts.join('; '))
+  }
+}
+
 function cleanPasteElement(el) {
   const tag = el.tagName.toLowerCase()
   const styleText = el.getAttribute('style') || ''
@@ -321,10 +384,11 @@ function cleanPasteElement(el) {
     return
   }
   if (tag === 'font') {
-    if (color) {
+    const fontSizePx = snapStoryFontSizePx(extractFontSizePx(styleText))
+    if (color || fontSizePx) {
       const span = replaceTag(el, 'span')
       clearAttributes(span)
-      applyColor(span, color)
+      applySpanStyles(span, color, fontSizePx)
       return
     }
     unwrapElement(el)
@@ -386,9 +450,10 @@ function cleanPasteElement(el) {
     return
   }
   if (tag === 'span') {
+    const fontSizePx = snapStoryFontSizePx(extractFontSizePx(styleText))
     clearAttributes(el)
-    if (color) {
-      applyColor(el, color)
+    if (color || fontSizePx) {
+      applySpanStyles(el, color, fontSizePx)
       return
     }
     unwrapElement(el)
@@ -588,7 +653,8 @@ function replacePlainVideoUrlNodes(root) {
 }
 
 /**
- * Keep headings, paragraphs, marks, links, lists, quotes, hr, color, align.
+ * Keep headings, paragraphs, marks, links, lists, quotes, hr, color,
+ * font-size (snapped to 14/16/20/26px), align.
  * Collects data:image imgs for upload; counts other imgs as skipped externals.
  * Turns YouTube/Vimeo URLs and embeds into 「영상 보기」 links.
  */
@@ -767,6 +833,17 @@ function buildToolbar(editor, root, actions) {
   })
   color.title = '글자 색'
   bar.append(color)
+
+  const fontSize = select(FONT_SIZE_OPTIONS, (value) => {
+    const chain = editor.chain().focus()
+    if (!value) {
+      chain.unsetFontSize().run()
+      return
+    }
+    chain.setFontSize(value).run()
+  })
+  fontSize.title = '글자 크기'
+  bar.append(fontSize)
 
   bar.append(
     button('링크', '링크', () => {
@@ -992,10 +1069,26 @@ function sanitizeStoryHtml(raw) {
       const style = styleMatch ? styleMatch[2] || '' : ''
       const colorMatch = STORY_HTML_COLOR_RE.exec(style)
       const color = colorMatch ? String(colorMatch[1] || '').trim() : ''
-      if (!STORY_HTML_HEX_RE.test(color)) {
+      const safeColor = STORY_HTML_HEX_RE.test(color) ? color : ''
+      const sizeMatch = /font-size\s*:\s*(\d+(?:\.\d+)?)\s*px\b/i.exec(style)
+      let fontSizePx = null
+      if (sizeMatch) {
+        const rounded = Math.round(Number.parseFloat(sizeMatch[1]))
+        if (STORY_FONT_SIZES_PX.includes(rounded)) {
+          fontSizePx = rounded
+        }
+      }
+      if (!safeColor && fontSizePx == null) {
         continue
       }
-      out += `<span style="color: ${color}">`
+      const parts = []
+      if (safeColor) {
+        parts.push(`color: ${safeColor}`)
+      }
+      if (fontSizePx != null) {
+        parts.push(`font-size: ${fontSizePx}px`)
+      }
+      out += `<span style="${parts.join('; ')}">`
       continue
     }
     if (STORY_HTML_ALIGN_TAGS.has(name)) {
@@ -1673,6 +1766,7 @@ function boot() {
 
   let editor
   const bubbleMenuEl = createBubbleMenuElement(() => editor, COLORS)
+  const imageBubbleMenuEl = createImageBubbleMenuElement(() => editor)
 
   editor = new Editor({
     element: surface,
@@ -1682,6 +1776,7 @@ function boot() {
         code: false,
       }),
       TextStyle,
+      FontSize,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph', 'image'],
@@ -1698,6 +1793,7 @@ function boot() {
       StoryVideo,
       createSlashCommandsExtension(storyActions),
       createBubbleMenuExtension(bubbleMenuEl),
+      createImageBubbleMenuExtension(imageBubbleMenuEl),
     ],
     content: '<p></p>',
     editorProps: {
@@ -1770,19 +1866,29 @@ function boot() {
   buildToolbar(editor, mount, storyActions)
   mount.insertBefore(mount.querySelector('.toolbar'), surface)
   mount.appendChild(bubbleMenuEl)
+  mount.appendChild(imageBubbleMenuEl)
 
   const MIN_EDITOR_HEIGHT = 360
   let heightReportTimer = null
   let lastReportedHeight = 0
 
+  function maxBodyHeightPx() {
+    return Math.max(360, Math.round(window.innerHeight * 0.7))
+  }
+
   function measureEditorHeight() {
     const app = document.getElementById('app')
-    const shellH = mount.getBoundingClientRect().height
+    const toolbar = mount.querySelector('.toolbar')
+    const toolbarH = toolbar ? toolbar.getBoundingClientRect().height : 0
     const appPad = app
       ? parseFloat(getComputedStyle(app).paddingTop || '0') +
         parseFloat(getComputedStyle(app).paddingBottom || '0')
       : 16
-    return Math.max(MIN_EDITOR_HEIGHT, Math.ceil(shellH + appPad))
+    // Shell height follows content until the body max-height; never report beyond that.
+    const maxTotal = Math.ceil(toolbarH + maxBodyHeightPx() + appPad)
+    const shellH = mount.getBoundingClientRect().height
+    const measured = Math.max(MIN_EDITOR_HEIGHT, Math.ceil(shellH + appPad))
+    return Math.min(measured, maxTotal)
   }
 
   function reportEditorHeight(force = false) {
@@ -1807,6 +1913,7 @@ function boot() {
   if (typeof ResizeObserver !== 'undefined') {
     const heightObserver = new ResizeObserver(() => scheduleHeightReport())
     heightObserver.observe(mount)
+    heightObserver.observe(surface)
   }
   surface.addEventListener(
     'load',
@@ -1817,6 +1924,19 @@ function boot() {
     },
     true,
   )
+  surface.addEventListener(
+    'wheel',
+    (event) => {
+      const { scrollTop, scrollHeight, clientHeight } = surface
+      const atTop = scrollTop <= 0
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1
+      if ((atTop && event.deltaY < 0) || (atBottom && event.deltaY > 0)) {
+        post('editorWheel', { deltaY: event.deltaY })
+      }
+    },
+    { passive: true },
+  )
+  window.addEventListener('resize', () => scheduleHeightReport())
 
   window.addEventListener('message', (event) => {
     const data = event.data

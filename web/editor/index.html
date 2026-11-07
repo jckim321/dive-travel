@@ -36,7 +36,7 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      overflow: visible;
+      overflow: hidden;
     }
     .toolbar {
       display: flex;
@@ -45,6 +45,10 @@
       padding: 8px;
       border-bottom: 1px solid var(--border);
       background: #f8fafc;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 6;
     }
     .toolbar button,
     .toolbar select {
@@ -66,8 +70,24 @@
       background: #e8eef5;
     }
     .editor-surface {
-      overflow: visible;
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: max(360px, 70vh);
       padding: 12px 14px;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: #9aa8bc #e8eef5;
+    }
+    .editor-surface::-webkit-scrollbar {
+      width: 10px;
+    }
+    .editor-surface::-webkit-scrollbar-track {
+      background: #e8eef5;
+      border-radius: 6px;
+    }
+    .editor-surface::-webkit-scrollbar-thumb {
+      background: #9aa8bc;
+      border-radius: 6px;
     }
     .ProseMirror {
       outline: none;
@@ -192,6 +212,16 @@
     .bubble-menu button:hover,
     .bubble-menu select:hover {
       border-color: var(--accent);
+    }
+    .image-bubble-menu {
+      z-index: 45;
+    }
+    /* TipTap ResizableNodeView selection + corner handles */
+    .ProseMirror-selectednode,
+    .ProseMirror img.ProseMirror-selectednode,
+    [data-node-view-wrapper].ProseMirror-selectednode {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
     .version-overlay {
       position: fixed;

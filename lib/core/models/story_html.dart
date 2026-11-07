@@ -78,8 +78,17 @@ final _alignInStyle = RegExp(
   caseSensitive: false,
 );
 
+final _fontSizeInStyle = RegExp(
+  r'font-size\s*:\s*(\d+(?:\.\d+)?)\s*px\b',
+  caseSensitive: false,
+);
+
+/// Allowed `span` font-size values (px) for TipTap story HTML.
+const storyHtmlFontSizesPx = <int>{14, 16, 20, 26};
+
 /// Keep only the allow-listed tags. `a` keeps http(s) href only.
-/// `span` keeps a safe `#` color; `p`/`h1`–`h3` keep text-align.
+/// `span` keeps a safe `#` color and/or allowed `font-size` px;
+/// `p`/`h1`–`h3` keep text-align.
 /// `img` keeps https `src` on the R2 public host plus optional width/height and text-align.
 /// `video` keeps https `src` and `controls` (up to [storyHtmlMaxVideos]).
 String sanitizeStoryHtml(String raw) {
@@ -180,10 +189,15 @@ String sanitizeStoryHtml(String raw) {
     }
     if (name == 'span') {
       final color = _safeColorFromStyle(attrs);
-      if (color == null) {
+      final fontSize = _safeFontSizeFromStyle(attrs);
+      if (color == null && fontSize == null) {
         continue;
       }
-      out.write('<span style="color: $color">');
+      final styles = <String>[
+        if (color != null) 'color: $color',
+        if (fontSize != null) 'font-size: ${fontSize}px',
+      ];
+      out.write('<span style="${styles.join('; ')}">');
       continue;
     }
     if (_alignTags.contains(name)) {
@@ -265,6 +279,25 @@ String? _safeColorFromStyle(String attrs) {
     return null;
   }
   return color;
+}
+
+/// Returns 14, 16, 20, or 26 when style has that exact px size.
+int? _safeFontSizeFromStyle(String attrs) {
+  final styleMatch = _stylePattern.firstMatch(attrs);
+  final style = styleMatch?.group(2) ?? '';
+  final match = _fontSizeInStyle.firstMatch(style);
+  if (match == null) {
+    return null;
+  }
+  final parsed = double.tryParse(match.group(1) ?? '');
+  if (parsed == null) {
+    return null;
+  }
+  final px = parsed.round();
+  if (!storyHtmlFontSizesPx.contains(px)) {
+    return null;
+  }
+  return px;
 }
 
 String? _safeAlignFromStyle(String attrs) {
