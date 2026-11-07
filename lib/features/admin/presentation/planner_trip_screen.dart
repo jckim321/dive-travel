@@ -101,8 +101,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _title = TextEditingController();
   final _region = TextEditingController();
   final _blurb = TextEditingController();
-  final _productName = TextEditingController();
   final _price = TextEditingController();
+  final _proPrice = TextEditingController();
   final _start = TextEditingController();
   final _end = TextEditingController();
   final _capacity = TextEditingController();
@@ -149,9 +149,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         stored: existing.storyBlocks,
         legacySchedule: existing.schedule,
       );
-      _productName.text = existing.name;
       if (existing.consumerPrice > 0) {
         _price.text = '${existing.consumerPrice}';
+      }
+      if (existing.professionalPrice > 0) {
+        _proPrice.text = '${existing.professionalPrice}';
       }
       final start = existing.departureStart?.toLocal();
       if (start != null) {
@@ -233,8 +235,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _title.text,
       _region.text,
       _blurb.text,
-      _productName.text,
       _price.text,
+      _proPrice.text,
       _start.text,
       _end.text,
       _capacity.text,
@@ -315,8 +317,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     _title.dispose();
     _region.dispose();
     _blurb.dispose();
-    _productName.dispose();
     _price.dispose();
+    _proPrice.dispose();
     _start.dispose();
     _end.dispose();
     _capacity.dispose();
@@ -627,6 +629,26 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       );
       return;
     }
+    final proRaw = _proPrice.text.trim();
+    late final int professionalPrice;
+    if (proRaw.isEmpty) {
+      professionalPrice = price;
+    } else {
+      final parsedPro = parsePositivePrice(proRaw);
+      if (parsedPro == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('강사 우대가를 숫자로 입력하세요.')),
+        );
+        return;
+      }
+      if (parsedPro > price) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('강사 우대가는 판매가보다 클 수 없습니다.')),
+        );
+        return;
+      }
+      professionalPrice = parsedPro;
+    }
     final departure = parsePlannerDay(_start.text);
     final returnDay = parsePlannerDay(_end.text);
     final needDates = wantOpen || !temp;
@@ -666,9 +688,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             ? existing.id
             : 'p-$shopId';
     final region = _region.text.trim();
-    final productName = _productName.text.trim().isEmpty
-        ? title
-        : _productName.text.trim();
     final duration = plannerDurationLabel(_start.text, _end.text);
     final admin = store.stats.isAdmin;
     final keptKind = existing == null
@@ -683,9 +702,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         name: title,
         location: region,
         country: region,
-        productName: productName,
+        productName: title,
         consumerPrice: price,
-        professionalPrice: price,
+        professionalPrice: professionalPrice,
         intro: _blurb.text.trim(),
         curated: true,
         coverBytes: _cover?.bytes,
@@ -699,9 +718,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         product: ShopProduct(
           id: productId,
           shopId: shopId,
-          name: productName,
+          name: title,
           consumerPrice: price,
-          professionalPrice: price,
+          professionalPrice: professionalPrice,
           active: existing?.active ?? false,
           blurb: _blurb.text.trim(),
           durationLabel: duration,
@@ -1261,15 +1280,16 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _text(
-          key: const Key('planner-product-name'),
-          controller: _productName,
-          label: '상품 이름',
-        ),
-        const SizedBox(height: 10),
-        _text(
           key: const Key('planner-product-price'),
           controller: _price,
           label: '판매가',
+          number: true,
+        ),
+        const SizedBox(height: 10),
+        _text(
+          key: const Key('planner-product-pro-price'),
+          controller: _proPrice,
+          label: '강사 우대가(선택)',
           number: true,
         ),
       ],
