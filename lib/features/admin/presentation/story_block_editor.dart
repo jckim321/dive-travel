@@ -86,7 +86,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
     }
     _controllers = [
-      for (final block in _blocks) TextEditingController(text: block.text),
+      for (final block in _blocks) _MarkedStoryController(text: block.text),
     ];
     _placeControllers = [
       for (final block in _blocks) TextEditingController(text: block.placeName),
@@ -192,7 +192,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   }
 
   void _insertEditors(int at) {
-    _controllers.insert(at, TextEditingController());
+    _controllers.insert(at, _MarkedStoryController());
     _placeControllers.insert(at, TextEditingController());
   }
 
@@ -617,7 +617,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       _blocks.removeAt(index);
       if (_blocks.isEmpty) {
         _blocks.add(const StoryBlock(kind: StoryBlockKind.paragraph));
-        _controllers.add(TextEditingController());
+        _controllers.add(_MarkedStoryController());
         _placeControllers.add(TextEditingController());
       }
       _focus = index.clamp(0, _blocks.length - 1);
@@ -649,10 +649,17 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     if (block.kind == StoryBlockKind.map) {
       return _mapBlock(index);
     }
+    final isParagraph = block.kind == StoryBlockKind.paragraph;
     final style = TextStyle(
       color: PartnerTheme.text,
       height: 1.45,
-      fontSize: block.kind == StoryBlockKind.heading ? 20 : 15,
+      fontSize: block.kind == StoryBlockKind.heading
+          ? 20
+          : (isParagraph ||
+                  block.kind == StoryBlockKind.quote ||
+                  block.kind == StoryBlockKind.list
+              ? 16
+              : 15),
       fontWeight: block.kind == StoryBlockKind.heading ? FontWeight.w800 : FontWeight.w500,
       fontStyle: block.kind == StoryBlockKind.quote ? FontStyle.italic : FontStyle.normal,
     );
@@ -661,13 +668,18 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           block.kind != StoryBlockKind.divider &&
           !StoryBlock.isAtomic(block.kind),
     );
+    final grows = isParagraph ||
+        block.kind == StoryBlockKind.quote ||
+        block.kind == StoryBlockKind.list;
     return TextField(
       key: Key(
         index == firstText ? 'planner-trip-story' : 'planner-story-block-$index',
       ),
       controller: _controllers[index],
-      minLines: block.kind == StoryBlockKind.heading ? 1 : 2,
-      maxLines: 8,
+      minLines: block.kind == StoryBlockKind.heading
+          ? 1
+          : (isParagraph ? 6 : 2),
+      maxLines: grows || block.kind == StoryBlockKind.heading ? null : 8,
       style: style,
       cursorColor: PartnerTheme.accent,
       onTap: () => _focus = index,
@@ -948,4 +960,94 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       ),
     );
   }
+}
+
+/// Keeps `**` / `*` / `++` in the stored text while painting the body styled.
+class _MarkedStoryController extends TextEditingController {
+  _MarkedStoryController({super.text});
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final base = style ?? const TextStyle();
+    final markerSize = (base.fontSize ?? 16) * 0.72;
+    final markerStyle = base.copyWith(
+      color: PartnerTheme.textDim,
+      fontSize: markerSize,
+      fontWeight: FontWeight.w400,
+      fontStyle: FontStyle.normal,
+      decoration: TextDecoration.none,
+      height: base.height,
+    );
+    return TextSpan(
+      style: base,
+      children: _markedEditorSpans(text, base, markerStyle),
+    );
+  }
+}
+
+List<InlineSpan> _markedEditorSpans(
+  String input,
+  TextStyle style,
+  TextStyle markerStyle,
+) {
+  final spans = <InlineSpan>[];
+  final buffer = StringBuffer();
+  var bold = false;
+  var italic = false;
+  var underline = false;
+  var index = 0;
+
+  void flushBody() {
+    if (buffer.isEmpty) {
+      return;
+    }
+    spans.add(
+      TextSpan(
+        text: buffer.toString(),
+        style: style.copyWith(
+          fontWeight: bold ? FontWeight.w800 : style.fontWeight,
+          fontStyle: italic ? FontStyle.italic : style.fontStyle,
+          decoration: underline ? TextDecoration.underline : style.decoration,
+        ),
+      ),
+    );
+    buffer.clear();
+  }
+
+  void addMarker(String marker) {
+    flushBody();
+    spans.add(TextSpan(text: marker, style: markerStyle));
+  }
+
+  while (index < input.length) {
+    if (input.startsWith('**', index)) {
+      addMarker('**');
+      bold = !bold;
+      index += 2;
+      continue;
+    }
+    if (input.startsWith('++', index)) {
+      addMarker('++');
+      underline = !underline;
+      index += 2;
+      continue;
+    }
+    if (input.startsWith('*', index)) {
+      addMarker('*');
+      italic = !italic;
+      index += 1;
+      continue;
+    }
+    buffer.write(input[index]);
+    index += 1;
+  }
+  flushBody();
+  if (spans.isEmpty) {
+    spans.add(TextSpan(text: '', style: style));
+  }
+  return spans;
 }
