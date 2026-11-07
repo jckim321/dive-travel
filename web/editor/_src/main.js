@@ -1838,6 +1838,10 @@ function boot() {
       }
       return
     }
+    if (data.type === 'blurEditor') {
+      blurEditorForAppPicker()
+      return
+    }
     if (data.type === 'setContent') {
       void handleSetContent(data.html || '<p></p>')
       return

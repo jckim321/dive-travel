@@ -265,14 +265,17 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
     }
     iframe.tabIndex = -1;
     iframe.style.pointerEvents = 'none';
-    try {
-      final active = iframe.contentDocument?.activeElement;
-      if (active is html.HtmlElement) {
-        active.blur();
-      }
-      iframe.contentWindow?.blur();
-    } catch (_) {}
     iframe.blur();
+    final win = iframe.contentWindow;
+    if (win != null) {
+      win.postMessage(
+        {
+          'source': _appSource,
+          'type': 'blurEditor',
+        },
+        '*',
+      );
+    }
   }
 
   void _unlockIframeInput() {
