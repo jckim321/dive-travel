@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -16,6 +17,7 @@ import 'package:dive_travel_app/features/admin/presentation/story_block_editor.d
 import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
+import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Calendar day from `2026.11.18`, `2026-11-18`, or the same text with a weekday.
@@ -132,6 +134,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _useNewStoryEditor = false;
   String _draftStoryHtml = '';
   Timer? _storyHtmlAutosaveTimer;
+  double? _tipTapVideoProgress;
+  final _tipTapController = TipTapStoryFrameController();
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -654,6 +658,10 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       final shopId = _shopId!;
       final productId = _productId!;
       final refreshed = _productFromStore(store, shopId, productId);
+      if (useHtml && !fromAutosave) {
+        _tipTapController.setStorageKey(_tipTapStorageKey);
+        _tipTapController.notifySaveSucceeded(cleanedHtml);
+      }
       setState(() {
         if (refreshed != null) {
           _live = refreshed;
@@ -675,6 +683,15 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   }
 
   Future<void> _previewStory() async {
+    final store = DiverStoreScope.of(context);
+    final useHtml = store.stats.isAdmin && _useNewStoryEditor;
+    if (!mounted) {
+      return;
+    }
+    if (useHtml) {
+      await _previewStoryHtml(_draftStoryHtml);
+      return;
+    }
     final blocks = _savedBlocks();
     if (!mounted) {
       return;
@@ -706,6 +723,120 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
               child: const Text('닫기'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<void> _previewStoryHtml(String rawHtml) async {
+    final html = sanitizeStoryHtml(rawHtml);
+    if (!mounted) {
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        var phoneWidth = true;
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            final width = phoneWidth ? 390.0 : 960.0;
+            return Dialog(
+              key: const Key('planner-story-html-preview-dialog'),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: width + 48,
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              '미리보기',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                          SegmentedButton<bool>(
+                            key: const Key('planner-story-html-preview-width'),
+                            segments: const [
+                              ButtonSegment<bool>(
+                                value: true,
+                                label: Text('폰'),
+                              ),
+                              ButtonSegment<bool>(
+                                value: false,
+                                label: Text('PC'),
+                              ),
+                            ],
+                            selected: {phoneWidth},
+                            onSelectionChanged: (next) {
+                              if (next.isEmpty) {
+                                return;
+                              }
+                              setLocal(() => phoneWidth = next.first);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            key: const Key('planner-story-html-preview-close'),
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('닫기'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: SizedBox(
+                            width: width,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: PlannerPalette.border,
+                                ),
+                                color: Colors.white,
+                              ),
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(12),
+                                child: html.trim().isEmpty
+                                    ? const Text(
+                                        '아직 본문이 없습니다.',
+                                        style: TextStyle(
+                                          color: PlannerPalette.textDim,
+                                        ),
+                                      )
+                                    : ProductStoryHtmlBody(
+                                        key: const Key(
+                                          'planner-story-html-preview-view',
+                                        ),
+                                        html: html,
+                                        textStyle: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -760,6 +891,23 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     );
   }
 
+  /// Fixed IndexedDB key while a new product has no product id yet.
+  static const _tipTapNewProductStorageKey = 'dive-travel-story:new';
+
+  /// Browser IndexedDB key for TipTap drafts/versions.
+  /// Unsaved new products use [_tipTapNewProductStorageKey] until first save.
+  String? get _tipTapStorageKey {
+    final shopId = (_shopId ?? _source?.shopId ?? '').trim();
+    final productId = (_productId ?? _source?.id ?? '').trim();
+    if (productId.isEmpty) {
+      return _tipTapNewProductStorageKey;
+    }
+    if (shopId.isEmpty) {
+      return null;
+    }
+    return 'dive-travel-story:$shopId:$productId';
+  }
+
   Future<String> _uploadStoryPhoto(PickedPhoto photo) {
     final store = DiverStoreScope.of(context);
     final shopId = _shopId ??= _nextShopId(widget.existing);
@@ -769,6 +917,228 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       fileName: photo.fileName,
       contentType: photo.contentType,
     );
+  }
+
+  Future<String?> _pickTipTapStoryPhoto() async {
+    if (countStoryHtmlImages(_draftStoryHtml) >= storyHtmlMaxPhotos) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('사진은 30장까지 올릴 수 있습니다.')),
+      );
+      return null;
+    }
+    final pick = widget.pickStoryPhoto ?? _photoPicker.pick;
+    final picked = await pick();
+    if (!mounted || picked == null) {
+      return null;
+    }
+    if (picked.bytes.lengthInBytes > 10 * 1024 * 1024) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('사진은 10MB 이하만 올릴 수 있어요')),
+      );
+      return null;
+    }
+    if (countStoryHtmlImages(_draftStoryHtml) >= storyHtmlMaxPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('사진은 30장까지 올릴 수 있습니다.')),
+      );
+      return null;
+    }
+    try {
+      final url = (await _uploadStoryPhoto(picked)).trim();
+      if (url.isEmpty || !isAllowedStoryImageUrl(url)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('사진을 올리지 못했습니다.')),
+          );
+        }
+        return null;
+      }
+      return url;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<String?> _uploadTipTapStoryPhotoBytes(
+    TipTapPhotoUploadRequest request,
+  ) async {
+    if (countStoryHtmlImages(_draftStoryHtml) >= storyHtmlMaxPhotos) {
+      return null;
+    }
+    final dataUrl = request.dataUrl.trim();
+    if (!dataUrl.startsWith('data:image/')) {
+      return null;
+    }
+    try {
+      final data = Uri.parse(dataUrl).data;
+      if (data == null) {
+        return null;
+      }
+      final bytes = data.contentAsBytes();
+      if (bytes.isEmpty) {
+        return null;
+      }
+      final mime = request.contentType.trim().isNotEmpty
+          ? request.contentType.trim()
+          : (data.mimeType.isNotEmpty ? data.mimeType : 'image/jpeg');
+      final name = request.fileName.trim().isNotEmpty
+          ? request.fileName.trim()
+          : 'paste.jpg';
+      final url = (await _uploadStoryPhoto(
+        PickedPhoto(
+          bytes: Uint8List.fromList(bytes),
+          fileName: name,
+          contentType: mime,
+        ),
+      )).trim();
+      if (url.isEmpty || !isAllowedStoryImageUrl(url)) {
+        return null;
+      }
+      return url;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _pickTipTapStoryVideo() async {
+    if (countStoryHtmlVideos(_draftStoryHtml) >= storyHtmlMaxVideos) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('동영상은 3개까지 올릴 수 있습니다.')),
+      );
+      return null;
+    }
+    final pick = widget.pickStoryVideo ?? const DiveVideoPicker().pick;
+    final picked = await pick();
+    if (!mounted || picked == null) {
+      return null;
+    }
+    if (countStoryHtmlVideos(_draftStoryHtml) >= storyHtmlMaxVideos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('동영상은 3개까지 올릴 수 있습니다.')),
+      );
+      return null;
+    }
+    final reason = StoryBlock.videoRejectReason(
+      name: picked.fileName,
+      size: picked.size,
+    );
+    if (reason != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(reason)),
+      );
+      return null;
+    }
+    setState(() => _tipTapVideoProgress = 0);
+    try {
+      final url = (await _uploadStoryVideo(picked, (progress) {
+        if (!mounted) {
+          return;
+        }
+        setState(() => _tipTapVideoProgress = progress.clamp(0, 1).toDouble());
+      })).trim();
+      if (!mounted) {
+        return null;
+      }
+      if (url.isEmpty || !isAllowedStoryVideoUrl(url)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('동영상을 올리지 못했습니다.')),
+        );
+        return null;
+      }
+      return url;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+      return null;
+    } finally {
+      if (mounted) {
+        setState(() => _tipTapVideoProgress = null);
+      }
+    }
+  }
+
+  Future<TipTapMapPlace?> _pickTipTapStoryMap() async {
+    if (countStoryHtmlMaps(_draftStoryHtml) >= storyHtmlMaxMaps) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('지도는 5개까지 넣을 수 있습니다.')),
+      );
+      return null;
+    }
+    final nameController = TextEditingController();
+    final addressController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('planner-tiptap-map-dialog'),
+          title: const Text('지도 장소'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                key: const Key('planner-tiptap-map-name'),
+                controller: nameController,
+                decoration: const InputDecoration(labelText: '장소 이름'),
+              ),
+              TextField(
+                key: const Key('planner-tiptap-map-address'),
+                controller: addressController,
+                decoration: const InputDecoration(labelText: '주소'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('넣기'),
+            ),
+          ],
+        );
+      },
+    );
+    final name = nameController.text.trim();
+    final address = addressController.text.trim();
+    nameController.dispose();
+    addressController.dispose();
+    if (!mounted || confirmed != true) {
+      return null;
+    }
+    if (name.isEmpty && address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('장소 이름 또는 주소를 입력하세요.')),
+      );
+      return null;
+    }
+    if (countStoryHtmlMaps(_draftStoryHtml) >= storyHtmlMaxMaps) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('지도는 5개까지 넣을 수 있습니다.')),
+      );
+      return null;
+    }
+    final query = [name, address].where((part) => part.isNotEmpty).join(' ');
+    final href = googleMapsSearchUri(query).toString();
+    return TipTapMapPlace(name: name, address: address, href: href);
   }
 
   Future<String> _uploadStoryVideo(
@@ -1152,11 +1522,39 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                               ),
                               const SizedBox(height: 8),
                             ],
-                            if (admin && _useNewStoryEditor)
+                            if (admin && _useNewStoryEditor) ...[
+                              if (_tipTapVideoProgress != null) ...[
+                                LinearProgressIndicator(
+                                  key: const Key(
+                                    'planner-tiptap-video-progress',
+                                  ),
+                                  value: _tipTapVideoProgress,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    '올리는 중 ${(_tipTapVideoProgress! * 100).round()}%',
+                                    key: const Key(
+                                      'planner-tiptap-video-progress-label',
+                                    ),
+                                    style: const TextStyle(
+                                      color: PlannerPalette.textDim,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
                               TipTapStoryFrame(
+                                controller: _tipTapController,
+                                storageKey: _tipTapStorageKey,
                                 initialHtml: _draftStoryHtml,
                                 onHtmlChanged: _onStoryHtmlChanged,
-                              )
+                                onPickPhoto: _pickTipTapStoryPhoto,
+                                onUploadPhoto: _uploadTipTapStoryPhotoBytes,
+                                onPickVideo: _pickTipTapStoryVideo,
+                                onPickMap: _pickTipTapStoryMap,
+                              ),
+                            ]
                             else if ((_source?.storyHtml ?? '')
                                 .trim()
                                 .isNotEmpty)

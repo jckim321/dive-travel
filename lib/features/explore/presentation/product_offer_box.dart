@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
+import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -507,26 +508,58 @@ class _OfferFactsState extends State<_OfferFacts> {
             ),
           ),
           const SizedBox(height: 2),
-          HtmlWidget(
-            html,
-            textStyle: body,
-            onTapUrl: (url) {
-              final uri = Uri.tryParse(url.trim());
-              if (uri == null) {
-                return true;
-              }
-              final scheme = uri.scheme.toLowerCase();
-              if (scheme != 'http' && scheme != 'https') {
-                return true;
-              }
-              unawaited(
-                launchUrl(uri, mode: LaunchMode.externalApplication),
-              );
-              return true;
-            },
-          ),
+          ProductStoryHtmlBody(html: html, textStyle: body),
         ],
       ),
+    );
+  }
+}
+
+/// Guest story HTML body: same video player and http(s) link handling as the
+/// product offer box.
+class ProductStoryHtmlBody extends StatelessWidget {
+  const ProductStoryHtmlBody({
+    super.key,
+    required this.html,
+    this.textStyle,
+  });
+
+  final String html;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return HtmlWidget(
+      html,
+      textStyle: textStyle,
+      customWidgetBuilder: (element) {
+        if (element.localName?.toLowerCase() != 'video') {
+          return null;
+        }
+        final src = (element.attributes['src'] ?? '').trim();
+        if (src.isEmpty || !isAllowedStoryVideoUrl(src)) {
+          return null;
+        }
+        return StoryBlockView(
+          blocks: [
+            StoryBlock(kind: StoryBlockKind.video, url: src),
+          ],
+        );
+      },
+      onTapUrl: (url) {
+        final uri = Uri.tryParse(url.trim());
+        if (uri == null) {
+          return true;
+        }
+        final scheme = uri.scheme.toLowerCase();
+        if (scheme != 'http' && scheme != 'https') {
+          return true;
+        }
+        unawaited(
+          launchUrl(uri, mode: LaunchMode.externalApplication),
+        );
+        return true;
+      },
     );
   }
 }

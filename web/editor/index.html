@@ -98,10 +98,155 @@
       color: #1565c0;
       text-decoration: underline;
     }
+    .ProseMirror img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .ProseMirror video {
+      display: block;
+      max-width: 100%;
+      width: 100%;
+      height: auto;
+      margin: 0.6em 0;
+      background: #12324a;
+    }
+    .ProseMirror img[style*="text-align: center"],
+    .ProseMirror span[style*="text-align: center"] > img,
+    .ProseMirror div[style*="text-align: center"] > img {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .ProseMirror img[style*="text-align: right"],
+    .ProseMirror span[style*="text-align: right"] > img,
+    .ProseMirror div[style*="text-align: right"] > img {
+      margin-left: auto;
+    }
+    .ProseMirror img[style*="text-align: left"],
+    .ProseMirror span[style*="text-align: left"] > img,
+    .ProseMirror div[style*="text-align: left"] > img {
+      margin-right: auto;
+    }
     .ProseMirror ul,
     .ProseMirror ol {
       padding-left: 1.4em;
       margin: 0.4em 0 0.8em;
+    }
+    .slash-menu {
+      z-index: 40;
+      min-width: 180px;
+      max-height: 260px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(21, 32, 51, 0.12);
+      padding: 4px;
+    }
+    .slash-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .slash-menu-item:hover,
+    .slash-menu-item.is-selected {
+      background: #e8eef5;
+    }
+    .slash-menu-empty {
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .bubble-menu {
+      z-index: 40;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(21, 32, 51, 0.12);
+      padding: 4px;
+    }
+    .bubble-menu button,
+    .bubble-menu select {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 5px 7px;
+      font-size: 12px;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .bubble-menu button:hover,
+    .bubble-menu select:hover {
+      border-color: var(--accent);
+    }
+    .version-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(21, 32, 51, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .version-panel {
+      width: min(360px, 100%);
+      max-height: min(420px, 90vh);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 12px 32px rgba(21, 32, 51, 0.18);
+    }
+    .version-panel-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .version-empty {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .version-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .version-item,
+    .version-close {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .version-item:hover,
+    .version-close:hover {
+      border-color: var(--accent);
+    }
+    .version-close {
+      width: 100%;
+      text-align: center;
     }
   </style>
 </head>

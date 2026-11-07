@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 
 /// Allowed tags for planned-trip `story_html` (TipTap trial path).
@@ -18,7 +19,18 @@ const storyHtmlAllowedTags = <String>{
   'hr',
   'br',
   'span',
+  'img',
+  'video',
 };
+
+/// Max `<img>` tags kept in one story HTML body.
+const storyHtmlMaxPhotos = 30;
+
+/// Max `<video>` tags kept in one story HTML body.
+const storyHtmlMaxVideos = 3;
+
+/// Max Google Maps search links kept as map cards in one story HTML body.
+const storyHtmlMaxMaps = 5;
 
 const _alignTags = <String>{'p', 'h1', 'h2', 'h3'};
 
@@ -29,6 +41,21 @@ final _tagPattern = RegExp(
 
 final _hrefPattern = RegExp(
   r'''href\s*=\s*(["'])(.*?)\1''',
+  caseSensitive: false,
+);
+
+final _srcPattern = RegExp(
+  r'''src\s*=\s*(["'])(.*?)\1''',
+  caseSensitive: false,
+);
+
+final _widthAttrPattern = RegExp(
+  r'''\bwidth\s*=\s*(["']?)(\d+)\1''',
+  caseSensitive: false,
+);
+
+final _heightAttrPattern = RegExp(
+  r'''\bheight\s*=\s*(["']?)(\d+)\1''',
   caseSensitive: false,
 );
 
@@ -53,12 +80,17 @@ final _alignInStyle = RegExp(
 
 /// Keep only the allow-listed tags. `a` keeps http(s) href only.
 /// `span` keeps a safe `#` color; `p`/`h1`–`h3` keep text-align.
+/// `img` keeps https `src` on the R2 public host plus optional width/height and text-align.
+/// `video` keeps https `src` and `controls` (up to [storyHtmlMaxVideos]).
 String sanitizeStoryHtml(String raw) {
   if (raw.trim().isEmpty) {
     return '';
   }
   final out = StringBuffer();
   var index = 0;
+  var imageCount = 0;
+  var videoCount = 0;
+  var suppressVideoClose = 0;
   for (final match in _tagPattern.allMatches(raw)) {
     if (match.start > index) {
       // TipTap already encoded text nodes; copy them unchanged.
@@ -79,6 +111,59 @@ String sanitizeStoryHtml(String raw) {
       out.write('<$name>');
       continue;
     }
+    if (name == 'img') {
+      if (closing) {
+        continue;
+      }
+      if (imageCount >= storyHtmlMaxPhotos) {
+        continue;
+      }
+      final srcMatch = _srcPattern.firstMatch(attrs);
+      final src = srcMatch?.group(2)?.trim() ?? '';
+      if (!isAllowedStoryImageUrl(src)) {
+        continue;
+      }
+      final width = _widthAttrPattern.firstMatch(attrs)?.group(2);
+      final height = _heightAttrPattern.firstMatch(attrs)?.group(2);
+      final align = _safeImageAlignFromStyle(attrs);
+      final tag = StringBuffer('<img src="${_escapeAttr(src)}"');
+      if (width != null) {
+        tag.write(' width="$width"');
+      }
+      if (height != null) {
+        tag.write(' height="$height"');
+      }
+      if (align != null) {
+        tag.write(' style="text-align: $align"');
+      }
+      tag.write('>');
+      out.write(tag);
+      imageCount += 1;
+      continue;
+    }
+    if (name == 'video') {
+      if (closing) {
+        if (suppressVideoClose > 0) {
+          suppressVideoClose -= 1;
+          continue;
+        }
+        out.write('</video>');
+        continue;
+      }
+      if (videoCount >= storyHtmlMaxVideos) {
+        suppressVideoClose += 1;
+        continue;
+      }
+      final srcMatch = _srcPattern.firstMatch(attrs);
+      final src = srcMatch?.group(2)?.trim() ?? '';
+      if (!isAllowedStoryVideoUrl(src)) {
+        suppressVideoClose += 1;
+        continue;
+      }
+      out.write('<video src="${_escapeAttr(src)}" controls>');
+      videoCount += 1;
+      continue;
+    }
     if (closing) {
       out.write('</$name>');
       continue;
@@ -89,6 +174,7 @@ String sanitizeStoryHtml(String raw) {
       if (!isAllowedStoryLinkUrl(href)) {
         continue;
       }
+      // Map cards are https Google Maps search links; keep like other links.
       out.write('<a href="${_escapeAttr(href)}">');
       continue;
     }
@@ -117,6 +203,59 @@ String sanitizeStoryHtml(String raw) {
   return out.toString().trim();
 }
 
+/// Host of [R2Config.publicBaseUrl] (uploadStoryPhoto public URLs). Empty if unset.
+String _storyImageAllowedHost() {
+  final base = R2Config.publicBaseUrl.trim();
+  if (base.isEmpty) {
+    return '';
+  }
+  final uri = Uri.tryParse(base);
+  return (uri?.host ?? '').trim().toLowerCase();
+}
+
+/// `https` on the configured R2 public host only (same host as uploadStoryPhoto).
+bool isAllowedStoryImageUrl(String raw) {
+  final uri = Uri.tryParse(raw.trim());
+  if (uri == null || !uri.hasScheme || uri.host.trim().isEmpty) {
+    return false;
+  }
+  if (uri.scheme != 'https') {
+    return false;
+  }
+  final allowed = _storyImageAllowedHost();
+  if (allowed.isEmpty) {
+    return false;
+  }
+  return uri.host.toLowerCase() == allowed;
+}
+
+/// `https` only for story HTML videos.
+bool isAllowedStoryVideoUrl(String raw) {
+  final uri = Uri.tryParse(raw.trim());
+  if (uri == null || !uri.hasScheme || uri.host.trim().isEmpty) {
+    return false;
+  }
+  return uri.scheme == 'https';
+}
+
+/// Count `<img` tags in story HTML (before or after sanitize).
+int countStoryHtmlImages(String html) {
+  return RegExp(r'<img\b', caseSensitive: false).allMatches(html).length;
+}
+
+/// Count `<video` tags in story HTML.
+int countStoryHtmlVideos(String html) {
+  return RegExp(r'<video\b', caseSensitive: false).allMatches(html).length;
+}
+
+/// Count Google Maps search links used as map cards.
+int countStoryHtmlMaps(String html) {
+  return RegExp(
+    r'https://www\.google\.com/maps/search/',
+    caseSensitive: false,
+  ).allMatches(html).length;
+}
+
 String? _safeColorFromStyle(String attrs) {
   final styleMatch = _stylePattern.firstMatch(attrs);
   final style = styleMatch?.group(2) ?? '';
@@ -133,6 +272,14 @@ String? _safeAlignFromStyle(String attrs) {
   final style = styleMatch?.group(2) ?? '';
   final alignMatch = _alignInStyle.firstMatch(style);
   return alignMatch?.group(1)?.toLowerCase();
+}
+
+String? _safeImageAlignFromStyle(String attrs) {
+  final align = _safeAlignFromStyle(attrs);
+  if (align == 'left' || align == 'center' || align == 'right') {
+    return align;
+  }
+  return null;
 }
 
 /// Convert legacy [StoryBlock]s into TipTap-friendly HTML.
