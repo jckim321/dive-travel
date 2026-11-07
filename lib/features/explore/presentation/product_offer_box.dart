@@ -513,7 +513,11 @@ class _OfferFactsState extends State<_OfferFacts> {
             onTapUrl: (url) {
               final uri = Uri.tryParse(url.trim());
               if (uri == null) {
-                return false;
+                return true;
+              }
+              final scheme = uri.scheme.toLowerCase();
+              if (scheme != 'http' && scheme != 'https') {
+                return true;
               }
               unawaited(
                 launchUrl(uri, mode: LaunchMode.externalApplication),

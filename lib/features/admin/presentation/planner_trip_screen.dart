@@ -458,7 +458,15 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                 ?.trim() ??
             '';
       } catch (_) {
-        docHtml = '';
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('글을 불러오지 못했습니다. 잠시 뒤 다시 시도하세요'),
+          ),
+        );
+        return;
       }
     }
     if (!mounted) {
