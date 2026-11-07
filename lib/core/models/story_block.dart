@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
@@ -10,6 +11,7 @@ enum StoryBlockKind {
   paragraph,
   quote,
   list,
+  numbered,
   divider,
   photo,
   video,
@@ -213,7 +215,20 @@ class StoryBlock {
   }
 }
 
-/// Bold `**`, italic `*`, underline `++` inside a block's text.
+/// `http` / `https` only for story markdown links.
+bool isAllowedStoryLinkUrl(String raw) {
+  final uri = Uri.tryParse(raw.trim());
+  if (uri == null || !uri.hasScheme || uri.host.trim().isEmpty) {
+    return false;
+  }
+  return uri.scheme == 'http' || uri.scheme == 'https';
+}
+
+final _storyLinkPattern = RegExp(
+  r'\[([^\]]*)\]\((https?://[^)\s]+)\)',
+);
+
+/// Bold `**`, italic `*`, underline `++`, and `[label](https://…)` links.
 List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
   final spans = <InlineSpan>[];
   final buffer = StringBuffer();
@@ -222,20 +237,17 @@ List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
   var underline = false;
   var index = 0;
 
+  TextStyle bodyStyle() => style.copyWith(
+        fontWeight: bold ? FontWeight.w800 : style.fontWeight,
+        fontStyle: italic ? FontStyle.italic : style.fontStyle,
+        decoration: underline ? TextDecoration.underline : style.decoration,
+      );
+
   void flush() {
     if (buffer.isEmpty) {
       return;
     }
-    spans.add(
-      TextSpan(
-        text: buffer.toString(),
-        style: style.copyWith(
-          fontWeight: bold ? FontWeight.w800 : style.fontWeight,
-          fontStyle: italic ? FontStyle.italic : style.fontStyle,
-          decoration: underline ? TextDecoration.underline : style.decoration,
-        ),
-      ),
-    );
+    spans.add(TextSpan(text: buffer.toString(), style: bodyStyle()));
     buffer.clear();
   }
 
@@ -256,6 +268,34 @@ List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
       flush();
       italic = !italic;
       index += 1;
+      continue;
+    }
+    final link = _storyLinkPattern.matchAsPrefix(input, index);
+    if (link != null && isAllowedStoryLinkUrl(link.group(2)!)) {
+      flush();
+      final label = link.group(1)!;
+      final url = link.group(2)!;
+      final linkStyle = bodyStyle().copyWith(
+        color: const Color(0xFF1565C0),
+        decoration: TextDecoration.underline,
+        decorationColor: const Color(0xFF1565C0),
+      );
+      final recognizer = TapGestureRecognizer()
+        ..onTap = () {
+          final uri = Uri.tryParse(url);
+          if (uri == null) {
+            return;
+          }
+          launchUrl(uri, mode: LaunchMode.externalApplication);
+        };
+      spans.add(
+        TextSpan(
+          text: label.isEmpty ? url : label,
+          style: linkStyle,
+          recognizer: recognizer,
+        ),
+      );
+      index = link.end;
       continue;
     }
     buffer.write(input[index]);
@@ -334,6 +374,7 @@ class StoryBlockView extends StatelessWidget {
                       ),
                 ],
               ),
+            StoryBlockKind.numbered => _storyNumberedList(blocks[i].text, body),
             StoryBlockKind.divider => const Divider(height: 16),
             StoryBlockKind.paragraph => Text.rich(
                 TextSpan(children: storyInlineSpans(blocks[i].text, body)),
@@ -343,6 +384,30 @@ class StoryBlockView extends StatelessWidget {
       ],
     );
   }
+}
+
+Widget _storyNumberedList(String text, TextStyle body) {
+  final lines = [
+    for (final line in text.split('\n'))
+      if (line.trim().isNotEmpty) line.trim(),
+  ];
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      for (var n = 0; n < lines.length; n++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '${n + 1}. '),
+                ...storyInlineSpans(lines[n], body),
+              ],
+            ),
+          ),
+        ),
+    ],
+  );
 }
 
 class _StoryPhoto extends StatelessWidget {

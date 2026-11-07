@@ -259,6 +259,73 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     _emit();
   }
 
+  Future<void> _insertLink() async {
+    final index = _focus.clamp(0, _controllers.length - 1);
+    if (StoryBlock.isAtomic(_blocks[index].kind)) {
+      return;
+    }
+    final controller = _controllers[index];
+    final text = controller.text;
+    var start = controller.selection.start;
+    var end = controller.selection.end;
+    if (start < 0 || end < 0 || start == end) {
+      _snack('링크를 걸 글자를 먼저 고르세요.');
+      return;
+    }
+    if (end < start) {
+      final swap = start;
+      start = end;
+      end = swap;
+    }
+    final selected = text.substring(start, end);
+    final url = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final field = TextEditingController();
+        return AlertDialog(
+          key: const Key('planner-story-link-dialog'),
+          title: const Text('링크 주소'),
+          content: TextField(
+            key: const Key('planner-story-link-url'),
+            controller: field,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(
+              hintText: 'https://',
+              labelText: 'http 또는 https 주소',
+            ),
+            onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              key: const Key('planner-story-link-confirm'),
+              onPressed: () => Navigator.of(context).pop(field.text.trim()),
+              child: const Text('넣기'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || url == null || url.isEmpty) {
+      return;
+    }
+    if (!isAllowedStoryLinkUrl(url)) {
+      _snack('http 또는 https 주소만 넣을 수 있습니다.');
+      return;
+    }
+    final wrapped = '[$selected]($url)';
+    final updated = text.replaceRange(start, end, wrapped);
+    controller.value = TextEditingValue(
+      text: updated,
+      selection: TextSelection.collapsed(offset: start + wrapped.length),
+    );
+    _emit();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -324,6 +391,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               PopupMenuItem(value: StoryBlockKind.heading, child: Text('제목')),
               PopupMenuItem(value: StoryBlockKind.quote, child: Text('인용')),
               PopupMenuItem(value: StoryBlockKind.list, child: Text('목록')),
+              PopupMenuItem(value: StoryBlockKind.numbered, child: Text('번호 목록')),
               PopupMenuItem(value: StoryBlockKind.divider, child: Text('구분선')),
             ],
             child: const Padding(
@@ -347,12 +415,26 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             '밑줄',
             () => _toggleMark('++'),
           ),
+          _icon(
+            const Key('planner-story-link'),
+            Icons.link,
+            '링크',
+            () {
+              _insertLink();
+            },
+          ),
         ],
         _icon(
           const Key('planner-story-list'),
           Icons.format_list_bulleted,
           '목록',
           () => _applyKind(StoryBlockKind.list),
+        ),
+        _icon(
+          const Key('planner-story-numbered'),
+          Icons.format_list_numbered,
+          '번호 목록',
+          () => _applyKind(StoryBlockKind.numbered),
         ),
         if (!compact) ...[
           _icon(
@@ -383,6 +465,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             itemBuilder: (context) => const [
               PopupMenuItem(value: 'italic', child: Text('기울임')),
               PopupMenuItem(value: 'underline', child: Text('밑줄')),
+              PopupMenuItem(value: 'link', child: Text('링크')),
               PopupMenuItem(value: 'quote', child: Text('인용')),
               PopupMenuItem(value: 'divider', child: Text('구분선')),
               PopupMenuItem(value: 'paragraph', child: Text('문단')),
@@ -405,6 +488,8 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
         _toggleMark('*');
       case 'underline':
         _toggleMark('++');
+      case 'link':
+        _insertLink();
       case 'quote':
         _applyKind(StoryBlockKind.quote);
       case 'divider':
@@ -650,6 +735,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       return _mapBlock(index);
     }
     final isParagraph = block.kind == StoryBlockKind.paragraph;
+    final isNumbered = block.kind == StoryBlockKind.numbered;
     final style = TextStyle(
       color: PartnerTheme.text,
       height: 1.45,
@@ -657,7 +743,8 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           ? 20
           : (isParagraph ||
                   block.kind == StoryBlockKind.quote ||
-                  block.kind == StoryBlockKind.list
+                  block.kind == StoryBlockKind.list ||
+                  isNumbered
               ? 16
               : 15),
       fontWeight: block.kind == StoryBlockKind.heading ? FontWeight.w800 : FontWeight.w500,
@@ -670,8 +757,9 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     );
     final grows = isParagraph ||
         block.kind == StoryBlockKind.quote ||
-        block.kind == StoryBlockKind.list;
-    return TextField(
+        block.kind == StoryBlockKind.list ||
+        isNumbered;
+    final field = TextField(
       key: Key(
         index == firstText ? 'planner-trip-story' : 'planner-story-block-$index',
       ),
@@ -683,7 +771,12 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       style: style,
       cursorColor: PartnerTheme.accent,
       onTap: () => _focus = index,
-      onChanged: (_) => _emit(),
+      onChanged: (_) {
+        _emit();
+        if (isNumbered) {
+          setState(() {});
+        }
+      },
       decoration: InputDecoration(
         hintText: index == firstText ? '여행 이야기를 적어 주세요' : null,
         filled: true,
@@ -712,6 +805,39 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           borderSide: const BorderSide(color: PartnerTheme.accent),
         ),
       ),
+    );
+    if (!isNumbered) {
+      return field;
+    }
+    final lineCount = _controllers[index].text.split('\n').length;
+    final lineHeight = (style.fontSize ?? 16) * (style.height ?? 1.45);
+    return Row(
+      key: Key('planner-story-numbered-row-$index'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 12, right: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (var n = 1; n <= lineCount; n++)
+                SizedBox(
+                  height: lineHeight,
+                  child: Text(
+                    '$n.',
+                    style: TextStyle(
+                      color: PartnerTheme.textDim,
+                      fontSize: style.fontSize,
+                      height: style.height,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Expanded(child: field),
+      ],
     );
   }
 
@@ -1040,6 +1166,29 @@ List<InlineSpan> _markedEditorSpans(
       addMarker('*');
       italic = !italic;
       index += 1;
+      continue;
+    }
+    final link = RegExp(r'\[([^\]]*)\]\((https?://[^)\s]+)\)')
+        .matchAsPrefix(input, index);
+    if (link != null && isAllowedStoryLinkUrl(link.group(2)!)) {
+      flushBody();
+      final label = link.group(1)!;
+      final url = link.group(2)!;
+      spans.add(TextSpan(text: '[', style: markerStyle));
+      spans.add(
+        TextSpan(
+          text: label.isEmpty ? url : label,
+          style: style.copyWith(
+            color: const Color(0xFF1565C0),
+            fontWeight: bold ? FontWeight.w800 : style.fontWeight,
+            fontStyle: italic ? FontStyle.italic : style.fontStyle,
+            decoration: TextDecoration.underline,
+            decorationColor: const Color(0xFF1565C0),
+          ),
+        ),
+      );
+      spans.add(TextSpan(text: ']($url)', style: markerStyle));
+      index = link.end;
       continue;
     }
     buffer.write(input[index]);
