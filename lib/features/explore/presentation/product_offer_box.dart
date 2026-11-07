@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -507,42 +507,18 @@ class _OfferFactsState extends State<_OfferFacts> {
             ),
           ),
           const SizedBox(height: 2),
-          Html(
-            data: html,
-            shrinkWrap: true,
-            style: {
-              'body': Style(
-                margin: Margins.zero,
-                padding: HtmlPaddings.zero,
-                fontSize: body?.fontSize != null
-                    ? FontSize(body!.fontSize!)
-                    : null,
-                color: body?.color,
-              ),
-              'p': Style(margin: Margins.only(bottom: 8)),
-              'h1': Style(margin: Margins.only(bottom: 8)),
-              'h2': Style(margin: Margins.only(bottom: 8)),
-              'h3': Style(margin: Margins.only(bottom: 8)),
-              'a': Style(color: const Color(0xFF1565C0)),
-              'blockquote': Style(
-                margin: Margins.symmetric(vertical: 8),
-                padding: HtmlPaddings.only(left: 12),
-                border: const Border(
-                  left: BorderSide(color: Color(0xFF1F4E79), width: 3),
-                ),
-              ),
-            },
-            onLinkTap: (url, attributes, element) {
-              if (url == null || url.trim().isEmpty) {
-                return;
-              }
+          HtmlWidget(
+            html,
+            textStyle: body,
+            onTapUrl: (url) {
               final uri = Uri.tryParse(url.trim());
               if (uri == null) {
-                return;
+                return false;
               }
               unawaited(
                 launchUrl(uri, mode: LaunchMode.externalApplication),
               );
+              return true;
             },
           ),
         ],
