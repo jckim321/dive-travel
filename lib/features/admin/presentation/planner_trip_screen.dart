@@ -1554,33 +1554,62 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final today = _today;
-    final start = parsePlannerDay(_start.text);
-    final end = parsePlannerDay(_end.text);
-    DateTimeRange? initial;
-    if (start != null && end != null && !end.isBefore(start)) {
-      final safeStart = start.isBefore(today) ? today : start;
-      final safeEnd = end.isBefore(safeStart) ? safeStart : end;
-      initial = DateTimeRange(start: safeStart, end: safeEnd);
+    final lastDate = DateTime(today.year + 5, 12, 31);
+    final previousStart = parsePlannerDay(_start.text);
+    final previousEnd = parsePlannerDay(_end.text);
+    var initialStart = previousStart ?? today;
+    if (initialStart.isBefore(today)) {
+      initialStart = today;
     }
-    final picked = await showDateRangePicker(
+    if (initialStart.isAfter(lastDate)) {
+      initialStart = lastDate;
+    }
+    final departure = await showDatePicker(
       context: context,
       locale: const Locale('ko'),
       firstDate: today,
-      lastDate: DateTime(today.year + 5, 12, 31),
-      initialDateRange: initial,
-      helpText: '기간 선택',
+      lastDate: lastDate,
+      initialDate: initialStart,
+      initialEntryMode: DatePickerEntryMode.calendar,
+      helpText: '출발일 선택',
       cancelText: '취소',
       confirmText: '확인',
-      saveText: '확인',
-      fieldStartLabelText: '출발일',
-      fieldEndLabelText: '종료일',
     );
-    if (picked == null || !mounted) {
+    if (departure == null || !mounted) {
+      return;
+    }
+    final departureDay = DateTime(
+      departure.year,
+      departure.month,
+      departure.day,
+    );
+    var initialEnd = previousEnd ?? departureDay;
+    if (initialEnd.isBefore(departureDay)) {
+      initialEnd = departureDay;
+    }
+    if (initialEnd.isAfter(lastDate)) {
+      initialEnd = lastDate;
+    }
+    final returnDay = await showDatePicker(
+      context: context,
+      locale: const Locale('ko'),
+      firstDate: departureDay,
+      lastDate: lastDate,
+      initialDate: initialEnd,
+      initialEntryMode: DatePickerEntryMode.calendar,
+      helpText: '귀국일 선택',
+      cancelText: '취소',
+      confirmText: '확인',
+    );
+    if (returnDay == null || !mounted) {
+      // Step-2 cancel keeps prior start/end; departure pick is discarded.
       return;
     }
     setState(() {
-      _start.text = formatPlannerDay(picked.start);
-      _end.text = formatPlannerDay(picked.end);
+      _start.text = formatPlannerDay(departureDay);
+      _end.text = formatPlannerDay(
+        DateTime(returnDay.year, returnDay.month, returnDay.day),
+      );
     });
   }
 
