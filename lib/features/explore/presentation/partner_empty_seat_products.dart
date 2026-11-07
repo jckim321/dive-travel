@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_date_range.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
@@ -12,8 +13,8 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 /// Optional empty-seat products under the regular product boxes.
 ///
 /// A product is in this section only when `open_empty_seats` is true.
-/// The return day is departure plus nights read from `duration_label`.
-/// It is not stored.
+/// The return day is chosen with the departure calendar and stored only as
+/// `duration_label` (same as the planner screen).
 class PartnerEmptySeatProducts extends StatefulWidget {
   const PartnerEmptySeatProducts({super.key, required this.shopId});
 
@@ -30,8 +31,6 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
   var _saving = false;
   var _loaded = false;
 
-  static final _day = DateFormat('yyyy-MM-dd');
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -47,8 +46,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         if (product.openEmptySeats)
           _EmptySeatDraft.fromProduct(
             product,
-            _day,
-            onDeparture: _onDeparture,
+            onDates: _onDates,
           ),
     ]);
   }
@@ -73,8 +71,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           if (product.openEmptySeats)
             _EmptySeatDraft.fromProduct(
               product,
-              _day,
-              onDeparture: _onDeparture,
+              onDates: _onDates,
             ),
       ]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,17 +81,89 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     });
   }
 
-  void _onDeparture() {
+  void _onDates() {
     if (mounted) {
       setState(() {});
     }
   }
 
   void _addBox() {
-    final draft = _EmptySeatDraft.empty(onDeparture: _onDeparture);
+    final draft = _EmptySeatDraft.empty(onDates: _onDates);
     setState(() {
       _boxes.add(draft);
       _expanded.add(draft.id);
+    });
+  }
+
+  DateTime get _today {
+    final now = DateTime.now().toLocal();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  Future<void> _pickDateRange(_EmptySeatDraft box) async {
+    if (_saving) {
+      return;
+    }
+    final picked = await pickPlannerDateRange(
+      context: context,
+      previousStart: parsePlannerDay(box.departure.text),
+      previousEnd: parsePlannerDay(box.end.text),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      box.departure.text = formatPlannerDay(picked.start);
+      box.end.text = formatPlannerDay(picked.end);
+      box.syncFlagCloseDefault(_today);
+    });
+  }
+
+  Future<void> _pickFlagClose(_EmptySeatDraft box) async {
+    if (_saving) {
+      return;
+    }
+    final departure = parsePlannerDay(box.departure.text);
+    if (departure == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('출발일을 먼저 선택하세요.')),
+      );
+      return;
+    }
+    final today = _today;
+    final last = departure.subtract(const Duration(days: 1));
+    if (last.isBefore(today)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('선택할 수 있는 깃발 마감일이 없습니다.')),
+      );
+      return;
+    }
+    final current = parsePlannerDay(box.flagClose.text);
+    var initial = current ?? box.defaultFlagCloseDay(departure, today) ?? today;
+    if (initial.isBefore(today)) {
+      initial = today;
+    }
+    if (initial.isAfter(last)) {
+      initial = last;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      locale: const Locale('ko'),
+      firstDate: today,
+      lastDate: last,
+      initialDate: initial,
+      helpText: '깃발 마감일',
+      cancelText: '취소',
+      confirmText: '확인',
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      box.flagCloseManual = true;
+      box.flagClose.text = formatPlannerDay(
+        DateTime(picked.year, picked.month, picked.day),
+      );
     });
   }
 
@@ -114,11 +183,41 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         );
         return;
       }
-      if (box.departure.text.trim().isNotEmpty &&
-          DateTime.tryParse(box.departure.text.trim()) == null) {
+      final departure = parsePlannerDay(box.departure.text);
+      final returnDay = parsePlannerDay(box.end.text);
+      final flagClose = parsePlannerDay(box.flagClose.text);
+      final wantOpen = box.listOnSameBoat && !box.sameBoatLocked;
+      final needDates = wantOpen || !temp;
+      if (needDates && (departure == null || returnDay == null)) {
         setState(() => _expanded.add(box.id));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('출발일은 2026-11-01처럼 입력하세요.')),
+          const SnackBar(content: Text('출발일과 종료일을 모두 선택하세요.')),
+        );
+        return;
+      }
+      if (departure != null &&
+          returnDay != null &&
+          returnDay.isBefore(departure)) {
+        setState(() => _expanded.add(box.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('종료일은 출발일 이후여야 합니다.')),
+        );
+        return;
+      }
+      if (wantOpen && flagClose == null) {
+        setState(() => _expanded.add(box.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.workbenchFlagDeadlineRequired)),
+        );
+        return;
+      }
+      if (wantOpen &&
+          departure != null &&
+          flagClose != null &&
+          !flagClose.isBefore(departure)) {
+        setState(() => _expanded.add(box.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('깃발 마감일은 출발일 이전이어야 합니다.')),
         );
         return;
       }
@@ -296,12 +395,22 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 decoration: _field('남은 자리'),
               ),
               const SizedBox(height: 10),
-              _returnReadout(box),
-              const SizedBox(height: 10),
               ShopProductBox(
                 keyPrefix: 'empty-${box.id}',
                 showDate: true,
                 dateController: box.departure,
+                endDateController: box.end,
+                endDateLabel: '귀국일',
+                dateSectionTitle: '날짜',
+                onDateTap: () => _pickDateRange(box),
+                dateExtra: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _durationReadout(box),
+                    const SizedBox(height: 10),
+                    _flagCloseField(box),
+                  ],
+                ),
                 priceTitle: l10n.partnerFormBoxPricePhoto,
                 optionsTitle: l10n.partnerFormBoxOptions,
                 includesTitle: l10n.partnerFormBoxIncludes,
@@ -316,37 +425,34 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     );
   }
 
-  Widget _returnReadout(_EmptySeatDraft box) {
-    final nights = nightsInDurationLabel(box.source?.durationLabel ?? '');
-    if (nights == null) {
-      return Text(
-        '기간을 먼저 입력하세요',
-        key: Key('partner-empty-return-${box.id}'),
-        style: const TextStyle(color: PartnerTheme.textDim, fontSize: 14),
-      );
-    }
-    final back = returnDayFromDeparture(
-      departureText: box.departure.text,
-      nights: nights,
+  Widget _durationReadout(_EmptySeatDraft box) {
+    final label = plannerDurationLabel(box.departure.text, box.end.text);
+    return Text(
+      label.isEmpty ? '기간을 달력에서 선택하세요' : label,
+      key: Key('partner-empty-duration-${box.id}'),
+      style: TextStyle(
+        color: label.isEmpty ? PartnerTheme.textDim : PartnerTheme.text,
+        fontSize: 14,
+        fontWeight: label.isEmpty ? FontWeight.w400 : FontWeight.w700,
+      ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '돌아오는 날',
-          style: TextStyle(color: PartnerTheme.textDim, fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          back == null ? '' : _day.format(back),
-          key: Key('partner-empty-return-${box.id}'),
-          style: const TextStyle(
-            color: PartnerTheme.text,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
+  }
+
+  Widget _flagCloseField(_EmptySeatDraft box) {
+    return TextField(
+      key: Key('partner-empty-flag-close-${box.id}'),
+      controller: box.flagClose,
+      readOnly: true,
+      enableInteractiveSelection: false,
+      enabled: !_saving,
+      onTap: _saving ? null : () => _pickFlagClose(box),
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: _field('깃발 마감일').copyWith(
+        hintText: '달력에서 선택',
+        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+      ),
     );
   }
 
@@ -487,25 +593,46 @@ class _EmptySeatDraft {
     required this.consumer,
     required this.includes,
     required this.departure,
+    required this.end,
+    required this.flagClose,
     required this.remaining,
     required this.addons,
     required this.individuals,
     required this.listOnSameBoat,
     required this.sameBoatLocked,
-    required this.onDeparture,
+    required this.onDates,
+    this.flagCloseManual = false,
   }) {
-    departure.addListener(onDeparture);
+    departure.addListener(_handleDates);
+    end.addListener(_handleDates);
   }
 
   factory _EmptySeatDraft.fromProduct(
-    ShopProduct product,
-    DateFormat day, {
-    required VoidCallback onDeparture,
+    ShopProduct product, {
+    required VoidCallback onDates,
   }) {
-    final departure = product.departureStart;
+    final departureAt = product.departureStart?.toLocal();
     final booked = product.bookedSeats;
     final left = product.capacity > booked ? product.capacity - booked : 0;
-    return _EmptySeatDraft(
+    final departure = TextEditingController(
+      text: departureAt == null ? '' : formatPlannerDay(departureAt),
+    );
+    final end = TextEditingController();
+    if (departureAt != null) {
+      final nights = nightsInDurationLabel(product.durationLabel);
+      if (nights != null && nights > 0) {
+        end.text = formatPlannerDay(
+          departureAt.add(Duration(days: nights)),
+        );
+      } else if (product.durationLabel.trim() == '1일') {
+        end.text = departure.text;
+      }
+    }
+    final flagAt = product.flagClosesAt?.toLocal();
+    final flagClose = TextEditingController(
+      text: flagAt == null ? '' : formatPlannerDay(flagAt),
+    );
+    final draft = _EmptySeatDraft(
       id: product.id,
       source: product,
       name: TextEditingController(text: product.name),
@@ -513,11 +640,12 @@ class _EmptySeatDraft {
         text: product.consumerPrice > 0 ? '${product.consumerPrice}' : '',
       ),
       includes: TextEditingController(text: product.includes),
-      departure: TextEditingController(
-        text: departure == null ? '' : day.format(departure.toLocal()),
-      ),
+      departure: departure,
+      end: end,
+      flagClose: flagClose,
       remaining: TextEditingController(text: left > 0 ? '$left' : ''),
-      onDeparture: onDeparture,
+      onDates: onDates,
+      flagCloseManual: flagAt != null,
       addons: [
         for (final option in product.options)
           if (option.kind != ProductOptionKind.individual)
@@ -530,9 +658,16 @@ class _EmptySeatDraft {
       listOnSameBoat: product.sameBoatStatus.isBoardLive,
       sameBoatLocked: product.sameBoatStatus.isPartnerLocked,
     );
+    if (flagAt == null) {
+      final now = DateTime.now().toLocal();
+      draft.syncFlagCloseDefault(
+        DateTime(now.year, now.month, now.day),
+      );
+    }
+    return draft;
   }
 
-  factory _EmptySeatDraft.empty({required VoidCallback onDeparture}) {
+  factory _EmptySeatDraft.empty({required VoidCallback onDates}) {
     return _EmptySeatDraft(
       id: 'p-${DateTime.now().microsecondsSinceEpoch}',
       source: null,
@@ -540,12 +675,14 @@ class _EmptySeatDraft {
       consumer: TextEditingController(),
       includes: TextEditingController(),
       departure: TextEditingController(),
+      end: TextEditingController(),
+      flagClose: TextEditingController(),
       remaining: TextEditingController(),
       addons: [],
       individuals: const [],
       listOnSameBoat: false,
       sameBoatLocked: false,
-      onDeparture: onDeparture,
+      onDates: onDates,
     );
   }
 
@@ -555,24 +692,67 @@ class _EmptySeatDraft {
   final TextEditingController consumer;
   final TextEditingController includes;
   final TextEditingController departure;
+  final TextEditingController end;
+  final TextEditingController flagClose;
   final TextEditingController remaining;
   final List<_SeatOptionDraft> addons;
   final List<ShopProductOption> individuals;
   bool listOnSameBoat;
   final bool sameBoatLocked;
-  final VoidCallback onDeparture;
+  final VoidCallback onDates;
+  bool flagCloseManual;
 
   bool get isUntouchedNew =>
       source == null &&
       name.text.trim().isEmpty &&
       (parsePositivePrice(consumer.text) ?? 0) <= 0;
 
+  void _handleDates() {
+    final now = DateTime.now().toLocal();
+    syncFlagCloseDefault(DateTime(now.year, now.month, now.day));
+    onDates();
+  }
+
+  /// Departure minus 7 days, floored to today.
+  DateTime? defaultFlagCloseDay(DateTime departure, DateTime today) {
+    final raw = departure.subtract(const Duration(days: 7));
+    final day = DateTime(raw.year, raw.month, raw.day);
+    if (day.isBefore(today)) {
+      return today;
+    }
+    return day;
+  }
+
+  void syncFlagCloseDefault(DateTime today) {
+    if (flagCloseManual) {
+      return;
+    }
+    final departureAt = parsePlannerDay(departure.text);
+    if (departureAt == null) {
+      if (flagClose.text.isNotEmpty) {
+        flagClose.clear();
+      }
+      return;
+    }
+    final def = defaultFlagCloseDay(departureAt, today);
+    if (def == null) {
+      return;
+    }
+    final text = formatPlannerDay(def);
+    if (flagClose.text != text) {
+      flagClose.text = text;
+    }
+  }
+
   void dispose() {
     name.dispose();
     consumer.dispose();
     includes.dispose();
-    departure.removeListener(onDeparture);
+    departure.removeListener(_handleDates);
+    end.removeListener(_handleDates);
     departure.dispose();
+    end.dispose();
+    flagClose.dispose();
     remaining.dispose();
     for (final addon in addons) {
       addon.dispose();
@@ -583,7 +763,9 @@ class _EmptySeatDraft {
     final consumerPrice = parsePositivePrice(consumer.text) ?? 0;
     final seatsLeft = int.tryParse(remaining.text.trim()) ?? 0;
     final booked = source?.bookedSeats ?? 0;
-    final departureAt = DateTime.tryParse(departure.text.trim());
+    final departureAt = parsePlannerDay(departure.text);
+    final duration = plannerDurationLabel(departure.text, end.text);
+    final flagCloseAt = parsePlannerDay(flagClose.text);
     final status = sameBoatLocked
         ? source!.sameBoatStatus
         : (listOnSameBoat ? SameBoatStatus.approved : SameBoatStatus.closed);
@@ -601,10 +783,12 @@ class _EmptySeatDraft {
         consumerPrice: consumerPrice,
         professionalPrice: consumerPrice,
         includes: includes.text.trim(),
+        durationLabel: duration,
         options: options,
         openEmptySeats: true,
         capacity: booked + seatsLeft,
         departureStart: departureAt,
+        flagClosesAt: flagCloseAt,
         sameBoatStatus: status,
         publishStatus: ProductPublishStatus.draft,
       );
@@ -616,10 +800,12 @@ class _EmptySeatDraft {
           ? existing.professionalPrice
           : consumerPrice,
       includes: includes.text.trim(),
+      durationLabel: duration,
       options: options,
       openEmptySeats: true,
       capacity: booked + seatsLeft,
       departureStart: departureAt,
+      flagClosesAt: flagCloseAt,
       sameBoatStatus: status,
     );
   }

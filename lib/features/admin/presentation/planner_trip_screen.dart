@@ -11,6 +11,7 @@ import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_date_range.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
@@ -1553,63 +1554,17 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     if (_saving) {
       return;
     }
-    final today = _today;
-    final lastDate = DateTime(today.year + 5, 12, 31);
-    final previousStart = parsePlannerDay(_start.text);
-    final previousEnd = parsePlannerDay(_end.text);
-    var initialStart = previousStart ?? today;
-    if (initialStart.isBefore(today)) {
-      initialStart = today;
-    }
-    if (initialStart.isAfter(lastDate)) {
-      initialStart = lastDate;
-    }
-    final departure = await showDatePicker(
+    final picked = await pickPlannerDateRange(
       context: context,
-      locale: const Locale('ko'),
-      firstDate: today,
-      lastDate: lastDate,
-      initialDate: initialStart,
-      initialEntryMode: DatePickerEntryMode.calendar,
-      helpText: '출발일 선택',
-      cancelText: '취소',
-      confirmText: '확인',
+      previousStart: parsePlannerDay(_start.text),
+      previousEnd: parsePlannerDay(_end.text),
     );
-    if (departure == null || !mounted) {
-      return;
-    }
-    final departureDay = DateTime(
-      departure.year,
-      departure.month,
-      departure.day,
-    );
-    var initialEnd = previousEnd ?? departureDay;
-    if (initialEnd.isBefore(departureDay)) {
-      initialEnd = departureDay;
-    }
-    if (initialEnd.isAfter(lastDate)) {
-      initialEnd = lastDate;
-    }
-    final returnDay = await showDatePicker(
-      context: context,
-      locale: const Locale('ko'),
-      firstDate: departureDay,
-      lastDate: lastDate,
-      initialDate: initialEnd,
-      initialEntryMode: DatePickerEntryMode.calendar,
-      helpText: '귀국일 선택',
-      cancelText: '취소',
-      confirmText: '확인',
-    );
-    if (returnDay == null || !mounted) {
-      // Step-2 cancel keeps prior start/end; departure pick is discarded.
+    if (picked == null || !mounted) {
       return;
     }
     setState(() {
-      _start.text = formatPlannerDay(departureDay);
-      _end.text = formatPlannerDay(
-        DateTime(returnDay.year, returnDay.month, returnDay.day),
-      );
+      _start.text = formatPlannerDay(picked.start);
+      _end.text = formatPlannerDay(picked.end);
     });
   }
 

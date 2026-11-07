@@ -24,6 +24,8 @@ class ShopProductBox extends StatelessWidget {
     this.endDateController,
     this.dateSectionTitle,
     this.endDateLabel = '종료일',
+    this.onDateTap,
+    this.dateExtra,
     this.footer,
     this.keyPrefix = '',
     this.palette,
@@ -49,6 +51,12 @@ class ShopProductBox extends StatelessWidget {
   /// Replaces the departure heading when the box shows a start and an end.
   final String? dateSectionTitle;
   final String endDateLabel;
+
+  /// When set, date fields are read-only and open a calendar on tap.
+  final VoidCallback? onDateTap;
+
+  /// Shown under the date fields (for example the auto period label).
+  final Widget? dateExtra;
 
   /// Extra block under the includes box. The partner form leaves this null.
   final Widget? footer;
@@ -85,6 +93,7 @@ class ShopProductBox extends StatelessWidget {
                   fieldKey: _key('shop-product-box-date'),
                   controller: dateController,
                   label: l10n.workbenchDepartureDate,
+                  onTap: onDateTap,
                 )
               else
                 LayoutBuilder(
@@ -94,12 +103,14 @@ class ShopProductBox extends StatelessWidget {
                       fieldKey: _key('shop-product-box-date'),
                       controller: dateController,
                       label: l10n.workbenchDepartureDate,
+                      onTap: onDateTap,
                     );
                     final end = _dateFieldBox(
                       colors: colors,
                       fieldKey: _key('shop-product-box-end-date'),
                       controller: endDateController,
                       label: endDateLabel,
+                      onTap: onDateTap,
                     );
                     if (constraints.maxWidth < 520) {
                       return Column(
@@ -121,6 +132,10 @@ class ShopProductBox extends StatelessWidget {
                     );
                   },
                 ),
+              if (dateExtra != null) ...[
+                const SizedBox(height: 10),
+                dateExtra!,
+              ],
             ],
           ),
         _sectionBox(
@@ -190,23 +205,37 @@ Widget _dateFieldBox({
   required Key fieldKey,
   required TextEditingController? controller,
   required String label,
+  VoidCallback? onTap,
 }) {
+  final calendar = onTap != null;
   return TextField(
     key: fieldKey,
     controller: controller,
-    keyboardType: TextInputType.datetime,
+    readOnly: calendar,
+    enableInteractiveSelection: !calendar,
+    keyboardType: calendar ? TextInputType.none : TextInputType.datetime,
+    onTap: onTap,
     style: TextStyle(color: colors.text, fontSize: 15),
     cursorColor: colors.text,
-    decoration: _dateField(colors, label),
+    decoration: _dateField(colors, label, calendar: calendar),
   );
 }
 
-InputDecoration _dateField(PlannerPaletteColors colors, String label) {
+InputDecoration _dateField(
+  PlannerPaletteColors colors,
+  String label, {
+  bool calendar = false,
+}) {
   return InputDecoration(
     labelText: label,
+    hintText: calendar ? '달력에서 선택' : null,
     filled: true,
     fillColor: colors.bg,
     labelStyle: TextStyle(color: colors.textDim),
+    hintStyle: TextStyle(color: colors.textDim),
+    suffixIcon: calendar
+        ? const Icon(Icons.calendar_today_outlined, size: 18)
+        : null,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
