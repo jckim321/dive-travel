@@ -532,7 +532,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
             name: title,
             consumerPrice: 0,
             professionalPrice: 0,
-            listingKind: ProductListingKind.curated,
+            listingKind: admin
+                ? ProductListingKind.curated
+                : ProductListingKind.diverPlanned,
             publishStatus: ProductPublishStatus.draft,
             active: false,
             openEmptySeats: false,
@@ -1150,7 +1152,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final admin = store.stats.isAdmin;
     final cleanedHtml = sanitizeStoryHtml(_draftStoryHtml);
     final keptKind = existing == null
-        ? ProductListingKind.curated
+        ? (admin
+            ? ProductListingKind.curated
+            : ProductListingKind.diverPlanned)
         : existing.listingKind == ProductListingKind.diverPlanned ||
                 existing.listingKind == ProductListingKind.curated
             ? existing.listingKind
