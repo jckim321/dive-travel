@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -11,6 +12,7 @@ import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -99,6 +101,7 @@ class PlannerTripScreen extends StatefulWidget {
 
 class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _title = TextEditingController();
+  final _country = TextEditingController();
   final _region = TextEditingController();
   final _blurb = TextEditingController();
   final _price = TextEditingController();
@@ -113,6 +116,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _photoPicker = const DivePhotoPicker();
   List<StoryBlock> _blocks = const [StoryBlock(kind: StoryBlockKind.paragraph)];
 
+  TravelCountry? _pickedCountry;
   PickedPhoto? _cover;
   var _saving = false;
   var _storySaving = false;
@@ -210,9 +214,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     final location = (live.location ?? '').trim();
     final country = (live.country ?? '').trim();
-    final region = location.isNotEmpty ? location : country;
-    if (region.isNotEmpty) {
-      _region.text = region;
+    if (country.isNotEmpty) {
+      _country.text = country;
+      _pickedCountry = TravelCountryMaster.match(country);
+    }
+    if (location.isNotEmpty) {
+      _region.text = location;
     }
     _markClean();
   }
@@ -233,6 +240,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   String _formFingerprint() {
     return [
       _title.text,
+      _country.text,
       _region.text,
       _blurb.text,
       _price.text,
@@ -315,6 +323,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   @override
   void dispose() {
     _title.dispose();
+    _country.dispose();
     _region.dispose();
     _blurb.dispose();
     _price.dispose();
@@ -416,12 +425,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       if (firstSave) {
         final shopId = _shopId ??= _nextShopId(null);
         final productId = _productId ??= 'p-$shopId';
+        final country = _country.text.trim();
         final region = _region.text.trim();
         await store.saveShopProfile(
           shopId: shopId,
           name: title,
           location: region,
-          country: region,
+          country: country,
           productName: title,
           consumerPrice: 0,
           professionalPrice: 0,
@@ -612,6 +622,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       );
       return;
     }
+    final country = _country.text.trim();
+    if (country.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('국가를 입력하세요.')),
+      );
+      return;
+    }
     final price = parsePositivePrice(_price.text) ?? 0;
     final storeForLock = DiverStoreScope.of(context);
     final locked = _adminHidden && !storeForLock.stats.isAdmin;
@@ -701,7 +718,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         shopId: shopId,
         name: title,
         location: region,
-        country: region,
+        country: country,
         productName: title,
         consumerPrice: price,
         professionalPrice: professionalPrice,
@@ -864,12 +881,29 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           step: '1',
                           title: '기본사항',
                           children: [
+                            _text(
+                              key: const Key('planner-trip-title'),
+                              controller: _title,
+                              label: '여행 제목',
+                            ),
+                            const SizedBox(height: 10),
                             _pair(
                               wide: wide,
-                              a: _text(
-                                key: const Key('planner-trip-title'),
-                                controller: _title,
-                                label: '여행 제목',
+                              a: TravelCountryField(
+                                controller: _country,
+                                fieldKey: const Key('planner-trip-country'),
+                                picked: _pickedCountry,
+                                style: const TextStyle(color: PlannerPalette.text),
+                                cursorColor: PlannerPalette.text,
+                                decoration: _field('국가'),
+                                showAssignment: false,
+                                onEdited: () => setState(() {}),
+                                onPicked: (picked) {
+                                  setState(() => _pickedCountry = picked);
+                                },
+                                onCustom: () {
+                                  setState(() => _pickedCountry = null);
+                                },
                               ),
                               b: _text(
                                 key: const Key('planner-trip-region'),
@@ -1379,8 +1413,23 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     );
   }
 
+  String _existingCoverUrl() {
+    final productCover = (_source?.coverUrl ?? '').trim();
+    if (productCover.isNotEmpty) {
+      return productCover;
+    }
+    final shopId = (_shopId ?? _source?.shopId ?? '').trim();
+    if (shopId.isEmpty) {
+      return '';
+    }
+    final live = DiverStoreScope.of(context).liveStatsFor(shopId);
+    return (live?.coverUrl ?? '').trim();
+  }
+
   Widget _coverBox() {
     final cover = _cover;
+    final existingUrl = cover == null ? _existingCoverUrl() : '';
+    final hasPreview = cover != null || existingUrl.isNotEmpty;
     return Material(
       key: const Key('planner-trip-cover'),
       color: PlannerPalette.bg,
@@ -1388,29 +1437,78 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         borderRadius: BorderRadius.circular(12),
         side: const BorderSide(color: PlannerPalette.border),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.photo_outlined, color: PlannerPalette.textDim),
-            const SizedBox(height: 8),
-            Text(
-              cover == null ? '사진을 여기에 놓으세요' : cover.fileName,
-              key: const Key('planner-trip-cover-name'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: PlannerPalette.text),
-            ),
-            const SizedBox(height: 4),
             const Text(
               '대표 사진',
-              style: TextStyle(color: PlannerPalette.textDim, fontSize: 12),
+              style: TextStyle(
+                color: PlannerPalette.text,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
             ),
+            const SizedBox(height: 10),
+            if (hasPreview)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SizedBox(
+                  key: const Key('planner-trip-cover-preview'),
+                  height: 180,
+                  width: double.infinity,
+                  child: cover != null
+                      ? Image.memory(
+                          cover.bytes,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          existingUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const ColoredBox(
+                            color: PlannerPalette.disabledFill,
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: PlannerPalette.textDim,
+                            ),
+                          ),
+                        ),
+                ),
+              )
+            else
+              const SizedBox(
+                height: 120,
+                width: double.infinity,
+                child: ColoredBox(
+                  color: PlannerPalette.disabledFill,
+                  child: Icon(
+                    Icons.photo_outlined,
+                    color: PlannerPalette.textDim,
+                  ),
+                ),
+              ),
+            if (cover != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                cover.fileName,
+                key: const Key('planner-trip-cover-name'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: PlannerPalette.textDim,
+                  fontSize: 12,
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
             OutlinedButton(
               key: const Key('planner-trip-cover-pick'),
               onPressed: _saving ? null : _pickCover,
-              style: OutlinedButton.styleFrom(foregroundColor: PlannerPalette.text),
-              child: const Text('파일 선택'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: PlannerPalette.text,
+              ),
+              child: const Text('사진 바꾸기'),
             ),
           ],
         ),
