@@ -357,6 +357,19 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   }
 
   Future<void> _openPlannedTrip(BuildContext context, ShopProduct product) async {
+    final flagClose = product.flagClosesAt;
+    final departure = product.departureStart;
+    if (flagClose == null ||
+        (departure != null && !flagClose.isBefore(departure))) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('깃발 마감일을 먼저 정해 주세요. 상품을 열어 저장해 주세요.'),
+          ),
+        );
+      }
+      return;
+    }
     final store = DiverStoreScope.of(context);
     try {
       await store.setPlannedTripOpen(
