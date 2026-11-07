@@ -180,8 +180,17 @@ void main() {
     expect(find.byKey(const Key('shop-product-box')), findsOneWidget);
     expect(find.byKey(const Key('shop-product-box-date')), findsOneWidget);
     expect(find.byKey(const Key('shop-product-box-end-date')), findsOneWidget);
+    expect(find.byKey(const Key('planner-same-boat-section')), findsOneWidget);
+    expect(find.byKey(const Key('planner-same-boat-capacity')), findsOneWidget);
+    expect(find.byKey(const Key('planner-same-boat-booked')), findsOneWidget);
+    expect(find.byKey(const Key('planner-same-boat-left')), findsOneWidget);
     expect(find.text('기간은 날짜로 자동'), findsOneWidget);
     expect(find.text('상품 박스 하나'), findsOneWidget);
+    final dateBox = tester.getTopLeft(find.byKey(const Key('shop-product-box-date-section'))).dy;
+    final sameBoat = tester.getTopLeft(find.byKey(const Key('planner-same-boat-section'))).dy;
+    final productBox = tester.getTopLeft(find.byKey(const Key('shop-product-box'))).dy;
+    expect(dateBox, lessThan(sameBoat));
+    expect(sameBoat, lessThan(productBox));
 
     final title = tester.getTopLeft(find.byKey(const Key('planner-trip-title')));
     final region = tester.getTopLeft(find.byKey(const Key('planner-trip-region')));
@@ -245,6 +254,8 @@ void main() {
       start: DateTime(2026, 11, 18),
       end: DateTime(2026, 11, 30),
     );
+    await tester.enterText(find.byKey(const Key('planner-same-boat-capacity')), '8');
+    await tester.enterText(find.byKey(const Key('planner-same-boat-booked')), '2');
     await tester.enterText(find.byKey(const Key('planner-includes')), '숙박, 보트');
     await tester.enterText(find.byKey(const Key('planner-excludes')), '항공');
     await tester.pump();
@@ -291,6 +302,8 @@ void main() {
     expect(doc.storyBlocks.single.toMap()['kind'], 'paragraph');
     expect(doc.durationLabel, '12박 13일');
     expect(doc.departureStart, DateTime(2026, 11, 18));
+    expect(doc.capacity, 8);
+    expect(doc.bookedSeats, 2);
     expect(doc.includes, '숙박, 보트');
     expect(doc.excludes, '항공');
     expect(doc.options.single.name, '성인 1인');
@@ -365,6 +378,10 @@ void main() {
       durationLabel: '12박 13일',
       departureStart: DateTime(2026, 11, 18),
       includes: '보트',
+      capacity: 8,
+      bookedSeats: 3,
+      openEmptySeats: true,
+      sameBoatStatus: SameBoatStatus.approved,
       listingKind: ProductListingKind.curated,
       publishStatus: ProductPublishStatus.approved,
       active: true,
@@ -402,7 +419,23 @@ void main() {
     expect(find.textContaining('2026.11.18'), findsWidgets);
     expect(find.textContaining('2026.11.30'), findsWidgets);
     expect(find.text('성인 1인'), findsWidgets);
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('planner-same-boat-capacity'))).controller!.text,
+      '8',
+    );
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('planner-same-boat-booked'))).controller!.text,
+      '3',
+    );
+    expect(find.text('남은 자리 5명'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('planner-same-boat-booked'))).enabled,
+      isFalse,
+    );
 
+    await tester.enterText(find.byKey(const Key('planner-same-boat-capacity')), '10');
+    tester.widget<TextField>(find.byKey(const Key('planner-same-boat-booked'))).controller!
+        .text = '9';
     await tester.enterText(find.byKey(const Key('planner-trip-story')), '저녁에도 고래');
     await tester.tap(find.byKey(const Key('planner-trip-save')));
     await tester.pump();
@@ -418,6 +451,8 @@ void main() {
     expect(doc.schedule, '저녁에도 고래');
     expect(doc.storyBlocks.single.kind, StoryBlockKind.paragraph);
     expect(doc.storyBlocks.single.text, '저녁에도 고래');
+    expect(doc.capacity, 10);
+    expect(doc.bookedSeats, 3);
     expect(doc.publishStatus, ProductPublishStatus.approved);
     expect(doc.active, isTrue);
     expect(doc.listingKind, ProductListingKind.curated);

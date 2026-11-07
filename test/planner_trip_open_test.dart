@@ -53,6 +53,8 @@ void main() {
         .text = formatPlannerDay(DateTime(2026, 11, 18));
     tester.widget<TextField>(find.byKey(const Key('shop-product-box-end-date'))).controller!
         .text = formatPlannerDay(DateTime(2026, 11, 23));
+    await tester.enterText(find.byKey(const Key('planner-same-boat-capacity')), '8');
+    await tester.enterText(find.byKey(const Key('planner-same-boat-booked')), '2');
     await tester.pump();
   }
 
@@ -78,7 +80,8 @@ void main() {
     expect(doc.active, isTrue);
     expect(doc.listingKind, ProductListingKind.curated);
     expect(doc.openEmptySeats, isTrue);
-    expect(doc.capacity, greaterThan(0));
+    expect(doc.capacity, 8);
+    expect(doc.bookedSeats, 2);
     expect(doc.sameBoatStatus, SameBoatStatus.approved);
     expect(doc.listsOnSameBoat, isTrue);
     expect(doc.isListedPublicly, isTrue);

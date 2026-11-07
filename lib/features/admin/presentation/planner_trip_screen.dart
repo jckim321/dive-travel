@@ -103,6 +103,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _price = TextEditingController();
   final _start = TextEditingController();
   final _end = TextEditingController();
+  final _capacity = TextEditingController();
+  final _booked = TextEditingController(text: '0');
   final _includes = TextEditingController();
   final _excludes = TextEditingController();
   final List<_PlannerOption> _options = [];
@@ -113,6 +115,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _saving = false;
   var _open = false;
   var _adminHidden = false;
+  var _bookedLocked = false;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -155,6 +158,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           _end.text = _start.text;
         }
       }
+      if (existing.capacity > 0) {
+        _capacity.text = '${existing.capacity}';
+      }
+      _booked.text = '${existing.bookedSeats < 0 ? 0 : existing.bookedSeats}';
+      _bookedLocked = existing.bookedSeats > 0;
       _includes.text = existing.includes;
       _excludes.text = existing.excludes;
       for (final option in existing.options) {
@@ -168,6 +176,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     _start.addListener(_onDates);
     _end.addListener(_onDates);
+    _capacity.addListener(_onDates);
+    _booked.addListener(_onDates);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _markClean();
@@ -215,6 +225,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _price.text,
       _start.text,
       _end.text,
+      _capacity.text,
+      _booked.text,
       _includes.text,
       _excludes.text,
       _open ? '1' : '0',
@@ -290,12 +302,31 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     _price.dispose();
     _start.dispose();
     _end.dispose();
+    _capacity.dispose();
+    _booked.dispose();
     _includes.dispose();
     _excludes.dispose();
     for (final option in _options) {
       option.dispose();
     }
     super.dispose();
+  }
+
+  int _parseNonNegativeInt(String raw) {
+    final value = int.tryParse(raw.trim());
+    if (value == null || value < 0) {
+      return 0;
+    }
+    return value;
+  }
+
+  int get _capacityValue => _parseNonNegativeInt(_capacity.text);
+
+  int get _bookedValue => _parseNonNegativeInt(_booked.text);
+
+  int get _seatsLeft {
+    final left = _capacityValue - _bookedValue;
+    return left < 0 ? 0 : left;
   }
 
   Future<void> _pickCover() async {
@@ -407,9 +438,24 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       );
       return;
     }
+    final capacity = _capacityValue;
+    if (wantOpen && capacity < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모집 정원을 1명 이상 입력하세요.')),
+      );
+      return;
+    }
+    final existing = _source;
+    final existingBooked = existing?.bookedSeats ?? 0;
+    final booked = existingBooked > 0 ? existingBooked : _bookedValue;
+    if (capacity > 0 && booked > capacity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('확정 인원은 모집 정원을 넘을 수 없습니다.')),
+      );
+      return;
+    }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
-    final existing = _source;
     final shopId = _shopId ??= _nextShopId(existing);
     final productId = _productId ??=
         existing != null && existing.shopId.trim() == shopId
@@ -464,8 +510,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           publishStatus: existing?.publishStatus ?? ProductPublishStatus.draft,
           sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
           openEmptySeats: existing?.openEmptySeats ?? false,
-          capacity: existing?.capacity ?? 0,
-          bookedSeats: existing?.bookedSeats ?? 0,
+          capacity: capacity,
+          bookedSeats: booked,
           flagHolds: existing?.flagHolds ?? const [],
           sameBoatOpenedAt: existing?.sameBoatOpenedAt,
           featuredAt: existing?.featuredAt,
@@ -509,6 +555,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         if (refreshed != null) {
           _live = refreshed;
           _adminHidden = refreshed.sameBoatStatus == SameBoatStatus.hidden;
+          if (refreshed.capacity > 0) {
+            _capacity.text = '${refreshed.capacity}';
+          }
+          _booked.text =
+              '${refreshed.bookedSeats < 0 ? 0 : refreshed.bookedSeats}';
+          _bookedLocked = refreshed.bookedSeats > 0;
         }
         _cover = null;
         _saving = false;
@@ -642,6 +694,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           badge: '상품 박스 하나',
                           children: [
                             _plannerDateSection(wide),
+                            const SizedBox(height: 12),
+                            _plannerSameBoatSection(wide),
                             const SizedBox(height: 12),
                             ShopProductBox(
                               showDate: false,
@@ -778,6 +832,124 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _start.text = formatPlannerDay(picked.start);
       _end.text = formatPlannerDay(picked.end);
     });
+  }
+
+  InputDecoration _plannerFieldDecoration({
+    required String label,
+    String? hintText,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      filled: true,
+      fillColor: PartnerTheme.bg,
+      labelStyle: const TextStyle(color: PartnerTheme.textDim),
+      hintStyle: const TextStyle(color: PartnerTheme.textDim),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: PartnerTheme.border),
+      ),
+    );
+  }
+
+  Widget _plannerSameBoatSection(bool wide) {
+    final capacityField = TextField(
+      key: const Key('planner-same-boat-capacity'),
+      controller: _capacity,
+      enabled: !_saving,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: _plannerFieldDecoration(label: '모집 정원(총 인원)'),
+    );
+    final bookedField = TextField(
+      key: const Key('planner-same-boat-booked'),
+      controller: _booked,
+      enabled: !_saving && !_bookedLocked,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+      cursorColor: PartnerTheme.accent,
+      decoration: _plannerFieldDecoration(
+        label: '이미 확정된 인원',
+        hintText: '0',
+      ),
+    );
+    final leftLabel = Text(
+      key: const Key('planner-same-boat-left'),
+      '남은 자리 $_seatsLeft명',
+      style: const TextStyle(
+        color: PartnerTheme.text,
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+      ),
+    );
+    return Material(
+      key: const Key('planner-same-boat-section'),
+      color: PartnerTheme.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: PartnerTheme.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '같은배 모집',
+              style: TextStyle(
+                color: PartnerTheme.text,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (!wide)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  capacityField,
+                  const SizedBox(height: 10),
+                  bookedField,
+                  const SizedBox(height: 10),
+                  leftLabel,
+                ],
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: capacityField),
+                      const SizedBox(width: 10),
+                      Expanded(child: bookedField),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  leftLabel,
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _plannerDateSection(bool wide) {

@@ -3208,13 +3208,16 @@ class DiverStore extends ChangeNotifier {
       if (current.departureStart == null) {
         throw StateError('출발일을 입력하세요.');
       }
+      if (current.capacity < 1) {
+        throw StateError('모집 정원을 1명 이상 입력하세요.');
+      }
       ProductPublishGuard.ensureCanApprove(current);
       final kind = current.listingKind == ProductListingKind.diverPlanned
           ? ProductListingKind.diverPlanned
           : ProductListingKind.curated;
       written = current.copyWith(
         openEmptySeats: true,
-        capacity: current.capacity > 0 ? current.capacity : 1,
+        capacity: current.capacity,
         sameBoatStatus: SameBoatStatus.approved,
         sameBoatOpenedAt: current.sameBoatOpenedAt ?? DateTime.now(),
         listingKind: kind,
