@@ -224,18 +224,103 @@ bool isAllowedStoryLinkUrl(String raw) {
   return uri.scheme == 'http' || uri.scheme == 'https';
 }
 
+/// Story body colors readable on both light and dark backgrounds.
+enum StoryTextColor {
+  red('빨강', Color(0xFFE53935)),
+  orange('주황', Color(0xFFFB8C00)),
+  green('초록', Color(0xFF43A047)),
+  blue('파랑', Color(0xFF1E88E5)),
+  purple('보라', Color(0xFF8E24AA)),
+  gray('회색', Color(0xFF78909C));
+
+  const StoryTextColor(this.label, this.color);
+
+  final String label;
+  final Color color;
+
+  static StoryTextColor? tryParse(String raw) {
+    for (final value in StoryTextColor.values) {
+      if (value.label == raw) {
+        return value;
+      }
+    }
+    return null;
+  }
+}
+
 final _storyLinkPattern = RegExp(
   r'\[([^\]]*)\]\((https?://[^)\s]+)\)',
 );
 
-/// Bold `**`, italic `*`, underline `++`, and `[label](https://…)` links.
-List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
+final _storyColorOpenPattern = RegExp(
+  r'\{\{(빨강|주황|초록|파랑|보라|회색):',
+);
+
+/// Wraps [inner] as `{{색이름:inner}}`. Replaces an existing color wrap.
+String wrapStoryTextColor(String inner, StoryTextColor color) {
+  final existing = unwrapStoryTextColor(inner);
+  return '{{${color.label}:${existing ?? inner}}}';
+}
+
+/// Returns inner text when [raw] is exactly one color wrap; otherwise null.
+String? unwrapStoryTextColor(String raw) {
+  final open = _storyColorOpenPattern.matchAsPrefix(raw);
+  if (open == null) {
+    return null;
+  }
+  final closed = _findStoryColorClose(raw, open.end);
+  if (closed == null || closed != raw.length) {
+    return null;
+  }
+  return raw.substring(open.end, closed - 2);
+}
+
+int? _findStoryColorClose(String input, int contentStart) {
+  var depth = 1;
+  var i = contentStart;
+  while (i < input.length) {
+    if (_storyColorOpenPattern.matchAsPrefix(input, i) != null) {
+      depth += 1;
+      final again = _storyColorOpenPattern.matchAsPrefix(input, i)!;
+      i = again.end;
+      continue;
+    }
+    if (input.startsWith('}}', i)) {
+      depth -= 1;
+      i += 2;
+      if (depth == 0) {
+        return i;
+      }
+      continue;
+    }
+    i += 1;
+  }
+  return null;
+}
+
+/// Bold `**`, italic `*`, underline `++`, links, and `{{색:글자}}` colors.
+///
+/// When [showMarkers] is true, markup characters stay visible (editor).
+List<InlineSpan> storyInlineSpans(
+  String input,
+  TextStyle style, {
+  bool showMarkers = false,
+  TextStyle? markerStyle,
+}) {
   final spans = <InlineSpan>[];
   final buffer = StringBuffer();
   var bold = false;
   var italic = false;
   var underline = false;
   var index = 0;
+  final markers = markerStyle ??
+      style.copyWith(
+        color: style.color?.withValues(alpha: 0.45) ?? const Color(0xFF9BB0C7),
+        fontSize: (style.fontSize ?? 14) * 0.72,
+        fontWeight: FontWeight.w400,
+        fontStyle: FontStyle.normal,
+        decoration: TextDecoration.none,
+      );
 
   TextStyle bodyStyle() => style.copyWith(
         fontWeight: bold ? FontWeight.w800 : style.fontWeight,
@@ -251,21 +336,67 @@ List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
     buffer.clear();
   }
 
+  void addMarker(String marker) {
+    if (!showMarkers) {
+      return;
+    }
+    flush();
+    spans.add(TextSpan(text: marker, style: markers));
+  }
+
   while (index < input.length) {
+    final colorOpen = _storyColorOpenPattern.matchAsPrefix(input, index);
+    if (colorOpen != null) {
+      final closeAt = _findStoryColorClose(input, colorOpen.end);
+      if (closeAt != null) {
+        flush();
+        final name = colorOpen.group(1)!;
+        final color = StoryTextColor.tryParse(name)?.color;
+        final inner = input.substring(colorOpen.end, closeAt - 2);
+        if (showMarkers) {
+          spans.add(TextSpan(text: '{{$name:', style: markers));
+        }
+        spans.addAll(
+          storyInlineSpans(
+            inner,
+            color == null ? bodyStyle() : bodyStyle().copyWith(color: color),
+            showMarkers: showMarkers,
+            markerStyle: markers,
+          ),
+        );
+        if (showMarkers) {
+          spans.add(TextSpan(text: '}}', style: markers));
+        }
+        index = closeAt;
+        continue;
+      }
+    }
     if (input.startsWith('**', index)) {
-      flush();
+      if (showMarkers) {
+        addMarker('**');
+      } else {
+        flush();
+      }
       bold = !bold;
       index += 2;
       continue;
     }
     if (input.startsWith('++', index)) {
-      flush();
+      if (showMarkers) {
+        addMarker('++');
+      } else {
+        flush();
+      }
       underline = !underline;
       index += 2;
       continue;
     }
     if (input.startsWith('*', index)) {
-      flush();
+      if (showMarkers) {
+        addMarker('*');
+      } else {
+        flush();
+      }
       italic = !italic;
       index += 1;
       continue;
@@ -275,26 +406,38 @@ List<InlineSpan> storyInlineSpans(String input, TextStyle style) {
       flush();
       final label = link.group(1)!;
       final url = link.group(2)!;
+      final linkColor = const Color(0xFF1565C0);
       final linkStyle = bodyStyle().copyWith(
-        color: const Color(0xFF1565C0),
+        color: linkColor,
         decoration: TextDecoration.underline,
-        decorationColor: const Color(0xFF1565C0),
+        decorationColor: linkColor,
       );
-      final recognizer = TapGestureRecognizer()
-        ..onTap = () {
-          final uri = Uri.tryParse(url);
-          if (uri == null) {
-            return;
-          }
-          launchUrl(uri, mode: LaunchMode.externalApplication);
-        };
-      spans.add(
-        TextSpan(
-          text: label.isEmpty ? url : label,
-          style: linkStyle,
-          recognizer: recognizer,
-        ),
-      );
+      if (showMarkers) {
+        spans.add(TextSpan(text: '[', style: markers));
+        spans.add(
+          TextSpan(
+            text: label.isEmpty ? url : label,
+            style: linkStyle,
+          ),
+        );
+        spans.add(TextSpan(text: ']($url)', style: markers));
+      } else {
+        final recognizer = TapGestureRecognizer()
+          ..onTap = () {
+            final uri = Uri.tryParse(url);
+            if (uri == null) {
+              return;
+            }
+            launchUrl(uri, mode: LaunchMode.externalApplication);
+          };
+        spans.add(
+          TextSpan(
+            text: label.isEmpty ? url : label,
+            style: linkStyle,
+            recognizer: recognizer,
+          ),
+        );
+      }
       index = link.end;
       continue;
     }

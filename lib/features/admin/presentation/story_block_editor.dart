@@ -423,6 +423,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               _insertLink();
             },
           ),
+          _colorMenu(),
         ],
         _icon(
           const Key('planner-story-list'),
@@ -466,6 +467,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               PopupMenuItem(value: 'italic', child: Text('기울임')),
               PopupMenuItem(value: 'underline', child: Text('밑줄')),
               PopupMenuItem(value: 'link', child: Text('링크')),
+              PopupMenuItem(value: 'color', child: Text('글자 색')),
               PopupMenuItem(value: 'quote', child: Text('인용')),
               PopupMenuItem(value: 'divider', child: Text('구분선')),
               PopupMenuItem(value: 'paragraph', child: Text('문단')),
@@ -482,6 +484,53 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     );
   }
 
+  Widget _colorMenu() {
+    return PopupMenuButton<String>(
+      key: const Key('planner-story-color'),
+      tooltip: '글자 색',
+      onSelected: (value) {
+        if (value == 'clear') {
+          _applyTextColor(null);
+          return;
+        }
+        final color = StoryTextColor.tryParse(value);
+        if (color != null) {
+          _applyTextColor(color);
+        }
+      },
+      itemBuilder: (context) => [
+        for (final color in StoryTextColor.values)
+          PopupMenuItem(
+            value: color.label,
+            child: Row(
+              children: [
+                Container(
+                  width: 14,
+                  height: 14,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: color.color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: PartnerTheme.border),
+                  ),
+                ),
+                Text(color.label, style: TextStyle(color: color.color)),
+              ],
+            ),
+          ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'clear',
+          child: Text('색 지우기'),
+        ),
+      ],
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        child: Icon(Icons.format_color_text, color: PartnerTheme.text, size: 20),
+      ),
+    );
+  }
+
   void _moreSelected(String value) {
     switch (value) {
       case 'italic':
@@ -490,6 +539,8 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
         _toggleMark('++');
       case 'link':
         _insertLink();
+      case 'color':
+        _pickTextColor();
       case 'quote':
         _applyKind(StoryBlockKind.quote);
       case 'divider':
@@ -503,6 +554,92 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       case 'map':
         _addMap();
     }
+  }
+
+  Future<void> _pickTextColor() async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+          key: const Key('planner-story-color-dialog'),
+          title: const Text('글자 색'),
+          children: [
+            for (final color in StoryTextColor.values)
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(context).pop(color.label),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 14,
+                      margin: const EdgeInsets.only(right: 10),
+                      decoration: BoxDecoration(
+                        color: color.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Text(color.label),
+                  ],
+                ),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop('clear'),
+              child: const Text('색 지우기'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || choice == null) {
+      return;
+    }
+    if (choice == 'clear') {
+      _applyTextColor(null);
+      return;
+    }
+    final color = StoryTextColor.tryParse(choice);
+    if (color != null) {
+      _applyTextColor(color);
+    }
+  }
+
+  void _applyTextColor(StoryTextColor? color) {
+    final index = _focus.clamp(0, _controllers.length - 1);
+    if (StoryBlock.isAtomic(_blocks[index].kind)) {
+      return;
+    }
+    final controller = _controllers[index];
+    final text = controller.text;
+    var start = controller.selection.start;
+    var end = controller.selection.end;
+    if (start < 0 || end < 0 || start == end) {
+      _snack('색을 넣을 글자를 먼저 고르세요.');
+      return;
+    }
+    if (end < start) {
+      final swap = start;
+      start = end;
+      end = swap;
+    }
+    final selected = text.substring(start, end);
+    final String next;
+    if (color == null) {
+      next = unwrapStoryTextColor(selected) ?? selected;
+    } else {
+      next = wrapStoryTextColor(selected, color);
+    }
+    if (next == selected) {
+      if (color == null) {
+        _snack('지울 글자 색이 없습니다.');
+      }
+      return;
+    }
+    final updated = text.replaceRange(start, end, next);
+    controller.value = TextEditingValue(
+      text: updated,
+      selection: TextSelection.collapsed(offset: start + next.length),
+    );
+    _emit();
   }
 
   void _snack(String message) {
@@ -1088,7 +1225,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
   }
 }
 
-/// Keeps `**` / `*` / `++` in the stored text while painting the body styled.
+/// Keeps markup in the stored text while painting bold / color / links styled.
 class _MarkedStoryController extends TextEditingController {
   _MarkedStoryController({super.text});
 
@@ -1099,10 +1236,9 @@ class _MarkedStoryController extends TextEditingController {
     required bool withComposing,
   }) {
     final base = style ?? const TextStyle();
-    final markerSize = (base.fontSize ?? 16) * 0.72;
     final markerStyle = base.copyWith(
       color: PartnerTheme.textDim,
-      fontSize: markerSize,
+      fontSize: (base.fontSize ?? 16) * 0.72,
       fontWeight: FontWeight.w400,
       fontStyle: FontStyle.normal,
       decoration: TextDecoration.none,
@@ -1110,93 +1246,12 @@ class _MarkedStoryController extends TextEditingController {
     );
     return TextSpan(
       style: base,
-      children: _markedEditorSpans(text, base, markerStyle),
-    );
-  }
-}
-
-List<InlineSpan> _markedEditorSpans(
-  String input,
-  TextStyle style,
-  TextStyle markerStyle,
-) {
-  final spans = <InlineSpan>[];
-  final buffer = StringBuffer();
-  var bold = false;
-  var italic = false;
-  var underline = false;
-  var index = 0;
-
-  void flushBody() {
-    if (buffer.isEmpty) {
-      return;
-    }
-    spans.add(
-      TextSpan(
-        text: buffer.toString(),
-        style: style.copyWith(
-          fontWeight: bold ? FontWeight.w800 : style.fontWeight,
-          fontStyle: italic ? FontStyle.italic : style.fontStyle,
-          decoration: underline ? TextDecoration.underline : style.decoration,
-        ),
+      children: storyInlineSpans(
+        text,
+        base,
+        showMarkers: true,
+        markerStyle: markerStyle,
       ),
     );
-    buffer.clear();
   }
-
-  void addMarker(String marker) {
-    flushBody();
-    spans.add(TextSpan(text: marker, style: markerStyle));
-  }
-
-  while (index < input.length) {
-    if (input.startsWith('**', index)) {
-      addMarker('**');
-      bold = !bold;
-      index += 2;
-      continue;
-    }
-    if (input.startsWith('++', index)) {
-      addMarker('++');
-      underline = !underline;
-      index += 2;
-      continue;
-    }
-    if (input.startsWith('*', index)) {
-      addMarker('*');
-      italic = !italic;
-      index += 1;
-      continue;
-    }
-    final link = RegExp(r'\[([^\]]*)\]\((https?://[^)\s]+)\)')
-        .matchAsPrefix(input, index);
-    if (link != null && isAllowedStoryLinkUrl(link.group(2)!)) {
-      flushBody();
-      final label = link.group(1)!;
-      final url = link.group(2)!;
-      spans.add(TextSpan(text: '[', style: markerStyle));
-      spans.add(
-        TextSpan(
-          text: label.isEmpty ? url : label,
-          style: style.copyWith(
-            color: const Color(0xFF1565C0),
-            fontWeight: bold ? FontWeight.w800 : style.fontWeight,
-            fontStyle: italic ? FontStyle.italic : style.fontStyle,
-            decoration: TextDecoration.underline,
-            decorationColor: const Color(0xFF1565C0),
-          ),
-        ),
-      );
-      spans.add(TextSpan(text: ']($url)', style: markerStyle));
-      index = link.end;
-      continue;
-    }
-    buffer.write(input[index]);
-    index += 1;
-  }
-  flushBody();
-  if (spans.isEmpty) {
-    spans.add(TextSpan(text: '', style: style));
-  }
-  return spans;
 }
