@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 
 /// Block editor for a planned-trip story.
 /// Wide screens show the full toolbar. Narrow screens show bold, heading,
@@ -342,7 +342,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
                 _autosaveNotice!,
                 key: const Key('planner-story-autosave-notice'),
                 style: const TextStyle(
-                  color: PartnerTheme.textDim,
+                  color: PlannerPalette.textDim,
                   fontSize: 12,
                 ),
               ),
@@ -353,14 +353,14 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
                 key: const Key('planner-story-video-progress'),
                 value: _videoProgress,
                 minHeight: 6,
-                color: PartnerTheme.accent,
-                backgroundColor: PartnerTheme.border,
+                color: PlannerPalette.accent,
+                backgroundColor: PlannerPalette.border,
               ),
               const SizedBox(height: 4),
               Text(
                 '올리는 중 ${(_videoProgress! * 100).round()}%',
                 key: const Key('planner-story-video-progress-label'),
-                style: const TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+                style: const TextStyle(color: PlannerPalette.textDim, fontSize: 12),
               ),
               const SizedBox(height: 8),
             ],
@@ -396,7 +396,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             ],
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Text('본문', style: TextStyle(color: PartnerTheme.text)),
+              child: Text('본문', style: TextStyle(color: PlannerPalette.text)),
             ),
           ),
         _icon(const Key('planner-story-bold'), Icons.format_bold, '굵게', () => _toggleMark('**')),
@@ -477,7 +477,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             ],
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Text('더보기', style: TextStyle(color: PartnerTheme.text)),
+              child: Text('더보기', style: TextStyle(color: PlannerPalette.text)),
             ),
           ),
       ],
@@ -511,7 +511,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
                   decoration: BoxDecoration(
                     color: color.color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: PartnerTheme.border),
+                    border: Border.all(color: PlannerPalette.border),
                   ),
                 ),
                 Text(color.label, style: TextStyle(color: color.color)),
@@ -526,7 +526,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       ],
       child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Icon(Icons.format_color_text, color: PartnerTheme.text, size: 20),
+        child: Icon(Icons.format_color_text, color: PlannerPalette.text, size: 20),
       ),
     );
   }
@@ -853,14 +853,14 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
       onPressed: onPressed,
-      icon: Icon(icon, color: PartnerTheme.text, size: 20),
+      icon: Icon(icon, color: PlannerPalette.text, size: 20),
     );
   }
 
   Widget _block(int index) {
     final block = _blocks[index];
     if (block.kind == StoryBlockKind.divider) {
-      return const Divider(color: PartnerTheme.border, height: 24);
+      return const Divider(color: PlannerPalette.border, height: 24);
     }
     if (block.kind == StoryBlockKind.photo) {
       return _photoBlock(index);
@@ -874,7 +874,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
     final isParagraph = block.kind == StoryBlockKind.paragraph;
     final isNumbered = block.kind == StoryBlockKind.numbered;
     final style = TextStyle(
-      color: PartnerTheme.text,
+      color: PlannerPalette.text,
       height: 1.45,
       fontSize: block.kind == StoryBlockKind.heading
           ? 20
@@ -906,7 +906,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           : (isParagraph ? 6 : 2),
       maxLines: grows || block.kind == StoryBlockKind.heading ? null : 8,
       style: style,
-      cursorColor: PartnerTheme.accent,
+      cursorColor: PlannerPalette.text,
       onTap: () => _focus = index,
       onChanged: (_) {
         _emit();
@@ -917,29 +917,29 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       decoration: InputDecoration(
         hintText: index == firstText ? '여행 이야기를 적어 주세요' : null,
         filled: true,
-        fillColor: PartnerTheme.bg,
-        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        fillColor: PlannerPalette.bg,
+        hintStyle: const TextStyle(color: PlannerPalette.textDim),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         prefixIcon: block.kind == StoryBlockKind.quote
-            ? const Icon(Icons.format_quote, color: PartnerTheme.textDim, size: 18)
+            ? const Icon(Icons.format_quote, color: PlannerPalette.textDim, size: 18)
             : block.kind == StoryBlockKind.list
-                ? const Icon(Icons.circle, color: PartnerTheme.textDim, size: 8)
+                ? const Icon(Icons.circle, color: PlannerPalette.textDim, size: 8)
                 : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.border),
+          borderSide: const BorderSide(color: PlannerPalette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
             color: block.kind == StoryBlockKind.quote
-                ? PartnerTheme.accent
-                : PartnerTheme.border,
+                ? PlannerPalette.accent
+                : PlannerPalette.border,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.accent),
+          borderSide: const BorderSide(color: PlannerPalette.accent),
         ),
       ),
     );
@@ -963,7 +963,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
                   child: Text(
                     '$n.',
                     style: TextStyle(
-                      color: PartnerTheme.textDim,
+                      color: PlannerPalette.textDim,
                       fontSize: style.fontSize,
                       height: style.height,
                       fontWeight: FontWeight.w600,
@@ -988,7 +988,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           const SizedBox(
             height: 160,
             width: double.infinity,
-            child: ColoredBox(color: Color(0xFF12324A)),
+            child: ColoredBox(color: PlannerPalette.disabledFill),
           )
         else
           Image.network(
@@ -999,7 +999,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
             errorBuilder: (_, _, _) => const SizedBox(
               height: 160,
               width: double.infinity,
-              child: ColoredBox(color: Color(0xFF12324A)),
+              child: ColoredBox(color: PlannerPalette.disabledFill),
             ),
           ),
         const SizedBox(height: 6),
@@ -1007,27 +1007,27 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           key: Key('planner-story-photo-caption-$index'),
           controller: _controllers[index],
           maxLines: 1,
-          style: const TextStyle(color: PartnerTheme.text, fontSize: 14),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text, fontSize: 14),
+          cursorColor: PlannerPalette.text,
           onTap: () => _focus = index,
           onChanged: (_) => _emit(),
           decoration: InputDecoration(
             hintText: '한 줄 설명',
             filled: true,
-            fillColor: PartnerTheme.bg,
-            hintStyle: const TextStyle(color: PartnerTheme.textDim),
+            fillColor: PlannerPalette.bg,
+            hintStyle: const TextStyle(color: PlannerPalette.textDim),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.border),
+              borderSide: const BorderSide(color: PlannerPalette.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.border),
+              borderSide: const BorderSide(color: PlannerPalette.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.accent),
+              borderSide: const BorderSide(color: PlannerPalette.accent),
             ),
           ),
         ),
@@ -1037,7 +1037,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               key: Key('planner-story-photo-up-$index'),
               tooltip: '위로',
               onPressed: index == 0 ? null : () => _movePhoto(index, -1),
-              icon: const Icon(Icons.arrow_upward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_upward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-photo-down-$index'),
@@ -1045,13 +1045,13 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               onPressed: index == _blocks.length - 1
                   ? null
                   : () => _movePhoto(index, 1),
-              icon: const Icon(Icons.arrow_downward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_downward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-photo-delete-$index'),
               tooltip: '지우기',
               onPressed: () => _removePhoto(index),
-              icon: const Icon(Icons.delete_outline, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.delete_outline, color: PlannerPalette.text, size: 18),
             ),
           ],
         ),
@@ -1068,9 +1068,13 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           height: 160,
           width: double.infinity,
           child: ColoredBox(
-            color: Color(0xFF12324A),
+            color: PlannerPalette.disabledFill,
             child: Center(
-              child: Icon(Icons.play_circle_outline, color: Colors.white, size: 48),
+              child: Icon(
+                Icons.play_circle_outline,
+                color: PlannerPalette.text,
+                size: 48,
+              ),
             ),
           ),
         ),
@@ -1079,27 +1083,27 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
           key: Key('planner-story-video-caption-$index'),
           controller: _controllers[index],
           maxLines: 1,
-          style: const TextStyle(color: PartnerTheme.text, fontSize: 14),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text, fontSize: 14),
+          cursorColor: PlannerPalette.text,
           onTap: () => _focus = index,
           onChanged: (_) => _emit(),
           decoration: InputDecoration(
             hintText: '한 줄 설명',
             filled: true,
-            fillColor: PartnerTheme.bg,
-            hintStyle: const TextStyle(color: PartnerTheme.textDim),
+            fillColor: PlannerPalette.bg,
+            hintStyle: const TextStyle(color: PlannerPalette.textDim),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.border),
+              borderSide: const BorderSide(color: PlannerPalette.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.border),
+              borderSide: const BorderSide(color: PlannerPalette.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: PartnerTheme.accent),
+              borderSide: const BorderSide(color: PlannerPalette.accent),
             ),
           ),
         ),
@@ -1109,7 +1113,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               key: Key('planner-story-video-up-$index'),
               tooltip: '위로',
               onPressed: index == 0 ? null : () => _moveMedia(index, -1),
-              icon: const Icon(Icons.arrow_upward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_upward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-video-down-$index'),
@@ -1117,13 +1121,13 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               onPressed: index == _blocks.length - 1
                   ? null
                   : () => _moveMedia(index, 1),
-              icon: const Icon(Icons.arrow_downward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_downward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-video-delete-$index'),
               tooltip: '지우기',
               onPressed: () => _removeMedia(index),
-              icon: const Icon(Icons.delete_outline, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.delete_outline, color: PlannerPalette.text, size: 18),
             ),
           ],
         ),
@@ -1166,7 +1170,7 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               key: Key('planner-story-map-up-$index'),
               tooltip: '위로',
               onPressed: index == 0 ? null : () => _moveMedia(index, -1),
-              icon: const Icon(Icons.arrow_upward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_upward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-map-down-$index'),
@@ -1174,13 +1178,13 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
               onPressed: index == _blocks.length - 1
                   ? null
                   : () => _moveMedia(index, 1),
-              icon: const Icon(Icons.arrow_downward, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.arrow_downward, color: PlannerPalette.text, size: 18),
             ),
             IconButton(
               key: Key('planner-story-map-delete-$index'),
               tooltip: '지우기',
               onPressed: () => _removeMedia(index),
-              icon: const Icon(Icons.delete_outline, color: PartnerTheme.text, size: 18),
+              icon: const Icon(Icons.delete_outline, color: PlannerPalette.text, size: 18),
             ),
           ],
         ),
@@ -1198,27 +1202,27 @@ class _StoryBlockEditorState extends State<StoryBlockEditor> {
       key: key,
       controller: controller,
       maxLines: 1,
-      style: const TextStyle(color: PartnerTheme.text, fontSize: 14),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 14),
+      cursorColor: PlannerPalette.text,
       onTap: () => _focus = index,
       onChanged: (_) => _emit(),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: PartnerTheme.bg,
-        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        fillColor: PlannerPalette.bg,
+        hintStyle: const TextStyle(color: PlannerPalette.textDim),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.border),
+          borderSide: const BorderSide(color: PlannerPalette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.border),
+          borderSide: const BorderSide(color: PlannerPalette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: PartnerTheme.accent),
+          borderSide: const BorderSide(color: PlannerPalette.accent),
         ),
       ),
     );
@@ -1237,7 +1241,7 @@ class _MarkedStoryController extends TextEditingController {
   }) {
     final base = style ?? const TextStyle();
     final markerStyle = base.copyWith(
-      color: PartnerTheme.textDim,
+      color: PlannerPalette.textDim,
       fontSize: (base.fontSize ?? 16) * 0.72,
       fontWeight: FontWeight.w400,
       fontStyle: FontStyle.normal,
