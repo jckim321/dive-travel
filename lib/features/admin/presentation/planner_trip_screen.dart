@@ -12,6 +12,7 @@ import 'package:dive_travel_app/core/storage/dive_video_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/story_block_editor.dart';
+import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -126,6 +127,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _bookedLocked = false;
   /// False keeps the flag-close field tied to departure − 7 days (or today).
   var _flagCloseManual = false;
+  /// Admin-only trial host for the Tiptap iframe editor.
+  var _useNewStoryEditor = false;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -1000,17 +1003,42 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                           title: '여행 이야기',
                           trailing: _storySectionTrailing(),
                           children: [
-                            StoryBlockEditor(
-                              initial: _blocks,
-                              onChanged: (blocks) => _blocks = blocks,
-                              pickPhoto: widget.pickStoryPhoto,
-                              uploadPhoto: _uploadStoryPhoto,
-                              pickVideo: widget.pickStoryVideo,
-                              uploadVideo: _uploadStoryVideo,
-                              onAutosave: () =>
-                                  _saveStoryBody(fromAutosave: true),
-                              lastSavedAt: _lastStorySavedAt,
-                            ),
+                            if (admin) ...[
+                              SwitchListTile(
+                                key: const Key('planner-new-editor-switch'),
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text(
+                                  '새 편집기(시험)',
+                                  style: TextStyle(
+                                    color: PlannerPalette.text,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                value: _useNewStoryEditor,
+                                onChanged: _saving
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _useNewStoryEditor = value;
+                                        });
+                                      },
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            if (admin && _useNewStoryEditor)
+                              const TipTapStoryFrame()
+                            else
+                              StoryBlockEditor(
+                                initial: _blocks,
+                                onChanged: (blocks) => _blocks = blocks,
+                                pickPhoto: widget.pickStoryPhoto,
+                                uploadPhoto: _uploadStoryPhoto,
+                                pickVideo: widget.pickStoryVideo,
+                                uploadVideo: _uploadStoryVideo,
+                                onAutosave: () =>
+                                    _saveStoryBody(fromAutosave: true),
+                                lastSavedAt: _lastStorySavedAt,
+                              ),
                           ],
                         ),
                         const SizedBox(height: 14),

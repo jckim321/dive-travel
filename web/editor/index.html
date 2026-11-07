@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dive Travel story editor (trial)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --border: #cdd5e0;
+      --text: #152033;
+      --muted: #5a6a7e;
+      --accent: #1f4e79;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    }
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+    }
+    .editor-shell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .toolbar button,
+    .toolbar select {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 13px;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .toolbar button:hover,
+    .toolbar select:hover {
+      border-color: var(--accent);
+    }
+    .toolbar button:active {
+      background: #e8eef5;
+    }
+    .editor-surface {
+      flex: 1;
+      overflow: auto;
+      padding: 12px 14px;
+    }
+    .ProseMirror {
+      outline: none;
+      min-height: 220px;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    .ProseMirror p { margin: 0 0 0.75em; }
+    .ProseMirror h1,
+    .ProseMirror h2,
+    .ProseMirror h3 {
+      margin: 0.4em 0 0.55em;
+      line-height: 1.25;
+    }
+    .ProseMirror blockquote {
+      margin: 0.6em 0;
+      padding: 0.2em 0 0.2em 0.9em;
+      border-left: 3px solid var(--accent);
+      color: var(--muted);
+    }
+    .ProseMirror hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1em 0;
+    }
+    .ProseMirror a {
+      color: #1565c0;
+      text-decoration: underline;
+    }
+    .ProseMirror ul,
+    .ProseMirror ol {
+      padding-left: 1.4em;
+      margin: 0.4em 0 0.8em;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./editor.js"></script>
+</body>
+</html>
