@@ -101,6 +101,14 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   var _pickingVideo = false;
   var _pickingMap = false;
   final _uploadingIds = <String>{};
+  /// Editor selection saved with pick*; echoed on insert* after the picker/dialog.
+  int? _pendingPhotoFrom;
+  int? _pendingPhotoTo;
+  int? _pendingVideoFrom;
+  int? _pendingVideoTo;
+  String? _pendingVideoId;
+  int? _pendingMapFrom;
+  int? _pendingMapTo;
 
   @override
   void initState() {
@@ -175,6 +183,8 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       return;
     }
     if (type == 'pickPhoto') {
+      _pendingPhotoFrom = _readMessageInt(data, 'from');
+      _pendingPhotoTo = _readMessageInt(data, 'to');
       unawaited(_handlePickPhoto());
       return;
     }
@@ -183,12 +193,37 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
       return;
     }
     if (type == 'pickVideo') {
+      _pendingVideoFrom = _readMessageInt(data, 'from');
+      _pendingVideoTo = _readMessageInt(data, 'to');
+      try {
+        _pendingVideoId = (data['id'] as String?)?.trim();
+        if (_pendingVideoId != null && _pendingVideoId!.isEmpty) {
+          _pendingVideoId = null;
+        }
+      } catch (_) {
+        _pendingVideoId = null;
+      }
       unawaited(_handlePickVideo());
       return;
     }
     if (type == 'pickMap') {
+      _pendingMapFrom = _readMessageInt(data, 'from');
+      _pendingMapTo = _readMessageInt(data, 'to');
       unawaited(_handlePickMap());
     }
+  }
+
+  int? _readMessageInt(dynamic data, String key) {
+    try {
+      final value = data[key];
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<void> _handlePickPhoto() async {
@@ -197,12 +232,16 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
     }
     final pick = widget.onPickPhoto;
     if (pick == null) {
+      _pendingPhotoFrom = null;
+      _pendingPhotoTo = null;
       return;
     }
     _pickingPhoto = true;
     try {
       final url = (await pick())?.trim() ?? '';
       if (!mounted || url.isEmpty) {
+        _pendingPhotoFrom = null;
+        _pendingPhotoTo = null;
         return;
       }
       _postInsertPhoto(url);
@@ -264,14 +303,13 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
     }
     final pick = widget.onPickVideo;
     if (pick == null) {
+      _postInsertVideo('');
       return;
     }
     _pickingVideo = true;
     try {
       final url = (await pick())?.trim() ?? '';
-      if (!mounted || url.isEmpty) {
-        return;
-      }
+      // Empty url still posts so the editor can remove the 「올리는 중」 placeholder.
       _postInsertVideo(url);
     } finally {
       _pickingVideo = false;
@@ -284,22 +322,36 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
     }
     final pick = widget.onPickMap;
     if (pick == null) {
+      _clearPendingMap();
       return;
     }
     _pickingMap = true;
     try {
       final place = await pick();
       if (!mounted || place == null) {
+        _clearPendingMap();
         return;
       }
       final href = place.href.trim();
       if (href.isEmpty) {
+        _clearPendingMap();
         return;
       }
       _postInsertMap(place);
     } finally {
       _pickingMap = false;
     }
+  }
+
+  void _clearPendingVideo() {
+    _pendingVideoFrom = null;
+    _pendingVideoTo = null;
+    _pendingVideoId = null;
+  }
+
+  void _clearPendingMap() {
+    _pendingMapFrom = null;
+    _pendingMapTo = null;
   }
 
   void _postStorageKey(String? key) {
@@ -350,13 +402,21 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   void _postInsertPhoto(String url) {
     final win = _iframe?.contentWindow;
     if (win == null) {
+      _pendingPhotoFrom = null;
+      _pendingPhotoTo = null;
       return;
     }
+    final from = _pendingPhotoFrom;
+    final to = _pendingPhotoTo;
+    _pendingPhotoFrom = null;
+    _pendingPhotoTo = null;
     win.postMessage(
       {
         'source': _appSource,
         'type': 'insertPhoto',
         'url': url,
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
       },
       '*',
     );
@@ -381,13 +441,21 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   void _postInsertVideo(String url) {
     final win = _iframe?.contentWindow;
     if (win == null) {
+      _clearPendingVideo();
       return;
     }
+    final from = _pendingVideoFrom;
+    final to = _pendingVideoTo;
+    final id = _pendingVideoId;
+    _clearPendingVideo();
     win.postMessage(
       {
         'source': _appSource,
         'type': 'insertVideo',
         'url': url,
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (id != null) 'id': id,
       },
       '*',
     );
@@ -396,8 +464,12 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
   void _postInsertMap(TipTapMapPlace place) {
     final win = _iframe?.contentWindow;
     if (win == null) {
+      _clearPendingMap();
       return;
     }
+    final from = _pendingMapFrom;
+    final to = _pendingMapTo;
+    _clearPendingMap();
     win.postMessage(
       {
         'source': _appSource,
@@ -405,6 +477,8 @@ class _TipTapStoryFrameState extends State<TipTapStoryFrame> {
         'name': place.name,
         'address': place.address,
         'href': place.href,
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
       },
       '*',
     );

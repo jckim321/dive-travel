@@ -874,6 +874,12 @@ function boot() {
   let pendingPasteDataImages = []
   let pendingExternalImageCount = 0
   let pendingSkippedVideoCount = 0
+  /** Saved before app pick* so insert survives iframe blur. */
+  let pendingPhotoSelection = null
+  let pendingVideoSelection = null
+  let pendingMapSelection = null
+  /** Placeholder id while app uploads a picked video. */
+  let pendingVideoPlaceholderId = null
   let storageKey = ''
   /** Serializes key migrate / clear so saveSucceeded cannot race a stale draft copy. */
   let storageKeyChain = Promise.resolve()
@@ -885,6 +891,50 @@ function boot() {
   function placeholderText(id) {
     // Zero-width space keeps the visible label as 「올리는 중」 while ids stay unique.
     return `올리는 중\u200b${id}`
+  }
+
+  function clampDocPos(pos) {
+    const max = editor.state.doc.content.size
+    const n = Number(pos)
+    if (!Number.isFinite(n)) {
+      return editor.state.selection.from
+    }
+    return Math.max(0, Math.min(Math.floor(n), max))
+  }
+
+  function readSelection() {
+    const { from, to } = editor.state.selection
+    return { from, to }
+  }
+
+  function capturePhotoSelection() {
+    pendingPhotoSelection = readSelection()
+    return pendingPhotoSelection
+  }
+
+  function resolveInsertRange(data, saved) {
+    const fromMsg = Number(data?.from)
+    const toMsg = Number(data?.to)
+    const from = Number.isFinite(fromMsg)
+      ? fromMsg
+      : saved && Number.isFinite(saved.from)
+        ? saved.from
+        : editor.state.selection.from
+    const to = Number.isFinite(toMsg)
+      ? toMsg
+      : saved && Number.isFinite(saved.to)
+        ? saved.to
+        : from
+    return { from, to }
+  }
+
+  function deleteRangeIfNeeded(fromPos, toPos) {
+    const from = clampDocPos(fromPos)
+    const to = toPos != null ? clampDocPos(toPos) : from
+    if (to > from) {
+      editor.chain().deleteRange({ from, to }).run()
+    }
+    return from
   }
 
   function findPlaceholder(id) {
@@ -920,6 +970,88 @@ function boot() {
       .run()
   }
 
+  /** Insert image at an absolute doc position (does not rely on live focus). */
+  function insertImageAt(fromPos, url, toPos) {
+    const from = deleteRangeIfNeeded(fromPos, toPos)
+    editor
+      .chain()
+      .insertContentAt(from, { type: 'image', attrs: { src: url } })
+      .run()
+  }
+
+  /** Insert story video at an absolute doc position. */
+  function insertVideoAt(fromPos, url, toPos) {
+    const from = deleteRangeIfNeeded(fromPos, toPos)
+    editor
+      .chain()
+      .insertContentAt(from, { type: 'storyVideo', attrs: { src: url } })
+      .run()
+  }
+
+  /** Insert map link paragraph at an absolute doc position. */
+  function insertMapAt(fromPos, href, label, toPos) {
+    const from = deleteRangeIfNeeded(fromPos, toPos)
+    const text = `${label} — 지도에서 보기`
+    editor
+      .chain()
+      .insertContentAt(
+        from,
+        `<p><a href="${escapeAttr(href)}">${escapeText(text)}</a></p>`,
+      )
+      .run()
+  }
+
+  /** Insert upload placeholder at pos; returns doc pos after the placeholder. */
+  function insertPlaceholderAt(pos, id) {
+    const marker = placeholderText(id)
+    const at = clampDocPos(pos)
+    editor
+      .chain()
+      .insertContentAt(at, `<p>${escapeText(marker)}</p>`)
+      .run()
+    const found = findPlaceholder(id)
+    return found ? found.pos + found.size : at
+  }
+
+  function replacePlaceholderWithVideo(id, url) {
+    const found = findPlaceholder(id)
+    if (!found) {
+      if (countStoryVideos(editor.getHTML()) >= MAX_STORY_VIDEOS) {
+        window.alert('동영상은 3개까지 올릴 수 있습니다.')
+        return
+      }
+      insertVideoAt(editor.state.selection.from, url)
+      return
+    }
+    const videoType = editor.schema.nodes.storyVideo
+    if (!videoType) {
+      return
+    }
+    editor
+      .chain()
+      .command(({ tr, dispatch }) => {
+        tr.replaceWith(
+          found.pos,
+          found.pos + found.size,
+          videoType.create({ src: url }),
+        )
+        if (dispatch) {
+          dispatch(tr)
+        }
+        return true
+      })
+      .run()
+  }
+
+  function clearPendingVideoPlaceholder() {
+    const id = pendingVideoPlaceholderId
+    pendingVideoPlaceholderId = null
+    pendingVideoSelection = null
+    if (id) {
+      removePlaceholder(id)
+    }
+  }
+
   function replacePlaceholderWithImage(id, url) {
     const found = findPlaceholder(id)
     if (!found) {
@@ -927,7 +1059,7 @@ function boot() {
         window.alert('사진은 30장까지 올릴 수 있습니다.')
         return
       }
-      editor.chain().focus().setImage({ src: url }).run()
+      insertImageAt(editor.state.selection.from, url)
       return
     }
     const imageType = editor.schema.nodes.image
@@ -985,27 +1117,29 @@ function boot() {
     return false
   }
 
-  function queueDataUrlUpload(dataUrl, fileName, contentType) {
+  function queueDataUrlUpload(dataUrl, fileName, contentType, atPos) {
+    const fallbackPos =
+      typeof atPos === 'number' ? atPos : editor.state.selection.from
     if (!dataUrl || !/^data:image\//i.test(dataUrl)) {
-      return
+      return fallbackPos
     }
     if (rejectIfPhotoTooLarge(dataUrlByteLength(dataUrl))) {
-      return
+      return fallbackPos
     }
     if (photoSlotsLeft() <= 0) {
       window.alert('사진은 30장까지 올릴 수 있습니다.')
-      return
+      return fallbackPos
     }
     const id = `u${++uploadSeq}`
-    const marker = placeholderText(id)
     pendingUploads.set(id, true)
-    editor.chain().focus().insertContent(`<p>${escapeText(marker)}</p>`).run()
+    const nextPos = insertPlaceholderAt(fallbackPos, id)
     post('uploadPhoto', {
       id,
       dataUrl,
       fileName: fileName || fileNameFromDataUrl(dataUrl),
       contentType: contentType || contentTypeFromDataUrl(dataUrl),
     })
+    return nextPos
   }
 
   function fileToDataUrl(file) {
@@ -1030,7 +1164,7 @@ function boot() {
     return out
   }
 
-  async function queueImageFiles(files) {
+  async function queueImageFiles(files, atPos) {
     const list = [...files]
     if (!list.length) {
       return
@@ -1043,16 +1177,19 @@ function boot() {
     if (list.length > slots) {
       window.alert('사진은 30장까지 올릴 수 있습니다.')
     }
+    let pos =
+      typeof atPos === 'number' ? atPos : editor.state.selection.from
     for (const file of list.slice(0, slots)) {
       if (rejectIfPhotoTooLarge(file.size || 0)) {
         continue
       }
       try {
         const dataUrl = await fileToDataUrl(file)
-        queueDataUrlUpload(
+        pos = queueDataUrlUpload(
           dataUrl,
           file.name || fileNameFromDataUrl(dataUrl),
           file.type || contentTypeFromDataUrl(dataUrl),
+          pos,
         )
       } catch (_) {
         window.alert('사진을 올리지 못했습니다.')
@@ -1077,8 +1214,14 @@ function boot() {
         `붙여넣은 글의 동영상 ${skippedVideo}개는 가져오지 못했습니다`,
       )
     }
+    let pos = editor.state.selection.from
     for (const item of dataImages) {
-      queueDataUrlUpload(item.dataUrl, item.fileName, item.contentType)
+      pos = queueDataUrlUpload(
+        item.dataUrl,
+        item.fileName,
+        item.contentType,
+        pos,
+      )
     }
   }
 
@@ -1288,21 +1431,33 @@ function boot() {
         window.alert('사진은 30장까지 올릴 수 있습니다.')
         return
       }
-      post('pickPhoto')
+      const sel = capturePhotoSelection()
+      post('pickPhoto', { from: sel.from, to: sel.to })
     },
     pickVideo() {
       if (countStoryVideos(editor.getHTML()) >= MAX_STORY_VIDEOS) {
         window.alert('동영상은 3개까지 올릴 수 있습니다.')
         return
       }
-      post('pickVideo')
+      if (pendingVideoPlaceholderId) {
+        return
+      }
+      const sel = readSelection()
+      pendingVideoSelection = sel
+      const id = `v${++uploadSeq}`
+      pendingVideoPlaceholderId = id
+      const at = deleteRangeIfNeeded(sel.from, sel.to)
+      insertPlaceholderAt(at, id)
+      post('pickVideo', { from: sel.from, to: sel.to, id })
     },
     pickMap() {
       if (countStoryMaps(editor.getHTML()) >= MAX_STORY_MAPS) {
         window.alert('지도는 5개까지 넣을 수 있습니다.')
         return
       }
-      post('pickMap')
+      const sel = readSelection()
+      pendingMapSelection = sel
+      post('pickMap', { from: sel.from, to: sel.to })
     },
   }
 
@@ -1344,7 +1499,7 @@ function boot() {
         queueMicrotask(flushPasteImageSideEffects)
         return cleaned.html
       },
-      handlePaste(_view, event) {
+      handlePaste(view, event) {
         const files = collectImageFiles(event.clipboardData?.files)
         if (!files.length && event.clipboardData?.items) {
           for (const item of event.clipboardData.items) {
@@ -1358,7 +1513,7 @@ function boot() {
         }
         if (files.length) {
           event.preventDefault()
-          void queueImageFiles(files)
+          void queueImageFiles(files, view.state.selection.from)
           return true
         }
         const html = event.clipboardData?.getData('text/html') || ''
@@ -1386,10 +1541,11 @@ function boot() {
           left: event.clientX,
           top: event.clientY,
         })
-        if (coords) {
-          editor.chain().focus().setTextSelection(coords.pos).run()
-        }
-        void queueImageFiles(files)
+        const dropPos =
+          coords && typeof coords.pos === 'number'
+            ? coords.pos
+            : view.state.selection.from
+        void queueImageFiles(files, dropPos)
         return true
       },
     },
@@ -1454,25 +1610,43 @@ function boot() {
     if (data.type === 'insertPhoto') {
       const url = typeof data.url === 'string' ? data.url.trim() : ''
       if (!/^https:\/\//i.test(url)) {
+        pendingPhotoSelection = null
         return
       }
       if (countStoryImages(editor.getHTML()) >= MAX_STORY_PHOTOS) {
+        pendingPhotoSelection = null
         window.alert('사진은 30장까지 올릴 수 있습니다.')
         return
       }
-      editor.chain().focus().setImage({ src: url }).run()
+      const saved = pendingPhotoSelection
+      pendingPhotoSelection = null
+      const { from, to } = resolveInsertRange(data, saved)
+      insertImageAt(from, url, to)
       return
     }
     if (data.type === 'insertVideo') {
       const url = typeof data.url === 'string' ? data.url.trim() : ''
+      const placeholderId =
+        (typeof data.id === 'string' && data.id.trim()) ||
+        pendingVideoPlaceholderId
       if (!/^https:\/\//i.test(url)) {
+        clearPendingVideoPlaceholder()
         return
       }
       if (countStoryVideos(editor.getHTML()) >= MAX_STORY_VIDEOS) {
+        clearPendingVideoPlaceholder()
         window.alert('동영상은 3개까지 올릴 수 있습니다.')
         return
       }
-      editor.chain().focus().setStoryVideo({ src: url }).run()
+      const saved = pendingVideoSelection
+      pendingVideoSelection = null
+      pendingVideoPlaceholderId = null
+      if (placeholderId && findPlaceholder(placeholderId)) {
+        replacePlaceholderWithVideo(placeholderId, url)
+        return
+      }
+      const { from, to } = resolveInsertRange(data, saved)
+      insertVideoAt(from, url, to)
       return
     }
     if (data.type === 'insertMap') {
@@ -1480,21 +1654,19 @@ function boot() {
       const name = typeof data.name === 'string' ? data.name.trim() : ''
       const address = typeof data.address === 'string' ? data.address.trim() : ''
       if (!/^https:\/\//i.test(href) || (!name && !address)) {
+        pendingMapSelection = null
         return
       }
       if (countStoryMaps(editor.getHTML()) >= MAX_STORY_MAPS) {
+        pendingMapSelection = null
         window.alert('지도는 5개까지 넣을 수 있습니다.')
         return
       }
+      const saved = pendingMapSelection
+      pendingMapSelection = null
+      const { from, to } = resolveInsertRange(data, saved)
       const label = [name, address].filter(Boolean).join(' · ')
-      const text = `${label} — 지도에서 보기`
-      editor
-        .chain()
-        .focus()
-        .insertContent(
-          `<p><a href="${escapeAttr(href)}">${escapeText(text)}</a></p>`,
-        )
-        .run()
+      insertMapAt(from, href, label, to)
     }
   })
 
