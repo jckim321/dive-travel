@@ -110,6 +110,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   final _end = TextEditingController();
   final _capacity = TextEditingController();
   final _booked = TextEditingController(text: '0');
+  final _flagClose = TextEditingController();
   final _includes = TextEditingController();
   final _excludes = TextEditingController();
   final List<_PlannerOption> _options = [];
@@ -123,6 +124,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   var _open = false;
   var _adminHidden = false;
   var _bookedLocked = false;
+  /// False keeps the flag-close field tied to departure − 7 days (or today).
+  var _flagCloseManual = false;
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
@@ -169,6 +172,13 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           _end.text = _start.text;
         }
       }
+      final flagClose = existing.flagClosesAt?.toLocal();
+      if (flagClose != null) {
+        _flagClose.text = formatPlannerDay(flagClose);
+        _flagCloseManual = true;
+      } else {
+        _syncFlagCloseDefault();
+      }
       if (existing.capacity > 0) {
         _capacity.text = '${existing.capacity}';
       }
@@ -189,6 +199,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     _end.addListener(_onDates);
     _capacity.addListener(_onDates);
     _booked.addListener(_onDates);
+    if (existing == null) {
+      _syncFlagCloseDefault();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _markClean();
@@ -225,8 +238,41 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   }
 
   void _onDates() {
+    _syncFlagCloseDefault();
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  /// Departure minus 7 days, floored to today.
+  DateTime? _defaultFlagCloseDay(DateTime departure) {
+    final today = _today;
+    final raw = departure.subtract(const Duration(days: 7));
+    final day = DateTime(raw.year, raw.month, raw.day);
+    if (day.isBefore(today)) {
+      return today;
+    }
+    return day;
+  }
+
+  void _syncFlagCloseDefault() {
+    if (_flagCloseManual) {
+      return;
+    }
+    final departure = parsePlannerDay(_start.text);
+    if (departure == null) {
+      if (_flagClose.text.isNotEmpty) {
+        _flagClose.clear();
+      }
+      return;
+    }
+    final def = _defaultFlagCloseDay(departure);
+    if (def == null) {
+      return;
+    }
+    final text = formatPlannerDay(def);
+    if (_flagClose.text != text) {
+      _flagClose.text = text;
     }
   }
 
@@ -249,6 +295,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _end.text,
       _capacity.text,
       _booked.text,
+      _flagClose.text,
       _includes.text,
       _excludes.text,
       _open ? '1' : '0',
@@ -332,6 +379,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     _end.dispose();
     _capacity.dispose();
     _booked.dispose();
+    _flagClose.dispose();
     _includes.dispose();
     _excludes.dispose();
     for (final option in _options) {
@@ -688,6 +736,22 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       );
       return;
     }
+    final flagClose = parsePlannerDay(_flagClose.text);
+    if (wantOpen && flagClose == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.workbenchFlagDeadlineRequired)),
+      );
+      return;
+    }
+    if (wantOpen &&
+        departure != null &&
+        flagClose != null &&
+        !flagClose.isBefore(departure)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('깃발 마감일은 출발일 이전이어야 합니다.')),
+      );
+      return;
+    }
     final existing = _source;
     final existingBooked = existing?.bookedSeats ?? 0;
     final booked = existingBooked > 0 ? existingBooked : _bookedValue;
@@ -746,6 +810,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           includes: _includes.text.trim(),
           excludes: _excludes.text.trim(),
           departureStart: departure,
+          flagClosesAt: flagClose,
           listingKind: keptKind,
           publishStatus: existing?.publishStatus ?? ProductPublishStatus.draft,
           sameBoatStatus: existing?.sameBoatStatus ?? SameBoatStatus.closed,
@@ -1097,6 +1162,54 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     });
   }
 
+  Future<void> _pickFlagClose() async {
+    if (_saving) {
+      return;
+    }
+    final departure = parsePlannerDay(_start.text);
+    if (departure == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('출발일을 먼저 선택하세요.')),
+      );
+      return;
+    }
+    final today = _today;
+    final last = departure.subtract(const Duration(days: 1));
+    if (last.isBefore(today)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('선택할 수 있는 깃발 마감일이 없습니다.')),
+      );
+      return;
+    }
+    final current = parsePlannerDay(_flagClose.text);
+    var initial = current ?? _defaultFlagCloseDay(departure) ?? today;
+    if (initial.isBefore(today)) {
+      initial = today;
+    }
+    if (initial.isAfter(last)) {
+      initial = last;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      locale: const Locale('ko'),
+      firstDate: today,
+      lastDate: last,
+      initialDate: initial,
+      helpText: '깃발 마감일',
+      cancelText: '취소',
+      confirmText: '확인',
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _flagCloseManual = true;
+      _flagClose.text = formatPlannerDay(
+        DateTime(picked.year, picked.month, picked.day),
+      );
+    });
+  }
+
   InputDecoration _plannerFieldDecoration({
     required String label,
     String? hintText,
@@ -1161,6 +1274,20 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         fontSize: 15,
       ),
     );
+    final flagCloseField = TextField(
+      key: const Key('planner-same-boat-flag-close'),
+      controller: _flagClose,
+      readOnly: true,
+      enableInteractiveSelection: false,
+      enabled: !_saving,
+      onTap: _saving ? null : _pickFlagClose,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 15),
+      cursorColor: PlannerPalette.text,
+      decoration: _plannerFieldDecoration(label: '깃발 마감일').copyWith(
+        hintText: '달력에서 선택',
+        suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+      ),
+    );
     return Material(
       key: const Key('planner-same-boat-section'),
       color: PlannerPalette.card,
@@ -1191,6 +1318,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                   bookedField,
                   const SizedBox(height: 10),
                   leftLabel,
+                  const SizedBox(height: 10),
+                  flagCloseField,
                 ],
               )
             else
@@ -1207,6 +1336,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                   ),
                   const SizedBox(height: 10),
                   leftLabel,
+                  const SizedBox(height: 10),
+                  flagCloseField,
                 ],
               ),
           ],
