@@ -290,24 +290,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (store.stats.isAdmin && _isPlannedTrip(product))
-                        TextButton(
-                          key: Key(
-                            product.sameBoatStatus == SameBoatStatus.hidden
-                                ? 'admin-planner-unhide-${product.id}'
-                                : 'admin-planner-hide-${product.id}',
-                          ),
-                          onPressed: () => _setPlannedHidden(
-                            context,
-                            product,
-                            hidden: product.sameBoatStatus !=
-                                SameBoatStatus.hidden,
-                          ),
-                          child: Text(
-                            product.sameBoatStatus == SameBoatStatus.hidden
-                                ? '숨김 해제'
-                                : '숨김',
-                          ),
-                        ),
+                        ..._plannedTripActions(context, product),
                       IconButton(
                         key: Key('delete-product-${product.id}'),
                         tooltip: l10n.adminProductDelete,
@@ -344,6 +327,50 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
         );
       },
     );
+  }
+
+  List<Widget> _plannedTripActions(BuildContext context, ShopProduct product) {
+    final listing = _plannedListingState(product);
+    return switch (listing) {
+      _PlannedListingState.draft => [
+          TextButton(
+            key: Key('admin-planner-open-${product.id}'),
+            onPressed: () => _openPlannedTrip(context, product),
+            child: const Text('열기'),
+          ),
+        ],
+      _PlannedListingState.open => [
+          TextButton(
+            key: Key('admin-planner-hide-${product.id}'),
+            onPressed: () => _setPlannedHidden(context, product, hidden: true),
+            child: const Text('숨김'),
+          ),
+        ],
+      _PlannedListingState.adminHidden => [
+          TextButton(
+            key: Key('admin-planner-unhide-${product.id}'),
+            onPressed: () => _setPlannedHidden(context, product, hidden: false),
+            child: const Text('숨김 해제'),
+          ),
+        ],
+    };
+  }
+
+  Future<void> _openPlannedTrip(BuildContext context, ShopProduct product) async {
+    final store = DiverStoreScope.of(context);
+    try {
+      await store.setPlannedTripOpen(
+        shopId: product.shopId,
+        productId: product.id,
+        open: true,
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$error')),
+        );
+      }
+    }
   }
 
   Future<void> _setPlannedHidden(
@@ -397,6 +424,26 @@ bool _isPlannedTrip(ShopProduct product) {
   final source = classifyAdminProductSource(product);
   return source == AdminProductSource.curatedSpecial ||
       source == AdminProductSource.diverDiy;
+}
+
+enum _PlannedListingState { draft, open, adminHidden }
+
+_PlannedListingState _plannedListingState(ShopProduct product) {
+  if (product.sameBoatStatus == SameBoatStatus.hidden) {
+    return _PlannedListingState.adminHidden;
+  }
+  if (product.isListedPublicly) {
+    return _PlannedListingState.open;
+  }
+  return _PlannedListingState.draft;
+}
+
+String _plannedListingLabel(ShopProduct product) {
+  return switch (_plannedListingState(product)) {
+    _PlannedListingState.draft => '임시저장',
+    _PlannedListingState.open => '열림',
+    _PlannedListingState.adminHidden => '관리자 숨김',
+  };
 }
 
 enum AdminProductSource { partner, diverDiy, curatedSpecial, unknown }
@@ -1005,6 +1052,7 @@ Widget _productLines(
   final style = TextStyle(color: color);
   final shopName =
       DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+  final planned = _isPlannedTrip(product);
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1012,9 +1060,17 @@ Widget _productLines(
         '$shopName · ${_sourceLabel(l10n, classifyAdminProductSource(product))}',
         style: style,
       ),
+      if (planned)
+        Text(
+          _plannedListingLabel(product),
+          key: Key('admin-planner-status-${product.id}'),
+          style: style.copyWith(fontSize: 13, fontWeight: FontWeight.w800),
+        ),
       Text(
-        '${_kindLabel(l10n, product.listingKind)} · '
-        '${_statusLabel(l10n, product.publishStatus)}',
+        planned
+            ? _kindLabel(l10n, product.listingKind)
+            : '${_kindLabel(l10n, product.listingKind)} · '
+                '${_statusLabel(l10n, product.publishStatus)}',
         style: style.copyWith(fontSize: 12),
       ),
       if (product.rejectedReasonTags.isNotEmpty)
