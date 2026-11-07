@@ -51,6 +51,7 @@ import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 import 'package:dive_travel_app/core/storage/gallery_upload.dart';
@@ -5241,6 +5242,23 @@ class FirestoreDiverRepository implements DiverRepository {
       }
       yield MapEntry(id, map);
     }
+  }
+
+  @override
+  Future<void> updateShopProductStory({
+    required String shopId,
+    required String productId,
+    required List<StoryBlock> storyBlocks,
+    required String schedule,
+  }) async {
+    final id = productId.trim();
+    if (id.isEmpty) {
+      throw StateError('Product id required');
+    }
+    await _shops.doc(shopId).collection('products').doc(id).update({
+      'story_blocks': [for (final block in storyBlocks) block.toMap()],
+      'schedule': schedule,
+    });
   }
 
   @override

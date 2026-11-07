@@ -30,6 +30,7 @@ import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_hull_id.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 
 abstract class DiverRepository {
@@ -685,6 +686,15 @@ abstract class DiverRepository {
     /// Creator proposals skip this. The subcollection is admin/owner-only, so
     /// writing it in the same batch would deny the whole product save.
     bool recordProductChanges = true,
+  });
+
+  /// Writes only `story_blocks` and `schedule` on
+  /// `shops/{shopId}/products/{productId}`. Does not touch the shop array.
+  Future<void> updateShopProductStory({
+    required String shopId,
+    required String productId,
+    required List<StoryBlock> storyBlocks,
+    required String schedule,
   });
 
   Future<List<ProductChangeRecord>> listProductChanges(String shopId);

@@ -44,6 +44,7 @@ import 'package:dive_travel_app/core/models/product_change.dart';
 import 'package:dive_travel_app/core/models/seat_life.dart';
 import 'package:dive_travel_app/core/models/shop_day_stats.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/models/trial_data_cleanup.dart';
 
@@ -4101,6 +4102,32 @@ class MemoryDiverRepository implements DiverRepository {
     final n = _storyVideoSeq;
     _storyVideoSeq += 1;
     return 'memory://story-video-$shopId-$n';
+  }
+
+  @override
+  Future<void> updateShopProductStory({
+    required String shopId,
+    required String productId,
+    required List<StoryBlock> storyBlocks,
+    required String schedule,
+  }) async {
+    final id = productId.trim();
+    if (id.isEmpty) {
+      throw StateError('Product id required');
+    }
+    final previous = _productDocs[shopId]?[id];
+    if (previous == null) {
+      throw StateError('Product not found');
+    }
+    final patch = <String, dynamic>{
+      'story_blocks': [for (final block in storyBlocks) block.toMap()],
+      'schedule': schedule,
+    };
+    _writeProductDoc(shopId, id, {...previous, ...patch});
+    final raw = _productRawByShop[shopId]?[id];
+    if (raw != null) {
+      _productRawByShop[shopId]![id] = {...raw, ...patch};
+    }
   }
 
   @override

@@ -451,16 +451,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       } else {
         final source = existing;
         final shopId = _shopId ??= source.shopId;
-        _productId ??= source.id;
-        await store.saveShopProduct(
+        final productId = _productId ??= source.id;
+        await store.updateShopProductStory(
           shopId: shopId,
-          product: source.copyWith(
-            schedule: schedule,
-            storyBlocks: blocks,
-          ),
-          intent: ProductSaveIntent.preserveListing,
-          creatorSubmission: !admin,
-          submitterUid: store.uid,
+          productId: productId,
+          storyBlocks: blocks,
+          schedule: schedule,
         );
       }
       if (!mounted) {

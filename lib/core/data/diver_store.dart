@@ -51,6 +51,7 @@ import 'package:dive_travel_app/core/models/shop_operating.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/core/models/story_block.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/storage/r2_photo_storage.dart';
 
@@ -2761,6 +2762,32 @@ class DiverStore extends ChangeNotifier {
       fileName: fileName,
       onProgress: onProgress,
     );
+  }
+
+  /// Product-doc only: `story_blocks` and `schedule`. Does not rewrite seats.
+  Future<void> updateShopProductStory({
+    required String shopId,
+    required String productId,
+    required List<StoryBlock> storyBlocks,
+    required String schedule,
+  }) async {
+    await _repository.updateShopProductStory(
+      shopId: shopId,
+      productId: productId,
+      storyBlocks: storyBlocks,
+      schedule: schedule,
+    );
+    final current = _findShopProduct(shopId, productId);
+    if (current != null) {
+      _upsertLocalShopProduct(
+        shopId,
+        current.copyWith(
+          storyBlocks: storyBlocks,
+          schedule: schedule,
+        ),
+      );
+    }
+    await refreshShopStat(shopId);
   }
 
   Future<ShopProductSaveResult> saveShopProduct({
