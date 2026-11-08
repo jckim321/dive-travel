@@ -432,6 +432,30 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     return null;
   }
 
+  /// Same merge as the home shelf. The array row is used only when that
+  /// shop has no reader product with this id.
+  ShopProduct? _mergedListing(DiverStore store, ShopProduct? arrayProduct) {
+    if (arrayProduct == null) {
+      return null;
+    }
+    final readers = store.liveStatsFor(arrayProduct.shopId)?.readerProducts;
+    if (readers == null) {
+      return arrayProduct;
+    }
+    for (final product in readers) {
+      if (product.id == arrayProduct.id) {
+        return product;
+      }
+    }
+    return arrayProduct;
+  }
+
+  bool _isAlreadyPublic(ShopProduct? product) {
+    return product != null &&
+        product.publishStatus == ProductPublishStatus.approved &&
+        product.active;
+  }
+
   @override
   void dispose() {
     _title.dispose();
@@ -1154,6 +1178,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
+    final alreadyPublic = _isAlreadyPublic(_mergedListing(store, existing));
     final shopId = _shopId ??= _nextShopId(existing);
     final productId = _productId ??=
         existing != null && existing.shopId.trim() == shopId
@@ -1242,9 +1267,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         productId: productId,
         storyHtml: cleanedHtml,
       );
-      final wasLive = existing != null &&
-          existing.publishStatus == ProductPublishStatus.approved &&
-          existing.active;
       if (temp) {
         // Temp save stays a draft, including a trip that was already public.
         if (!_adminHidden) {
@@ -1256,7 +1278,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         }
       } else if (admin && _adminHidden) {
         // Save the words, but do not clear an admin hide.
-      } else if (admin || wasLive) {
+      } else if (admin || alreadyPublic) {
         await store.setPlannedTripOpen(
           shopId: shopId,
           productId: productId,
@@ -1342,7 +1364,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final duration = plannerDurationLabel(_start.text, _end.text);
-    final admin = DiverStoreScope.of(context).stats.isAdmin;
+    final store = DiverStoreScope.of(context);
+    final admin = store.stats.isAdmin;
+    final alreadyPublic = _isAlreadyPublic(_mergedListing(store, _source));
     return PopScope(
       canPop: !_isDirty || _forcePop,
       onPopInvokedWithResult: (didPop, _) async {
@@ -1532,10 +1556,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                 child: Row(
                   children: [
-                    if (_source == null ||
-                        _source!.publishStatus !=
-                            ProductPublishStatus.approved ||
-                        !_source!.active) ...[
+                    if (!alreadyPublic) ...[
                       Expanded(
                         child: OutlinedButton(
                           key: const Key('planner-trip-temp-save'),

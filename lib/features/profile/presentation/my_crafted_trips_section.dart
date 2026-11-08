@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/models/crafted_trip_seats.dart';
+import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
-import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Horizontal rail of trips this diver submitted + CTA to craft a new one.
@@ -29,35 +28,20 @@ class MyCraftedTripsSection extends StatelessWidget {
     );
   }
 
-  Future<void> _askOpenSeats(BuildContext context, ShopProduct product) async {
-    final l10n = AppLocalizations.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          key: const Key('same-boat-ask-create-seats'),
-          content: Text(l10n.sameBoatAskCreateSeats),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.sameBoatAskCreateSeatsNo),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.sameBoatAskCreateSeatsYes),
-            ),
-          ],
-        );
-      },
-    );
-    if (ok != true || !context.mounted) {
-      return;
+  /// Home uses [ShopLiveStats.readerProducts]. The card list is still the
+  /// shop array. Same id prefers that merge; otherwise the array row.
+  ShopProduct _statusProduct(BuildContext context, ShopProduct arrayProduct) {
+    final scope = context.dependOnInheritedWidgetOfExactType<DiverStoreScope>();
+    final readers = scope?.notifier?.liveStatsFor(arrayProduct.shopId)?.readerProducts;
+    if (readers == null) {
+      return arrayProduct;
     }
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => SameBoatSeatsScreen(product: product),
-      ),
-    );
+    for (final product in readers) {
+      if (product.id == arrayProduct.id) {
+        return product;
+      }
+    }
+    return arrayProduct;
   }
 
   @override
@@ -81,14 +65,8 @@ class MyCraftedTripsSection extends StatelessWidget {
                 const SizedBox(width: 10),
                 _CraftedTripCard(
                   product: product,
+                  statusProduct: _statusProduct(context, product),
                   onTap: () => _openCraft(context, existing: product),
-                  onOpenSeats: craftedTripCanOpenSeats(
-                    grade: memberGrade,
-                    viewerUid: viewerUid,
-                    product: product,
-                  )
-                      ? () => _askOpenSeats(context, product)
-                      : null,
                 ),
               ],
             ],
@@ -145,27 +123,27 @@ class _NewTripCard extends StatelessWidget {
 class _CraftedTripCard extends StatelessWidget {
   const _CraftedTripCard({
     required this.product,
+    required this.statusProduct,
     required this.onTap,
-    this.onOpenSeats,
   });
 
   final ShopProduct product;
+  final ShopProduct statusProduct;
   final VoidCallback onTap;
-  final VoidCallback? onOpenSeats;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final adminHidden = product.sameBoatStatus == SameBoatStatus.hidden;
+    final adminHidden = statusProduct.sameBoatStatus == SameBoatStatus.hidden;
     final status = adminHidden
         ? '관리자가 잠시 숨김'
-        : switch (product.publishStatus) {
+        : switch (statusProduct.publishStatus) {
             ProductPublishStatus.pending => l10n.profileCraftStatusPending,
             ProductPublishStatus.approved => l10n.profileCraftStatusLive,
             ProductPublishStatus.rejected => l10n.profileCraftStatusRejected,
             ProductPublishStatus.draft => '임시 저장',
           };
-    final accent = switch (product.publishStatus) {
+    final accent = switch (statusProduct.publishStatus) {
       ProductPublishStatus.approved => AppTheme.ocean,
       ProductPublishStatus.rejected => const Color(0xFFB45309),
       _ => AppTheme.gold,
@@ -176,7 +154,6 @@ class _CraftedTripCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onTap,
-        onLongPress: onOpenSeats,
         borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 168,
@@ -212,23 +189,14 @@ class _CraftedTripCard extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               const Spacer(),
-              if (onOpenSeats != null)
-                FilledButton(
-                  key: Key('crafted-open-seats-${product.id}'),
-                  onPressed: onOpenSeats,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.ocean,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 30),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
+              if (!adminHidden &&
+                  statusProduct.publishStatus == ProductPublishStatus.approved)
+                Text(
+                  statusProduct.listsOnSameBoat ? '같은배 모집 중' : '같은배 닫힘',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.ocean,
+                    fontWeight: FontWeight.w800,
                   ),
-                  child: Text(l10n.sameBoatSeatsTitle),
                 )
               else
                 Text(
