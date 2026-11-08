@@ -16,9 +16,24 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 /// The return day is chosen with the departure calendar and stored only as
 /// `duration_label` (same as the planner screen).
 class PartnerEmptySeatProducts extends StatefulWidget {
-  const PartnerEmptySeatProducts({super.key, required this.shopId});
+  const PartnerEmptySeatProducts({
+    super.key,
+    required this.shopId,
+    this.partnerLabels = false,
+    this.onlyProductId,
+    this.singleNew = false,
+  });
 
   final String shopId;
+
+  /// Partner product screen copy. The admin desk keeps the original labels.
+  final bool partnerLabels;
+
+  /// When set, only this product is shown.
+  final String? onlyProductId;
+
+  /// One empty draft, without the shop's other products.
+  final bool singleNew;
 
   @override
   State<PartnerEmptySeatProducts> createState() =>
@@ -38,17 +53,39 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       return;
     }
     _loaded = true;
+    if (widget.singleNew) {
+      final draft = _EmptySeatDraft.empty(onDates: _onDates);
+      _boxes.add(draft);
+      _expanded.add(draft.id);
+      return;
+    }
     final products =
         DiverStoreScope.of(context).liveStatsFor(widget.shopId)?.products ??
         const <ShopProduct>[];
     _boxes.addAll([
       for (final product in products)
-        if (product.openEmptySeats)
+        if (_shows(product))
           _EmptySeatDraft.fromProduct(
             product,
             onDates: _onDates,
           ),
     ]);
+    _expandSingle();
+  }
+
+  bool _shows(ShopProduct product) {
+    if (!product.openEmptySeats) {
+      return false;
+    }
+    final only = widget.onlyProductId;
+    return only == null || product.id == only;
+  }
+
+  void _expandSingle() {
+    if ((widget.singleNew || widget.onlyProductId != null) &&
+        _boxes.length == 1) {
+      _expanded.add(_boxes.single.id);
+    }
   }
 
   @override
@@ -64,16 +101,18 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         DiverStoreScope.of(context).liveStatsFor(widget.shopId)?.products ??
         const <ShopProduct>[];
     final previous = List<_EmptySeatDraft>.of(_boxes);
+    final pinned = widget.singleNew ? {for (final box in previous) box.id} : null;
     _boxes
       ..clear()
       ..addAll([
         for (final product in products)
-          if (product.openEmptySeats)
+          if (_shows(product) && (pinned == null || pinned.contains(product.id)))
             _EmptySeatDraft.fromProduct(
               product,
               onDates: _onDates,
             ),
       ]);
+    _expandSingle();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
         box.dispose();
@@ -256,6 +295,11 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         return;
       }
       setState(_replaceFromStore);
+      if (widget.partnerLabels) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('같은배 설정을 저장했습니다')),
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -277,9 +321,9 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       key: const Key('partner-empty-seat-products'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          '③ 빈자리 상품 (선택)',
-          style: TextStyle(
+        Text(
+          widget.partnerLabels ? '② 같은배 열기 (선택)' : '③ 빈자리 상품 (선택)',
+          style: const TextStyle(
             color: PlannerPalette.text,
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -290,17 +334,19 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           _card(l10n, box),
           const SizedBox(height: 12),
         ],
-        OutlinedButton.icon(
-          key: const Key('partner-empty-add'),
-          onPressed: _saving ? null : _addBox,
-          icon: const Icon(Icons.add),
-          label: const Text('빈자리 상품 추가'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: PlannerPalette.text,
-            minimumSize: const Size.fromHeight(48),
+        if (!widget.singleNew && widget.onlyProductId == null) ...[
+          OutlinedButton.icon(
+            key: const Key('partner-empty-add'),
+            onPressed: _saving ? null : _addBox,
+            icon: const Icon(Icons.add),
+            label: const Text('빈자리 상품 추가'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: PlannerPalette.text,
+              minimumSize: const Size.fromHeight(48),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
         Row(
           children: [
             Expanded(
@@ -326,7 +372,9 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(
-                  _saving ? l10n.exploreSaving : l10n.partnerSave,
+                  _saving
+                      ? l10n.exploreSaving
+                      : (widget.partnerLabels ? '같은배 저장' : l10n.partnerSave),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -385,6 +433,16 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                     ? null
                     : (value) => setState(() => box.listOnSameBoat = value),
               ),
+              if (widget.partnerLabels)
+                Text(
+                  box.listOnSameBoat
+                      ? '저장하면 같은배에 올라갑니다'
+                      : '저장하면 같은배에서 내려갑니다',
+                  style: const TextStyle(
+                    color: PlannerPalette.textDim,
+                    fontSize: 12,
+                  ),
+                ),
               TextField(
                 key: Key('partner-empty-remaining-${box.id}'),
                 controller: box.remaining,

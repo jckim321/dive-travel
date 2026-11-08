@@ -18,9 +18,24 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 /// Empty-seat products are not a section here. Saved individual options stay
 /// readable and keep their ids.
 class PartnerRegularProducts extends StatefulWidget {
-  const PartnerRegularProducts({super.key, required this.shopId});
+  const PartnerRegularProducts({
+    super.key,
+    required this.shopId,
+    this.partnerLabels = false,
+    this.onlyProductId,
+    this.singleNew = false,
+  });
 
   final String shopId;
+
+  /// Partner product screen copy. The admin desk keeps the original labels.
+  final bool partnerLabels;
+
+  /// When set, only this product is shown.
+  final String? onlyProductId;
+
+  /// One empty draft, without the shop's other products.
+  final bool singleNew;
 
   @override
   State<PartnerRegularProducts> createState() => _PartnerRegularProductsState();
@@ -42,12 +57,34 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       return;
     }
     _loaded = true;
+    if (widget.singleNew) {
+      final draft = _RegularProductDraft.empty();
+      _boxes.add(draft);
+      _expanded.add(draft.id);
+      return;
+    }
     final store = DiverStoreScope.of(context);
     final products = store.liveStatsFor(widget.shopId)?.products ?? const [];
     _boxes.addAll([
       for (final product in products)
-        if (!product.openEmptySeats) _RegularProductDraft.fromProduct(product),
+        if (_shows(product)) _RegularProductDraft.fromProduct(product),
     ]);
+    _expandSingle();
+  }
+
+  bool _shows(ShopProduct product) {
+    if (product.openEmptySeats) {
+      return false;
+    }
+    final only = widget.onlyProductId;
+    return only == null || product.id == only;
+  }
+
+  void _expandSingle() {
+    if ((widget.singleNew || widget.onlyProductId != null) &&
+        _boxes.length == 1) {
+      _expanded.add(_boxes.single.id);
+    }
   }
 
   @override
@@ -62,13 +99,15 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final store = DiverStoreScope.of(context);
     final products = store.liveStatsFor(widget.shopId)?.products ?? const [];
     final previous = List<_RegularProductDraft>.of(_boxes);
+    final pinned = widget.singleNew ? {for (final box in previous) box.id} : null;
     _boxes
       ..clear()
       ..addAll([
         for (final product in products)
-          if (!product.openEmptySeats)
+          if (_shows(product) && (pinned == null || pinned.contains(product.id)))
             _RegularProductDraft.fromProduct(product),
       ]);
+    _expandSingle();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
         box.dispose();
@@ -136,6 +175,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         return;
       }
       setState(_replaceFromStore);
+      if (widget.partnerLabels) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('상품을 저장했습니다')),
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -157,9 +201,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       key: const Key('partner-regular-products'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          '일반 상품',
-          style: TextStyle(
+        Text(
+          widget.partnerLabels ? '① 상품' : '일반 상품',
+          style: const TextStyle(
             color: PlannerPalette.text,
             fontWeight: FontWeight.w800,
             fontSize: 18,
@@ -176,17 +220,19 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           _productCard(l10n, box),
           const SizedBox(height: 12),
         ],
-        OutlinedButton.icon(
-          key: const Key('partner-regular-add'),
-          onPressed: _saving ? null : _addBox,
-          icon: const Icon(Icons.add),
-          label: const Text('상품 박스 추가'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: PlannerPalette.text,
-            minimumSize: const Size.fromHeight(48),
+        if (!widget.singleNew && widget.onlyProductId == null) ...[
+          OutlinedButton.icon(
+            key: const Key('partner-regular-add'),
+            onPressed: _saving ? null : _addBox,
+            icon: const Icon(Icons.add),
+            label: const Text('상품 박스 추가'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: PlannerPalette.text,
+              minimumSize: const Size.fromHeight(48),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
         Row(
           children: [
             Expanded(
@@ -214,7 +260,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(
-                  _saving ? l10n.exploreSaving : l10n.partnerSave,
+                  _saving
+                      ? l10n.exploreSaving
+                      : (widget.partnerLabels ? '상품 저장' : l10n.partnerSave),
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -301,6 +349,16 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                     ? null
                     : (value) => setState(() => box.showOnBooking = value),
               ),
+              if (widget.partnerLabels)
+                Text(
+                  box.showOnBooking
+                      ? '저장하면 손님 예약 화면에 보입니다'
+                      : '저장하면 손님 예약 화면에서 숨겨집니다',
+                  style: const TextStyle(
+                    color: PlannerPalette.textDim,
+                    fontSize: 12,
+                  ),
+                ),
               ShopProductBox(
                 keyPrefix: 'regular-${box.id}',
                 palette: PlannerPaletteColors.plannerLight,

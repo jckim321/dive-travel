@@ -321,6 +321,7 @@ class PartnerResortInfoForm extends StatelessWidget {
     required this.saving,
     required this.onTempSave,
     required this.onSave,
+    this.showActions = true,
   });
 
   final TextStyle fieldStyle;
@@ -341,6 +342,9 @@ class PartnerResortInfoForm extends StatelessWidget {
   final bool saving;
   final VoidCallback? onTempSave;
   final VoidCallback? onSave;
+
+  /// Partner shop info uses a fixed bottom save button instead of this row.
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -648,35 +652,36 @@ class PartnerResortInfoForm extends StatelessWidget {
             cover: cover,
           ),
         ),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('partner-resort-temp-save'),
-                onPressed: saving ? null : onTempSave,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PlannerPalette.text,
-                  side: const BorderSide(color: PlannerPalette.borderStrong),
-                  minimumSize: const Size.fromHeight(48),
+        if (showActions)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('partner-resort-temp-save'),
+                  onPressed: saving ? null : onTempSave,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: PlannerPalette.text,
+                    side: const BorderSide(color: PlannerPalette.borderStrong),
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: Text(saving ? l10n.exploreSaving : l10n.briefTempSave),
                 ),
-                child: Text(saving ? l10n.exploreSaving : l10n.briefTempSave),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FilledButton(
-                key: const Key('partner-resort-save'),
-                onPressed: saving ? null : onSave,
-                style: FilledButton.styleFrom(
-                  backgroundColor: PlannerPalette.accent,
-                  foregroundColor: PlannerPalette.onAccent,
-                  minimumSize: const Size.fromHeight(48),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  key: const Key('partner-resort-save'),
+                  onPressed: saving ? null : onSave,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: PlannerPalette.accent,
+                    foregroundColor: PlannerPalette.onAccent,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: Text(saving ? l10n.exploreSaving : l10n.partnerSave),
                 ),
-                child: Text(saving ? l10n.exploreSaving : l10n.partnerSave),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         const SizedBox(height: 16),
       ],
     );

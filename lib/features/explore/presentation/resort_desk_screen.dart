@@ -52,12 +52,20 @@ class ResortDeskScreen extends StatefulWidget {
     super.key,
     required this.shopId,
     this.partnerMode = false,
+    this.focusProduct,
+    this.creatingProduct = false,
   });
 
   final String shopId;
 
   /// Partner stack hides the admin sidebar. Both modes use [PlannerPalette].
   final bool partnerMode;
+
+  /// Partner product edit. Ignored unless [partnerMode]. Shop info leaves this null.
+  final ShopProduct? focusProduct;
+
+  /// Partner new-product screen. Ignored unless [partnerMode].
+  final bool creatingProduct;
 
   @override
   State<ResortDeskScreen> createState() => _ResortDeskScreenState();
@@ -431,7 +439,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       // Unblock UI as soon as the write + local patch finish.
       setState(() => _saving = false);
       // Controllers already hold saved values; local store patch ran in save.
-      if (_canSeeSaveProbe(store)) {
+      final showTiming = widget.partnerMode
+          ? store.stats.isAdmin
+          : _canSeeSaveProbe(store);
+      if (showTiming) {
         // TODO(a1-desk-save-timing): remove owner timing snackbar after probe.
         final write = probe.write;
         final read = await probe.readFuture;
@@ -452,7 +463,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       } else {
         unawaited(probe.readFuture);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.exploreSaveOk)),
+          SnackBar(
+            content: Text(
+              widget.partnerMode ? '샵 정보를 저장했습니다' : l10n.exploreSaveOk,
+            ),
+          ),
         );
       }
     } catch (error) {
@@ -476,6 +491,13 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       }
     }
   }
+
+  /// Partner shop info is the default partner screen. Product entry sets the rest.
+  bool get _partnerProductOnly =>
+      widget.partnerMode &&
+      (widget.creatingProduct || widget.focusProduct != null);
+
+  bool get _partnerShopOnly => widget.partnerMode && !_partnerProductOnly;
 
   /// Admin-only temporary save probe.
   bool _canSeeSaveProbe(DiverStore store) {
@@ -521,7 +543,13 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onPressed: () => Navigator.of(context).maybePop(),
               )
             : null,
-        title: Text(l10n.exploreEditResort),
+        title: Text(
+          _partnerShopOnly
+              ? '샵 정보'
+              : _partnerProductOnly
+                  ? (widget.creatingProduct ? '상품 등록' : '상품 수정')
+                  : l10n.exploreEditResort,
+        ),
         actions: [
           TextButton.icon(
             onPressed: _openPreview,
@@ -606,6 +634,14 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 onRemovePhoto: _removeAt,
                 onMakeCover: _makeCover,
                 shopId: widget.shopId,
+                showShop: !_partnerProductOnly,
+                showShopActions: !_partnerShopOnly,
+                showProducts: !_partnerShopOnly,
+                partnerProductLabels: _partnerProductOnly,
+                focusProductId: _partnerProductOnly
+                    ? widget.focusProduct?.id
+                    : null,
+                creatingProduct: _partnerProductOnly && widget.creatingProduct,
               );
               final side = _DeskStickySidebar(
                 palette: palette,
@@ -697,6 +733,29 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           ],
         ],
       ),
+      bottomNavigationBar: _partnerShopOnly
+          ? Material(
+              color: PlannerPalette.card,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: FilledButton(
+                    key: const Key('partner-resort-save'),
+                    onPressed: _saving ? null : _saveProfile,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: palette.primary,
+                      foregroundColor: palette.onPrimary,
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    child: Text(
+                      _saving ? l10n.exploreSaving : l10n.partnerSave,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
 
     return Theme(data: PlannerPalette.theme, child: scaffold);
@@ -864,6 +923,12 @@ class _DeskMainColumn extends StatelessWidget {
     required this.onRemovePhoto,
     required this.onMakeCover,
     required this.shopId,
+    required this.showShop,
+    required this.showShopActions,
+    required this.showProducts,
+    required this.partnerProductLabels,
+    required this.creatingProduct,
+    this.focusProductId,
   });
 
   final _DeskPalette palette;
@@ -886,12 +951,19 @@ class _DeskMainColumn extends StatelessWidget {
   final ValueChanged<int> onRemovePhoto;
   final ValueChanged<int> onMakeCover;
   final String shopId;
+  final bool showShop;
+  final bool showShopActions;
+  final bool showProducts;
+  final bool partnerProductLabels;
+  final bool creatingProduct;
+  final String? focusProductId;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (showShop)
         PartnerResortInfoForm(
             fieldStyle: const TextStyle(
               color: PlannerPalette.text,
@@ -930,15 +1002,28 @@ class _DeskMainColumn extends StatelessWidget {
             saving: saving,
             onTempSave: onTempSave,
             onSave: onTempSave,
+            showActions: showShopActions,
           ),
         if (!palette.partnerMode) ...[
           const SizedBox(height: 16),
           ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
-        const SizedBox(height: 16),
-        PartnerRegularProducts(shopId: shopId),
-        const SizedBox(height: 16),
-        PartnerEmptySeatProducts(shopId: shopId),
+        if (showProducts) ...[
+          const SizedBox(height: 16),
+          PartnerRegularProducts(
+            shopId: shopId,
+            partnerLabels: partnerProductLabels,
+            onlyProductId: focusProductId,
+            singleNew: creatingProduct,
+          ),
+          const SizedBox(height: 16),
+          PartnerEmptySeatProducts(
+            shopId: shopId,
+            partnerLabels: partnerProductLabels,
+            onlyProductId: focusProductId,
+            singleNew: creatingProduct,
+          ),
+        ],
       ],
     );
   }

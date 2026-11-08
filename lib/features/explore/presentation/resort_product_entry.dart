@@ -31,6 +31,7 @@ Widget resortProductEditor({
     return ResortDeskScreen(
       shopId: product.shopId.trim(),
       partnerMode: partnerMode,
+      focusProduct: partnerMode ? product : null,
     );
   }
   return PlannerTripScreen(existing: product);
@@ -55,7 +56,12 @@ Widget resortRegistrationEntry({
       listingKind: existing?.listingKind ?? ProductListingKind.exploreOnly,
     ),
   )) {
-    return ResortDeskScreen(shopId: id, partnerMode: partnerMode);
+    return ResortDeskScreen(
+      shopId: id,
+      partnerMode: partnerMode,
+      focusProduct: partnerMode ? existing : null,
+      creatingProduct: partnerMode && existing == null,
+    );
   }
   return TravelProductRegistrationScreen(
     lockedShopId: id.isEmpty ? null : id,
