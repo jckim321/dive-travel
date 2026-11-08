@@ -49,6 +49,15 @@ class TipTapStoryFrameController {
   void notifySaveSucceeded(String html) {
     _state?._postSaveSucceeded(html);
   }
+
+  /// Block iframe clicks while a Flutter dialog covers the editor.
+  void suspendInput() {
+    _state?._lockIframeInput();
+  }
+
+  void resumeInput() {
+    _state?._unlockIframeInput();
+  }
 }
 
 /// IFrame host for [web/editor/index.html]. Read/write HTML via postMessage.

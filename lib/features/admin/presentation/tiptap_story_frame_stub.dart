@@ -33,6 +33,10 @@ class TipTapStoryFrameController {
   void setStorageKey(String? key) {}
 
   void notifySaveSucceeded(String html) {}
+
+  void suspendInput() {}
+
+  void resumeInput() {}
 }
 
 /// Non-web placeholder. The trial Tiptap frame only runs in the browser.

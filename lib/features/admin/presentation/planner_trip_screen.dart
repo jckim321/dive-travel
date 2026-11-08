@@ -382,11 +382,22 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     return '임시저장';
   }
 
+  /// Same iframe pause photo, video, and map picks already use.
+  Future<T> _withEditorInputPaused<T>(Future<T> Function() action) async {
+    _tipTapController.suspendInput();
+    try {
+      return await action();
+    } finally {
+      _tipTapController.resumeInput();
+    }
+  }
+
   Future<bool> _confirmLeave() async {
     if (!_isDirty) {
       return true;
     }
-    final leave = await showDialog<bool>(
+    final leave = await _withEditorInputPaused(
+      () => showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -407,6 +418,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           ],
         );
       },
+    ),
     );
     return leave == true;
   }
@@ -606,7 +618,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     if (!mounted) {
       return;
     }
-    await showDialog<void>(
+    await _withEditorInputPaused(
+      () => showDialog<void>(
       context: context,
       builder: (context) {
         var phoneWidth = true;
@@ -712,6 +725,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           },
         );
       },
+      ),
     );
   }
 
@@ -956,7 +970,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     final nameController = TextEditingController();
     final addressController = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    final confirmed = await _withEditorInputPaused(
+      () => showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -1000,6 +1015,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           ],
         );
       },
+      ),
     );
     final name = nameController.text.trim();
     final address = addressController.text.trim();
@@ -1610,10 +1626,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     if (_saving) {
       return;
     }
-    final picked = await pickPlannerDateRange(
+    final picked = await _withEditorInputPaused(
+      () => pickPlannerDateRange(
       context: context,
       previousStart: parsePlannerDay(_start.text),
       previousEnd: parsePlannerDay(_end.text),
+      ),
     );
     if (picked == null || !mounted) {
       return;
@@ -1651,7 +1669,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     if (initial.isAfter(last)) {
       initial = last;
     }
-    final picked = await showDatePicker(
+    final picked = await _withEditorInputPaused(
+      () => showDatePicker(
       context: context,
       locale: const Locale('ko'),
       firstDate: today,
@@ -1660,6 +1679,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       helpText: '깃발 마감일',
       cancelText: '취소',
       confirmText: '확인',
+      ),
     );
     if (picked == null || !mounted) {
       return;
