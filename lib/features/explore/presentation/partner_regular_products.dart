@@ -10,7 +10,7 @@ import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Regular product boxes on the partner resort screen.
@@ -160,7 +160,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         const Text(
           '일반 상품',
           style: TextStyle(
-            color: PartnerTheme.text,
+            color: PlannerPalette.text,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -169,7 +169,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         const Text(
           '구매자가 예약할 때 정해요',
           key: Key('partner-regular-date-hint'),
-          style: TextStyle(color: PartnerTheme.textDim, height: 1.35),
+          style: TextStyle(color: PlannerPalette.textDim, height: 1.35),
         ),
         const SizedBox(height: 12),
         for (final box in _boxes) ...[
@@ -182,7 +182,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           icon: const Icon(Icons.add),
           label: const Text('상품 박스 추가'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: PartnerTheme.text,
+            foregroundColor: PlannerPalette.text,
             minimumSize: const Size.fromHeight(48),
           ),
         ),
@@ -194,7 +194,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 key: const Key('partner-regular-temp-save'),
                 onPressed: _saving ? null : () => _save(temp: true),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: PartnerTheme.text,
+                  foregroundColor: PlannerPalette.text,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(
@@ -209,8 +209,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 key: const Key('partner-regular-save'),
                 onPressed: _saving ? null : () => _save(temp: false),
                 style: FilledButton.styleFrom(
-                  backgroundColor: PartnerTheme.accent,
-                  foregroundColor: PartnerTheme.bg,
+                  backgroundColor: PlannerPalette.accent,
+                  foregroundColor: PlannerPalette.onAccent,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(
@@ -231,10 +231,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final optionCount = box.optionCount;
     return Material(
       key: Key('partner-regular-card-${box.id}'),
-      color: PartnerTheme.card,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -243,7 +243,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           children: [
             const Text(
               '구매자가 예약할 때 정해요',
-              style: TextStyle(color: PartnerTheme.textDim, fontSize: 12),
+              style: TextStyle(color: PlannerPalette.textDim, fontSize: 12),
             ),
             InkWell(
               key: Key('partner-regular-expand-${box.id}'),
@@ -264,24 +264,24 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                             ? '이름 없음'
                             : box.name.text.trim(),
                         style: const TextStyle(
-                          color: PartnerTheme.text,
+                          color: PlannerPalette.text,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
                       '${_price.format(price)}원',
-                      style: const TextStyle(color: PartnerTheme.text),
+                      style: const TextStyle(color: PlannerPalette.text),
                     ),
                     const SizedBox(width: 12),
                     Text(
                       '옵션 $optionCount',
                       key: Key('partner-regular-option-count-${box.id}'),
-                      style: const TextStyle(color: PartnerTheme.textDim),
+                      style: const TextStyle(color: PlannerPalette.textDim),
                     ),
                     Icon(
                       open ? Icons.expand_less : Icons.expand_more,
-                      color: PartnerTheme.textDim,
+                      color: PlannerPalette.textDim,
                     ),
                   ],
                 ),
@@ -293,16 +293,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text(
                   '예약하러 가기에 보이기',
-                  style: TextStyle(color: PartnerTheme.text, fontSize: 14),
+                  style: TextStyle(color: PlannerPalette.text, fontSize: 14),
                 ),
                 value: box.showOnBooking,
-                activeThumbColor: PartnerTheme.accent,
+                activeThumbColor: PlannerPalette.accent,
                 onChanged: _saving
                     ? null
                     : (value) => setState(() => box.showOnBooking = value),
               ),
               ShopProductBox(
                 keyPrefix: 'regular-${box.id}',
+                palette: PlannerPaletteColors.plannerLight,
                 priceTitle: l10n.partnerFormBoxPricePhoto,
                 optionsTitle: l10n.partnerFormBoxOptions,
                 includesTitle: l10n.partnerFormBoxIncludes,
@@ -325,8 +326,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         TextField(
           key: Key('partner-regular-name-${box.id}'),
           controller: box.name,
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
           decoration: _field('상품 이름'),
           onChanged: (_) => setState(() {}),
         ),
@@ -339,8 +340,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 controller: box.consumer,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PartnerTheme.text),
-                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
                 decoration: _field(l10n.partnerFormBasePrice),
                 onChanged: (_) => setState(() {}),
               ),
@@ -351,8 +352,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 controller: box.professional,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PartnerTheme.text),
-                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
                 decoration: _field(l10n.exploreProPrice),
               ),
             ),
@@ -399,10 +400,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
 
   Widget _addonRow(_RegularProductDraft box, _AddonDraft addon) {
     return Material(
-      color: PartnerTheme.bg,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -414,15 +415,15 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                   child: TextField(
                     key: Key('partner-regular-option-name-${addon.id}'),
                     controller: addon.name,
-                    style: const TextStyle(color: PartnerTheme.text),
-                    cursorColor: PartnerTheme.accent,
+                    style: const TextStyle(color: PlannerPalette.text),
+                    cursorColor: PlannerPalette.accent,
                     decoration: _field('옵션 이름'),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
                 IconButton(
                   onPressed: () => setState(() => box.addons.remove(addon)),
-                  icon: const Icon(Icons.close, color: PartnerTheme.textDim),
+                  icon: const Icon(Icons.close, color: PlannerPalette.textDim),
                 ),
               ],
             ),
@@ -431,8 +432,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               controller: addon.consumer,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(color: PartnerTheme.text),
-              cursorColor: PartnerTheme.accent,
+              style: const TextStyle(color: PlannerPalette.text),
+              cursorColor: PlannerPalette.accent,
               decoration: _field('소비자가'),
             ),
             const SizedBox(height: 8),
@@ -440,8 +441,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               controller: addon.professional,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(color: PartnerTheme.text),
-              cursorColor: PartnerTheme.accent,
+              style: const TextStyle(color: PlannerPalette.text),
+              cursorColor: PlannerPalette.accent,
               decoration: _field('강사 우대가'),
             ),
           ],
@@ -458,8 +459,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           controller: box.includes,
           minLines: 2,
           maxLines: 4,
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
           decoration: _field(l10n.productFormIncludes),
         ),
         const SizedBox(height: 10),
@@ -467,8 +468,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           controller: box.excludes,
           minLines: 2,
           maxLines: 4,
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
           decoration: _field(l10n.productFormExcludes),
         ),
       ],
@@ -484,7 +485,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           const Text(
             '저장된 개별 상품',
             style: TextStyle(
-              color: PartnerTheme.text,
+              color: PlannerPalette.text,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -495,7 +496,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               child: Text(
                 '${option.name} · ${_price.format(option.consumerPrice)}원',
                 key: Key('partner-regular-individual-${option.id}'),
-                style: const TextStyle(color: PartnerTheme.text),
+                style: const TextStyle(color: PlannerPalette.text),
               ),
             ),
         ],
@@ -527,7 +528,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('사진 선택 실패: $error')),
+        const SnackBar(content: Text('사진을 불러오지 못했습니다. 다시 시도해 주세요')),
       );
     }
   }
@@ -537,20 +538,20 @@ InputDecoration _field(String label) {
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: PartnerTheme.bg,
-    labelStyle: const TextStyle(color: PartnerTheme.textDim),
+    fillColor: PlannerPalette.card,
+    labelStyle: const TextStyle(color: PlannerPalette.textDim),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
     ),
   );
 }

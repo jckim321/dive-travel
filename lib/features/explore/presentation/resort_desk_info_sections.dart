@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kAmenityPresets = <String>[
@@ -315,6 +315,7 @@ class PartnerResortInfoForm extends StatelessWidget {
     required this.intro,
     required this.info,
     required this.onInfoChanged,
+    required this.onCoverTap,
     required this.slots,
     required this.photos,
     required this.saving,
@@ -334,6 +335,7 @@ class PartnerResortInfoForm extends StatelessWidget {
   final TextEditingController intro;
   final ResortDeskInfoDraft info;
   final VoidCallback onInfoChanged;
+  final VoidCallback onCoverTap;
   final List<BookingGalleryItem> slots;
   final Widget photos;
   final bool saving;
@@ -358,7 +360,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                 key: const Key('resort-name-field'),
                 controller: name,
                 style: fieldStyle,
-                cursorColor: PartnerTheme.accent,
+                cursorColor: PlannerPalette.accent,
                 onChanged: (_) {
                   onNameEdited();
                   onInfoChanged();
@@ -372,7 +374,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                 key: const Key('resort-region-field'),
                 controller: location,
                 style: fieldStyle,
-                cursorColor: PartnerTheme.accent,
+                cursorColor: PlannerPalette.accent,
                 onChanged: (_) {
                   onRegionEdited();
                   onInfoChanged();
@@ -388,7 +390,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                       key: const Key('resort-address-field'),
                       controller: address,
                       style: fieldStyle,
-                      cursorColor: PartnerTheme.accent,
+                      cursorColor: PlannerPalette.accent,
                       decoration: _field(l10n.exploreResortAddress),
                     ),
                   ),
@@ -397,8 +399,8 @@ class PartnerResortInfoForm extends StatelessWidget {
                     key: const Key('partner-resort-map-search'),
                     onPressed: onMapSearch,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: PartnerTheme.accent,
-                      side: const BorderSide(color: PartnerTheme.borderStrong),
+                      foregroundColor: PlannerPalette.accent,
+                      side: const BorderSide(color: PlannerPalette.borderStrong),
                       minimumSize: const Size(96, 52),
                     ),
                     child: const Text('지도 검색'),
@@ -409,12 +411,12 @@ class PartnerResortInfoForm extends StatelessWidget {
               Text(
                 '대표 이미지',
                 style: const TextStyle(
-                  color: PartnerTheme.text,
+                  color: PlannerPalette.text,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
-              _CoverPreview(item: cover, keyed: true),
+              _CoverPreview(item: cover, keyed: true, onTap: onCoverTap),
             ],
           ),
         ),
@@ -425,7 +427,7 @@ class PartnerResortInfoForm extends StatelessWidget {
             key: const Key('resort-intro-field'),
             controller: intro,
             style: fieldStyle,
-            cursorColor: PartnerTheme.accent,
+            cursorColor: PlannerPalette.accent,
             maxLines: 5,
             maxLength: kMaxIntroBody,
             decoration: _field(l10n.exploreResortIntro),
@@ -440,7 +442,7 @@ class PartnerResortInfoForm extends StatelessWidget {
               TextField(
                 controller: info.nearestHub,
                 style: fieldStyle,
-                cursorColor: PartnerTheme.accent,
+                cursorColor: PlannerPalette.accent,
                 maxLength: kMaxShortLine,
                 maxLines: 2,
                 decoration: _field('가장 가까운 도시·공항'),
@@ -531,7 +533,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                       key: const Key('partner-resort-facility-add'),
                       controller: info.amenityCustom,
                       style: fieldStyle,
-                      cursorColor: PartnerTheme.accent,
+                      cursorColor: PlannerPalette.accent,
                       maxLength: kMaxShortLine,
                       decoration: _field('직접 추가'),
                       onSubmitted: (_) => _addCustomAmenity(),
@@ -590,7 +592,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                 key: const Key('partner-resort-dive-blurb'),
                 controller: info.featureBlurb,
                 style: fieldStyle,
-                cursorColor: PartnerTheme.accent,
+                cursorColor: PlannerPalette.accent,
                 maxLength: kMaxShortLine * 2,
                 maxLines: 3,
                 decoration: _field('환경·조건'),
@@ -616,7 +618,7 @@ class PartnerResortInfoForm extends StatelessWidget {
                     child: TextField(
                       controller: info.featureTagCustom,
                       style: fieldStyle,
-                      cursorColor: PartnerTheme.accent,
+                      cursorColor: PlannerPalette.accent,
                       maxLength: kMaxShortLine,
                       decoration: _field('조건 태그'),
                       onSubmitted: (_) => _addDiveTag(),
@@ -653,8 +655,8 @@ class PartnerResortInfoForm extends StatelessWidget {
                 key: const Key('partner-resort-temp-save'),
                 onPressed: saving ? null : onTempSave,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: PartnerTheme.text,
-                  side: const BorderSide(color: PartnerTheme.borderStrong),
+                  foregroundColor: PlannerPalette.text,
+                  side: const BorderSide(color: PlannerPalette.borderStrong),
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(saving ? l10n.exploreSaving : l10n.briefTempSave),
@@ -666,8 +668,8 @@ class PartnerResortInfoForm extends StatelessWidget {
                 key: const Key('partner-resort-save'),
                 onPressed: saving ? null : onSave,
                 style: FilledButton.styleFrom(
-                  backgroundColor: PartnerTheme.accent,
-                  foregroundColor: PartnerTheme.bg,
+                  backgroundColor: PlannerPalette.accent,
+                  foregroundColor: PlannerPalette.onAccent,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(saving ? l10n.exploreSaving : l10n.partnerSave),
@@ -721,7 +723,7 @@ class _PartnerRouteCard extends StatelessWidget {
     final route = draft.accessRoutes[index];
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: PartnerTheme.border),
+        border: Border.all(color: PlannerPalette.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -788,7 +790,7 @@ class _PartnerSpotCard extends StatelessWidget {
     final spot = draft.nearbySpots[index];
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: PartnerTheme.border),
+        border: Border.all(color: PlannerPalette.border),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -825,27 +827,36 @@ class _PartnerSpotCard extends StatelessWidget {
 }
 
 class _CoverPreview extends StatelessWidget {
-  const _CoverPreview({required this.item, this.keyed = false});
+  const _CoverPreview({required this.item, this.keyed = false, this.onTap});
 
   final BookingGalleryItem? item;
   final bool keyed;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final photo = item?.photo;
     final url = item?.url;
-    Widget child = const Icon(Icons.image_outlined, color: PartnerTheme.textDim);
+    Widget child = const Icon(Icons.image_outlined, color: PlannerPalette.textDim);
     if (photo != null && photo.bytes.isNotEmpty) {
       child = Image.memory(photo.bytes, fit: BoxFit.cover);
     } else if (url != null && url.startsWith('http')) {
       child = Image.network(url, fit: BoxFit.cover);
     }
-    return ClipRRect(
-      key: keyed ? const Key('partner-resort-cover-preview') : null,
-      borderRadius: BorderRadius.circular(12),
-      child: ColoredBox(
-        color: PartnerTheme.bg,
-        child: SizedBox(width: 96, height: 72, child: child),
+    return Material(
+      color: PlannerPalette.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: PlannerPalette.border),
+      ),
+      child: InkWell(
+        key: keyed ? const Key('partner-resort-cover-preview') : null,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(width: 96, height: 72, child: child),
+        ),
       ),
     );
   }
@@ -876,14 +887,14 @@ class _ListPreview extends StatelessWidget {
           title: Text(
             name.isEmpty ? '리조트 이름' : name,
             style: const TextStyle(
-              color: PartnerTheme.text,
+              color: PlannerPalette.text,
               fontWeight: FontWeight.w800,
             ),
           ),
           subtitle: Text(
             place,
             key: const Key('partner-resort-preview-place'),
-            style: const TextStyle(color: PartnerTheme.textDim),
+            style: const TextStyle(color: PlannerPalette.textDim),
           ),
         ),
         const SizedBox(height: 8),
@@ -891,8 +902,8 @@ class _ListPreview extends StatelessWidget {
           key: const Key('partner-resort-preview-book'),
           onPressed: () {},
           style: FilledButton.styleFrom(
-            backgroundColor: PartnerTheme.accent,
-            foregroundColor: PartnerTheme.bg,
+            backgroundColor: PlannerPalette.accent,
+            foregroundColor: PlannerPalette.onAccent,
             minimumSize: const Size.fromHeight(44),
           ),
           child: const Text('이 리조트 예약하러 가기'),
@@ -930,10 +941,10 @@ Widget _box({
     padding: const EdgeInsets.only(bottom: 14),
     child: Material(
       key: boxKey,
-      color: PartnerTheme.card,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -943,7 +954,7 @@ Widget _box({
             Text(
               title,
               style: const TextStyle(
-                color: PartnerTheme.text,
+                color: PlannerPalette.text,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -961,20 +972,20 @@ InputDecoration _field(String label) {
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: PartnerTheme.bg,
-    labelStyle: const TextStyle(color: PartnerTheme.textDim),
+    fillColor: PlannerPalette.card,
+    labelStyle: const TextStyle(color: PlannerPalette.textDim),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
     ),
   );
 }

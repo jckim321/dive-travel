@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
-import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// One gallery cell: remote URL and/or local picked bytes.
@@ -338,14 +337,16 @@ class _EmptyDrop extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final radius = BorderRadius.circular(cornerRadius);
+    final scheme = theme.colorScheme;
     return Material(
-      color: const Color(0xFF0B1F33),
+      color: scheme.surface,
       borderRadius: radius,
       child: InkWell(
         onTap: onAdd,
         borderRadius: radius,
-        child: AspectRatio(
-          aspectRatio: ListingCover.aspectRatio,
+        child: SizedBox(
+          height: 150,
+          width: double.infinity,
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -354,23 +355,25 @@ class _EmptyDrop extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.add_a_photo_outlined,
-                    size: 40,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 32,
+                    color: scheme.onSurface,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     l10n.exploreGalleryAdd,
                     style: theme.textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
+                      color: scheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     l10n.exploreGalleryHint,
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

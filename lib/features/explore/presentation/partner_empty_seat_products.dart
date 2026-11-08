@@ -7,7 +7,7 @@ import 'package:dive_travel_app/features/admin/presentation/planner_date_range.d
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Optional empty-seat products under the regular product boxes.
@@ -280,7 +280,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         const Text(
           '③ 빈자리 상품 (선택)',
           style: TextStyle(
-            color: PartnerTheme.text,
+            color: PlannerPalette.text,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -296,7 +296,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           icon: const Icon(Icons.add),
           label: const Text('빈자리 상품 추가'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: PartnerTheme.text,
+            foregroundColor: PlannerPalette.text,
             minimumSize: const Size.fromHeight(48),
           ),
         ),
@@ -308,7 +308,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 key: const Key('partner-empty-temp-save'),
                 onPressed: _saving ? null : () => _save(temp: true),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: PartnerTheme.text,
+                  foregroundColor: PlannerPalette.text,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(_saving ? l10n.exploreSaving : l10n.briefTempSave),
@@ -321,8 +321,8 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 key: const Key('partner-empty-save'),
                 onPressed: _saving ? null : () => _save(temp: false),
                 style: FilledButton.styleFrom(
-                  backgroundColor: PartnerTheme.accent,
-                  foregroundColor: PartnerTheme.bg,
+                  backgroundColor: PlannerPalette.accent,
+                  foregroundColor: PlannerPalette.onAccent,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 child: Text(
@@ -341,10 +341,10 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     final open = _expanded.contains(box.id);
     return Material(
       key: Key('partner-empty-card-${box.id}'),
-      color: PartnerTheme.card,
+      color: PlannerPalette.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PartnerTheme.border),
+        side: const BorderSide(color: PlannerPalette.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -365,7 +365,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 child: Text(
                   box.name.text.trim().isEmpty ? '이름 없음' : box.name.text.trim(),
                   style: const TextStyle(
-                    color: PartnerTheme.text,
+                    color: PlannerPalette.text,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -377,10 +377,10 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text(
                   '열림(같은배에 올리기)',
-                  style: TextStyle(color: PartnerTheme.text, fontSize: 14),
+                  style: TextStyle(color: PlannerPalette.text, fontSize: 14),
                 ),
                 value: box.listOnSameBoat,
-                activeThumbColor: PartnerTheme.accent,
+                activeThumbColor: PlannerPalette.accent,
                 onChanged: _saving || box.sameBoatLocked
                     ? null
                     : (value) => setState(() => box.listOnSameBoat = value),
@@ -390,13 +390,14 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
                 controller: box.remaining,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PartnerTheme.text),
-                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
                 decoration: _field('남은 자리'),
               ),
               const SizedBox(height: 10),
               ShopProductBox(
                 keyPrefix: 'empty-${box.id}',
+                palette: PlannerPaletteColors.plannerLight,
                 showDate: true,
                 dateController: box.departure,
                 endDateController: box.end,
@@ -431,7 +432,7 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       label.isEmpty ? '기간을 달력에서 선택하세요' : label,
       key: Key('partner-empty-duration-${box.id}'),
       style: TextStyle(
-        color: label.isEmpty ? PartnerTheme.textDim : PartnerTheme.text,
+        color: label.isEmpty ? PlannerPalette.textDim : PlannerPalette.text,
         fontSize: 14,
         fontWeight: label.isEmpty ? FontWeight.w400 : FontWeight.w700,
       ),
@@ -446,11 +447,11 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       enableInteractiveSelection: false,
       enabled: !_saving,
       onTap: _saving ? null : () => _pickFlagClose(box),
-      style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text, fontSize: 15),
+      cursorColor: PlannerPalette.accent,
       decoration: _field('깃발 마감일').copyWith(
         hintText: '달력에서 선택',
-        hintStyle: const TextStyle(color: PartnerTheme.textDim),
+        hintStyle: const TextStyle(color: PlannerPalette.textDim),
         suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
       ),
     );
@@ -462,8 +463,8 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         TextField(
           key: Key('partner-empty-name-${box.id}'),
           controller: box.name,
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
           decoration: _field('상품 이름'),
           onChanged: (_) => setState(() {}),
         ),
@@ -473,8 +474,8 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           controller: box.consumer,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(color: PartnerTheme.text),
-          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
           decoration: _field(l10n.partnerFormBasePrice),
         ),
       ],
@@ -489,8 +490,8 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
           TextField(
             key: Key('partner-empty-option-${addon.id}'),
             controller: addon.name,
-            style: const TextStyle(color: PartnerTheme.text),
-            cursorColor: PartnerTheme.accent,
+            style: const TextStyle(color: PlannerPalette.text),
+            cursorColor: PlannerPalette.accent,
             decoration: _field('옵션 이름'),
           ),
           const SizedBox(height: 8),
@@ -512,8 +513,8 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       controller: box.includes,
       minLines: 2,
       maxLines: 4,
-      style: const TextStyle(color: PartnerTheme.text),
-      cursorColor: PartnerTheme.accent,
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
       decoration: _field(l10n.productFormIncludes),
     );
   }
@@ -523,20 +524,20 @@ InputDecoration _field(String label) {
   return InputDecoration(
     labelText: label,
     filled: true,
-    fillColor: PartnerTheme.bg,
-    labelStyle: const TextStyle(color: PartnerTheme.textDim),
+    fillColor: PlannerPalette.card,
+    labelStyle: const TextStyle(color: PlannerPalette.textDim),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.border),
+      borderSide: const BorderSide(color: PlannerPalette.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PartnerTheme.accent, width: 1.4),
+      borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
     ),
   );
 }

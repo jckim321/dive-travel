@@ -12,7 +12,7 @@ import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
-import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
@@ -21,8 +21,6 @@ import 'package:dive_travel_app/features/explore/presentation/partner_regular_pr
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kMaxGallery = GalleryLimits.maxProductPhotos;
@@ -32,24 +30,18 @@ class _DeskPalette {
 
   final bool partnerMode;
 
-  Color get bg => partnerMode ? PartnerTheme.bg : AppTheme.canvas;
-  Color get surface => partnerMode ? PartnerTheme.card : Colors.white;
-  Color get primary => partnerMode ? PartnerTheme.accent : AppTheme.navy;
-  Color get onPrimary => partnerMode ? PartnerTheme.bg : Colors.white;
-  Color get muted => partnerMode ? PartnerTheme.textDim : AppTheme.muted;
-  Color get border =>
-      partnerMode ? PartnerTheme.border : const Color(0xFFE7E7E7);
-  Color get softFill =>
-      partnerMode ? PartnerTheme.bg : const Color(0xFFF7F9FB);
-  Color get softBorder =>
-      partnerMode ? PartnerTheme.border : const Color(0xFFE6EBEF);
-  Color get inputBorder =>
-      partnerMode ? PartnerTheme.borderStrong : const Color(0xFFBDBDBD);
+  Color get bg => PlannerPalette.bg;
+  Color get surface => PlannerPalette.card;
+  Color get primary => PlannerPalette.accent;
+  Color get onPrimary => PlannerPalette.onAccent;
+  Color get muted => PlannerPalette.textDim;
+  Color get border => PlannerPalette.border;
+  Color get softFill => PlannerPalette.bg;
+  Color get softBorder => PlannerPalette.border;
+  Color get inputBorder => PlannerPalette.borderStrong;
 
-  /// Admin desk is a light form. Text must stay navy even when the route is
-  /// pushed from the dark admin console, or the white fields look blank.
-  TextStyle get fieldStyle => TextStyle(
-        color: partnerMode ? PartnerTheme.text : AppTheme.navy,
+  TextStyle get fieldStyle => const TextStyle(
+        color: PlannerPalette.text,
         fontSize: 16,
         fontWeight: FontWeight.w600,
       );
@@ -64,7 +56,7 @@ class ResortDeskScreen extends StatefulWidget {
 
   final String shopId;
 
-  /// Affiliate-partner stack: dark [PartnerTheme] chrome. Admin/explore stay light.
+  /// Partner stack hides the admin sidebar. Both modes use [PlannerPalette].
   final bool partnerMode;
 
   @override
@@ -320,7 +312,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('사진 선택 실패: $error')),
+        const SnackBar(content: Text('사진을 불러오지 못했습니다. 다시 시도해 주세요')),
       );
     }
   }
@@ -519,9 +511,16 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       backgroundColor: palette.bg,
       appBar: AppBar(
         backgroundColor: palette.surface,
-        foregroundColor: widget.partnerMode ? PartnerTheme.text : null,
+        foregroundColor: PlannerPalette.text,
         surfaceTintColor: Colors.transparent,
-        leading: widget.partnerMode ? const PartnerBackButton() : null,
+        leading: widget.partnerMode
+            ? IconButton(
+                key: const Key('partner-back'),
+                tooltip: l10n.partnerExit,
+                icon: const Icon(Icons.arrow_back, color: PlannerPalette.text),
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null,
         title: Text(l10n.exploreEditResort),
         actions: [
           TextButton.icon(
@@ -529,12 +528,12 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             icon: Icon(
               Icons.visibility_outlined,
               size: 18,
-              color: widget.partnerMode ? PartnerTheme.accent : null,
+              color: PlannerPalette.accent,
             ),
             label: Text(
               '미리보기',
               style: TextStyle(
-                color: widget.partnerMode ? PartnerTheme.accent : null,
+                color: PlannerPalette.accent,
               ),
             ),
           ),
@@ -687,9 +686,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                         l10n.exploreSaving,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: widget.partnerMode
-                                  ? PartnerTheme.text
-                                  : null,
+                              color: PlannerPalette.text,
                             ),
                       ),
                     ],
@@ -702,12 +699,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       ),
     );
 
-    if (widget.partnerMode) {
-      return PartnerTheme.wrap(scaffold);
-    }
-    // The admin console theme is dark. Without this, white fields inherit
-    // pale text and the name, country, and region look locked.
-    return Theme(data: AppTheme.light, child: scaffold);
+    return Theme(data: PlannerPalette.theme, child: scaffold);
   }
 }
 
@@ -721,8 +713,7 @@ InputDecoration _deskInputDecoration({
     borderRadius: BorderRadius.circular(4),
     borderSide: BorderSide(color: palette.inputBorder),
   );
-  final labelColor =
-      palette.partnerMode ? PartnerTheme.textDim : AppTheme.navy;
+  final labelColor = PlannerPalette.textDim;
   return InputDecoration(
     label: required
         ? _RequiredLabel(label, color: labelColor)
@@ -903,7 +894,7 @@ class _DeskMainColumn extends StatelessWidget {
       children: [
         PartnerResortInfoForm(
             fieldStyle: const TextStyle(
-              color: PartnerTheme.text,
+              color: PlannerPalette.text,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
@@ -918,6 +909,7 @@ class _DeskMainColumn extends StatelessWidget {
             intro: intro,
             info: info,
             onInfoChanged: onInfoChanged,
+            onCoverTap: onAddPhotos,
             slots: slots,
             photos: RepaintBoundary(
               child: BookingGalleryEditor(
