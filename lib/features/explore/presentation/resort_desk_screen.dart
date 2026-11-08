@@ -13,11 +13,13 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
+import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/features/admin/presentation/travel_product_form.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_regular_products.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
@@ -81,6 +83,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
   TravelCountry? _pickedCountry;
   final _info = ResortDeskInfoDraft();
   final _mainScroll = ScrollController();
+  final _storyController = TipTapStoryFrameController();
   final _sideScroll = ScrollController();
   /// Preserved listing scalars — desk no longer edits product name/prices.
   var _listingProductName = '';
@@ -522,7 +525,40 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  void _openPreview() => openResortDetail(context, widget.shopId);
+  Future<void> _pauseStoryEditor(Future<void> Function() action) {
+    return pausePartnerStoryInput(_storyController, action);
+  }
+
+  void _openPreview() {
+    if (!_partnerProductOnly) {
+      openResortDetail(context, widget.shopId);
+      return;
+    }
+    unawaited(_pauseStoryEditor(_openPartnerPreviewSheet));
+  }
+
+  /// Same sheet as [openResortDetail]. Awaited so the story iframe stays
+  /// paused until the preview closes. The shared helper does not return
+  /// that future.
+  Future<void> _openPartnerPreviewSheet() {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        final height = MediaQuery.sizeOf(sheetContext).height;
+        return SizedBox(
+          height: height * 0.94,
+          child: ResortDetailScreen(hullId: widget.shopId, asSheet: true),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -644,6 +680,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                 creatingProduct: _partnerProductOnly && widget.creatingProduct,
                 focusOpenEmptySeats:
                     widget.focusProduct?.openEmptySeats ?? false,
+                storyController:
+                    _partnerProductOnly ? _storyController : null,
+                pauseEditorInput:
+                    _partnerProductOnly ? _pauseStoryEditor : null,
               );
               final side = _DeskStickySidebar(
                 palette: palette,
@@ -932,6 +972,8 @@ class _DeskMainColumn extends StatelessWidget {
     required this.creatingProduct,
     this.focusProductId,
     this.focusOpenEmptySeats = false,
+    this.storyController,
+    this.pauseEditorInput,
   });
 
   final _DeskPalette palette;
@@ -961,6 +1003,8 @@ class _DeskMainColumn extends StatelessWidget {
   final bool creatingProduct;
   final String? focusProductId;
   final bool focusOpenEmptySeats;
+  final TipTapStoryFrameController? storyController;
+  final Future<void> Function(Future<void> Function() action)? pauseEditorInput;
 
   @override
   Widget build(BuildContext context) {
@@ -1022,6 +1066,7 @@ class _DeskMainColumn extends StatelessWidget {
               partnerLabels: partnerProductLabels,
               onlyProductId: focusProductId,
               singleNew: creatingProduct,
+              storyController: storyController,
             ),
           ],
           if (!partnerProductLabels ||
@@ -1033,6 +1078,7 @@ class _DeskMainColumn extends StatelessWidget {
               partnerLabels: partnerProductLabels,
               onlyProductId: focusProductId,
               singleNew: creatingProduct,
+              pauseEditorInput: pauseEditorInput,
             ),
           ],
         ],

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -6,11 +9,14 @@ import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dart';
+import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Regular product boxes on the partner resort screen.
@@ -24,6 +30,7 @@ class PartnerRegularProducts extends StatefulWidget {
     this.partnerLabels = false,
     this.onlyProductId,
     this.singleNew = false,
+    this.storyController,
   });
 
   final String shopId;
@@ -36,6 +43,9 @@ class PartnerRegularProducts extends StatefulWidget {
 
   /// One empty draft, without the shop's other products.
   final bool singleNew;
+
+  /// Partner product screen only. The admin desk leaves this null.
+  final TipTapStoryFrameController? storyController;
 
   @override
   State<PartnerRegularProducts> createState() => _PartnerRegularProductsState();
@@ -59,6 +69,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     _loaded = true;
     if (widget.singleNew) {
       final draft = _RegularProductDraft.empty();
+      draft.storyReady = true;
       _boxes.add(draft);
       _expanded.add(draft.id);
       return;
@@ -70,6 +81,61 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         if (_shows(product)) _RegularProductDraft.fromProduct(product),
     ]);
     _expandSingle();
+    if (widget.partnerLabels) {
+      for (final box in _boxes) {
+        if (box.source == null) {
+          box.storyReady = true;
+        }
+      }
+      unawaited(_loadPartnerStories());
+    }
+  }
+
+  bool _mountsStoryEditor(_RegularProductDraft box) {
+    return widget.partnerLabels &&
+        widget.storyController != null &&
+        _boxes.isNotEmpty &&
+        box.id == _boxes.first.id;
+  }
+
+  Future<void> _loadPartnerStories() async {
+    if (!widget.partnerLabels || widget.storyController == null) {
+      return;
+    }
+    final store = DiverStoreScope.of(context);
+    for (final box in List<_RegularProductDraft>.of(_boxes)) {
+      if (box.storyReady || box.source == null || !_mountsStoryEditor(box)) {
+        continue;
+      }
+      try {
+        final html = await store.fetchShopProductStoryHtml(
+          shopId: widget.shopId,
+          productId: box.id,
+        );
+        if (!mounted) {
+          return;
+        }
+        final text = html ?? '';
+        setState(() {
+          box.storyInitialHtml = text;
+          box.storyDraftHtml = text;
+          box.savedStoryHtml = text;
+          box.storyReady = true;
+          box.storyFetchFailed = false;
+        });
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          box.storyReady = true;
+          box.storyFetchFailed = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('저장된 소개글을 불러오지 못했습니다: $error')),
+        );
+      }
+    }
   }
 
   bool _shows(ShopProduct product) {
@@ -100,6 +166,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final products = store.liveStatsFor(widget.shopId)?.products ?? const [];
     final previous = List<_RegularProductDraft>.of(_boxes);
     final pinned = widget.singleNew ? {for (final box in previous) box.id} : null;
+    final stories = {for (final box in previous) box.id: box};
     _boxes
       ..clear()
       ..addAll([
@@ -107,6 +174,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           if (_shows(product) && (pinned == null || pinned.contains(product.id)))
             _RegularProductDraft.fromProduct(product),
       ]);
+    for (final box in _boxes) {
+      final old = stories[box.id];
+      if (old == null) {
+        continue;
+      }
+      box.storyInitialHtml = old.storyInitialHtml;
+      box.storyDraftHtml = old.storyDraftHtml;
+      box.savedStoryHtml = old.savedStoryHtml;
+      box.storyReady = old.storyReady;
+      box.storyFetchFailed = old.storyFetchFailed;
+    }
     _expandSingle();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
@@ -150,6 +228,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
     var saved = 0;
+    String? storyFailure;
     try {
       for (final box in _boxes) {
         if (box.isUntouchedNew) {
@@ -172,6 +251,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             intent: ProductSaveIntent.takeDown,
           );
         }
+        final failure = await _persistStory(store, box);
+        if (failure != null) {
+          storyFailure ??= failure;
+        }
       }
       if (!mounted) {
         return;
@@ -180,12 +263,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         setState(_replaceFromStore);
       }
       if (widget.partnerLabels) {
+        final message = storyFailure != null
+            ? '상품은 저장했지만 소개글을 저장하지 못했습니다: $storyFailure'
+            : (saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다',
-            ),
-          ),
+          SnackBar(content: Text(message)),
         );
       }
     } catch (error) {
@@ -200,6 +282,45 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         setState(() => _saving = false);
       }
     }
+  }
+
+  /// Writes the editor HTML after the product document exists.
+  /// Returns the failure reason, or null when saved or skipped.
+  Future<String?> _persistStory(
+    DiverStore store,
+    _RegularProductDraft box,
+  ) async {
+    if (!_mountsStoryEditor(box)) {
+      return null;
+    }
+    final draft = box.storyDraftHtml;
+    if (box.storyFetchFailed && partnerStoryBodyIsEmpty(draft)) {
+      return null;
+    }
+    final cleaned = sanitizeStoryHtml(draft);
+    if (partnerStoryBodyIsEmpty(cleaned) &&
+        partnerStoryBodyIsEmpty(box.savedStoryHtml)) {
+      return null;
+    }
+    final stored = partnerStoryBodyIsEmpty(cleaned) ? '' : cleaned;
+    try {
+      await store.updateShopProductStory(
+        shopId: widget.shopId,
+        productId: box.id,
+        storyHtml: stored,
+      );
+    } catch (error) {
+      return '$error';
+    }
+    box.storyDraftHtml = stored;
+    box.savedStoryHtml = stored;
+    box.storyFetchFailed = false;
+    final controller = widget.storyController;
+    if (controller != null) {
+      controller.setStorageKey(partnerStoryStorageKey(widget.shopId, box.id));
+      controller.notifySaveSucceeded(stored);
+    }
+    return null;
   }
 
   @override
@@ -367,21 +488,117 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                     fontSize: 12,
                   ),
                 ),
-              ShopProductBox(
-                keyPrefix: 'regular-${box.id}',
-                palette: PlannerPaletteColors.plannerLight,
-                priceTitle: l10n.partnerFormBoxPricePhoto,
-                optionsTitle: l10n.partnerFormBoxOptions,
-                includesTitle: l10n.partnerFormBoxIncludes,
-                priceAndPhotos: _priceBlock(l10n, box),
-                options: _optionsBlock(l10n, box),
-                includes: _includesBlock(l10n, box),
-              ),
+              if (widget.partnerLabels)
+                _partnerSections(l10n, box)
+              else
+                ShopProductBox(
+                  keyPrefix: 'regular-${box.id}',
+                  palette: PlannerPaletteColors.plannerLight,
+                  priceTitle: l10n.partnerFormBoxPricePhoto,
+                  optionsTitle: l10n.partnerFormBoxOptions,
+                  includesTitle: l10n.partnerFormBoxIncludes,
+                  priceAndPhotos: _priceBlock(l10n, box),
+                  options: _optionsBlock(l10n, box),
+                  includes: _includesBlock(l10n, box),
+                ),
               if (box.individuals.isNotEmpty) _savedIndividuals(box),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _partnerSections(AppLocalizations l10n, _RegularProductDraft box) {
+    return Column(
+      key: Key('regular-${box.id}-shop-product-box'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sectionCard(
+          boxKey: Key('regular-${box.id}-partner-form-section-price'),
+          title: l10n.partnerFormBoxPricePhoto,
+          child: _priceBlock(l10n, box),
+        ),
+        if (_mountsStoryEditor(box))
+          _sectionCard(
+            boxKey: Key('partner-product-story-${box.id}'),
+            title: '상품 소개글',
+            child: _storyBody(box),
+          ),
+        _sectionCard(
+          boxKey: Key('regular-${box.id}-partner-form-section-options'),
+          title: l10n.partnerFormBoxOptions,
+          child: _optionsBlock(l10n, box),
+        ),
+        _sectionCard(
+          boxKey: Key('regular-${box.id}-partner-form-section-includes'),
+          title: l10n.partnerFormBoxIncludes,
+          child: _includesBlock(l10n, box),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionCard({
+    required Key boxKey,
+    required String title,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Material(
+        key: boxKey,
+        color: PlannerPalette.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: PlannerPalette.border),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: PlannerPalette.text,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _storyBody(_RegularProductDraft box) {
+    if (!kIsWeb) {
+      return Text(
+        '소개글 편집은 웹에서만 열립니다',
+        key: Key('partner-story-web-only-${box.id}'),
+      );
+    }
+    final controller = widget.storyController;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+    if (!box.storyReady) {
+      return const SizedBox(
+        height: 360,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return PartnerStoryEditor(
+      key: Key('partner-story-editor-${box.id}'),
+      shopId: widget.shopId,
+      productId: box.id,
+      initialHtml: box.storyInitialHtml,
+      controller: controller,
+      onHtmlChanged: (html) => box.storyDraftHtml = html,
     );
   }
 
@@ -715,6 +932,19 @@ class _RegularProductDraft {
   bool showOnBooking;
   bool galleryTouched = false;
   final int sourcePrice;
+
+  /// HTML last given to the editor. Stays put so a later rebuild does not
+  /// push a new document into the iframe.
+  String storyInitialHtml = '';
+
+  /// Latest editor HTML, including text the user has not saved yet.
+  String storyDraftHtml = '';
+
+  /// Last story read from or written to the product document.
+  String savedStoryHtml = '';
+
+  bool storyReady = false;
+  bool storyFetchFailed = false;
 
   int get optionCount => addons.length + individuals.length;
 

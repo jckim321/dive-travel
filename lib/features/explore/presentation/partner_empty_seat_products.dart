@@ -22,6 +22,7 @@ class PartnerEmptySeatProducts extends StatefulWidget {
     this.partnerLabels = false,
     this.onlyProductId,
     this.singleNew = false,
+    this.pauseEditorInput,
   });
 
   final String shopId;
@@ -34,6 +35,9 @@ class PartnerEmptySeatProducts extends StatefulWidget {
 
   /// One empty draft, without the shop's other products.
   final bool singleNew;
+
+  /// Partner product screen. Null on the admin desk, so calendars stay as they are.
+  final Future<void> Function(Future<void> Function() action)? pauseEditorInput;
 
   @override
   State<PartnerEmptySeatProducts> createState() =>
@@ -139,14 +143,38 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     return DateTime(now.year, now.month, now.day);
   }
 
+  Future<T> _withEditorInputPaused<T>(Future<T> Function() action) async {
+    final pause = widget.pauseEditorInput;
+    if (pause == null) {
+      return action();
+    }
+    T? value;
+    Object? error;
+    StackTrace? stack;
+    await pause(() async {
+      try {
+        value = await action();
+      } catch (caught, caughtStack) {
+        error = caught;
+        stack = caughtStack;
+      }
+    });
+    if (error != null) {
+      Error.throwWithStackTrace(error!, stack ?? StackTrace.empty);
+    }
+    return value as T;
+  }
+
   Future<void> _pickDateRange(_EmptySeatDraft box) async {
     if (_saving) {
       return;
     }
-    final picked = await pickPlannerDateRange(
-      context: context,
-      previousStart: parsePlannerDay(box.departure.text),
-      previousEnd: parsePlannerDay(box.end.text),
+    final picked = await _withEditorInputPaused(
+      () => pickPlannerDateRange(
+        context: context,
+        previousStart: parsePlannerDay(box.departure.text),
+        previousEnd: parsePlannerDay(box.end.text),
+      ),
     );
     if (picked == null || !mounted) {
       return;
@@ -185,15 +213,17 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     if (initial.isAfter(last)) {
       initial = last;
     }
-    final picked = await showDatePicker(
-      context: context,
-      locale: const Locale('ko'),
-      firstDate: today,
-      lastDate: last,
-      initialDate: initial,
-      helpText: '깃발 마감일',
-      cancelText: '취소',
-      confirmText: '확인',
+    final picked = await _withEditorInputPaused(
+      () => showDatePicker(
+        context: context,
+        locale: const Locale('ko'),
+        firstDate: today,
+        lastDate: last,
+        initialDate: initial,
+        helpText: '깃발 마감일',
+        cancelText: '취소',
+        confirmText: '확인',
+      ),
     );
     if (picked == null || !mounted) {
       return;
