@@ -138,6 +138,8 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   String? _shopId;
   String? _productId;
   var _placeSeeded = false;
+  /// Lets a confirmed leave or a successful full save close the screen.
+  var _forcePop = false;
   DateTime? _lastStorySavedAt;
 
   /// Last known product on this screen. Starts as [widget.existing] and is
@@ -248,7 +250,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         shopId: shopId,
         productId: productId,
       );
-    } catch (_) {
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('저장된 본문을 불러오지 못했습니다: $error')),
+        );
+      }
       return;
     }
     final html = docHtml?.trim() ?? '';
@@ -579,9 +586,12 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         _markStoryClean();
       });
       return true;
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         setState(() => _storySaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('본문을 저장하지 못했습니다: $error')),
+        );
       }
       return false;
     }
@@ -1261,6 +1271,9 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         _saving = false;
         _lastStorySavedAt = DateTime.now();
         _markClean();
+        if (!temp) {
+          _forcePop = true;
+        }
       });
       if (temp) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1273,7 +1286,11 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('저장했습니다')),
       );
-      Navigator.of(context).pop();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      });
     } catch (error) {
       if (!mounted) {
         return;
@@ -1292,13 +1309,18 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final admin = DiverStoreScope.of(context).stats.isAdmin;
     final locked = _adminHidden && !admin;
     return PopScope(
-      canPop: !_isDirty,
+      canPop: !_isDirty || _forcePop,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) {
           return;
         }
         if (await _confirmLeave() && mounted) {
-          Navigator.of(context).pop();
+          setState(() => _forcePop = true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          });
         }
       },
       child: Theme(
