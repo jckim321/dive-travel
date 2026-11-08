@@ -149,11 +149,13 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
+    var saved = 0;
     try {
       for (final box in _boxes) {
         if (box.isUntouchedNew) {
           continue;
         }
+        saved++;
         final product = box.toProduct(widget.shopId);
         await store.saveShopProduct(
           shopId: widget.shopId,
@@ -174,10 +176,16 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       if (!mounted) {
         return;
       }
-      setState(_replaceFromStore);
+      if (saved > 0) {
+        setState(_replaceFromStore);
+      }
       if (widget.partnerLabels) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('상품을 저장했습니다')),
+          SnackBar(
+            content: Text(
+              saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다',
+            ),
+          ),
         );
       }
     } catch (error) {

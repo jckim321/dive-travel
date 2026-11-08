@@ -270,11 +270,13 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
+    var saved = 0;
     try {
       for (final box in _boxes) {
         if (box.isUntouchedNew) {
           continue;
         }
+        saved++;
         var product = box.toProduct(widget.shopId);
         final keepLive =
             !temp ||
@@ -294,10 +296,16 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
       if (!mounted) {
         return;
       }
-      setState(_replaceFromStore);
+      if (saved > 0) {
+        setState(_replaceFromStore);
+      }
       if (widget.partnerLabels) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('같은배 설정을 저장했습니다')),
+          SnackBar(
+            content: Text(
+              saved > 0 ? '같은배 설정을 저장했습니다' : '저장할 내용이 없습니다',
+            ),
+          ),
         );
       }
     } catch (error) {
@@ -349,20 +357,24 @@ class _PartnerEmptySeatProductsState extends State<PartnerEmptySeatProducts> {
         ],
         Row(
           children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('partner-empty-temp-save'),
-                onPressed: _saving ? null : () => _save(temp: true),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: PlannerPalette.text,
-                  minimumSize: const Size.fromHeight(48),
+            if (!widget.partnerLabels) ...[
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('partner-empty-temp-save'),
+                  onPressed: _saving ? null : () => _save(temp: true),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: PlannerPalette.text,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: Text(
+                    _saving ? l10n.exploreSaving : l10n.briefTempSave,
+                  ),
                 ),
-                child: Text(_saving ? l10n.exploreSaving : l10n.briefTempSave),
               ),
-            ),
-            const SizedBox(width: 10),
+              const SizedBox(width: 10),
+            ],
             Expanded(
-              flex: 2,
+              flex: widget.partnerLabels ? 1 : 2,
               child: FilledButton(
                 key: const Key('partner-empty-save'),
                 onPressed: _saving ? null : () => _save(temp: false),

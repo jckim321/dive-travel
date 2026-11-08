@@ -642,6 +642,8 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     ? widget.focusProduct?.id
                     : null,
                 creatingProduct: _partnerProductOnly && widget.creatingProduct,
+                focusOpenEmptySeats:
+                    widget.focusProduct?.openEmptySeats ?? false,
               );
               final side = _DeskStickySidebar(
                 palette: palette,
@@ -929,6 +931,7 @@ class _DeskMainColumn extends StatelessWidget {
     required this.partnerProductLabels,
     required this.creatingProduct,
     this.focusProductId,
+    this.focusOpenEmptySeats = false,
   });
 
   final _DeskPalette palette;
@@ -957,6 +960,7 @@ class _DeskMainColumn extends StatelessWidget {
   final bool partnerProductLabels;
   final bool creatingProduct;
   final String? focusProductId;
+  final bool focusOpenEmptySeats;
 
   @override
   Widget build(BuildContext context) {
@@ -1009,20 +1013,28 @@ class _DeskMainColumn extends StatelessWidget {
           ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
         if (showProducts) ...[
-          const SizedBox(height: 16),
-          PartnerRegularProducts(
-            shopId: shopId,
-            partnerLabels: partnerProductLabels,
-            onlyProductId: focusProductId,
-            singleNew: creatingProduct,
-          ),
-          const SizedBox(height: 16),
-          PartnerEmptySeatProducts(
-            shopId: shopId,
-            partnerLabels: partnerProductLabels,
-            onlyProductId: focusProductId,
-            singleNew: creatingProduct,
-          ),
+          if (!partnerProductLabels ||
+              creatingProduct ||
+              !focusOpenEmptySeats) ...[
+            const SizedBox(height: 16),
+            PartnerRegularProducts(
+              shopId: shopId,
+              partnerLabels: partnerProductLabels,
+              onlyProductId: focusProductId,
+              singleNew: creatingProduct,
+            ),
+          ],
+          if (!partnerProductLabels ||
+              creatingProduct ||
+              focusOpenEmptySeats) ...[
+            const SizedBox(height: 16),
+            PartnerEmptySeatProducts(
+              shopId: shopId,
+              partnerLabels: partnerProductLabels,
+              onlyProductId: focusProductId,
+              singleNew: creatingProduct,
+            ),
+          ],
         ],
       ],
     );
