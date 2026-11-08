@@ -43,6 +43,8 @@ class BookingGalleryEditor extends StatefulWidget {
     this.attachKey,
     this.testKey,
     this.compact = false,
+    this.onManagerOpening,
+    this.onManagerClosed,
   });
 
   final List<BookingGalleryItem> items;
@@ -58,6 +60,12 @@ class BookingGalleryEditor extends StatefulWidget {
 
   /// Narrower width cap. Product forms use this. Resort keeps the wider one.
   final bool compact;
+
+  /// Called just before the manage dialog opens. Null keeps the current path.
+  final VoidCallback? onManagerOpening;
+
+  /// Called after the manage dialog closes, including cancel and errors.
+  final VoidCallback? onManagerClosed;
 
   @override
   State<BookingGalleryEditor> createState() => _BookingGalleryEditorState();
@@ -82,9 +90,11 @@ class _BookingGalleryEditorState extends State<BookingGalleryEditor> {
     super.dispose();
   }
 
-  Future<void> _openManager() {
-    final wide = MediaQuery.sizeOf(context).width >= 600;
-    return showDialog<void>(
+  Future<void> _openManager() async {
+    try {
+      widget.onManagerOpening?.call();
+      final wide = MediaQuery.sizeOf(context).width >= 600;
+      await showDialog<void>(
       context: context,
       builder: (_) {
         return ValueListenableBuilder<int>(
@@ -116,6 +126,9 @@ class _BookingGalleryEditorState extends State<BookingGalleryEditor> {
         );
       },
     );
+    } finally {
+      widget.onManagerClosed?.call();
+    }
   }
 
   @override

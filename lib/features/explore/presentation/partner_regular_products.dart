@@ -695,6 +695,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           items: box.photos,
           compact: true,
           maxItems: GalleryLimits.maxProductPhotos,
+          onManagerOpening: widget.storyController?.suspendInput,
+          onManagerClosed: widget.storyController?.resumeInput,
           onAdd: () => _addPhotos(box),
           onRemove: (index) => setState(() {
             box.galleryTouched = true;
