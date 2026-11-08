@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/config/r2_config.dart';
@@ -54,7 +56,7 @@ class BookingGalleryEditor extends StatefulWidget {
   final Key? attachKey;
   final Key? testKey;
 
-  /// Shorter mosaic. Product forms use this. Resort keeps the taller one.
+  /// Narrower width cap. Product forms use this. Resort keeps the wider one.
   final bool compact;
 
   @override
@@ -64,7 +66,7 @@ class BookingGalleryEditor extends StatefulWidget {
 class _BookingGalleryEditorState extends State<BookingGalleryEditor> {
   final _generation = ValueNotifier<int>(0);
 
-  double get _height => widget.compact ? 160 : 220;
+  double get _maxWidth => widget.compact ? 360 : 640;
 
   bool get _canAdd => widget.items.length < widget.maxItems;
 
@@ -120,96 +122,169 @@ class _BookingGalleryEditorState extends State<BookingGalleryEditor> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final items = widget.items;
-    return SizedBox(
-      key: widget.fieldKey ?? const Key('product-photo-strip'),
-      height: _height,
-      width: double.infinity,
-      child: items.isEmpty
-          ? _EmptyAddBox(
-              height: _height,
-              radius: widget.cornerRadius,
-              onTap: _canAdd ? widget.onAdd : null,
-              buttonKey: widget.attachKey ?? const Key('product-photo-add'),
-              label: l10n.exploreGalleryAdd,
-            )
-          : Stack(
-              fit: StackFit.expand,
-              children: [
-                _Mosaic(
-                  items: items,
-                  radius: widget.cornerRadius,
-                ),
-                Positioned(
-                  right: 8,
-                  bottom: 8,
-                  child: _CaptionButton(
-                    label: '모든 사진 관리 (${items.length}장)',
-                    onTap: _openManager,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = constraints.maxWidth;
+        final width = !available.isFinite
+            ? _maxWidth
+            : math.min(_maxWidth, math.max(0.0, available));
+        final metrics = _MosaicMetrics.of(width, items.length);
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            key: widget.fieldKey ?? const Key('product-photo-strip'),
+            width: metrics.width,
+            height: metrics.height,
+            child: items.isEmpty
+                ? _EmptyAddBox(
+                    height: metrics.height,
+                    radius: widget.cornerRadius,
+                    onTap: _canAdd ? widget.onAdd : null,
+                    buttonKey: widget.attachKey ?? const Key('product-photo-add'),
+                    label: l10n.exploreGalleryAdd,
+                  )
+                : Stack(
+                    children: [
+                      _Mosaic(
+                        items: items,
+                        radius: widget.cornerRadius,
+                        metrics: metrics,
+                      ),
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: _CaptionButton(
+                          label: '모든 사진 관리 (${items.length}장)',
+                          onTap: _openManager,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Width cap and 4:3 cells. Height follows the width.
+class _MosaicMetrics {
+  const _MosaicMetrics({
+    required this.width,
+    required this.height,
+    required this.largeWidth,
+    required this.largeHeight,
+    required this.smallWidth,
+    required this.smallHeight,
+    required this.smallCount,
+  });
+
+  final double width;
+  final double height;
+  final double largeWidth;
+  final double largeHeight;
+  final double smallWidth;
+  final double smallHeight;
+  final int smallCount;
+
+  static const gap = 4.0;
+
+  factory _MosaicMetrics.of(double maxWidth, int count) {
+    if (count <= 1) {
+      final height = maxWidth * 3 / 4;
+      return _MosaicMetrics(
+        width: maxWidth,
+        height: height,
+        largeWidth: maxWidth,
+        largeHeight: height,
+        smallWidth: 0,
+        smallHeight: 0,
+        smallCount: 0,
+      );
+    }
+    final height = (maxWidth - 2 * gap / 3) * 3 / 8;
+    final largeWidth = height * 4 / 3;
+    final smallHeight = (height - gap) / 2;
+    final smallWidth = smallHeight * 4 / 3;
+    final smallCount = math.min(4, count - 1);
+    final columns = smallCount == 1 ? 1 : 2;
+    final rightWidth = columns * smallWidth + (columns - 1) * gap;
+    return _MosaicMetrics(
+      width: largeWidth + gap + rightWidth,
+      height: height,
+      largeWidth: largeWidth,
+      largeHeight: height,
+      smallWidth: smallWidth,
+      smallHeight: smallHeight,
+      smallCount: smallCount,
     );
   }
 }
 
 class _Mosaic extends StatelessWidget {
-  const _Mosaic({required this.items, required this.radius});
+  const _Mosaic({
+    required this.items,
+    required this.radius,
+    required this.metrics,
+  });
 
   final List<BookingGalleryItem> items;
   final double radius;
+  final _MosaicMetrics metrics;
 
   @override
   Widget build(BuildContext context) {
+    final smallRadius = radius > 2 ? 8.0 : radius;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 3,
+        SizedBox(
+          width: metrics.largeWidth,
+          height: metrics.largeHeight,
           child: _MosaicCell(
             item: items.first,
             radius: radius,
             cover: true,
           ),
         ),
-        const SizedBox(width: 4),
-        Expanded(
-          flex: 2,
-          child: Column(
+        if (metrics.smallCount > 0) ...[
+          const SizedBox(width: _MosaicMetrics.gap),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(child: _slot(1)),
-                    const SizedBox(width: 4),
-                    Expanded(child: _slot(2)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(child: _slot(3)),
-                    const SizedBox(width: 4),
-                    Expanded(child: _slot(4)),
-                  ],
-                ),
-              ),
+              _smallRow(0, smallRadius),
+              if (metrics.smallCount > 2) ...[
+                const SizedBox(height: _MosaicMetrics.gap),
+                _smallRow(2, smallRadius),
+              ],
             ],
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _slot(int index) {
-    if (index >= items.length) {
-      return _EmptyCell(radius: radius > 2 ? 8 : radius);
-    }
+  Widget _smallRow(int start, double smallRadius) {
+    final end = math.min(start + 2, metrics.smallCount);
+    return Row(
+      children: [
+        for (var i = start; i < end; i++) ...[
+          if (i > start) const SizedBox(width: _MosaicMetrics.gap),
+          SizedBox(
+            width: metrics.smallWidth,
+            height: metrics.smallHeight,
+            child: _slot(i + 1, smallRadius),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _slot(int index, double smallRadius) {
     final extra = index == 4 && items.length > 5 ? items.length - 5 : 0;
     return _MosaicCell(
       item: items[index],
-      radius: radius > 2 ? 8 : radius,
+      radius: smallRadius,
       extraCount: extra,
     );
   }
@@ -255,23 +330,6 @@ class _MosaicCell extends StatelessWidget {
               child: Center(child: _PhotoCaption('+$extraCount')),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyCell extends StatelessWidget {
-  const _EmptyCell({required this.radius});
-
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: PlannerPalette.bg,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: PlannerPalette.border),
       ),
     );
   }
