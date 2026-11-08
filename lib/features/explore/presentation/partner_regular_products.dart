@@ -19,6 +19,23 @@ import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart
 import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+/// Outcome of a partner story write after the product document save.
+class _StoryPersistResult {
+  const _StoryPersistResult._({this.failure, this.unconfirmed = false});
+
+  const _StoryPersistResult.skipped() : this._();
+
+  const _StoryPersistResult.saved() : this._();
+
+  const _StoryPersistResult.failed(String reason) : this._(failure: reason);
+
+  /// Loaded story was missing, and the editor has new text. Do not write.
+  const _StoryPersistResult.unconfirmed() : this._(unconfirmed: true);
+
+  final String? failure;
+  final bool unconfirmed;
+}
+
 /// Regular product boxes on the partner resort screen.
 ///
 /// Empty-seat products are not a section here. Saved individual options stay
@@ -213,14 +230,18 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       if (box.name.text.trim().isEmpty) {
         setState(() => _expanded.add(box.id));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('상품 이름을 입력하세요.')),
+          SnackBar(content: Text(_storyBlockedMessage(box) ?? '상품 이름을 입력하세요.')),
         );
         return;
       }
       if (!temp && (parsePositivePrice(box.consumer.text) ?? 0) <= 0) {
         setState(() => _expanded.add(box.id));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
+          SnackBar(
+            content: Text(
+              _storyBlockedMessage(box) ?? l10n.briefTempSaveNeedPrice,
+            ),
+          ),
         );
         return;
       }
@@ -229,6 +250,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final store = DiverStoreScope.of(context);
     var saved = 0;
     String? storyFailure;
+    var storyUnconfirmed = false;
     try {
       for (final box in _boxes) {
         if (box.isUntouchedNew) {
@@ -251,9 +273,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             intent: ProductSaveIntent.takeDown,
           );
         }
-        final failure = await _persistStory(store, box);
-        if (failure != null) {
-          storyFailure ??= failure;
+        final story = await _persistStory(store, box);
+        if (story.unconfirmed) {
+          storyUnconfirmed = true;
+        } else if (story.failure != null) {
+          storyFailure ??= story.failure;
         }
       }
       if (!mounted) {
@@ -263,9 +287,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         setState(_replaceFromStore);
       }
       if (widget.partnerLabels) {
-        final message = storyFailure != null
-            ? '상품은 저장했지만 소개글을 저장하지 못했습니다: $storyFailure'
-            : (saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다');
+        final untouchedStory = saved == 0 &&
+            _boxes.any(
+              (box) => box.isUntouchedNew && _storyHasContent(box),
+            );
+        final message = storyUnconfirmed
+            ? '저장된 소개글을 확인하지 못해 소개글은 저장하지 않았습니다. 새로고침 후 다시 시도해 주세요'
+            : storyFailure != null
+                ? '상품은 저장했지만 소개글을 저장하지 못했습니다: $storyFailure'
+                : untouchedStory
+                    ? '상품 이름과 가격을 먼저 입력해 주세요'
+                    : (saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
@@ -284,23 +316,39 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     }
   }
 
+  bool _storyHasContent(_RegularProductDraft box) {
+    return !partnerStoryBodyIsEmpty(box.storyDraftHtml);
+  }
+
+  /// Set when a story is waiting but the existing name or price check stops the save.
+  String? _storyBlockedMessage(_RegularProductDraft box) {
+    if (!_storyHasContent(box)) {
+      return null;
+    }
+    return '상품 이름과 가격을 먼저 입력해 주세요';
+  }
+
   /// Writes the editor HTML after the product document exists.
-  /// Returns the failure reason, or null when saved or skipped.
-  Future<String?> _persistStory(
+  /// Skips the write when the saved story could not be loaded and the editor
+  /// has new text, so that text cannot replace an unread document.
+  Future<_StoryPersistResult> _persistStory(
     DiverStore store,
     _RegularProductDraft box,
   ) async {
     if (!_mountsStoryEditor(box)) {
-      return null;
+      return const _StoryPersistResult.skipped();
     }
     final draft = box.storyDraftHtml;
-    if (box.storyFetchFailed && partnerStoryBodyIsEmpty(draft)) {
-      return null;
+    if (box.storyFetchFailed) {
+      if (partnerStoryBodyIsEmpty(draft)) {
+        return const _StoryPersistResult.skipped();
+      }
+      return const _StoryPersistResult.unconfirmed();
     }
     final cleaned = sanitizeStoryHtml(draft);
     if (partnerStoryBodyIsEmpty(cleaned) &&
         partnerStoryBodyIsEmpty(box.savedStoryHtml)) {
-      return null;
+      return const _StoryPersistResult.skipped();
     }
     final stored = partnerStoryBodyIsEmpty(cleaned) ? '' : cleaned;
     try {
@@ -310,7 +358,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         storyHtml: stored,
       );
     } catch (error) {
-      return '$error';
+      return _StoryPersistResult.failed('$error');
     }
     box.storyDraftHtml = stored;
     box.savedStoryHtml = stored;
@@ -320,7 +368,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       controller.setStorageKey(partnerStoryStorageKey(widget.shopId, box.id));
       controller.notifySaveSucceeded(stored);
     }
-    return null;
+    return const _StoryPersistResult.saved();
   }
 
   @override
