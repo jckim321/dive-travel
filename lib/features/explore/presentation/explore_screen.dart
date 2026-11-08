@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/travel_country_master.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/shop_product_reader.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
@@ -283,5 +284,10 @@ bool _showsOnExplore(DiveShop shop, DiverStore store) {
   if (live == null || !live.operatingStatus.acceptsCustomers) {
     return false;
   }
-  return live.readerProducts.any(isCustomerShelfProduct);
+  return live.readerProducts.any(
+    (product) =>
+        isCustomerShelfProduct(product) &&
+        product.listingKind != ProductListingKind.curated &&
+        product.listingKind != ProductListingKind.diverPlanned,
+  );
 }

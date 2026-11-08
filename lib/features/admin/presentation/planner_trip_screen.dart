@@ -124,7 +124,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
   PickedPhoto? _cover;
   var _saving = false;
   var _storySaving = false;
-  var _open = false;
   var _adminHidden = false;
   var _bookedLocked = false;
   /// False keeps the flag-close field tied to departure − 7 days (or today).
@@ -206,7 +205,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         _options.add(_PlannerOption.fromOption(option));
       }
       _adminHidden = existing.sameBoatStatus == SameBoatStatus.hidden;
-      _open = existing.isListedPublicly && !_adminHidden;
     }
     _start.addListener(_onDates);
     _end.addListener(_onDates);
@@ -354,7 +352,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       _flagClose.text,
       _includes.text,
       _excludes.text,
-      _open ? '1' : '0',
       _cover == null ? '' : 'cover',
       for (final option in _options)
         '${option.id}|${option.name.text}|${option.price.text}',
@@ -1067,16 +1064,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final price = parsePositivePrice(_price.text) ?? 0;
-    final storeForLock = DiverStoreScope.of(context);
-    final locked = _adminHidden && !storeForLock.stats.isAdmin;
-    // Temp save always closes. Full save follows the open switch.
-    final wantOpen = temp ? false : (_open && !locked);
-    if (wantOpen && price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
-      );
-      return;
-    }
     if (!temp && price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
@@ -1105,8 +1092,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     }
     final departure = parsePlannerDay(_start.text);
     final returnDay = parsePlannerDay(_end.text);
-    final needDates = wantOpen || !temp;
-    if (needDates && (departure == null || returnDay == null)) {
+    if (!temp && (departure == null || returnDay == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('출발일과 종료일을 모두 선택하세요.')),
       );
@@ -1119,20 +1105,20 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
       return;
     }
     final capacity = _capacityValue;
-    if (wantOpen && capacity < 1) {
+    if (!temp && capacity < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('모집 정원을 1명 이상 입력하세요.')),
       );
       return;
     }
     final flagClose = parsePlannerDay(_flagClose.text);
-    if (wantOpen && flagClose == null) {
+    if (!temp && flagClose == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.workbenchFlagDeadlineRequired)),
       );
       return;
     }
-    if (wantOpen &&
+    if (!temp &&
         departure != null &&
         flagClose != null &&
         !flagClose.isBefore(departure)) {
@@ -1240,15 +1226,49 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
         productId: productId,
         storyHtml: cleanedHtml,
       );
-      final keepHidden = _adminHidden && !wantOpen;
-      if (!keepHidden) {
+      final wasLive = existing != null &&
+          existing.publishStatus == ProductPublishStatus.approved &&
+          existing.active;
+      if (temp) {
+        // Temp save stays a draft, including a trip that was already public.
+        if (!_adminHidden) {
+          await store.setPlannedTripOpen(
+            shopId: shopId,
+            productId: productId,
+            open: false,
+          );
+        }
+      } else if (admin && _adminHidden) {
+        // Save the words, but do not clear an admin hide.
+      } else if (admin || wasLive) {
         await store.setPlannedTripOpen(
           shopId: shopId,
           productId: productId,
-          open: wantOpen,
+          open: true,
         );
       }
       if (!mounted) {
+        return;
+      }
+      if (!temp && admin && _adminHidden) {
+        final refreshedHidden = _productFromStore(store, shopId, productId);
+        _tipTapController.setStorageKey(_tipTapStorageKey);
+        _tipTapController.notifySaveSucceeded(cleanedHtml);
+        setState(() {
+          if (refreshedHidden != null) {
+            _live = refreshedHidden;
+            _adminHidden = refreshedHidden.sameBoatStatus == SameBoatStatus.hidden;
+          }
+          _draftStoryHtml = cleanedHtml;
+          _showLegacyStoryBlocksNotice = false;
+          _cover = null;
+          _saving = false;
+          _lastStorySavedAt = DateTime.now();
+          _markClean();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('관리자가 잠시 숨김')),
+        );
         return;
       }
       final refreshed = _productFromStore(store, shopId, productId);
@@ -1307,7 +1327,6 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     final l10n = AppLocalizations.of(context);
     final duration = plannerDurationLabel(_start.text, _end.text);
     final admin = DiverStoreScope.of(context).stats.isAdmin;
-    final locked = _adminHidden && !admin;
     return PopScope(
       canPop: !_isDirty || _forcePop,
       onPopInvokedWithResult: (didPop, _) async {
@@ -1345,7 +1364,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _statusAndOpen(locked),
+                        _statusAndOpen(admin),
                         const SizedBox(height: 12),
                         const Text(
                           '제목·지역·이야기·상품을 적습니다.',
@@ -1497,19 +1516,24 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const Key('planner-trip-temp-save'),
-                        onPressed: _saving ? null : () => _save(temp: true),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: PlannerPalette.text,
-                          minimumSize: const Size.fromHeight(48),
-                          side: const BorderSide(color: PlannerPalette.border),
+                    if (_source == null ||
+                        _source!.publishStatus !=
+                            ProductPublishStatus.approved ||
+                        !_source!.active) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          key: const Key('planner-trip-temp-save'),
+                          onPressed: _saving ? null : () => _save(temp: true),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: PlannerPalette.text,
+                            minimumSize: const Size.fromHeight(48),
+                            side: const BorderSide(color: PlannerPalette.border),
+                          ),
+                          child: Text(l10n.briefTempSave),
                         ),
-                        child: Text(l10n.briefTempSave),
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 10),
+                    ],
                     Expanded(
                       flex: 2,
                       child: FilledButton(
@@ -1536,7 +1560,7 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
     );
   }
 
-  Widget _statusAndOpen(bool locked) {
+  Widget _statusAndOpen(bool admin) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1553,19 +1577,25 @@ class _PlannerTripScreenState extends State<PlannerTripScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        SwitchListTile(
-          key: const Key('planner-trip-open'),
-          contentPadding: EdgeInsets.zero,
-          title: const Text('열림'),
-          subtitle: Text(
-            (locked ? false : _open)
-                ? '손님에게 공개 중입니다'
-                : '켜고 저장하면 손님 목록·홈·같은배에 바로 나옵니다.',
+        Text(
+          key: const Key('planner-trip-publish-hint'),
+          admin
+              ? '저장하면 바로 손님에게 공개됩니다'
+              : '저장하면 관리자 승인 요청이 됩니다. 승인되면 손님에게 공개됩니다',
+          style: const TextStyle(
+            color: PlannerPalette.text,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
-          value: locked ? false : _open,
-          onChanged: locked || _saving
-              ? null
-              : (value) => setState(() => _open = value),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          key: Key('planner-trip-temp-hint'),
+          '임시 저장은 공개·요청되지 않습니다',
+          style: TextStyle(
+            color: PlannerPalette.textDim,
+            fontSize: 14,
+          ),
         ),
       ],
     );

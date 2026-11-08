@@ -3515,21 +3515,41 @@ class DiverStore extends ChangeNotifier {
     }
     final previous = _findShopProduct(shopId, productId);
     final writeSw = Stopwatch()..start();
-    await _repository.setShopProductPublishStatus(
-      shopId: shopId,
-      productId: productId,
-      status: ProductPublishStatus.approved,
-    );
-    writeSw.stop();
-    if (previous != null) {
-      _upsertLocalShopProduct(
-        shopId,
-        ProductPublishGuard.applyStatusChange(
-          product: previous,
-          status: ProductPublishStatus.approved,
-        ),
+    final planned = previous != null &&
+        (previous.listingKind == ProductListingKind.curated ||
+            previous.listingKind == ProductListingKind.diverPlanned);
+    if (planned) {
+      if (previous.sameBoatStatus == SameBoatStatus.hidden) {
+        throw StateError('숨김 상태입니다. 먼저 숨김 해제하세요');
+      }
+      final flagClose = previous.flagClosesAt;
+      final departure = previous.departureStart;
+      if (flagClose == null ||
+          (departure != null && !flagClose.isBefore(departure))) {
+        throw StateError('깃발 마감일을 먼저 정해 주세요. 상품을 열어 저장해 주세요.');
+      }
+      await setPlannedTripOpen(
+        shopId: shopId,
+        productId: productId,
+        open: true,
       );
+    } else {
+      await _repository.setShopProductPublishStatus(
+        shopId: shopId,
+        productId: productId,
+        status: ProductPublishStatus.approved,
+      );
+      if (previous != null) {
+        _upsertLocalShopProduct(
+          shopId,
+          ProductPublishGuard.applyStatusChange(
+            product: previous,
+            status: ProductPublishStatus.approved,
+          ),
+        );
+      }
     }
+    writeSw.stop();
     final readFuture = () async {
       final readSw = Stopwatch()..start();
       await refreshShopStat(shopId);

@@ -163,7 +163,7 @@ class _CraftedTripCard extends StatelessWidget {
             ProductPublishStatus.pending => l10n.profileCraftStatusPending,
             ProductPublishStatus.approved => l10n.profileCraftStatusLive,
             ProductPublishStatus.rejected => l10n.profileCraftStatusRejected,
-            ProductPublishStatus.draft => l10n.profileCraftStatusPending,
+            ProductPublishStatus.draft => '임시 저장',
           };
     final accent = switch (product.publishStatus) {
       ProductPublishStatus.approved => AppTheme.ocean,
