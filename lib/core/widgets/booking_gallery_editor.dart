@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
+import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// One gallery cell: remote URL and/or local picked bytes.
@@ -24,7 +25,9 @@ class BookingGalleryItem {
 }
 
 /// Booking.com-style editor: large cover + horizontal scroll of all photos.
-class BookingGalleryEditor extends StatelessWidget {
+
+/// Mosaic preview plus a manage dialog. Callbacks stay with the caller.
+class BookingGalleryEditor extends StatefulWidget {
   const BookingGalleryEditor({
     super.key,
     required this.items,
@@ -51,547 +54,510 @@ class BookingGalleryEditor extends StatelessWidget {
   final Key? attachKey;
   final Key? testKey;
 
-  /// One 72px row. Product forms use this. Resort keeps the large cover.
+  /// Shorter mosaic. Product forms use this. Resort keeps the taller one.
   final bool compact;
 
   @override
+  State<BookingGalleryEditor> createState() => _BookingGalleryEditorState();
+}
+
+class _BookingGalleryEditorState extends State<BookingGalleryEditor> {
+  final _generation = ValueNotifier<int>(0);
+
+  double get _height => widget.compact ? 160 : 220;
+
+  bool get _canAdd => widget.items.length < widget.maxItems;
+
+  @override
+  void didUpdateWidget(BookingGalleryEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _generation.value++;
+  }
+
+  @override
+  void dispose() {
+    _generation.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openManager() {
+    final wide = MediaQuery.sizeOf(context).width >= 600;
+    return showDialog<void>(
+      context: context,
+      builder: (_) {
+        return ValueListenableBuilder<int>(
+          valueListenable: _generation,
+          builder: (context, _, _) {
+            final body = _ManageGallery(
+              items: widget.items,
+              onAdd: _canAdd ? widget.onAdd : null,
+              onRemove: widget.onRemove,
+              onMakeCover: widget.onMakeCover,
+              onTest: widget.onTest,
+              testEnabled: _canAdd,
+              attachKey: widget.attachKey ?? const Key('product-photo-add'),
+              testKey: widget.testKey,
+            );
+            if (!wide) {
+              return Dialog.fullscreen(child: body);
+            }
+            return Dialog(
+              backgroundColor: PlannerPalette.card,
+              surfaceTintColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 40,
+                vertical: 24,
+              ),
+              child: SizedBox(width: 760, height: 640, child: body),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final canAdd = items.length < maxItems;
-    if (compact) {
-      return _CompactPhotoRow(
-        key: fieldKey,
-        items: items,
-        onAdd: canAdd ? onAdd : null,
-        onRemove: onRemove,
-        onMakeCover: onMakeCover,
-        addKey: attachKey ?? const Key('product-photo-add'),
-      );
-    }
-
-    return Column(
-      key: fieldKey,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          items.isEmpty
-              ? l10n.exploreGalleryEmpty
-              : l10n.exploreGalleryCount(items.length),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (items.isEmpty)
-          _EmptyDrop(onAdd: onAdd, cornerRadius: cornerRadius)
-        else
-          _CoverWithStrip(
-            items: items,
-            onRemove: onRemove,
-            onMakeCover: onMakeCover,
-            onAdd: canAdd ? onAdd : null,
-            cornerRadius: cornerRadius,
-          ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilledButton.icon(
-              key: attachKey,
-              onPressed: canAdd ? onAdd : null,
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+    final items = widget.items;
+    return SizedBox(
+      key: widget.fieldKey ?? const Key('product-photo-strip'),
+      height: _height,
+      width: double.infinity,
+      child: items.isEmpty
+          ? _EmptyAddBox(
+              height: _height,
+              radius: widget.cornerRadius,
+              onTap: _canAdd ? widget.onAdd : null,
+              buttonKey: widget.attachKey ?? const Key('product-photo-add'),
+              label: l10n.exploreGalleryAdd,
+            )
+          : Stack(
+              fit: StackFit.expand,
+              children: [
+                _Mosaic(
+                  items: items,
+                  radius: widget.cornerRadius,
                 ),
-              ),
-              icon: const Icon(Icons.add_photo_alternate_outlined, size: 20),
-              label: Text(
-                items.isEmpty
-                    ? l10n.exploreAttachPhoto
-                    : l10n.exploreGalleryAddMore,
-              ),
-            ),
-            if (onTest != null)
-              OutlinedButton(
-                key: testKey,
-                onPressed: canAdd ? onTest : null,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.primary,
-                  side: BorderSide(color: theme.colorScheme.outline),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: _CaptionButton(
+                    label: '모든 사진 관리 (${items.length}장)',
+                    onTap: _openManager,
                   ),
                 ),
-                child: Text(l10n.logbookUseTestPhoto),
-              ),
-          ],
-        ),
-      ],
+              ],
+            ),
     );
   }
 }
 
-class _CompactPhotoRow extends StatelessWidget {
-  const _CompactPhotoRow({
-    super.key,
-    required this.items,
-    required this.onRemove,
-    required this.onMakeCover,
-    required this.addKey,
-    this.onAdd,
-  });
-
-  static const thumb = 72.0;
+class _Mosaic extends StatelessWidget {
+  const _Mosaic({required this.items, required this.radius});
 
   final List<BookingGalleryItem> items;
-  final VoidCallback? onAdd;
-  final ValueChanged<int> onRemove;
-  final ValueChanged<int> onMakeCover;
-  final Key addKey;
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SizedBox(
-      key: const Key('product-photo-strip'),
-      height: thumb,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: items.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _CompactAddTile(
-              key: addKey,
-              enabled: onAdd != null,
-              label: '+ ${l10n.exploreGalleryAdd}',
-              onTap: onAdd,
-            );
-          }
-          final photoIndex = index - 1;
-          return _CompactThumb(
-            key: Key('product-photo-thumb-$photoIndex'),
-            item: items[photoIndex],
-            isCover: photoIndex == 0,
-            onSelected: (action) {
-              if (action == 'cover') {
-                onMakeCover(photoIndex);
-              } else if (action == 'delete') {
-                onRemove(photoIndex);
-              }
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CompactAddTile extends StatelessWidget {
-  const _CompactAddTile({
-    super.key,
-    required this.label,
-    required this.enabled,
-    this.onTap,
-  });
-
-  final String label;
-  final bool enabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _CompactPhotoRow.thumb,
-      height: _CompactPhotoRow.thumb,
-      child: Material(
-        color: const Color(0xFF16324A),
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: enabled ? Colors.white : Colors.white38,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                ),
-              ),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: _MosaicCell(
+            item: items.first,
+            radius: radius,
+            cover: true,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CompactThumb extends StatelessWidget {
-  const _CompactThumb({
-    super.key,
-    required this.item,
-    required this.isCover,
-    required this.onSelected,
-  });
-
-  final BookingGalleryItem item;
-  final bool isCover;
-  final ValueChanged<String> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SizedBox(
-      width: _CompactPhotoRow.thumb,
-      height: _CompactPhotoRow.thumb,
-      child: PopupMenuButton<String>(
-        padding: EdgeInsets.zero,
-        offset: const Offset(0, _CompactPhotoRow.thumb),
-        onSelected: onSelected,
-        itemBuilder: (context) => [
-          if (!isCover)
-            PopupMenuItem(
-              value: 'cover',
-              key: const Key('product-photo-make-cover'),
-              height: 36,
-              child: Text(l10n.exploreGalleryMakeCover),
-            ),
-          PopupMenuItem(
-            value: 'delete',
-            key: const Key('product-photo-delete'),
-            height: 36,
-            child: Text(l10n.exploreCoverRemove),
-          ),
-        ],
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            fit: StackFit.expand,
+        const SizedBox(width: 4),
+        Expanded(
+          flex: 2,
+          child: Column(
             children: [
-              ColoredBox(
-                color: const Color(0xFF0B1F33),
-                child: item.photo != null
-                    ? Image.memory(item.photo!.bytes, fit: BoxFit.cover)
-                    : item.url != null && item.url!.isNotEmpty
-                    ? Image.network(
-                        item.url!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              if (isCover)
-                Positioned(
-                  left: 4,
-                  bottom: 4,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.62),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 1,
-                      ),
-                      child: Text(
-                        l10n.partnerFormPhotoMain,
-                        key: const Key('product-photo-cover'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: _slot(1)),
+                    const SizedBox(width: 4),
+                    Expanded(child: _slot(2)),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(child: _slot(3)),
+                    const SizedBox(width: 4),
+                    Expanded(child: _slot(4)),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyDrop extends StatelessWidget {
-  const _EmptyDrop({required this.onAdd, this.cornerRadius = 12});
-
-  final VoidCallback onAdd;
-  final double cornerRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(cornerRadius);
-    final scheme = theme.colorScheme;
-    return Material(
-      color: scheme.surface,
-      borderRadius: radius,
-      child: InkWell(
-        onTap: onAdd,
-        borderRadius: radius,
-        child: SizedBox(
-          height: 150,
-          width: double.infinity,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.add_a_photo_outlined,
-                    size: 32,
-                    color: scheme.onSurface,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.exploreGalleryAdd,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: scheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.exploreGalleryHint,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CoverWithStrip extends StatelessWidget {
-  const _CoverWithStrip({
-    required this.items,
-    required this.onRemove,
-    required this.onMakeCover,
-    this.onAdd,
-    this.cornerRadius = 12,
-  });
-
-  final List<BookingGalleryItem> items;
-  final ValueChanged<int> onRemove;
-  final ValueChanged<int> onMakeCover;
-  final VoidCallback? onAdd;
-  final double cornerRadius;
-
-  static const _stripHeight = 92.0;
-  static const _thumbSize = 88.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final thumbRadius = cornerRadius > 2 ? cornerRadius * 0.67 : cornerRadius;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AspectRatio(
-          aspectRatio: 16 / 10,
-          child: _GalleryTile(
-            item: items.first,
-            isCover: true,
-            cornerRadius: cornerRadius,
-            label: l10n.exploreCoverPhoto,
-            onRemove: () => onRemove(0),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: _stripHeight,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length + (onAdd != null ? 1 : 0),
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              if (index >= items.length) {
-                return _StripAddTile(
-                  size: _thumbSize,
-                  cornerRadius: thumbRadius,
-                  onTap: onAdd!,
-                );
-              }
-              final isCover = index == 0;
-              return SizedBox(
-                width: _thumbSize,
-                height: _thumbSize,
-                child: _GalleryTile(
-                  item: items[index],
-                  isCover: isCover,
-                  cornerRadius: thumbRadius,
-                  label: isCover ? '★' : null,
-                  onRemove: () => onRemove(index),
-                  onMakeCover: isCover ? null : () => onMakeCover(index),
-                ),
-              );
-            },
-          ),
-        ),
       ],
     );
   }
-}
 
-class _StripAddTile extends StatelessWidget {
-  const _StripAddTile({
-    required this.size,
-    required this.cornerRadius,
-    required this.onTap,
-  });
-
-  final double size;
-  final double cornerRadius;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(cornerRadius);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Material(
-        color: const Color(0xFF16324A),
-        borderRadius: radius,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: const Center(
-            child: Icon(Icons.add, color: Colors.white70, size: 28),
-          ),
-        ),
-      ),
+  Widget _slot(int index) {
+    if (index >= items.length) {
+      return _EmptyCell(radius: radius > 2 ? 8 : radius);
+    }
+    final extra = index == 4 && items.length > 5 ? items.length - 5 : 0;
+    return _MosaicCell(
+      item: items[index],
+      radius: radius > 2 ? 8 : radius,
+      extraCount: extra,
     );
   }
 }
 
-class _GalleryTile extends StatelessWidget {
-  const _GalleryTile({
+class _MosaicCell extends StatelessWidget {
+  const _MosaicCell({
     required this.item,
-    required this.onRemove,
-    this.onMakeCover,
-    this.isCover = false,
-    this.cornerRadius = 8,
-    this.label,
+    required this.radius,
+    this.cover = false,
+    this.extraCount = 0,
   });
 
   final BookingGalleryItem item;
-  final VoidCallback onRemove;
-  final VoidCallback? onMakeCover;
-  final bool isCover;
-  final double cornerRadius;
-  final String? label;
+  final double radius;
+  final bool cover;
+  final int extraCount;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final radius = BorderRadius.circular(cornerRadius);
-    final chipRadius =
-        cornerRadius > 2 ? (isCover ? 6.0 : 4.0) : cornerRadius;
     return ClipRRect(
-      borderRadius: radius,
+      borderRadius: BorderRadius.circular(radius),
       child: Stack(
         fit: StackFit.expand,
         children: [
           ColoredBox(
-            color: const Color(0xFF0B1F33),
-            child: item.photo != null
-                ? Image.memory(item.photo!.bytes, fit: BoxFit.cover)
-                : item.url != null && item.url!.isNotEmpty
-                    ? Image.network(
-                        item.url!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => ColoredBox(
-                          color: const Color(0xFF16344A),
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Text(
-                                l10n.workbenchPhotoLoadFailed,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    : Image.asset(
-                        'assets/images/test_dive_photo.png',
-                        fit: BoxFit.cover,
-                        opacity: const AlwaysStoppedAnimation(0.45),
-                      ),
+            color: PlannerPalette.disabledFill,
+            child: _PhotoImage(item: item),
           ),
-          if (label != null)
+          if (cover)
             Positioned(
-              left: 10,
-              bottom: 10,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.62),
-                  borderRadius: BorderRadius.circular(chipRadius),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: Text(
-                    label!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+              left: 8,
+              bottom: 8,
+              child: _PhotoCaption(
+                l10n.partnerFormPhotoMain,
+                key: const Key('product-photo-cover'),
+              ),
+            ),
+          if (extraCount > 0)
+            ColoredBox(
+              color: Colors.black.withValues(alpha: 0.45),
+              child: Center(child: _PhotoCaption('+$extraCount')),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyCell extends StatelessWidget {
+  const _EmptyCell({required this.radius});
+
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: PlannerPalette.bg,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: PlannerPalette.border),
+      ),
+    );
+  }
+}
+
+class _EmptyAddBox extends StatelessWidget {
+  const _EmptyAddBox({
+    required this.height,
+    required this.radius,
+    required this.label,
+    required this.buttonKey,
+    this.onTap,
+  });
+
+  final double height;
+  final double radius;
+  final String label;
+  final Key buttonKey;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      foregroundPainter: _DashedRectPainter(
+        color: PlannerPalette.borderStrong,
+        radius: radius,
+      ),
+      child: Material(
+        color: PlannerPalette.card,
+        borderRadius: BorderRadius.circular(radius),
+        child: InkWell(
+          key: buttonKey,
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          child: SizedBox(
+            height: height,
+            width: double.infinity,
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: PlannerPalette.text,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-          Positioned(
-            top: 6,
-            right: 6,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CaptionButton extends StatelessWidget {
+  const _CaptionButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.62),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoCaption extends StatelessWidget {
+  const _PhotoCaption(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ManageGallery extends StatelessWidget {
+  const _ManageGallery({
+    required this.items,
+    required this.onRemove,
+    required this.onMakeCover,
+    required this.attachKey,
+    required this.testEnabled,
+    this.onAdd,
+    this.onTest,
+    this.testKey,
+  });
+
+  final List<BookingGalleryItem> items;
+  final VoidCallback? onAdd;
+  final ValueChanged<int> onRemove;
+  final ValueChanged<int> onMakeCover;
+  final VoidCallback? onTest;
+  final bool testEnabled;
+  final Key attachKey;
+  final Key? testKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Theme(
+      data: PlannerPalette.theme,
+      child: Material(
+        color: PlannerPalette.card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '모든 사진 관리 (${items.length}장)',
+                      style: const TextStyle(
+                        color: PlannerPalette.text,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, color: PlannerPalette.text),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    key: attachKey,
+                    onPressed: onAdd,
+                    icon: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 20,
+                    ),
+                    label: Text(
+                      items.isEmpty
+                          ? l10n.exploreGalleryAdd
+                          : l10n.exploreGalleryAddMore,
+                    ),
+                  ),
+                  if (onTest != null)
+                    OutlinedButton(
+                      key: testKey,
+                      onPressed: testEnabled ? onTest : null,
+                      child: Text(l10n.logbookUseTestPhoto),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.82,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final cover = index == 0;
+                  return _ManageTile(
+                    key: Key('product-photo-thumb-$index'),
+                    item: items[index],
+                    cover: cover,
+                    onRemove: () => onRemove(index),
+                    onMakeCover: cover ? null : () => onMakeCover(index),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ManageTile extends StatelessWidget {
+  const _ManageTile({
+    super.key,
+    required this.item,
+    required this.cover,
+    required this.onRemove,
+    this.onMakeCover,
+  });
+
+  final BookingGalleryItem item;
+  final bool cover;
+  final VoidCallback onRemove;
+  final VoidCallback? onMakeCover;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: PlannerPalette.card,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: PlannerPalette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(9),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(
+                    color: PlannerPalette.disabledFill,
+                    child: _PhotoImage(item: item),
+                  ),
+                  if (cover)
+                    Positioned(
+                      left: 6,
+                      bottom: 6,
+                      child: _PhotoCaption(l10n.partnerFormPhotoMain),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 if (onMakeCover != null)
-                  _Action(
-                    tooltip: l10n.exploreGalleryMakeCover,
-                    icon: Icons.star_outline,
-                    onTap: onMakeCover!,
+                  Expanded(
+                    child: TextButton(
+                      key: const Key('product-photo-make-cover'),
+                      onPressed: onMakeCover,
+                      child: Text(l10n.exploreGalleryMakeCover),
+                    ),
                   ),
-                _Action(
-                  tooltip: l10n.exploreCoverRemove,
-                  icon: Icons.close,
-                  onTap: onRemove,
+                Expanded(
+                  child: TextButton(
+                    key: const Key('product-photo-delete'),
+                    onPressed: onRemove,
+                    child: Text(l10n.exploreCoverRemove),
+                  ),
                 ),
               ],
             ),
@@ -602,37 +568,81 @@ class _GalleryTile extends StatelessWidget {
   }
 }
 
-class _Action extends StatelessWidget {
-  const _Action({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-  });
+class _PhotoImage extends StatelessWidget {
+  const _PhotoImage({required this.item});
 
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
+  final BookingGalleryItem item;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Material(
-        color: Colors.black54,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Tooltip(
-            message: tooltip,
+    final l10n = AppLocalizations.of(context);
+    if (item.photo != null && item.photo!.bytes.isNotEmpty) {
+      return Image.memory(item.photo!.bytes, fit: BoxFit.cover);
+    }
+    final url = item.url;
+    if (url != null && url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => ColoredBox(
+          color: PlannerPalette.disabledFill,
+          child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(icon, size: 16, color: Colors.white),
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                l10n.workbenchPhotoLoadFailed,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: PlannerPalette.textDim,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ),
-      ),
+      );
+    }
+    return Image.asset(
+      'assets/images/test_dive_photo.png',
+      fit: BoxFit.cover,
+      opacity: const AlwaysStoppedAnimation(0.45),
     );
+  }
+}
+
+class _DashedRectPainter extends CustomPainter {
+  const _DashedRectPainter({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Offset.zero & size,
+          Radius.circular(radius),
+        ),
+      );
+    for (final metric in path.computeMetrics()) {
+      var start = 0.0;
+      while (start < metric.length) {
+        final end = (start + 6).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(start, end), paint);
+        start += 10;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRectPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.radius != radius;
   }
 }
 
