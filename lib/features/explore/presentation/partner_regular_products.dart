@@ -754,6 +754,16 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         ),
         const SizedBox(height: 10),
         TextField(
+          key: Key('partner-regular-nights-${box.id}'),
+          controller: box.nights,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
+          decoration: _field('숙박 박 수 (예: 2박 3일이면 2)'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
           key: Key('partner-regular-single-supplement-${box.id}'),
           controller: box.singleSupplement,
           keyboardType: TextInputType.number,
@@ -1001,8 +1011,10 @@ class _RegularProductDraft {
     required this.sourcePrice,
     List<_GuestTierDraft>? guestTiers,
     TextEditingController? singleSupplement,
+    TextEditingController? nights,
   }) : guestTiers = guestTiers ?? <_GuestTierDraft>[],
-       singleSupplement = singleSupplement ?? TextEditingController();
+       singleSupplement = singleSupplement ?? TextEditingController(),
+       nights = nights ?? TextEditingController();
 
   factory _RegularProductDraft.fromProduct(ShopProduct product) {
     final addons = <_AddonDraft>[];
@@ -1050,6 +1062,9 @@ class _RegularProductDraft {
       ],
       singleSupplement: TextEditingController(
         text: product.singleSupplement > 0 ? '${product.singleSupplement}' : '',
+      ),
+      nights: TextEditingController(
+        text: product.nights > 0 ? '${product.nights}' : '',
       ),
     );
   }
@@ -1101,6 +1116,7 @@ class _RegularProductDraft {
   bool storyFetchFailed = false;
   final List<_GuestTierDraft> guestTiers;
   final TextEditingController singleSupplement;
+  final TextEditingController nights;
 
   /// Partner product form. Other saves leave these keys off the document.
   bool writeGuestPrices = false;
@@ -1110,14 +1126,17 @@ class _RegularProductDraft {
       _GuestTierDraft(
         labelText: '비다이버',
         conditionText: '다이빙 제외 · 숙박·식사 포함',
+        role: 'nondiver',
       ),
       _GuestTierDraft(
         labelText: '소아',
         conditionText: '만 2–11세 · 보호자 동반',
+        role: 'child',
       ),
       _GuestTierDraft(
         labelText: '유아',
         conditionText: '만 2세 미만 · 침대 미사용',
+        role: 'infant',
       ),
     ]);
   }
@@ -1143,6 +1162,7 @@ class _RegularProductDraft {
       tier.dispose();
     }
     singleSupplement.dispose();
+    nights.dispose();
   }
 
   ShopProduct toProduct(String shopId) {
@@ -1156,6 +1176,10 @@ class _RegularProductDraft {
       ...individuals,
     ];
     final guestPrices = writeGuestPrices ? _guestPriceFields() : null;
+    final stayNights = writeGuestPrices ? _stayNights() : null;
+    final stayLabel = stayNights != null && stayNights >= 1
+        ? '$stayNights박 ${stayNights + 1}일'
+        : null;
     final existing = source;
     if (existing == null) {
       return ShopProduct(
@@ -1172,6 +1196,9 @@ class _RegularProductDraft {
         priceTiers: guestPrices?.tiers ?? const [],
         singleSupplement: guestPrices?.supplement ?? 0,
         includeGuestPriceFields: writeGuestPrices,
+        guestRates: writeGuestPrices ? _guestRates(null) : const [],
+        nights: stayNights ?? 0,
+        durationLabel: stayLabel ?? '',
       );
     }
     return existing.copyWith(
@@ -1185,7 +1212,42 @@ class _RegularProductDraft {
       priceTiers: guestPrices?.tiers,
       singleSupplement: guestPrices?.supplement,
       includeGuestPriceFields: writeGuestPrices ? true : null,
+      guestRates: writeGuestPrices ? _guestRates(existing) : null,
+      nights: stayNights,
+      durationLabel: stayLabel,
     );
+  }
+
+  /// Nondiver, child, and infant follow the priced rows. An existing diver
+  /// rate stays as it was.
+  List<GuestRate> _guestRates(ShopProduct? existing) {
+    return [
+      for (final rate in existing?.guestRates ?? const <GuestRate>[])
+        if (rate.role == GuestRole.diver) rate,
+      _rateFor(GuestRole.nondiver),
+      _rateFor(GuestRole.child),
+      _rateFor(GuestRole.infant),
+    ];
+  }
+
+  GuestRate _rateFor(GuestRole role) {
+    final key = role.firestoreValue;
+    for (final tier in guestTiers) {
+      if (tier.role != key) {
+        continue;
+      }
+      final price = tier.enteredPrice;
+      if (price == null) {
+        return GuestRate(role: role, enabled: false);
+      }
+      return GuestRate(
+        role: role,
+        enabled: true,
+        consumer: price,
+        professional: price,
+      );
+    }
+    return GuestRate(role: role, enabled: false);
   }
 
   ({List<ProductPriceTier> tiers, int supplement}) _guestPriceFields() {
@@ -1197,11 +1259,14 @@ class _RegularProductDraft {
               label: tier.label.text.trim(),
               condition: tier.condition.text.trim(),
               price: tier.enteredPrice!,
+              role: tier.role,
             ),
       ],
       supplement: parsePositivePrice(singleSupplement.text) ?? 0,
     );
   }
+
+  int _stayNights() => int.tryParse(nights.text.trim()) ?? 0;
 
   List<ShopGallerySlot> gallerySlots() {
     return [
@@ -1224,6 +1289,7 @@ class _GuestTierDraft {
     String labelText = '',
     String conditionText = '',
     String priceText = '',
+    this.role = '',
   }) : id = id ?? 'tier-${_nextId()}',
        label = TextEditingController(text: labelText),
        condition = TextEditingController(text: conditionText),
@@ -1238,10 +1304,12 @@ class _GuestTierDraft {
       labelText: tier.label,
       conditionText: tier.condition,
       priceText: '${tier.price}',
+      role: tier.role,
     );
   }
 
   final String id;
+  final String role;
   final TextEditingController label;
   final TextEditingController condition;
   final TextEditingController price;

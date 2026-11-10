@@ -104,6 +104,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   var _qtyNondiver = 0;
   var _qtyChild = 0;
   var _qtyInfant = 0;
+  var _singleRooms = 0;
   var _bookPackage = true;
   final _selected = <String>{};
   var _paying = false;
@@ -144,6 +145,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       infants: _qtyInfant,
       bookPackage: _bookPackage,
       selectedOptionIds: _selected,
+      singleRooms: _singleRooms,
     );
   }
 
@@ -221,6 +223,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       bookPackage: _bookPackage,
       selectedOptionIds: _selected,
       quoteAmount: widget.quote.amount,
+      singleRooms: _singleRooms,
     ).total;
   }
 
@@ -1221,6 +1224,39 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ],
         for (final rate in product.resolvedGuestRates)
           if (rate.enabled) _qtyRow(l10n, rate.role),
+        if (_showsSingleRoom) _singleRoomRow(),
+      ],
+    );
+  }
+
+  bool get _showsSingleRoom {
+    final product = widget.product;
+    if (product == null || widget.fromFlag) {
+      return false;
+    }
+    return product.singleSupplement >= 1 && product.nights >= 1;
+  }
+
+  int get _singleRoomMax => _qtyDiver + _qtyNondiver;
+
+  Widget _singleRoomRow() {
+    final max = _singleRoomMax;
+    return Row(
+      children: [
+        const Expanded(child: Text('1인 1실')),
+        IconButton(
+          onPressed: _singleRooms == 0
+              ? null
+              : () => setState(() => _singleRooms -= 1),
+          icon: const Icon(Icons.remove),
+        ),
+        Text('$_singleRooms'),
+        IconButton(
+          onPressed: _singleRooms >= max
+              ? null
+              : () => setState(() => _singleRooms += 1),
+          icon: const Icon(Icons.add),
+        ),
       ],
     );
   }
@@ -1272,6 +1308,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         _qtyChild = value;
       case GuestRole.infant:
         _qtyInfant = value;
+    }
+    if (_singleRooms > _singleRoomMax) {
+      _singleRooms = _singleRoomMax;
     }
   }
 }

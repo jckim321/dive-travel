@@ -412,6 +412,7 @@ class CheckoutCharge {
     bool bookPackage = true,
     Set<String> selectedOptionIds = const {},
     int quoteAmount = 0,
+    int singleRooms = 0,
   }) {
     final lockParty = fromFlag && lockedPartySize > 0;
     final partyDivers = lockParty ? lockedPartySize : divers;
@@ -429,6 +430,7 @@ class CheckoutCharge {
             infants: partyInfants,
             bookPackage: bookPackage,
             selectedOptionIds: selectedOptionIds,
+            singleRooms: lockParty ? 0 : singleRooms,
           ).total;
     return CheckoutCharge(
       partySize: partyDivers + partyNondivers + partyChildren + partyInfants,
@@ -688,16 +690,21 @@ class ProductPriceTier {
     required this.label,
     required this.condition,
     required this.price,
+    this.role = '',
   });
 
   final String label;
   final String condition;
   final int price;
 
+  /// `nondiver`, `child`, `infant`, or empty when the row has no guest role.
+  final String role;
+
   Map<String, dynamic> toMap() => {
     'label': label,
     'condition': condition,
     'price': price,
+    'role': role,
   };
 
   static List<ProductPriceTier> listFrom(dynamic raw) {
@@ -711,8 +718,27 @@ class ProductPriceTier {
             label: item['label'] as String? ?? '',
             condition: item['condition'] as String? ?? '',
             price: (item['price'] as num?)?.toInt() ?? 0,
+            role: _roleFrom(item),
           ),
     ];
+  }
+
+  /// A missing `role` uses the label only when it is exactly one of the three.
+  static String _roleFrom(Map<dynamic, dynamic> item) {
+    if (item.containsKey('role')) {
+      final raw = item['role'];
+      return raw is String ? raw : '';
+    }
+    switch (item['label']) {
+      case '비다이버':
+        return 'nondiver';
+      case '소아':
+        return 'child';
+      case '유아':
+        return 'infant';
+      default:
+        return '';
+    }
   }
 }
 
@@ -772,6 +798,7 @@ class ShopProduct {
     this.priceRevision,
     this.priceTiers = const [],
     this.singleSupplement = 0,
+    this.nights = 0,
     this.includeGuestPriceFields = false,
   });
 
@@ -852,6 +879,7 @@ class ShopProduct {
       priceRevision: _priceRevision(data['price_revision']),
       priceTiers: ProductPriceTier.listFrom(data['price_tiers']),
       singleSupplement: (data['single_supplement'] as num?)?.toInt() ?? 0,
+      nights: (data['nights'] as num?)?.toInt() ?? 0,
       includeGuestPriceFields: data.containsKey('price_tiers') ||
           data.containsKey('single_supplement'),
     );
@@ -941,6 +969,9 @@ class ShopProduct {
 
   /// Extra charge for one person in a room, per night.
   final int singleSupplement;
+
+  /// Partner stay length in nights. Written only when [includeGuestPriceFields].
+  final int nights;
 
   /// When false, [toMap] leaves the guest-price keys off so other saves stay unchanged.
   final bool includeGuestPriceFields;
@@ -1648,6 +1679,7 @@ class ShopProduct {
     Object? priceRevision = _unset,
     List<ProductPriceTier>? priceTiers,
     int? singleSupplement,
+    int? nights,
     bool? includeGuestPriceFields,
   }) {
     return ShopProduct(
@@ -1714,6 +1746,7 @@ class ShopProduct {
           : priceRevision as PriceRevision?,
       priceTiers: priceTiers ?? this.priceTiers,
       singleSupplement: singleSupplement ?? this.singleSupplement,
+      nights: nights ?? this.nights,
       includeGuestPriceFields:
           includeGuestPriceFields ?? this.includeGuestPriceFields,
     );
@@ -1868,6 +1901,7 @@ class ShopProduct {
       if (includeGuestPriceFields) ...{
         'price_tiers': [for (final tier in priceTiers) tier.toMap()],
         'single_supplement': singleSupplement,
+        'nights': nights,
       },
     };
   }

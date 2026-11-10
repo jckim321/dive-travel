@@ -116,6 +116,7 @@ class BookingQuote {
     required bool bookPackage,
     required Set<String> selectedOptionIds,
     Map<String, int>? optionQuantities,
+    int singleRooms = 0,
   }) {
     final lines = <BookingLine>[];
     var total = 0;
@@ -178,6 +179,14 @@ class BookingQuote {
         final amount =
             qty * optionUnit(option: option, professional: professional);
         lines.add(BookingLine(label: option.name, amount: amount));
+        total += amount;
+      }
+      if (singleRooms >= 1 &&
+          product.singleSupplement >= 1 &&
+          product.nights >= 1) {
+        final amount =
+            singleRooms * product.singleSupplement * product.nights;
+        lines.add(BookingLine(label: '1인 1실 추가', amount: amount));
         total += amount;
       }
     } else {
