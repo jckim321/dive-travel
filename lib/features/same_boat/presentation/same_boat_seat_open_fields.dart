@@ -22,6 +22,7 @@ class SameBoatSeatOpenController {
     required this.isAdmin,
     DateTime? packageDeparture,
     this.now,
+    this.partnerLiveEdit = false,
   }) {
     final p = existing;
     _packageWasOpen = p != null &&
@@ -45,6 +46,9 @@ class SameBoatSeatOpenController {
   }
 
   bool isAdmin;
+
+  /// Partner edit of an already-live seat. Departure stays stored when locked.
+  final bool partnerLiveEdit;
 
   /// Clock for the schedule lock. Tests pass a fixed time.
   final DateTime? now;
@@ -165,6 +169,7 @@ class SameBoatSeatOpenController {
       storedDeparture: countsFrom?.departureStart ?? _storedPackageDeparture,
       storedFlagClose: countsFrom?.flagClosesAt ?? _storedPackageFlagClose,
       now: now,
+      lockDepartureOnly: partnerLiveEdit,
     );
   }
 
@@ -461,10 +466,12 @@ class SameBoatSeatOpenFields extends StatelessWidget {
                 : null,
           ),
           value: c.openPackage,
-          onChanged: (v) {
-            c.openPackage = v;
-            onChanged();
-          },
+          onChanged: c.partnerLiveEdit
+              ? null
+              : (v) {
+                  c.openPackage = v;
+                  onChanged();
+                },
         ),
         if (c.openPackage) ...[
           if (partnerChrome)
@@ -745,9 +752,6 @@ class _PartnerPackageSeats extends StatelessWidget {
       '${_monthDay(date)} (${_days[date.weekday - 1]})';
 
   void _bumpCapacity(int delta) {
-    if (scheduleLocked) {
-      return;
-    }
     final next = _capacityValue + delta;
     if (delta < 0 && next < referenceBooked) {
       return;
@@ -760,7 +764,7 @@ class _PartnerPackageSeats extends StatelessWidget {
   }
 
   void _bumpFlag(int delta) {
-    if (scheduleLocked || departure == null) {
+    if (departure == null) {
       return;
     }
     final current = _flagDaysBefore ?? 7;
@@ -827,7 +831,7 @@ class _PartnerPackageSeats extends StatelessWidget {
             child: TextField(
               key: const Key('same-boat-capacity'),
               controller: capacity,
-              enabled: !scheduleLocked,
+              enabled: true,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -963,7 +967,7 @@ class _PartnerPackageSeats extends StatelessWidget {
   }) {
     return IconButton(
       tooltip: label,
-      onPressed: scheduleLocked ? null : onPressed,
+      onPressed: onPressed,
       icon: Text(
         icon,
         style: const TextStyle(fontSize: 20, color: _ink),

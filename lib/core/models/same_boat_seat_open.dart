@@ -208,6 +208,7 @@ abstract final class SameBoatSeatOpenLogic {
     required DateTime? storedDeparture,
     required DateTime? storedFlagClose,
     required DateTime now,
+    bool lockDepartureOnly = false,
   }) {
     if (!open) {
       return SeatScheduleWrite(
@@ -226,6 +227,16 @@ abstract final class SameBoatSeatOpenLogic {
       departure: storedDeparture,
     );
     if (locked) {
+      if (lockDepartureOnly) {
+        return SeatScheduleWrite(
+          capacity: formCapacity,
+          booked: storedBooked,
+          holds: storedHolds,
+          departure: storedDeparture,
+          flagClose: formFlagClose,
+          restart: false,
+        );
+      }
       return SeatScheduleWrite(
         capacity: storedCapacity,
         booked: storedBooked,

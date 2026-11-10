@@ -38,12 +38,38 @@ class SameBoatSeatsScreen extends StatefulWidget {
 
 class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
   SameBoatSeatOpenController? _seats;
+  ShopProduct? _freshProduct;
   var _saving = false;
   var _loadingFresh = false;
 
-  bool get _partnerBlocked =>
-      !widget.adminBypassApproval &&
-      SameBoatSeatOpenLogic.blocksPartnerRequest(widget.product);
+  ShopProduct get _blockProduct => _freshProduct ?? widget.product;
+
+  bool _approvedLive(ShopProduct product) {
+    return !product.hasPendingSameBoat &&
+        product.sameBoatStatus == SameBoatStatus.approved &&
+        product.listsOnSameBoat;
+  }
+
+  bool get _partnerBlocked {
+    if (widget.adminBypassApproval) {
+      return false;
+    }
+    final product = _blockProduct;
+    if (widget.partnerLiveCopy && _approvedLive(product)) {
+      return false;
+    }
+    return SameBoatSeatOpenLogic.blocksPartnerRequest(product);
+  }
+
+  String? get _partnerBlockReason {
+    if (!widget.partnerLiveCopy || !_partnerBlocked) {
+      return null;
+    }
+    if (_blockProduct.hasPendingSameBoat) {
+      return '승인 대기 중이라 수정할 수 없어요';
+    }
+    return '이미 열려 있어 수정할 수 없어요';
+  }
 
   bool _isCreatorSeatOpen(DiverStore store) {
     if (widget.adminBypassApproval || widget.partnerLiveCopy) {
@@ -80,6 +106,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       existing: product,
       optionSlots: _slotsFor(product),
       isAdmin: widget.adminBypassApproval,
+      partnerLiveEdit: widget.partnerLiveCopy && _approvedLive(product),
     );
   }
 
@@ -113,6 +140,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       return;
     }
     setState(() {
+      _freshProduct = source;
       _seats = _controllerFor(source);
       _loadingFresh = false;
     });
@@ -273,6 +301,17 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
+          if (_partnerBlockReason != null) ...[
+            Text(
+              _partnerBlockReason!,
+              style: const TextStyle(
+                color: Color(0xFF0B1F33),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(
             partnerCopy ? l10n.partnerSeatsOpenHint : l10n.sameBoatSeatsHint,
             style: partnerCopy
