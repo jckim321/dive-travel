@@ -6,8 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/constants/gallery_limits.dart';
+import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_html.dart';
 import 'package:dive_travel_app/core/storage/dive_photo_picker.dart';
@@ -17,6 +19,9 @@ import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.d
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
+import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Outcome of a partner story write after the product document save.
@@ -469,6 +474,185 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     );
   }
 
+  Future<void> _pushOverForm(Widget page) async {
+    final controller = widget.storyController;
+    controller?.suspendInput();
+    try {
+      if (!mounted) {
+        return;
+      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(builder: (_) => page),
+      );
+    } finally {
+      controller?.resumeInput();
+    }
+  }
+
+  void _openShopInfo() {
+    unawaited(
+      _pushOverForm(
+        ResortDeskScreen(shopId: widget.shopId, partnerMode: true),
+      ),
+    );
+  }
+
+  ShopProduct? _savedProduct(_RegularProductDraft box) {
+    final products = DiverStoreScope.of(context).productsForShop(widget.shopId);
+    for (final product in products) {
+      if (product.id == box.id) {
+        return product;
+      }
+    }
+    return box.source;
+  }
+
+  void _openEmptySeats(_RegularProductDraft box) {
+    final product = _savedProduct(box);
+    if (product == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장된 상품이 없어 빈자리 화면을 열 수 없어요')),
+      );
+      return;
+    }
+    unawaited(
+      _pushOverForm(
+        PartnerTheme.wrap(
+          SameBoatSeatsScreen(
+            product: product,
+            basePackageOnly: true,
+            partnerLiveCopy: true,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shopInfoRow(String boxId) {
+    return ListenableBuilder(
+      listenable: DiverStoreScope.of(context),
+      builder: (context, _) {
+        final store = DiverStoreScope.of(context);
+        final liveName = store.liveStatsFor(widget.shopId)?.name?.trim() ?? '';
+        final catalogName =
+            DiveShopCatalog.byId(widget.shopId)?.name.trim() ?? '';
+        final shopName = liveName.isNotEmpty
+            ? liveName
+            : (catalogName.isNotEmpty ? catalogName : widget.shopId);
+        return Column(
+          key: Key('partner-regular-shop-$boxId'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '샵',
+              style: TextStyle(
+                color: PlannerPalette.textDim,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F8F9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: PlannerPalette.border),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        shopName,
+                        key: Key('partner-regular-shop-name-$boxId'),
+                        style: const TextStyle(
+                          color: PlannerPalette.text,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      key: Key('partner-regular-shop-info-$boxId'),
+                      onPressed: _openShopInfo,
+                      child: const Text('샵 정보 ›'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '이름·지역·주소·소개는 샵 정보에서 불러와요. 여기서 다시 쓰지 않아요.',
+              style: TextStyle(
+                color: PlannerPalette.textDim,
+                fontSize: 12,
+                height: 1.35,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _openSeatsRow(_RegularProductDraft box) {
+    return ListenableBuilder(
+      listenable: DiverStoreScope.of(context),
+      builder: (context, _) {
+        final openCount = SameBoatBoard.offers(
+          DiverStoreScope.of(context).productsForShop(widget.shopId),
+        ).length;
+        return DecoratedBox(
+          key: Key('partner-regular-seats-${box.id}'),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F6F9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: PlannerPalette.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '열린 빈자리 $openCount / 1',
+                        key: Key('partner-regular-seats-count-${box.id}'),
+                        style: const TextStyle(
+                          color: PlannerPalette.text,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        '한 번에 1개만 열 수 있어요. 출발이 끝나면 다음 일정을 올릴 수 있어요.',
+                        style: TextStyle(
+                          color: PlannerPalette.textDim,
+                          fontSize: 13,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  key: Key('partner-regular-seats-open-${box.id}'),
+                  onPressed: () => _openEmptySeats(box),
+                  child: const Text('빈자리 만들기 ›'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _productCard(AppLocalizations l10n, _RegularProductDraft box) {
     final open = _expanded.contains(box.id);
     final price = parsePositivePrice(box.consumer.text) ?? box.sourcePrice;
@@ -532,6 +716,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               ),
             ),
             if (open) ...[
+              if (widget.partnerLabels) ...[
+                _shopInfoRow(box.id),
+                const SizedBox(height: 8),
+              ],
               SwitchListTile.adaptive(
                 key: Key('partner-regular-visible-${box.id}'),
                 contentPadding: EdgeInsets.zero,
@@ -569,6 +757,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                   includes: _includesBlock(l10n, box),
                 ),
               if (box.individuals.isNotEmpty) _savedIndividuals(box),
+              if (widget.partnerLabels) ...[
+                const SizedBox(height: 8),
+                _openSeatsRow(box),
+              ],
             ],
           ],
         ),
