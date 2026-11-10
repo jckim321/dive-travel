@@ -772,47 +772,168 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           cursorColor: PlannerPalette.accent,
           decoration: _field('1인 1실 추가 요금(1박당)'),
         ),
+        const SizedBox(height: 16),
+        _saleRulesBlock(box),
       ],
     );
   }
 
-  Widget _guestTierRow(_RegularProductDraft box, _GuestTierDraft tier) {
+  Widget _saleRulesBlock(_RegularProductDraft box) {
+    const labels = ['월', '화', '수', '목', '금', '토', '일'];
+    final lead = box.minLeadDays;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        const Text(
+          '예약 가능 조건',
+          style: TextStyle(
+            color: PlannerPalette.text,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '예약 가능 요일',
+          style: TextStyle(color: PlannerPalette.textDim),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
           children: [
-            Expanded(
-              child: TextField(
-                key: Key('partner-regular-tier-label-${tier.id}'),
-                controller: tier.label,
-                style: const TextStyle(color: PlannerPalette.text),
-                cursorColor: PlannerPalette.accent,
-                decoration: _field('유형 이름'),
+            for (var day = 1; day <= 7; day++)
+              FilterChip(
+                key: Key('partner-regular-weekday-${box.id}-$day'),
+                label: Text(labels[day - 1]),
+                selected: box.saleWeekdays.contains(day),
+                onSelected: (on) => setState(() {
+                  if (on) {
+                    box.saleWeekdays.add(day);
+                  } else {
+                    box.saleWeekdays.remove(day);
+                  }
+                }),
               ),
-            ),
-            IconButton(
-              onPressed: () => setState(() => box.guestTiers.remove(tier)),
-              icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+          ],
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<int>(
+          key: Key('partner-regular-lead-${box.id}-$lead'),
+          initialValue: lead,
+          decoration: _field('최소 사전 예약'),
+          items: [
+            if (lead != 0 && lead != 3 && lead != 7)
+              DropdownMenuItem(value: lead, child: Text('출발 $lead일 전까지')),
+            const DropdownMenuItem(value: 0, child: Text('당일까지')),
+            const DropdownMenuItem(value: 3, child: Text('출발 3일 전까지')),
+            const DropdownMenuItem(value: 7, child: Text('출발 7일 전까지')),
+          ],
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() => box.minLeadDays = value);
+          },
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          '예약 막을 날짜',
+          style: TextStyle(color: PlannerPalette.textDim),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final range in box.blockedDates)
+              InputChip(
+                label: Text('${range.start}–${range.end}'),
+                onDeleted: () => setState(() => box.blockedDates.remove(range)),
+              ),
+            ActionChip(
+              key: Key('partner-regular-block-add-${box.id}'),
+              label: const Text('+ 날짜 추가'),
+              onPressed: () => unawaited(_addBlockedRange(box)),
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Future<void> _addBlockedRange(_RegularProductDraft box) async {
+    final controller = widget.storyController;
+    controller?.suspendInput();
+    try {
+      final picked = await showDateRangePicker(
+        context: context,
+        firstDate: DateTime(2020),
+        lastDate: DateTime(2100),
+      );
+      if (picked == null || !mounted) {
+        return;
+      }
+      final format = DateFormat('yyyy-MM-dd');
+      setState(() {
+        box.blockedDates.add(
+          SaleBlockedRange(
+            start: format.format(picked.start),
+            end: format.format(picked.end),
+          ),
+        );
+      });
+    } finally {
+      controller?.resumeInput();
+    }
+  }
+
+  Widget _guestTierRow(_RegularProductDraft box, _GuestTierDraft tier) {
+    final label = TextField(
+      key: Key('partner-regular-tier-label-${tier.id}'),
+      controller: tier.label,
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('유형 이름'),
+    );
+    final condition = TextField(
+      controller: tier.condition,
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('조건 문구'),
+    );
+    final price = TextField(
+      controller: tier.price,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('가격'),
+    );
+    final remove = IconButton(
+      onPressed: () => setState(() => box.guestTiers.remove(tier)),
+      icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+    );
+    if (MediaQuery.sizeOf(context).width >= 720) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 2, child: label),
+          const SizedBox(width: 8),
+          Expanded(flex: 3, child: condition),
+          const SizedBox(width: 8),
+          Expanded(flex: 2, child: price),
+          remove,
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(children: [Expanded(child: label), remove]),
         const SizedBox(height: 8),
-        TextField(
-          controller: tier.condition,
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('조건 문구'),
-        ),
+        condition,
         const SizedBox(height: 8),
-        TextField(
-          controller: tier.price,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('가격'),
-        ),
+        price,
       ],
     );
   }
@@ -1012,9 +1133,14 @@ class _RegularProductDraft {
     List<_GuestTierDraft>? guestTiers,
     TextEditingController? singleSupplement,
     TextEditingController? nights,
+    Set<int>? saleWeekdays,
+    this.minLeadDays = 0,
+    List<SaleBlockedRange>? blockedDates,
   }) : guestTiers = guestTiers ?? <_GuestTierDraft>[],
        singleSupplement = singleSupplement ?? TextEditingController(),
-       nights = nights ?? TextEditingController();
+       nights = nights ?? TextEditingController(),
+       saleWeekdays = saleWeekdays ?? {1, 2, 3, 4, 5, 6, 7},
+       blockedDates = blockedDates ?? <SaleBlockedRange>[];
 
   factory _RegularProductDraft.fromProduct(ShopProduct product) {
     final addons = <_AddonDraft>[];
@@ -1066,6 +1192,11 @@ class _RegularProductDraft {
       nights: TextEditingController(
         text: product.nights > 0 ? '${product.nights}' : '',
       ),
+      saleWeekdays: product.saleWeekdays.isEmpty
+          ? {1, 2, 3, 4, 5, 6, 7}
+          : {...product.saleWeekdays},
+      minLeadDays: product.minLeadDays,
+      blockedDates: [...product.blockedDates],
     );
   }
 
@@ -1117,6 +1248,9 @@ class _RegularProductDraft {
   final List<_GuestTierDraft> guestTiers;
   final TextEditingController singleSupplement;
   final TextEditingController nights;
+  final Set<int> saleWeekdays;
+  int minLeadDays;
+  final List<SaleBlockedRange> blockedDates;
 
   /// Partner product form. Other saves leave these keys off the document.
   bool writeGuestPrices = false;
@@ -1199,6 +1333,11 @@ class _RegularProductDraft {
         guestRates: writeGuestPrices ? _guestRates(null) : const [],
         nights: stayNights ?? 0,
         durationLabel: stayLabel ?? '',
+        saleWeekdays: writeGuestPrices ? _saleWeekdays() : const [],
+        minLeadDays: writeGuestPrices ? minLeadDays : 0,
+        blockedDates: writeGuestPrices
+            ? List<SaleBlockedRange>.of(blockedDates)
+            : const [],
       );
     }
     return existing.copyWith(
@@ -1215,6 +1354,11 @@ class _RegularProductDraft {
       guestRates: writeGuestPrices ? _guestRates(existing) : null,
       nights: stayNights,
       durationLabel: stayLabel,
+      saleWeekdays: writeGuestPrices ? _saleWeekdays() : null,
+      minLeadDays: writeGuestPrices ? minLeadDays : null,
+      blockedDates: writeGuestPrices
+          ? List<SaleBlockedRange>.of(blockedDates)
+          : null,
     );
   }
 
@@ -1267,6 +1411,16 @@ class _RegularProductDraft {
   }
 
   int _stayNights() => int.tryParse(nights.text.trim()) ?? 0;
+
+  /// Seven selected days are stored empty, which means every weekday.
+  List<int> _saleWeekdays() {
+    final days = [...saleWeekdays.where((day) => day >= 1 && day <= 7)]
+      ..sort();
+    if (days.length >= 7) {
+      return const [];
+    }
+    return days;
+  }
 
   List<ShopGallerySlot> gallerySlots() {
     return [

@@ -163,7 +163,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       _tourDate = departure;
     }
     if (_buyerPicksDeparture) {
-      _tourDate = buyerDepartureDay(now: DateTime.now(), preferred: _tourDate);
+      final now = DateTime.now();
+      _tourDate = buyerDepartureDay(now: now, preferred: _tourDate);
+      final product = widget.product;
+      if (product != null && _hasSaleRules(product)) {
+        final next = _nextAllowedDeparture(product, _tourDate, now);
+        if (next != null) {
+          _tourDate = next;
+        }
+      }
     }
     if (widget.lockedPartySize > 0) {
       _qtyDiver = widget.lockedPartySize;
@@ -322,20 +330,63 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   Future<void> _pickDate() async {
-    final today = calendarDay(DateTime.now());
+    final now = DateTime.now();
+    final today = calendarDay(now);
     var initial = calendarDay(_tourDate);
     if (initial.isBefore(today)) initial = today;
     final last = today.add(const Duration(days: 180));
     if (initial.isAfter(last)) initial = last;
+    final product = widget.product;
+    bool Function(DateTime day)? allowedDay;
+    if (_buyerPicksDeparture && product != null && _hasSaleRules(product)) {
+      if (!product.allowsDeparture(initial, now)) {
+        final next = _nextAllowedDeparture(product, initial, now);
+        if (next == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('예약 가능한 날짜가 없어요')),
+          );
+          return;
+        }
+        initial = next;
+      }
+      allowedDay = (day) => product.allowsDeparture(day, now);
+    }
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: today,
       lastDate: last,
+      selectableDayPredicate: allowedDay,
     );
     if (picked != null && mounted) {
       setState(() => _tourDate = calendarDay(picked));
     }
+  }
+
+  bool _hasSaleRules(ShopProduct product) {
+    return product.saleWeekdays.isNotEmpty ||
+        product.minLeadDays != 0 ||
+        product.blockedDates.isNotEmpty;
+  }
+
+  /// First allowed day from [from] through 180 days after today.
+  DateTime? _nextAllowedDeparture(
+    ShopProduct product,
+    DateTime from,
+    DateTime now,
+  ) {
+    final today = calendarDay(now);
+    final last = today.add(const Duration(days: 180));
+    var day = calendarDay(from);
+    if (day.isBefore(today)) day = today;
+    if (day.isAfter(last)) return null;
+    final span = last.difference(day).inDays;
+    for (var i = 0; i <= span; i++) {
+      final candidate = day.add(Duration(days: i));
+      if (product.allowsDeparture(candidate, now)) return candidate;
+    }
+    return null;
   }
 
   int get _partySize => _qtyDiver + _qtyNondiver + _qtyChild + _qtyInfant;
@@ -402,6 +453,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       }
       final amount = _payable(context);
       final product = widget.product;
+      if (_buyerPicksDeparture &&
+          product != null &&
+          _hasSaleRules(product) &&
+          !product.allowsDeparture(calendarDay(_tourDate), DateTime.now())) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('예약 가능한 날짜가 없어요')),
+        );
+        return;
+      }
       final party = _hasProduct ? _partySize : 1;
       if (product != null) {
         // min_guests is legacy / unused by the product form — do not block checkout.
@@ -1234,7 +1294,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (product == null || widget.fromFlag) {
       return false;
     }
-    return product.singleSupplement >= 1 && product.nights >= 1;
+    return _bookPackage &&
+        product.singleSupplement >= 1 &&
+        product.nights >= 1;
   }
 
   int get _singleRoomMax => _qtyDiver + _qtyNondiver;

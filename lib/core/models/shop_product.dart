@@ -742,6 +742,50 @@ class ProductPriceTier {
   }
 }
 
+DateTime? _isoCalendarDay(String raw) {
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(raw.trim());
+  if (match == null) {
+    return null;
+  }
+  final year = int.parse(match.group(1)!);
+  final month = int.parse(match.group(2)!);
+  final day = int.parse(match.group(3)!);
+  final date = DateTime(year, month, day);
+  if (date.year != year || date.month != month || date.day != day) {
+    return null;
+  }
+  return date;
+}
+
+/// One closed stay range on a partner product (`blocked_dates` item).
+class SaleBlockedRange {
+  const SaleBlockedRange({required this.start, required this.end});
+
+  /// `yyyy-MM-dd`.
+  final String start;
+
+  /// `yyyy-MM-dd`.
+  final String end;
+
+  Map<String, dynamic> toMap() => {'start': start, 'end': end};
+
+  static List<SaleBlockedRange> listFrom(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw)
+        if (item is Map &&
+            (item['start'] as String? ?? '').isNotEmpty &&
+            (item['end'] as String? ?? '').isNotEmpty)
+          SaleBlockedRange(
+            start: item['start'] as String,
+            end: item['end'] as String,
+          ),
+    ];
+  }
+}
+
 class ShopProduct {
   const ShopProduct({
     required this.id,
@@ -799,8 +843,26 @@ class ShopProduct {
     this.priceTiers = const [],
     this.singleSupplement = 0,
     this.nights = 0,
+    this.saleWeekdays = const [],
+    this.minLeadDays = 0,
+    this.blockedDates = const [],
     this.includeGuestPriceFields = false,
   });
+
+  static List<int> _weekdayList(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final days = <int>[];
+    for (final item in raw) {
+      final day = item is num ? item.toInt() : int.tryParse('$item');
+      if (day == null || day < 1 || day > 7 || days.contains(day)) {
+        continue;
+      }
+      days.add(day);
+    }
+    return days;
+  }
 
   static const Object _unset = Object();
 
@@ -880,6 +942,9 @@ class ShopProduct {
       priceTiers: ProductPriceTier.listFrom(data['price_tiers']),
       singleSupplement: (data['single_supplement'] as num?)?.toInt() ?? 0,
       nights: (data['nights'] as num?)?.toInt() ?? 0,
+      saleWeekdays: _weekdayList(data['sale_weekdays']),
+      minLeadDays: (data['min_lead_days'] as num?)?.toInt() ?? 0,
+      blockedDates: SaleBlockedRange.listFrom(data['blocked_dates']),
       includeGuestPriceFields: data.containsKey('price_tiers') ||
           data.containsKey('single_supplement'),
     );
@@ -972,6 +1037,42 @@ class ShopProduct {
 
   /// Partner stay length in nights. Written only when [includeGuestPriceFields].
   final int nights;
+
+  /// Bookable weekdays, 1 = Monday through 7 = Sunday. Empty means every day.
+  final List<int> saleWeekdays;
+
+  /// How many days before departure a booking must be made. 0 means same day.
+  final int minLeadDays;
+
+  /// Date ranges that cannot be booked.
+  final List<SaleBlockedRange> blockedDates;
+
+  /// True when [day] is a bookable departure at [now].
+  /// An empty [saleWeekdays] allows every weekday. [minLeadDays] counts from today.
+  bool allowsDeparture(DateTime day, DateTime now) {
+    final target = DateTime(day.year, day.month, day.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final earliest = today.add(Duration(days: minLeadDays));
+    if (target.isBefore(earliest)) {
+      return false;
+    }
+    if (saleWeekdays.isNotEmpty && !saleWeekdays.contains(target.weekday)) {
+      return false;
+    }
+    for (final range in blockedDates) {
+      final start = _isoCalendarDay(range.start);
+      final end = _isoCalendarDay(range.end);
+      if (start == null || end == null) {
+        continue;
+      }
+      final from = start.isAfter(end) ? end : start;
+      final to = start.isAfter(end) ? start : end;
+      if (!target.isBefore(from) && !target.isAfter(to)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /// When false, [toMap] leaves the guest-price keys off so other saves stay unchanged.
   final bool includeGuestPriceFields;
@@ -1680,6 +1781,9 @@ class ShopProduct {
     List<ProductPriceTier>? priceTiers,
     int? singleSupplement,
     int? nights,
+    List<int>? saleWeekdays,
+    int? minLeadDays,
+    List<SaleBlockedRange>? blockedDates,
     bool? includeGuestPriceFields,
   }) {
     return ShopProduct(
@@ -1747,6 +1851,9 @@ class ShopProduct {
       priceTiers: priceTiers ?? this.priceTiers,
       singleSupplement: singleSupplement ?? this.singleSupplement,
       nights: nights ?? this.nights,
+      saleWeekdays: saleWeekdays ?? this.saleWeekdays,
+      minLeadDays: minLeadDays ?? this.minLeadDays,
+      blockedDates: blockedDates ?? this.blockedDates,
       includeGuestPriceFields:
           includeGuestPriceFields ?? this.includeGuestPriceFields,
     );
@@ -1902,6 +2009,9 @@ class ShopProduct {
         'price_tiers': [for (final tier in priceTiers) tier.toMap()],
         'single_supplement': singleSupplement,
         'nights': nights,
+        'sale_weekdays': saleWeekdays,
+        'min_lead_days': minLeadDays,
+        'blocked_dates': [for (final range in blockedDates) range.toMap()],
       },
     };
   }
