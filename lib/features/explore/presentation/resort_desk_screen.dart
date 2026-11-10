@@ -1119,9 +1119,7 @@ class _DeskMainColumn extends StatelessWidget {
               storyController: storyController,
             ),
           ],
-          if (!partnerProductLabels ||
-              creatingProduct ||
-              focusOpenEmptySeats) ...[
+          if (!partnerProductLabels || focusOpenEmptySeats) ...[
             const SizedBox(height: 16),
             PartnerEmptySeatProducts(
               shopId: shopId,
