@@ -331,16 +331,45 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             _boxes.any(
               (box) => box.isUntouchedNew && _storyHasContent(box),
             );
-        final message = storyUnconfirmed
-            ? '저장된 소개글을 확인하지 못해 소개글은 저장하지 않았습니다. 새로고침 후 다시 시도해 주세요'
-            : storyFailure != null
-                ? '상품은 저장했지만 소개글을 저장하지 못했습니다: $storyFailure'
-                : untouchedStory
-                    ? '상품 이름과 가격을 먼저 입력해 주세요'
-                    : (saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        final storyProblem = storyUnconfirmed || storyFailure != null;
+        if (saved > 0 && !storyProblem) {
+          if (temp) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('임시 저장했습니다 · 손님에게는 아직 보이지 않아요'),
+                behavior: SnackBarBehavior.floating,
+                margin: EdgeInsets.only(bottom: 88),
+              ),
+            );
+          } else {
+            final hidden = _boxes.any(
+              (box) => !box.isUntouchedNew && !box.showOnBooking,
+            );
+            final messenger = ScaffoldMessenger.of(context);
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  hidden
+                      ? '상품을 저장했습니다 · 손님 예약 화면에서는 숨겨져 있어요'
+                      : '상품을 저장했습니다',
+                ),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+            await Navigator.of(context).maybePop();
+          }
+        } else {
+          final message = storyUnconfirmed
+              ? '저장된 소개글을 확인하지 못해 소개글은 저장하지 않았습니다. 새로고침 후 다시 시도해 주세요'
+              : storyFailure != null
+                  ? '상품은 저장했지만 소개글을 저장하지 못했습니다: $storyFailure'
+                  : untouchedStory
+                      ? '상품 이름과 가격을 먼저 입력해 주세요'
+                      : (saved > 0 ? '상품을 저장했습니다' : '저장할 내용이 없습니다');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
+          );
+        }
       }
     } catch (error) {
       if (!mounted) {
