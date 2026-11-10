@@ -682,6 +682,40 @@ class ShopProductOption {
   }
 }
 
+/// One person-type price on a partner product (`price_tiers` item).
+class ProductPriceTier {
+  const ProductPriceTier({
+    required this.label,
+    required this.condition,
+    required this.price,
+  });
+
+  final String label;
+  final String condition;
+  final int price;
+
+  Map<String, dynamic> toMap() => {
+    'label': label,
+    'condition': condition,
+    'price': price,
+  };
+
+  static List<ProductPriceTier> listFrom(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw)
+        if (item is Map)
+          ProductPriceTier(
+            label: item['label'] as String? ?? '',
+            condition: item['condition'] as String? ?? '',
+            price: (item['price'] as num?)?.toInt() ?? 0,
+          ),
+    ];
+  }
+}
+
 class ShopProduct {
   const ShopProduct({
     required this.id,
@@ -736,6 +770,9 @@ class ShopProduct {
     this.guestRating = 0,
     this.guestReviewCount = 0,
     this.priceRevision,
+    this.priceTiers = const [],
+    this.singleSupplement = 0,
+    this.includeGuestPriceFields = false,
   });
 
   static const Object _unset = Object();
@@ -813,6 +850,10 @@ class ShopProduct {
       guestRating: (data['guest_rating'] as num?)?.toDouble() ?? 0,
       guestReviewCount: (data['guest_review_count'] as num?)?.toInt() ?? 0,
       priceRevision: _priceRevision(data['price_revision']),
+      priceTiers: ProductPriceTier.listFrom(data['price_tiers']),
+      singleSupplement: (data['single_supplement'] as num?)?.toInt() ?? 0,
+      includeGuestPriceFields: data.containsKey('price_tiers') ||
+          data.containsKey('single_supplement'),
     );
   }
 
@@ -894,6 +935,15 @@ class ShopProduct {
 
   /// Staged partner price / new-option request (guests never read this).
   final PriceRevision? priceRevision;
+
+  /// Partner person-type prices. Written only when [includeGuestPriceFields].
+  final List<ProductPriceTier> priceTiers;
+
+  /// Extra charge for one person in a room, per night.
+  final int singleSupplement;
+
+  /// When false, [toMap] leaves the guest-price keys off so other saves stay unchanged.
+  final bool includeGuestPriceFields;
 
   bool get isPendingApproval => publishStatus == ProductPublishStatus.pending;
 
@@ -1596,6 +1646,9 @@ class ShopProduct {
     double? guestRating,
     int? guestReviewCount,
     Object? priceRevision = _unset,
+    List<ProductPriceTier>? priceTiers,
+    int? singleSupplement,
+    bool? includeGuestPriceFields,
   }) {
     return ShopProduct(
       id: id,
@@ -1659,6 +1712,10 @@ class ShopProduct {
       priceRevision: identical(priceRevision, _unset)
           ? this.priceRevision
           : priceRevision as PriceRevision?,
+      priceTiers: priceTiers ?? this.priceTiers,
+      singleSupplement: singleSupplement ?? this.singleSupplement,
+      includeGuestPriceFields:
+          includeGuestPriceFields ?? this.includeGuestPriceFields,
     );
   }
 
@@ -1808,6 +1865,10 @@ class ShopProduct {
       if (guestReviewCount > 0) 'guest_rating': guestRating,
       if (guestReviewCount > 0) 'guest_review_count': guestReviewCount,
       if (priceRevision != null) 'price_revision': priceRevision!.toMap(),
+      if (includeGuestPriceFields) ...{
+        'price_tiers': [for (final tier in priceTiers) tier.toMap()],
+        'single_supplement': singleSupplement,
+      },
     };
   }
 

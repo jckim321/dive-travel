@@ -87,6 +87,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     if (widget.singleNew) {
       final draft = _RegularProductDraft.empty();
       draft.storyReady = true;
+      _prepareGuestPrices(draft);
       _boxes.add(draft);
       _expanded.add(draft.id);
       return;
@@ -97,6 +98,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       for (final product in products)
         if (_shows(product)) _RegularProductDraft.fromProduct(product),
     ]);
+    for (final box in _boxes) {
+      _prepareGuestPrices(box);
+    }
     _expandSingle();
     if (widget.partnerLabels) {
       for (final box in _boxes) {
@@ -202,6 +206,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       box.storyReady = old.storyReady;
       box.storyFetchFailed = old.storyFetchFailed;
     }
+    for (final box in _boxes) {
+      _prepareGuestPrices(box);
+    }
     _expandSingle();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final box in previous) {
@@ -212,10 +219,22 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
 
   void _addBox() {
     final draft = _RegularProductDraft.empty();
+    _prepareGuestPrices(draft);
     setState(() {
       _boxes.add(draft);
       _expanded.add(draft.id);
     });
+  }
+
+  /// Partner form owns guest prices. Other desks leave the fields off the write.
+  void _prepareGuestPrices(_RegularProductDraft box) {
+    if (!widget.partnerLabels || box.writeGuestPrices) {
+      return;
+    }
+    box.writeGuestPrices = true;
+    if (box.source == null && box.guestTiers.isEmpty) {
+      box.seedDefaultGuestTiers();
+    }
   }
 
   Future<void> _save({required bool temp}) async {
@@ -673,7 +692,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: const TextStyle(color: PlannerPalette.text),
                 cursorColor: PlannerPalette.accent,
-                decoration: _field(l10n.partnerFormBasePrice),
+                decoration: _field(
+                  widget.partnerLabels ? '다이버' : l10n.partnerFormBasePrice,
+                ),
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -690,6 +711,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             ),
           ],
         ),
+        if (widget.partnerLabels) ...[
+          const SizedBox(height: 10),
+          _guestPriceBlock(box),
+        ],
         const SizedBox(height: 10),
         BookingGalleryEditor(
           items: box.photos,
@@ -707,6 +732,76 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             final item = box.photos.removeAt(index);
             box.photos.insert(0, item);
           }),
+        ),
+      ],
+    );
+  }
+
+  Widget _guestPriceBlock(_RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final tier in box.guestTiers) ...[
+          _guestTierRow(box, tier),
+          const SizedBox(height: 8),
+        ],
+        OutlinedButton(
+          key: Key('partner-regular-add-tier-${box.id}'),
+          onPressed: () => setState(() {
+            box.guestTiers.add(_GuestTierDraft());
+          }),
+          child: const Text('인원 유형 추가'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          key: Key('partner-regular-single-supplement-${box.id}'),
+          controller: box.singleSupplement,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
+          decoration: _field('1인 1실 추가 요금(1박당)'),
+        ),
+      ],
+    );
+  }
+
+  Widget _guestTierRow(_RegularProductDraft box, _GuestTierDraft tier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: Key('partner-regular-tier-label-${tier.id}'),
+                controller: tier.label,
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
+                decoration: _field('유형 이름'),
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() => box.guestTiers.remove(tier)),
+              icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: tier.condition,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
+          decoration: _field('조건 문구'),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: tier.price,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
+          decoration: _field('가격'),
         ),
       ],
     );
@@ -904,7 +999,10 @@ class _RegularProductDraft {
     required this.photos,
     required this.showOnBooking,
     required this.sourcePrice,
-  });
+    List<_GuestTierDraft>? guestTiers,
+    TextEditingController? singleSupplement,
+  }) : guestTiers = guestTiers ?? <_GuestTierDraft>[],
+       singleSupplement = singleSupplement ?? TextEditingController();
 
   factory _RegularProductDraft.fromProduct(ShopProduct product) {
     final addons = <_AddonDraft>[];
@@ -947,6 +1045,12 @@ class _RegularProductDraft {
       photos: photos,
       showOnBooking: product.active && product.publishStatus.isPublic,
       sourcePrice: product.consumerPrice,
+      guestTiers: [
+        for (final tier in product.priceTiers) _GuestTierDraft.fromTier(tier),
+      ],
+      singleSupplement: TextEditingController(
+        text: product.singleSupplement > 0 ? '${product.singleSupplement}' : '',
+      ),
     );
   }
 
@@ -995,6 +1099,28 @@ class _RegularProductDraft {
 
   bool storyReady = false;
   bool storyFetchFailed = false;
+  final List<_GuestTierDraft> guestTiers;
+  final TextEditingController singleSupplement;
+
+  /// Partner product form. Other saves leave these keys off the document.
+  bool writeGuestPrices = false;
+
+  void seedDefaultGuestTiers() {
+    guestTiers.addAll([
+      _GuestTierDraft(
+        labelText: '비다이버',
+        conditionText: '다이빙 제외 · 숙박·식사 포함',
+      ),
+      _GuestTierDraft(
+        labelText: '소아',
+        conditionText: '만 2–11세 · 보호자 동반',
+      ),
+      _GuestTierDraft(
+        labelText: '유아',
+        conditionText: '만 2세 미만 · 침대 미사용',
+      ),
+    ]);
+  }
 
   int get optionCount => addons.length + individuals.length;
 
@@ -1013,6 +1139,10 @@ class _RegularProductDraft {
     for (final addon in addons) {
       addon.dispose();
     }
+    for (final tier in guestTiers) {
+      tier.dispose();
+    }
+    singleSupplement.dispose();
   }
 
   ShopProduct toProduct(String shopId) {
@@ -1025,6 +1155,7 @@ class _RegularProductDraft {
         if (addon.keep) addon.toOption(),
       ...individuals,
     ];
+    final guestPrices = writeGuestPrices ? _guestPriceFields() : null;
     final existing = source;
     if (existing == null) {
       return ShopProduct(
@@ -1038,6 +1169,9 @@ class _RegularProductDraft {
         excludes: excludes.text.trim(),
         options: options,
         publishStatus: ProductPublishStatus.draft,
+        priceTiers: guestPrices?.tiers ?? const [],
+        singleSupplement: guestPrices?.supplement ?? 0,
+        includeGuestPriceFields: writeGuestPrices,
       );
     }
     return existing.copyWith(
@@ -1048,6 +1182,24 @@ class _RegularProductDraft {
       includes: includes.text.trim(),
       excludes: excludes.text.trim(),
       options: options,
+      priceTiers: guestPrices?.tiers,
+      singleSupplement: guestPrices?.supplement,
+      includeGuestPriceFields: writeGuestPrices ? true : null,
+    );
+  }
+
+  ({List<ProductPriceTier> tiers, int supplement}) _guestPriceFields() {
+    return (
+      tiers: [
+        for (final tier in guestTiers)
+          if (tier.enteredPrice != null)
+            ProductPriceTier(
+              label: tier.label.text.trim(),
+              condition: tier.condition.text.trim(),
+              price: tier.enteredPrice!,
+            ),
+      ],
+      supplement: parsePositivePrice(singleSupplement.text) ?? 0,
     );
   }
 
@@ -1063,6 +1215,50 @@ class _RegularProductDraft {
         else if (item.url != null && item.url!.trim().isNotEmpty)
           ShopGallerySlot(url: item.url),
     ];
+  }
+}
+
+class _GuestTierDraft {
+  _GuestTierDraft({
+    String? id,
+    String labelText = '',
+    String conditionText = '',
+    String priceText = '',
+  }) : id = id ?? 'tier-${_nextId()}',
+       label = TextEditingController(text: labelText),
+       condition = TextEditingController(text: conditionText),
+       price = TextEditingController(text: priceText);
+
+  static int _seq = 0;
+
+  static int _nextId() => _seq++;
+
+  factory _GuestTierDraft.fromTier(ProductPriceTier tier) {
+    return _GuestTierDraft(
+      labelText: tier.label,
+      conditionText: tier.condition,
+      priceText: '${tier.price}',
+    );
+  }
+
+  final String id;
+  final TextEditingController label;
+  final TextEditingController condition;
+  final TextEditingController price;
+
+  /// Empty price is omitted. A typed 0 is stored as 0.
+  int? get enteredPrice {
+    final digits = price.text.trim();
+    if (digits.isEmpty) {
+      return null;
+    }
+    return int.tryParse(digits);
+  }
+
+  void dispose() {
+    label.dispose();
+    condition.dispose();
+    price.dispose();
   }
 }
 
