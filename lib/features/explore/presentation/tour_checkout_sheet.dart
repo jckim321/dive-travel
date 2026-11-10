@@ -609,6 +609,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final cancelNote = product?.cancellationNote.trim() ?? '';
     final diveStarLine = () {
       if (!shop.showsDiveStarBadge) {
@@ -933,32 +934,51 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           Material(
             color: const Color(0xFFF6F3EC),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 10, 20, 16 + bottom),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                4,
+                20,
+                (keyboardOpen ? 4 : 6) + bottom,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (cannotBuy) const StaffCannotBuyNote(),
-                  if (duration.trim().isNotEmpty)
-                    Text(
-                      '다이버 1인 · ${duration.trim()}',
-                      style: const TextStyle(
-                        color: Color(0xFF5B6B75),
-                        fontSize: 12,
-                      ),
-                    ),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Expanded(
-                        child: Text(
-                          '총 결제 예상 금액',
-                          style: TextStyle(
-                            color: Color(0xFF10242F),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      const Text(
+                        '총 결제 예상 금액',
+                        style: TextStyle(
+                          color: Color(0xFF10242F),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
+                      if (quote.hasDiscount && !keyboardOpen)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 8,
+                              right: 8,
+                              bottom: 2,
+                            ),
+                            child: Text(
+                              l10n.exploreOriginalPrice(
+                                _priceFormat.format(quote.compareAtAmount!),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        const Spacer(),
                       Text(
                         l10n.explorePriceWon(formatted),
                         style: const TextStyle(
@@ -970,25 +990,23 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     ],
                   ),
                   Text(
-                    label,
+                    [
+                      if (duration.trim().isNotEmpty)
+                        '다이버 1인 · ${duration.trim()}',
+                      label,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
+                      height: 1.15,
                       fontWeight: FontWeight.w700,
                       color: quote.isProfessional
                           ? AppTheme.gold
                           : const Color(0xFF5B6B75),
                     ),
                   ),
-                  if (quote.hasDiscount)
-                    Text(
-                      l10n.exploreOriginalPrice(
-                        _priceFormat.format(quote.compareAtAmount!),
-                      ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        decoration: TextDecoration.lineThrough,
-                      ),
-                    ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 2),
                   if (_payBlockedHint() != null) ...[
                     Text(
                       _payBlockedHint()!,
@@ -998,7 +1016,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 2),
                   ],
                   FilledButton(
                     key: const Key('explore-checkout-pay'),
@@ -1018,17 +1036,19 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     ),
                     child: _payButtonChild(l10n.explorePayAmount(formatted)),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    cancelNote.isNotEmpty
-                        ? cancelNote
-                        : l10n.refundPolicyHint(refund.percent),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF5B6B75),
-                      fontSize: 12,
+                  if (!keyboardOpen) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      cancelNote.isNotEmpty
+                          ? cancelNote
+                          : l10n.refundPolicyHint(refund.percent),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF5B6B75),
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
