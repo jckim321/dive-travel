@@ -213,6 +213,35 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   bool get _choiceReady =>
       !_workbench || _bookPackage || _selected.isNotEmpty;
 
+  /// Why the pay button is off. Does not change the enable conditions.
+  String? _payBlockedHint() {
+    if (_paying) {
+      return null;
+    }
+    final missing = <String>[
+      if (_guestName.text.trim().isEmpty) '이름',
+      if (_guestBirth.text.trim().isEmpty) '생년월일',
+      if (_guestContact.text.trim().isEmpty) '연락처',
+    ];
+    final parts = <String>[
+      if (missing.isNotEmpty)
+        '${missing.join('·')}${_objectParticle(missing.last)} 입력하면 결제할 수 있어요',
+      if (!_choiceReady) '옵션을 고르면 결제할 수 있어요',
+    ];
+    if (parts.isEmpty) {
+      return null;
+    }
+    return parts.join(' ');
+  }
+
+  String _objectParticle(String word) {
+    final code = word.runes.lastOrNull;
+    if (code == null || code < 0xAC00 || code > 0xD7A3) {
+      return '를';
+    }
+    return (code - 0xAC00) % 28 == 0 ? '를' : '을';
+  }
+
   bool get _partyLocked =>
       widget.fromFlag && widget.lockedPartySize > 0;
 
@@ -960,6 +989,17 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       ),
                     ),
                   const SizedBox(height: 8),
+                  if (_payBlockedHint() != null) ...[
+                    Text(
+                      _payBlockedHint()!,
+                      style: const TextStyle(
+                        color: Color(0xFF5B6B75),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   FilledButton(
                     key: const Key('explore-checkout-pay'),
                     onPressed: cannotBuy ||

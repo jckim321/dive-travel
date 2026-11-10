@@ -1718,17 +1718,41 @@ class ShopProduct {
       return null;
     }
 
+    GuestRate priced(GuestRole role, GuestRate fallback) {
+      final rate = saved(role) ?? fallback;
+      final legacyFree =
+          priceTiers.isEmpty &&
+          (role == GuestRole.nondiver || role == GuestRole.child) &&
+          rate.consumer <= 0 &&
+          rate.professional <= 0;
+      if (!legacyFree) {
+        return rate;
+      }
+      return GuestRate(
+        role: rate.role,
+        enabled: false,
+        consumer: rate.consumer,
+        professional: rate.professional,
+      );
+    }
+
     return [
-      saved(GuestRole.diver) ??
-          GuestRate(
-            role: GuestRole.diver,
-            consumer: consumerPrice,
-            professional: professionalPrice,
-          ),
-      saved(GuestRole.nondiver) ??
-          const GuestRate(role: GuestRole.nondiver, enabled: true),
-      saved(GuestRole.child) ??
-          const GuestRate(role: GuestRole.child, enabled: true),
+      priced(
+        GuestRole.diver,
+        GuestRate(
+          role: GuestRole.diver,
+          consumer: consumerPrice,
+          professional: professionalPrice,
+        ),
+      ),
+      priced(
+        GuestRole.nondiver,
+        const GuestRate(role: GuestRole.nondiver, enabled: true),
+      ),
+      priced(
+        GuestRole.child,
+        const GuestRate(role: GuestRole.child, enabled: true),
+      ),
       if (saved(GuestRole.infant)?.enabled == true) saved(GuestRole.infant)!,
     ];
   }

@@ -140,6 +140,24 @@ class ProductOfferBox extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            _OfferFacts(
+              product: product,
+              book: _hasOptionRows
+                  ? null
+                  : FilledButton(
+                      key: Key('shop-book-${shop.id}'),
+                      onPressed: bookingsEnabled ? () => onBook('') : null,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF0B2A3C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(l10n.exploreBook),
+                    ),
+            ),
             if (shop.blurb.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -147,7 +165,6 @@ class ProductOfferBox extends StatelessWidget {
                 style: const TextStyle(color: Color(0xFF5B6B75), fontSize: 13),
               ),
             ],
-            _OfferFacts(product: product),
             if (shop.departure != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -169,24 +186,8 @@ class ProductOfferBox extends StatelessWidget {
                 style: const TextStyle(color: Color(0xFF5B6B75), fontSize: 12),
               ),
             ],
-            const SizedBox(height: 12),
-            if (!_hasOptionRows)
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  key: Key('shop-book-${shop.id}'),
-                  onPressed: bookingsEnabled ? () => onBook('') : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0B2A3C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(l10n.exploreBook),
-                ),
-              )
-            else ...[
+            if (_hasOptionRows) ...[
+              const SizedBox(height: 12),
               _offerRow(
                 context,
                 title: product.name,
@@ -340,9 +341,10 @@ class ProductOfferBox extends StatelessWidget {
 
 /// Collapsed trip facts on the resort product card.
 class _OfferFacts extends StatefulWidget {
-  const _OfferFacts({required this.product});
+  const _OfferFacts({required this.product, this.book});
 
   final ShopProduct product;
+  final Widget? book;
 
   @override
   State<_OfferFacts> createState() => _OfferFactsState();
@@ -365,24 +367,33 @@ class _OfferFactsState extends State<_OfferFacts> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasFacts) {
-      return const SizedBox.shrink();
-    }
     final l10n = AppLocalizations.of(context);
     final product = widget.product;
+    final book = widget.book;
+    if (!_hasFacts && book == null) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
-        TextButton(
-          key: Key('product-offer-details-${product.id}'),
-          onPressed: () => setState(() => _open = !_open),
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 32),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(l10n.productOfferDetails),
+        Row(
+          children: [
+            if (_hasFacts)
+              TextButton(
+                key: Key('product-offer-details-${product.id}'),
+                onPressed: () => setState(() => _open = !_open),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(l10n.productOfferDetails),
+              ),
+            if (book != null) ...[
+              if (_hasFacts) const SizedBox(width: 8),
+              Expanded(child: book),
+            ],
+          ],
         ),
         if (_open) ...[
           _fact(l10n.productOfferNights, product.derivedDurationLabel),
