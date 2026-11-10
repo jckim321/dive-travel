@@ -14,7 +14,6 @@ import 'package:dive_travel_app/core/models/seat_demand.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
-import 'package:dive_travel_app/core/widgets/app_card.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_empty_search.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
@@ -213,6 +212,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
           placeOf: (offer) => _placeFor(store, offer),
         );
         final results = store.sameBoatResults(now: now);
+        final liveIds = <String>{
+          for (final offer in offers) _offerIdentity(offer),
+        };
+        final board = <SameBoatOffer>[
+          ...offers,
+          for (final offer in results)
+            if (!liveIds.contains(_offerIdentity(offer))) offer,
+        ];
+        final teams = _orderedSection(
+          [
+            for (final offer in board)
+              if (_isTeamRecruit(offer.product)) offer,
+          ],
+          now,
+        );
+        final resorts = _orderedSection(
+          [
+            for (final offer in board)
+              if (!_isTeamRecruit(offer.product)) offer,
+          ],
+          now,
+        );
         final lastCallCount = store
             .sameBoatOffers(SameBoatFilter.lastCall, now: now)
             .length;
@@ -363,45 +384,41 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                   _unlockNotice = null;
                                 });
                               },
-                            )
-                          else
-                            for (var i = 0; i < offers.length; i++) ...[
-                              _SeatCard(
-                                offer: offers[i],
-                                shop: _shopForProduct(store, offers[i].product),
-                                shopName: store.shopLabelFor(
-                                  offers[i].product.shopId,
-                                ),
-                                onOpen: () => _openOfferDetail(
-                                  context,
-                                  offers[i],
-                                  shop: _shopForProduct(
-                                    store,
-                                    offers[i].product,
-                                  ),
-                                  shopName: store.shopLabelFor(
-                                    offers[i].product.shopId,
-                                  ),
-                                ),
-                                onTake: () =>
-                                    _takeSeat(context, store, offers[i]),
+                            ),
+                          if (teams.isNotEmpty) ...[
+                            _SectionHeading(
+                              title: '팀 모집 중',
+                              caption: '캡틴 · 기획스페셜',
+                            ),
+                            for (final offer in teams) ...[
+                              _boardOfferCard(
+                                context,
+                                store,
+                                offer,
+                                live: liveIds.contains(_offerIdentity(offer)),
                               ),
                               const SizedBox(height: 12),
                             ],
-                          if (results.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.communitySameBoatResults,
-                              style: theme.textTheme.titleMedium,
+                          ],
+                          if (teams.isNotEmpty && resorts.isNotEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 4, bottom: 14),
+                              child: Divider(
+                                height: 1,
+                                color: Color(0xFFDDE3EA),
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            for (final offer in results) ...[
-                              _ResultCard(
-                                offer: offer,
-                                shopName: store.shopLabelFor(
-                                  offer.product.shopId,
-                                ),
-                                now: now,
+                          if (resorts.isNotEmpty) ...[
+                            _SectionHeading(
+                              title: '리조트 빈자리',
+                              caption: '파트너',
+                            ),
+                            for (final offer in resorts) ...[
+                              _boardOfferCard(
+                                context,
+                                store,
+                                offer,
+                                live: liveIds.contains(_offerIdentity(offer)),
                               ),
                               const SizedBox(height: 12),
                             ],
@@ -421,6 +438,35 @@ class _CommunityScreenState extends State<CommunityScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _boardOfferCard(
+    BuildContext context,
+    DiverStore store,
+    SameBoatOffer offer, {
+    required bool live,
+  }) {
+    final card = _SeatCard(
+      offer: offer,
+      shop: _shopForProduct(store, offer.product),
+      shopName: store.shopLabelFor(offer.product.shopId),
+      onOpen: live
+          ? () => _openOfferDetail(
+              context,
+              offer,
+              shop: _shopForProduct(store, offer.product),
+              shopName: store.shopLabelFor(offer.product.shopId),
+            )
+          : () {},
+      onTake: live ? () => _takeSeat(context, store, offer) : null,
+    );
+    if (live) {
+      return card;
+    }
+    return KeyedSubtree(
+      key: Key('same-boat-result-${offer.product.id}-${offer.optionId}'),
+      child: card,
     );
   }
 
@@ -936,69 +982,31 @@ DiveShop? _shopForProduct(DiverStore store, ShopProduct product) {
   return store.listingCardForProduct(hull, product);
 }
 
-class _ResultCard extends StatelessWidget {
-  const _ResultCard({
-    required this.offer,
-    required this.shopName,
-    required this.now,
-  });
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({required this.title, required this.caption});
 
-  final SameBoatOffer offer;
-  final String shopName;
-  final DateTime now;
+  final String title;
+  final String caption;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final product = offer.product;
-    final dayFmt = DateFormat('yyyy.MM.dd');
-    final departure = offer.departureStart;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Text(
-            _resultReason(l10n, offer, now),
-            key: Key('same-boat-result-${product.id}-${offer.optionId}'),
+            title,
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.muted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            product.name,
-            style: const TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
               color: AppTheme.navy,
             ),
           ),
-          if (offer.optionName.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              offer.optionName,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.navy,
-              ),
-            ),
-          ],
-          if (shopName.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              shopName,
-              style: const TextStyle(fontSize: 12, color: AppTheme.muted),
-            ),
-          ],
-          const SizedBox(height: 4),
+          const Spacer(),
           Text(
-            [
-              if (departure != null) dayFmt.format(departure),
-              '${offer.bookedSeats}/${offer.capacity}',
-            ].join(' · '),
+            caption,
             style: const TextStyle(fontSize: 12, color: AppTheme.muted),
           ),
         ],
@@ -1007,19 +1015,64 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
-String _resultReason(AppLocalizations l10n, SameBoatOffer offer, DateTime now) {
-  final departure = offer.departureStart;
-  if (departure != null) {
-    final start = DateTime(departure.year, departure.month, departure.day);
-    final today = DateTime(now.year, now.month, now.day);
-    if (start.isBefore(today)) {
-      return l10n.communitySameBoatResultDeparted;
+/// 기획스페셜·내가 캡틴. Same rule as the admin source classifier.
+bool _isTeamRecruit(ShopProduct product) {
+  return product.listingKind == ProductListingKind.diverPlanned ||
+      product.listingKind == ProductListingKind.curated ||
+      product.shopId.startsWith('curated-');
+}
+
+String _offerIdentity(SameBoatOffer offer) {
+  return '${offer.product.id}/${offer.optionId}';
+}
+
+/// Soonest departure first. Full or already-departed offers stay at the back.
+List<SameBoatOffer> _orderedSection(List<SameBoatOffer> items, DateTime now) {
+  final today = DateTime(now.year, now.month, now.day);
+  bool behind(SameBoatOffer offer) {
+    if (offer.capacity > 0 && offer.remainingSeatsAt(now) <= 0) {
+      return true;
     }
+    final departure = offer.departureStart;
+    if (departure == null) {
+      return false;
+    }
+    final start = DateTime(departure.year, departure.month, departure.day);
+    return start.isBefore(today);
   }
-  if (offer.capacity > 0 && offer.bookedSeats >= offer.capacity) {
-    return l10n.communitySameBoatResultSoldOut;
+
+  int byDeparture(SameBoatOffer a, SameBoatOffer b) {
+    final ad = a.departureStart;
+    final bd = b.departureStart;
+    if (ad == null && bd == null) {
+      return 0;
+    }
+    if (ad == null) {
+      return 1;
+    }
+    if (bd == null) {
+      return -1;
+    }
+    return ad.compareTo(bd);
   }
-  return l10n.communitySameBoatResultClosed;
+
+  final open = [for (final offer in items) if (!behind(offer)) offer]
+    ..sort(byDeparture);
+  final done = [for (final offer in items) if (behind(offer)) offer]
+    ..sort(byDeparture);
+  return [...open, ...done];
+}
+
+String _departureFlagLine(SameBoatOffer offer) {
+  const days = ['월', '화', '수', '목', '금', '토', '일'];
+  String monthDay(DateTime date) => '${date.month}/${date.day}';
+  String withWeekday(DateTime date) =>
+      '${monthDay(date)} (${days[date.weekday - 1]})';
+  final departure = offer.departureStart;
+  final flag = offer.flagClosesAt;
+  final dep = departure == null ? '출발일 없음' : '${withWeekday(departure)} 출발';
+  final close = flag == null ? '깃발 마감일 없음' : '깃발 마감 ${monthDay(flag)}';
+  return '$dep · $close';
 }
 
 class _SeatCard extends StatelessWidget {
@@ -1035,7 +1088,7 @@ class _SeatCard extends StatelessWidget {
   final DiveShop? shop;
   final String shopName;
   final VoidCallback onOpen;
-  final VoidCallback onTake;
+  final VoidCallback? onTake;
 
   @override
   Widget build(BuildContext context) {
@@ -1053,6 +1106,7 @@ class _SeatCard extends StatelessWidget {
         ? 0
         : held.clamp(0, capacity - paidSeats).toInt();
     final openSeats = capacity <= 0 ? 0 : capacity - paidSeats - heldSeats;
+    final full = openSeats <= 0;
     final rating = product.guestRating;
     return Material(
       color: Colors.white,
@@ -1194,7 +1248,7 @@ class _SeatCard extends StatelessWidget {
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 2),
               child: Text(
                 '${l10n.communitySeatPaid(paidSeats)} · ${l10n.communitySeatHeld(heldSeats)} · ${l10n.communitySeatOpen(openSeats)}',
                 style: const TextStyle(
@@ -1202,6 +1256,13 @@ class _SeatCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: AppTheme.muted,
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text(
+                _departureFlagLine(offer),
+                style: const TextStyle(fontSize: 12, color: AppTheme.muted),
               ),
             ),
             Padding(
@@ -1216,8 +1277,12 @@ class _SeatCard extends StatelessWidget {
                       backgroundColor: const Color(0xFFE07A1F),
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: cannotBuy ? null : onTake,
-                    child: Text(l10n.communityFlagButton),
+                    onPressed: cannotBuy || full || onTake == null
+                        ? null
+                        : onTake,
+                    child: Text(
+                      full ? '자리 모두 참' : l10n.communityFlagButton,
+                    ),
                   ),
                 ],
               ),
@@ -1303,10 +1368,10 @@ class _SeatDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 14,
-      height: 14,
+      width: 20,
+      height: 25,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(5),
         color: filled ? color : Colors.transparent,
         border: Border.all(
           color: filled ? color : const Color(0xFFB7C0C8),
