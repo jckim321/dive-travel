@@ -846,6 +846,9 @@ class ShopProduct {
     this.saleWeekdays = const [],
     this.minLeadDays = 0,
     this.blockedDates = const [],
+    this.diveCount = 0,
+    this.freeCancelDays = 0,
+    this.weatherPolicy = '',
     this.includeGuestPriceFields = false,
   });
 
@@ -945,6 +948,9 @@ class ShopProduct {
       saleWeekdays: _weekdayList(data['sale_weekdays']),
       minLeadDays: (data['min_lead_days'] as num?)?.toInt() ?? 0,
       blockedDates: SaleBlockedRange.listFrom(data['blocked_dates']),
+      diveCount: (data['dive_count'] as num?)?.toInt() ?? 0,
+      freeCancelDays: (data['free_cancel_days'] as num?)?.toInt() ?? 0,
+      weatherPolicy: data['weather_policy'] as String? ?? '',
       includeGuestPriceFields: data.containsKey('price_tiers') ||
           data.containsKey('single_supplement'),
     );
@@ -1046,6 +1052,17 @@ class ShopProduct {
 
   /// Date ranges that cannot be booked.
   final List<SaleBlockedRange> blockedDates;
+
+  /// Partner dive count. Written only when [includeGuestPriceFields].
+  final int diveCount;
+
+  /// Days before departure a free cancel is allowed. Written only when
+  /// [includeGuestPriceFields].
+  final int freeCancelDays;
+
+  /// `full_refund` or `reschedule_or_refund`. Empty means unset.
+  /// Written only when [includeGuestPriceFields].
+  final String weatherPolicy;
 
   /// True when [day] is a bookable departure at [now].
   /// An empty [saleWeekdays] allows every weekday. [minLeadDays] counts from today.
@@ -1784,6 +1801,9 @@ class ShopProduct {
     List<int>? saleWeekdays,
     int? minLeadDays,
     List<SaleBlockedRange>? blockedDates,
+    int? diveCount,
+    int? freeCancelDays,
+    String? weatherPolicy,
     bool? includeGuestPriceFields,
   }) {
     return ShopProduct(
@@ -1854,6 +1874,9 @@ class ShopProduct {
       saleWeekdays: saleWeekdays ?? this.saleWeekdays,
       minLeadDays: minLeadDays ?? this.minLeadDays,
       blockedDates: blockedDates ?? this.blockedDates,
+      diveCount: diveCount ?? this.diveCount,
+      freeCancelDays: freeCancelDays ?? this.freeCancelDays,
+      weatherPolicy: weatherPolicy ?? this.weatherPolicy,
       includeGuestPriceFields:
           includeGuestPriceFields ?? this.includeGuestPriceFields,
     );
@@ -2012,6 +2035,9 @@ class ShopProduct {
         'sale_weekdays': saleWeekdays,
         'min_lead_days': minLeadDays,
         'blocked_dates': [for (final range in blockedDates) range.toMap()],
+        'dive_count': diveCount,
+        'free_cancel_days': freeCancelDays,
+        'weather_policy': weatherPolicy,
       },
     };
   }

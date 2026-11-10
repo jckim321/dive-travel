@@ -76,6 +76,7 @@ class PartnerRegularProducts extends StatefulWidget {
 class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
   final _boxes = <_RegularProductDraft>[];
   final _expanded = <String>{};
+  final _sectionAnchors = <String, List<GlobalKey>>{};
   final _picker = const DivePhotoPicker();
   var _saving = false;
   var _loaded = false;
@@ -716,10 +717,6 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               ),
             ),
             if (open) ...[
-              if (widget.partnerLabels) ...[
-                _shopInfoRow(box.id),
-                const SizedBox(height: 8),
-              ],
               SwitchListTile.adaptive(
                 key: Key('partner-regular-visible-${box.id}'),
                 contentPadding: EdgeInsets.zero,
@@ -757,10 +754,6 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                   includes: _includesBlock(l10n, box),
                 ),
               if (box.individuals.isNotEmpty) _savedIndividuals(box),
-              if (widget.partnerLabels) ...[
-                const SizedBox(height: 8),
-                _openSeatsRow(box),
-              ],
             ],
           ],
         ),
@@ -768,31 +761,292 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     );
   }
 
+  static const _stepLabels = [
+    '기본 정보',
+    '사진',
+    '핵심 정보',
+    '소개 · 일정',
+    '가격 · 포함 · 옵션',
+    '예약 가능 조건',
+    '같은배 빈자리',
+    '환불 · 안내',
+  ];
+
+  List<GlobalKey> _anchors(String boxId) {
+    return _sectionAnchors.putIfAbsent(
+      boxId,
+      () => [for (var i = 0; i < _stepLabels.length; i++) GlobalKey()],
+    );
+  }
+
+  void _scrollToSection(GlobalKey key) {
+    final target = key.currentContext;
+    if (target == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 250),
+      alignment: 0.08,
+    );
+  }
+
   Widget _partnerSections(AppLocalizations l10n, _RegularProductDraft box) {
-    return Column(
+    final anchors = _anchors(box.id);
+    final cards = <Widget>[
+      _sectionCard(
+        boxKey: Key('partner-regular-section-basic-${box.id}'),
+        title: '1. 기본 정보',
+        child: _basicInfo(l10n, box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-regular-section-photos-${box.id}'),
+        title: '2. 사진',
+        child: _photoEditor(box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-regular-section-facts-${box.id}'),
+        title: '3. 핵심 정보',
+        child: _factsBlock(box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-product-story-${box.id}'),
+        title: '4. 소개 · 일정',
+        child: _storySchedule(box),
+      ),
+      _sectionCard(
+        boxKey: Key('regular-${box.id}-partner-form-section-price'),
+        title: '5. 가격 · 포함 · 옵션',
+        child: _pricePackage(l10n, box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-regular-section-sale-${box.id}'),
+        title: '6. 예약 가능 조건',
+        child: _saleRulesBlock(box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-regular-section-seats-${box.id}'),
+        title: '7. 같은배 빈자리',
+        child: _openSeatsRow(box),
+      ),
+      _sectionCard(
+        boxKey: Key('partner-regular-section-refund-${box.id}'),
+        title: '8. 환불 · 안내',
+        child: _refundBlock(box),
+      ),
+    ];
+    final form = Column(
       key: Key('regular-${box.id}-shop-product-box'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionCard(
-          boxKey: Key('regular-${box.id}-partner-form-section-price'),
-          title: l10n.partnerFormBoxPricePhoto,
-          child: _priceBlock(l10n, box),
+        for (var i = 0; i < cards.length; i++)
+          KeyedSubtree(key: anchors[i], child: cards[i]),
+      ],
+    );
+    if (MediaQuery.sizeOf(context).width < 1000) {
+      return form;
+    }
+    return _PinnedSteps(
+      boxId: box.id,
+      labels: _stepLabels,
+      onTap: (index) => _scrollToSection(anchors[index]),
+      child: form,
+    );
+  }
+
+  Widget _basicInfo(AppLocalizations l10n, _RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _shopInfoRow(box.id),
+        const SizedBox(height: 12),
+        const Text(
+          '상품 분류',
+          style: TextStyle(color: PlannerPalette.textDim),
         ),
-        if (_mountsStoryEditor(box))
-          _sectionCard(
-            boxKey: Key('partner-product-story-${box.id}'),
-            title: '상품 소개글',
-            child: _storyBody(box),
+        const SizedBox(height: 6),
+        _categoryChips(l10n, box),
+        const SizedBox(height: 10),
+        _nameField(box),
+      ],
+    );
+  }
+
+  Widget _categoryChips(AppLocalizations l10n, _RegularProductDraft box) {
+    final items = <(ProductCategory, String)>[
+      (ProductCategory.resortPackage, l10n.workbenchCatResort),
+      (ProductCategory.liveaboard, l10n.workbenchCatLiveaboard),
+      (ProductCategory.funDive, l10n.workbenchCatFun),
+      (ProductCategory.course, l10n.workbenchCatCourse),
+      (ProductCategory.dayTrip, l10n.workbenchCatDay),
+    ];
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          FilterChip(
+            key: Key(
+              'partner-regular-category-${box.id}-${item.$1.firestoreValue}',
+            ),
+            label: Text(item.$2),
+            selected: box.category == item.$1,
+            onSelected: (_) => setState(() => box.category = item.$1),
           ),
-        _sectionCard(
-          boxKey: Key('regular-${box.id}-partner-form-section-options'),
-          title: l10n.partnerFormBoxOptions,
+      ],
+    );
+  }
+
+  Widget _factsBlock(_RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _nightsField(box),
+        const SizedBox(height: 10),
+        _numberField(
+          controller: box.diveCount,
+          keyName: 'partner-regular-dive-count-${box.id}',
+          label: '다이빙 횟수',
+        ),
+        const SizedBox(height: 10),
+        _difficultyField(box),
+        const SizedBox(height: 10),
+        _numberField(
+          controller: box.maxGuests,
+          keyName: 'partner-regular-max-guests-${box.id}',
+          label: '하루 최대 인원 (비우면 제한 없음)',
+        ),
+      ],
+    );
+  }
+
+  Widget _storySchedule(_RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_mountsStoryEditor(box)) _storyBody(box),
+        if (_mountsStoryEditor(box)) const SizedBox(height: 12),
+        for (final row in box.itinerary) ...[
+          _itineraryRow(box, row),
+          const SizedBox(height: 8),
+        ],
+        OutlinedButton(
+          key: Key('partner-regular-itinerary-add-${box.id}'),
+          onPressed: () => setState(() => box.itinerary.add(_ItineraryDraft())),
+          child: const Text('+ 일정 추가'),
+        ),
+      ],
+    );
+  }
+
+  Widget _itineraryRow(_RegularProductDraft box, _ItineraryDraft row) {
+    return Column(
+      key: Key('partner-regular-itinerary-${row.id}'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 88,
+              child: TextField(
+                key: Key('partner-regular-itinerary-day-${row.id}'),
+                controller: row.day,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
+                decoration: _field('일차'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                key: Key('partner-regular-itinerary-title-${row.id}'),
+                controller: row.title,
+                style: const TextStyle(color: PlannerPalette.text),
+                cursorColor: PlannerPalette.accent,
+                decoration: _field('제목'),
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() {
+                box.itinerary.remove(row);
+                row.dispose();
+              }),
+              icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          key: Key('partner-regular-itinerary-body-${row.id}'),
+          controller: row.body,
+          minLines: 2,
+          maxLines: 4,
+          style: const TextStyle(color: PlannerPalette.text),
+          cursorColor: PlannerPalette.accent,
+          decoration: _field('내용'),
+        ),
+      ],
+    );
+  }
+
+  Widget _pricePackage(AppLocalizations l10n, _RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _basePriceRow(l10n, box),
+        const SizedBox(height: 10),
+        _guestTierList(box),
+        const SizedBox(height: 10),
+        _supplementField(box),
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: Key('regular-${box.id}-partner-form-section-includes'),
+          child: _includesBlock(l10n, box),
+        ),
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: Key('regular-${box.id}-partner-form-section-options'),
           child: _optionsBlock(l10n, box),
         ),
-        _sectionCard(
-          boxKey: Key('regular-${box.id}-partner-form-section-includes'),
-          title: l10n.partnerFormBoxIncludes,
-          child: _includesBlock(l10n, box),
+      ],
+    );
+  }
+
+  Widget _refundBlock(_RegularProductDraft box) {
+    final policy = box.weatherPolicy;
+    const known = <String, String>{
+      'full_refund': '전액 환불',
+      'reschedule_or_refund': '일정 변경 또는 환불',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _numberField(
+          controller: box.freeCancelDays,
+          keyName: 'partner-regular-free-cancel-${box.id}',
+          label: '무료 취소 기한 (출발 며칠 전까지)',
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          key: Key('partner-regular-weather-${box.id}-$policy'),
+          initialValue: policy,
+          decoration: _field('기상 악화로 출항 취소 시'),
+          items: [
+            if (policy.isNotEmpty && !known.containsKey(policy))
+              DropdownMenuItem(value: policy, child: Text(policy)),
+            const DropdownMenuItem(value: '', child: Text('선택해 주세요')),
+            for (final item in known.entries)
+              DropdownMenuItem(value: item.key, child: Text(item.value)),
+          ],
+          onChanged: (value) {
+            if (value == null) {
+              return;
+            }
+            setState(() => box.weatherPolicy = value);
+          },
         ),
       ],
     );
@@ -861,75 +1115,137 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     );
   }
 
-  Widget _priceBlock(AppLocalizations l10n, _RegularProductDraft box) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _nameField(_RegularProductDraft box) {
+    return TextField(
+      key: Key('partner-regular-name-${box.id}'),
+      controller: box.name,
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('상품 이름'),
+      onChanged: (_) => setState(() {}),
+    );
+  }
+
+  Widget _basePriceRow(AppLocalizations l10n, _RegularProductDraft box) {
+    return Row(
       children: [
-        TextField(
-          key: Key('partner-regular-name-${box.id}'),
-          controller: box.name,
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('상품 이름'),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                key: Key('partner-regular-price-${box.id}'),
-                controller: box.consumer,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PlannerPalette.text),
-                cursorColor: PlannerPalette.accent,
-                decoration: _field(
-                  widget.partnerLabels ? '다이버' : l10n.partnerFormBasePrice,
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
+        Expanded(
+          child: TextField(
+            key: Key('partner-regular-price-${box.id}'),
+            controller: box.consumer,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(color: PlannerPalette.text),
+            cursorColor: PlannerPalette.accent,
+            decoration: _field(
+              widget.partnerLabels ? '다이버' : l10n.partnerFormBasePrice,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: box.professional,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PlannerPalette.text),
-                cursorColor: PlannerPalette.accent,
-                decoration: _field(l10n.exploreProPrice),
-              ),
-            ),
-          ],
+            onChanged: (_) => setState(() {}),
+          ),
         ),
-        if (widget.partnerLabels) ...[
-          const SizedBox(height: 10),
-          _guestPriceBlock(box),
-        ],
-        const SizedBox(height: 10),
-        BookingGalleryEditor(
-          items: box.photos,
-          compact: true,
-          maxItems: GalleryLimits.maxProductPhotos,
-          onManagerOpening: widget.storyController?.suspendInput,
-          onManagerClosed: widget.storyController?.resumeInput,
-          onAdd: () => _addPhotos(box),
-          onRemove: (index) => setState(() {
-            box.galleryTouched = true;
-            box.photos.removeAt(index);
-          }),
-          onMakeCover: (index) => setState(() {
-            box.galleryTouched = true;
-            final item = box.photos.removeAt(index);
-            box.photos.insert(0, item);
-          }),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextField(
+            controller: box.professional,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(color: PlannerPalette.text),
+            cursorColor: PlannerPalette.accent,
+            decoration: _field(l10n.exploreProPrice),
+          ),
         ),
       ],
     );
   }
 
-  Widget _guestPriceBlock(_RegularProductDraft box) {
+  Widget _photoEditor(_RegularProductDraft box) {
+    return BookingGalleryEditor(
+      items: box.photos,
+      compact: true,
+      maxItems: GalleryLimits.maxProductPhotos,
+      onManagerOpening: widget.storyController?.suspendInput,
+      onManagerClosed: widget.storyController?.resumeInput,
+      onAdd: () => _addPhotos(box),
+      onRemove: (index) => setState(() {
+        box.galleryTouched = true;
+        box.photos.removeAt(index);
+      }),
+      onMakeCover: (index) => setState(() {
+        box.galleryTouched = true;
+        final item = box.photos.removeAt(index);
+        box.photos.insert(0, item);
+      }),
+    );
+  }
+
+  Widget _nightsField(_RegularProductDraft box) {
+    return TextField(
+      key: Key('partner-regular-nights-${box.id}'),
+      controller: box.nights,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('숙박 박 수 (예: 2박 3일이면 2)'),
+    );
+  }
+
+  Widget _supplementField(_RegularProductDraft box) {
+    return TextField(
+      key: Key('partner-regular-single-supplement-${box.id}'),
+      controller: box.singleSupplement,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field('1인 1실 추가 요금(1박당)'),
+    );
+  }
+
+  Widget _numberField({
+    required TextEditingController controller,
+    required String keyName,
+    required String label,
+  }) {
+    return TextField(
+      key: Key(keyName),
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _field(label),
+    );
+  }
+
+  Widget _difficultyField(_RegularProductDraft box) {
+    const known = [
+      '오픈워터 이상 (체험 옵션 있음)',
+      '자격 불필요',
+      '어드밴스드 이상',
+    ];
+    final current = box.difficulty;
+    return DropdownButtonFormField<String>(
+      key: Key('partner-regular-difficulty-${box.id}-$current'),
+      initialValue: current,
+      decoration: _field('요구 자격'),
+      items: [
+        if (current.isNotEmpty && !known.contains(current))
+          DropdownMenuItem(value: current, child: Text(current)),
+        const DropdownMenuItem(value: '', child: Text('선택해 주세요')),
+        for (final label in known)
+          DropdownMenuItem(value: label, child: Text(label)),
+      ],
+      onChanged: (value) {
+        if (value == null) {
+          return;
+        }
+        setState(() => box.difficulty = value);
+      },
+    );
+  }
+
+  Widget _guestTierList(_RegularProductDraft box) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -944,26 +1260,36 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           }),
           child: const Text('인원 유형 추가'),
         ),
+      ],
+    );
+  }
+
+  Widget _priceBlock(AppLocalizations l10n, _RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _nameField(box),
         const SizedBox(height: 10),
-        TextField(
-          key: Key('partner-regular-nights-${box.id}'),
-          controller: box.nights,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('숙박 박 수 (예: 2박 3일이면 2)'),
-        ),
+        _basePriceRow(l10n, box),
+        if (widget.partnerLabels) ...[
+          const SizedBox(height: 10),
+          _guestPriceBlock(box),
+        ],
         const SizedBox(height: 10),
-        TextField(
-          key: Key('partner-regular-single-supplement-${box.id}'),
-          controller: box.singleSupplement,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('1인 1실 추가 요금(1박당)'),
-        ),
+        _photoEditor(box),
+      ],
+    );
+  }
+
+  Widget _guestPriceBlock(_RegularProductDraft box) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _guestTierList(box),
+        const SizedBox(height: 10),
+        _nightsField(box),
+        const SizedBox(height: 10),
+        _supplementField(box),
         const SizedBox(height: 16),
         _saleRulesBlock(box),
       ],
@@ -976,14 +1302,6 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          '예약 가능 조건',
-          style: TextStyle(
-            color: PlannerPalette.text,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
         const Text(
           '예약 가능 요일',
           style: TextStyle(color: PlannerPalette.textDim),
@@ -1328,11 +1646,23 @@ class _RegularProductDraft {
     Set<int>? saleWeekdays,
     this.minLeadDays = 0,
     List<SaleBlockedRange>? blockedDates,
+    ProductCategory? category,
+    this.difficulty = '',
+    this.weatherPolicy = '',
+    TextEditingController? diveCount,
+    TextEditingController? maxGuests,
+    TextEditingController? freeCancelDays,
+    List<_ItineraryDraft>? itinerary,
   }) : guestTiers = guestTiers ?? <_GuestTierDraft>[],
        singleSupplement = singleSupplement ?? TextEditingController(),
        nights = nights ?? TextEditingController(),
        saleWeekdays = saleWeekdays ?? {1, 2, 3, 4, 5, 6, 7},
-       blockedDates = blockedDates ?? <SaleBlockedRange>[];
+       blockedDates = blockedDates ?? <SaleBlockedRange>[],
+       category = category ?? ProductCategory.resortPackage,
+       diveCount = diveCount ?? TextEditingController(),
+       maxGuests = maxGuests ?? TextEditingController(),
+       freeCancelDays = freeCancelDays ?? TextEditingController(),
+       itinerary = itinerary ?? <_ItineraryDraft>[];
 
   factory _RegularProductDraft.fromProduct(ShopProduct product) {
     final addons = <_AddonDraft>[];
@@ -1389,6 +1719,26 @@ class _RegularProductDraft {
           : {...product.saleWeekdays},
       minLeadDays: product.minLeadDays,
       blockedDates: [...product.blockedDates],
+      category: product.category,
+      difficulty: product.difficulty,
+      weatherPolicy: product.weatherPolicy,
+      diveCount: TextEditingController(
+        text: product.diveCount > 0 ? '${product.diveCount}' : '',
+      ),
+      maxGuests: TextEditingController(
+        text: product.maxGuests > 0 ? '${product.maxGuests}' : '',
+      ),
+      freeCancelDays: TextEditingController(
+        text: product.freeCancelDays > 0 ? '${product.freeCancelDays}' : '',
+      ),
+      itinerary: [
+        for (final day in product.itineraryDays)
+          _ItineraryDraft(
+            dayText: day.day > 0 ? '${day.day}' : '',
+            titleText: day.title,
+            bodyText: day.body,
+          ),
+      ],
     );
   }
 
@@ -1443,6 +1793,13 @@ class _RegularProductDraft {
   final Set<int> saleWeekdays;
   int minLeadDays;
   final List<SaleBlockedRange> blockedDates;
+  ProductCategory category;
+  String difficulty;
+  String weatherPolicy;
+  final TextEditingController diveCount;
+  final TextEditingController maxGuests;
+  final TextEditingController freeCancelDays;
+  final List<_ItineraryDraft> itinerary;
 
   /// Partner product form. Other saves leave these keys off the document.
   bool writeGuestPrices = false;
@@ -1489,6 +1846,12 @@ class _RegularProductDraft {
     }
     singleSupplement.dispose();
     nights.dispose();
+    diveCount.dispose();
+    maxGuests.dispose();
+    freeCancelDays.dispose();
+    for (final day in itinerary) {
+      day.dispose();
+    }
   }
 
   ShopProduct toProduct(String shopId) {
@@ -1530,6 +1893,13 @@ class _RegularProductDraft {
         blockedDates: writeGuestPrices
             ? List<SaleBlockedRange>.of(blockedDates)
             : const [],
+        category: writeGuestPrices ? category : ProductCategory.resortPackage,
+        difficulty: writeGuestPrices ? difficulty : '',
+        maxGuests: writeGuestPrices ? _wholeNumber(maxGuests) : 0,
+        itineraryDays: writeGuestPrices ? _itineraryDays() : const [],
+        diveCount: writeGuestPrices ? _wholeNumber(diveCount) : 0,
+        freeCancelDays: writeGuestPrices ? _wholeNumber(freeCancelDays) : 0,
+        weatherPolicy: writeGuestPrices ? weatherPolicy : '',
       );
     }
     return existing.copyWith(
@@ -1551,6 +1921,13 @@ class _RegularProductDraft {
       blockedDates: writeGuestPrices
           ? List<SaleBlockedRange>.of(blockedDates)
           : null,
+      category: writeGuestPrices ? category : null,
+      difficulty: writeGuestPrices ? difficulty : null,
+      maxGuests: writeGuestPrices ? _wholeNumber(maxGuests) : null,
+      itineraryDays: writeGuestPrices ? _itineraryDays() : null,
+      diveCount: writeGuestPrices ? _wholeNumber(diveCount) : null,
+      freeCancelDays: writeGuestPrices ? _wholeNumber(freeCancelDays) : null,
+      weatherPolicy: writeGuestPrices ? weatherPolicy : null,
     );
   }
 
@@ -1602,7 +1979,24 @@ class _RegularProductDraft {
     );
   }
 
-  int _stayNights() => int.tryParse(nights.text.trim()) ?? 0;
+  int _stayNights() => _wholeNumber(nights);
+
+  int _wholeNumber(TextEditingController controller) =>
+      int.tryParse(controller.text.trim()) ?? 0;
+
+  List<ItineraryDay> _itineraryDays() {
+    final days = <ItineraryDay>[];
+    for (final row in itinerary) {
+      final day = int.tryParse(row.day.text.trim()) ?? 0;
+      final title = row.title.text.trim();
+      final body = row.body.text.trim();
+      if (day == 0 && title.isEmpty && body.isEmpty) {
+        continue;
+      }
+      days.add(ItineraryDay(day: day, title: title, body: body));
+    }
+    return days;
+  }
 
   /// Seven selected days are stored empty, which means every weekday.
   List<int> _saleWeekdays() {
@@ -1626,6 +2020,155 @@ class _RegularProductDraft {
         else if (item.url != null && item.url!.trim().isNotEmpty)
           ShopGallerySlot(url: item.url),
     ];
+  }
+}
+
+class _ItineraryDraft {
+  _ItineraryDraft({
+    String? id,
+    String dayText = '',
+    String titleText = '',
+    String bodyText = '',
+  }) : id = id ?? 'day-${_nextId()}',
+       day = TextEditingController(text: dayText),
+       title = TextEditingController(text: titleText),
+       body = TextEditingController(text: bodyText);
+
+  static int _seq = 0;
+
+  static int _nextId() => _seq++;
+
+  final String id;
+  final TextEditingController day;
+  final TextEditingController title;
+  final TextEditingController body;
+
+  void dispose() {
+    day.dispose();
+    title.dispose();
+    body.dispose();
+  }
+}
+
+class _PinnedSteps extends StatefulWidget {
+  const _PinnedSteps({
+    required this.boxId,
+    required this.labels,
+    required this.onTap,
+    required this.child,
+  });
+
+  final String boxId;
+  final List<String> labels;
+  final ValueChanged<int> onTap;
+  final Widget child;
+
+  @override
+  State<_PinnedSteps> createState() => _PinnedStepsState();
+}
+
+class _PinnedStepsState extends State<_PinnedSteps> {
+  ScrollPosition? _position;
+  final _navKey = GlobalKey();
+  var _shift = 0.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = Scrollable.maybeOf(context)?.position;
+    if (identical(_position, next)) {
+      return;
+    }
+    _position?.removeListener(_sync);
+    _position = next;
+    _position?.addListener(_sync);
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_sync);
+    super.dispose();
+  }
+
+  void _sync() {
+    if (!mounted) {
+      return;
+    }
+    final box = context.findRenderObject();
+    final viewport = _position?.context.storageContext.findRenderObject();
+    if (box is! RenderBox ||
+        !box.hasSize ||
+        viewport is! RenderBox ||
+        !viewport.hasSize) {
+      return;
+    }
+    final nav = _navKey.currentContext?.findRenderObject();
+    final navHeight = nav is RenderBox && nav.hasSize ? nav.size.height : 0.0;
+    late final double top;
+    try {
+      top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    } catch (_) {
+      return;
+    }
+    final room = box.size.height - navHeight;
+    final maxShift = room > 0 ? room : 0.0;
+    final shift = top < 0 ? (-top).clamp(0.0, maxShift) : 0.0;
+    if ((shift - _shift).abs() < 0.5) {
+      return;
+    }
+    setState(() => _shift = shift);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 210,
+          child: Transform.translate(
+            offset: Offset(0, _shift),
+            child: Material(
+              key: _navKey,
+              color: PlannerPalette.card,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: PlannerPalette.border),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  key: Key('partner-regular-steps-${widget.boxId}'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < widget.labels.length; i++)
+                      InkWell(
+                        key: Key('partner-regular-step-${widget.boxId}-$i'),
+                        onTap: () => widget.onTap(i),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            '${i + 1}. ${widget.labels[i]}',
+                            style: const TextStyle(
+                              color: PlannerPalette.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: widget.child),
+      ],
+    );
   }
 }
 
