@@ -398,10 +398,14 @@ class SameBoatSeatOpenFields extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     this.showPackageDeparturePicker = true,
+    this.partnerChrome = false,
   });
 
   final SameBoatSeatOpenController controller;
   final VoidCallback onChanged;
+
+  /// Partner open-seats layout. Admin and creator forms stay on the old fields.
+  final bool partnerChrome;
 
   /// When false, package departure comes from the parent form (workbench stay).
   final bool showPackageDeparturePicker;
@@ -447,7 +451,39 @@ class SameBoatSeatOpenFields extends StatelessWidget {
           },
         ),
         if (c.openPackage) ...[
-          _SeatOpenInputs(
+          if (partnerChrome)
+            _PartnerPackageSeats(
+              capacity: c.packageCapacity,
+              referenceBooked: c.packageReferenceBooked,
+              departure: c.packageDeparture,
+              flagClose: c.packageFlagClose,
+              scheduleLocked: c.packageScheduleLocked,
+              onPickDeparture: () => _pickDate(
+                context,
+                current: c.packageDeparture,
+                locked: c.packageScheduleLocked,
+                onPicked: (d) {
+                  c.packageDeparture = d;
+                  onChanged();
+                },
+              ),
+              onFlagDays: (days) {
+                final departure = c.packageDeparture;
+                if (departure == null || c.packageScheduleLocked) {
+                  return;
+                }
+                final day = DateTime(
+                  departure.year,
+                  departure.month,
+                  departure.day,
+                );
+                c.packageFlagClose = day.subtract(Duration(days: days));
+                onChanged();
+              },
+              onChanged: onChanged,
+            )
+          else
+            _SeatOpenInputs(
             capacity: c.packageCapacity,
             referenceBooked: c.packageReferenceBooked,
             departure: c.packageDeparture,
@@ -644,6 +680,261 @@ class _SeatOpenInputs extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
+    );
+  }
+}
+
+/// Partner-only package row. Writes the same capacity and date fields.
+class _PartnerPackageSeats extends StatelessWidget {
+  const _PartnerPackageSeats({
+    required this.capacity,
+    required this.referenceBooked,
+    required this.departure,
+    required this.flagClose,
+    required this.scheduleLocked,
+    required this.onPickDeparture,
+    required this.onFlagDays,
+    required this.onChanged,
+  });
+
+  final TextEditingController capacity;
+  final int referenceBooked;
+  final DateTime? departure;
+  final DateTime? flagClose;
+  final bool scheduleLocked;
+  final VoidCallback onPickDeparture;
+  final ValueChanged<int> onFlagDays;
+  final VoidCallback onChanged;
+
+  static const _ink = Color(0xFF0B1F33);
+  static const _muted = Color(0xFF52606D);
+  static const _line = Color(0xFFDDE3EA);
+  static const _teal = Color(0xFF0A6B64);
+  static const _days = ['월', '화', '수', '목', '금', '토', '일'];
+
+  int get _capacityValue => int.tryParse(capacity.text.trim()) ?? 0;
+
+  int? get _flagDaysBefore {
+    if (departure == null || flagClose == null) {
+      return null;
+    }
+    final start = DateTime(departure!.year, departure!.month, departure!.day);
+    final close = DateTime(flagClose!.year, flagClose!.month, flagClose!.day);
+    return start.difference(close).inDays;
+  }
+
+  String _monthDay(DateTime date) => '${date.month}/${date.day}';
+
+  String _withWeekday(DateTime date) =>
+      '${_monthDay(date)} (${_days[date.weekday - 1]})';
+
+  void _bumpCapacity(int delta) {
+    if (scheduleLocked) {
+      return;
+    }
+    final next = _capacityValue + delta;
+    if (delta < 0 && next < referenceBooked) {
+      return;
+    }
+    if (next < 0) {
+      return;
+    }
+    capacity.text = '$next';
+    onChanged();
+  }
+
+  void _bumpFlag(int delta) {
+    if (scheduleLocked || departure == null) {
+      return;
+    }
+    final current = _flagDaysBefore ?? 7;
+    final next = (current + delta).clamp(3, 14);
+    onFlagDays(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cap = _capacityValue;
+    final fill = cap - referenceBooked;
+    final openSeats = fill < 0 ? 0 : fill;
+    final days = _flagDaysBefore;
+    final bookedNote = referenceBooked > 0
+        ? '${l10n.sameBoatBookedReference(referenceBooked)} · 이 수 아래로는 줄일 수 없어요'
+        : '${l10n.sameBoatBookedReference(0)} · 더 줄일 예약 자리는 없어요';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '출발일',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: _ink,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Material(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: _line),
+          ),
+          child: ListTile(
+            enabled: !scheduleLocked,
+            title: Text(
+              departure == null ? '날짜를 고르세요' : _withWeekday(departure!),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: _ink,
+              ),
+            ),
+            trailing: const Icon(Icons.calendar_today, color: _muted),
+            onTap: scheduleLocked ? null : onPickDeparture,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _stepCard(
+          title: '열 자리 수',
+          note: bookedNote,
+          noteKey: const Key('same-boat-booked-reference'),
+          value: TextField(
+            key: const Key('same-boat-capacity'),
+            controller: capacity,
+            enabled: !scheduleLocked,
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+            onChanged: (_) => onChanged(),
+          ),
+          onDec: () => _bumpCapacity(-1),
+          onInc: () => _bumpCapacity(1),
+          decLabel: '자리 줄이기',
+          incLabel: '자리 늘리기',
+        ),
+        if (cap > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              key: const Key('same-boat-seats-to-fill'),
+              l10n.sameBoatSeatsToFill(openSeats),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: _ink,
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
+        _stepCard(
+          title: '깃발 마감일',
+          note: days == null ? '출발 3~14일 전' : '출발 $days일 전',
+          value: Text(
+            days == null ? '—' : '$days',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _ink,
+            ),
+          ),
+          onDec: () => _bumpFlag(-1),
+          onInc: () => _bumpFlag(1),
+          decLabel: '마감일 앞당기기',
+          incLabel: '마감일 늦추기',
+        ),
+        if (flagClose != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              '${_withWeekday(flagClose!)}까지 깃발을 꽂을 수 있어요',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: _teal,
+              ),
+            ),
+          ),
+        if (scheduleLocked)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              l10n.sameBoatAskAdminToChange,
+              style: const TextStyle(fontSize: 12, color: _muted),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _stepCard({
+    required String title,
+    required String note,
+    required Widget value,
+    required VoidCallback onDec,
+    required VoidCallback onInc,
+    required String decLabel,
+    required String incLabel,
+    Key? noteKey,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _line),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: _ink,
+                  ),
+                ),
+                Text(
+                  note,
+                  key: noteKey,
+                  style: const TextStyle(fontSize: 12, color: _muted),
+                ),
+              ],
+            ),
+          ),
+          _roundStep(label: decLabel, icon: '−', onPressed: onDec),
+          SizedBox(width: 36, child: value),
+          _roundStep(label: incLabel, icon: '＋', onPressed: onInc),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundStep({
+    required String label,
+    required String icon,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      tooltip: label,
+      onPressed: scheduleLocked ? null : onPressed,
+      icon: Text(
+        icon,
+        style: const TextStyle(fontSize: 20, color: _ink),
+      ),
     );
   }
 }

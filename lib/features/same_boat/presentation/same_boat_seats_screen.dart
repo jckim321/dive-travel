@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/same_boat_seat_open.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
-import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seat_open_fields.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -161,11 +161,48 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
     final partnerCopy = widget.partnerLiveCopy;
     final creatorOpen = _isCreatorSeatOpen(store);
-    return Scaffold(
-      backgroundColor: partnerCopy ? PartnerTheme.bg : null,
+    final fields = IgnorePointer(
+      ignoring: _partnerBlocked,
+      child: Opacity(
+        opacity: _partnerBlocked ? 0.55 : 1,
+        child: SameBoatSeatOpenFields(
+          controller: _seats,
+          partnerChrome: partnerCopy,
+          onChanged: () => setState(() {}),
+        ),
+      ),
+    );
+    final submit = FilledButton(
+      key: const Key('same-boat-seats-submit'),
+      style: partnerCopy
+          ? FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0B2A3C),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            )
+          : null,
+      onPressed: (_saving || _partnerBlocked) ? null : _submit,
+      child: Text(
+        waiting
+            ? l10n.sameBoatSeatsWaiting
+            : partnerCopy
+                ? l10n.partnerSeatsOpenButton
+                : creatorOpen
+                    ? l10n.creatorOpenSeatsButton
+                    : widget.adminBypassApproval
+                        ? l10n.sameBoatSeatsPublish
+                        : l10n.sameBoatSeatsSubmit,
+      ),
+    );
+    final page = Scaffold(
+      backgroundColor: partnerCopy ? const Color(0xFFF4F6F9) : null,
       appBar: AppBar(
-        backgroundColor: partnerCopy ? PartnerTheme.bg : null,
-        foregroundColor: partnerCopy ? PartnerTheme.text : null,
+        backgroundColor: partnerCopy ? Colors.white : null,
+        foregroundColor: partnerCopy ? const Color(0xFF0B1F33) : null,
+        surfaceTintColor: partnerCopy ? Colors.white : null,
         leading: partnerCopy ? const PartnerBackButton() : null,
         title: Text(
           partnerCopy ? l10n.partnerOpenSeatsTitle : l10n.sameBoatSeatsTitle,
@@ -176,42 +213,344 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         children: [
           Text(
             partnerCopy ? l10n.partnerSeatsOpenHint : l10n.sameBoatSeatsHint,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: partnerCopy
+                ? const TextStyle(color: Color(0xFF52606D), fontSize: 13)
+                : Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
           Text(
             widget.product.name,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: partnerCopy
+                ? const TextStyle(
+                    color: Color(0xFF0B1F33),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  )
+                : Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 16),
-          IgnorePointer(
-            ignoring: _partnerBlocked,
-            child: Opacity(
-              opacity: _partnerBlocked ? 0.55 : 1,
-              child: SameBoatSeatOpenFields(
-                controller: _seats,
-                onChanged: () => setState(() {}),
-              ),
+          if (!partnerCopy) ...[
+            fields,
+            const SizedBox(height: 24),
+            submit,
+          ] else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= 1000;
+                final form = <Widget>[
+                  fields,
+                  const SizedBox(height: 24),
+                  submit,
+                ];
+                final aside = <Widget>[
+                  _PartnerSeatPreview(
+                    product: widget.product,
+                    shopName: store.shopLabelFor(widget.product.shopId),
+                    seats: _seats,
+                  ),
+                  const SizedBox(height: 20),
+                  _PartnerSeatHistory(
+                    products: store.productsForShop(widget.product.shopId),
+                    now: DateTime.now(),
+                  ),
+                ];
+                if (!wide) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [...form, const SizedBox(height: 20), ...aside],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: form,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    SizedBox(
+                      width: 380,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: aside,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            key: const Key('same-boat-seats-submit'),
-            onPressed: (_saving || _partnerBlocked) ? null : _submit,
-            child: Text(
-              waiting
-                  ? l10n.sameBoatSeatsWaiting
-                  : partnerCopy
-                      ? l10n.partnerSeatsOpenButton
-                      : creatorOpen
-                          ? l10n.creatorOpenSeatsButton
-                          : widget.adminBypassApproval
-                              ? l10n.sameBoatSeatsPublish
-                              : l10n.sameBoatSeatsSubmit,
-            ),
-          ),
         ],
       ),
     );
+    if (!partnerCopy) {
+      return page;
+    }
+    return Theme(
+      data: Theme.of(context).copyWith(
+        scaffoldBackgroundColor: const Color(0xFFF4F6F9),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF0B1F33),
+          elevation: 0,
+          surfaceTintColor: Colors.white,
+        ),
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: const Color(0xFF0B1F33),
+          displayColor: const Color(0xFF0B1F33),
+        ),
+      ),
+      child: page,
+    );
   }
+}
+
+class _PartnerSeatPreview extends StatelessWidget {
+  const _PartnerSeatPreview({
+    required this.product,
+    required this.shopName,
+    required this.seats,
+  });
+
+  final ShopProduct product;
+  final String shopName;
+  final SameBoatSeatOpenController seats;
+
+  static final _price = NumberFormat('#,###', 'en_US');
+  static const _days = ['월', '화', '수', '목', '금', '토', '일'];
+
+  @override
+  Widget build(BuildContext context) {
+    final departure = seats.packageDeparture;
+    final flag = seats.packageFlagClose;
+    final capacity = int.tryParse(seats.packageCapacity.text.trim()) ?? 0;
+    final booked = seats.packageReferenceBooked;
+    final open = capacity - booked;
+    final openSeats = open < 0 ? 0 : open;
+    String monthDay(DateTime date) => '${date.month}/${date.day}';
+    String withWeekday(DateTime date) =>
+        '${monthDay(date)} (${_days[date.weekday - 1]})';
+    final dep = departure == null ? '출발일 없음' : '${withWeekday(departure)} 출발';
+    final flagLine = flag == null ? '깃발 마감일 없음' : '깃발 마감 ${monthDay(flag)}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '손님에게 보이는 카드',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0B1F33),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F6F9),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDDE3EA)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '리조트 빈자리 구역에 이렇게 보여요',
+                style: TextStyle(fontSize: 12, color: Color(0xFF52606D)),
+              ),
+              const SizedBox(height: 6),
+              if (shopName.isNotEmpty)
+                Text(
+                  shopName,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0A6B64),
+                  ),
+                ),
+              Text(
+                product.name,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0B1F33),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '₩${_price.format(product.consumerPrice)}~',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0B1F33),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                dep,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0B1F33),
+                ),
+              ),
+              Text(
+                booked > 0
+                    ? '결제 $booked · 빈자리 $openSeats개'
+                    : '빈자리 $openSeats개',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0A6B64),
+                ),
+              ),
+              Text(
+                flagLine,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF52606D)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PartnerSeatHistory extends StatelessWidget {
+  const _PartnerSeatHistory({required this.products, required this.now});
+
+  final List<ShopProduct> products;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <({String label, String tag})>[];
+    for (final product in products) {
+      final tag = _historyTag(product, now);
+      if (tag == null) {
+        continue;
+      }
+      rows.add((label: _historyLabel(product), tag: tag));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          '내 빈자리 기록',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0B1F33),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFDDE3EA)),
+          ),
+          child: rows.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Text(
+                    '지난 빈자리 기록이 없어요',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF52606D)),
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (var i = 0; i < rows.length; i++)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          border: i == rows.length - 1
+                              ? null
+                              : const Border(
+                                  bottom: BorderSide(color: Color(0xFFDDE3EA)),
+                                ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                rows[i].label,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0B1F33),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2F6),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                rows[i].tag,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF52606D),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+String? _historyTag(ShopProduct product, DateTime now) {
+  final touched = product.openEmptySeats ||
+      product.sameBoatOpenedAt != null ||
+      product.bookedSeats > 0;
+  if (!touched) {
+    return null;
+  }
+  final full = product.capacity > 0 && product.bookedSeats >= product.capacity;
+  if (full) {
+    return '마감';
+  }
+  final departure = product.departureStart;
+  final today = DateTime(now.year, now.month, now.day);
+  final past = departure != null &&
+      DateTime(departure.year, departure.month, departure.day).isBefore(today);
+  final stopped = !product.openEmptySeats ||
+      product.sameBoatStatus == SameBoatStatus.closed ||
+      product.sameBoatStatus == SameBoatStatus.hidden ||
+      product.sameBoatStatus == SameBoatStatus.rejected;
+  if (past || stopped) {
+    return '종료';
+  }
+  return null;
+}
+
+String _historyLabel(ShopProduct product) {
+  final departure = product.departureStart;
+  final when = departure == null
+      ? product.name
+      : '${departure.month}/${departure.day} 출발';
+  if (product.capacity > 0 && product.bookedSeats >= product.capacity) {
+    return '$when · ${product.capacity}자리 모두 참';
+  }
+  if (product.bookedSeats > 0 && product.capacity > 0) {
+    return '$when · ${product.capacity}자리 중 ${product.bookedSeats} 참';
+  }
+  if (product.capacity > 0) {
+    return '$when · ${product.capacity}자리';
+  }
+  return when;
 }

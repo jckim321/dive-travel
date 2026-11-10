@@ -119,6 +119,8 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
     final store = DiverStoreScope.of(context);
     final dayFmt = DateFormat('yyyy.MM.dd');
     final partnerShopId = widget.shopId;
+    final partnerHub =
+        !widget.adminBypassApproval && partnerShopId != null;
 
     final body = ListenableBuilder(
       listenable: store,
@@ -343,6 +345,7 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
                         product: products[i],
                         dayFmt: dayFmt,
                         adminBypass: widget.adminBypassApproval,
+                        partnerChrome: partnerHub,
                       ),
                     ],
                 ],
@@ -353,18 +356,32 @@ class _SameBoatSeatsHubScreenState extends State<SameBoatSeatsHubScreen> {
       },
     );
 
+    final framed = partnerHub
+        ? ColoredBox(
+            color: const Color(0xFFF4F6F9),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                scaffoldBackgroundColor: const Color(0xFFF4F6F9),
+                cardColor: Colors.white,
+              ),
+              child: body,
+            ),
+          )
+        : body;
+
     if (widget.embedded) {
       return Material(
         key: const Key('same-boat-seats-hub'),
         color: Colors.transparent,
-        child: body,
+        child: framed,
       );
     }
 
     return Scaffold(
       key: const Key('same-boat-seats-hub'),
+      backgroundColor: partnerHub ? const Color(0xFFF4F6F9) : null,
       appBar: AppBar(title: Text(l10n.sameBoatApplyTitle)),
-      body: body,
+      body: framed,
     );
   }
 }
@@ -374,11 +391,13 @@ class _HubProductTile extends StatelessWidget {
     required this.product,
     required this.dayFmt,
     required this.adminBypass,
+    this.partnerChrome = false,
   });
 
   final ShopProduct product;
   final DateFormat dayFmt;
   final bool adminBypass;
+  final bool partnerChrome;
 
   void _openSeatsForm(BuildContext context) {
     Navigator.of(context).push(
@@ -505,9 +524,11 @@ class _HubProductTile extends StatelessWidget {
           key: Key('same-boat-hub-${product.id}'),
           title: Text(product.name),
           subtitle: Text(bits.join(' · ')),
-          trailing: Text(
-            pending ? l10n.sameBoatSeatsWaiting : l10n.adminSameBoatLiveBadge,
-            style: Theme.of(context).textTheme.labelLarge,
+          trailing: _hubTrailing(
+            Text(
+              pending ? l10n.sameBoatSeatsWaiting : l10n.adminSameBoatLiveBadge,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
           ),
         ),
       );
@@ -518,11 +539,70 @@ class _HubProductTile extends StatelessWidget {
         key: Key('same-boat-hub-${product.id}'),
         title: Text(product.name),
         subtitle: Text(bits.join(' · ')),
-        trailing: adminBypass
-            ? Text(l10n.sameBoatHubOpenSeats)
-            : const Icon(Icons.chevron_right),
+        trailing: _hubTrailing(
+          adminBypass
+              ? Text(l10n.sameBoatHubOpenSeats)
+              : const Icon(Icons.chevron_right),
+        ),
         onTap: () => _openSeatsForm(context),
       ),
     );
   }
+
+  Widget _hubTrailing(Widget child) {
+    if (!partnerChrome) {
+      return child;
+    }
+    final tag = _partnerRecordTag(product, DateTime.now());
+    if (tag == null) {
+      return child;
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        child,
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2F6),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            tag,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF52606D),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String? _partnerRecordTag(ShopProduct product, DateTime now) {
+  final touched = product.openEmptySeats ||
+      product.sameBoatOpenedAt != null ||
+      product.bookedSeats > 0;
+  if (!touched) {
+    return null;
+  }
+  if (product.capacity > 0 && product.bookedSeats >= product.capacity) {
+    return '마감';
+  }
+  final departure = product.departureStart;
+  final today = DateTime(now.year, now.month, now.day);
+  final past = departure != null &&
+      DateTime(departure.year, departure.month, departure.day).isBefore(today);
+  final stopped = !product.openEmptySeats ||
+      product.sameBoatStatus == SameBoatStatus.closed ||
+      product.sameBoatStatus == SameBoatStatus.hidden ||
+      product.sameBoatStatus == SameBoatStatus.rejected;
+  if (past || stopped) {
+    return '종료';
+  }
+  return null;
 }
