@@ -908,6 +908,16 @@
   "bookingVoucherSaved": "바우처를 저장할 수 있는 공유 화면을 열었습니다.",
   "bookingVoucherId": "예약번호",
   "bookingVoucherShop": "샵",
+  "bookingVoucherPaymentStatus": "결제 상태",
+  "bookingVoucherPartySummary": "다이버 {diver} · 비다이버 {nondiver} · 소아 {child} · 유아 {infant}",
+  "@bookingVoucherPartySummary": {
+    "placeholders": {
+      "diver": { "type": "int" },
+      "nondiver": { "type": "int" },
+      "child": { "type": "int" },
+      "infant": { "type": "int" }
+    }
+  },
   "profileBookingStatus": "나의 예약",
   "profilePaidBookingsEmpty": "결제 완료된 예약이 없습니다.",
   "profileRequestedBookingsEmpty": "요청 중인 예약이 없습니다.",

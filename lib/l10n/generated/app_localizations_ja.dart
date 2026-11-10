@@ -1163,6 +1163,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherPaymentStatus => '결제 상태';
+
+  @override
+  String bookingVoucherPartySummary(
+    int diver,
+    int nondiver,
+    int child,
+    int infant,
+  ) {
+    return '다이버 $diver · 비다이버 $nondiver · 소아 $child · 유아 $infant';
+  }
+
+  @override
   String get profileBookingStatus => '나의 예약';
 
   @override

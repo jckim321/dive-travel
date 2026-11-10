@@ -2262,6 +2262,23 @@ abstract class AppLocalizations {
   /// **'샵'**
   String get bookingVoucherShop;
 
+  /// No description provided for @bookingVoucherPaymentStatus.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제 상태'**
+  String get bookingVoucherPaymentStatus;
+
+  /// No description provided for @bookingVoucherPartySummary.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 {diver} · 비다이버 {nondiver} · 소아 {child} · 유아 {infant}'**
+  String bookingVoucherPartySummary(
+    int diver,
+    int nondiver,
+    int child,
+    int infant,
+  );
+
   /// No description provided for @profileBookingStatus.
   ///
   /// In ko, this message translates to:

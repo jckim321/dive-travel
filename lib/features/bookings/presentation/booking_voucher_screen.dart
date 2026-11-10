@@ -143,7 +143,7 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                         if (booking.hasPartyDetail)
                           _row(
                             l10n.checkoutGuests,
-                            l10n.bookingPartySummary(
+                            l10n.bookingVoucherPartySummary(
                               booking.divers,
                               booking.nondivers,
                               booking.children,
@@ -155,12 +155,22 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                             l10n.checkoutGuests,
                             '${booking.partySize}',
                           ),
+                        if (booking.guestDisplayName.trim().isNotEmpty)
+                          _row(
+                            l10n.checkoutGuestName,
+                            booking.guestDisplayName.trim(),
+                          ),
+                        if (booking.guestContact.trim().isNotEmpty)
+                          _row(
+                            l10n.checkoutGuestContact,
+                            booking.guestContact.trim(),
+                          ),
                         _row(
                           l10n.checkoutStepPay,
                           l10n.explorePriceWon(_money.format(booking.price)),
                         ),
                         _row(
-                          l10n.bookingPaymentCaptured,
+                          l10n.bookingVoucherPaymentStatus,
                           l10n.bookingPaymentCaptured,
                         ),
                         if (booking.quoteLines.isNotEmpty) ...[
