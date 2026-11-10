@@ -27,24 +27,36 @@ import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kMaxGallery = GalleryLimits.maxProductPhotos;
 
+const _kPartnerBg = Color(0xFFF4F6F9);
+const _kPartnerCard = Color(0xFFFFFFFF);
+const _kPartnerLine = Color(0xFFDDE3EA);
+const _kPartnerInk = Color(0xFF0B1F33);
+const _kPartnerMuted = Color(0xFF52606D);
+const _kPartnerTeal = Color(0xFF0A6B64);
+const _kPartnerNavy = Color(0xFF0B2A3C);
+const _kPartnerInput = Color(0xFF8A98A8);
+
 class _DeskPalette {
   const _DeskPalette(this.partnerMode);
 
   final bool partnerMode;
 
-  Color get bg => PlannerPalette.bg;
-  Color get surface => PlannerPalette.card;
-  Color get primary => PlannerPalette.accent;
-  Color get onPrimary => PlannerPalette.onAccent;
-  Color get muted => PlannerPalette.textDim;
-  Color get border => PlannerPalette.border;
-  Color get softFill => PlannerPalette.bg;
-  Color get softBorder => PlannerPalette.border;
-  Color get inputBorder => PlannerPalette.borderStrong;
+  Color get bg => partnerMode ? _kPartnerBg : PlannerPalette.bg;
+  Color get surface => partnerMode ? _kPartnerCard : PlannerPalette.card;
+  Color get primary => partnerMode ? _kPartnerNavy : PlannerPalette.accent;
+  Color get onPrimary => partnerMode ? Colors.white : PlannerPalette.onAccent;
+  Color get muted => partnerMode ? _kPartnerMuted : PlannerPalette.textDim;
+  Color get border => partnerMode ? _kPartnerLine : PlannerPalette.border;
+  Color get softFill => partnerMode ? _kPartnerBg : PlannerPalette.bg;
+  Color get softBorder => partnerMode ? _kPartnerLine : PlannerPalette.border;
+  Color get inputBorder =>
+      partnerMode ? _kPartnerInput : PlannerPalette.borderStrong;
+  Color get text => partnerMode ? _kPartnerInk : PlannerPalette.text;
+  Color get link => partnerMode ? _kPartnerTeal : PlannerPalette.accent;
 
-  TextStyle get fieldStyle => const TextStyle(
-        color: PlannerPalette.text,
-        fontSize: 16,
+  TextStyle get fieldStyle => TextStyle(
+        color: text,
+        fontSize: partnerMode ? 15 : 16,
         fontWeight: FontWeight.w600,
       );
 }
@@ -569,13 +581,13 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       backgroundColor: palette.bg,
       appBar: AppBar(
         backgroundColor: palette.surface,
-        foregroundColor: PlannerPalette.text,
+        foregroundColor: palette.text,
         surfaceTintColor: Colors.transparent,
         leading: widget.partnerMode
             ? IconButton(
                 key: const Key('partner-back'),
                 tooltip: l10n.partnerExit,
-                icon: const Icon(Icons.arrow_back, color: PlannerPalette.text),
+                icon: Icon(Icons.arrow_back, color: palette.text),
                 onPressed: () => Navigator.of(context).maybePop(),
               )
             : null,
@@ -592,12 +604,12 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
             icon: Icon(
               Icons.visibility_outlined,
               size: 18,
-              color: PlannerPalette.accent,
+              color: palette.link,
             ),
             label: Text(
               '미리보기',
               style: TextStyle(
-                color: PlannerPalette.accent,
+                color: palette.link,
               ),
             ),
           ),
@@ -624,7 +636,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final wide = constraints.maxWidth >= 980;
-              final formPalette = _DeskPalette(true);
               final main = _DeskMainColumn(
                 palette: palette,
                 name: _name,
@@ -634,10 +645,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                   controller: _country,
                   fieldKey: const Key('resort-country-field'),
                   picked: _pickedCountry,
-                  style: formPalette.fieldStyle,
-                  cursorColor: formPalette.primary,
+                  style: palette.fieldStyle,
+                  cursorColor: palette.link,
                   decoration: _deskInputDecoration(
-                    palette: formPalette,
+                    palette: palette,
                     label: l10n.productFormCuratedCountry,
                     required: true,
                   ),
@@ -764,7 +775,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                         l10n.exploreSaving,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: PlannerPalette.text,
+                              color: palette.text,
                             ),
                       ),
                     ],
@@ -777,7 +788,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       ),
       bottomNavigationBar: _partnerShopOnly
           ? Material(
-              color: PlannerPalette.card,
+              color: palette.bg,
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -787,7 +798,10 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     style: FilledButton.styleFrom(
                       backgroundColor: palette.primary,
                       foregroundColor: palette.onPrimary,
-                      minimumSize: const Size.fromHeight(48),
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: Text(
                       _saving ? l10n.exploreSaving : l10n.partnerSave,
@@ -800,8 +814,43 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
           : null,
     );
 
-    return Theme(data: PlannerPalette.theme, child: scaffold);
+    return Theme(
+      data: widget.partnerMode ? _partnerDeskTheme : PlannerPalette.theme,
+      child: scaffold,
+    );
   }
+}
+
+ThemeData get _partnerDeskTheme {
+  final base = PlannerPalette.theme;
+  const ink = _kPartnerInk;
+  const teal = _kPartnerTeal;
+  return base.copyWith(
+    scaffoldBackgroundColor: _kPartnerBg,
+    colorScheme: base.colorScheme.copyWith(
+      primary: teal,
+      onPrimary: Colors.white,
+      surface: _kPartnerCard,
+      onSurface: ink,
+    ),
+    chipTheme: base.chipTheme.copyWith(
+      backgroundColor: Colors.white,
+      selectedColor: const Color(0xFF0A7C74),
+      checkmarkColor: Colors.white,
+      side: const BorderSide(color: _kPartnerInput),
+      labelStyle: const TextStyle(
+        color: ink,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      secondaryLabelStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+    ),
+  );
 }
 
 InputDecoration _deskInputDecoration({
@@ -810,11 +859,12 @@ InputDecoration _deskInputDecoration({
   String? hint,
   bool required = false,
 }) {
+  final radius = palette.partnerMode ? 10.0 : 4.0;
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(4),
+    borderRadius: BorderRadius.circular(radius),
     borderSide: BorderSide(color: palette.inputBorder),
   );
-  final labelColor = PlannerPalette.textDim;
+  final labelColor = palette.partnerMode ? palette.muted : PlannerPalette.textDim;
   return InputDecoration(
     label: required
         ? _RequiredLabel(label, color: labelColor)
@@ -834,8 +884,11 @@ InputDecoration _deskInputDecoration({
     border: border,
     enabledBorder: border,
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
-      borderSide: BorderSide(color: palette.primary, width: 1.6),
+      borderRadius: BorderRadius.circular(radius),
+      borderSide: BorderSide(
+        color: palette.partnerMode ? palette.link : palette.primary,
+        width: 1.6,
+      ),
     ),
   );
 }
@@ -1013,11 +1066,7 @@ class _DeskMainColumn extends StatelessWidget {
       children: [
         if (showShop)
         PartnerResortInfoForm(
-            fieldStyle: const TextStyle(
-              color: PlannerPalette.text,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
+            fieldStyle: palette.fieldStyle,
             name: name,
             onNameEdited: onNameEdited,
             countryField: countryField,
@@ -1051,6 +1100,7 @@ class _DeskMainColumn extends StatelessWidget {
             onTempSave: onTempSave,
             onSave: onTempSave,
             showActions: showShopActions,
+            partnerChrome: palette.partnerMode,
           ),
         if (!palette.partnerMode) ...[
           const SizedBox(height: 16),

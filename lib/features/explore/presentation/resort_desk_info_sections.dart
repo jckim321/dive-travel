@@ -322,6 +322,7 @@ class PartnerResortInfoForm extends StatelessWidget {
     required this.onTempSave,
     required this.onSave,
     this.showActions = true,
+    this.partnerChrome = false,
   });
 
   final TextStyle fieldStyle;
@@ -346,10 +347,16 @@ class PartnerResortInfoForm extends StatelessWidget {
   /// Partner shop info uses a fixed bottom save button instead of this row.
   final bool showActions;
 
+  /// Light mockup cards. Admin keeps the previous chrome.
+  final bool partnerChrome;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cover = slots.isEmpty ? null : slots.first;
+    if (partnerChrome) {
+      return _mockupColumn(l10n, cover);
+    }
     return Column(
       key: const Key('partner-resort-info'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -687,6 +694,404 @@ class PartnerResortInfoForm extends StatelessWidget {
     );
   }
 
+  Widget _mockupColumn(AppLocalizations l10n, BookingGalleryItem? cover) {
+    return Column(
+      key: const Key('partner-resort-info'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-photos'),
+          title: '대표 사진',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              photos,
+              const SizedBox(height: 8),
+              _CoverPreview(item: cover, keyed: true, onTap: onCoverTap),
+              _mockTip('리조트 전경, 객실, 보트, 식당 순으로 올리면 좋아요. 사진을 눌러 대표로 바꿀 수 있어요.'),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-basics'),
+          title: '기본 정보',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _mockLabel(
+                l10n.partnerShopName,
+                TextField(
+                  key: const Key('resort-name-field'),
+                  controller: name,
+                  style: fieldStyle,
+                  cursorColor: const Color(0xFF0A6B64),
+                  onChanged: (_) {
+                    onNameEdited();
+                    onInfoChanged();
+                  },
+                  decoration: _field(l10n.partnerShopName, mockup: true),
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: countryField),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _mockLabel(
+                      '지역',
+                      TextField(
+                        key: const Key('resort-region-field'),
+                        controller: location,
+                        style: fieldStyle,
+                        cursorColor: const Color(0xFF0A6B64),
+                        onChanged: (_) {
+                          onRegionEdited();
+                          onInfoChanged();
+                        },
+                        decoration: _field('지역', mockup: true),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              _mockLabel(
+                l10n.exploreResortAddress,
+                TextField(
+                  key: const Key('resort-address-field'),
+                  controller: address,
+                  style: fieldStyle,
+                  cursorColor: const Color(0xFF0A6B64),
+                  decoration: _field(l10n.exploreResortAddress, mockup: true),
+                ),
+              ),
+              OutlinedButton(
+                key: const Key('partner-resort-map-search'),
+                onPressed: onMapSearch,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0A6B64),
+                  side: const BorderSide(color: Color(0xFF8A98A8), width: 1.5),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  '지도에서 위치 찍기',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-intro'),
+          title: '소개',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                key: const Key('resort-intro-field'),
+                controller: intro,
+                style: fieldStyle,
+                cursorColor: const Color(0xFF0A6B64),
+                maxLines: 5,
+                maxLength: kMaxIntroBody,
+                decoration: _field(l10n.exploreResortIntro, mockup: true),
+              ),
+              _mockTip('상품이 아니라 샵을 소개해 주세요. 상품 소개는 상품 등록에서 따로 써요.'),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-amenities'),
+          title: '시설 · 서비스',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final preset in _kPartnerAmenityPresets)
+                    FilterChip(
+                      label: Text('${_kAmenityEmoji[preset] ?? ''} $preset'),
+                      selected: info.amenities.contains(preset),
+                      showCheckmark: false,
+                      selectedColor: const Color(0xFF0A7C74),
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: info.amenities.contains(preset)
+                            ? const Color(0xFF0A7C74)
+                            : const Color(0xFF8A98A8),
+                      ),
+                      labelStyle: TextStyle(
+                        color: info.amenities.contains(preset)
+                            ? Colors.white
+                            : const Color(0xFF0B1F33),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      shape: const StadiumBorder(),
+                      onSelected: (selected) {
+                        if (selected) {
+                          if (info.amenities.length >= kMaxAmenities) {
+                            return;
+                          }
+                          if (!info.amenities.contains(preset)) {
+                            info.amenities.add(preset);
+                          }
+                        } else {
+                          info.amenities.remove(preset);
+                        }
+                        onInfoChanged();
+                      },
+                    ),
+                ],
+              ),
+              KeyedSubtree(
+                key: const Key('partner-resort-section-facilities'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final item in info.amenities)
+                          if (!_kPartnerAmenityPresets.contains(item))
+                            InputChip(
+                              label: Text(item),
+                              onDeleted: () {
+                                info.amenities.remove(item);
+                                onInfoChanged();
+                              },
+                            ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _mockLabel(
+                            '직접 추가',
+                            TextField(
+                              key: const Key('partner-resort-facility-add'),
+                              controller: info.amenityCustom,
+                              style: fieldStyle,
+                              cursorColor: const Color(0xFF0A6B64),
+                              maxLength: kMaxShortLine,
+                              decoration: _field('직접 추가', mockup: true),
+                              onSubmitted: (_) => _addCustomAmenity(),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _addCustomAmenity,
+                          icon: const Icon(Icons.add_circle_outline),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-transport'),
+          title: '오시는 길',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _mockLabel(
+                '가장 가까운 도시·공항',
+                TextField(
+                  controller: info.nearestHub,
+                  style: fieldStyle,
+                  cursorColor: const Color(0xFF0A6B64),
+                  maxLength: kMaxShortLine,
+                  maxLines: 2,
+                  decoration: _field('가장 가까운 도시·공항', mockup: true),
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (var i = 0; i < info.accessRoutes.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _PartnerRouteCard(
+                    draft: info,
+                    index: i,
+                    onChanged: onInfoChanged,
+                    mockup: true,
+                  ),
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: info.accessRoutes.length >= kMaxAccessRoutes
+                      ? null
+                      : () {
+                          info.accessRoutes.add(_AccessRouteDraft());
+                          onInfoChanged();
+                        },
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    info.accessRoutes.length >= kMaxAccessRoutes
+                        ? '교통편은 최대 $kMaxAccessRoutes개입니다'
+                        : '경로 추가',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-nearby'),
+          title: '주변 관광',
+          child: Column(
+            children: [
+              for (var i = 0; i < info.nearbySpots.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _PartnerSpotCard(
+                    draft: info,
+                    index: i,
+                    onChanged: onInfoChanged,
+                    mockup: true,
+                  ),
+                ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: info.nearbySpots.length >= kMaxNearbySpots
+                      ? null
+                      : () {
+                          info.nearbySpots.add(_NearbySpotDraft());
+                          onInfoChanged();
+                        },
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    info.nearbySpots.length >= kMaxNearbySpots
+                        ? '주변 관광은 최대 $kMaxNearbySpots개입니다'
+                        : '장소 추가',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-dive'),
+          title: '다이빙 환경과 조건',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _mockLabel(
+                '환경·조건',
+                TextField(
+                  key: const Key('partner-resort-dive-blurb'),
+                  controller: info.featureBlurb,
+                  style: fieldStyle,
+                  cursorColor: const Color(0xFF0A6B64),
+                  maxLength: kMaxShortLine * 2,
+                  maxLines: 3,
+                  decoration: _field('환경·조건', mockup: true),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final tag in info.featureTags)
+                    InputChip(
+                      label: Text(tag),
+                      onDeleted: () {
+                        info.featureTags.remove(tag);
+                        onInfoChanged();
+                      },
+                    ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _mockLabel(
+                      '조건 태그',
+                      TextField(
+                        controller: info.featureTagCustom,
+                        style: fieldStyle,
+                        cursorColor: const Color(0xFF0A6B64),
+                        maxLength: kMaxShortLine,
+                        decoration: _field('조건 태그', mockup: true),
+                        onSubmitted: (_) => _addDiveTag(),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _addDiveTag,
+                    icon: const Icon(Icons.add_circle_outline),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-list-preview'),
+          title: '목록 미리보기',
+          child: _ListPreview(
+            name: name.text.trim(),
+            country: country.text.trim(),
+            region: location.text.trim(),
+            cover: cover,
+            mockup: true,
+          ),
+        ),
+        if (showActions)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('partner-resort-temp-save'),
+                  onPressed: saving ? null : onTempSave,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0B1F33),
+                    side: const BorderSide(color: Color(0xFF8A98A8)),
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: Text(saving ? l10n.exploreSaving : l10n.briefTempSave),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  key: const Key('partner-resort-save'),
+                  onPressed: saving ? null : onSave,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B2A3C),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: Text(saving ? l10n.exploreSaving : l10n.partnerSave),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   void _addCustomAmenity() {
     final item = clampShort(info.amenityCustom.text);
     if (item.isEmpty || info.amenities.length >= kMaxAmenities) {
@@ -717,18 +1122,22 @@ class _PartnerRouteCard extends StatelessWidget {
     required this.draft,
     required this.index,
     required this.onChanged,
+    this.mockup = false,
   });
 
   final ResortDeskInfoDraft draft;
   final int index;
   final VoidCallback onChanged;
+  final bool mockup;
 
   @override
   Widget build(BuildContext context) {
     final route = draft.accessRoutes[index];
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: PlannerPalette.border),
+        border: Border.all(
+          color: mockup ? const Color(0xFFDDE3EA) : PlannerPalette.border,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -738,7 +1147,17 @@ class _PartnerRouteCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('경로 ${index + 1}')),
+                Expanded(
+                  child: Text(
+                    '경로 ${index + 1}',
+                    style: mockup
+                        ? const TextStyle(
+                            color: Color(0xFF0B1F33),
+                            fontWeight: FontWeight.w800,
+                          )
+                        : null,
+                  ),
+                ),
                 IconButton(
                   onPressed: () {
                     route.dispose();
@@ -749,10 +1168,7 @@ class _PartnerRouteCard extends StatelessWidget {
                 ),
               ],
             ),
-            TextField(
-              controller: route.from,
-              decoration: _field('출발지'),
-            ),
+            _routeFrom(route),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -777,6 +1193,21 @@ class _PartnerRouteCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _routeFrom(_AccessRouteDraft route) {
+    final field = TextField(
+      controller: route.from,
+      style: TextStyle(
+        color: mockup ? const Color(0xFF0B1F33) : null,
+      ),
+      cursorColor: mockup ? const Color(0xFF0A6B64) : null,
+      decoration: _field('출발지', mockup: mockup),
+    );
+    if (!mockup) {
+      return field;
+    }
+    return _mockLabel('출발지', field);
+  }
 }
 
 class _PartnerSpotCard extends StatelessWidget {
@@ -784,18 +1215,22 @@ class _PartnerSpotCard extends StatelessWidget {
     required this.draft,
     required this.index,
     required this.onChanged,
+    this.mockup = false,
   });
 
   final ResortDeskInfoDraft draft;
   final int index;
   final VoidCallback onChanged;
+  final bool mockup;
 
   @override
   Widget build(BuildContext context) {
     final spot = draft.nearbySpots[index];
     return DecoratedBox(
       decoration: BoxDecoration(
-        border: Border.all(color: PlannerPalette.border),
+        border: Border.all(
+          color: mockup ? const Color(0xFFDDE3EA) : PlannerPalette.border,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -804,7 +1239,17 @@ class _PartnerSpotCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: Text('장소 ${index + 1}')),
+                Expanded(
+                  child: Text(
+                    '장소 ${index + 1}',
+                    style: mockup
+                        ? const TextStyle(
+                            color: Color(0xFF0B1F33),
+                            fontWeight: FontWeight.w800,
+                          )
+                        : null,
+                  ),
+                ),
                 IconButton(
                   onPressed: () {
                     spot.dispose();
@@ -815,19 +1260,28 @@ class _PartnerSpotCard extends StatelessWidget {
                 ),
               ],
             ),
-            TextField(
-              controller: spot.name,
-              decoration: _field('장소 이름'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: spot.distance,
-              decoration: _field('거리'),
-            ),
+            _spotField(spot.name, '장소 이름'),
+            if (!mockup) const SizedBox(height: 8),
+            _spotField(spot.distance, '거리'),
           ],
         ),
       ),
     );
+  }
+
+  Widget _spotField(TextEditingController controller, String label) {
+    final field = TextField(
+      controller: controller,
+      style: TextStyle(
+        color: mockup ? const Color(0xFF0B1F33) : null,
+      ),
+      cursorColor: mockup ? const Color(0xFF0A6B64) : null,
+      decoration: _field(label, mockup: mockup),
+    );
+    if (!mockup) {
+      return field;
+    }
+    return _mockLabel(label, field);
   }
 }
 
@@ -873,12 +1327,14 @@ class _ListPreview extends StatelessWidget {
     required this.country,
     required this.region,
     required this.cover,
+    this.mockup = false,
   });
 
   final String name;
   final String country;
   final String region;
   final BookingGalleryItem? cover;
+  final bool mockup;
 
   @override
   Widget build(BuildContext context) {
@@ -891,15 +1347,17 @@ class _ListPreview extends StatelessWidget {
           leading: _CoverPreview(item: cover),
           title: Text(
             name.isEmpty ? '리조트 이름' : name,
-            style: const TextStyle(
-              color: PlannerPalette.text,
+            style: TextStyle(
+              color: mockup ? const Color(0xFF0B1F33) : PlannerPalette.text,
               fontWeight: FontWeight.w800,
             ),
           ),
           subtitle: Text(
             place,
             key: const Key('partner-resort-preview-place'),
-            style: const TextStyle(color: PlannerPalette.textDim),
+            style: TextStyle(
+              color: mockup ? const Color(0xFF52606D) : PlannerPalette.textDim,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -907,9 +1365,15 @@ class _ListPreview extends StatelessWidget {
           key: const Key('partner-resort-preview-book'),
           onPressed: () {},
           style: FilledButton.styleFrom(
-            backgroundColor: PlannerPalette.accent,
-            foregroundColor: PlannerPalette.onAccent,
+            backgroundColor:
+                mockup ? const Color(0xFF0B2A3C) : PlannerPalette.accent,
+            foregroundColor: mockup ? Colors.white : PlannerPalette.onAccent,
             minimumSize: const Size.fromHeight(44),
+            shape: mockup
+                ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  )
+                : null,
           ),
           child: const Text('이 리조트 예약하러 가기'),
         ),
@@ -941,25 +1405,28 @@ Widget _box({
   required Key boxKey,
   required String title,
   required Widget child,
+  bool mockup = false,
 }) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 14),
     child: Material(
       key: boxKey,
-      color: PlannerPalette.card,
+      color: mockup ? Colors.white : PlannerPalette.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PlannerPalette.border),
+        borderRadius: BorderRadius.circular(mockup ? 16 : 14),
+        side: BorderSide(
+          color: mockup ? const Color(0xFFDDE3EA) : PlannerPalette.border,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        padding: EdgeInsets.fromLTRB(mockup ? 16 : 14, mockup ? 16 : 12, mockup ? 16 : 14, mockup ? 16 : 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               title,
-              style: const TextStyle(
-                color: PlannerPalette.text,
+              style: TextStyle(
+                color: mockup ? const Color(0xFF0B1F33) : PlannerPalette.text,
                 fontWeight: FontWeight.w800,
                 fontSize: 16,
               ),
@@ -973,24 +1440,71 @@ Widget _box({
   );
 }
 
-InputDecoration _field(String label) {
+InputDecoration _field(String label, {bool mockup = false}) {
+  final borderColor = mockup ? const Color(0xFF8A98A8) : PlannerPalette.border;
+  final radius = BorderRadius.circular(10);
   return InputDecoration(
-    labelText: label,
+    labelText: mockup ? null : label,
     filled: true,
-    fillColor: PlannerPalette.card,
-    labelStyle: const TextStyle(color: PlannerPalette.textDim),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    fillColor: Colors.white,
+    labelStyle: TextStyle(
+      color: mockup ? const Color(0xFF52606D) : PlannerPalette.textDim,
+      fontWeight: mockup ? FontWeight.w700 : FontWeight.w400,
+    ),
+    constraints: mockup ? const BoxConstraints(minHeight: 48) : null,
+    contentPadding: EdgeInsets.symmetric(
+      horizontal: mockup ? 12 : 14,
+      vertical: 14,
+    ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PlannerPalette.border),
+      borderRadius: radius,
+      borderSide: BorderSide(color: borderColor),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PlannerPalette.border),
+      borderRadius: radius,
+      borderSide: BorderSide(color: borderColor),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: PlannerPalette.accent, width: 1.4),
+      borderRadius: radius,
+      borderSide: BorderSide(
+        color: mockup ? const Color(0xFF0A6B64) : PlannerPalette.accent,
+        width: 1.4,
+      ),
+    ),
+  );
+}
+
+Widget _mockLabel(String label, Widget field) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF0B1F33),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        field,
+      ],
+    ),
+  );
+}
+
+Widget _mockTip(String text) {
+  return Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: Color(0xFF52606D),
+        fontSize: 12,
+        height: 1.55,
+      ),
     ),
   );
 }

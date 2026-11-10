@@ -41,6 +41,20 @@ class _StoryPersistResult {
   final bool unconfirmed;
 }
 
+abstract final class _FormInk {
+  static const bg = Color(0xFFF4F6F9);
+  static const card = Color(0xFFFFFFFF);
+  static const line = Color(0xFFDDE3EA);
+  static const ink = Color(0xFF0B1F33);
+  static const muted = Color(0xFF52606D);
+  static const teal = Color(0xFF0A6B64);
+  static const chipOn = Color(0xFF0A7C74);
+  static const input = Color(0xFF8A98A8);
+  static const tagBg = Color(0xFFE3F4F1);
+  static const navy = Color(0xFF0B2A3C);
+  static const fieldFill = Color(0xFFF7F8F9);
+}
+
 /// Regular product boxes on the partner resort screen.
 ///
 /// Empty-seat products are not a section here. Saved individual options stay
@@ -405,17 +419,20 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       children: [
         Text(
           widget.partnerLabels ? '① 상품' : '일반 상품',
-          style: const TextStyle(
-            color: PlannerPalette.text,
+          style: TextStyle(
+            color: widget.partnerLabels ? _FormInk.ink : PlannerPalette.text,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           '구매자가 예약할 때 정해요',
-          key: Key('partner-regular-date-hint'),
-          style: TextStyle(color: PlannerPalette.textDim, height: 1.35),
+          key: const Key('partner-regular-date-hint'),
+          style: TextStyle(
+            color: widget.partnerLabels ? _FormInk.muted : PlannerPalette.textDim,
+            height: 1.35,
+          ),
         ),
         const SizedBox(height: 12),
         for (final box in _boxes) ...[
@@ -442,8 +459,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 key: const Key('partner-regular-temp-save'),
                 onPressed: _saving ? null : () => _save(temp: true),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: PlannerPalette.text,
-                  minimumSize: const Size.fromHeight(48),
+                  foregroundColor:
+                      widget.partnerLabels ? _FormInk.ink : PlannerPalette.text,
+                  side: widget.partnerLabels
+                      ? const BorderSide(color: _FormInk.input)
+                      : null,
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      widget.partnerLabels ? 10 : 4,
+                    ),
+                  ),
                 ),
                 child: Text(
                   _saving ? l10n.exploreSaving : l10n.briefTempSave,
@@ -457,9 +483,18 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 key: const Key('partner-regular-save'),
                 onPressed: _saving ? null : () => _save(temp: false),
                 style: FilledButton.styleFrom(
-                  backgroundColor: PlannerPalette.accent,
-                  foregroundColor: PlannerPalette.onAccent,
-                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: widget.partnerLabels
+                      ? _FormInk.navy
+                      : PlannerPalette.accent,
+                  foregroundColor: widget.partnerLabels
+                      ? Colors.white
+                      : PlannerPalette.onAccent,
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      widget.partnerLabels ? 10 : 4,
+                    ),
+                  ),
                 ),
                 child: Text(
                   _saving
@@ -547,17 +582,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             const Text(
               '샵',
               style: TextStyle(
-                color: PlannerPalette.textDim,
-                fontSize: 12,
+                color: _FormInk.muted,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 6),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F8F9),
+                color: _FormInk.fieldFill,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: PlannerPalette.border),
+                border: Border.all(color: _FormInk.line),
               ),
               child: Padding(
                 padding: const EdgeInsets.only(left: 12),
@@ -568,8 +603,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                         shopName,
                         key: Key('partner-regular-shop-name-$boxId'),
                         style: const TextStyle(
-                          color: PlannerPalette.text,
-                          fontSize: 14,
+                          color: _FormInk.ink,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -577,7 +612,13 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                     TextButton(
                       key: Key('partner-regular-shop-info-$boxId'),
                       onPressed: _openShopInfo,
-                      child: const Text('샵 정보 ›'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _FormInk.teal,
+                      ),
+                      child: const Text(
+                        '샵 정보 ›',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ],
                 ),
@@ -587,7 +628,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             const Text(
               '이름·지역·주소·소개는 샵 정보에서 불러와요. 여기서 다시 쓰지 않아요.',
               style: TextStyle(
-                color: PlannerPalette.textDim,
+                color: _FormInk.muted,
                 fontSize: 12,
                 height: 1.35,
               ),
@@ -608,9 +649,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         return DecoratedBox(
           key: Key('partner-regular-seats-${box.id}'),
           decoration: BoxDecoration(
-            color: const Color(0xFFF4F6F9),
+            color: _FormInk.bg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: PlannerPalette.border),
+            border: Border.all(color: _FormInk.line),
           ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
@@ -624,7 +665,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                         '열린 빈자리 $openCount / 1',
                         key: Key('partner-regular-seats-count-${box.id}'),
                         style: const TextStyle(
-                          color: PlannerPalette.text,
+                          color: _FormInk.ink,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -633,7 +674,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                       const Text(
                         '한 번에 1개만 열 수 있어요. 출발이 끝나면 다음 일정을 올릴 수 있어요.',
                         style: TextStyle(
-                          color: PlannerPalette.textDim,
+                          color: _FormInk.muted,
                           fontSize: 13,
                           height: 1.35,
                         ),
@@ -644,7 +685,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 TextButton(
                   key: Key('partner-regular-seats-open-${box.id}'),
                   onPressed: () => _openEmptySeats(box),
-                  child: const Text('빈자리 만들기 ›'),
+                  style: TextButton.styleFrom(foregroundColor: _FormInk.teal),
+                  child: const Text(
+                    '빈자리 만들기 ›',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ],
             ),
@@ -660,19 +705,30 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final optionCount = box.optionCount;
     return Material(
       key: Key('partner-regular-card-${box.id}'),
-      color: PlannerPalette.card,
+      color: widget.partnerLabels ? Colors.transparent : PlannerPalette.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: PlannerPalette.border),
+        borderRadius: BorderRadius.circular(widget.partnerLabels ? 0 : 14),
+        side: BorderSide(
+          color: widget.partnerLabels
+              ? Colors.transparent
+              : PlannerPalette.border,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: widget.partnerLabels
+            ? EdgeInsets.zero
+            : const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               '구매자가 예약할 때 정해요',
-              style: TextStyle(color: PlannerPalette.textDim, fontSize: 12),
+              style: TextStyle(
+                color: widget.partnerLabels
+                    ? _FormInk.muted
+                    : PlannerPalette.textDim,
+                fontSize: 12,
+              ),
             ),
             InkWell(
               key: Key('partner-regular-expand-${box.id}'),
@@ -692,25 +748,37 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                         box.name.text.trim().isEmpty
                             ? '이름 없음'
                             : box.name.text.trim(),
-                        style: const TextStyle(
-                          color: PlannerPalette.text,
+                        style: TextStyle(
+                          color: widget.partnerLabels
+                              ? _FormInk.ink
+                              : PlannerPalette.text,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
                       '${_price.format(price)}원',
-                      style: const TextStyle(color: PlannerPalette.text),
+                      style: TextStyle(
+                        color: widget.partnerLabels
+                            ? _FormInk.ink
+                            : PlannerPalette.text,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Text(
                       '옵션 $optionCount',
                       key: Key('partner-regular-option-count-${box.id}'),
-                      style: const TextStyle(color: PlannerPalette.textDim),
+                      style: TextStyle(
+                        color: widget.partnerLabels
+                            ? _FormInk.muted
+                            : PlannerPalette.textDim,
+                      ),
                     ),
                     Icon(
                       open ? Icons.expand_less : Icons.expand_more,
-                      color: PlannerPalette.textDim,
+                      color: widget.partnerLabels
+                          ? _FormInk.muted
+                          : PlannerPalette.textDim,
                     ),
                   ],
                 ),
@@ -720,12 +788,19 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               SwitchListTile.adaptive(
                 key: Key('partner-regular-visible-${box.id}'),
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
+                title: Text(
                   '예약하러 가기에 보이기',
-                  style: TextStyle(color: PlannerPalette.text, fontSize: 14),
+                  style: TextStyle(
+                    color: widget.partnerLabels
+                        ? _FormInk.ink
+                        : PlannerPalette.text,
+                    fontSize: 14,
+                  ),
                 ),
                 value: box.showOnBooking,
-                activeThumbColor: PlannerPalette.accent,
+                activeThumbColor: widget.partnerLabels
+                    ? _FormInk.teal
+                    : PlannerPalette.accent,
                 onChanged: _saving
                     ? null
                     : (value) => setState(() => box.showOnBooking = value),
@@ -736,7 +811,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                       ? '저장하면 손님 예약 화면에 보입니다'
                       : '저장하면 손님 예약 화면에서 숨겨집니다',
                   style: const TextStyle(
-                    color: PlannerPalette.textDim,
+                    color: _FormInk.muted,
                     fontSize: 12,
                   ),
                 ),
@@ -796,42 +871,77 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     final cards = <Widget>[
       _sectionCard(
         boxKey: Key('partner-regular-section-basic-${box.id}'),
-        title: '1. 기본 정보',
+        index: 1,
+        title: '기본 정보',
+        subtitle: '탐색 목록과 상품 상세의 첫 화면에 쓰여요.',
+        tag: '필수',
         child: _basicInfo(l10n, box),
       ),
       _sectionCard(
         boxKey: Key('partner-regular-section-photos-${box.id}'),
-        title: '2. 사진',
-        child: _photoEditor(box),
+        index: 2,
+        title: '사진',
+        subtitle: '이 상품의 사진이에요. 1번 사진이 탐색 카드와 같은배 카드에 쓰여요.',
+        tag: '필수',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _photoEditor(box),
+            const SizedBox(height: 10),
+            const Text(
+              '여러 장을 한 번에 올리고 순서를 바꿔요. 1번이 대표 사진이에요.',
+              style: TextStyle(color: _FormInk.muted, fontSize: 13, height: 1.5),
+            ),
+          ],
+        ),
       ),
       _sectionCard(
         boxKey: Key('partner-regular-section-facts-${box.id}'),
-        title: '3. 핵심 정보',
+        index: 3,
+        title: '핵심 정보',
+        subtitle: '상품 상세 상단 요약과 검색 필터에 쓰여요.',
+        tag: '필수',
         child: _factsBlock(box),
       ),
       _sectionCard(
         boxKey: Key('partner-product-story-${box.id}'),
-        title: '4. 소개 · 일정',
+        index: 4,
+        title: '소개 · 일정',
+        subtitle: '짧은 소개와 하루 일정을 정해진 칸으로 입력해요.',
+        tag: '권장',
         child: _storySchedule(box),
       ),
       _sectionCard(
         boxKey: Key('regular-${box.id}-partner-form-section-price'),
-        title: '5. 가격 · 포함 · 옵션',
+        index: 5,
+        title: '가격 · 포함 · 옵션',
+        subtitle: '누구와 가는지에 따라 가격이 달라요. 인원 유형별로 가격을 정해요.',
+        tag: '필수',
         child: _pricePackage(l10n, box),
       ),
       _sectionCard(
         boxKey: Key('partner-regular-section-sale-${box.id}'),
-        title: '6. 예약 가능 조건',
+        index: 6,
+        title: '예약 가능 조건',
+        subtitle: '날짜를 하나씩 만들지 않고, 규칙으로 늘 열어 두어요.',
+        tag: '필수',
         child: _saleRulesBlock(box),
       ),
       _sectionCard(
         boxKey: Key('partner-regular-section-seats-${box.id}'),
-        title: '7. 같은배 빈자리',
+        index: 7,
+        title: '같은배 빈자리',
+        subtitle: '상품은 그대로 두고, 빈자리 화면에서 출발일만 올려요.',
+        tag: '선택',
+        accent: _FormInk.teal,
         child: _openSeatsRow(box),
       ),
       _sectionCard(
         boxKey: Key('partner-regular-section-refund-${box.id}'),
-        title: '8. 환불 · 안내',
+        index: 8,
+        title: '환불 · 안내',
+        subtitle: '결제 직전 망설임을 줄이는 구간이에요.',
+        tag: '권장',
         child: _refundBlock(box),
       ),
     ];
@@ -849,6 +959,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     return _PinnedSteps(
       boxId: box.id,
       labels: _stepLabels,
+      statuses: const ['필수', '필수', '필수', '권장', '필수', '필수', '선택', '권장'],
       onTap: (index) => _scrollToSection(anchors[index]),
       child: form,
     );
@@ -891,6 +1002,18 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             ),
             label: Text(item.$2),
             selected: box.category == item.$1,
+            showCheckmark: false,
+            selectedColor: _FormInk.chipOn,
+            backgroundColor: Colors.white,
+            labelStyle: TextStyle(
+              color: box.category == item.$1 ? Colors.white : _FormInk.ink,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+            side: BorderSide(
+              color: box.category == item.$1 ? _FormInk.chipOn : _FormInk.input,
+            ),
+            shape: const StadiumBorder(),
             onSelected: (_) => setState(() => box.category = item.$1),
           ),
       ],
@@ -898,24 +1021,39 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
   }
 
   Widget _factsBlock(_RegularProductDraft box) {
+    final nights = _nightsField(box);
+    final dives = _numberField(
+      controller: box.diveCount,
+      keyName: 'partner-regular-dive-count-${box.id}',
+      label: '다이빙 횟수',
+    );
+    final level = _difficultyField(box);
+    final guests = _numberField(
+      controller: box.maxGuests,
+      keyName: 'partner-regular-max-guests-${box.id}',
+      label: '하루 최대 인원 (비우면 제한 없음)',
+    );
+    if (MediaQuery.sizeOf(context).width >= 720) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: nights),
+          const SizedBox(width: 10),
+          Expanded(child: dives),
+          const SizedBox(width: 10),
+          Expanded(child: level),
+          const SizedBox(width: 10),
+          Expanded(child: guests),
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _nightsField(box),
-        const SizedBox(height: 10),
-        _numberField(
-          controller: box.diveCount,
-          keyName: 'partner-regular-dive-count-${box.id}',
-          label: '다이빙 횟수',
-        ),
-        const SizedBox(height: 10),
-        _difficultyField(box),
-        const SizedBox(height: 10),
-        _numberField(
-          controller: box.maxGuests,
-          keyName: 'partner-regular-max-guests-${box.id}',
-          label: '하루 최대 인원 (비우면 제한 없음)',
-        ),
+        nights,
+        dives,
+        level,
+        guests,
       ],
     );
   }
@@ -933,7 +1071,18 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         OutlinedButton(
           key: Key('partner-regular-itinerary-add-${box.id}'),
           onPressed: () => setState(() => box.itinerary.add(_ItineraryDraft())),
-          child: const Text('+ 일정 추가'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _FormInk.teal,
+            side: const BorderSide(color: _FormInk.input, width: 1.5),
+            minimumSize: const Size.fromHeight(44),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: const Text(
+            '+ 일정 추가',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
@@ -949,24 +1098,30 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           children: [
             SizedBox(
               width: 88,
-              child: TextField(
-                key: Key('partner-regular-itinerary-day-${row.id}'),
-                controller: row.day,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(color: PlannerPalette.text),
-                cursorColor: PlannerPalette.accent,
-                decoration: _field('일차'),
+              child: _labeled(
+                '일차',
+                TextField(
+                  key: Key('partner-regular-itinerary-day-${row.id}'),
+                  controller: row.day,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  style: _ink,
+                  cursorColor: _cursor,
+                  decoration: _deco('일차'),
+                ),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: TextField(
-                key: Key('partner-regular-itinerary-title-${row.id}'),
-                controller: row.title,
-                style: const TextStyle(color: PlannerPalette.text),
-                cursorColor: PlannerPalette.accent,
-                decoration: _field('제목'),
+              child: _labeled(
+                '제목',
+                TextField(
+                  key: Key('partner-regular-itinerary-title-${row.id}'),
+                  controller: row.title,
+                  style: _ink,
+                  cursorColor: _cursor,
+                  decoration: _deco('제목'),
+                ),
               ),
             ),
             IconButton(
@@ -974,19 +1129,21 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 box.itinerary.remove(row);
                 row.dispose();
               }),
-              icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+              icon: const Icon(Icons.close, color: _FormInk.muted),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        TextField(
-          key: Key('partner-regular-itinerary-body-${row.id}'),
-          controller: row.body,
-          minLines: 2,
-          maxLines: 4,
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field('내용'),
+        _labeled(
+          '내용',
+          TextField(
+            key: Key('partner-regular-itinerary-body-${row.id}'),
+            controller: row.body,
+            minLines: 2,
+            maxLines: 4,
+            style: _ink,
+            cursorColor: _cursor,
+            decoration: _deco('내용'),
+          ),
         ),
       ],
     );
@@ -1030,10 +1187,12 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           label: '무료 취소 기한 (출발 며칠 전까지)',
         ),
         const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
+        _labeled(
+          '기상 악화로 출항 취소 시',
+          DropdownButtonFormField<String>(
           key: Key('partner-regular-weather-${box.id}-$policy'),
           initialValue: policy,
-          decoration: _field('기상 악화로 출항 취소 시'),
+          decoration: _deco('기상 악화로 출항 취소 시'),
           items: [
             if (policy.isNotEmpty && !known.containsKey(policy))
               DropdownMenuItem(value: policy, child: Text(policy)),
@@ -1048,38 +1207,99 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             setState(() => box.weatherPolicy = value);
           },
         ),
+        ),
       ],
     );
   }
 
   Widget _sectionCard({
     required Key boxKey,
+    required int index,
     required String title,
+    required String subtitle,
+    required String tag,
     required Widget child,
+    Color accent = _FormInk.line,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Material(
         key: boxKey,
-        color: PlannerPalette.card,
+        color: _FormInk.card,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: PlannerPalette.border),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: accent),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: PlannerPalette.text,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: _FormInk.line,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$index',
+                      style: const TextStyle(
+                        color: _FormInk.ink,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: _FormInk.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: _FormInk.muted,
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _FormInk.tagBg,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        color: _FormInk.teal,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
               child,
             ],
           ),
@@ -1115,43 +1335,106 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     );
   }
 
+  TextStyle get _ink => TextStyle(
+        color: widget.partnerLabels ? _FormInk.ink : PlannerPalette.text,
+        fontSize: 14,
+      );
+
+  Color get _cursor =>
+      widget.partnerLabels ? _FormInk.teal : PlannerPalette.accent;
+
+  InputDecoration _deco(String label) {
+    if (!widget.partnerLabels) {
+      return _field(label);
+    }
+    const border = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(10)),
+      borderSide: BorderSide(color: _FormInk.input),
+    );
+    return const InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      constraints: BoxConstraints(minHeight: 44),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        borderSide: BorderSide(color: _FormInk.teal, width: 1.6),
+      ),
+    );
+  }
+
+  Widget _labeled(String label, Widget field) {
+    if (!widget.partnerLabels) {
+      return field;
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: _FormInk.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          field,
+        ],
+      ),
+    );
+  }
+
   Widget _nameField(_RegularProductDraft box) {
-    return TextField(
-      key: Key('partner-regular-name-${box.id}'),
-      controller: box.name,
-      style: const TextStyle(color: PlannerPalette.text),
-      cursorColor: PlannerPalette.accent,
-      decoration: _field('상품 이름'),
-      onChanged: (_) => setState(() {}),
+    return _labeled(
+      '상품 이름',
+      TextField(
+        key: Key('partner-regular-name-${box.id}'),
+        controller: box.name,
+        style: _ink,
+        cursorColor: _cursor,
+        decoration: _deco('상품 이름'),
+        onChanged: (_) => setState(() {}),
+      ),
     );
   }
 
   Widget _basePriceRow(AppLocalizations l10n, _RegularProductDraft box) {
+    final diverLabel = widget.partnerLabels ? '다이버' : l10n.partnerFormBasePrice;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: TextField(
-            key: Key('partner-regular-price-${box.id}'),
-            controller: box.consumer,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(color: PlannerPalette.text),
-            cursorColor: PlannerPalette.accent,
-            decoration: _field(
-              widget.partnerLabels ? '다이버' : l10n.partnerFormBasePrice,
+          child: _labeled(
+            diverLabel,
+            TextField(
+              key: Key('partner-regular-price-${box.id}'),
+              controller: box.consumer,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: _ink,
+              cursorColor: _cursor,
+              decoration: _deco(diverLabel),
+              onChanged: (_) => setState(() {}),
             ),
-            onChanged: (_) => setState(() {}),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
-          child: TextField(
-            controller: box.professional,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(color: PlannerPalette.text),
-            cursorColor: PlannerPalette.accent,
-            decoration: _field(l10n.exploreProPrice),
+          child: _labeled(
+            l10n.exploreProPrice,
+            TextField(
+              controller: box.professional,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: _ink,
+              cursorColor: _cursor,
+              decoration: _deco(l10n.exploreProPrice),
+            ),
           ),
         ),
       ],
@@ -1179,26 +1462,32 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
   }
 
   Widget _nightsField(_RegularProductDraft box) {
-    return TextField(
-      key: Key('partner-regular-nights-${box.id}'),
-      controller: box.nights,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: PlannerPalette.text),
-      cursorColor: PlannerPalette.accent,
-      decoration: _field('숙박 박 수 (예: 2박 3일이면 2)'),
+    return _labeled(
+      '숙박 박 수 (예: 2박 3일이면 2)',
+      TextField(
+        key: Key('partner-regular-nights-${box.id}'),
+        controller: box.nights,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: _ink,
+        cursorColor: _cursor,
+        decoration: _deco('숙박 박 수 (예: 2박 3일이면 2)'),
+      ),
     );
   }
 
   Widget _supplementField(_RegularProductDraft box) {
-    return TextField(
-      key: Key('partner-regular-single-supplement-${box.id}'),
-      controller: box.singleSupplement,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: PlannerPalette.text),
-      cursorColor: PlannerPalette.accent,
-      decoration: _field('1인 1실 추가 요금(1박당)'),
+    return _labeled(
+      '1인 1실 추가 요금 (1박당)',
+      TextField(
+        key: Key('partner-regular-single-supplement-${box.id}'),
+        controller: box.singleSupplement,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: _ink,
+        cursorColor: _cursor,
+        decoration: _deco('1인 1실 추가 요금(1박당)'),
+      ),
     );
   }
 
@@ -1207,14 +1496,17 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     required String keyName,
     required String label,
   }) {
-    return TextField(
-      key: Key(keyName),
-      controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: PlannerPalette.text),
-      cursorColor: PlannerPalette.accent,
-      decoration: _field(label),
+    return _labeled(
+      label,
+      TextField(
+        key: Key(keyName),
+        controller: controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: _ink,
+        cursorColor: _cursor,
+        decoration: _deco(label),
+      ),
     );
   }
 
@@ -1225,10 +1517,12 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       '어드밴스드 이상',
     ];
     final current = box.difficulty;
-    return DropdownButtonFormField<String>(
+    return _labeled(
+      '요구 자격',
+      DropdownButtonFormField<String>(
       key: Key('partner-regular-difficulty-${box.id}-$current'),
       initialValue: current,
-      decoration: _field('요구 자격'),
+      decoration: _deco('요구 자격'),
       items: [
         if (current.isNotEmpty && !known.contains(current))
           DropdownMenuItem(value: current, child: Text(current)),
@@ -1242,13 +1536,46 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         }
         setState(() => box.difficulty = value);
       },
+    ),
     );
   }
 
   Widget _guestTierList(_RegularProductDraft box) {
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    const head = TextStyle(
+      color: _FormInk.muted,
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Text(
+          '인원 유형별 가격',
+          style: TextStyle(
+            color: _FormInk.ink,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (wide)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 6),
+            child: Row(
+              children: [
+                Expanded(flex: 2, child: Text('유형', style: head)),
+                SizedBox(width: 8),
+                Expanded(flex: 3, child: Text('손님에게 보이는 조건', style: head)),
+                SizedBox(width: 8),
+                Expanded(flex: 2, child: Text('가격(원)', style: head)),
+                SizedBox(
+                  width: 48,
+                  child: Text('삭제', style: head),
+                ),
+              ],
+            ),
+          ),
         for (final tier in box.guestTiers) ...[
           _guestTierRow(box, tier),
           const SizedBox(height: 8),
@@ -1258,7 +1585,23 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           onPressed: () => setState(() {
             box.guestTiers.add(_GuestTierDraft());
           }),
-          child: const Text('인원 유형 추가'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _FormInk.teal,
+            side: const BorderSide(color: _FormInk.input, width: 1.5),
+            minimumSize: const Size.fromHeight(44),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: const Text(
+            '+ 인원 유형 추가',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          '다이버 1명 이상 동반 필수 · 소아·유아는 보호자 동반 필수',
+          style: TextStyle(color: _FormInk.muted, fontSize: 13, height: 1.45),
         ),
       ],
     );
@@ -1304,7 +1647,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       children: [
         const Text(
           '예약 가능 요일',
-          style: TextStyle(color: PlannerPalette.textDim),
+          style: TextStyle(
+            color: _FormInk.ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -1316,6 +1663,21 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 key: Key('partner-regular-weekday-${box.id}-$day'),
                 label: Text(labels[day - 1]),
                 selected: box.saleWeekdays.contains(day),
+                showCheckmark: false,
+                selectedColor: _FormInk.chipOn,
+                backgroundColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: box.saleWeekdays.contains(day)
+                      ? Colors.white
+                      : _FormInk.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+                side: BorderSide(
+                  color: box.saleWeekdays.contains(day)
+                      ? _FormInk.chipOn
+                      : _FormInk.input,
+                ),
+                shape: const StadiumBorder(),
                 onSelected: (on) => setState(() {
                   if (on) {
                     box.saleWeekdays.add(day);
@@ -1327,10 +1689,12 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           ],
         ),
         const SizedBox(height: 10),
-        DropdownButtonFormField<int>(
+        _labeled(
+          '최소 사전 예약',
+          DropdownButtonFormField<int>(
           key: Key('partner-regular-lead-${box.id}-$lead'),
           initialValue: lead,
-          decoration: _field('최소 사전 예약'),
+          decoration: _deco('최소 사전 예약'),
           items: [
             if (lead != 0 && lead != 3 && lead != 7)
               DropdownMenuItem(value: lead, child: Text('출발 $lead일 전까지')),
@@ -1345,10 +1709,15 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             setState(() => box.minLeadDays = value);
           },
         ),
+        ),
         const SizedBox(height: 10),
         const Text(
           '예약 막을 날짜',
-          style: TextStyle(color: PlannerPalette.textDim),
+          style: TextStyle(
+            color: _FormInk.ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -1403,13 +1772,13 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       controller: tier.label,
       style: const TextStyle(color: PlannerPalette.text),
       cursorColor: PlannerPalette.accent,
-      decoration: _field('유형 이름'),
+      decoration: _deco('유형 이름'),
     );
     final condition = TextField(
       controller: tier.condition,
       style: const TextStyle(color: PlannerPalette.text),
       cursorColor: PlannerPalette.accent,
-      decoration: _field('조건 문구'),
+      decoration: _deco('조건 문구'),
     );
     final price = TextField(
       controller: tier.price,
@@ -1417,21 +1786,27 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       style: const TextStyle(color: PlannerPalette.text),
       cursorColor: PlannerPalette.accent,
-      decoration: _field('가격'),
+      decoration: _deco('가격'),
     );
     final remove = IconButton(
       onPressed: () => setState(() => box.guestTiers.remove(tier)),
-      icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+      icon: Icon(
+        Icons.close,
+        color: widget.partnerLabels ? _FormInk.muted : PlannerPalette.textDim,
+      ),
     );
-    if (MediaQuery.sizeOf(context).width >= 720) {
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    Widget cell(String name, Widget field) =>
+        wide ? field : _labeled(name, field);
+    if (wide) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: label),
+          Expanded(flex: 2, child: cell('유형', label)),
           const SizedBox(width: 8),
-          Expanded(flex: 3, child: condition),
+          Expanded(flex: 3, child: cell('손님에게 보이는 조건', condition)),
           const SizedBox(width: 8),
-          Expanded(flex: 2, child: price),
+          Expanded(flex: 2, child: cell('가격(원)', price)),
           remove,
         ],
       );
@@ -1439,11 +1814,9 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(children: [Expanded(child: label), remove]),
-        const SizedBox(height: 8),
-        condition,
-        const SizedBox(height: 8),
-        price,
+        Row(children: [Expanded(child: cell('유형', label)), remove]),
+        cell('손님에게 보이는 조건', condition),
+        cell('가격(원)', price),
       ],
     );
   }
@@ -1461,7 +1834,24 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
           onPressed: () => setState(() {
             box.addons.add(_AddonDraft());
           }),
-          child: Text(l10n.partnerFormAddOption),
+          style: widget.partnerLabels
+              ? OutlinedButton.styleFrom(
+                  foregroundColor: _FormInk.teal,
+                  side: const BorderSide(color: _FormInk.input, width: 1.5),
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                )
+              : null,
+          child: Text(
+            widget.partnerLabels
+                ? '+ ${l10n.partnerFormAddOption}'
+                : l10n.partnerFormAddOption,
+            style: TextStyle(
+              fontWeight: widget.partnerLabels ? FontWeight.w700 : null,
+            ),
+          ),
         ),
       ],
     );
@@ -1469,50 +1859,65 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
 
   Widget _addonRow(_RegularProductDraft box, _AddonDraft addon) {
     return Material(
-      color: PlannerPalette.card,
+      color: widget.partnerLabels ? _FormInk.card : PlannerPalette.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: PlannerPalette.border),
+        borderRadius: BorderRadius.circular(widget.partnerLabels ? 10 : 12),
+        side: BorderSide(
+          color: widget.partnerLabels ? _FormInk.line : PlannerPalette.border,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: TextField(
-                    key: Key('partner-regular-option-name-${addon.id}'),
-                    controller: addon.name,
-                    style: const TextStyle(color: PlannerPalette.text),
-                    cursorColor: PlannerPalette.accent,
-                    decoration: _field('옵션 이름'),
-                    onChanged: (_) => setState(() {}),
+                  child: _labeled(
+                    '옵션 이름',
+                    TextField(
+                      key: Key('partner-regular-option-name-${addon.id}'),
+                      controller: addon.name,
+                      style: _ink,
+                      cursorColor: _cursor,
+                      decoration: _deco('옵션 이름'),
+                      onChanged: (_) => setState(() {}),
+                    ),
                   ),
                 ),
                 IconButton(
                   onPressed: () => setState(() => box.addons.remove(addon)),
-                  icon: const Icon(Icons.close, color: PlannerPalette.textDim),
+                  icon: Icon(
+                    Icons.close,
+                    color: widget.partnerLabels
+                        ? _FormInk.muted
+                        : PlannerPalette.textDim,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: addon.consumer,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(color: PlannerPalette.text),
-              cursorColor: PlannerPalette.accent,
-              decoration: _field('소비자가'),
+            _labeled(
+              '소비자가',
+              TextField(
+                controller: addon.consumer,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: _ink,
+                cursorColor: _cursor,
+                decoration: _deco('소비자가'),
+              ),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: addon.professional,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: const TextStyle(color: PlannerPalette.text),
-              cursorColor: PlannerPalette.accent,
-              decoration: _field('강사 우대가'),
+            _labeled(
+              '강사 우대가',
+              TextField(
+                controller: addon.professional,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: _ink,
+                cursorColor: _cursor,
+                decoration: _deco('강사 우대가'),
+              ),
             ),
           ],
         ),
@@ -1523,23 +1928,28 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
   Widget _includesBlock(AppLocalizations l10n, _RegularProductDraft box) {
     return Column(
       children: [
-        TextField(
-          key: Key('partner-regular-includes-${box.id}'),
-          controller: box.includes,
-          minLines: 2,
-          maxLines: 4,
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field(l10n.productFormIncludes),
+        _labeled(
+          l10n.productFormIncludes,
+          TextField(
+            key: Key('partner-regular-includes-${box.id}'),
+            controller: box.includes,
+            minLines: 2,
+            maxLines: 4,
+            style: _ink,
+            cursorColor: _cursor,
+            decoration: _deco(l10n.productFormIncludes),
+          ),
         ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: box.excludes,
-          minLines: 2,
-          maxLines: 4,
-          style: const TextStyle(color: PlannerPalette.text),
-          cursorColor: PlannerPalette.accent,
-          decoration: _field(l10n.productFormExcludes),
+        _labeled(
+          l10n.productFormExcludes,
+          TextField(
+            controller: box.excludes,
+            minLines: 2,
+            maxLines: 4,
+            style: _ink,
+            cursorColor: _cursor,
+            decoration: _deco(l10n.productFormExcludes),
+          ),
         ),
       ],
     );
@@ -2054,12 +2464,14 @@ class _PinnedSteps extends StatefulWidget {
   const _PinnedSteps({
     required this.boxId,
     required this.labels,
+    required this.statuses,
     required this.onTap,
     required this.child,
   });
 
   final String boxId;
   final List<String> labels;
+  final List<String> statuses;
   final ValueChanged<int> onTap;
   final Widget child;
 
@@ -2130,35 +2542,91 @@ class _PinnedStepsState extends State<_PinnedSteps> {
             offset: Offset(0, _shift),
             child: Material(
               key: _navKey,
-              color: PlannerPalette.card,
+              color: _FormInk.card,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: const BorderSide(color: PlannerPalette.border),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: _FormInk.line),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
                 child: Column(
                   key: Key('partner-regular-steps-${widget.boxId}'),
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 10),
+                      child: Text(
+                        '등록 단계 (8)',
+                        style: TextStyle(
+                          color: _FormInk.ink,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                     for (var i = 0; i < widget.labels.length; i++)
                       InkWell(
                         key: Key('partner-regular-step-${widget.boxId}-$i'),
                         onTap: () => widget.onTap(i),
+                        borderRadius: BorderRadius.circular(10),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
+                            horizontal: 8,
+                            vertical: 8,
                           ),
-                          child: Text(
-                            '${i + 1}. ${widget.labels[i]}',
-                            style: const TextStyle(
-                              color: PlannerPalette.text,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 26,
+                                height: 26,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  color: _FormInk.line,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${i + 1}',
+                                  style: const TextStyle(
+                                    color: _FormInk.ink,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  widget.labels[i],
+                                  style: const TextStyle(
+                                    color: _FormInk.ink,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                widget.statuses[i],
+                                style: const TextStyle(
+                                  color: _FormInk.muted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(8, 12, 8, 4),
+                      child: Text(
+                        '모든 상품은 먼저 상시 판매로 열려요. 7번에서 같은배 빈자리를 따로 열 수 있어요.',
+                        style: TextStyle(
+                          color: _FormInk.muted,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
