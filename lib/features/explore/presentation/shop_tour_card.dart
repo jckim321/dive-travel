@@ -27,6 +27,7 @@ class ShopTourCard extends StatelessWidget {
     final label = quote.isProfessional
         ? l10n.exploreProPrice
         : l10n.exploreConsumerPrice;
+    final showPrice = shop.departure != null;
     final accent = Color(shop.accentColor);
 
     return AppCard(
@@ -86,58 +87,70 @@ class ShopTourCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 280),
-                        child: Column(
-                          key: ValueKey('${shop.id}-${quote.isProfessional}'),
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  label,
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: quote.isProfessional
-                                        ? AppTheme.gold
-                                        : theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w700,
+                    if (showPrice)
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 280),
+                          child: Column(
+                            key: ValueKey('${shop.id}-${quote.isProfessional}'),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    label,
+                                    style: theme.textTheme.labelMedium?.copyWith(
+                                      color: quote.isProfessional
+                                          ? AppTheme.gold
+                                          : theme.colorScheme.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
-                                if (quote.isProfessional) ...[
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.verified_outlined,
-                                    size: 16,
-                                    color: AppTheme.gold,
-                                  ),
+                                  if (quote.isProfessional) ...[
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.verified_outlined,
+                                      size: 16,
+                                      color: AppTheme.gold,
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              l10n.explorePriceWon(_priceFormat.format(quote.amount)),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
                               ),
-                            ),
-                            if (quote.hasDiscount)
+                              const SizedBox(height: 2),
                               Text(
-                                l10n.exploreOriginalPrice(
-                                  _priceFormat.format(quote.compareAtAmount!),
+                                l10n.explorePriceWon(
+                                  _priceFormat.format(quote.amount),
                                 ),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                          ],
+                              if (quote.hasDiscount)
+                                Text(
+                                  l10n.exploreOriginalPrice(
+                                    _priceFormat.format(quote.compareAtAmount!),
+                                  ),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
+                      )
+                    else
+                      const Spacer(),
                     FilledButton(
                       key: Key('shop-book-${shop.id}'),
                       onPressed: onBook,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF0B2A3C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       child: Text(l10n.exploreBook),
                     ),
                   ],
@@ -172,9 +185,9 @@ class _ShopHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.navy,
+            const Color(0xFF27C2D1),
             accent.withValues(alpha: 0.92),
-            AppTheme.navyMid,
+            const Color(0xFF06364E),
           ],
         ),
       ),

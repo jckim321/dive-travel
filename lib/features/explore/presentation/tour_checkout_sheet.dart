@@ -15,6 +15,7 @@ import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> showTourCheckoutSheet({
@@ -593,9 +594,13 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
           : '· ${l10n.exploreDiveStarCertified} $marks';
     }();
 
+    final duration = product?.derivedDurationLabel.trim() ?? shop.durationLabel;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF6F3EC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF6F3EC),
+        foregroundColor: const Color(0xFF10242F),
+        elevation: 0,
         title: Text(l10n.exploreCheckoutTitle),
       ),
       body: Column(
@@ -635,28 +640,54 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                           children: [
                             Text(
                               shop.productName,
-                              style: theme.textTheme.headlineSmall?.copyWith(
+                              style: const TextStyle(
+                                color: Color(0xFF10242F),
+                                fontSize: 28,
                                 fontWeight: FontWeight.w800,
-                                height: 1.2,
+                                height: 1.28,
+                                letterSpacing: -0.4,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Text(
-                              l10n.exploreCheckoutBody(
-                                shop.name,
-                                shop.location,
-                              ),
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 4,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => ResortDetailScreen(
+                                          hullId: shop.hullId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    foregroundColor: const Color(0xFF10242F),
+                                  ),
+                                  child: Text(
+                                    shop.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      decoration: TextDecoration.underline,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '· ${shop.country} ${shop.location}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF5B6B75),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${shop.country} · ${shop.location}',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: AppTheme.muted,
-                              ),
-                            ),
+                            if (product != null) _productChips(product, duration),
                             if (product != null &&
                                 product.blurb.trim().isNotEmpty) ...[
                               const SizedBox(height: 10),
@@ -871,28 +902,41 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   ),
           ),
           Material(
-            elevation: 12,
-            shadowColor: const Color(0x330B1F33),
-            color: Colors.white,
+            color: const Color(0xFFF6F3EC),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + bottom),
+              padding: EdgeInsets.fromLTRB(20, 10, 20, 16 + bottom),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (cannotBuy) const StaffCannotBuyNote(),
+                  if (duration.trim().isNotEmpty)
+                    Text(
+                      '다이버 1인 · ${duration.trim()}',
+                      style: const TextStyle(
+                        color: Color(0xFF5B6B75),
+                        fontSize: 12,
+                      ),
+                    ),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        l10n.explorePriceWon(formatted),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                      const Expanded(
+                        child: Text(
+                          '총 결제 예상 금액',
+                          style: TextStyle(
+                            color: Color(0xFF10242F),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       Text(
-                        l10n.explorePerTrip,
-                        style: theme.textTheme.bodySmall,
+                        l10n.explorePriceWon(formatted),
+                        style: const TextStyle(
+                          color: Color(0xFF10242F),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ],
                   ),
@@ -903,7 +947,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       fontWeight: FontWeight.w700,
                       color: quote.isProfessional
                           ? AppTheme.gold
-                          : AppTheme.navy,
+                          : const Color(0xFF5B6B75),
                     ),
                   ),
                   if (quote.hasDiscount)
@@ -916,13 +960,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       ),
                     ),
                   const SizedBox(height: 8),
-                  Text(
-                    cancelNote.isNotEmpty
-                        ? cancelNote
-                        : l10n.refundPolicyHint(refund.percent),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
                   FilledButton(
                     key: const Key('explore-checkout-pay'),
                     onPressed: cannotBuy ||
@@ -932,13 +969,25 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                         ? null
                         : _pay,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.navy,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 14,
+                      backgroundColor: const Color(0xFFCF3B18),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: _payButtonChild(l10n.explorePayAmount(formatted)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    cancelNote.isNotEmpty
+                        ? cancelNote
+                        : l10n.refundPolicyHint(refund.percent),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFF5B6B75),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -1189,8 +1238,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       });
                     },
             ),
-          const SizedBox(height: 8),
-          _compositionAmounts(),
         ],
       );
     }
@@ -1228,10 +1275,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       } else {
                         _selected.remove(option.id);
                       }
-                    });
+                    }            );
                   },
           ),
-        _compositionAmounts(),
       ],
     );
   }
@@ -1241,50 +1287,136 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     if (lines.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Column(
-      children: [
-        for (final line in lines)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                Expanded(child: Text(line.label)),
-                Text(_priceFormat.format(line.amount)),
-              ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE3DED3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Column(
+          children: [
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        line.label,
+                        style: const TextStyle(
+                          color: Color(0xFF5B6B75),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _priceFormat.format(line.amount),
+                      style: const TextStyle(
+                        color: Color(0xFF10242F),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _productChips(ShopProduct product, String duration) {
+    final chips = <String>[
+      if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),
+      if (duration.trim().isNotEmpty) duration.trim(),
+      if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+    ];
+    if (chips.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          for (final chip in chips)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE3F4F1),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                chip,
+                style: const TextStyle(
+                  color: Color(0xFF0A6B64),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _guestQtyBlock(AppLocalizations l10n, ThemeData theme) {
     final product = widget.product!;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.checkoutGuests, style: theme.textTheme.titleSmall),
-        if (_partyLocked) ...[
-          const SizedBox(height: 6),
-          Text(
-            l10n.communityFlagPartyLocked(widget.lockedPartySize),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppTheme.muted,
-              fontWeight: FontWeight.w600,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE3DED3)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.checkoutGuests,
+                  style: const TextStyle(
+                    color: Color(0xFF10242F),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (_partyLocked) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.communityFlagPartyLocked(widget.lockedPartySize),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF5B6B75),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (_flagPayByLabel() != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.communityFlagPayBy(_flagPayByLabel()!),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ],
+                for (final rate in product.resolvedGuestRates)
+                  if (rate.enabled) _qtyRow(l10n, rate),
+              ],
             ),
           ),
-          if (_flagPayByLabel() != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              l10n.communityFlagPayBy(_flagPayByLabel()!),
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
+        ),
+        if (_showsSingleRoom) ...[
+          const SizedBox(height: 10),
+          _singleRoomRow(),
         ],
-        for (final rate in product.resolvedGuestRates)
-          if (rate.enabled) _qtyRow(l10n, rate.role),
-        if (_showsSingleRoom) _singleRoomRow(),
+        const SizedBox(height: 10),
+        _compositionAmounts(),
       ],
     );
   }
@@ -1302,28 +1434,93 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   int get _singleRoomMax => _qtyDiver + _qtyNondiver;
 
   Widget _singleRoomRow() {
+    final product = widget.product!;
     final max = _singleRoomMax;
-    return Row(
-      children: [
-        const Expanded(child: Text('1인 1실')),
-        IconButton(
-          onPressed: _singleRooms == 0
-              ? null
-              : () => setState(() => _singleRooms -= 1),
-          icon: const Icon(Icons.remove),
+    final nights = product.nights;
+    final supplement = product.singleSupplement;
+    final price = supplement > 0
+        ? '+₩${_priceFormat.format(supplement)} /박'
+        : '';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE3DED3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: '1인 1실 사용',
+                          style: TextStyle(
+                            color: Color(0xFF10242F),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (price.isNotEmpty)
+                          TextSpan(
+                            text: ' $price',
+                            style: const TextStyle(
+                              color: Color(0xFF0A7C74),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    nights >= 1
+                        ? '혼자 방을 쓰는 성인 인원 · $nights박 기준'
+                        : '혼자 방을 쓰는 성인 인원',
+                    style: const TextStyle(
+                      color: Color(0xFF5B6B75),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _stepButton(
+              icon: Icons.remove,
+              onPressed: _singleRooms == 0
+                  ? null
+                  : () => setState(() => _singleRooms -= 1),
+            ),
+            SizedBox(
+              width: 26,
+              child: Text(
+                '$_singleRooms',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            _stepButton(
+              icon: Icons.add,
+              onPressed: _singleRooms >= max
+                  ? null
+                  : () => setState(() => _singleRooms += 1),
+            ),
+          ],
         ),
-        Text('$_singleRooms'),
-        IconButton(
-          onPressed: _singleRooms >= max
-              ? null
-              : () => setState(() => _singleRooms += 1),
-          icon: const Icon(Icons.add),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _qtyRow(AppLocalizations l10n, GuestRole role) {
+  Widget _qtyRow(AppLocalizations l10n, GuestRate rate) {
+    final role = rate.role;
     final label = switch (role) {
       GuestRole.diver => l10n.workbenchGuestDiver,
       GuestRole.nondiver => l10n.workbenchGuestNondiver,
@@ -1336,24 +1533,94 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       GuestRole.child => _qtyChild,
       GuestRole.infant => _qtyInfant,
     };
+    final unit = widget.quote.isProfessional ? rate.professional : rate.consumer;
+    final price = unit <= 0 ? '무료' : '₩${_priceFormat.format(unit)}';
+    var condition = '';
+    for (final tier in widget.product?.priceTiers ?? const <ProductPriceTier>[]) {
+      if (tier.role == role.firestoreValue && tier.condition.trim().isNotEmpty) {
+        condition = tier.condition.trim();
+        break;
+      }
+    }
     final locked = _partyLocked;
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        IconButton(
-          onPressed: locked || value == 0
-              ? null
-              : () => setState(() => _setQty(role, value - 1)),
-          icon: const Icon(Icons.remove),
-        ),
-        Text('$value'),
-        IconButton(
-          onPressed: locked
-              ? null
-              : () => setState(() => _setQty(role, value + 1)),
-          icon: const Icon(Icons.add),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: label,
+                        style: const TextStyle(
+                          color: Color(0xFF10242F),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' $price',
+                        style: const TextStyle(
+                          color: Color(0xFF0A7C74),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (condition.isNotEmpty)
+                  Text(
+                    condition,
+                    style: const TextStyle(
+                      color: Color(0xFF5B6B75),
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          _stepButton(
+            icon: Icons.remove,
+            onPressed: locked || value == 0
+                ? null
+                : () => setState(() => _setQty(role, value - 1)),
+          ),
+          SizedBox(
+            width: 26,
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+          ),
+          _stepButton(
+            icon: Icons.add,
+            onPressed: locked
+                ? null
+                : () => setState(() => _setQty(role, value + 1)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepButton({required IconData icon, required VoidCallback? onPressed}) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      style: IconButton.styleFrom(
+        backgroundColor: const Color(0xFFF6F3EC),
+        foregroundColor: const Color(0xFF10242F),
+        disabledForegroundColor: const Color(0xFF10242F),
+        side: const BorderSide(color: Color(0xFFD4CEC0)),
+        fixedSize: const Size(40, 40),
+        shape: const CircleBorder(),
+      ),
     );
   }
 
@@ -1403,7 +1670,7 @@ class _PhotoMosaic extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 248,
+      height: 320,
       child: Stack(
         children: [
           Row(

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
@@ -247,7 +246,11 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
         businessHours.isNotEmpty;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F3EC),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF6F3EC),
+        foregroundColor: const Color(0xFF10242F),
+        elevation: 0,
         title: Text(hull.name),
         automaticallyImplyLeading: !widget.asSheet,
         leading: widget.asSheet
@@ -459,14 +462,13 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
               ),
             ],
             const SizedBox(height: 22),
-            Text(
-              l10n.exploreChooseRoom,
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.exploreChooseRoomHint,
-              style: theme.textTheme.bodySmall,
+            const Text(
+              '이 리조트의 상품',
+              style: TextStyle(
+                color: Color(0xFF10242F),
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 14),
             RepaintBoundary(
@@ -481,6 +483,33 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
                 ),
               ),
             ),
+            if (rooms > 0) ...[
+              const SizedBox(height: 22),
+              const Text(
+                '지금 열린 빈자리',
+                style: TextStyle(
+                  color: Color(0xFF10242F),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 10),
+              for (final offer in SameBoatBoard.offers(products)) ...[
+                _OpenSeatCard(
+                  offer: offer,
+                  onOpen: () {
+                    final card = store.listingCardForProduct(hull, offer.product);
+                    showTourCheckoutSheet(
+                      context: context,
+                      shop: card,
+                      quote: store.quoteFor(card),
+                      product: _paymentProduct(store, hull.hullId, offer.product),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+            ],
             const SizedBox(height: 28),
             RepaintBoundary(
               child: DiverReviewsSection(
@@ -488,6 +517,78 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
                 rating: ratingValue,
                 reviewCount: ratingCount,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OpenSeatCard extends StatelessWidget {
+  const _OpenSeatCard({required this.offer, required this.onOpen});
+
+  final SameBoatOffer offer;
+  final VoidCallback onOpen;
+
+  String _day(DateTime value) => '${value.month}/${value.day}';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final start = offer.departureStart;
+    final close = offer.flagClosesAt;
+    final when = [
+      if (start != null) '${_day(start)} 출발',
+      if (close != null) '깃발 마감 ${_day(close)}',
+    ].join(' · ');
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE3DED3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              offer.product.name,
+              style: const TextStyle(
+                color: Color(0xFF10242F),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (when.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                when,
+                style: const TextStyle(color: Color(0xFF5B6B75), fontSize: 12),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              '결제 ${offer.bookedSeats} · 가확정 ${offer.flaggedSeatsAt(DateTime.now())} · 빈자리 ${offer.remainingSeats}',
+              style: const TextStyle(
+                color: Color(0xFF10242F),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            FilledButton(
+              onPressed: onOpen,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0B2A3C),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(l10n.exploreBook),
             ),
           ],
         ),
@@ -507,7 +608,14 @@ class _ResortInfoSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF10242F),
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 8),
         child,
       ],
@@ -758,24 +866,54 @@ class _RegularProductPicker extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final product = products[index];
-                final price = NumberFormat('#,###', 'en_US')
-                    .format(product.consumerPrice);
+                final span = [
+                  if (product.derivedDurationLabel.trim().isNotEmpty)
+                    product.derivedDurationLabel.trim(),
+                  if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+                ].join(' · ');
+                final status = [
+                  if (product.difficulty.trim().isNotEmpty)
+                    product.difficulty.trim(),
+                  '상시 예약',
+                ].join(' · ');
                 return Material(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: Color(0xFFE4E8EE)),
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: Color(0xFFE3DED3)),
                   ),
                   child: ListTile(
                     key: Key('resort-book-product-${product.id}'),
                     title: Text(
                       product.name,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        color: Color(0xFF10242F),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
                     ),
-                    subtitle: Text(
-                      product.durationLabel.trim().isEmpty
-                          ? '₩$price'
-                          : '${product.durationLabel} · ₩$price',
+                    subtitle: Text.rich(
+                      TextSpan(
+                        children: [
+                          if (span.isNotEmpty)
+                            TextSpan(
+                              text: span,
+                              style: const TextStyle(
+                                color: Color(0xFF5B6B75),
+                                fontSize: 12,
+                              ),
+                            ),
+                          if (span.isNotEmpty) const TextSpan(text: '\n'),
+                          TextSpan(
+                            text: status,
+                            style: const TextStyle(
+                              color: Color(0xFF0A6B64),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {

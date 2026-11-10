@@ -40,125 +40,112 @@ class ProductOfferBox extends StatelessWidget {
   final bool bookingsEnabled;
   final Uint8List? coverBytes;
 
-  IconData get _kindIcon {
-    final text = '${shop.productName}${shop.durationLabel}'.toLowerCase();
-    if (text.contains('나이트') || text.contains('night')) {
-      return Icons.nights_stay_outlined;
-    }
-    if (text.contains('라이브') || text.contains('liveaboard')) {
-      return Icons.directions_boat_outlined;
-    }
-    if (text.contains('오픈워터') ||
-        text.contains('코스') ||
-        text.contains('course')) {
-      return Icons.school_outlined;
-    }
-    return Icons.scuba_diving;
-  }
-
   static final _price = NumberFormat('#,###', 'en_US');
+
+  bool get _showsCardPrice =>
+      product.openEmptySeats ||
+      product.listingKind == ProductListingKind.curated ||
+      product.listingKind == ProductListingKind.diverPlanned;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final lastCall = shop.departure?.lastCall == true;
+    final span = <String>[
+      if (product.derivedDurationLabel.trim().isNotEmpty)
+        product.derivedDurationLabel.trim(),
+      if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+    ].join(' · ');
+    final status = <String>[
+      if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),
+      if (recommended) l10n.exploreRecommended,
+      if (lightest && !recommended) l10n.exploreLightest,
+      if (!_showsCardPrice) '상시 예약',
+      if (lastCall) l10n.communityKindLast,
+    ].join(' · ');
 
     return Material(
       color: Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: lastCall ? AppTheme.gold : const Color(0xFFE4E8EC),
-          width: lastCall ? 1.6 : 1,
+          color: lastCall ? const Color(0xFFCF3B18) : const Color(0xFFE3DED3),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: ListingCover.aspectRatio,
-                child: ListingCoverPhoto(shop: shop, bytes: coverBytes),
-              ),
-            ),
-            const SizedBox(height: 12),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(_kindIcon, size: 18, color: AppTheme.ocean),
-                const SizedBox(width: 8),
-                if (shop.durationLabel.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.goldSoft,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      shop.durationLabel,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 96,
+                    height: 96,
+                    child: ListingCoverPhoto(shop: shop, bytes: coverBytes),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        shop.productName,
+                        style: const TextStyle(
+                          color: Color(0xFF10242F),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          height: 1.3,
+                        ),
                       ),
-                    ),
+                      if (span.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          span,
+                          style: const TextStyle(
+                            color: Color(0xFF5B6B75),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      if (status.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          status,
+                          style: const TextStyle(
+                            color: Color(0xFF0A6B64),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                      if (_showsCardPrice) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.explorePriceWon(_price.format(quote.amount)),
+                          style: const TextStyle(
+                            color: Color(0xFF10242F),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                if (recommended) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.exploreRecommended,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      color: AppTheme.ocean,
-                    ),
-                  ),
-                ],
-                if (lightest && !recommended) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    l10n.exploreLightest,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                if (lastCall)
-                  Text(
-                    l10n.communityKindLast,
-                    style: const TextStyle(
-                      color: Color(0xFFB42318),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
-                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(shop.productName, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              product.guestReviewCount > 0
-                  ? l10n.reviewCountLabel(
-                      product.guestRating.toStringAsFixed(1),
-                      product.guestReviewCount,
-                    )
-                  : l10n.reviewNoReviewsYet,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF6B7280),
-              ),
-            ),
             if (shop.blurb.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(shop.blurb, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 8),
+              Text(
+                shop.blurb,
+                style: const TextStyle(color: Color(0xFF5B6B75), fontSize: 13),
+              ),
             ],
             _OfferFacts(product: product),
             if (shop.departure != null) ...[
@@ -168,9 +155,10 @@ class ProductOfferBox extends StatelessWidget {
                   shop.departure!.windowLabel,
                   shop.departure!.emptySeats,
                 ),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: AppTheme.ocean,
+                style: const TextStyle(
+                  color: Color(0xFF0A6B64),
                   fontWeight: FontWeight.w800,
+                  fontSize: 13,
                 ),
               ),
             ],
@@ -178,39 +166,25 @@ class ProductOfferBox extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 l10n.exploreProductRooms(openRooms),
-                style: theme.textTheme.bodySmall,
+                style: const TextStyle(color: Color(0xFF5B6B75), fontSize: 12),
               ),
             ],
             const SizedBox(height: 12),
             if (!_hasOptionRows)
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          quote.isProfessional
-                              ? l10n.exploreProPrice
-                              : l10n.exploreConsumerPrice,
-                          style: theme.textTheme.labelSmall,
-                        ),
-                        Text(
-                          l10n.explorePriceWon(_price.format(quote.amount)),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  key: Key('shop-book-${shop.id}'),
+                  onPressed: bookingsEnabled ? () => onBook('') : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B2A3C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  FilledButton(
-                    key: Key('shop-book-${shop.id}'),
-                    onPressed: bookingsEnabled ? () => onBook('') : null,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.navy,
-                    ),
-                    child: Text(l10n.exploreBook),
-                  ),
-                ],
+                  child: Text(l10n.exploreBook),
+                ),
               )
             else ...[
               _offerRow(
@@ -218,6 +192,7 @@ class ProductOfferBox extends StatelessWidget {
                 title: product.name,
                 note: _packageNote,
                 price: quote.amount,
+                showPrice: _showsCardPrice,
                 button: l10n.optionBookPackage,
                 buttonKey: Key('shop-book-${shop.id}'),
                 onPressed: () => onBook(''),
@@ -229,6 +204,7 @@ class ProductOfferBox extends StatelessWidget {
                   title: option.name,
                   note: option.description,
                   price: _optionPrice(option),
+                  showPrice: _showsCardPrice,
                   button: l10n.optionBookAddon,
                   buttonKey: Key('shop-book-addon-${option.id}'),
                   onPressed: () => onBook(option.id),
@@ -241,6 +217,7 @@ class ProductOfferBox extends StatelessWidget {
                   title: option.name,
                   note: option.description,
                   price: _optionPrice(option),
+                  showPrice: _showsCardPrice,
                   button: l10n.optionBookIndividual,
                   buttonKey: Key('shop-book-individual-${option.id}'),
                   onPressed: () => onBook(option.id),
@@ -294,6 +271,7 @@ class ProductOfferBox extends StatelessWidget {
     required String title,
     required String note,
     required int price,
+    required bool showPrice,
     required String button,
     required Key buttonKey,
     required VoidCallback onPressed,
@@ -331,18 +309,24 @@ class ProductOfferBox extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    l10n.explorePriceWon(_price.format(price)),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                if (showPrice)
+                  Expanded(
+                    child: Text(
+                      l10n.explorePriceWon(_price.format(price)),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                ),
+                  )
+                else
+                  const Spacer(),
                 FilledButton(
                   key: buttonKey,
                   onPressed: bookingsEnabled ? onPressed : null,
-                  style: FilledButton.styleFrom(backgroundColor: AppTheme.navy),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0B2A3C),
+                    foregroundColor: Colors.white,
+                  ),
                   child: Text(button),
                 ),
               ],
