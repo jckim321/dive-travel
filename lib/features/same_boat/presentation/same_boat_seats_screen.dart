@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -35,8 +37,9 @@ class SameBoatSeatsScreen extends StatefulWidget {
 }
 
 class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
-  late final SameBoatSeatOpenController _seats;
+  SameBoatSeatOpenController? _seats;
   var _saving = false;
+  var _loadingFresh = false;
 
   bool get _partnerBlocked =>
       !widget.adminBypassApproval &&
@@ -50,41 +53,82 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     return uid.isNotEmpty && widget.product.submittedByUid == uid;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    final p = widget.product;
+  List<SameBoatOptionSeatSlot> _slotsFor(ShopProduct product) {
     final slots = <SameBoatOptionSeatSlot>[];
-    if (!widget.basePackageOnly) {
-      for (final o in p.options) {
-        if (o.kind == ProductOptionKind.individual ||
-            o.kind == ProductOptionKind.basePackage ||
-            o.openEmptySeats ||
-            o.sameBoatStatus != SameBoatStatus.closed) {
-          slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
-        }
-      }
-      final seen = {for (final s in slots) s.id};
-      for (final o in p.options) {
-        if (o.kind == ProductOptionKind.individual && !seen.contains(o.id)) {
-          slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
-        }
+    if (widget.basePackageOnly) {
+      return slots;
+    }
+    for (final o in product.options) {
+      if (o.kind == ProductOptionKind.individual ||
+          o.kind == ProductOptionKind.basePackage ||
+          o.openEmptySeats ||
+          o.sameBoatStatus != SameBoatStatus.closed) {
+        slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
       }
     }
-    _seats = SameBoatSeatOpenController(
-      existing: p,
-      optionSlots: slots,
+    final seen = {for (final s in slots) s.id};
+    for (final o in product.options) {
+      if (o.kind == ProductOptionKind.individual && !seen.contains(o.id)) {
+        slots.add(SameBoatOptionSeatSlot(id: o.id, name: o.name));
+      }
+    }
+    return slots;
+  }
+
+  SameBoatSeatOpenController _controllerFor(ShopProduct product) {
+    return SameBoatSeatOpenController(
+      existing: product,
+      optionSlots: _slotsFor(product),
       isAdmin: widget.adminBypassApproval,
     );
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.partnerLiveCopy) {
+      _loadingFresh = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_loadFresh());
+      });
+      return;
+    }
+    _seats = _controllerFor(widget.product);
+  }
+
+  Future<void> _loadFresh() async {
+    if (!mounted) {
+      return;
+    }
+    var source = widget.product;
+    try {
+      source = await DiverStoreScope.of(context).requireFreshShopProduct(
+        shopId: widget.product.shopId,
+        productId: widget.product.id,
+      );
+    } catch (_) {
+      source = widget.product;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _seats = _controllerFor(source);
+      _loadingFresh = false;
+    });
+  }
+
+  @override
   void dispose() {
-    _seats.dispose();
+    _seats?.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
+    final seats = _seats;
+    if (seats == null) {
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final store = DiverStoreScope.of(context);
     if (_partnerBlocked) {
@@ -99,8 +143,8 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
       );
       return;
     }
-    _seats.isAdmin = widget.adminBypassApproval;
-    final early = _seats.validate(l10n, now: DateTime.now());
+    seats.isAdmin = widget.adminBypassApproval;
+    final early = seats.validate(l10n, now: DateTime.now());
     if (early != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(early)));
       return;
@@ -112,7 +156,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         shopId: widget.product.shopId,
         productId: widget.product.id,
       );
-      final error = _seats.validate(l10n, now: DateTime.now(), countsFrom: base);
+      final error = seats.validate(l10n, now: DateTime.now(), countsFrom: base);
       if (error != null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,7 +164,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         );
         return;
       }
-      final next = _seats.applyToProduct(base);
+      final next = seats.applyToProduct(base);
       final creatorOpen = _isCreatorSeatOpen(store);
       if (creatorOpen) {
         await store.openCreatorSeats(product: next);
@@ -161,12 +205,30 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     final waiting = _partnerBlocked && widget.product.hasPendingSameBoat;
     final partnerCopy = widget.partnerLiveCopy;
     final creatorOpen = _isCreatorSeatOpen(store);
+    final seats = _seats;
+    if (partnerCopy && ( _loadingFresh || seats == null)) {
+      return _partnerChrome(
+        context,
+        Scaffold(
+          backgroundColor: const Color(0xFFF4F6F9),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xFF0B1F33),
+            surfaceTintColor: Colors.white,
+            leading: const PartnerBackButton(),
+            title: Text(l10n.partnerOpenSeatsTitle),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    final ready = seats!;
     final fields = IgnorePointer(
       ignoring: _partnerBlocked,
       child: Opacity(
         opacity: _partnerBlocked ? 0.55 : 1,
         child: SameBoatSeatOpenFields(
-          controller: _seats,
+          controller: ready,
           partnerChrome: partnerCopy,
           onChanged: () => setState(() {}),
         ),
@@ -246,7 +308,7 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
                   _PartnerSeatPreview(
                     product: widget.product,
                     shopName: store.shopLabelFor(widget.product.shopId),
-                    seats: _seats,
+                    seats: ready,
                   ),
                   const SizedBox(height: 20),
                   _PartnerSeatHistory(
@@ -287,23 +349,27 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
     if (!partnerCopy) {
       return page;
     }
-    return Theme(
-      data: Theme.of(context).copyWith(
-        scaffoldBackgroundColor: const Color(0xFFF4F6F9),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF0B1F33),
-          elevation: 0,
-          surfaceTintColor: Colors.white,
-        ),
-        textTheme: Theme.of(context).textTheme.apply(
-          bodyColor: const Color(0xFF0B1F33),
-          displayColor: const Color(0xFF0B1F33),
-        ),
-      ),
-      child: page,
-    );
+    return _partnerChrome(context, page);
   }
+}
+
+Widget _partnerChrome(BuildContext context, Widget child) {
+  return Theme(
+    data: Theme.of(context).copyWith(
+      scaffoldBackgroundColor: const Color(0xFFF4F6F9),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Color(0xFF0B1F33),
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+      ),
+      textTheme: Theme.of(context).textTheme.apply(
+        bodyColor: const Color(0xFF0B1F33),
+        displayColor: const Color(0xFF0B1F33),
+      ),
+    ),
+    child: child,
+  );
 }
 
 class _PartnerSeatPreview extends StatelessWidget {

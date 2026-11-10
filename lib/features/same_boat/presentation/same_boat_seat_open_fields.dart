@@ -442,8 +442,24 @@ class SameBoatSeatOpenFields extends StatelessWidget {
         SwitchListTile(
           key: const Key('same-boat-open-package'),
           contentPadding: EdgeInsets.zero,
-          title: Text(l10n.workbenchOpenSeats),
-          subtitle: Text(l10n.workbenchOpenSeatsHint),
+          title: Text(
+            l10n.workbenchOpenSeats,
+            style: partnerChrome
+                ? const TextStyle(
+                    color: Color(0xFF0B1F33),
+                    fontWeight: FontWeight.w800,
+                  )
+                : null,
+          ),
+          subtitle: Text(
+            l10n.workbenchOpenSeatsHint,
+            style: partnerChrome
+                ? const TextStyle(
+                    color: Color(0xFF0B1F33),
+                    fontWeight: FontWeight.w700,
+                  )
+                : null,
+          ),
           value: c.openPackage,
           onChanged: (v) {
             c.openPackage = v;
@@ -798,24 +814,41 @@ class _PartnerPackageSeats extends StatelessWidget {
           title: '열 자리 수',
           note: bookedNote,
           noteKey: const Key('same-boat-booked-reference'),
-          value: TextField(
-            key: const Key('same-boat-capacity'),
-            controller: capacity,
-            enabled: !scheduleLocked,
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: _ink,
+          value: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                onSurface: _ink,
+              ),
+              textTheme: Theme.of(context).textTheme.apply(
+                bodyColor: _ink,
+                displayColor: _ink,
+              ),
             ),
-            decoration: const InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
+            child: TextField(
+              key: const Key('same-boat-capacity'),
+              controller: capacity,
+              enabled: !scheduleLocked,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              cursorColor: _ink,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: _ink,
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                filled: true,
+                fillColor: Colors.white,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (_) => onChanged(),
             ),
-            onChanged: (_) => onChanged(),
           ),
           onDec: () => _bumpCapacity(-1),
           onInc: () => _bumpCapacity(1),
