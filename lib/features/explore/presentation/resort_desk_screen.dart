@@ -689,8 +689,6 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
                     ? widget.focusProduct?.id
                     : null,
                 creatingProduct: _partnerProductOnly && widget.creatingProduct,
-                focusOpenEmptySeats:
-                    widget.focusProduct?.openEmptySeats ?? false,
                 storyController:
                     _partnerProductOnly ? _storyController : null,
                 pauseEditorInput:
@@ -1024,7 +1022,6 @@ class _DeskMainColumn extends StatelessWidget {
     required this.partnerProductLabels,
     required this.creatingProduct,
     this.focusProductId,
-    this.focusOpenEmptySeats = false,
     this.storyController,
     this.pauseEditorInput,
   });
@@ -1055,7 +1052,6 @@ class _DeskMainColumn extends StatelessWidget {
   final bool partnerProductLabels;
   final bool creatingProduct;
   final String? focusProductId;
-  final bool focusOpenEmptySeats;
   final TipTapStoryFrameController? storyController;
   final Future<void> Function(Future<void> Function() action)? pauseEditorInput;
 
@@ -1107,19 +1103,15 @@ class _DeskMainColumn extends StatelessWidget {
           ResortDeskInfoSections(draft: info, onChanged: onInfoChanged),
         ],
         if (showProducts) ...[
-          if (!partnerProductLabels ||
-              creatingProduct ||
-              !focusOpenEmptySeats) ...[
-            const SizedBox(height: 16),
-            PartnerRegularProducts(
-              shopId: shopId,
-              partnerLabels: partnerProductLabels,
-              onlyProductId: focusProductId,
-              singleNew: creatingProduct,
-              storyController: storyController,
-            ),
-          ],
-          if (!partnerProductLabels || focusOpenEmptySeats) ...[
+          const SizedBox(height: 16),
+          PartnerRegularProducts(
+            shopId: shopId,
+            partnerLabels: partnerProductLabels,
+            onlyProductId: focusProductId,
+            singleNew: creatingProduct,
+            storyController: storyController,
+          ),
+          if (!partnerProductLabels) ...[
             const SizedBox(height: 16),
             PartnerEmptySeatProducts(
               shopId: shopId,

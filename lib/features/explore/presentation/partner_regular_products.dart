@@ -180,10 +180,11 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
   }
 
   bool _shows(ShopProduct product) {
-    if (product.openEmptySeats) {
+    final only = widget.onlyProductId;
+    final partnerOne = widget.partnerLabels && only != null;
+    if (product.openEmptySeats && !partnerOne) {
       return false;
     }
-    final only = widget.onlyProductId;
     return only == null || product.id == only;
   }
 
