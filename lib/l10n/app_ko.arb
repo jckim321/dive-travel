@@ -2753,7 +2753,7 @@
   "communityCommentHint": "짧게 남기세요",
   "communityTideKicker": "출발 보드",
   "communityTideHeadline": "같은배 동승하기",
-  "communityTideBody": "팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.",
+  "communityTideBody": "팀 모집 중인 상품과 리조트 빈자리를 나눠 보여 드려요. 빈자리를 열지 않은 상품은 탐색에만 있어요.",
   "communityTideSafety": "물속 버디는 샵이 배정합니다. 이 탭은 이미 예약한 여행의 밴·식탁·침대를 나눕니다.",
   "communityStatOpenSeats": "빈자리",
   "communityUrgentBanner": "마감 임박 {count}건 · 바로 보기",
@@ -2763,7 +2763,7 @@
     }
   },
   "communityBoardList": "출발 명부",
-  "communityBoardListHint": "새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.",
+  "communityBoardListHint": "출발일이 가까운 순입니다. 빈자리를 잡으면 예약으로 이어집니다.",
   "communitySameBoatResults": "종료된 빈자리",
   "communitySameBoatResultDeparted": "출발 종료",
   "communitySameBoatResultSoldOut": "매진",
@@ -2885,7 +2885,7 @@
   "@sameBoatSearchOpenCount": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "sameBoatSearchSortNewest": "새로 올라온 순",
+  "sameBoatSearchSortNewest": "출발일 가까운 순",
   "sameBoatSearchAllSeats": "전체 빈자리",
   "sameBoatEmptyTitle": "조건에 맞는 빈자리가 아직 없어요",
   "sameBoatEmptySave": "알림 저장",

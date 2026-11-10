@@ -64,7 +64,10 @@ class _PartnerProductsScreenState extends State<PartnerProductsScreen> {
                   backgroundColor: Colors.white,
                   foregroundColor: _ink,
                   surfaceTintColor: Colors.white,
-                  leading: const PartnerBackButton(),
+                  leading: const ColorFiltered(
+                    colorFilter: ColorFilter.mode(_ink, BlendMode.srcIn),
+                    child: PartnerBackButton(),
+                  ),
                   title: Text(l10n.partnerProductListTitle),
                 ),
           body: ListenableBuilder(

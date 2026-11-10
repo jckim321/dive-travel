@@ -751,15 +751,6 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '구매자가 예약할 때 정해요',
-              style: TextStyle(
-                color: widget.partnerLabels
-                    ? _FormInk.muted
-                    : PlannerPalette.textDim,
-                fontSize: 12,
-              ),
-            ),
             InkWell(
               key: Key('partner-regular-expand-${box.id}'),
               onTap: () => setState(() {

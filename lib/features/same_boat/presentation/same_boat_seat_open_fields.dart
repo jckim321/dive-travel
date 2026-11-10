@@ -905,7 +905,7 @@ class _PartnerPackageSeats extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              l10n.sameBoatAskAdminToChange,
+              '예약이나 깃발이 있어 출발일은 바꿀 수 없어요.',
               style: const TextStyle(fontSize: 12, color: _muted),
             ),
           ),

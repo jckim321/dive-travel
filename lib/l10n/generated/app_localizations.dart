@@ -9531,7 +9531,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityTideBody.
   ///
   /// In ko, this message translates to:
-  /// **'팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.'**
+  /// **'팀 모집 중인 상품과 리조트 빈자리를 나눠 보여 드려요. 빈자리를 열지 않은 상품은 탐색에만 있어요.'**
   String get communityTideBody;
 
   /// No description provided for @communityTideSafety.
@@ -9561,7 +9561,7 @@ abstract class AppLocalizations {
   /// No description provided for @communityBoardListHint.
   ///
   /// In ko, this message translates to:
-  /// **'새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
+  /// **'출발일이 가까운 순입니다. 빈자리를 잡으면 예약으로 이어집니다.'**
   String get communityBoardListHint;
 
   /// No description provided for @communitySameBoatResults.
@@ -10059,7 +10059,7 @@ abstract class AppLocalizations {
   /// No description provided for @sameBoatSearchSortNewest.
   ///
   /// In ko, this message translates to:
-  /// **'새로 올라온 순'**
+  /// **'출발일 가까운 순'**
   String get sameBoatSearchSortNewest;
 
   /// No description provided for @sameBoatSearchAllSeats.

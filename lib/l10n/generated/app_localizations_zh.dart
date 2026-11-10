@@ -5042,7 +5042,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get communityTideBody =>
-      '팀이 있는 상품만 같은 기간에 빈자리를 엽니다. 빈자리를 열지 않은 상품은 탐색에만 있습니다.';
+      '팀 모집 중인 상품과 리조트 빈자리를 나눠 보여 드려요. 빈자리를 열지 않은 상품은 탐색에만 있어요.';
 
   @override
   String get communityTideSafety =>
@@ -5060,7 +5060,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get communityBoardList => '출발 명부';
 
   @override
-  String get communityBoardListHint => '새로 올라온 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
+  String get communityBoardListHint => '출발일이 가까운 순입니다. 빈자리를 잡으면 예약으로 이어집니다.';
 
   @override
   String get communitySameBoatResults => '종료된 빈자리';
@@ -5330,7 +5330,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get sameBoatSearchSortNewest => '새로 올라온 순';
+  String get sameBoatSearchSortNewest => '출발일 가까운 순';
 
   @override
   String get sameBoatSearchAllSeats => '전체 빈자리';

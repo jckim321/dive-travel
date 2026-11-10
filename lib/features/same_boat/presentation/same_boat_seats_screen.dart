@@ -243,7 +243,13 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
             backgroundColor: Colors.white,
             foregroundColor: const Color(0xFF0B1F33),
             surfaceTintColor: Colors.white,
-            leading: const PartnerBackButton(),
+            leading: const ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Color(0xFF0B1F33),
+                BlendMode.srcIn,
+              ),
+              child: PartnerBackButton(),
+            ),
             title: Text(l10n.partnerOpenSeatsTitle),
           ),
           body: const Center(child: CircularProgressIndicator()),
@@ -293,7 +299,15 @@ class _SameBoatSeatsScreenState extends State<SameBoatSeatsScreen> {
         backgroundColor: partnerCopy ? Colors.white : null,
         foregroundColor: partnerCopy ? const Color(0xFF0B1F33) : null,
         surfaceTintColor: partnerCopy ? Colors.white : null,
-        leading: partnerCopy ? const PartnerBackButton() : null,
+        leading: partnerCopy
+            ? const ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  Color(0xFF0B1F33),
+                  BlendMode.srcIn,
+                ),
+                child: PartnerBackButton(),
+              )
+            : null,
         title: Text(
           partnerCopy ? l10n.partnerOpenSeatsTitle : l10n.sameBoatSeatsTitle,
         ),

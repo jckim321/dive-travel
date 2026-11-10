@@ -46,6 +46,7 @@ class PartnerProductCard extends StatelessWidget {
     final closed = badge == PartnerPublishBadgeKind.closed;
     final listed = badge == PartnerPublishBadgeKind.listed;
     final seatsEnabled = partnerSeatsActionEnabled(product);
+    final seatsManage = partnerSeatsIsManage(product);
     final sameBoatKind = partnerSameBoatLineKind(product);
     final individuals = partnerIndividualOptions(product);
     final addons = partnerCommonAddons(product);
@@ -141,7 +142,7 @@ class PartnerProductCard extends StatelessWidget {
               const SizedBox(width: 8),
               _action(
                 key: Key('partner-product-seats-${product.id}'),
-                label: '빈자리 열기',
+                label: seatsManage ? '빈자리 관리' : '빈자리 열기',
                 accent: seatsEnabled,
                 onPressed: seatsEnabled
                     ? () => Navigator.of(context).push(
