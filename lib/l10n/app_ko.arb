@@ -2622,6 +2622,22 @@
       "nondivers": { "type": "int" }
     }
   },
+  "partnerVoucherPartyDiver": "다이버 {count}",
+  "@partnerVoucherPartyDiver": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherPartyNondiver": "비다이버 {count}",
+  "@partnerVoucherPartyNondiver": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherPartyChild": "소아 {count}",
+  "@partnerVoucherPartyChild": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "partnerVoucherPartyInfant": "유아 {count}",
+  "@partnerVoucherPartyInfant": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "partnerVoucherOptions": "선택 옵션",
   "partnerVoucherFoc": "강사 FOC",
   "partnerVoucherGuestName": "예약자",

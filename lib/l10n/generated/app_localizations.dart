@@ -8897,6 +8897,30 @@ abstract class AppLocalizations {
   /// **'다이버 {divers} · 비다이버 {nondivers}'**
   String partnerVoucherPartyDetail(int divers, int nondivers);
 
+  /// No description provided for @partnerVoucherPartyDiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 {count}'**
+  String partnerVoucherPartyDiver(int count);
+
+  /// No description provided for @partnerVoucherPartyNondiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버 {count}'**
+  String partnerVoucherPartyNondiver(int count);
+
+  /// No description provided for @partnerVoucherPartyChild.
+  ///
+  /// In ko, this message translates to:
+  /// **'소아 {count}'**
+  String partnerVoucherPartyChild(int count);
+
+  /// No description provided for @partnerVoucherPartyInfant.
+  ///
+  /// In ko, this message translates to:
+  /// **'유아 {count}'**
+  String partnerVoucherPartyInfant(int count);
+
   /// No description provided for @partnerVoucherOptions.
   ///
   /// In ko, this message translates to:

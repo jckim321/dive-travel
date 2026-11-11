@@ -190,6 +190,17 @@ class _TabChip extends StatelessWidget {
   }
 }
 
+String _partnerVoucherPartyDetail(AppLocalizations l10n, TourBooking booking) {
+  final parts = <String>[
+    if (booking.divers > 0) l10n.partnerVoucherPartyDiver(booking.divers),
+    if (booking.nondivers > 0)
+      l10n.partnerVoucherPartyNondiver(booking.nondivers),
+    if (booking.children > 0) l10n.partnerVoucherPartyChild(booking.children),
+    if (booking.infants > 0) l10n.partnerVoucherPartyInfant(booking.infants),
+  ];
+  return parts.join(' · ');
+}
+
 class PartnerVoucherCard extends StatelessWidget {
   const PartnerVoucherCard({
     super.key,
@@ -266,10 +277,7 @@ class PartnerVoucherCard extends StatelessWidget {
             _line(
               l10n.partnerVoucherParty,
               booking.hasPartyDetail
-                  ? l10n.partnerVoucherPartyDetail(
-                      booking.divers,
-                      booking.nondivers,
-                    )
+                  ? _partnerVoucherPartyDetail(l10n, booking)
                   : (booking.partySize > 0
                       ? '${booking.partySize}'
                       : l10n.partnerVoucherNone),
@@ -507,7 +515,7 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
         booking.productLabel,
       ),
       '${l10n.partnerVoucherTourDate}: ${_day.format(booking.scheduledFor)}',
-      '${l10n.partnerVoucherParty}: ${booking.hasPartyDetail ? l10n.partnerVoucherPartyDetail(booking.divers, booking.nondivers) : booking.partySize}',
+      '${l10n.partnerVoucherParty}: ${booking.hasPartyDetail ? _partnerVoucherPartyDetail(l10n, booking) : booking.partySize}',
       '${l10n.partnerVoucherOptions}: ${option.isEmpty ? l10n.partnerVoucherNone : option}',
       '${l10n.partnerVoucherFoc}: ${foc ?? l10n.partnerVoucherNone}',
       '${l10n.partnerVoucherGuestName}: ${booking.guestDisplayName.trim().isEmpty ? l10n.partnerVoucherGuestNameMissing : booking.guestDisplayName.trim()}',

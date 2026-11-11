@@ -4717,6 +4717,26 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String partnerVoucherPartyDiver(int count) {
+    return '다이버 $count';
+  }
+
+  @override
+  String partnerVoucherPartyNondiver(int count) {
+    return '비다이버 $count';
+  }
+
+  @override
+  String partnerVoucherPartyChild(int count) {
+    return '소아 $count';
+  }
+
+  @override
+  String partnerVoucherPartyInfant(int count) {
+    return '유아 $count';
+  }
+
+  @override
   String get partnerVoucherOptions => '선택 옵션';
 
   @override
