@@ -1,34 +1,72 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
-import 'package:dive_travel_app/core/models/dive_shop.dart';
+import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
 import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-/// Home "같은 배 · 마감 임박" as a departure board. Hidden when [shops] is empty.
+/// Open same-boat seats, soonest departure first. Past departures are left out.
+/// Uses the same public offer list as the same-boat tab.
+List<SameBoatOffer> homeOpenSameBoatOffers(
+  DiverStore store, {
+  DateTime? now,
+}) {
+  final clock = now ?? DateTime.now();
+  final today = DateTime(clock.year, clock.month, clock.day);
+  final open = [
+    for (final offer in store.sameBoatOffers(SameBoatFilter.all, now: clock))
+      if (!_departed(offer, today)) offer,
+  ];
+  open.sort((a, b) {
+    final ad = a.departureStart;
+    final bd = b.departureStart;
+    if (ad == null && bd == null) {
+      return 0;
+    }
+    if (ad == null) {
+      return 1;
+    }
+    if (bd == null) {
+      return -1;
+    }
+    return ad.compareTo(bd);
+  });
+  return open;
+}
+
+bool _departed(SameBoatOffer offer, DateTime today) {
+  final departure = offer.departureStart;
+  if (departure == null) {
+    return false;
+  }
+  final start = DateTime(departure.year, departure.month, departure.day);
+  return start.isBefore(today);
+}
+
+/// Home "같은 배 · 마감 임박" as a departure board. Hidden when [offers] is empty.
 class HomeSameBoatBoard extends StatelessWidget {
   const HomeSameBoatBoard({
     super.key,
-    required this.shops,
-    required this.onOpen,
+    required this.offers,
   });
 
-  final List<DiveShop> shops;
-  final void Function(DiveShop shop) onOpen;
+  final List<SameBoatOffer> offers;
 
   @override
   Widget build(BuildContext context) {
-    if (shops.isEmpty) {
+    if (offers.isEmpty) {
       return const SizedBox.shrink();
     }
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final rows = shops.take(2).toList();
+    final store = DiverStoreScope.of(context);
+    final now = DateTime.now();
+    final rows = offers.take(2).toList();
     var openSeats = 0;
-    for (final shop in shops) {
-      openSeats += _facts(context, shop).seatsLeft ?? 0;
+    for (final offer in offers) {
+      openSeats += offer.remainingSeatsAt(now);
     }
 
     return Column(
@@ -37,7 +75,7 @@ class HomeSameBoatBoard extends StatelessWidget {
         Text(l10n.homeNextDepartures, style: theme.textTheme.titleMedium),
         const SizedBox(height: 2),
         Text(
-          l10n.homeSameBoatBoardSummary(shops.length, openSeats),
+          l10n.homeSameBoatBoardSummary(offers.length, openSeats),
           style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.muted),
         ),
         const SizedBox(height: 10),
@@ -52,26 +90,30 @@ class HomeSameBoatBoard extends StatelessWidget {
             child: Material(
               color: Colors.white,
               child: Column(
-              children: [
-                const ColoredBox(
-                  color: AppTheme.navy,
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      child: _BoardHeading(),
+                children: [
+                  const ColoredBox(
+                    color: AppTheme.navy,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        child: _BoardHeading(),
+                      ),
                     ),
                   ),
-                ),
-                for (var i = 0; i < rows.length; i++) ...[
-                  if (i > 0) const _DottedDivider(),
-                  _BoardRow(
-                    shop: rows[i],
-                    onOpen: () => onOpen(rows[i]),
-                  ),
+                  for (var i = 0; i < rows.length; i++) ...[
+                    if (i > 0) const _DottedDivider(),
+                    _BoardRow(
+                      offer: rows[i],
+                      shopName: _shopName(store, rows[i]),
+                      onOpen: () => MainShell.goToTab(context, 2),
+                    ),
+                  ],
                 ],
-              ],
-            ),
+              ),
             ),
           ),
         ),
@@ -100,6 +142,20 @@ class HomeSameBoatBoard extends StatelessWidget {
   }
 }
 
+String _shopName(DiverStore store, SameBoatOffer offer) {
+  final hullId = offer.product.shopId.split('--').first;
+  for (final shop in store.shops) {
+    if (shop.hullId == hullId && shop.name.trim().isNotEmpty) {
+      return shop.name.trim();
+    }
+  }
+  final fromStats = store.liveStatsFor(hullId)?.name?.trim() ?? '';
+  if (fromStats.isNotEmpty) {
+    return fromStats;
+  }
+  return '';
+}
+
 class _BoardHeading extends StatelessWidget {
   const _BoardHeading();
 
@@ -117,20 +173,30 @@ class _BoardHeading extends StatelessWidget {
 }
 
 class _BoardRow extends StatelessWidget {
-  const _BoardRow({required this.shop, required this.onOpen});
+  const _BoardRow({
+    required this.offer,
+    required this.shopName,
+    required this.onOpen,
+  });
 
-  final DiveShop shop;
+  final SameBoatOffer offer;
+  final String shopName;
   final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final facts = _facts(context, shop);
-    final productName = shop.productName.trim();
-    final title = productName.isNotEmpty ? productName : shop.name;
-    final left = facts.seatsLeft;
-    final showDots = facts.capacity > 0 && facts.capacity <= 8;
-    final filled = facts.booked.clamp(0, facts.capacity);
+    final productName = offer.product.name.trim();
+    final optionName = offer.optionName.trim();
+    final title = optionName.isEmpty
+        ? productName
+        : (productName.isEmpty ? optionName : '$productName · $optionName');
+    final left = offer.remainingSeats;
+    final capacity = offer.capacity;
+    final showDots = capacity > 0 && capacity <= 8;
+    final openDots = left.clamp(0, capacity);
+    final filled = capacity - openDots;
+    final departure = offer.departureStart;
 
     return InkWell(
       onTap: onOpen,
@@ -141,7 +207,7 @@ class _BoardRow extends StatelessWidget {
             SizedBox(
               width: 96,
               child: Text(
-                facts.departure == null ? '' : homeDayLabel(facts.departure!),
+                departure == null ? '' : homeDayLabel(departure),
                 style: const TextStyle(
                   color: AppTheme.ocean,
                   fontWeight: FontWeight.w800,
@@ -165,7 +231,7 @@ class _BoardRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    shop.name,
+                    shopName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -184,7 +250,7 @@ class _BoardRow extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (var i = 0; i < facts.capacity; i++)
+                      for (var i = 0; i < capacity; i++)
                         Container(
                           width: 8,
                           height: 8,
@@ -198,17 +264,15 @@ class _BoardRow extends StatelessWidget {
                         ),
                     ],
                   ),
-                if (left != null) ...[
-                  if (showDots) const SizedBox(height: 4),
-                  Text(
-                    l10n.homeSameBoatSeatsLeft(left),
-                    style: const TextStyle(
-                      color: AppTheme.gold,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
+                if (showDots) const SizedBox(height: 4),
+                Text(
+                  l10n.homeSameBoatSeatsLeft(left),
+                  style: const TextStyle(
+                    color: AppTheme.gold,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
                   ),
-                ],
+                ),
               ],
             ),
           ],
@@ -216,15 +280,6 @@ class _BoardRow extends StatelessWidget {
       ),
     );
   }
-}
-
-HomeBoatFacts _facts(BuildContext context, DiveShop shop) {
-  final store = DiverStoreScope.of(context);
-  final product = homeListingProduct(
-    shop,
-    store.liveStatsFor(shop.hullId)?.readerProducts ?? const [],
-  );
-  return homeBoatFacts(shop, product);
 }
 
 class _DottedDivider extends StatelessWidget {

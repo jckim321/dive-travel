@@ -59,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required List<DiveShop> curatedShops,
     required List<DiveShop> plannedShops,
   }) {
+    final sameBoatOffers = homeOpenSameBoatOffers(DiverStoreScope.of(context));
     final shelves = <Widget>[
       if (diveStarShops.isNotEmpty)
         HomeDiscoverySection(
@@ -69,11 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
           shops: diveStarShops,
           onOpen: (shop) => _openShop(context, shop),
         ),
-      if (lastCallShops.isNotEmpty)
+      if (sameBoatOffers.isNotEmpty)
         HomeSameBoatBoard(
           key: const Key('home-section-same-boat'),
-          shops: lastCallShops,
-          onOpen: (shop) => _openShop(context, shop),
+          offers: sameBoatOffers,
         ),
       if (hotShops.isNotEmpty)
         HomeHotSpotList(
