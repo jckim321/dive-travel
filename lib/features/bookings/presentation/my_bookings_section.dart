@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/refund_policy.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -297,6 +298,13 @@ class _BookingDetailSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
+            _DetailRow(
+              label: l10n.bookingVoucherId,
+              value: bookingPublicLabel(
+                publicCode: booking.publicCode,
+                bookingId: booking.id,
+              ),
+            ),
             _DetailRow(
               label: l10n.weatherTourDate,
               value: DateFormat('yyyy.MM.dd').format(booking.scheduledFor),

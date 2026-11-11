@@ -20,6 +20,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
@@ -1427,6 +1428,7 @@ class MemoryDiverRepository implements DiverRepository {
       }
 
       _bookingSequence += 1;
+      final publicCode = bookingPublicCode(now);
       final booking = TourBooking(
         id: 'booking-$_bookingSequence',
         uid: uid,
@@ -1454,6 +1456,7 @@ class MemoryDiverRepository implements DiverRepository {
         guestDisplayName: guestDisplayName.trim(),
         guestBirthDate: guestBirthDate.trim(),
         guestContact: guestContact.trim(),
+        publicCode: publicCode,
       );
       // Dual write: user copy keeps contact. Shop copy keeps the name only.
       _bookings.insert(0, booking);

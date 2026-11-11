@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_settlement_screen.dart';
@@ -232,7 +233,10 @@ class PartnerVoucherCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.partnerVoucherTitleLine(
-                      booking.id,
+                      bookingPublicLabel(
+                        publicCode: booking.publicCode,
+                        bookingId: booking.id,
+                      ),
                       booking.productLabel,
                     ),
                     style: const TextStyle(
@@ -495,7 +499,13 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
     final foc = partnerVoucherFocLabel(booking);
     final option = booking.optionLabel;
     return [
-      l10n.partnerVoucherTitleLine(booking.id, booking.productLabel),
+      l10n.partnerVoucherTitleLine(
+        bookingPublicLabel(
+          publicCode: booking.publicCode,
+          bookingId: booking.id,
+        ),
+        booking.productLabel,
+      ),
       '${l10n.partnerVoucherTourDate}: ${_day.format(booking.scheduledFor)}',
       '${l10n.partnerVoucherParty}: ${booking.hasPartyDetail ? l10n.partnerVoucherPartyDetail(booking.divers, booking.nondivers) : booking.partySize}',
       '${l10n.partnerVoucherOptions}: ${option.isEmpty ? l10n.partnerVoucherNone : option}',

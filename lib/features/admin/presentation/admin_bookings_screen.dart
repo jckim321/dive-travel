@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_screen_shell.dart';
@@ -109,6 +110,11 @@ class _AdminBookingTile extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${l10n.bookingVoucherId} ${bookingPublicLabel(publicCode: booking.publicCode, bookingId: booking.id)}',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
             Text(

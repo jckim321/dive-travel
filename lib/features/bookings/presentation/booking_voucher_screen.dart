@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -134,7 +135,13 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                           ),
                         ],
                         const SizedBox(height: 16),
-                        _row(l10n.bookingVoucherId, booking.id),
+                        _row(
+                          l10n.bookingVoucherId,
+                          bookingPublicLabel(
+                            publicCode: booking.publicCode,
+                            bookingId: booking.id,
+                          ),
+                        ),
                         _row(l10n.bookingVoucherShop, booking.shopName),
                         _row(
                           l10n.workbenchDepartureDate,

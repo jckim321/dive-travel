@@ -29,6 +29,7 @@ import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/i18n/translation_engine.dart';
 import 'package:dive_travel_app/core/models/admin_models.dart';
 import 'package:dive_travel_app/core/models/app_user.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_log.dart';
 import 'package:dive_travel_app/core/models/instructor_discount.dart';
@@ -2013,6 +2014,7 @@ class FirestoreDiverRepository implements DiverRepository {
       guestDisplayName: data['guest_display_name'] as String? ?? '',
       guestBirthDate: data['guest_birth_date'] as String? ?? '',
       guestContact: data['guest_contact'] as String? ?? '',
+      publicCode: data['public_code'] as String? ?? '',
       partnerAckedAt: data['partner_acked_at'] == null
           ? null
           : _readDate(data['partner_acked_at']),
@@ -2052,6 +2054,7 @@ class FirestoreDiverRepository implements DiverRepository {
       'seats_held': booking.seatsHeld,
       'seat_option_id': booking.seatOptionId,
       'guest_display_name': booking.guestDisplayName,
+      'public_code': booking.publicCode,
       if (includeGuestPrivate && booking.guestBirthDate.isNotEmpty)
         'guest_birth_date': booking.guestBirthDate,
       if (includeGuestPrivate && booking.guestContact.isNotEmpty)
@@ -2109,6 +2112,7 @@ class FirestoreDiverRepository implements DiverRepository {
   }) async {
     final hullId = shopId.split('--').first;
     final now = DateTime.now();
+    final publicCode = bookingPublicCode(now);
     final id = _bookings(uid).doc().id;
     final userBookingRef = _bookings(uid).doc(id);
     final shopBookingRef = _shopBookings(hullId).doc(id);
@@ -2218,6 +2222,7 @@ class FirestoreDiverRepository implements DiverRepository {
           guestDisplayName: guestDisplayName.trim(),
           guestBirthDate: guestBirthDate.trim(),
           guestContact: guestContact.trim(),
+          publicCode: publicCode,
         );
         final userPayload = _bookingPayload(
           booking,

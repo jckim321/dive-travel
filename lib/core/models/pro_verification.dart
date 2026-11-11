@@ -68,6 +68,7 @@ class TourBooking {
     this.guestDisplayName = '',
     this.guestBirthDate = '',
     this.guestContact = '',
+    this.publicCode = '',
     this.partnerAckedAt,
     this.cancelledAt,
   });
@@ -113,6 +114,9 @@ class TourBooking {
 
   /// Booker's own booking only. Shop copies and vouchers stay empty.
   final String guestContact;
+
+  /// Spoken booking number (`DT-MMDD-XXXX`). Empty on rows saved before this field.
+  final String publicCode;
 
   /// Partner 「확인했어요」 read receipt (shop booking doc only).
   final DateTime? partnerAckedAt;
@@ -238,6 +242,7 @@ class TourBooking {
       guestDisplayName: guestDisplayName ?? this.guestDisplayName,
       guestBirthDate: guestBirthDate ?? this.guestBirthDate,
       guestContact: guestContact ?? this.guestContact,
+      publicCode: publicCode,
       partnerAckedAt: clearPartnerAckedAt
           ? null
           : (partnerAckedAt ?? this.partnerAckedAt),
