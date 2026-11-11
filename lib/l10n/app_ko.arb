@@ -878,6 +878,21 @@
   "profileBookingHistory": "예약 내역",
   "profileTripScheduleTitle": "나의 이번 여행 스케줄",
   "profileTripScheduleEmpty": "확정된 여행이 아직 없습니다.",
+  "profileMyTripsTitle": "나의 여행",
+  "profileUpcomingTrips": "다가오는 여행",
+  "profilePastTrips": "다녀온 여행",
+  "profileMyTripsEmpty": "아직 여행이 없습니다.",
+  "profileTripDday": "D-{days}",
+  "@profileTripDday": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "profileTripDdayToday": "D-Day",
+  "profileTripDone": "완료",
+  "profileTripCancelled": "취소",
+  "profileTripWriteReview": "후기 쓰기",
+  "profileTripsMore": "더보기",
   "profileFlaggedSeatsTitle": "깃발꽂은 빈자리",
   "profileFlaggedSeatsEmpty": "잠가 둔 빈자리가 없습니다.",
   "profileFlagPayCta": "결제 바로가기",

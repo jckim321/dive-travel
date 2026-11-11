@@ -2136,6 +2136,66 @@ abstract class AppLocalizations {
   /// **'확정된 여행이 아직 없습니다.'**
   String get profileTripScheduleEmpty;
 
+  /// No description provided for @profileMyTripsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'나의 여행'**
+  String get profileMyTripsTitle;
+
+  /// No description provided for @profileUpcomingTrips.
+  ///
+  /// In ko, this message translates to:
+  /// **'다가오는 여행'**
+  String get profileUpcomingTrips;
+
+  /// No description provided for @profilePastTrips.
+  ///
+  /// In ko, this message translates to:
+  /// **'다녀온 여행'**
+  String get profilePastTrips;
+
+  /// No description provided for @profileMyTripsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 여행이 없습니다.'**
+  String get profileMyTripsEmpty;
+
+  /// No description provided for @profileTripDday.
+  ///
+  /// In ko, this message translates to:
+  /// **'D-{days}'**
+  String profileTripDday(int days);
+
+  /// No description provided for @profileTripDdayToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'D-Day'**
+  String get profileTripDdayToday;
+
+  /// No description provided for @profileTripDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'완료'**
+  String get profileTripDone;
+
+  /// No description provided for @profileTripCancelled.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get profileTripCancelled;
+
+  /// No description provided for @profileTripWriteReview.
+  ///
+  /// In ko, this message translates to:
+  /// **'후기 쓰기'**
+  String get profileTripWriteReview;
+
+  /// No description provided for @profileTripsMore.
+  ///
+  /// In ko, this message translates to:
+  /// **'더보기'**
+  String get profileTripsMore;
+
   /// No description provided for @profileFlaggedSeatsTitle.
   ///
   /// In ko, this message translates to:

@@ -1104,6 +1104,38 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileTripScheduleEmpty => '확정된 여행이 아직 없습니다.';
 
   @override
+  String get profileMyTripsTitle => '나의 여행';
+
+  @override
+  String get profileUpcomingTrips => '다가오는 여행';
+
+  @override
+  String get profilePastTrips => '다녀온 여행';
+
+  @override
+  String get profileMyTripsEmpty => '아직 여행이 없습니다.';
+
+  @override
+  String profileTripDday(int days) {
+    return 'D-$days';
+  }
+
+  @override
+  String get profileTripDdayToday => 'D-Day';
+
+  @override
+  String get profileTripDone => '완료';
+
+  @override
+  String get profileTripCancelled => '취소';
+
+  @override
+  String get profileTripWriteReview => '후기 쓰기';
+
+  @override
+  String get profileTripsMore => '더보기';
+
+  @override
   String get profileFlaggedSeatsTitle => '깃발꽂은 빈자리';
 
   @override

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/region_catalog.dart';
 import 'package:dive_travel_app/core/data/travel_style.dart';
+import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/member_grade.dart';
@@ -25,6 +26,7 @@ import 'package:dive_travel_app/features/explore/presentation/tour_checkout_shee
 import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.dart';
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
+import 'package:dive_travel_app/features/profile/presentation/flight_link_sheet.dart';
 import 'package:dive_travel_app/features/profile/presentation/diving_passport_card.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
 import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
@@ -139,15 +141,6 @@ class ProfileScreen extends StatelessWidget {
           final crafted = store.craftedProductsFor(store.uid ?? '');
           final favorites = store.favoriteShops;
           final now = DateTime.now();
-          final today = DateTime(now.year, now.month, now.day);
-          final activeBookings = [
-            for (final booking in store.bookings)
-              if (booking.isActive) booking,
-          ]..sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
-          final paidBookings = [
-            for (final booking in activeBookings)
-              if (booking.isPaid) booking,
-          ];
           final flags = store.myLiveFlags(now: now);
           final insight = TravelStyleAnalyzer.analyze(
             regions: store.regions,
@@ -157,13 +150,6 @@ class ProfileScreen extends StatelessWidget {
           final suggested = favorites.isNotEmpty
               ? favorites.first
               : insight.suggestedShop;
-          final toReview = [
-            for (final booking in store.bookings)
-              if (booking.isActive &&
-                  !booking.reviewed &&
-                  booking.scheduledFor.isBefore(today))
-                booking,
-          ];
 
           return _CraftedShopRefresh(
             child: ListView(
@@ -197,12 +183,18 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       DivingPassportCard(regions: store.regions),
                       const SizedBox(height: 28),
-                      _OceanSectionTitle(title: l10n.profileTripScheduleTitle),
+                      _OceanSectionTitle(title: l10n.profileMyTripsTitle),
                       const SizedBox(height: 12),
-                      _TripScheduleBox(
-                        bookings: paidBookings,
+                      _MyTripsSection(
+                        bookings: store.bookings,
                         onOpenVoucher: (booking) =>
                             openBookingVoucher(context, booking),
+                        onWriteReview: (booking) => openOperationReview(
+                          context,
+                          shopId: booking.shopId,
+                          bookingId: booking.id,
+                          productId: booking.productId,
+                        ),
                         onSeeAll: store.bookings.isEmpty
                             ? null
                             : () => _openBookings(context),
@@ -312,26 +304,6 @@ class ProfileScreen extends StatelessWidget {
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => openMyReviews(context),
                         ),
-                      ),
-                      const SizedBox(height: 28),
-                      _OceanSectionTitle(title: l10n.profileWriteReviewTitle),
-                      const SizedBox(height: 12),
-                      _HintOrList(
-                        plate: 2,
-                        empty: l10n.profileAfterTripEmpty,
-                        children: [
-                          for (final booking in toReview)
-                            _Line(
-                              title: booking.productName,
-                              detail: booking.shopName,
-                              onTap: () => openOperationReview(
-                                context,
-                                shopId: booking.shopId,
-                                bookingId: booking.id,
-                                productId: booking.productId,
-                              ),
-                            ),
-                        ],
                       ),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.profileCharmsTitle),
@@ -473,35 +445,224 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _TripScheduleBox extends StatelessWidget {
-  const _TripScheduleBox({
+class _MyTripsSection extends StatefulWidget {
+  const _MyTripsSection({
     required this.bookings,
     required this.onOpenVoucher,
+    required this.onWriteReview,
     this.onSeeAll,
   });
 
   final List<TourBooking> bookings;
   final void Function(TourBooking booking) onOpenVoucher;
+  final void Function(TourBooking booking) onWriteReview;
   final VoidCallback? onSeeAll;
+
+  @override
+  State<_MyTripsSection> createState() => _MyTripsSectionState();
+}
+
+class _MyTripsSectionState extends State<_MyTripsSection> {
+  String? _openId;
+  var _chose = false;
+  var _showAllUpcoming = false;
+  var _showAllPast = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return _LightPanel(
-      plate: 0,
-      child: bookings.isEmpty
-          ? Text(
-              l10n.profileTripScheduleEmpty,
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final booking in bookings) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final split = _splitTrips(widget.bookings, today);
+    final openId = _visibleOpen(split.upcoming, split.past);
+    final upcoming = _showAllUpcoming
+        ? split.upcoming
+        : split.upcoming.take(3).toList();
+    final past = _showAllPast ? split.past : split.past.take(3).toList();
+
+    if (split.upcoming.isEmpty && split.past.isEmpty) {
+      return _LightPanel(
+        plate: 0,
+        child: Text(
+          l10n.profileMyTripsEmpty,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (split.upcoming.isNotEmpty) ...[
+          Text(
+            l10n.profileUpcomingTrips,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          for (final booking in upcoming) ...[
+            _TripCard(
+              booking: booking,
+              expanded: openId == booking.id,
+              upcoming: true,
+              onToggle: () => _toggle(booking.id, openId),
+              onOpenVoucher: () => widget.onOpenVoucher(booking),
+              onWriteReview: () => widget.onWriteReview(booking),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (split.upcoming.length > 3 && !_showAllUpcoming)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: const Key('profile-trips-more-upcoming'),
+                onPressed: () => setState(() => _showAllUpcoming = true),
+                child: Text(l10n.profileTripsMore),
+              ),
+            ),
+        ],
+        if (split.past.isNotEmpty) ...[
+          if (split.upcoming.isNotEmpty) const SizedBox(height: 8),
+          Text(
+            l10n.profilePastTrips,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppTheme.navy,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          for (final booking in past) ...[
+            _TripCard(
+              booking: booking,
+              expanded: openId == booking.id,
+              upcoming: false,
+              onToggle: () => _toggle(booking.id, openId),
+              onOpenVoucher: () => widget.onOpenVoucher(booking),
+              onWriteReview: () => widget.onWriteReview(booking),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (split.past.length > 3 && !_showAllPast)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: const Key('profile-trips-more-past'),
+                onPressed: () => setState(() => _showAllPast = true),
+                child: Text(l10n.profileTripsMore),
+              ),
+            ),
+        ],
+        if (widget.onSeeAll != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: widget.onSeeAll,
+              child: Text(l10n.exploreMyBookings),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String? _visibleOpen(
+    List<TourBooking> upcoming,
+    List<TourBooking> past,
+  ) {
+    final known = {for (final booking in [...upcoming, ...past]) booking.id};
+    if (!_chose) {
+      return upcoming.isEmpty ? null : upcoming.first.id;
+    }
+    if (_openId != null && !known.contains(_openId)) {
+      return upcoming.isEmpty ? null : upcoming.first.id;
+    }
+    return _openId;
+  }
+
+  void _toggle(String id, String? openId) {
+    setState(() {
+      _chose = true;
+      _openId = openId == id ? null : id;
+    });
+  }
+}
+
+({List<TourBooking> upcoming, List<TourBooking> past}) _splitTrips(
+  List<TourBooking> bookings,
+  DateTime today,
+) {
+  final upcoming = <TourBooking>[];
+  final past = <TourBooking>[];
+  for (final booking in bookings) {
+    final start = DateTime(
+      booking.scheduledFor.year,
+      booking.scheduledFor.month,
+      booking.scheduledFor.day,
+    );
+    final stillAhead = booking.isActive && !start.isBefore(today);
+    if (stillAhead) {
+      upcoming.add(booking);
+    } else {
+      past.add(booking);
+    }
+  }
+  upcoming.sort((a, b) => a.scheduledFor.compareTo(b.scheduledFor));
+  past.sort((a, b) => b.scheduledFor.compareTo(a.scheduledFor));
+  return (upcoming: upcoming, past: past);
+}
+
+class _TripCard extends StatelessWidget {
+  const _TripCard({
+    required this.booking,
+    required this.expanded,
+    required this.upcoming,
+    required this.onToggle,
+    required this.onOpenVoucher,
+    required this.onWriteReview,
+  });
+
+  final TourBooking booking;
+  final bool expanded;
+  final bool upcoming;
+  final VoidCallback onToggle;
+  final VoidCallback onOpenVoucher;
+  final VoidCallback onWriteReview;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cancelled = !booking.isActive;
+    final date = DateFormat('yyyy.MM.dd').format(booking.scheduledFor);
+    final shop = booking.shopName.trim();
+    final when = shop.isEmpty ? date : '$date · $shop';
+    final canReview = !upcoming && booking.isActive && !booking.reviewed;
+
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE4E8EE)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            key: Key('profile-trip-${booking.id}'),
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TripMark(label: _markLabel(l10n), tone: _markTone(cancelled)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
                           booking.productLabel,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -511,33 +672,289 @@ class _TripScheduleBox extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.tonal(
-                        key: Key('profile-voucher-${booking.id}'),
-                        onPressed: () => onOpenVoucher(booking),
-                        style: FilledButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        const SizedBox(height: 3),
+                        Text(
+                          when,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.muted,
+                            fontSize: 12,
+                          ),
                         ),
-                        child: Text(l10n.bookingVoucherOpen),
-                      ),
-                    ],
-                  ),
-                  if (booking != bookings.last) const SizedBox(height: 12),
-                ],
-                if (onSeeAll != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: onSeeAll,
-                      child: Text(l10n.exploreMyBookings),
+                      ],
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: _TripStatusChip(label: _statusLabel(l10n)),
+                  ),
+                  Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    color: AppTheme.muted,
+                    size: 20,
+                  ),
                 ],
-              ],
+              ),
             ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: cancelled
+                  ? Text(
+                      booking.status == BookingStatus.weatherCancelled
+                          ? l10n.bookingWeatherCancelled
+                          : l10n.bookingCancelledRefund(booking.refundPercent),
+                      style: const TextStyle(
+                        color: AppTheme.navy,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    )
+                  : _TripDetails(
+                      booking: booking,
+                      date: date,
+                      showReview: canReview,
+                      onOpenVoucher: onOpenVoucher,
+                      onWriteReview: onWriteReview,
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _markLabel(AppLocalizations l10n) {
+    if (!booking.isActive) {
+      return l10n.profileTripCancelled;
+    }
+    if (!upcoming) {
+      return l10n.profileTripDone;
+    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = DateTime(
+      booking.scheduledFor.year,
+      booking.scheduledFor.month,
+      booking.scheduledFor.day,
+    );
+    final days = start.difference(today).inDays;
+    if (days <= 0) {
+      return l10n.profileTripDdayToday;
+    }
+    return l10n.profileTripDday(days);
+  }
+
+  _TripMarkTone _markTone(bool cancelled) {
+    if (cancelled || !upcoming) {
+      return _TripMarkTone.muted;
+    }
+    return _TripMarkTone.gold;
+  }
+
+  String _statusLabel(AppLocalizations l10n) {
+    if (!booking.isActive) {
+      return booking.status == BookingStatus.weatherCancelled
+          ? l10n.bookingWeatherCancelled
+          : l10n.bookingCancelled;
+    }
+    if (booking.isPaid) {
+      return l10n.bookingPaymentCaptured;
+    }
+    if (booking.status == BookingStatus.requested) {
+      return l10n.bookingRequested;
+    }
+    return '${l10n.bookingConfirmed} · ${l10n.bookingPaymentUnpaid}';
+  }
+}
+
+enum _TripMarkTone { gold, muted }
+
+class _TripMark extends StatelessWidget {
+  const _TripMark({required this.label, required this.tone});
+
+  final String label;
+  final _TripMarkTone tone;
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = tone == _TripMarkTone.gold;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: gold ? AppTheme.goldSoft : const Color(0xFFF0F2F4),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: gold ? const Color(0xFF8A6A12) : AppTheme.muted,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _TripStatusChip extends StatelessWidget {
+  const _TripStatusChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8EEF2),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: AppTheme.navy,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _TripDetails extends StatelessWidget {
+  const _TripDetails({
+    required this.booking,
+    required this.date,
+    required this.showReview,
+    required this.onOpenVoucher,
+    required this.onWriteReview,
+  });
+
+  final TourBooking booking;
+  final String date;
+  final bool showReview;
+  final VoidCallback onOpenVoucher;
+  final VoidCallback onWriteReview;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final option = booking.optionLabel.trim();
+    final party = booking.hasPartyDetail
+        ? l10n.bookingPartySummary(
+            booking.divers,
+            booking.nondivers,
+            booking.children,
+            booking.infants,
+          )
+        : '${booking.partySize}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: 1, color: Color(0xFFE4E8EE)),
+        const SizedBox(height: 10),
+        _TripFact(label: l10n.workbenchDepartureDate, value: date),
+        if (option.isNotEmpty)
+          _TripFact(label: l10n.partnerFormBoxOptions, value: option),
+        _TripFact(label: l10n.checkoutGuests, value: party),
+        _TripFact(
+          label: l10n.bookingVoucherPaymentStatus,
+          value: _paymentLabel(l10n),
+        ),
+        _TripFact(
+          label: l10n.bookingVoucherId,
+          value: bookingPublicLabel(
+            publicCode: booking.publicCode,
+            bookingId: booking.id,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton(
+              key: Key('profile-voucher-${booking.id}'),
+              onPressed: onOpenVoucher,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.navy,
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(l10n.bookingVoucherOpen),
+            ),
+            FilledButton(
+              key: Key('profile-flight-${booking.id}'),
+              onPressed: () => showFlightLinkSheet(context),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.gold,
+                foregroundColor: AppTheme.navy,
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(l10n.profileFlightSearch),
+            ),
+            if (showReview)
+              FilledButton(
+                key: Key('profile-review-${booking.id}'),
+                onPressed: onWriteReview,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.gold,
+                  foregroundColor: AppTheme.navy,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(l10n.profileTripWriteReview),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _paymentLabel(AppLocalizations l10n) {
+    return switch (booking.paymentStatus) {
+      PaymentStatus.unpaid => l10n.bookingPaymentUnpaid,
+      PaymentStatus.captured => l10n.bookingPaymentCaptured,
+      PaymentStatus.refunded => l10n.bookingPaymentRefunded,
+    };
+  }
+}
+
+class _TripFact extends StatelessWidget {
+  const _TripFact({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.muted, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: AppTheme.navy,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
