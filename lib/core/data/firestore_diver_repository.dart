@@ -5389,6 +5389,17 @@ class FirestoreDiverRepository implements DiverRepository {
       'products': [for (final item in next) item.toMap()],
       'updated_at': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    final docRef = ref.collection('products').doc(productId);
+    final existingDoc = await docRef.get();
+    if (!existingDoc.exists) {
+      return;
+    }
+    await docRef.update({
+      'listing_kind': listingKind.firestoreValue,
+      'featured_at': listingKind.isHomeShelf
+          ? now.toIso8601String()
+          : FieldValue.delete(),
+    });
   }
 
   @override
