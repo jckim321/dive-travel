@@ -4285,6 +4285,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get partnerProductBadgePending => '승인 대기';
 
   @override
+  String get partnerProductCardBadgePending => '승인 대기';
+
+  @override
+  String get partnerProductCardBadgeDraft => '임시저장';
+
+  @override
   String get partnerProductBadgeDrafting => '작성 중';
 
   @override

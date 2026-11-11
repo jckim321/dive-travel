@@ -43,6 +43,7 @@ class PartnerProductCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final badge = partnerPublishBadgeKind(product);
     final drafting = badge == PartnerPublishBadgeKind.drafting;
+    final pending = badge == PartnerPublishBadgeKind.pending;
     final closed = badge == PartnerPublishBadgeKind.closed;
     final listed = badge == PartnerPublishBadgeKind.listed;
     final seatsEnabled = partnerSeatsActionEnabled(product);
@@ -102,8 +103,8 @@ class PartnerProductCard extends StatelessWidget {
                           key: Key('partner-product-status-${product.id}'),
                           label: pricePending
                               ? '가격 변경 확인 중'
-                              : _statusLabel(badge),
-                          fg: pricePending || closed || drafting
+                              : _statusLabel(l10n, badge),
+                          fg: pricePending || closed || drafting || pending
                               ? (pricePending ? _amberFg : _muted)
                               : _teal,
                           bg: pricePending
@@ -246,10 +247,14 @@ class PartnerProductCard extends StatelessWidget {
     );
   }
 
-  static String _statusLabel(PartnerPublishBadgeKind kind) {
+  static String _statusLabel(
+    AppLocalizations l10n,
+    PartnerPublishBadgeKind kind,
+  ) {
     return switch (kind) {
       PartnerPublishBadgeKind.listed => '판매 중',
-      PartnerPublishBadgeKind.drafting => '임시저장',
+      PartnerPublishBadgeKind.drafting => l10n.partnerProductCardBadgeDraft,
+      PartnerPublishBadgeKind.pending => l10n.partnerProductCardBadgePending,
       PartnerPublishBadgeKind.closed => '닫힘',
     };
   }

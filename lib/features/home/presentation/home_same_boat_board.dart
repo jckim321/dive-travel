@@ -142,6 +142,13 @@ class HomeSameBoatBoard extends StatelessWidget {
   }
 }
 
+/// Shop line is redundant when it repeats the product name.
+bool _sameName(String shopName, String productName) {
+  String fold(String value) =>
+      value.replaceAll(RegExp(r'\s'), '').toLowerCase();
+  return fold(shopName) == fold(productName);
+}
+
 String _shopName(DiverStore store, SameBoatOffer offer) {
   final hullId = offer.product.shopId.split('--').first;
   for (final shop in store.shops) {
@@ -229,16 +236,18 @@ class _BoardRow extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    shopName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.muted,
-                      fontSize: 12,
+                  if (!_sameName(shopName, productName)) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      shopName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.muted,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

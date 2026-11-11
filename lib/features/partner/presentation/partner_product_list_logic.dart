@@ -4,8 +4,11 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 
 /// Partner product list publish badge (H1a: no approval queue for partners).
 enum PartnerPublishBadgeKind {
-  /// Draft / legacy pending / legacy rejected — editing, not public.
+  /// Draft / legacy rejected — editing, not submitted.
   drafting,
+
+  /// Submitted and waiting for admin approval.
+  pending,
 
   /// `isListedPublicly` (approved + active)
   listed,
@@ -47,7 +50,10 @@ PartnerPublishBadgeKind partnerPublishBadgeKind(ShopProduct product) {
   if (product.publishStatus == ProductPublishStatus.approved && !product.active) {
     return PartnerPublishBadgeKind.closed;
   }
-  // draft, pending, rejected → 작성 중 (legacy approval states)
+  if (product.publishStatus == ProductPublishStatus.pending) {
+    return PartnerPublishBadgeKind.pending;
+  }
+  // draft, rejected → 작성 중
   return PartnerPublishBadgeKind.drafting;
 }
 
@@ -110,6 +116,8 @@ PartnerProductFilterCounts partnerProductFilterCounts(
     switch (partnerPublishBadgeKind(product)) {
       case PartnerPublishBadgeKind.drafting:
         drafting += 1;
+      case PartnerPublishBadgeKind.pending:
+        break;
       case PartnerPublishBadgeKind.listed:
         listed += 1;
       case PartnerPublishBadgeKind.closed:

@@ -47,6 +47,11 @@ class ProductPublishStatusBadge extends StatelessWidget {
           PartnerTheme.badgeOrangeFg,
           PartnerTheme.badgeOrangeBg,
         ),
+      PartnerPublishBadgeKind.pending => (
+          l10n.partnerProductCardBadgePending,
+          PartnerTheme.badgeOrangeFg,
+          PartnerTheme.badgeOrangeBg,
+        ),
       PartnerPublishBadgeKind.listed => (
           l10n.partnerProductBadgeListed,
           PartnerTheme.badgeGreenFg,

@@ -8063,6 +8063,18 @@ abstract class AppLocalizations {
   /// **'승인 대기'**
   String get partnerProductBadgePending;
 
+  /// No description provided for @partnerProductCardBadgePending.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기'**
+  String get partnerProductCardBadgePending;
+
+  /// No description provided for @partnerProductCardBadgeDraft.
+  ///
+  /// In ko, this message translates to:
+  /// **'임시저장'**
+  String get partnerProductCardBadgeDraft;
+
   /// No description provided for @partnerProductBadgeDrafting.
   ///
   /// In ko, this message translates to:

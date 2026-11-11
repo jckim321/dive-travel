@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_product_entry.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_back_button.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_open_seats_picker_screen.dart';
@@ -29,11 +30,41 @@ class PartnerProductMenuScreen extends StatelessWidget {
     final store = DiverStoreScope.of(context);
 
     return PartnerTheme.wrap(
-      Scaffold(
+      Theme(
+        data: ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: AppTheme.canvas,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppTheme.navy,
+            brightness: Brightness.light,
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.navy,
+            surfaceTintColor: Colors.white,
+          ),
+          cardTheme: const CardThemeData(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+              side: BorderSide(color: Color(0xFFDDE3EA)),
+            ),
+          ),
+        ),
+        child: Scaffold(
+        backgroundColor: AppTheme.canvas,
         appBar: embedded
             ? null
             : AppBar(
-                leading: const PartnerBackButton(),
+                leading: const ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    AppTheme.navy,
+                    BlendMode.srcIn,
+                  ),
+                  child: PartnerBackButton(),
+                ),
                 title: Text(l10n.partnerProductMenuTitle),
               ),
         body: SafeArea(
@@ -105,7 +136,7 @@ class PartnerProductMenuScreen extends StatelessWidget {
                     key: const Key('partner-menu-foc-note'),
                     l10n.partnerProductMenuFocNote,
                     style: const TextStyle(
-                      color: PartnerTheme.textDim,
+                      color: AppTheme.navy,
                       fontSize: 13,
                       height: 1.45,
                     ),
@@ -114,6 +145,7 @@ class PartnerProductMenuScreen extends StatelessWidget {
               );
             },
           ),
+        ),
         ),
       ),
     );
@@ -139,6 +171,7 @@ class _MenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       key: Key(keyName),
+      color: Colors.white,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -146,7 +179,7 @@ class _MenuCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
           child: Row(
             children: [
-              Icon(icon, color: PartnerTheme.accent, size: 28),
+              Icon(icon, color: AppTheme.navy, size: 28),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -155,7 +188,7 @@ class _MenuCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        color: PartnerTheme.text,
+                        color: AppTheme.navy,
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
@@ -164,14 +197,14 @@ class _MenuCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                        color: PartnerTheme.textDim,
+                        color: AppTheme.navy,
                         fontSize: 13,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: PartnerTheme.textDim),
+              const Icon(Icons.chevron_right, color: AppTheme.navy),
             ],
           ),
         ),

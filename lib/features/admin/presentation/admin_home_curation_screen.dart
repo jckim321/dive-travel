@@ -36,7 +36,9 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
         ];
         final pool = [
           for (final product in public)
-            if (product.listingKind == ProductListingKind.exploreOnly) product,
+            if (product.listingKind == ProductListingKind.exploreOnly ||
+                product.listingKind == ProductListingKind.nextDeparture)
+              product,
         ];
         final count = store.countOnHomeShelf(_shelf);
         final limit = ProductListingKind.homeShelfLimit;
@@ -57,16 +59,18 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
               runSpacing: 8,
               children: [
                 for (final kind in ProductListingKind.homeShelves)
-                  ChoiceChip(
-                    key: Key('home-shelf-${kind.name}'),
-                    label: Text(
-                      '${_shelfLabel(l10n, kind)} · '
-                      '${store.countOnHomeShelf(kind)}/$limit',
+                  if (kind != ProductListingKind.nextDeparture)
+                    ChoiceChip(
+                      key: Key('home-shelf-${kind.name}'),
+                      label: Text(
+                        '${_shelfLabel(l10n, kind)} · '
+                        '${store.countOnHomeShelf(kind)}/$limit',
+                      ),
+                      selected: _shelf == kind,
+                      selectedColor:
+                          AdminConsoleTheme.aqua.withValues(alpha: 0.35),
+                      onSelected: (_) => setState(() => _shelf = kind),
                     ),
-                    selected: _shelf == kind,
-                    selectedColor: AdminConsoleTheme.aqua.withValues(alpha: 0.35),
-                    onSelected: (_) => setState(() => _shelf = kind),
-                  ),
               ],
             ),
             const SizedBox(height: 8),

@@ -2432,6 +2432,8 @@
   "productListingCurated": "기획 스페셜",
   "productStatusPending": "승인 대기",
   "partnerProductBadgePending": "승인 대기",
+  "partnerProductCardBadgePending": "승인 대기",
+  "partnerProductCardBadgeDraft": "임시저장",
   "partnerProductBadgeDrafting": "작성 중",
   "partnerProductBadgeListed": "게시중",
   "partnerProductBadgeRejected": "반려",
