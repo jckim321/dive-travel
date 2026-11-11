@@ -65,109 +65,110 @@ class DepartureDeskHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF3C8FB6), Color(0xFF0A4A73)],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF3C8FB6), Color(0xFF0A4A73)],
+                  ),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: const Icon(
+                  Icons.scuba_diving_rounded,
+                  color: Colors.white,
+                  size: 25,
+                ),
               ),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: const Icon(
-              Icons.scuba_diving_rounded,
-              color: Colors.white,
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.profileMyOceanKicker,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFFD7E7EF),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  displayName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '$gradeMark $gradeLabel',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Material(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(999),
-                  child: InkWell(
-                    key: const Key('profile-flight-search'),
-                    borderRadius: BorderRadius.circular(999),
-                    onTap: () => showFlightLinkSheet(context),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            l10n.profileFlightSearch,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l10n.profileFlightPayHint,
-                              textAlign: TextAlign.right,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.86),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.profileMyOceanKicker,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFFD7E7EF),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.4,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      displayName,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '$gradeMark $gradeLabel',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              TextButton(
+                key: const Key('open-profile-settings'),
+                onPressed: onSettings,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: Text('👤 ${l10n.profileViewMyInfo}'),
+              ),
+            ],
           ),
-          TextButton(
-            key: const Key('open-profile-settings'),
-            onPressed: onSettings,
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+          const SizedBox(height: 8),
+          Material(
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(999),
+            child: InkWell(
+              key: const Key('profile-flight-search'),
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => showFlightLinkSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      l10n.profileFlightSearch,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      l10n.profileFlightPayHint,
+                      softWrap: false,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: Text('👤 ${l10n.profileViewMyInfo}'),
           ),
         ],
       ),
