@@ -2010,6 +2010,54 @@ abstract class AppLocalizations {
   /// **'나의 정보 보기'**
   String get profileViewMyInfo;
 
+  /// No description provided for @profileFlightSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'✈ 항공권 찾기'**
+  String get profileFlightSearch;
+
+  /// No description provided for @profileFlightPayHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'결제는 연결 앱에서 ↗'**
+  String get profileFlightPayHint;
+
+  /// No description provided for @profileFlightSheetTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'항공권, 어느 앱에서 볼까요?'**
+  String get profileFlightSheetTitle;
+
+  /// No description provided for @profileFlightSheetBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'선택한 앱으로 이동해 그곳에서 바로 결제해요'**
+  String get profileFlightSheetBody;
+
+  /// No description provided for @profileFlightSkyscanner.
+  ///
+  /// In ko, this message translates to:
+  /// **'스카이스캐너'**
+  String get profileFlightSkyscanner;
+
+  /// No description provided for @profileFlightNaver.
+  ///
+  /// In ko, this message translates to:
+  /// **'네이버 항공권'**
+  String get profileFlightNaver;
+
+  /// No description provided for @profileFlightGoogle.
+  ///
+  /// In ko, this message translates to:
+  /// **'구글 항공편'**
+  String get profileFlightGoogle;
+
+  /// No description provided for @profileFlightDisclaimer.
+  ///
+  /// In ko, this message translates to:
+  /// **'항공권 판매·결제는 각 앱이 직접 진행하며, 다이브트래블은 연결만 도와드려요.'**
+  String get profileFlightDisclaimer;
+
   /// No description provided for @profileNextOceanTitle.
   ///
   /// In ko, this message translates to:

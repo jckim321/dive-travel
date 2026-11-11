@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/profile/presentation/flight_link_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Identity header on My page. Grade follows stored [MemberGrade].
@@ -114,12 +115,46 @@ class DepartureDeskHeader extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${l10n.profileRegions(regionsCount)} · '
-                  '${l10n.profileTotalDives} $logCount',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white70,
+                const SizedBox(height: 8),
+                Material(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                  child: InkWell(
+                    key: const Key('profile-flight-search'),
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: () => showFlightLinkSheet(context),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            l10n.profileFlightSearch,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.profileFlightPayHint,
+                              textAlign: TextAlign.right,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.86),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],

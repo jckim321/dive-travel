@@ -1030,6 +1030,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileViewMyInfo => '나의 정보 보기';
 
   @override
+  String get profileFlightSearch => '✈ 항공권 찾기';
+
+  @override
+  String get profileFlightPayHint => '결제는 연결 앱에서 ↗';
+
+  @override
+  String get profileFlightSheetTitle => '항공권, 어느 앱에서 볼까요?';
+
+  @override
+  String get profileFlightSheetBody => '선택한 앱으로 이동해 그곳에서 바로 결제해요';
+
+  @override
+  String get profileFlightSkyscanner => '스카이스캐너';
+
+  @override
+  String get profileFlightNaver => '네이버 항공권';
+
+  @override
+  String get profileFlightGoogle => '구글 항공편';
+
+  @override
+  String get profileFlightDisclaimer =>
+      '항공권 판매·결제는 각 앱이 직접 진행하며, 다이브트래블은 연결만 도와드려요.';
+
+  @override
   String get profileNextOceanTitle => '다음 바다';
 
   @override
