@@ -40,8 +40,19 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
                 product.listingKind == ProductListingKind.nextDeparture)
               product,
         ];
-        final count = store.countOnHomeShelf(_shelf);
+        int listedHere(ProductListingKind kind) {
+          var total = 0;
+          for (final product in public) {
+            if (product.listingKind == kind) {
+              total++;
+            }
+          }
+          return total;
+        }
+
+        final count = listedHere(_shelf);
         final limit = ProductListingKind.homeShelfLimit;
+        final shelfFull = store.countOnHomeShelf(_shelf) >= limit;
 
         final body = ListView(
           key: const Key('admin-home-curation'),
@@ -64,7 +75,7 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
                       key: Key('home-shelf-${kind.name}'),
                       label: Text(
                         '${_shelfLabel(l10n, kind)} · '
-                        '${store.countOnHomeShelf(kind)}/$limit',
+                        '${listedHere(kind)}/$limit',
                       ),
                       selected: _shelf == kind,
                       selectedColor:
@@ -134,7 +145,7 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
                   product: product,
                   embedded: widget.embedded,
                   trailing: FilledButton(
-                    onPressed: count >= limit
+                    onPressed: shelfFull
                         ? null
                         : () => _assign(context, store, product, _shelf),
                     child: Text(l10n.adminHomeCurationSend),
@@ -264,8 +275,10 @@ class _CurationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shopName =
-        DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+    final shopName = _shopName(
+      DiverStoreScope.of(context),
+      product.shopId,
+    );
 
     return Card(
       color: embedded ? AdminConsoleTheme.surfaceHigh : null,
@@ -393,7 +406,7 @@ class _OrderFieldState extends State<_OrderField> {
     final l10n = AppLocalizations.of(context);
     final ink = widget.embedded ? Colors.white : null;
     return SizedBox(
-      width: 88,
+      width: 120,
       child: TextField(
         controller: _controller,
         focusNode: _focus,
@@ -412,6 +425,14 @@ class _OrderFieldState extends State<_OrderField> {
       ),
     );
   }
+}
+
+String _shopName(DiverStore store, String shopId) {
+  final fromStore = store.shopLabelFor(shopId);
+  if (fromStore.isNotEmpty) {
+    return fromStore;
+  }
+  return DiveShopCatalog.byId(shopId)?.name ?? shopId;
 }
 
 String _shelfLabel(AppLocalizations l10n, ProductListingKind kind) {

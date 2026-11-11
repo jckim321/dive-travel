@@ -284,6 +284,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
                   subtitle: _productLines(
                     l10n,
                     product,
+                    store,
                     color: widget.embedded ? AdminConsoleTheme.muted : null,
                   ),
                   trailing: Row(
@@ -728,8 +729,10 @@ class _PendingProductTileState extends State<_PendingProductTile> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final shopName =
-        DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+    final shopName = _shopName(
+      DiverStoreScope.of(context),
+      product.shopId,
+    );
     final canCompare =
         productSectionHashesComparable(product.rejectedSectionHashes);
     final changeFlags = sectionChangeFlags(
@@ -1057,14 +1060,22 @@ String _statusLabel(AppLocalizations l10n, ProductPublishStatus status) {
   }
 }
 
+String _shopName(DiverStore store, String shopId) {
+  final fromStore = store.shopLabelFor(shopId);
+  if (fromStore.isNotEmpty) {
+    return fromStore;
+  }
+  return DiveShopCatalog.byId(shopId)?.name ?? shopId;
+}
+
 Widget _productLines(
   AppLocalizations l10n,
-  ShopProduct product, {
+  ShopProduct product,
+  DiverStore store, {
   Color? color,
 }) {
   final style = TextStyle(color: color);
-  final shopName =
-      DiveShopCatalog.byId(product.shopId)?.name ?? product.shopId;
+  final shopName = _shopName(store, product.shopId);
   final planned = _isPlannedTrip(product);
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
