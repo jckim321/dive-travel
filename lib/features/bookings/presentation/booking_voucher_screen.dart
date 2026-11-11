@@ -34,6 +34,26 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
   static final _money = NumberFormat('#,###', 'en_US');
   static final _day = DateFormat('yyyy.MM.dd');
 
+  String _partyLine(AppLocalizations l10n) {
+    final booking = widget.booking;
+    final party = booking.hasPartyDetail
+        ? l10n.bookingVoucherPartySummary(
+            booking.divers,
+            booking.nondivers,
+            booking.children,
+            booking.infants,
+          )
+        : (booking.partySize > 0 ? '${booking.partySize}' : '');
+    if (booking.singleRooms < 1) {
+      return party;
+    }
+    final rooms = l10n.bookingSingleRooms(booking.singleRooms);
+    if (party.isEmpty) {
+      return rooms;
+    }
+    return '$party · $rooms';
+  }
+
   Future<void> _saveToPhone() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _saving = true);
@@ -78,6 +98,7 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final booking = widget.booking;
+    final partyLine = _partyLine(l10n);
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -147,21 +168,8 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                           l10n.workbenchDepartureDate,
                           _day.format(booking.scheduledFor),
                         ),
-                        if (booking.hasPartyDetail)
-                          _row(
-                            l10n.checkoutGuests,
-                            l10n.bookingVoucherPartySummary(
-                              booking.divers,
-                              booking.nondivers,
-                              booking.children,
-                              booking.infants,
-                            ),
-                          )
-                        else if (booking.partySize > 0)
-                          _row(
-                            l10n.checkoutGuests,
-                            '${booking.partySize}',
-                          ),
+                        if (partyLine.isNotEmpty)
+                          _row(l10n.checkoutGuests, partyLine),
                         if (booking.guestDisplayName.trim().isNotEmpty)
                           _row(
                             l10n.checkoutGuestName,

@@ -276,11 +276,15 @@ class PartnerVoucherCard extends StatelessWidget {
             _line(l10n.partnerVoucherTourDate, _day.format(booking.scheduledFor)),
             _line(
               l10n.partnerVoucherParty,
-              booking.hasPartyDetail
-                  ? _partnerVoucherPartyDetail(l10n, booking)
-                  : (booking.partySize > 0
-                      ? '${booking.partySize}'
-                      : l10n.partnerVoucherNone),
+              partnerVoucherPartyWithSingleRooms(
+                l10n,
+                booking,
+                booking.hasPartyDetail
+                    ? _partnerVoucherPartyDetail(l10n, booking)
+                    : (booking.partySize > 0
+                        ? '${booking.partySize}'
+                        : l10n.partnerVoucherNone),
+              ),
             ),
             _line(
               l10n.partnerVoucherOptions,
@@ -515,7 +519,7 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
         booking.productLabel,
       ),
       '${l10n.partnerVoucherTourDate}: ${_day.format(booking.scheduledFor)}',
-      '${l10n.partnerVoucherParty}: ${booking.hasPartyDetail ? _partnerVoucherPartyDetail(l10n, booking) : booking.partySize}',
+      '${l10n.partnerVoucherParty}: ${partnerVoucherPartyWithSingleRooms(l10n, booking, booking.hasPartyDetail ? _partnerVoucherPartyDetail(l10n, booking) : '${booking.partySize}')}',
       '${l10n.partnerVoucherOptions}: ${option.isEmpty ? l10n.partnerVoucherNone : option}',
       '${l10n.partnerVoucherFoc}: ${foc ?? l10n.partnerVoucherNone}',
       '${l10n.partnerVoucherGuestName}: ${booking.guestDisplayName.trim().isEmpty ? l10n.partnerVoucherGuestNameMissing : booking.guestDisplayName.trim()}',

@@ -2405,6 +2405,12 @@ abstract class AppLocalizations {
     int infant,
   );
 
+  /// No description provided for @bookingSingleRooms.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 1실 {count}'**
+  String bookingSingleRooms(int count);
+
   /// No description provided for @profileBookingStatus.
   ///
   /// In ko, this message translates to:

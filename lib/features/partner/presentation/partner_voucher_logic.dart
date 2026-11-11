@@ -1,4 +1,5 @@
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Partner voucher list tabs (시안 24).
 enum PartnerVoucherTab { arrived, past, cancelled }
@@ -132,4 +133,21 @@ String? partnerVoucherFocLabel(TourBooking booking) {
     }
   }
   return null;
+}
+
+/// Party line plus 「1인 1실 n」 when the booking stored a count.
+String partnerVoucherPartyWithSingleRooms(
+  AppLocalizations l10n,
+  TourBooking booking,
+  String partyText,
+) {
+  if (booking.singleRooms < 1) {
+    return partyText;
+  }
+  final rooms = l10n.bookingSingleRooms(booking.singleRooms);
+  final party = partyText.trim();
+  if (party.isEmpty) {
+    return rooms;
+  }
+  return '$party · $rooms';
 }

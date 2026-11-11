@@ -1244,6 +1244,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String bookingSingleRooms(int count) {
+    return '1인 1실 $count';
+  }
+
+  @override
   String get profileBookingStatus => '나의 예약';
 
   @override
