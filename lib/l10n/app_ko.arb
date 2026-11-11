@@ -125,6 +125,15 @@
   "@homeNextDepartures": {
     "description": "홈에서 같은 배 마감 임박 목록 제목입니다."
   },
+  "homeSameBoatBoardSummary": "마감 임박 {teams}팀 · 빈자리 {seats}자리",
+  "@homeSameBoatBoardSummary": {
+    "placeholders": {
+      "teams": {"type": "int"},
+      "seats": {"type": "int"}
+    }
+  },
+  "homeSameBoatBoardHeading": "출발 안내",
+  "homeSameBoatBoardSeeAll": "같은배에서 전체 보기",
   "homeLastMinuteTitle": "마감 임박 출발",
   "@homeLastMinuteTitle": {
     "description": "홈 화면 마감 임박 피드 제목입니다."

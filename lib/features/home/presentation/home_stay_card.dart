@@ -839,10 +839,10 @@ class HomeCuratedCard extends StatelessWidget {
     required this.onDetails,
   });
 
-  static const width = 260.0;
-  static const photoAspect = 1.6;
-  static const bandHeight = 86.0;
-  static const height = width / photoAspect + bandHeight;
+  static const height = 150.0;
+
+  /// Full width inside the home screen's 40px of horizontal padding.
+  static double widthFor(double screenWidth) => screenWidth - 40;
 
   final DiveShop shop;
   final VoidCallback onDetails;
@@ -854,98 +854,86 @@ class HomeCuratedCard extends StatelessWidget {
         ? shop.productName.trim()
         : shop.name;
     final line = homeCuratedLine(shop);
+    final price = homeWon(homeCardPrice(context, shop));
+    final detail = line.isNotEmpty ? '$price · $line' : price;
     return GestureDetector(
       onTap: onDetails,
       behavior: HitTestBehavior.opaque,
       child: ClipRRect(
         key: Key('home-curated-card-${shop.hullId}'),
         borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            AspectRatio(
-              aspectRatio: photoAspect,
-              child: Stack(
-                fit: StackFit.expand,
+            ListingCoverPhoto(shop: shop),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x00000000), Color(0xCC052A4A)],
+                  stops: [0.42, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 10,
+              top: 10,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppTheme.gold,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    l10n.homeApdiSpecial,
+                    key: Key('home-curated-kicker-${shop.hullId}'),
+                    style: const TextStyle(
+                      color: AppTheme.navy,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListingCoverPhoto(shop: shop),
-                  Positioned(
-                    left: 10,
-                    top: 10,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppTheme.gold,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        child: Text(
-                          l10n.homeApdiSpecial,
-                          key: Key('home-curated-kicker-${shop.hullId}'),
-                          style: const TextStyle(
-                            color: AppTheme.navy,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detail,
+                    key: Key('home-curated-price-${shop.hullId}'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
                     ),
                   ),
                 ],
-              ),
-            ),
-            Expanded(
-              child: ColoredBox(
-                color: AppTheme.navy,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          height: 1.2,
-                        ),
-                      ),
-                      if (line.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          line,
-                          key: Key('home-curated-line-${shop.hullId}'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFFD5DDE6),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      Text(
-                        homeWon(homeCardPrice(context, shop)),
-                        key: Key('home-curated-price-${shop.hullId}'),
-                        style: const TextStyle(
-                          color: AppTheme.gold,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ],
@@ -962,10 +950,13 @@ class HomeCaptainCard extends StatelessWidget {
     required this.onDetails,
   });
 
-  static const width = 260.0;
-  static const photoAspect = 1.6;
-  static const bandHeight = 86.0;
-  static const height = width / photoAspect + bandHeight;
+  static const photoHeight = 104.0;
+  static const bandHeight = 76.0;
+
+  /// Two cards across the home padding (40) with the 12px gap between them.
+  static double widthFor(double screenWidth) => (screenWidth - 40 - 12) / 2;
+
+  static double get height => photoHeight + bandHeight;
 
   final DiveShop shop;
   final VoidCallback onDetails;
@@ -988,86 +979,73 @@ class HomeCaptainCard extends StatelessWidget {
     final title = shop.productName.trim().isNotEmpty
         ? shop.productName.trim()
         : shop.name;
-    final initial = identity == null ? '' : homeNameInitial(identity.name);
+    final facts = homeBoatFacts(shop, product);
+    final when = <String>[
+      if (facts.departure != null) homeDayLabel(facts.departure!),
+      if (facts.seatsLeft != null) l10n.homeSameBoatSeatsLeft(facts.seatsLeft!),
+    ];
 
     return GestureDetector(
       onTap: onDetails,
       behavior: HitTestBehavior.opaque,
-      child: ClipRRect(
+      child: DecoratedBox(
         key: Key('home-captain-card-${shop.hullId}'),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
-              aspectRatio: photoAspect,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ListingCoverPhoto(shop: shop),
-                  if (identity != null && initial.isNotEmpty)
-                    Positioned(
-                      left: 10,
-                      top: 10,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          DecoratedBox(
-                            decoration: const BoxDecoration(
-                              color: AppTheme.navy,
-                              shape: BoxShape.circle,
-                            ),
-                            child: SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: Center(
-                                child: Text(
-                                  initial,
-                                  key: Key(
-                                    'home-captain-initial-${shop.hullId}',
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE4E8EE)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: photoHeight,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ListingCoverPhoto(shop: shop),
+                    if (identity != null)
+                      Positioned(
+                        left: 8,
+                        top: 8,
+                        right: 8,
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: AppTheme.gold,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
+                                  child: Text(
+                                    '${identity.name} 캡틴',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppTheme.navy,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: AppTheme.gold,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Text(
-                                homeGradeLabel(l10n, identity.grade),
-                                key: Key('home-captain-grade-${shop.hullId}'),
-                                style: const TextStyle(
-                                  color: AppTheme.navy,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: ColoredBox(
-                color: AppTheme.navy,
+              Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1076,20 +1054,20 @@ class HomeCaptainCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
+                          color: AppTheme.navy,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           height: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        l10n.homeCrewRecruiting,
+                        when.join(' · '),
                         key: Key('home-captain-status-${shop.hullId}'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Color(0xFFD5DDE6),
+                          color: AppTheme.muted,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                           height: 1.2,
@@ -1099,10 +1077,12 @@ class HomeCaptainCard extends StatelessWidget {
                       Text(
                         homeWon(homeCardPrice(context, shop)),
                         key: Key('home-captain-price-${shop.hullId}'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: AppTheme.gold,
                           fontWeight: FontWeight.w800,
-                          fontSize: 15,
+                          fontSize: 14,
                           height: 1.2,
                         ),
                       ),
@@ -1110,8 +1090,8 @@ class HomeCaptainCard extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1155,8 +1135,8 @@ class HomeDiscoverySection extends StatelessWidget {
     final cardWidth = switch (style) {
       HomeShelfStyle.diveStar => HomeDiveStarCard.width,
       HomeShelfStyle.sameBoat => HomeSameBoatCard.width,
-      HomeShelfStyle.captain => HomeCaptainCard.width,
-      HomeShelfStyle.curated => HomeCuratedCard.width,
+      HomeShelfStyle.captain => HomeCaptainCard.widthFor(screenW),
+      HomeShelfStyle.curated => HomeCuratedCard.widthFor(screenW),
       _ => (screenW * 0.55).clamp(168.0, 220.0),
     };
     final cardHeight = switch (style) {
@@ -1167,6 +1147,8 @@ class HomeDiscoverySection extends StatelessWidget {
       HomeShelfStyle.curated => HomeCuratedCard.height,
       HomeShelfStyle.standard => cardWidth / coverAspect + 50,
     };
+    final captainAction =
+        style == HomeShelfStyle.captain ? headerAction : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1194,7 +1176,10 @@ class HomeDiscoverySection extends StatelessWidget {
                 ],
               ),
             ),
-            if (onSeeAll != null)
+            if (captainAction != null) ...[
+              const SizedBox(width: 8),
+              captainAction,
+            ] else if (onSeeAll != null)
               IconButton(
                 tooltip: l10n.homeSeeAll,
                 onPressed: onSeeAll,
@@ -1202,7 +1187,7 @@ class HomeDiscoverySection extends StatelessWidget {
               ),
           ],
         ),
-        if (headerAction != null) ...[
+        if (headerAction != null && captainAction == null) ...[
           const SizedBox(height: 10),
           headerAction!,
         ],

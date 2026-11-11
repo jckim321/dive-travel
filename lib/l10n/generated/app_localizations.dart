@@ -300,6 +300,24 @@ abstract class AppLocalizations {
   /// **'같은 배 · 마감 임박'**
   String get homeNextDepartures;
 
+  /// No description provided for @homeSameBoatBoardSummary.
+  ///
+  /// In ko, this message translates to:
+  /// **'마감 임박 {teams}팀 · 빈자리 {seats}자리'**
+  String homeSameBoatBoardSummary(int teams, int seats);
+
+  /// No description provided for @homeSameBoatBoardHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 안내'**
+  String get homeSameBoatBoardHeading;
+
+  /// No description provided for @homeSameBoatBoardSeeAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은배에서 전체 보기'**
+  String get homeSameBoatBoardSeeAll;
+
   /// 홈 화면 마감 임박 피드 제목입니다.
   ///
   /// In ko, this message translates to:

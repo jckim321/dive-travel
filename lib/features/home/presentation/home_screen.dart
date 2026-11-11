@@ -12,6 +12,8 @@ import 'package:dive_travel_app/core/widgets/travel_title_bar.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_trip_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/home/presentation/for_you_section.dart';
+import 'package:dive_travel_app/features/home/presentation/home_hot_spot_list.dart';
+import 'package:dive_travel_app/features/home/presentation/home_same_boat_board.dart';
 import 'package:dive_travel_app/features/home/presentation/home_stay_card.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -68,28 +70,15 @@ class _HomeScreenState extends State<HomeScreen> {
           onOpen: (shop) => _openShop(context, shop),
         ),
       if (lastCallShops.isNotEmpty)
-        HomeDiscoverySection(
+        HomeSameBoatBoard(
           key: const Key('home-section-same-boat'),
-          title: l10n.homeNextDepartures,
-          style: HomeShelfStyle.sameBoat,
           shops: lastCallShops,
           onOpen: (shop) => _openShop(context, shop),
         ),
       if (hotShops.isNotEmpty)
-        HomeDiscoverySection(
+        HomeHotSpotList(
           key: const Key('home-section-hot'),
-          title: l10n.homePopularTitle,
-          subtitle: l10n.homeHotSpotSubtitle,
-          style: HomeShelfStyle.ranked,
           shops: hotShops,
-          onOpen: (shop) => _openShop(context, shop),
-        ),
-      if (curatedShops.isNotEmpty)
-        HomeDiscoverySection(
-          key: const Key('home-section-curated'),
-          title: l10n.homeCuratedTitle,
-          style: HomeShelfStyle.curated,
-          shops: curatedShops,
           onOpen: (shop) => _openShop(context, shop),
         ),
       if (plannedShops.isNotEmpty || canCaptain)
@@ -131,6 +120,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 : null,
             onOpen: (shop) => _openShop(context, shop),
           ),
+      if (curatedShops.isNotEmpty)
+        HomeDiscoverySection(
+          key: const Key('home-section-curated'),
+          title: l10n.homeCuratedTitle,
+          style: HomeShelfStyle.curated,
+          shops: curatedShops,
+          onOpen: (shop) => _openShop(context, shop),
+        ),
     ];
     final spaced = <Widget>[];
     for (final shelf in shelves) {

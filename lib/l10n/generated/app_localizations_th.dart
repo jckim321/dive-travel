@@ -114,6 +114,17 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeNextDepartures => 'รอบออกเดินทางนี้';
 
   @override
+  String homeSameBoatBoardSummary(int teams, int seats) {
+    return '마감 임박 $teams팀 · 빈자리 $seats자리';
+  }
+
+  @override
+  String get homeSameBoatBoardHeading => '출발 안내';
+
+  @override
+  String get homeSameBoatBoardSeeAll => '같은배에서 전체 보기';
+
+  @override
   String get homeLastMinuteTitle => 'ทัวร์กลุ่มใกล้ปิดรอบ';
 
   @override
