@@ -708,13 +708,15 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     ),
                                   ),
                                 ),
-                                Text(
-                                  '· ${shop.country} ${shop.location}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF5B6B75),
-                                    fontSize: 14,
+                                if (_shopPlace(shop.country, shop.location)
+                                    .isNotEmpty)
+                                  Text(
+                                    _shopPlace(shop.country, shop.location),
+                                    style: const TextStyle(
+                                      color: Color(0xFF5B6B75),
+                                      fontSize: 14,
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                             if (product != null) _productChips(product, duration),
@@ -860,13 +862,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                 ),
                             ],
                             const SizedBox(height: 18),
-                            Text(
-                              l10n.exploreCheckoutTitle,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
                             Row(
                               children: [
                                 Expanded(
@@ -1704,6 +1699,18 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 }
 
+String _shopPlace(String country, String location) {
+  final left = country.trim();
+  final right = location.trim();
+  if (left.isEmpty && right.isEmpty) {
+    return '';
+  }
+  if (left.isEmpty || right.isEmpty || left == right) {
+    return '· ${left.isEmpty ? right : left}';
+  }
+  return '· $left $right';
+}
+
 class _PhotoMosaic extends StatelessWidget {
   const _PhotoMosaic({
     required this.shop,
@@ -1805,20 +1812,19 @@ class _PhotoTile extends StatelessWidget {
         ),
         child: Stack(
           fit: StackFit.expand,
+          alignment: Alignment.center,
           children: [
-            FractionalTranslation(
-              translation: Offset(shift, 0),
-              child: ListingCoverPhoto(shop: shop),
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x11000000), Color(0x66052A4A)],
+            ListingCoverPhoto(shop: shop),
+            if (shift == 0)
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x11000000), Color(0x66052A4A)],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
