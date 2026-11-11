@@ -94,13 +94,18 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
                 _CurationTile(
                   product: product,
                   embedded: widget.embedded,
-                  trailing: OutlinedButton(
-                    onPressed: () => _assign(
-                      context,
-                      store,
-                      product,
-                      ProductListingKind.exploreOnly,
+                  order: _OrderField(
+                    key: Key('home-shelf-order-${product.id}'),
+                    product: product,
+                    embedded: widget.embedded,
+                    onSave: (order) => store.setProductHomeOrder(
+                      shopId: product.shopId,
+                      productId: product.id,
+                      order: order,
                     ),
+                  ),
+                  trailing: OutlinedButton(
+                    onPressed: () => _removeFromHome(context, store, product),
                     child: Text(l10n.adminHomeCurationRemove),
                   ),
                 ),
@@ -182,6 +187,42 @@ class _AdminHomeCurationScreenState extends State<AdminHomeCurationScreen> {
       );
     }
   }
+
+  Future<void> _removeFromHome(
+    BuildContext context,
+    DiverStore store,
+    ShopProduct product,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await store.setProductHomeShelf(
+        shopId: product.shopId,
+        productId: product.id,
+        listingKind: ProductListingKind.exploreOnly,
+      );
+      await store.setProductHomeOrder(
+        shopId: product.shopId,
+        productId: product.id,
+        order: null,
+      );
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.adminHomeCurationCleared)),
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      final message = error.toString().contains('Home shelf full')
+          ? l10n.adminHomeCurationFull
+          : error.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
 }
 
 class _EmptyCard extends StatelessWidget {
@@ -209,11 +250,13 @@ class _CurationTile extends StatelessWidget {
     required this.product,
     required this.embedded,
     required this.trailing,
+    this.order,
   });
 
   final ShopProduct product;
   final bool embedded;
   final Widget trailing;
+  final Widget? order;
 
   @override
   Widget build(BuildContext context) {
@@ -249,9 +292,118 @@ class _CurationTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (order != null) ...[
+              const SizedBox(width: 8),
+              order!,
+            ],
             const SizedBox(width: 8),
             trailing,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OrderField extends StatefulWidget {
+  const _OrderField({
+    super.key,
+    required this.product,
+    required this.embedded,
+    required this.onSave,
+  });
+
+  final ShopProduct product;
+  final bool embedded;
+  final Future<void> Function(int? order) onSave;
+
+  @override
+  State<_OrderField> createState() => _OrderFieldState();
+}
+
+class _OrderFieldState extends State<_OrderField> {
+  late final TextEditingController _controller;
+  late final FocusNode _focus;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _label(widget.product));
+    _focus = FocusNode()..addListener(_onFocus);
+  }
+
+  @override
+  void didUpdateWidget(covariant _OrderField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_focus.hasFocus &&
+        oldWidget.product.homeShelfOrder != widget.product.homeShelfOrder) {
+      _controller.text = _label(widget.product);
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocus);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _label(ShopProduct product) {
+    final order = product.homeShelfOrder;
+    return order == null ? '' : '$order';
+  }
+
+  void _onFocus() {
+    if (!_focus.hasFocus) {
+      _commit();
+    }
+  }
+
+  Future<void> _commit() async {
+    final raw = _controller.text.trim();
+    final current = widget.product.homeShelfOrder;
+    final parsed = raw.isEmpty ? null : int.tryParse(raw);
+    if (raw.isNotEmpty && (parsed == null || parsed < 1)) {
+      _controller.text = _label(widget.product);
+      return;
+    }
+    if (parsed == current) {
+      return;
+    }
+    try {
+      await widget.onSave(parsed);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _controller.text = _label(widget.product);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final ink = widget.embedded ? Colors.white : null;
+    return SizedBox(
+      width: 88,
+      child: TextField(
+        controller: _controller,
+        focusNode: _focus,
+        keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _commit(),
+        style: TextStyle(color: ink, fontSize: 13),
+        decoration: InputDecoration(
+          isDense: true,
+          labelText: l10n.adminHomeCurationOrder,
+          labelStyle: TextStyle(
+            color: widget.embedded ? AdminConsoleTheme.muted : null,
+            fontSize: 11,
+          ),
         ),
       ),
     );

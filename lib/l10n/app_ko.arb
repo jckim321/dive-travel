@@ -2267,6 +2267,7 @@
   },
   "adminHomeCurationSend": "이 선반으로",
   "adminHomeCurationRemove": "홈에서 내리기",
+  "adminHomeCurationOrder": "홈 고정 순서",
   "adminHomeCurationFull": "이 선반은 이미 10개입니다. 하나를 내린 뒤 다시 올려 주세요.",
   "adminHomeCurationEmptyPool": "미배치 공개 상품이 없습니다.",
   "adminHomeCurationEmptyShelf": "이 선반에 올린 상품이 없습니다.",

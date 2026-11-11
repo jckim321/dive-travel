@@ -3878,6 +3878,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get adminHomeCurationRemove => '홈에서 내리기';
 
   @override
+  String get adminHomeCurationOrder => '홈 고정 순서';
+
+  @override
   String get adminHomeCurationFull => '이 선반은 이미 10개입니다. 하나를 내린 뒤 다시 올려 주세요.';
 
   @override

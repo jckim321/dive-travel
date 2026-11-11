@@ -5403,6 +5403,37 @@ class FirestoreDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setShopProductHomeOrder({
+    required String shopId,
+    required String productId,
+    int? order,
+  }) async {
+    final stored = order != null && order >= 1 ? order : null;
+    final ref = _shops.doc(shopId);
+    final snap = await ref.get();
+    final current = ShopProduct.listFrom(shopId, snap.data()?['products']);
+    final next = [
+      for (final item in current)
+        if (item.id == productId)
+          item.copyWith(homeShelfOrder: stored)
+        else
+          item,
+    ];
+    await ref.set({
+      'products': [for (final item in next) item.toMap()],
+      'updated_at': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    final docRef = ref.collection('products').doc(productId);
+    final existingDoc = await docRef.get();
+    if (!existingDoc.exists) {
+      return;
+    }
+    await docRef.update({
+      'home_shelf_order': stored ?? FieldValue.delete(),
+    });
+  }
+
+  @override
   Future<void> deleteEmptyPartnerShop(String shopId) async {
     final id = shopId.trim();
     if (id.isEmpty) {

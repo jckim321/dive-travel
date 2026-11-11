@@ -744,6 +744,15 @@ abstract class DiverRepository {
     required ProductListingKind listingKind,
   });
 
+  /// Writes [order] onto the shop products array and, when the product
+  /// document already exists, onto that document. Null or below 1 clears it.
+  /// Does not create a missing product document.
+  Future<void> setShopProductHomeOrder({
+    required String shopId,
+    required String productId,
+    int? order,
+  });
+
   Stream<InstructorDiscount> watchInstructorDiscount();
 
   Future<void> saveInstructorDiscount(InstructorDiscount discount);

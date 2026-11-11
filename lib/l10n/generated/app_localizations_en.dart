@@ -3975,6 +3975,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminHomeCurationRemove => 'Remove from home';
 
   @override
+  String get adminHomeCurationOrder => '홈 고정 순서';
+
+  @override
   String get adminHomeCurationFull =>
       'This shelf already has 10. Remove one before adding.';
 

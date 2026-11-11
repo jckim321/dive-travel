@@ -4494,6 +4494,41 @@ class MemoryDiverRepository implements DiverRepository {
   }
 
   @override
+  Future<void> setShopProductHomeOrder({
+    required String shopId,
+    required String productId,
+    int? order,
+  }) async {
+    final current = _shopStats[shopId];
+    if (current == null) {
+      return;
+    }
+    final stored = order != null && order >= 1 ? order : null;
+    final products = [
+      for (final item in current.products)
+        if (item.id == productId)
+          item.copyWith(homeShelfOrder: stored)
+        else
+          item,
+    ];
+    _shopStats[shopId] = current.copyWith(products: products);
+    for (final byShop in [_productDocs[shopId], _productRawByShop[shopId]]) {
+      final raw = byShop?[productId];
+      if (raw == null) {
+        continue;
+      }
+      final next = Map<String, dynamic>.from(raw);
+      if (stored == null) {
+        next.remove('home_shelf_order');
+      } else {
+        next['home_shelf_order'] = stored;
+      }
+      byShop![productId] = next;
+    }
+    _shopController.add(_shopStats.values.toList());
+  }
+
+  @override
   Future<void> deleteEmptyPartnerShop(String shopId) async {
     final id = shopId.trim();
     if (id.isEmpty) {

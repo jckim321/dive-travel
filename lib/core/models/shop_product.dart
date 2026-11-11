@@ -829,6 +829,7 @@ class ShopProduct {
     this.publishStatus = ProductPublishStatus.approved,
     this.submittedAt,
     this.featuredAt,
+    this.homeShelfOrder,
     this.reviewedAt,
     this.reviewNote = '',
     this.rejectedContentHash = '',
@@ -931,6 +932,7 @@ class ShopProduct {
       publishStatus: ProductPublishStatus.parse(data['publish_status']),
       submittedAt: _readTime(data['submitted_at']),
       featuredAt: _readTime(data['featured_at']),
+      homeShelfOrder: _homeShelfOrder(data['home_shelf_order']),
       reviewedAt: _readTime(data['reviewed_at']),
       reviewNote: data['review_note'] as String? ?? '',
       rejectedContentHash: data['rejected_content_hash'] as String? ?? '',
@@ -1005,6 +1007,9 @@ class ShopProduct {
 
   /// When an admin last assigned this product to a home shelf.
   final DateTime? featuredAt;
+
+  /// Optional home-shelf pin. Null means the shelf sorts by [featuredAt].
+  final int? homeShelfOrder;
   final DateTime? reviewedAt;
 
   /// Latest admin reject reason (kept across resubmit; cleared on approve).
@@ -1808,6 +1813,7 @@ class ShopProduct {
     ProductPublishStatus? publishStatus,
     DateTime? submittedAt,
     Object? featuredAt = _unset,
+    Object? homeShelfOrder = _unset,
     DateTime? reviewedAt,
     String? reviewNote,
     String? rejectedContentHash,
@@ -1878,6 +1884,9 @@ class ShopProduct {
       featuredAt: identical(featuredAt, _unset)
           ? this.featuredAt
           : featuredAt as DateTime?,
+      homeShelfOrder: identical(homeShelfOrder, _unset)
+          ? this.homeShelfOrder
+          : homeShelfOrder as int?,
       reviewedAt: reviewedAt ?? this.reviewedAt,
       reviewNote: reviewNote ?? this.reviewNote,
       rejectedContentHash: rejectedContentHash ?? this.rejectedContentHash,
@@ -2038,6 +2047,8 @@ class ShopProduct {
       'publish_status': publishStatus.firestoreValue,
       if (submittedAt != null) 'submitted_at': submittedAt!.toIso8601String(),
       if (featuredAt != null) 'featured_at': featuredAt!.toIso8601String(),
+      if (homeShelfOrder != null && homeShelfOrder! >= 1)
+        'home_shelf_order': homeShelfOrder,
       if (reviewedAt != null) 'reviewed_at': reviewedAt!.toIso8601String(),
       if (reviewNote.isNotEmpty) 'review_note': reviewNote,
       if (rejectedContentHash.isNotEmpty)
@@ -2159,6 +2170,9 @@ class ShopProduct {
       if (previous != null) ...previous,
       ...overlay,
     };
+    if (product.homeShelfOrder == null) {
+      merged.remove('home_shelf_order');
+    }
     if (clearAbsentFormFields) {
       for (final key in formOwnedOptionalKeys) {
         if (!overlay.containsKey(key)) {
@@ -2334,6 +2348,14 @@ class ShopProduct {
       }
     }
     return out;
+  }
+
+  static int? _homeShelfOrder(dynamic value) {
+    final parsed = (value as num?)?.toInt();
+    if (parsed == null || parsed < 1) {
+      return null;
+    }
+    return parsed;
   }
 
   static DateTime? _readTime(dynamic value) {

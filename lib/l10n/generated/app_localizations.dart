@@ -7265,6 +7265,12 @@ abstract class AppLocalizations {
   /// **'홈에서 내리기'**
   String get adminHomeCurationRemove;
 
+  /// No description provided for @adminHomeCurationOrder.
+  ///
+  /// In ko, this message translates to:
+  /// **'홈 고정 순서'**
+  String get adminHomeCurationOrder;
+
   /// No description provided for @adminHomeCurationFull.
   ///
   /// In ko, this message translates to:

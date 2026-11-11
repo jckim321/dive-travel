@@ -653,7 +653,7 @@ class DiverStore extends ChangeNotifier {
       return const [];
     }
     final statsByShop = {for (final stats in _shopStats) stats.shopId: stats};
-    final scored = <({DiveShop card, DateTime at})>[];
+    final scored = <({DiveShop card, DateTime at, int? pin})>[];
 
     for (final hull in DiveShopCatalog.hulls(shops)) {
       if (excludeHullIds.contains(hull.hullId)) {
@@ -668,18 +668,61 @@ class DiverStore extends ChangeNotifier {
       if (matches.isEmpty) {
         continue;
       }
-      matches.sort(
-        (a, b) => _homeFeatureTime(b).compareTo(_homeFeatureTime(a)),
-      );
+      matches.sort(_compareHomeShelf);
       final best = matches.first;
       scored.add((
         card: _hullCardForProduct(hull, best),
         at: _homeFeatureTime(best),
+        pin: _homePin(best),
       ));
     }
 
-    scored.sort((a, b) => b.at.compareTo(a.at));
+    scored.sort((a, b) {
+      final aPin = a.pin;
+      final bPin = b.pin;
+      if (aPin != null && bPin != null) {
+        final byPin = aPin.compareTo(bPin);
+        if (byPin != 0) {
+          return byPin;
+        }
+        return b.at.compareTo(a.at);
+      }
+      if (aPin != null) {
+        return -1;
+      }
+      if (bPin != null) {
+        return 1;
+      }
+      return b.at.compareTo(a.at);
+    });
     return [for (final item in scored.take(limit)) item.card];
+  }
+
+  static int? _homePin(ShopProduct product) {
+    final order = product.homeShelfOrder;
+    if (order == null || order < 1) {
+      return null;
+    }
+    return order;
+  }
+
+  static int _compareHomeShelf(ShopProduct a, ShopProduct b) {
+    final aPin = _homePin(a);
+    final bPin = _homePin(b);
+    if (aPin != null && bPin != null) {
+      final byPin = aPin.compareTo(bPin);
+      if (byPin != 0) {
+        return byPin;
+      }
+      return _homeFeatureTime(b).compareTo(_homeFeatureTime(a));
+    }
+    if (aPin != null) {
+      return -1;
+    }
+    if (bPin != null) {
+      return 1;
+    }
+    return _homeFeatureTime(b).compareTo(_homeFeatureTime(a));
   }
 
   static DateTime _homeFeatureTime(ShopProduct product) {
@@ -3633,6 +3676,34 @@ class DiverStore extends ChangeNotifier {
       shopId: shopId,
       productId: productId,
       listingKind: listingKind,
+    );
+    await refreshShopStat(shopId);
+  }
+
+  /// Admin-only pin for the order of a product already on a home shelf.
+  /// Null or below 1 clears the pin. Does not change the shelf or its limit.
+  Future<void> setProductHomeOrder({
+    required String shopId,
+    required String productId,
+    int? order,
+  }) async {
+    if (!_stats.isAdmin) {
+      throw StateError('Admin only');
+    }
+    ShopProduct? current;
+    for (final product in productsForShop(shopId)) {
+      if (product.id == productId) {
+        current = product;
+        break;
+      }
+    }
+    if (current == null || !current.isListedPublicly) {
+      throw StateError('Product not public');
+    }
+    await _repository.setShopProductHomeOrder(
+      shopId: shopId,
+      productId: productId,
+      order: order != null && order >= 1 ? order : null,
     );
     await refreshShopStat(shopId);
   }
