@@ -4807,6 +4807,11 @@ class FirestoreDiverRepository implements DiverRepository {
     String? checkIn,
     String? checkOut,
     String? businessHours,
+    List<String>? spokenLanguages,
+    List<int>? operatingMonths,
+    bool? regularClosedNone,
+    List<int>? regularClosedDays,
+    String? regularClosedNote,
     String? country,
     String? continent,
     bool? curated,
@@ -4906,6 +4911,15 @@ class FirestoreDiverRepository implements DiverRepository {
       if (checkIn != null) 'check_in': checkIn.trim(),
       if (checkOut != null) 'check_out': checkOut.trim(),
       if (businessHours != null) 'business_hours': businessHours.trim(),
+      if (spokenLanguages != null)
+        'spoken_languages': shopLanguageCodesFrom(spokenLanguages),
+      if (operatingMonths != null)
+        'operating_months': shopMonthsFrom(operatingMonths),
+      if (regularClosedNone != null) 'regular_closed_none': regularClosedNone,
+      if (regularClosedDays != null)
+        'regular_closed_days': shopClosedDaysFrom(regularClosedDays),
+      if (regularClosedNote != null)
+        'regular_closed_note': clampShort(regularClosedNote),
       if (galleryUrls != null) 'gallery_urls': galleryUrls,
       if (galleryUrls != null && galleryUrls.isEmpty)
         'cover_url': FieldValue.delete()

@@ -2508,6 +2508,11 @@ class DiverStore extends ChangeNotifier {
     String? checkIn,
     String? checkOut,
     String? businessHours,
+    List<String>? spokenLanguages,
+    List<int>? operatingMonths,
+    bool? regularClosedNone,
+    List<int>? regularClosedDays,
+    String? regularClosedNote,
     String? country,
     String? continent,
     bool? curated,
@@ -2569,6 +2574,11 @@ class DiverStore extends ChangeNotifier {
       checkIn: checkIn,
       checkOut: checkOut,
       businessHours: businessHours,
+      spokenLanguages: spokenLanguages,
+      operatingMonths: operatingMonths,
+      regularClosedNone: regularClosedNone,
+      regularClosedDays: regularClosedDays,
+      regularClosedNote: regularClosedNote,
       country: country,
       continent: continent,
       curated: curated,
@@ -2601,6 +2611,11 @@ class DiverStore extends ChangeNotifier {
       checkIn: checkIn,
       checkOut: checkOut,
       businessHours: businessHours,
+      spokenLanguages: spokenLanguages,
+      operatingMonths: operatingMonths,
+      regularClosedNone: regularClosedNone,
+      regularClosedDays: regularClosedDays,
+      regularClosedNote: regularClosedNote,
       country: country,
       continent: continent,
       curated: curated,
@@ -2646,6 +2661,11 @@ class DiverStore extends ChangeNotifier {
     String? checkIn,
     String? checkOut,
     String? businessHours,
+    List<String>? spokenLanguages,
+    List<int>? operatingMonths,
+    bool? regularClosedNone,
+    List<int>? regularClosedDays,
+    String? regularClosedNote,
     String? country,
     String? continent,
     bool? curated,
@@ -2718,6 +2738,11 @@ class DiverStore extends ChangeNotifier {
           checkIn: checkIn?.trim(),
           checkOut: checkOut?.trim(),
           businessHours: businessHours?.trim(),
+          spokenLanguages: spokenLanguages,
+          operatingMonths: operatingMonths,
+          regularClosedNone: regularClosedNone,
+          regularClosedDays: regularClosedDays,
+          regularClosedNote: regularClosedNote?.trim(),
           country: country?.trim() ?? catalog?.country,
           continent: continent?.trim() ?? catalog?.continent,
           products: nextProducts,
@@ -3918,6 +3943,11 @@ class DiverStore extends ChangeNotifier {
           checkIn: profile.checkIn,
           checkOut: profile.checkOut,
           businessHours: profile.businessHours,
+          spokenLanguages: profile.spokenLanguages,
+          operatingMonths: profile.operatingMonths,
+          regularClosedNone: profile.regularClosedNone,
+          regularClosedDays: profile.regularClosedDays,
+          regularClosedNote: profile.regularClosedNote,
           amenities: profile.amenities,
           coverUrl: profile.coverUrl,
           clearCoverUrl: (profile.coverUrl ?? '').isEmpty,
@@ -3969,6 +3999,30 @@ class DiverStore extends ChangeNotifier {
     return next;
   }
 
+  bool _sameStrings(List<String> a, List<String> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _sameInts(List<int> a, List<int> b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool _profileEchoMatches(ShopLiveStats fetched, ShopLiveStats saved) {
     return fetched.name == saved.name &&
         fetched.location == saved.location &&
@@ -3986,6 +4040,11 @@ class DiverStore extends ChangeNotifier {
         fetched.checkIn == saved.checkIn &&
         fetched.checkOut == saved.checkOut &&
         fetched.businessHours == saved.businessHours &&
+        _sameStrings(fetched.spokenLanguages, saved.spokenLanguages) &&
+        _sameInts(fetched.operatingMonths, saved.operatingMonths) &&
+        fetched.regularClosedNone == saved.regularClosedNone &&
+        _sameInts(fetched.regularClosedDays, saved.regularClosedDays) &&
+        fetched.regularClosedNote == saved.regularClosedNote &&
         fetched.coverUrl == saved.coverUrl;
   }
 

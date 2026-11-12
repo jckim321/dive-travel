@@ -60,6 +60,11 @@ class ResortDeskInfoDraft {
   final checkIn = TextEditingController();
   final checkOut = TextEditingController();
   final businessHours = TextEditingController();
+  final spokenLanguages = <String>[];
+  final operatingMonths = <int>[];
+  var regularClosedNone = false;
+  final regularClosedDays = <int>[];
+  final regularClosedNote = TextEditingController();
   final amenityCustom = TextEditingController();
   final featureTagCustom = TextEditingController();
 
@@ -76,6 +81,11 @@ class ResortDeskInfoDraft {
     required String checkIn,
     required String checkOut,
     required String businessHours,
+    List<String> spokenLanguages = const [],
+    List<int> operatingMonths = const [],
+    bool regularClosedNone = false,
+    List<int> regularClosedDays = const [],
+    String regularClosedNote = '',
     required List<String> amenities,
     required List<String> featureTags,
     required List<AccessRoute> accessRoutes,
@@ -88,6 +98,17 @@ class ResortDeskInfoDraft {
     this.checkIn.text = checkIn;
     this.checkOut.text = checkOut;
     this.businessHours.text = businessHours;
+    this.spokenLanguages
+      ..clear()
+      ..addAll(shopLanguageCodesFrom(spokenLanguages));
+    this.operatingMonths
+      ..clear()
+      ..addAll(shopMonthsFrom(operatingMonths));
+    this.regularClosedNone = regularClosedNone;
+    this.regularClosedDays
+      ..clear()
+      ..addAll(shopClosedDaysFrom(regularClosedDays));
+    this.regularClosedNote.text = regularClosedNote;
     this.amenities
       ..clear()
       ..addAll(amenities.take(kMaxAmenities));
@@ -108,6 +129,49 @@ class ResortDeskInfoDraft {
       ]);
   }
 
+  void toggleLanguage(String code) {
+    if (!kShopLanguageCodes.contains(code)) {
+      return;
+    }
+    if (spokenLanguages.contains(code)) {
+      spokenLanguages.remove(code);
+    } else {
+      spokenLanguages.add(code);
+    }
+  }
+
+  void toggleMonth(int month) {
+    if (month < 1 || month > 12) {
+      return;
+    }
+    if (operatingMonths.contains(month)) {
+      operatingMonths.remove(month);
+    } else {
+      operatingMonths.add(month);
+    }
+    operatingMonths.sort();
+  }
+
+  void chooseClosedNone() {
+    regularClosedNone = !regularClosedNone;
+    if (regularClosedNone) {
+      regularClosedDays.clear();
+    }
+  }
+
+  void toggleClosedDay(int day) {
+    if (day < 1 || day > 7) {
+      return;
+    }
+    regularClosedNone = false;
+    if (regularClosedDays.contains(day)) {
+      regularClosedDays.remove(day);
+    } else {
+      regularClosedDays.add(day);
+    }
+    regularClosedDays.sort();
+  }
+
   void dispose() {
     mapUrl.dispose();
     nearestHub.dispose();
@@ -116,6 +180,7 @@ class ResortDeskInfoDraft {
     checkIn.dispose();
     checkOut.dispose();
     businessHours.dispose();
+    regularClosedNote.dispose();
     amenityCustom.dispose();
     featureTagCustom.dispose();
     for (final route in accessRoutes) {
@@ -239,6 +304,270 @@ InputDecoration _deskDeco(
   );
 }
 
+String shopLanguageLabel(AppLocalizations l10n, String code) {
+  return switch (code) {
+    'ko' => l10n.exploreShopLanguageKo,
+    'en' => l10n.exploreShopLanguageEn,
+    'ja' => l10n.exploreShopLanguageJa,
+    'zh' => l10n.exploreShopLanguageZh,
+    'th' => l10n.exploreShopLanguageTh,
+    'id' => l10n.exploreShopLanguageId,
+    'es' => l10n.exploreShopLanguageEs,
+    _ => code,
+  };
+}
+
+String shopWeekdayShort(AppLocalizations l10n, int day) {
+  return switch (day) {
+    1 => l10n.exploreShopDayMon,
+    2 => l10n.exploreShopDayTue,
+    3 => l10n.exploreShopDayWed,
+    4 => l10n.exploreShopDayThu,
+    5 => l10n.exploreShopDayFri,
+    6 => l10n.exploreShopDaySat,
+    7 => l10n.exploreShopDaySun,
+    _ => '',
+  };
+}
+
+String shopWeekdayFull(AppLocalizations l10n, int day) {
+  return switch (day) {
+    1 => l10n.exploreShopWeekMon,
+    2 => l10n.exploreShopWeekTue,
+    3 => l10n.exploreShopWeekWed,
+    4 => l10n.exploreShopWeekThu,
+    5 => l10n.exploreShopWeekFri,
+    6 => l10n.exploreShopWeekSat,
+    7 => l10n.exploreShopWeekSun,
+    _ => '',
+  };
+}
+
+/// Guest line for a saved closed-day choice. Empty when nothing was chosen.
+String shopClosedGuestLine(AppLocalizations l10n, ShopLiveStatsFacts facts) {
+  if (facts.regularClosedNone) {
+    return l10n.exploreShopClosedNone;
+  }
+  final names = [
+    for (final day in facts.regularClosedDays) shopWeekdayFull(l10n, day),
+  ].where((name) => name.isNotEmpty);
+  final days = names.join(', ');
+  final note = facts.regularClosedNote.trim();
+  if (days.isEmpty) {
+    return note;
+  }
+  final weekly = l10n.exploreShopClosedWeekly(days);
+  if (note.isEmpty) {
+    return weekly;
+  }
+  return '$weekly · $note';
+}
+
+class ShopLiveStatsFacts {
+  const ShopLiveStatsFacts({
+    required this.regularClosedNone,
+    required this.regularClosedDays,
+    required this.regularClosedNote,
+  });
+
+  final bool regularClosedNone;
+  final List<int> regularClosedDays;
+  final String regularClosedNote;
+}
+
+class ShopProfileFactsEditor extends StatelessWidget {
+  const ShopProfileFactsEditor({
+    super.key,
+    required this.draft,
+    required this.onChanged,
+    this.partnerChrome = false,
+  });
+
+  final ResortDeskInfoDraft draft;
+  final VoidCallback onChanged;
+  final bool partnerChrome;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final selected = const Color(0xFF0A7C74);
+    final idleBorder = const Color(0xFF8A98A8);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '${l10n.exploreShopLanguages} (${l10n.exploreShopPickMany})',
+          style: TextStyle(
+            color: partnerChrome ? const Color(0xFF0B1F33) : null,
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final code in kShopLanguageCodes)
+              FilterChip(
+                key: Key('shop-language-$code'),
+                label: Text(shopLanguageLabel(l10n, code)),
+                selected: draft.spokenLanguages.contains(code),
+                showCheckmark: false,
+                selectedColor: selected,
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: draft.spokenLanguages.contains(code)
+                      ? selected
+                      : idleBorder,
+                ),
+                labelStyle: TextStyle(
+                  color: draft.spokenLanguages.contains(code)
+                      ? Colors.white
+                      : const Color(0xFF0B1F33),
+                  fontWeight: FontWeight.w700,
+                ),
+                shape: const StadiumBorder(),
+                onSelected: (_) {
+                  draft.toggleLanguage(code);
+                  onChanged();
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.exploreShopSeason,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var month = 1; month <= 12; month++)
+              FilterChip(
+                key: Key('shop-month-$month'),
+                label: Text('$month'),
+                selected: draft.operatingMonths.contains(month),
+                showCheckmark: false,
+                selectedColor: selected,
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: draft.operatingMonths.contains(month)
+                      ? selected
+                      : idleBorder,
+                ),
+                labelStyle: TextStyle(
+                  color: draft.operatingMonths.contains(month)
+                      ? Colors.white
+                      : const Color(0xFF0B1F33),
+                  fontWeight: FontWeight.w800,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                onSelected: (_) {
+                  draft.toggleMonth(month);
+                  onChanged();
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          l10n.exploreShopSeasonHint,
+          style: const TextStyle(color: Color(0xFF52606D), fontSize: 12),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.exploreShopClosed,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              key: const Key('shop-closed-none'),
+              label: Text(l10n.exploreShopClosedNone),
+              selected: draft.regularClosedNone,
+              showCheckmark: false,
+              selectedColor: selected,
+              backgroundColor: Colors.white,
+              side: BorderSide(
+                color: draft.regularClosedNone ? selected : idleBorder,
+              ),
+              labelStyle: TextStyle(
+                color: draft.regularClosedNone
+                    ? Colors.white
+                    : const Color(0xFF0B1F33),
+                fontWeight: FontWeight.w700,
+              ),
+              shape: const StadiumBorder(),
+              onSelected: (_) {
+                draft.chooseClosedNone();
+                onChanged();
+              },
+            ),
+            for (var day = 1; day <= 7; day++)
+              FilterChip(
+                key: Key('shop-closed-day-$day'),
+                label: Text(shopWeekdayShort(l10n, day)),
+                selected: draft.regularClosedDays.contains(day),
+                showCheckmark: false,
+                selectedColor: selected,
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: draft.regularClosedDays.contains(day)
+                      ? selected
+                      : idleBorder,
+                ),
+                labelStyle: TextStyle(
+                  color: draft.regularClosedDays.contains(day)
+                      ? Colors.white
+                      : const Color(0xFF0B1F33),
+                  fontWeight: FontWeight.w700,
+                ),
+                shape: const StadiumBorder(),
+                onSelected: (_) {
+                  draft.toggleClosedDay(day);
+                  onChanged();
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          key: const Key('shop-closed-note'),
+          controller: draft.regularClosedNote,
+          maxLength: kMaxShortLine,
+          onChanged: (_) => onChanged(),
+          decoration: InputDecoration(
+            hintText: l10n.exploreShopClosedNote,
+            counterText: '',
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF8A98A8)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF8A98A8)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Expandable resort-info blocks for [ResortDeskScreen].
 class ResortDeskInfoSections extends StatelessWidget {
   const ResortDeskInfoSections({
@@ -252,6 +581,7 @@ class ResortDeskInfoSections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -293,6 +623,13 @@ class ResortDeskInfoSections extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        BookingFormSection(
+          step: '8',
+          title: l10n.exploreShopInfoTitle,
+          subtitle: '비어 있는 항목은 손님 화면에서 줄째로 숨깁니다.',
+          child: ShopProfileFactsEditor(draft: draft, onChanged: onChanged),
         ),
       ],
     );
@@ -900,6 +1237,16 @@ class PartnerResortInfoForm extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        _box(
+          mockup: true,
+          boxKey: const Key('partner-resort-section-shop-facts'),
+          title: l10n.exploreShopInfoTitle,
+          child: ShopProfileFactsEditor(
+            draft: info,
+            onChanged: onInfoChanged,
+            partnerChrome: true,
           ),
         ),
         _box(

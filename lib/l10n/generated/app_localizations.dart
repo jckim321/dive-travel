@@ -10079,6 +10079,186 @@ abstract class AppLocalizations {
   /// **'영업시간'**
   String get exploreBusinessHoursLabel;
 
+  /// No description provided for @exploreShopInfoTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'샵 정보'**
+  String get exploreShopInfoTitle;
+
+  /// No description provided for @exploreShopLanguages.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용 언어'**
+  String get exploreShopLanguages;
+
+  /// No description provided for @exploreShopPickMany.
+  ///
+  /// In ko, this message translates to:
+  /// **'여러 개 선택'**
+  String get exploreShopPickMany;
+
+  /// No description provided for @exploreShopSeason.
+  ///
+  /// In ko, this message translates to:
+  /// **'운영 시기'**
+  String get exploreShopSeason;
+
+  /// No description provided for @exploreShopSeasonHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'월을 눌러 고르면 「3월 ~ 11월」처럼 자동 표시돼요'**
+  String get exploreShopSeasonHint;
+
+  /// No description provided for @exploreShopClosed.
+  ///
+  /// In ko, this message translates to:
+  /// **'정기 휴무'**
+  String get exploreShopClosed;
+
+  /// No description provided for @exploreShopClosedNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get exploreShopClosedNone;
+
+  /// No description provided for @exploreShopClosedNote.
+  ///
+  /// In ko, this message translates to:
+  /// **'기타 메모 (예: 우기에는 수요일도 휴무)'**
+  String get exploreShopClosedNote;
+
+  /// No description provided for @exploreShopClosedWeekly.
+  ///
+  /// In ko, this message translates to:
+  /// **'매주 {days}'**
+  String exploreShopClosedWeekly(String days);
+
+  /// No description provided for @exploreShopLanguageKo.
+  ///
+  /// In ko, this message translates to:
+  /// **'한국어'**
+  String get exploreShopLanguageKo;
+
+  /// No description provided for @exploreShopLanguageEn.
+  ///
+  /// In ko, this message translates to:
+  /// **'English'**
+  String get exploreShopLanguageEn;
+
+  /// No description provided for @exploreShopLanguageJa.
+  ///
+  /// In ko, this message translates to:
+  /// **'日本語'**
+  String get exploreShopLanguageJa;
+
+  /// No description provided for @exploreShopLanguageZh.
+  ///
+  /// In ko, this message translates to:
+  /// **'中文'**
+  String get exploreShopLanguageZh;
+
+  /// No description provided for @exploreShopLanguageTh.
+  ///
+  /// In ko, this message translates to:
+  /// **'ภาษาไทย'**
+  String get exploreShopLanguageTh;
+
+  /// No description provided for @exploreShopLanguageId.
+  ///
+  /// In ko, this message translates to:
+  /// **'Bahasa'**
+  String get exploreShopLanguageId;
+
+  /// No description provided for @exploreShopLanguageEs.
+  ///
+  /// In ko, this message translates to:
+  /// **'Español'**
+  String get exploreShopLanguageEs;
+
+  /// No description provided for @exploreShopDayMon.
+  ///
+  /// In ko, this message translates to:
+  /// **'월'**
+  String get exploreShopDayMon;
+
+  /// No description provided for @exploreShopDayTue.
+  ///
+  /// In ko, this message translates to:
+  /// **'화'**
+  String get exploreShopDayTue;
+
+  /// No description provided for @exploreShopDayWed.
+  ///
+  /// In ko, this message translates to:
+  /// **'수'**
+  String get exploreShopDayWed;
+
+  /// No description provided for @exploreShopDayThu.
+  ///
+  /// In ko, this message translates to:
+  /// **'목'**
+  String get exploreShopDayThu;
+
+  /// No description provided for @exploreShopDayFri.
+  ///
+  /// In ko, this message translates to:
+  /// **'금'**
+  String get exploreShopDayFri;
+
+  /// No description provided for @exploreShopDaySat.
+  ///
+  /// In ko, this message translates to:
+  /// **'토'**
+  String get exploreShopDaySat;
+
+  /// No description provided for @exploreShopDaySun.
+  ///
+  /// In ko, this message translates to:
+  /// **'일'**
+  String get exploreShopDaySun;
+
+  /// No description provided for @exploreShopWeekMon.
+  ///
+  /// In ko, this message translates to:
+  /// **'월요일'**
+  String get exploreShopWeekMon;
+
+  /// No description provided for @exploreShopWeekTue.
+  ///
+  /// In ko, this message translates to:
+  /// **'화요일'**
+  String get exploreShopWeekTue;
+
+  /// No description provided for @exploreShopWeekWed.
+  ///
+  /// In ko, this message translates to:
+  /// **'수요일'**
+  String get exploreShopWeekWed;
+
+  /// No description provided for @exploreShopWeekThu.
+  ///
+  /// In ko, this message translates to:
+  /// **'목요일'**
+  String get exploreShopWeekThu;
+
+  /// No description provided for @exploreShopWeekFri.
+  ///
+  /// In ko, this message translates to:
+  /// **'금요일'**
+  String get exploreShopWeekFri;
+
+  /// No description provided for @exploreShopWeekSat.
+  ///
+  /// In ko, this message translates to:
+  /// **'토요일'**
+  String get exploreShopWeekSat;
+
+  /// No description provided for @exploreShopWeekSun.
+  ///
+  /// In ko, this message translates to:
+  /// **'일요일'**
+  String get exploreShopWeekSun;
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

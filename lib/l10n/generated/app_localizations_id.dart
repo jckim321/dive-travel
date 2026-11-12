@@ -5397,6 +5397,98 @@ class AppLocalizationsId extends AppLocalizations {
   String get exploreBusinessHoursLabel => '영업시간';
 
   @override
+  String get exploreShopInfoTitle => '샵 정보';
+
+  @override
+  String get exploreShopLanguages => '사용 언어';
+
+  @override
+  String get exploreShopPickMany => '여러 개 선택';
+
+  @override
+  String get exploreShopSeason => '운영 시기';
+
+  @override
+  String get exploreShopSeasonHint => '월을 눌러 고르면 「3월 ~ 11월」처럼 자동 표시돼요';
+
+  @override
+  String get exploreShopClosed => '정기 휴무';
+
+  @override
+  String get exploreShopClosedNone => '없음';
+
+  @override
+  String get exploreShopClosedNote => '기타 메모 (예: 우기에는 수요일도 휴무)';
+
+  @override
+  String exploreShopClosedWeekly(String days) {
+    return '매주 $days';
+  }
+
+  @override
+  String get exploreShopLanguageKo => '한국어';
+
+  @override
+  String get exploreShopLanguageEn => 'English';
+
+  @override
+  String get exploreShopLanguageJa => '日本語';
+
+  @override
+  String get exploreShopLanguageZh => '中文';
+
+  @override
+  String get exploreShopLanguageTh => 'ภาษาไทย';
+
+  @override
+  String get exploreShopLanguageId => 'Bahasa';
+
+  @override
+  String get exploreShopLanguageEs => 'Español';
+
+  @override
+  String get exploreShopDayMon => '월';
+
+  @override
+  String get exploreShopDayTue => '화';
+
+  @override
+  String get exploreShopDayWed => '수';
+
+  @override
+  String get exploreShopDayThu => '목';
+
+  @override
+  String get exploreShopDayFri => '금';
+
+  @override
+  String get exploreShopDaySat => '토';
+
+  @override
+  String get exploreShopDaySun => '일';
+
+  @override
+  String get exploreShopWeekMon => '월요일';
+
+  @override
+  String get exploreShopWeekTue => '화요일';
+
+  @override
+  String get exploreShopWeekWed => '수요일';
+
+  @override
+  String get exploreShopWeekThu => '목요일';
+
+  @override
+  String get exploreShopWeekFri => '금요일';
+
+  @override
+  String get exploreShopWeekSat => '토요일';
+
+  @override
+  String get exploreShopWeekSun => '일요일';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override

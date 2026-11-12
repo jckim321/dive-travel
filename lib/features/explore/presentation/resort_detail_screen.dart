@@ -16,6 +16,7 @@ import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/explore/presentation/diver_reviews_section.dart';
 import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
+import 'package:dive_travel_app/features/explore/presentation/resort_desk_info_sections.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -235,6 +236,20 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     final checkIn = live?.checkIn ?? '';
     final checkOut = live?.checkOut ?? '';
     final businessHours = live?.businessHours ?? '';
+    final spokenLanguages = live?.spokenLanguages ?? const <String>[];
+    final operatingMonths = live?.operatingMonths ?? const <int>[];
+    final seasonLabel = summarizeOperatingMonths(operatingMonths);
+    final closedLabel = shopClosedGuestLine(
+      l10n,
+      ShopLiveStatsFacts(
+        regularClosedNone: live?.regularClosedNone ?? false,
+        regularClosedDays: live?.regularClosedDays ?? const <int>[],
+        regularClosedNote: live?.regularClosedNote ?? '',
+      ),
+    );
+    final showShopFacts = spokenLanguages.isNotEmpty ||
+        seasonLabel.isNotEmpty ||
+        closedLabel.isNotEmpty;
     final amenityChips = <String>[
       ...hull.amenities,
       ...hull.sites,
@@ -433,6 +448,89 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
                       _NearbySpotTile(spot: nearbySpots[i]),
                     ],
                   ],
+                ),
+              ),
+            ],
+            if (showShopFacts) ...[
+              const SizedBox(height: 20),
+              _ResortInfoSection(
+                title: l10n.exploreShopInfoTitle,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F4EE),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE6E1D6)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                        child: Column(
+                          children: [
+                            if (spokenLanguages.isNotEmpty)
+                              _ShopFactRow(
+                                label: l10n.exploreShopLanguages,
+                                child: Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  alignment: WrapAlignment.end,
+                                  children: [
+                                    for (final code in spokenLanguages)
+                                      DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE3F4F1),
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          child: Text(
+                                            shopLanguageLabel(l10n, code),
+                                            style: const TextStyle(
+                                              color: Color(0xFF0A6B64),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            if (seasonLabel.isNotEmpty)
+                              _ShopFactRow(
+                                label: l10n.exploreShopSeason,
+                                child: Text(
+                                  seasonLabel,
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            if (closedLabel.isNotEmpty)
+                              _ShopFactRow(
+                                label: l10n.exploreShopClosed,
+                                child: Text(
+                                  closedLabel,
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -722,6 +820,36 @@ class _NearbySpotTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ShopFactRow extends StatelessWidget {
+  const _ShopFactRow({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF5C6770),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Align(alignment: Alignment.centerRight, child: child),
+          ),
+        ],
+      ),
     );
   }
 }

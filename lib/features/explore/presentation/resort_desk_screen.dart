@@ -234,6 +234,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
       checkIn: live?.checkIn ?? '',
       checkOut: live?.checkOut ?? '',
       businessHours: live?.businessHours ?? '',
+      spokenLanguages: live?.spokenLanguages ?? const [],
+      operatingMonths: live?.operatingMonths ?? const [],
+      regularClosedNone: live?.regularClosedNone ?? false,
+      regularClosedDays: live?.regularClosedDays ?? const [],
+      regularClosedNote: live?.regularClosedNote ?? '',
       amenities: amenitySource,
       featureTags: live?.featureTags ?? const [],
       accessRoutes: live?.accessRoutes ?? const [],
@@ -433,6 +438,11 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         checkIn: clampShort(_info.checkIn.text),
         checkOut: clampShort(_info.checkOut.text),
         businessHours: clampShort(_info.businessHours.text),
+        spokenLanguages: List<String>.from(_info.spokenLanguages),
+        operatingMonths: List<int>.from(_info.operatingMonths),
+        regularClosedNone: _info.regularClosedNone,
+        regularClosedDays: List<int>.from(_info.regularClosedDays),
+        regularClosedNote: clampShort(_info.regularClosedNote.text),
         // Only rewrite gallery/cover when the user edited photos. An empty
         // _slots from a race before live stats loaded used to wipe cover_url.
         gallery: _galleryTouched

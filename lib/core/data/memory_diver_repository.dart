@@ -3897,6 +3897,11 @@ class MemoryDiverRepository implements DiverRepository {
     String? checkIn,
     String? checkOut,
     String? businessHours,
+    List<String>? spokenLanguages,
+    List<int>? operatingMonths,
+    bool? regularClosedNone,
+    List<int>? regularClosedDays,
+    String? regularClosedNote,
     String? country,
     String? continent,
     bool? curated,
@@ -4012,6 +4017,15 @@ class MemoryDiverRepository implements DiverRepository {
               checkIn: checkIn ?? current?.checkIn,
               checkOut: checkOut ?? current?.checkOut,
               businessHours: businessHours ?? current?.businessHours,
+              spokenLanguages:
+                  spokenLanguages ?? current?.spokenLanguages,
+              operatingMonths: operatingMonths ?? current?.operatingMonths,
+              regularClosedNone:
+                  regularClosedNone ?? current?.regularClosedNone,
+              regularClosedDays:
+                  regularClosedDays ?? current?.regularClosedDays,
+              regularClosedNote:
+                  regularClosedNote ?? current?.regularClosedNote,
               coverUrl: coverUrl,
               galleryUrls: galleryUrls,
               products: products,

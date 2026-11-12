@@ -107,6 +107,11 @@ class ShopLiveStats {
     this.checkIn = '',
     this.checkOut = '',
     this.businessHours = '',
+    this.spokenLanguages = const [],
+    this.operatingMonths = const [],
+    this.regularClosedNone = false,
+    this.regularClosedDays = const [],
+    this.regularClosedNote = '',
     this.coverUrl,
     this.galleryUrls = const [],
     this.amenities = const [],
@@ -165,6 +170,13 @@ class ShopLiveStats {
       checkIn: (data['check_in'] as String? ?? '').trim(),
       checkOut: (data['check_out'] as String? ?? '').trim(),
       businessHours: (data['business_hours'] as String? ?? '').trim(),
+      spokenLanguages: shopLanguageCodesFrom(data['spoken_languages']),
+      operatingMonths: shopMonthsFrom(data['operating_months']),
+      regularClosedNone: data['regular_closed_none'] == true,
+      regularClosedDays: shopClosedDaysFrom(data['regular_closed_days']),
+      regularClosedNote: clampShort(
+        (data['regular_closed_note'] as String? ?? '').trim(),
+      ),
       coverUrl: () {
         final raw = data['cover_url'] as String?;
         if (raw == null || raw.trim().isEmpty) {
@@ -226,6 +238,11 @@ class ShopLiveStats {
   final String checkIn;
   final String checkOut;
   final String businessHours;
+  final List<String> spokenLanguages;
+  final List<int> operatingMonths;
+  final bool regularClosedNone;
+  final List<int> regularClosedDays;
+  final String regularClosedNote;
   final String? coverUrl;
   final List<String> galleryUrls;
   final List<String> amenities;
@@ -301,6 +318,11 @@ class ShopLiveStats {
     String? checkIn,
     String? checkOut,
     String? businessHours,
+    List<String>? spokenLanguages,
+    List<int>? operatingMonths,
+    bool? regularClosedNone,
+    List<int>? regularClosedDays,
+    String? regularClosedNote,
     String? coverUrl,
     bool clearCoverUrl = false,
     List<String>? galleryUrls,
@@ -349,6 +371,11 @@ class ShopLiveStats {
       checkIn: checkIn ?? this.checkIn,
       checkOut: checkOut ?? this.checkOut,
       businessHours: businessHours ?? this.businessHours,
+      spokenLanguages: spokenLanguages ?? this.spokenLanguages,
+      operatingMonths: operatingMonths ?? this.operatingMonths,
+      regularClosedNone: regularClosedNone ?? this.regularClosedNone,
+      regularClosedDays: regularClosedDays ?? this.regularClosedDays,
+      regularClosedNote: regularClosedNote ?? this.regularClosedNote,
       coverUrl: clearCoverUrl ? null : (coverUrl ?? this.coverUrl),
       galleryUrls: galleryUrls ?? this.galleryUrls,
       amenities: amenities ?? this.amenities,

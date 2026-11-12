@@ -229,3 +229,93 @@ List<String> stringListFrom(
   }
   return out;
 }
+
+/// Stored spoken-language codes. Display names stay in l10n.
+const kShopLanguageCodes = <String>[
+  'ko',
+  'en',
+  'ja',
+  'zh',
+  'th',
+  'id',
+  'es',
+];
+
+List<String> shopLanguageCodesFrom(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  final out = <String>[];
+  for (final item in raw) {
+    if (item is! String || !kShopLanguageCodes.contains(item)) {
+      continue;
+    }
+    if (!out.contains(item)) {
+      out.add(item);
+    }
+  }
+  return out;
+}
+
+List<int> shopMonthsFrom(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  final months = <int>{};
+  for (final item in raw) {
+    final month = item is num ? item.toInt() : null;
+    if (month != null && month >= 1 && month <= 12) {
+      months.add(month);
+    }
+  }
+  final sorted = months.toList()..sort();
+  return sorted;
+}
+
+List<int> shopClosedDaysFrom(dynamic raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  final days = <int>{};
+  for (final item in raw) {
+    final day = item is num ? item.toInt() : null;
+    if (day != null && day >= 1 && day <= 7) {
+      days.add(day);
+    }
+  }
+  final sorted = days.toList()..sort();
+  return sorted;
+}
+
+/// One span is `3월 ~ 11월`. A gap is `3~6월, 9~11월`. A lone month is `3월`.
+/// December does not join January.
+String summarizeOperatingMonths(List<int> months) {
+  final sorted = shopMonthsFrom(months);
+  if (sorted.isEmpty) {
+    return '';
+  }
+  final ranges = <(int, int)>[];
+  var start = sorted.first;
+  var previous = sorted.first;
+  for (final month in sorted.skip(1)) {
+    if (month == previous + 1) {
+      previous = month;
+      continue;
+    }
+    ranges.add((start, previous));
+    start = month;
+    previous = month;
+  }
+  ranges.add((start, previous));
+  if (ranges.length == 1) {
+    final range = ranges.first;
+    if (range.$1 == range.$2) {
+      return '${range.$1}월';
+    }
+    return '${range.$1}월 ~ ${range.$2}월';
+  }
+  return [
+    for (final range in ranges)
+      if (range.$1 == range.$2) '${range.$1}월' else '${range.$1}~${range.$2}월',
+  ].join(', ');
+}
