@@ -8465,6 +8465,12 @@ abstract class AppLocalizations {
   /// **'종료일'**
   String get partnerPeakSeasonEnd;
 
+  /// 성수기 날짜 칸이 비었을 때 칸 안에 보이는 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{label} 선택'**
+  String partnerPeakSeasonPickDate(String label);
+
   /// No description provided for @partnerPeakSeasonOverlap.
   ///
   /// In ko, this message translates to:

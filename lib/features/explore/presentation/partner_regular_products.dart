@@ -1829,6 +1829,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     required bool isEnd,
     required DateTime? startDay,
   }) {
+    final l10n = AppLocalizations.of(context);
     return TextField(
       key: Key(keyName),
       controller: controller,
@@ -1842,7 +1843,23 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
       ),
       style: const TextStyle(color: PlannerPalette.text),
       cursorColor: PlannerPalette.accent,
-      decoration: _deco(label),
+      decoration: _deco(label).copyWith(
+        hintText: l10n.partnerPeakSeasonPickDate(label),
+        hintStyle: const TextStyle(
+          color: Color(0xFF8A98A8),
+          fontWeight: FontWeight.w600,
+        ),
+        suffixIcon: IconButton(
+          onPressed: () => _pickPeakDay(
+            controller: controller,
+            isEnd: isEnd,
+            startDay: startDay,
+          ),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.calendar_today_outlined, size: 18),
+          color: const Color(0xFF8A98A8),
+        ),
+      ),
     );
   }
 

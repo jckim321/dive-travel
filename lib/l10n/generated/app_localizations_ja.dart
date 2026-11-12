@@ -4491,6 +4491,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get partnerPeakSeasonEnd => '종료일';
 
   @override
+  String partnerPeakSeasonPickDate(String label) {
+    return '$label 선택';
+  }
+
+  @override
   String get partnerPeakSeasonOverlap => '기간이 겹치면 저장할 수 없어요';
 
   @override

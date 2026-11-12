@@ -1612,7 +1612,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       GuestRole.child => _qtyChild,
       GuestRole.infant => _qtyInfant,
     };
-    final unit = widget.quote.isProfessional ? rate.professional : rate.consumer;
+    final professional = widget.quote.isProfessional;
+    final product = widget.product;
+    final unit = product == null
+        ? (professional ? rate.professional : rate.consumer)
+        : BookingQuote.rolePrice(
+            product: product,
+            role: role,
+            professional: professional,
+            departure: _tourDate,
+          );
     final price = unit <= 0 ? '무료' : '₩${_priceFormat.format(unit)}';
     var condition = '';
     for (final tier in widget.product?.priceTiers ?? const <ProductPriceTier>[]) {
