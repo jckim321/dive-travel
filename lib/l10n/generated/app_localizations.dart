@@ -2412,6 +2412,12 @@ abstract class AppLocalizations {
   /// **'샵'**
   String get bookingVoucherShop;
 
+  /// No description provided for @bookingVoucherLocalContact.
+  ///
+  /// In ko, this message translates to:
+  /// **'현지 연락처'**
+  String get bookingVoucherLocalContact;
+
   /// No description provided for @bookingVoucherPaymentStatus.
   ///
   /// In ko, this message translates to:

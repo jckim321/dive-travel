@@ -1258,6 +1258,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherLocalContact => 'ช่องทางติดต่อในพื้นที่';
+
+  @override
   String get bookingVoucherPaymentStatus => '결제 상태';
 
   @override

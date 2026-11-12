@@ -963,6 +963,7 @@
   "bookingVoucherSaved": "바우처를 저장할 수 있는 공유 화면을 열었습니다.",
   "bookingVoucherId": "예약번호",
   "bookingVoucherShop": "샵",
+  "bookingVoucherLocalContact": "현지 연락처",
   "bookingVoucherPaymentStatus": "결제 상태",
   "bookingVoucherPartySummary": "다이버 {diver} · 비다이버 {nondiver} · 소아 {child} · 유아 {infant}",
   "bookingSingleRooms": "1인 1실 {count}개",

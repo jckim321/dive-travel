@@ -1255,6 +1255,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherLocalContact => '현지 연락처';
+
+  @override
   String get bookingVoucherPaymentStatus => '결제 상태';
 
   @override

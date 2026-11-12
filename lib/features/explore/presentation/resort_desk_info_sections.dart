@@ -588,7 +588,7 @@ class ResortDeskInfoSections extends StatelessWidget {
         BookingFormSection(
           step: '7',
           title: '연락·운영',
-          subtitle: '현지 연락처는 저장만 됩니다. 고객 상세에는 아직 보이지 않습니다.',
+          subtitle: '현지 연락처는 저장만 됩니다. 결제를 마친 손님의 바우처에만 보여요.',
           child: Column(
             children: [
               TextField(

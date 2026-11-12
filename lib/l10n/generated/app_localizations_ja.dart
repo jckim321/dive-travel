@@ -1247,6 +1247,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherLocalContact => '現地連絡先';
+
+  @override
   String get bookingVoucherPaymentStatus => '결제 상태';
 
   @override

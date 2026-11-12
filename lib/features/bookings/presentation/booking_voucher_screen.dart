@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
@@ -32,6 +34,17 @@ class BookingVoucherScreen extends StatefulWidget {
 class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
   final _boundaryKey = GlobalKey();
   var _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(DiverStoreScope.of(context).ensureShopStatsLoaded());
+    });
+  }
   static final _money = NumberFormat('#,###', 'en_US');
   static final _day = DateFormat('yyyy.MM.dd');
 
@@ -100,6 +113,11 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
     final theme = Theme.of(context);
     final booking = widget.booking;
     final partyLine = _partyLine(l10n);
+    final localContact = (DiverStoreScope.of(context)
+                .liveStatsFor(booking.shopId)
+                ?.localContact ??
+            '')
+        .trim();
     final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
@@ -166,6 +184,8 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                           ),
                         ),
                         _row(l10n.bookingVoucherShop, booking.shopName),
+                        if (localContact.isNotEmpty)
+                          _row(l10n.bookingVoucherLocalContact, localContact),
                         _row(
                           l10n.workbenchDepartureDate,
                           _day.format(booking.scheduledFor),

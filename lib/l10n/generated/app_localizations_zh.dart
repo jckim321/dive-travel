@@ -1247,6 +1247,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherLocalContact => '当地联系方式';
+
+  @override
   String get bookingVoucherPaymentStatus => '결제 상태';
 
   @override

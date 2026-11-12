@@ -1264,6 +1264,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get bookingVoucherShop => '샵';
 
   @override
+  String get bookingVoucherLocalContact => 'Kontak lokal';
+
+  @override
   String get bookingVoucherPaymentStatus => '결제 상태';
 
   @override
