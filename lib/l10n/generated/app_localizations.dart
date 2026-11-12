@@ -1086,6 +1086,15 @@ abstract class AppLocalizations {
   /// **'연락처'**
   String get checkoutGuestContact;
 
+  /// In ko, this message translates to:
+  /// **'총 결제 예상 금액'**
+  String get checkoutExpectedTotal => '총 결제 예상 금액';
+
+  /// In ko, this message translates to:
+  /// **'{fields} 입력하면 결제할 수 있어요'**
+  String checkoutPayEnterToPay(String fields) =>
+      '$fields 입력하면 결제할 수 있어요';
+
   /// No description provided for @simPayTitle.
   ///
   /// In ko, this message translates to:
@@ -9998,6 +10007,10 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'호텔에서 객실을 고르듯, 원하는 다이브 상품을 고르세요.'**
   String get exploreChooseRoomHint;
+
+  /// In ko, this message translates to:
+  /// **'상시 예약'**
+  String get exploreAlwaysBookable => '상시 예약';
 
   /// No description provided for @exploreResortTraits.
   ///

@@ -176,6 +176,13 @@
   "checkoutGuestName": "Booker name",
   "checkoutGuestBirth": "Date of birth",
   "checkoutGuestContact": "Contact",
+  "checkoutExpectedTotal": "Estimated total",
+  "checkoutPayEnterToPay": "Enter {fields} to pay",
+  "@checkoutPayEnterToPay": {
+    "placeholders": {
+      "fields": { "type": "String" }
+    }
+  },
   "simPayTitle": "Confirm booking request",
   "simPayNotice": "No charge yet. Payment continues after the shop confirms.",
   "simPaySameBoatTitle": "Confirm payment",
@@ -2171,6 +2178,7 @@
   "communityRoomOpened": "Your booked trip is now a room.",
   "exploreChooseRoom": "This resort's trips",
   "exploreChooseRoomHint": "Like choosing a room in a hotel, pick the dive product you want.",
+  "exploreAlwaysBookable": "Book anytime",
   "exploreResortTraits": "Facilities & features",
   "exploreAmenitiesHint": "Comma-separated (e.g. Wi-Fi, pool, nitrox, airport pickup)",
   "exploreRecommended": "Recommended",

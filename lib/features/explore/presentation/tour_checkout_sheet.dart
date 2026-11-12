@@ -215,24 +215,32 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       !_workbench || _bookPackage || _selected.isNotEmpty;
 
   /// Why the pay button is off. Does not change the enable conditions.
-  String? _payBlockedHint() {
+  String? _payBlockedHint(AppLocalizations l10n) {
     if (_paying) {
       return null;
     }
     final missing = <String>[
       if (_guestName.text.trim().isEmpty) '이름',
-      if (_guestBirth.text.trim().isEmpty) '생년월일',
-      if (_guestContact.text.trim().isEmpty) '연락처',
+      if (_guestBirth.text.trim().isEmpty) l10n.checkoutGuestBirth,
+      if (_guestContact.text.trim().isEmpty) l10n.checkoutGuestContact,
     ];
     final parts = <String>[
       if (missing.isNotEmpty)
-        '${missing.join('·')}${_objectParticle(missing.last)} 입력하면 결제할 수 있어요',
+        l10n.checkoutPayEnterToPay(_payFieldList(missing)),
       if (!_choiceReady) '옵션을 고르면 결제할 수 있어요',
     ];
     if (parts.isEmpty) {
       return null;
     }
     return parts.join(' ');
+  }
+
+  String _payFieldList(List<String> missing) {
+    final joined = missing.join('·');
+    if (Localizations.localeOf(context).languageCode != 'ko') {
+      return joined;
+    }
+    return '$joined${_objectParticle(missing.last)}';
   }
 
   String _objectParticle(String word) {
@@ -877,7 +885,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                           : 'checkout-tour-date',
                                     ),
                                     label: _buyerPicksDeparture
-                                        ? '출발일'
+                                        ? l10n.workbenchDepartureDate
                                         : l10n.weatherTourDate,
                                     value: DateFormat(
                                       'yyyy.MM.dd',
@@ -953,9 +961,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text(
-                        '총 결제 예상 금액',
-                        style: TextStyle(
+                      Text(
+                        l10n.checkoutExpectedTotal,
+                        style: const TextStyle(
                           color: Color(0xFF10242F),
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
@@ -1026,9 +1034,9 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  if (_payBlockedHint() != null) ...[
+                  if (_payBlockedHint(l10n) != null) ...[
                     Text(
-                      _payBlockedHint()!,
+                      _payBlockedHint(l10n)!,
                       style: const TextStyle(
                         color: Color(0xFF5B6B75),
                         fontSize: 12,

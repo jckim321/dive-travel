@@ -545,6 +545,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutGuestContact => 'Contact';
 
   @override
+  String get checkoutExpectedTotal => 'Estimated total';
+
+  @override
+  String checkoutPayEnterToPay(String fields) {
+    return 'Enter $fields to pay';
+  }
+
+  @override
   String get simPayTitle => 'Confirm booking request';
 
   @override
@@ -5485,6 +5493,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get exploreChooseRoomHint =>
       'Like choosing a room in a hotel, pick the dive product you want.';
+
+  @override
+  String get exploreAlwaysBookable => 'Book anytime';
 
   @override
   String get exploreResortTraits => 'Facilities & features';

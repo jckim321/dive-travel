@@ -472,6 +472,13 @@
   "checkoutGuestName": "예약자 이름",
   "checkoutGuestBirth": "생년월일",
   "checkoutGuestContact": "연락처",
+  "checkoutExpectedTotal": "총 결제 예상 금액",
+  "checkoutPayEnterToPay": "{fields} 입력하면 결제할 수 있어요",
+  "@checkoutPayEnterToPay": {
+    "placeholders": {
+      "fields": { "type": "String" }
+    }
+  },
   "@explorePay": {
     "description": "체크아웃의 결제(예약 요청) 버튼입니다."
   },
@@ -2947,6 +2954,7 @@
   "communityRoomOpened": "예약한 여행에 방을 열었습니다.",
   "exploreChooseRoom": "이 리조트의 상품",
   "exploreChooseRoomHint": "호텔에서 객실을 고르듯, 원하는 다이브 상품을 고르세요.",
+  "exploreAlwaysBookable": "상시 예약",
   "exploreResortTraits": "편의시설 · 특징",
   "exploreAmenitiesHint": "쉼표로 구분 (예: Wi-Fi, 수영장, 나이트록스, 공항 픽업)",
   "exploreRecommended": "추천",

@@ -562,9 +562,9 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
               ),
             ],
             const SizedBox(height: 22),
-            const Text(
-              '이 리조트의 상품',
-              style: TextStyle(
+            Text(
+              l10n.exploreChooseRoom,
+              style: const TextStyle(
                 color: Color(0xFF10242F),
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
@@ -985,6 +985,7 @@ class _RegularProductPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       key: const Key('resort-book-products'),
       appBar: AppBar(title: Text(hull.name)),
@@ -1004,7 +1005,7 @@ class _RegularProductPicker extends StatelessWidget {
                 final status = [
                   if (product.difficulty.trim().isNotEmpty)
                     product.difficulty.trim(),
-                  '상시 예약',
+                  l10n.exploreAlwaysBookable,
                 ].join(' · ');
                 return Material(
                   color: Colors.white,

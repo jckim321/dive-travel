@@ -64,7 +64,7 @@ class ProductOfferBox extends StatelessWidget {
       if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),
       if (recommended) l10n.exploreRecommended,
       if (lightest && !recommended) l10n.exploreLightest,
-      if (!_showsCardPrice) '상시 예약',
+      if (!_showsCardPrice) l10n.exploreAlwaysBookable,
       if (lastCall) l10n.communityKindLast,
     ].join(' · ');
 
