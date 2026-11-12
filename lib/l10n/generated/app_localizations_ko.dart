@@ -4510,6 +4510,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get partnerPeakSeasonBadRange => '종료일은 시작일보다 앞설 수 없어요';
 
   @override
+  String get partnerPeakSeasonNeedDates => '시작일과 종료일을 선택해 주세요';
+
+  @override
   String get partnerFormAddOption => '+ 옵션 추가';
 
   @override

@@ -1733,7 +1733,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         style: const TextStyle(color: PlannerPalette.text),
         cursorColor: PlannerPalette.accent,
-        decoration: _deco(l10n.exploreConsumerPrice),
+        decoration: _deco('일반가'),
       );
     }
 
@@ -1751,22 +1751,22 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    key: Key('partner-peak-start-${box.id}-$index'),
+                  child: _peakDateField(
+                    keyName: 'partner-peak-start-${box.id}-$index',
                     controller: row.start,
-                    style: const TextStyle(color: PlannerPalette.text),
-                    cursorColor: PlannerPalette.accent,
-                    decoration: _deco(l10n.partnerPeakSeasonStart),
+                    label: l10n.partnerPeakSeasonStart,
+                    isEnd: false,
+                    startDay: null,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: TextField(
-                    key: Key('partner-peak-end-${box.id}-$index'),
+                  child: _peakDateField(
+                    keyName: 'partner-peak-end-${box.id}-$index',
                     controller: row.end,
-                    style: const TextStyle(color: PlannerPalette.text),
-                    cursorColor: PlannerPalette.accent,
-                    decoration: _deco(l10n.partnerPeakSeasonEnd),
+                    label: l10n.partnerPeakSeasonEnd,
+                    isEnd: true,
+                    startDay: _peakDay(row.start.text),
                   ),
                 ),
                 IconButton(
@@ -1784,25 +1784,32 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
               Text(roleName(role), style: labelStyle),
               const SizedBox(height: 4),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: money(
-                      row.consumer[role]!,
-                      'partner-peak-consumer-${box.id}-$index-${role.firestoreValue}',
+                    child: _labeled(
+                      '일반가',
+                      money(
+                        row.consumer[role]!,
+                        'partner-peak-consumer-${box.id}-$index-${role.firestoreValue}',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: TextField(
-                      key: Key(
-                        'partner-peak-pro-${box.id}-$index-${role.firestoreValue}',
+                    child: _labeled(
+                      l10n.exploreProPrice,
+                      TextField(
+                        key: Key(
+                          'partner-peak-pro-${box.id}-$index-${role.firestoreValue}',
+                        ),
+                        controller: row.professional[role],
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: const TextStyle(color: PlannerPalette.text),
+                        cursorColor: PlannerPalette.accent,
+                        decoration: _deco(l10n.exploreProPrice),
                       ),
-                      controller: row.professional[role],
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(color: PlannerPalette.text),
-                      cursorColor: PlannerPalette.accent,
-                      decoration: _deco('전문가'),
                     ),
                   ),
                 ],
@@ -1813,6 +1820,72 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         ),
       ),
     );
+  }
+
+  Widget _peakDateField({
+    required String keyName,
+    required TextEditingController controller,
+    required String label,
+    required bool isEnd,
+    required DateTime? startDay,
+  }) {
+    return TextField(
+      key: Key(keyName),
+      controller: controller,
+      readOnly: true,
+      showCursor: false,
+      mouseCursor: SystemMouseCursors.click,
+      onTap: () => _pickPeakDay(
+        controller: controller,
+        isEnd: isEnd,
+        startDay: startDay,
+      ),
+      style: const TextStyle(color: PlannerPalette.text),
+      cursorColor: PlannerPalette.accent,
+      decoration: _deco(label),
+    );
+  }
+
+  Future<void> _pickPeakDay({
+    required TextEditingController controller,
+    required bool isEnd,
+    required DateTime? startDay,
+  }) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final horizon = DateTime(today.year + 3, today.month, today.day);
+    final current = _peakDay(controller.text);
+    var first = today;
+    var last = horizon;
+    if (isEnd && startDay != null) {
+      first = startDay;
+    }
+    if (last.isBefore(first)) {
+      last = first;
+    }
+    if (!isEnd && current != null && current.isBefore(first)) {
+      first = current;
+    }
+    if (current != null && current.isAfter(last)) {
+      last = current;
+    }
+    var initial = current ?? first;
+    if (initial.isBefore(first)) {
+      initial = first;
+    }
+    if (initial.isAfter(last)) {
+      initial = last;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+    );
+    if (!mounted || picked == null) {
+      return;
+    }
+    setState(() => controller.text = _peakDisplay(picked));
   }
 
   Widget _saleRulesBlock(_RegularProductDraft box) {
@@ -2211,6 +2284,38 @@ InputDecoration _field(String label) {
   );
 }
 
+String _peakDisplay(DateTime day) {
+  final month = day.month.toString().padLeft(2, '0');
+  final date = day.day.toString().padLeft(2, '0');
+  return '${day.year}.$month.$date';
+}
+
+String _peakIsoText(DateTime day) {
+  final month = day.month.toString().padLeft(2, '0');
+  final date = day.day.toString().padLeft(2, '0');
+  return '${day.year}-$month-$date';
+}
+
+DateTime? _peakDay(String raw) {
+  return PeakSeason.parseDay(raw.trim().replaceAll('.', '-'));
+}
+
+String _peakFieldText(String stored) {
+  final day = _peakDay(stored);
+  if (day == null) {
+    return stored;
+  }
+  return _peakDisplay(day);
+}
+
+String? _peakStored(String shown) {
+  final day = _peakDay(shown);
+  if (day == null) {
+    return null;
+  }
+  return _peakIsoText(day);
+}
+
 class _PeakSeasonDraft {
   _PeakSeasonDraft({
     String startText = '',
@@ -2240,8 +2345,8 @@ class _PeakSeasonDraft {
     }
 
     return _PeakSeasonDraft(
-      startText: season.start,
-      endText: season.end,
+      startText: _peakFieldText(season.start),
+      endText: _peakFieldText(season.end),
       consumerText: {
         for (final role in GuestRole.values) role: textOf(role, true),
       },
@@ -2684,8 +2789,8 @@ class _RegularProductDraft {
       }
       seasons.add(
         PeakSeason(
-          start: row.start.text.trim(),
-          end: row.end.text.trim(),
+          start: _peakStored(row.start.text) ?? row.start.text.trim(),
+          end: _peakStored(row.end.text) ?? row.end.text.trim(),
           rates: rates,
         ),
       );
@@ -2699,15 +2804,20 @@ class _RegularProductDraft {
       if (row.isBlank) {
         continue;
       }
-      final start = PeakSeason.parseDay(row.start.text);
-      final end = PeakSeason.parseDay(row.end.text);
-      if (start == null || end == null || end.isBefore(start)) {
+      final startRaw = row.start.text.trim();
+      final endRaw = row.end.text.trim();
+      final start = _peakDay(startRaw);
+      final end = _peakDay(endRaw);
+      if (startRaw.isEmpty || endRaw.isEmpty || start == null || end == null) {
+        return l10n.partnerPeakSeasonNeedDates;
+      }
+      if (end.isBefore(start)) {
         return l10n.partnerPeakSeasonBadRange;
       }
       seasons.add(
         PeakSeason(
-          start: row.start.text.trim(),
-          end: row.end.text.trim(),
+          start: _peakStored(startRaw)!,
+          end: _peakStored(endRaw)!,
         ),
       );
     }

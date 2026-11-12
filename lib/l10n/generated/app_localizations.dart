@@ -8477,6 +8477,12 @@ abstract class AppLocalizations {
   /// **'종료일은 시작일보다 앞설 수 없어요'**
   String get partnerPeakSeasonBadRange;
 
+  /// No description provided for @partnerPeakSeasonNeedDates.
+  ///
+  /// In ko, this message translates to:
+  /// **'시작일과 종료일을 선택해 주세요'**
+  String get partnerPeakSeasonNeedDates;
+
   /// No description provided for @partnerFormAddOption.
   ///
   /// In ko, this message translates to:

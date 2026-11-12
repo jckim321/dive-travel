@@ -2565,6 +2565,7 @@
   "partnerPeakSeasonEnd": "종료일",
   "partnerPeakSeasonOverlap": "기간이 겹치면 저장할 수 없어요",
   "partnerPeakSeasonBadRange": "종료일은 시작일보다 앞설 수 없어요",
+  "partnerPeakSeasonNeedDates": "시작일과 종료일을 선택해 주세요",
   "partnerFormAddOption": "+ 옵션 추가",
   "partnerFormAddIndividual": "+ 개별 상품 추가",
   "partnerFormIndividualOptions": "이 상품의 옵션",
