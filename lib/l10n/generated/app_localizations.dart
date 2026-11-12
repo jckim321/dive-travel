@@ -2013,7 +2013,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileFlightSearch.
   ///
   /// In ko, this message translates to:
-  /// **'✈ 항공권 찾기'**
+  /// **'항공권 찾기'**
   String get profileFlightSearch;
 
   /// No description provided for @profileFlightPayHint.

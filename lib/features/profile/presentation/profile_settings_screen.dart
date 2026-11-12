@@ -62,11 +62,13 @@ class ProfileSettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     _GradeLadder(current: liveGrade),
-                    const SizedBox(height: 10),
-                    Text(
-                      _nextGradeLine(l10n, live),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    if (!live.isInstructor) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _nextGradeLine(l10n, live),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),

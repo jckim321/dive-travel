@@ -1060,7 +1060,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileViewMyInfo => 'View my info';
 
   @override
-  String get profileFlightSearch => '✈ 항공권 찾기';
+  String get profileFlightSearch => '항공권 찾기';
 
   @override
   String get profileFlightPayHint => '결제는 연결 앱에서 ↗';

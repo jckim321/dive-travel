@@ -675,7 +675,7 @@ class _TripCard extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           when,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppTheme.muted,
@@ -715,6 +715,7 @@ class _TripCard extends StatelessWidget {
                   : _TripDetails(
                       booking: booking,
                       date: date,
+                      showFlight: upcoming,
                       showReview: canReview,
                       onOpenVoucher: onOpenVoucher,
                       onWriteReview: onWriteReview,
@@ -829,6 +830,7 @@ class _TripDetails extends StatelessWidget {
   const _TripDetails({
     required this.booking,
     required this.date,
+    required this.showFlight,
     required this.showReview,
     required this.onOpenVoucher,
     required this.onWriteReview,
@@ -836,6 +838,7 @@ class _TripDetails extends StatelessWidget {
 
   final TourBooking booking;
   final String date;
+  final bool showFlight;
   final bool showReview;
   final VoidCallback onOpenVoucher;
   final VoidCallback onWriteReview;
@@ -844,6 +847,7 @@ class _TripDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final option = booking.optionLabel.trim();
+    final hasParty = booking.hasPartyDetail || booking.partySize > 0;
     final party = booking.hasPartyDetail
         ? l10n.bookingPartySummary(
             booking.divers,
@@ -860,7 +864,7 @@ class _TripDetails extends StatelessWidget {
         _TripFact(label: l10n.workbenchDepartureDate, value: date),
         if (option.isNotEmpty)
           _TripFact(label: l10n.partnerFormBoxOptions, value: option),
-        _TripFact(label: l10n.checkoutGuests, value: party),
+        if (hasParty) _TripFact(label: l10n.checkoutGuests, value: party),
         _TripFact(
           label: l10n.bookingVoucherPaymentStatus,
           value: _paymentLabel(l10n),
@@ -886,16 +890,24 @@ class _TripDetails extends StatelessWidget {
               ),
               child: Text(l10n.bookingVoucherOpen),
             ),
-            FilledButton(
-              key: Key('profile-flight-${booking.id}'),
-              onPressed: () => showFlightLinkSheet(context),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.gold,
-                foregroundColor: AppTheme.navy,
-                visualDensity: VisualDensity.compact,
+            if (showFlight)
+              FilledButton(
+                key: Key('profile-flight-${booking.id}'),
+                onPressed: () => showFlightLinkSheet(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.gold,
+                  foregroundColor: AppTheme.navy,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.flight, size: 16),
+                    const SizedBox(width: 4),
+                    Text(l10n.profileFlightSearch),
+                  ],
+                ),
               ),
-              child: Text(l10n.profileFlightSearch),
-            ),
             if (showReview)
               FilledButton(
                 key: Key('profile-review-${booking.id}'),

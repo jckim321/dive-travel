@@ -147,6 +147,8 @@ class DepartureDeskHeader extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    const Icon(Icons.flight, color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
                     Text(
                       l10n.profileFlightSearch,
                       style: const TextStyle(
