@@ -117,14 +117,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String homeSameBoatBoardSummary(int teams, int seats) {
-    return '마감 임박 $teams팀 · 빈자리 $seats자리';
+    return '$teams teams closing soon · $seats open seats';
   }
 
   @override
-  String get homeSameBoatBoardHeading => '출발 안내';
+  String get homeSameBoatBoardHeading => 'Departures';
 
   @override
-  String get homeSameBoatBoardSeeAll => '같은배에서 전체 보기';
+  String get homeSameBoatBoardSeeAll => 'See all on this boat';
 
   @override
   String get homeLastMinuteTitle => 'Last-call departures';
@@ -689,18 +689,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String explorePriceFrom(String price) {
-    return '$price부터';
+    return 'From $price';
   }
 
   @override
-  String get explorePeakSeasonBadge => '성수기 요금 있음';
+  String get explorePeakSeasonBadge => 'Peak-season rates';
 
   @override
-  String get explorePeakSeasonDateBadge => '성수기';
+  String get explorePeakSeasonDateBadge => 'Peak season';
 
   @override
   String explorePeakSeasonApplied(String start, String end) {
-    return '$start ~ $end 성수기 요금이 적용됐어요';
+    return '$start ~ $end peak-season rates apply';
   }
 
   @override
@@ -1076,29 +1076,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileViewMyInfo => 'View my info';
 
   @override
-  String get profileFlightSearch => '항공권 찾기';
+  String get profileFlightSearch => 'Find flights';
 
   @override
-  String get profileFlightPayHint => '결제는 연결 앱에서 ↗';
+  String get profileFlightPayHint => 'Pay in the linked app ↗';
 
   @override
-  String get profileFlightSheetTitle => '항공권, 어느 앱에서 볼까요?';
+  String get profileFlightSheetTitle => 'Which app should we open for flights?';
 
   @override
-  String get profileFlightSheetBody => '선택한 앱으로 이동해 그곳에서 바로 결제해요';
+  String get profileFlightSheetBody => 'You continue in that app and pay there';
 
   @override
-  String get profileFlightSkyscanner => '스카이스캐너';
+  String get profileFlightSkyscanner => 'Skyscanner';
 
   @override
-  String get profileFlightNaver => '네이버 항공권';
+  String get profileFlightNaver => 'Naver Flights';
 
   @override
-  String get profileFlightGoogle => '구글 항공편';
+  String get profileFlightGoogle => 'Google Flights';
 
   @override
   String get profileFlightDisclaimer =>
-      '항공권 판매·결제는 각 앱이 직접 진행하며, 다이브트래블은 연결만 도와드려요.';
+      'The flight app sells the ticket and takes payment. Dive Travel only opens the link.';
 
   @override
   String get profileNextOceanTitle => 'Your next ocean';
@@ -1144,16 +1144,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTripScheduleEmpty => 'No confirmed trips yet.';
 
   @override
-  String get profileMyTripsTitle => '나의 여행';
+  String get profileMyTripsTitle => 'My trips';
 
   @override
-  String get profileUpcomingTrips => '다가오는 여행';
+  String get profileUpcomingTrips => 'Upcoming trips';
 
   @override
-  String get profilePastTrips => '다녀온 여행';
+  String get profilePastTrips => 'Past trips';
 
   @override
-  String get profileMyTripsEmpty => '아직 여행이 없습니다.';
+  String get profileMyTripsEmpty => 'No trips yet.';
 
   @override
   String profileTripDday(int days) {
@@ -1164,16 +1164,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTripDdayToday => 'D-Day';
 
   @override
-  String get profileTripDone => '완료';
+  String get profileTripDone => 'Done';
 
   @override
-  String get profileTripCancelled => '취소';
+  String get profileTripCancelled => 'Canceled';
 
   @override
-  String get profileTripWriteReview => '후기 쓰기';
+  String get profileTripWriteReview => 'Write a review';
 
   @override
-  String get profileTripsMore => '더보기';
+  String get profileTripsMore => 'See more';
 
   @override
   String get profileFlaggedSeatsTitle => 'Flagged leftover seats';
@@ -1286,7 +1286,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookingVoucherLocalContact => 'Local contact';
 
   @override
-  String get bookingVoucherPaymentStatus => '결제 상태';
+  String get bookingVoucherPaymentStatus => 'Payment status';
 
   @override
   String bookingVoucherPartySummary(
@@ -1295,42 +1295,42 @@ class AppLocalizationsEn extends AppLocalizations {
     int child,
     int infant,
   ) {
-    return '다이버 $diver · 비다이버 $nondiver · 소아 $child · 유아 $infant';
+    return 'Diver $diver · Non-diver $nondiver · Child $child · Infant $infant';
   }
 
   @override
   String bookingSingleRooms(int count) {
-    return '1인 1실 $count개';
+    return '$count single rooms';
   }
 
   @override
   String bookingPartyDiver(int count, String unit) {
-    return '다이버 $count × $unit';
+    return 'Diver $count × $unit';
   }
 
   @override
   String bookingPartyNondiver(int count, String unit) {
-    return '비다이버 $count × $unit';
+    return 'Non-diver $count × $unit';
   }
 
   @override
   String bookingPartyChild(int count, String unit) {
-    return '소아 $count × $unit';
+    return 'Child $count × $unit';
   }
 
   @override
   String bookingPartyInfant(int count, String unit) {
-    return '유아 $count × $unit';
+    return 'Infant $count × $unit';
   }
 
   @override
   String bookingPartyFoc(int count) {
-    return '무료 인원(FOC) $count';
+    return 'Free guests (FOC) $count';
   }
 
   @override
   String bookingPartySingleRoom(int count, String unit) {
-    return '1인 1실 $count × $unit';
+    return 'Single room $count × $unit';
   }
 
   @override
@@ -1381,6 +1381,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSettingsTitle => 'Settings';
+
+  @override
+  String get settingsLanguageLabel => 'Language';
 
   @override
   String get profileMembershipTitle => 'Membership';
@@ -4086,7 +4089,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminHomeCurationRemove => 'Remove from home';
 
   @override
-  String get adminHomeCurationOrder => '홈 고정 순서';
+  String get adminHomeCurationOrder => 'Pinned home order';
 
   @override
   String get adminHomeCurationFull =>
@@ -4513,10 +4516,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerProductBadgePending => 'Pending approval';
 
   @override
-  String get partnerProductCardBadgePending => '승인 대기';
+  String get partnerProductCardBadgePending => 'Awaiting approval';
 
   @override
-  String get partnerProductCardBadgeDraft => '임시저장';
+  String get partnerProductCardBadgeDraft => 'Draft';
 
   @override
   String get partnerProductBadgeDrafting => 'Drafting';
@@ -4619,30 +4622,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set non-diver / child prices separately';
 
   @override
-  String get partnerPeakSeasonTitle => '성수기 요금';
+  String get partnerPeakSeasonTitle => 'Peak-season rates';
 
   @override
-  String get partnerPeakSeasonAdd => '기간 추가';
+  String get partnerPeakSeasonAdd => 'Add dates';
 
   @override
-  String get partnerPeakSeasonStart => '시작일';
+  String get partnerPeakSeasonStart => 'Start date';
 
   @override
-  String get partnerPeakSeasonEnd => '종료일';
+  String get partnerPeakSeasonEnd => 'End date';
 
   @override
   String partnerPeakSeasonPickDate(String label) {
-    return '$label 선택';
+    return 'Choose $label';
   }
 
   @override
-  String get partnerPeakSeasonOverlap => '기간이 겹치면 저장할 수 없어요';
+  String get partnerPeakSeasonOverlap => 'Overlapping dates cannot be saved';
 
   @override
-  String get partnerPeakSeasonBadRange => '종료일은 시작일보다 앞설 수 없어요';
+  String get partnerPeakSeasonBadRange => 'The end date cannot be before the start date';
 
   @override
-  String get partnerPeakSeasonNeedDates => '시작일과 종료일을 선택해 주세요';
+  String get partnerPeakSeasonNeedDates => 'Choose a start date and an end date';
 
   @override
   String get partnerFormAddOption => '+ Add option';
@@ -5025,22 +5028,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String partnerVoucherPartyDiver(int count) {
-    return '다이버 $count';
+    return 'Diver $count';
   }
 
   @override
   String partnerVoucherPartyNondiver(int count) {
-    return '비다이버 $count';
+    return 'Non-diver $count';
   }
 
   @override
   String partnerVoucherPartyChild(int count) {
-    return '소아 $count';
+    return 'Child $count';
   }
 
   @override
   String partnerVoucherPartyInfant(int count) {
-    return '유아 $count';
+    return 'Infant $count';
   }
 
   @override
@@ -5532,96 +5535,96 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreBusinessHoursLabel => 'Business hours';
 
   @override
-  String get exploreShopInfoTitle => '샵 정보';
+  String get exploreShopInfoTitle => 'Shop info';
 
   @override
-  String get exploreShopLanguages => '사용 언어';
+  String get exploreShopLanguages => 'Languages';
 
   @override
-  String get exploreShopPickMany => '여러 개 선택';
+  String get exploreShopPickMany => 'Choose more than one';
 
   @override
-  String get exploreShopSeason => '운영 시기';
+  String get exploreShopSeason => 'Open season';
 
   @override
-  String get exploreShopSeasonHint => '월을 눌러 고르면 「3월 ~ 11월」처럼 자동 표시돼요';
+  String get exploreShopSeasonHint => 'Tap the months and a range fills in, like Mar–Nov.';
 
   @override
-  String get exploreShopClosed => '정기 휴무';
+  String get exploreShopClosed => 'Regular days off';
 
   @override
-  String get exploreShopClosedNone => '없음';
+  String get exploreShopClosedNone => 'None';
 
   @override
-  String get exploreShopClosedNote => '기타 메모 (예: 우기에는 수요일도 휴무)';
+  String get exploreShopClosedNote => 'Other note (for example, Wednesdays may also be closed in the rainy season)';
 
   @override
   String exploreShopClosedWeekly(String days) {
-    return '매주 $days';
+    return 'Every $days';
   }
 
   @override
-  String get exploreShopLanguageKo => '한국어';
+  String get exploreShopLanguageKo => 'Korean';
 
   @override
   String get exploreShopLanguageEn => 'English';
 
   @override
-  String get exploreShopLanguageJa => '日本語';
+  String get exploreShopLanguageJa => 'Japanese';
 
   @override
-  String get exploreShopLanguageZh => '中文';
+  String get exploreShopLanguageZh => 'Chinese';
 
   @override
-  String get exploreShopLanguageTh => 'ภาษาไทย';
+  String get exploreShopLanguageTh => 'Thai';
 
   @override
-  String get exploreShopLanguageId => 'Bahasa';
+  String get exploreShopLanguageId => 'Indonesian';
 
   @override
-  String get exploreShopLanguageEs => 'Español';
+  String get exploreShopLanguageEs => 'Spanish';
 
   @override
-  String get exploreShopDayMon => '월';
+  String get exploreShopDayMon => 'Mon';
 
   @override
-  String get exploreShopDayTue => '화';
+  String get exploreShopDayTue => 'Tue';
 
   @override
-  String get exploreShopDayWed => '수';
+  String get exploreShopDayWed => 'Wed';
 
   @override
-  String get exploreShopDayThu => '목';
+  String get exploreShopDayThu => 'Thu';
 
   @override
-  String get exploreShopDayFri => '금';
+  String get exploreShopDayFri => 'Fri';
 
   @override
-  String get exploreShopDaySat => '토';
+  String get exploreShopDaySat => 'Sat';
 
   @override
-  String get exploreShopDaySun => '일';
+  String get exploreShopDaySun => 'Sun';
 
   @override
-  String get exploreShopWeekMon => '월요일';
+  String get exploreShopWeekMon => 'Monday';
 
   @override
-  String get exploreShopWeekTue => '화요일';
+  String get exploreShopWeekTue => 'Tuesday';
 
   @override
-  String get exploreShopWeekWed => '수요일';
+  String get exploreShopWeekWed => 'Wednesday';
 
   @override
-  String get exploreShopWeekThu => '목요일';
+  String get exploreShopWeekThu => 'Thursday';
 
   @override
-  String get exploreShopWeekFri => '금요일';
+  String get exploreShopWeekFri => 'Friday';
 
   @override
-  String get exploreShopWeekSat => '토요일';
+  String get exploreShopWeekSat => 'Saturday';
 
   @override
-  String get exploreShopWeekSun => '일요일';
+  String get exploreShopWeekSun => 'Sunday';
 
   @override
   String get exploreHqInquiryTitle => 'Questions? Dive Travel is here to help';

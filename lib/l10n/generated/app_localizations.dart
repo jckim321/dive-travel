@@ -2567,6 +2567,10 @@ abstract class AppLocalizations {
   /// **'설정'**
   String get profileSettingsTitle;
 
+  /// In ko, this message translates to:
+  /// **'언어'**
+  String get settingsLanguageLabel => '언어';
+
   /// No description provided for @profileMembershipTitle.
   ///
   /// In ko, this message translates to:

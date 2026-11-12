@@ -2796,5 +2796,190 @@
   "adminApplyHandled": "Handled",
   "adminApplyMark": "Mark handled",
   "adminApplyOpenMember": "View this member",
-  "refundPolicyHint": "Cancel now for a {percent}% refund"
+  "refundPolicyHint": "Cancel now for a {percent}% refund",
+  "homeSameBoatBoardSummary": "{teams} teams closing soon · {seats} open seats",
+  "@homeSameBoatBoardSummary": {
+    "placeholders": {
+      "teams": { "type": "int" },
+      "seats": { "type": "int" }
+    }
+  },
+  "homeSameBoatBoardHeading": "Departures",
+  "homeSameBoatBoardSeeAll": "See all on this boat",
+  "explorePriceFrom": "From {price}",
+  "@explorePriceFrom": {
+    "placeholders": {
+      "price": { "type": "String" }
+    }
+  },
+  "explorePeakSeasonBadge": "Peak-season rates",
+  "explorePeakSeasonDateBadge": "Peak season",
+  "explorePeakSeasonApplied": "{start} ~ {end} peak-season rates apply",
+  "@explorePeakSeasonApplied": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "profileFlightSearch": "Find flights",
+  "profileFlightPayHint": "Pay in the linked app ↗",
+  "profileFlightSheetTitle": "Which app should we open for flights?",
+  "profileFlightSheetBody": "You continue in that app and pay there",
+  "profileFlightSkyscanner": "Skyscanner",
+  "profileFlightNaver": "Naver Flights",
+  "profileFlightGoogle": "Google Flights",
+  "profileFlightDisclaimer": "The flight app sells the ticket and takes payment. Dive Travel only opens the link.",
+  "profileMyTripsTitle": "My trips",
+  "profileUpcomingTrips": "Upcoming trips",
+  "profilePastTrips": "Past trips",
+  "profileMyTripsEmpty": "No trips yet.",
+  "profileTripDday": "D-{days}",
+  "@profileTripDday": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "profileTripDdayToday": "D-Day",
+  "profileTripDone": "Done",
+  "profileTripCancelled": "Canceled",
+  "profileTripWriteReview": "Write a review",
+  "profileTripsMore": "See more",
+  "bookingVoucherLocalContact": "Local contact",
+  "bookingVoucherPaymentStatus": "Payment status",
+  "bookingVoucherPartySummary": "Diver {diver} · Non-diver {nondiver} · Child {child} · Infant {infant}",
+  "@bookingVoucherPartySummary": {
+    "placeholders": {
+      "diver": { "type": "int" },
+      "nondiver": { "type": "int" },
+      "child": { "type": "int" },
+      "infant": { "type": "int" }
+    }
+  },
+  "bookingSingleRooms": "{count} single rooms",
+  "@bookingSingleRooms": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookingPartyDiver": "Diver {count} × {unit}",
+  "@bookingPartyDiver": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyNondiver": "Non-diver {count} × {unit}",
+  "@bookingPartyNondiver": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyChild": "Child {count} × {unit}",
+  "@bookingPartyChild": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyInfant": "Infant {count} × {unit}",
+  "@bookingPartyInfant": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyFoc": "Free guests (FOC) {count}",
+  "@bookingPartyFoc": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookingPartySingleRoom": "Single room {count} × {unit}",
+  "@bookingPartySingleRoom": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "adminHomeCurationOrder": "Pinned home order",
+  "partnerProductCardBadgePending": "Awaiting approval",
+  "partnerProductCardBadgeDraft": "Draft",
+  "partnerPeakSeasonTitle": "Peak-season rates",
+  "partnerPeakSeasonAdd": "Add dates",
+  "partnerPeakSeasonStart": "Start date",
+  "partnerPeakSeasonEnd": "End date",
+  "partnerPeakSeasonPickDate": "Choose {label}",
+  "@partnerPeakSeasonPickDate": {
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+  "partnerPeakSeasonOverlap": "Overlapping dates cannot be saved",
+  "partnerPeakSeasonBadRange": "The end date cannot be before the start date",
+  "partnerPeakSeasonNeedDates": "Choose a start date and an end date",
+  "partnerVoucherPartyDiver": "Diver {count}",
+  "@partnerVoucherPartyDiver": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerVoucherPartyNondiver": "Non-diver {count}",
+  "@partnerVoucherPartyNondiver": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerVoucherPartyChild": "Child {count}",
+  "@partnerVoucherPartyChild": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "partnerVoucherPartyInfant": "Infant {count}",
+  "@partnerVoucherPartyInfant": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "exploreShopInfoTitle": "Shop info",
+  "exploreShopLanguages": "Languages",
+  "exploreShopPickMany": "Choose more than one",
+  "exploreShopSeason": "Open season",
+  "exploreShopSeasonHint": "Tap the months and a range fills in, like Mar–Nov.",
+  "exploreShopClosed": "Regular days off",
+  "exploreShopClosedNone": "None",
+  "exploreShopClosedNote": "Other note (for example, Wednesdays may also be closed in the rainy season)",
+  "exploreShopClosedWeekly": "Every {days}",
+  "@exploreShopClosedWeekly": {
+    "placeholders": {
+      "days": { "type": "String" }
+    }
+  },
+  "exploreShopLanguageKo": "Korean",
+  "exploreShopLanguageEn": "English",
+  "exploreShopLanguageJa": "Japanese",
+  "exploreShopLanguageZh": "Chinese",
+  "exploreShopLanguageTh": "Thai",
+  "exploreShopLanguageId": "Indonesian",
+  "exploreShopLanguageEs": "Spanish",
+  "exploreShopDayMon": "Mon",
+  "exploreShopDayTue": "Tue",
+  "exploreShopDayWed": "Wed",
+  "exploreShopDayThu": "Thu",
+  "exploreShopDayFri": "Fri",
+  "exploreShopDaySat": "Sat",
+  "exploreShopDaySun": "Sun",
+  "exploreShopWeekMon": "Monday",
+  "exploreShopWeekTue": "Tuesday",
+  "exploreShopWeekWed": "Wednesday",
+  "exploreShopWeekThu": "Thursday",
+  "exploreShopWeekFri": "Friday",
+  "exploreShopWeekSat": "Saturday",
+  "exploreShopWeekSun": "Sunday",
+  "exploreHqInquiryTitle": "Questions? Dive Travel is here to help",
+  "exploreHqInquiryBody": "For booking, change or refund questions, contact us and we'll check with the shop.",
+  "exploreHqInquiryEmail": "Contact by email",
+  "exploreHqInquiryKakao": "Contact on KakaoTalk",
+  "settingsLanguageLabel": "Language"
 }

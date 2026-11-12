@@ -1046,6 +1046,7 @@
     }
   },
   "profileSettingsTitle": "설정",
+  "settingsLanguageLabel": "언어",
   "profileMembershipTitle": "멤버십",
   "profileGradeFirstTide": "첫 바다를 결제하면 골드로 건너갑니다.",
   "profileGradeStepsLeft": "{next}까지 {count}번의 여행이 남았습니다.",

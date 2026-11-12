@@ -536,13 +536,14 @@ class _LanguageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = AppLocaleScope.of(context);
+    final l10n = AppLocalizations.of(context);
     final current = controller.locale.languageCode;
     return _SettingsCard(
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Text(
-            '언어: ',
+          Text(
+            '${l10n.settingsLanguageLabel}: ',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           for (var i = 0; i < kAppLanguageChoices.length; i++) ...[
