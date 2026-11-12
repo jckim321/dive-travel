@@ -2976,6 +2976,8 @@
   "exploreCheckOutLabel": "체크아웃",
   "exploreBusinessHoursLabel": "영업시간",
   "exploreShopInfoTitle": "샵 정보",
+  "exploreShopLocalContactHint": "전화·WhatsApp 등",
+  "exploreShopLocalContactNote": "결제를 마친 손님의 바우처에만 보여요.",
   "exploreShopLanguages": "사용 언어",
   "exploreShopPickMany": "여러 개 선택",
   "exploreShopSeason": "운영 시기",

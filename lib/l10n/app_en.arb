@@ -2951,6 +2951,8 @@
     }
   },
   "exploreShopInfoTitle": "Shop info",
+  "exploreShopLocalContactHint": "Phone, WhatsApp, and similar",
+  "exploreShopLocalContactNote": "Shown only on a guest's voucher after payment.",
   "exploreShopLanguages": "Languages",
   "exploreShopPickMany": "Choose more than one",
   "exploreShopSeason": "Open season",

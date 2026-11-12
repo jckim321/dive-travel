@@ -1251,6 +1251,28 @@ class PartnerResortInfoForm extends StatelessWidget {
         ),
         _box(
           mockup: true,
+          boxKey: const Key('partner-resort-section-local-contact'),
+          title: l10n.bookingVoucherLocalContact,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                key: const Key('partner-resort-local-contact'),
+                controller: info.localContact,
+                style: fieldStyle,
+                cursorColor: const Color(0xFF0A6B64),
+                maxLength: kMaxShortLine,
+                decoration: _field(
+                  l10n.exploreShopLocalContactHint,
+                  mockup: true,
+                ).copyWith(hintText: l10n.exploreShopLocalContactHint),
+              ),
+              _mockTip(l10n.exploreShopLocalContactNote),
+            ],
+          ),
+        ),
+        _box(
+          mockup: true,
           boxKey: const Key('partner-resort-section-transport'),
           title: '오시는 길',
           child: Column(

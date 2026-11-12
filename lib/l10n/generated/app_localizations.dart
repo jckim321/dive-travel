@@ -10108,6 +10108,14 @@ abstract class AppLocalizations {
   /// **'샵 정보'**
   String get exploreShopInfoTitle;
 
+  /// In ko, this message translates to:
+  /// **'전화·WhatsApp 등'**
+  String get exploreShopLocalContactHint => '전화·WhatsApp 등';
+
+  /// In ko, this message translates to:
+  /// **'결제를 마친 손님의 바우처에만 보여요.'**
+  String get exploreShopLocalContactNote => '결제를 마친 손님의 바우처에만 보여요.';
+
   /// No description provided for @exploreShopLanguages.
   ///
   /// In ko, this message translates to:

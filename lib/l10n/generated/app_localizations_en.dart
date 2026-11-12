@@ -5549,6 +5549,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreShopInfoTitle => 'Shop info';
 
   @override
+  String get exploreShopLocalContactHint => 'Phone, WhatsApp, and similar';
+
+  @override
+  String get exploreShopLocalContactNote =>
+      'Shown only on a guest\'s voucher after payment.';
+
+  @override
   String get exploreShopLanguages => 'Languages';
 
   @override
