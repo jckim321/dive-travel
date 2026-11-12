@@ -1,6 +1,7 @@
 import 'package:dive_travel_app/core/config/r2_config.dart';
 import 'package:dive_travel_app/core/constants/option_group.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
 
@@ -1881,6 +1882,100 @@ class ShopProduct {
       }
     }
     return base();
+  }
+
+  /// True when any saved peak window includes at least one guest rate.
+  bool get hasPeakSeasons {
+    for (final season in peakSeasons) {
+      if (season.rates.isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// The one peak window that contains [day].
+  /// Null when [day] is missing, outside every window, or inside more than one.
+  ({DateTime start, DateTime end})? peakSeasonOn(DateTime? day) {
+    if (day == null) {
+      return null;
+    }
+    final target = DateTime(day.year, day.month, day.day);
+    DateTime? start;
+    DateTime? end;
+    var matches = 0;
+    for (final season in peakSeasons) {
+      final seasonStart = PeakSeason.parseDay(season.start);
+      final seasonEnd = PeakSeason.parseDay(season.end);
+      if (seasonStart == null ||
+          seasonEnd == null ||
+          seasonEnd.isBefore(seasonStart)) {
+        continue;
+      }
+      if (!target.isBefore(seasonStart) && !target.isAfter(seasonEnd)) {
+        matches += 1;
+        start = seasonStart;
+        end = seasonEnd;
+      }
+    }
+    if (matches != 1 || start == null || end == null) {
+      return null;
+    }
+    return (start: start, end: end);
+  }
+
+  /// Lowest diver unit among the base rate and every peak-season diver rate.
+  /// A professional price of 0 uses the consumer price. Disabled rates and
+  /// zero amounts are not candidates; with none left, the base display stands.
+  int lowestDiverPrice({required bool professional}) {
+    int shown(int consumer, int professionalPrice) {
+      if (!professional) {
+        return consumer;
+      }
+      return TourPricePolicy.shownUnit(
+        consumer: consumer,
+        professional: professionalPrice,
+      );
+    }
+
+    GuestRate? diver;
+    for (final rate in resolvedGuestRates) {
+      if (rate.role == GuestRole.diver) {
+        diver = rate;
+        break;
+      }
+    }
+    final baseShown = diver == null
+        ? shown(consumerPrice, professionalPrice)
+        : shown(diver.consumer, diver.professional);
+
+    final candidates = <int>[];
+    void consider(bool enabled, int price) {
+      if (!enabled || price <= 0) {
+        return;
+      }
+      candidates.add(price);
+    }
+
+    consider(diver?.enabled ?? true, baseShown);
+    for (final season in peakSeasons) {
+      for (final rate in season.rates) {
+        if (rate.role != GuestRole.diver) {
+          continue;
+        }
+        consider(rate.enabled, shown(rate.consumer, rate.professional));
+      }
+    }
+    if (candidates.isEmpty) {
+      return baseShown;
+    }
+    var lowest = candidates.first;
+    for (final price in candidates) {
+      if (price < lowest) {
+        lowest = price;
+      }
+    }
+    return lowest;
   }
 
   String get derivedDurationLabel {

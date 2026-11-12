@@ -672,6 +672,22 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String explorePriceFrom(String price) {
+    return '$price부터';
+  }
+
+  @override
+  String get explorePeakSeasonBadge => '성수기 요금 있음';
+
+  @override
+  String get explorePeakSeasonDateBadge => '성수기';
+
+  @override
+  String explorePeakSeasonApplied(String start, String end) {
+    return '$start ~ $end 성수기 요금이 적용됐어요';
+  }
+
+  @override
   String exploreOriginalPrice(String price) {
     return '소비자가 $price원';
   }

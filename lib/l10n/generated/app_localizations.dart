@@ -1320,6 +1320,30 @@ abstract class AppLocalizations {
   /// **'{price}원'**
   String explorePriceWon(String price);
 
+  /// 성수기 요금이 있을 때 목록에 보이는 최저가입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{price}부터'**
+  String explorePriceFrom(String price);
+
+  /// 성수기 요금이 있는 상품 카드의 배지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'성수기 요금 있음'**
+  String get explorePeakSeasonBadge;
+
+  /// 예약 화면에서 고른 출발일이 성수기일 때 날짜 옆 배지입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'성수기'**
+  String get explorePeakSeasonDateBadge;
+
+  /// 예약 화면 금액 영역에 보이는 성수기 적용 안내입니다.
+  ///
+  /// In ko, this message translates to:
+  /// **'{start} ~ {end} 성수기 요금이 적용됐어요'**
+  String explorePeakSeasonApplied(String start, String end);
+
   /// 강사 우대가일 때 그어 보이는 소비자가입니다.
   ///
   /// In ko, this message translates to:

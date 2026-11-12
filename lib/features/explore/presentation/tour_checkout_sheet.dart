@@ -629,6 +629,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     }();
 
     final duration = product?.derivedDurationLabel.trim() ?? shop.durationLabel;
+    final peak = product?.peakSeasonOn(_tourDate);
     return Scaffold(
       backgroundColor: const Color(0xFFF6F3EC),
       appBar: AppBar(
@@ -884,6 +885,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     valueKey: const Key(
                                       'checkout-departure-value',
                                     ),
+                                    badge: peak == null
+                                        ? null
+                                        : _PeakDateBadge(
+                                            label: l10n.explorePeakSeasonDateBadge,
+                                          ),
                                     onTap: _dateLocked ? null : _pickDate,
                                   ),
                                 ),
@@ -988,6 +994,20 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                       ),
                     ],
                   ),
+                  if (peak != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.explorePeakSeasonApplied(
+                        '${peak.start.month}/${peak.start.day}',
+                        '${peak.end.month}/${peak.end.day}',
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFF8A5A2B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                   Text(
                     [
                       if (duration.trim().isNotEmpty)
@@ -2013,18 +2033,48 @@ class _MarkdownDetailCard extends StatelessWidget {
   }
 }
 
+class _PeakDateBadge extends StatelessWidget {
+  const _PeakDateBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4EBD3),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF8A5A2B),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DateBox extends StatelessWidget {
   const _DateBox({
     super.key,
     required this.label,
     required this.value,
     this.valueKey,
+    this.badge,
     this.onTap,
   });
 
   final String label;
   final String value;
   final Key? valueKey;
+  final Widget? badge;
   final VoidCallback? onTap;
 
   @override
@@ -2053,14 +2103,32 @@ class _DateBox extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                value,
-                key: valueKey,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              if (badge == null)
+                Text(
+                  value,
+                  key: valueKey,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        key: valueKey,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    badge!,
+                  ],
                 ),
-              ),
             ],
           ),
         ),

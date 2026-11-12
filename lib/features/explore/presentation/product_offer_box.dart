@@ -47,6 +47,10 @@ class ProductOfferBox extends StatelessWidget {
       product.listingKind == ProductListingKind.curated ||
       product.listingKind == ProductListingKind.diverPlanned;
 
+  bool get _showsPeakFrom =>
+      product.hasPeakSeasons &&
+      product.lowestDiverPrice(professional: quote.isProfessional) > 0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -126,8 +130,10 @@ class ProductOfferBox extends StatelessWidget {
                       ],
                       if (_showsCardPrice) ...[
                         const SizedBox(height: 6),
-                        Text(
-                          l10n.explorePriceWon(_price.format(quote.amount)),
+                        _listedPrice(
+                          l10n,
+                          amount: quote.amount,
+                          fromPeak: _showsPeakFrom,
                           style: const TextStyle(
                             color: Color(0xFF10242F),
                             fontSize: 14,
@@ -194,6 +200,7 @@ class ProductOfferBox extends StatelessWidget {
                 note: _packageNote,
                 price: quote.amount,
                 showPrice: _showsCardPrice,
+                fromPeak: _showsPeakFrom,
                 button: l10n.optionBookPackage,
                 buttonKey: Key('shop-book-${shop.id}'),
                 onPressed: () => onBook(''),
@@ -267,12 +274,41 @@ class ProductOfferBox extends StatelessWidget {
     );
   }
 
+  Widget _listedPrice(
+    AppLocalizations l10n, {
+    required int amount,
+    required TextStyle style,
+    required bool fromPeak,
+  }) {
+    if (!fromPeak) {
+      return Text(
+        l10n.explorePriceWon(_price.format(amount)),
+        style: style,
+      );
+    }
+    final lowest = product.lowestDiverPrice(
+      professional: quote.isProfessional,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _PeakSeasonBadge(label: l10n.explorePeakSeasonBadge),
+        const SizedBox(height: 4),
+        Text(
+          l10n.explorePriceFrom(l10n.explorePriceWon(_price.format(lowest))),
+          style: style.copyWith(color: const Color(0xFF0A4A73)),
+        ),
+      ],
+    );
+  }
+
   Widget _offerRow(
     BuildContext context, {
     required String title,
     required String note,
     required int price,
     required bool showPrice,
+    bool fromPeak = false,
     required String button,
     required Key buttonKey,
     required VoidCallback onPressed,
@@ -312,11 +348,12 @@ class ProductOfferBox extends StatelessWidget {
               children: [
                 if (showPrice)
                   Expanded(
-                    child: Text(
-                      l10n.explorePriceWon(_price.format(price)),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: _listedPrice(
+                      l10n,
+                      amount: price,
+                      fromPeak: fromPeak,
+                      style: (theme.textTheme.titleMedium ?? const TextStyle())
+                          .copyWith(fontWeight: FontWeight.w800),
                     ),
                   )
                 else
@@ -333,6 +370,37 @@ class ProductOfferBox extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PeakSeasonBadge extends StatelessWidget {
+  const _PeakSeasonBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4EBD3),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF8A5A2B),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+          ),
         ),
       ),
     );
