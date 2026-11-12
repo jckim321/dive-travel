@@ -786,6 +786,82 @@ class SaleBlockedRange {
   }
 }
 
+/// One inclusive stay window with its own guest rates.
+/// Days outside every window keep the product's base rates.
+class PeakSeason {
+  const PeakSeason({
+    required this.start,
+    required this.end,
+    this.rates = const [],
+  });
+
+  /// `yyyy-MM-dd`, inclusive.
+  final String start;
+
+  /// `yyyy-MM-dd`, inclusive.
+  final String end;
+
+  final List<GuestRate> rates;
+
+  static DateTime? parseDay(String raw) => _isoCalendarDay(raw);
+
+  Map<String, dynamic> toMap() => {
+        'start': start,
+        'end': end,
+        'rates': [for (final rate in rates) rate.toMap()],
+      };
+
+  static List<PeakSeason> listFrom(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final seasons = <PeakSeason>[];
+    for (final item in raw) {
+      if (item is! Map) {
+        continue;
+      }
+      final data = Map<String, dynamic>.from(item);
+      final start = (data['start'] as String? ?? '').trim();
+      final end = (data['end'] as String? ?? '').trim();
+      if (parseDay(start) == null || parseDay(end) == null) {
+        continue;
+      }
+      seasons.add(
+        PeakSeason(
+          start: start,
+          end: end,
+          rates: ShopProduct._rates(data['rates']),
+        ),
+      );
+    }
+    return seasons;
+  }
+}
+
+/// True when two valid windows share a calendar day.
+/// A bad or inverted date is ignored here; the form rejects it separately.
+bool peakSeasonsOverlap(Iterable<PeakSeason> seasons) {
+  final ranges = <(DateTime, DateTime)>[];
+  for (final season in seasons) {
+    final start = PeakSeason.parseDay(season.start);
+    final end = PeakSeason.parseDay(season.end);
+    if (start == null || end == null || end.isBefore(start)) {
+      continue;
+    }
+    ranges.add((start, end));
+  }
+  for (var i = 0; i < ranges.length; i++) {
+    for (var j = i + 1; j < ranges.length; j++) {
+      final a = ranges[i];
+      final b = ranges[j];
+      if (!a.$1.isAfter(b.$2) && !b.$1.isAfter(a.$2)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 class ShopProduct {
   const ShopProduct({
     required this.id,
@@ -847,6 +923,7 @@ class ShopProduct {
     this.saleWeekdays = const [],
     this.minLeadDays = 0,
     this.blockedDates = const [],
+    this.peakSeasons = const [],
     this.diveCount = 0,
     this.freeCancelDays = 0,
     this.weatherPolicy = '',
@@ -950,6 +1027,7 @@ class ShopProduct {
       saleWeekdays: _weekdayList(data['sale_weekdays']),
       minLeadDays: (data['min_lead_days'] as num?)?.toInt() ?? 0,
       blockedDates: SaleBlockedRange.listFrom(data['blocked_dates']),
+      peakSeasons: PeakSeason.listFrom(data['peak_seasons']),
       diveCount: (data['dive_count'] as num?)?.toInt() ?? 0,
       freeCancelDays: (data['free_cancel_days'] as num?)?.toInt() ?? 0,
       weatherPolicy: data['weather_policy'] as String? ?? '',
@@ -1057,6 +1135,9 @@ class ShopProduct {
 
   /// Date ranges that cannot be booked.
   final List<SaleBlockedRange> blockedDates;
+
+  /// Inclusive peak windows. Empty means every departure uses base rates.
+  final List<PeakSeason> peakSeasons;
 
   /// Partner dive count. Written only when [includeGuestPriceFields].
   final int diveCount;
@@ -1762,6 +1843,44 @@ class ShopProduct {
     ];
   }
 
+  /// Base rate when [day] is null or outside every peak window.
+  /// More than one window on the same day also falls back to the base rate.
+  GuestRate rateForRole(DateTime? day, GuestRole role) {
+    GuestRate base() {
+      for (final rate in resolvedGuestRates) {
+        if (rate.role == role) {
+          return rate;
+        }
+      }
+      return GuestRate(role: role, enabled: false);
+    }
+
+    if (day == null) {
+      return base();
+    }
+    final target = DateTime(day.year, day.month, day.day);
+    final matches = <PeakSeason>[];
+    for (final season in peakSeasons) {
+      final start = PeakSeason.parseDay(season.start);
+      final end = PeakSeason.parseDay(season.end);
+      if (start == null || end == null || end.isBefore(start)) {
+        continue;
+      }
+      if (!target.isBefore(start) && !target.isAfter(end)) {
+        matches.add(season);
+      }
+    }
+    if (matches.length != 1) {
+      return base();
+    }
+    for (final rate in matches.first.rates) {
+      if (rate.role == role) {
+        return rate;
+      }
+    }
+    return base();
+  }
+
   String get derivedDurationLabel {
     if (itineraryDays.isEmpty) {
       return durationLabel;
@@ -1831,6 +1950,7 @@ class ShopProduct {
     List<int>? saleWeekdays,
     int? minLeadDays,
     List<SaleBlockedRange>? blockedDates,
+    List<PeakSeason>? peakSeasons,
     int? diveCount,
     int? freeCancelDays,
     String? weatherPolicy,
@@ -1907,6 +2027,7 @@ class ShopProduct {
       saleWeekdays: saleWeekdays ?? this.saleWeekdays,
       minLeadDays: minLeadDays ?? this.minLeadDays,
       blockedDates: blockedDates ?? this.blockedDates,
+      peakSeasons: peakSeasons ?? this.peakSeasons,
       diveCount: diveCount ?? this.diveCount,
       freeCancelDays: freeCancelDays ?? this.freeCancelDays,
       weatherPolicy: weatherPolicy ?? this.weatherPolicy,
@@ -2070,6 +2191,7 @@ class ShopProduct {
         'sale_weekdays': saleWeekdays,
         'min_lead_days': minLeadDays,
         'blocked_dates': [for (final range in blockedDates) range.toMap()],
+        'peak_seasons': [for (final season in peakSeasons) season.toMap()],
         'dive_count': diveCount,
         'free_cancel_days': freeCancelDays,
         'weather_policy': weatherPolicy,

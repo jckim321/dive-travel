@@ -285,6 +285,14 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         );
         return;
       }
+      final peakBlock = box.peakSeasonBlockReason(l10n);
+      if (peakBlock != null) {
+        setState(() => _expanded.add(box.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(peakBlock)),
+        );
+        return;
+      }
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
@@ -1655,8 +1663,153 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         const SizedBox(height: 10),
         _supplementField(box),
         const SizedBox(height: 16),
+        _peakSeasonBlock(box),
+        const SizedBox(height: 16),
         _saleRulesBlock(box),
       ],
+    );
+  }
+
+  Widget _peakSeasonBlock(_RegularProductDraft box) {
+    final l10n = AppLocalizations.of(context);
+    const labelStyle = TextStyle(
+      color: _FormInk.muted,
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+    );
+    String roleName(GuestRole role) {
+      return switch (role) {
+        GuestRole.diver => l10n.workbenchGuestDiver,
+        GuestRole.nondiver => l10n.workbenchGuestNondiver,
+        GuestRole.child => l10n.workbenchGuestChild,
+        GuestRole.infant => l10n.workbenchGuestInfant,
+      };
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.partnerPeakSeasonTitle,
+          style: const TextStyle(
+            color: _FormInk.ink,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var index = 0; index < box.peakSeasons.length; index++) ...[
+          _peakSeasonCard(box, box.peakSeasons[index], index, roleName, labelStyle),
+          const SizedBox(height: 8),
+        ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: Key('partner-peak-add-${box.id}'),
+            onPressed: () => setState(() => box.peakSeasons.add(_PeakSeasonDraft())),
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(l10n.partnerPeakSeasonAdd),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _peakSeasonCard(
+    _RegularProductDraft box,
+    _PeakSeasonDraft row,
+    int index,
+    String Function(GuestRole role) roleName,
+    TextStyle labelStyle,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    Widget money(TextEditingController controller, String key) {
+      return TextField(
+        key: Key(key),
+        controller: controller,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        style: const TextStyle(color: PlannerPalette.text),
+        cursorColor: PlannerPalette.accent,
+        decoration: _deco(l10n.exploreConsumerPrice),
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _FormInk.input),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: Key('partner-peak-start-${box.id}-$index'),
+                    controller: row.start,
+                    style: const TextStyle(color: PlannerPalette.text),
+                    cursorColor: PlannerPalette.accent,
+                    decoration: _deco(l10n.partnerPeakSeasonStart),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    key: Key('partner-peak-end-${box.id}-$index'),
+                    controller: row.end,
+                    style: const TextStyle(color: PlannerPalette.text),
+                    cursorColor: PlannerPalette.accent,
+                    decoration: _deco(l10n.partnerPeakSeasonEnd),
+                  ),
+                ),
+                IconButton(
+                  key: Key('partner-peak-remove-${box.id}-$index'),
+                  onPressed: () => setState(() {
+                    box.peakSeasons.remove(row);
+                    row.dispose();
+                  }),
+                  icon: const Icon(Icons.close, color: _FormInk.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (final role in GuestRole.values) ...[
+              Text(roleName(role), style: labelStyle),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: money(
+                      row.consumer[role]!,
+                      'partner-peak-consumer-${box.id}-$index-${role.firestoreValue}',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      key: Key(
+                        'partner-peak-pro-${box.id}-$index-${role.firestoreValue}',
+                      ),
+                      controller: row.professional[role],
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      style: const TextStyle(color: PlannerPalette.text),
+                      cursorColor: PlannerPalette.accent,
+                      decoration: _deco('전문가'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -2056,6 +2209,76 @@ InputDecoration _field(String label) {
   );
 }
 
+class _PeakSeasonDraft {
+  _PeakSeasonDraft({
+    String startText = '',
+    String endText = '',
+    Map<GuestRole, String>? consumerText,
+    Map<GuestRole, String>? professionalText,
+  }) : start = TextEditingController(text: startText),
+       end = TextEditingController(text: endText),
+       consumer = {
+         for (final role in GuestRole.values)
+           role: TextEditingController(text: consumerText?[role] ?? ''),
+       },
+       professional = {
+         for (final role in GuestRole.values)
+           role: TextEditingController(text: professionalText?[role] ?? ''),
+       };
+
+  factory _PeakSeasonDraft.fromSeason(PeakSeason season) {
+    String textOf(GuestRole role, bool consumer) {
+      for (final rate in season.rates) {
+        if (rate.role != role) {
+          continue;
+        }
+        return '${consumer ? rate.consumer : rate.professional}';
+      }
+      return '';
+    }
+
+    return _PeakSeasonDraft(
+      startText: season.start,
+      endText: season.end,
+      consumerText: {
+        for (final role in GuestRole.values) role: textOf(role, true),
+      },
+      professionalText: {
+        for (final role in GuestRole.values) role: textOf(role, false),
+      },
+    );
+  }
+
+  final TextEditingController start;
+  final TextEditingController end;
+  final Map<GuestRole, TextEditingController> consumer;
+  final Map<GuestRole, TextEditingController> professional;
+
+  bool get isBlank {
+    if (start.text.trim().isNotEmpty || end.text.trim().isNotEmpty) {
+      return false;
+    }
+    for (final role in GuestRole.values) {
+      if (consumer[role]!.text.trim().isNotEmpty ||
+          professional[role]!.text.trim().isNotEmpty) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void dispose() {
+    start.dispose();
+    end.dispose();
+    for (final controller in consumer.values) {
+      controller.dispose();
+    }
+    for (final controller in professional.values) {
+      controller.dispose();
+    }
+  }
+}
+
 class _RegularProductDraft {
   _RegularProductDraft({
     required this.id,
@@ -2077,6 +2300,7 @@ class _RegularProductDraft {
     Set<int>? saleWeekdays,
     this.minLeadDays = 0,
     List<SaleBlockedRange>? blockedDates,
+    List<_PeakSeasonDraft>? peakSeasons,
     ProductCategory? category,
     this.difficulty = '',
     this.weatherPolicy = '',
@@ -2089,6 +2313,7 @@ class _RegularProductDraft {
        nights = nights ?? TextEditingController(),
        saleWeekdays = saleWeekdays ?? {1, 2, 3, 4, 5, 6, 7},
        blockedDates = blockedDates ?? <SaleBlockedRange>[],
+       peakSeasons = peakSeasons ?? <_PeakSeasonDraft>[],
        category = category ?? ProductCategory.resortPackage,
        diveCount = diveCount ?? TextEditingController(),
        maxGuests = maxGuests ?? TextEditingController(),
@@ -2150,6 +2375,10 @@ class _RegularProductDraft {
           : {...product.saleWeekdays},
       minLeadDays: product.minLeadDays,
       blockedDates: [...product.blockedDates],
+      peakSeasons: [
+        for (final season in product.peakSeasons)
+          _PeakSeasonDraft.fromSeason(season),
+      ],
       category: product.category,
       difficulty: product.difficulty,
       weatherPolicy: product.weatherPolicy,
@@ -2224,6 +2453,7 @@ class _RegularProductDraft {
   final Set<int> saleWeekdays;
   int minLeadDays;
   final List<SaleBlockedRange> blockedDates;
+  final List<_PeakSeasonDraft> peakSeasons;
   ProductCategory category;
   String difficulty;
   String weatherPolicy;
@@ -2283,6 +2513,9 @@ class _RegularProductDraft {
     for (final day in itinerary) {
       day.dispose();
     }
+    for (final season in peakSeasons) {
+      season.dispose();
+    }
   }
 
   ShopProduct toProduct(String shopId) {
@@ -2324,6 +2557,7 @@ class _RegularProductDraft {
         blockedDates: writeGuestPrices
             ? List<SaleBlockedRange>.of(blockedDates)
             : const [],
+        peakSeasons: writeGuestPrices ? _storedPeakSeasons() : const [],
         category: writeGuestPrices ? category : ProductCategory.resortPackage,
         difficulty: writeGuestPrices ? difficulty : '',
         maxGuests: writeGuestPrices ? _wholeNumber(maxGuests) : 0,
@@ -2352,6 +2586,7 @@ class _RegularProductDraft {
       blockedDates: writeGuestPrices
           ? List<SaleBlockedRange>.of(blockedDates)
           : null,
+      peakSeasons: writeGuestPrices ? _storedPeakSeasons() : null,
       category: writeGuestPrices ? category : null,
       difficulty: writeGuestPrices ? difficulty : null,
       maxGuests: writeGuestPrices ? _wholeNumber(maxGuests) : null,
@@ -2392,6 +2627,92 @@ class _RegularProductDraft {
       );
     }
     return GuestRate(role: role, enabled: false);
+  }
+
+  /// Blank date rows are dropped. An empty price copies the base rate.
+  /// A role that is off stays at 0.
+  List<PeakSeason> _storedPeakSeasons() {
+    final diverConsumer = parsePositivePrice(consumer.text) ?? 0;
+    final diverProfessional =
+        parsePositivePrice(professional.text) ?? diverConsumer;
+    GuestRate base(GuestRole role) {
+      if (role == GuestRole.diver) {
+        return GuestRate(
+          role: role,
+          enabled: true,
+          consumer: diverConsumer,
+          professional: diverProfessional,
+        );
+      }
+      return _rateFor(role);
+    }
+
+    int? typed(String raw) {
+      if (raw.trim().isEmpty) {
+        return null;
+      }
+      final value = int.tryParse(raw.trim());
+      if (value == null || value < 0) {
+        return null;
+      }
+      return value;
+    }
+
+    final seasons = <PeakSeason>[];
+    for (final row in peakSeasons) {
+      if (row.isBlank) {
+        continue;
+      }
+      final rates = <GuestRate>[];
+      for (final role in GuestRole.values) {
+        final fallback = base(role);
+        if (!fallback.enabled) {
+          rates.add(GuestRate(role: role, enabled: false));
+          continue;
+        }
+        rates.add(
+          GuestRate(
+            role: role,
+            enabled: true,
+            consumer: typed(row.consumer[role]!.text) ?? fallback.consumer,
+            professional:
+                typed(row.professional[role]!.text) ?? fallback.professional,
+          ),
+        );
+      }
+      seasons.add(
+        PeakSeason(
+          start: row.start.text.trim(),
+          end: row.end.text.trim(),
+          rates: rates,
+        ),
+      );
+    }
+    return seasons;
+  }
+
+  String? peakSeasonBlockReason(AppLocalizations l10n) {
+    final seasons = <PeakSeason>[];
+    for (final row in peakSeasons) {
+      if (row.isBlank) {
+        continue;
+      }
+      final start = PeakSeason.parseDay(row.start.text);
+      final end = PeakSeason.parseDay(row.end.text);
+      if (start == null || end == null || end.isBefore(start)) {
+        return l10n.partnerPeakSeasonBadRange;
+      }
+      seasons.add(
+        PeakSeason(
+          start: row.start.text.trim(),
+          end: row.end.text.trim(),
+        ),
+      );
+    }
+    if (peakSeasonsOverlap(seasons)) {
+      return l10n.partnerPeakSeasonOverlap;
+    }
+    return null;
   }
 
   ({List<ProductPriceTier> tiers, int supplement}) _guestPriceFields() {

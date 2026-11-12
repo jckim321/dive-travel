@@ -8417,6 +8417,42 @@ abstract class AppLocalizations {
   /// **'비다이버·아동 가격을 따로 설정'**
   String get partnerFormGuestRatesToggle;
 
+  /// No description provided for @partnerPeakSeasonTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'성수기 요금'**
+  String get partnerPeakSeasonTitle;
+
+  /// No description provided for @partnerPeakSeasonAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'기간 추가'**
+  String get partnerPeakSeasonAdd;
+
+  /// No description provided for @partnerPeakSeasonStart.
+  ///
+  /// In ko, this message translates to:
+  /// **'시작일'**
+  String get partnerPeakSeasonStart;
+
+  /// No description provided for @partnerPeakSeasonEnd.
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일'**
+  String get partnerPeakSeasonEnd;
+
+  /// No description provided for @partnerPeakSeasonOverlap.
+  ///
+  /// In ko, this message translates to:
+  /// **'기간이 겹치면 저장할 수 없어요'**
+  String get partnerPeakSeasonOverlap;
+
+  /// No description provided for @partnerPeakSeasonBadRange.
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일은 시작일보다 앞설 수 없어요'**
+  String get partnerPeakSeasonBadRange;
+
   /// No description provided for @partnerFormAddOption.
   ///
   /// In ko, this message translates to:

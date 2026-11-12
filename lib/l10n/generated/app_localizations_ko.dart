@@ -4476,6 +4476,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get partnerFormGuestRatesToggle => '비다이버·아동 가격을 따로 설정';
 
   @override
+  String get partnerPeakSeasonTitle => '성수기 요금';
+
+  @override
+  String get partnerPeakSeasonAdd => '기간 추가';
+
+  @override
+  String get partnerPeakSeasonStart => '시작일';
+
+  @override
+  String get partnerPeakSeasonEnd => '종료일';
+
+  @override
+  String get partnerPeakSeasonOverlap => '기간이 겹치면 저장할 수 없어요';
+
+  @override
+  String get partnerPeakSeasonBadRange => '종료일은 시작일보다 앞설 수 없어요';
+
+  @override
   String get partnerFormAddOption => '+ 옵션 추가';
 
   @override
