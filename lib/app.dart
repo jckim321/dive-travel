@@ -5,11 +5,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:dive_travel_app/core/auth/device_pin_controller.dart';
 import 'package:dive_travel_app/core/auth/device_pin_store.dart';
-import 'package:dive_travel_app/core/constants/app_constants.dart';
 import 'package:dive_travel_app/core/data/diver_repository.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/firestore_diver_repository.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/locale/app_locale.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_gate.dart';
 import 'package:dive_travel_app/features/partner/presentation/meeting_report_link_host.dart';
@@ -24,6 +24,7 @@ class DiveTravelApp extends StatefulWidget {
     this.repository,
     this.devicePinStore,
     this.initialReportId,
+    this.localeController,
   });
 
   final bool firebaseReady;
@@ -35,6 +36,9 @@ class DiveTravelApp extends StatefulWidget {
   /// Injected in tests; production uses [PrefsDevicePinStore].
   final DevicePinStore? devicePinStore;
 
+  /// Loaded before [runApp] in production. Tests omit it and stay on Korean.
+  final AppLocaleController? localeController;
+
   @override
   State<DiveTravelApp> createState() => _DiveTravelAppState();
 }
@@ -43,10 +47,21 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
   SessionController? _session;
   DiverStore? _store;
   DevicePinController? _pins;
+  late final AppLocaleController _locale;
+  late final bool _ownsLocale;
 
   @override
   void initState() {
     super.initState();
+    final injected = widget.localeController;
+    if (injected != null) {
+      _locale = injected;
+      _ownsLocale = false;
+    } else {
+      _locale = AppLocaleController();
+      _ownsLocale = true;
+      unawaited(_locale.load());
+    }
     _bindRepository(widget.repository);
   }
 
@@ -101,6 +116,9 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
   @override
   void dispose() {
     _tearDown();
+    if (_ownsLocale) {
+      _locale.dispose();
+    }
     super.dispose();
   }
 
@@ -132,12 +150,16 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
   }
 
   Widget _localizedApp({required Widget home, required bool debugFooter}) {
-    return MaterialApp(
+    return AppLocaleScope(
+      controller: _locale,
+      child: ListenableBuilder(
+        listenable: _locale,
+        builder: (context, _) => MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      locale: AppConstants.defaultLocale,
+      locale: _locale.locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -151,6 +173,8 @@ class _DiveTravelAppState extends State<DiveTravelApp> {
               )
           : null,
       home: home,
+        ),
+      ),
     );
   }
 }

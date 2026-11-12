@@ -6,6 +6,7 @@ import 'package:dive_travel_app/core/auth/guest_browse_store.dart';
 import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/locale/app_locale.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/signup_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -197,7 +198,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final session = SessionScope.of(context);
     return Scaffold(
       key: const Key('auth-full-screen'),
-      body: DecoratedBox(
+      body: Stack(
+        children: [
+          DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -408,6 +411,60 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
+          const Positioned(
+            top: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(top: 4, right: 12),
+                child: _AuthLanguageToggle(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthLanguageToggle extends StatelessWidget {
+  const _AuthLanguageToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppLocaleScope.of(context);
+    final current = controller.locale.languageCode;
+    return Row(
+      key: const Key('auth-language-toggle'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < kAppLanguageChoices.length; i++) ...[
+          if (i > 0)
+            const Text(
+              ' | ',
+              style: TextStyle(color: AppTheme.muted, fontSize: 13),
+            ),
+          GestureDetector(
+            onTap: () => controller.setLocale(kAppLanguageChoices[i].locale),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+              child: Text(
+                kAppLanguageChoices[i].shortLabel,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: current ==
+                          kAppLanguageChoices[i].locale.languageCode
+                      ? FontWeight.w800
+                      : FontWeight.w500,
+                  color: current == kAppLanguageChoices[i].locale.languageCode
+                      ? AppTheme.navy
+                      : AppTheme.muted,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

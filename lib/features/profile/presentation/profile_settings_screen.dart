@@ -15,6 +15,7 @@ import 'package:dive_travel_app/features/auth/presentation/device_pin_dialogs.da
 import 'package:dive_travel_app/features/profile/presentation/nationality_field.dart';
 import 'package:dive_travel_app/features/profile/presentation/partner_application_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/pro_verification_card.dart';
+import 'package:dive_travel_app/core/locale/app_locale.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {
@@ -72,6 +73,8 @@ class ProfileSettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              const _LanguageCard(),
               const SizedBox(height: 16),
               _NationalityCard(nationality: live.nationality),
               if (!live.isAdmin && !live.isBusiness) ...[
@@ -519,6 +522,53 @@ class _PasswordCardState extends State<_PasswordCard> {
               _notice!,
               key: const Key('profile-password-notice'),
               style: TextStyle(color: noticeColor),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = AppLocaleScope.of(context);
+    final current = controller.locale.languageCode;
+    return _SettingsCard(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Text(
+            '언어: ',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+          for (var i = 0; i < kAppLanguageChoices.length; i++) ...[
+            if (i > 0)
+              const Text(
+                ' / ',
+                style: TextStyle(color: AppTheme.muted, fontSize: 15),
+              ),
+            GestureDetector(
+              key: Key(
+                'profile-language-${kAppLanguageChoices[i].locale.languageCode}',
+              ),
+              onTap: () => controller.setLocale(kAppLanguageChoices[i].locale),
+              child: Text(
+                kAppLanguageChoices[i].nativeName,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: current ==
+                          kAppLanguageChoices[i].locale.languageCode
+                      ? FontWeight.w800
+                      : FontWeight.w500,
+                  color: current == kAppLanguageChoices[i].locale.languageCode
+                      ? AppTheme.navy
+                      : AppTheme.muted,
+                ),
+              ),
             ),
           ],
         ],
