@@ -1188,6 +1188,8 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         const SizedBox(height: 10),
         _supplementField(box),
         const SizedBox(height: 12),
+        _peakSeasonBlock(box),
+        const SizedBox(height: 12),
         KeyedSubtree(
           key: Key('regular-${box.id}-partner-form-section-includes'),
           child: _includesBlock(l10n, box),
