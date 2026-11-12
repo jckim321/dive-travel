@@ -1253,7 +1253,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String bookingSingleRooms(int count) {
-    return '1인 1실 $count';
+    return '1인 1실 $count개';
   }
 
   @override

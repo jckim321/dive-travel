@@ -145,7 +145,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
               InputChip(
                 label: Text(
                   l10n.adminProductFilterShop(
-                    DiveShopCatalog.byId(shopFilter)?.name ?? shopFilter,
+                    _shopName(store, shopFilter),
                   ),
                 ),
                 onDeleted: widget.onClearShopFilter,

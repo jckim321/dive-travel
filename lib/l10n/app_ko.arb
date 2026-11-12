@@ -942,7 +942,7 @@
   "bookingVoucherShop": "샵",
   "bookingVoucherPaymentStatus": "결제 상태",
   "bookingVoucherPartySummary": "다이버 {diver} · 비다이버 {nondiver} · 소아 {child} · 유아 {infant}",
-  "bookingSingleRooms": "1인 1실 {count}",
+  "bookingSingleRooms": "1인 1실 {count}개",
   "@bookingSingleRooms": {
     "placeholders": {
       "count": { "type": "int" }

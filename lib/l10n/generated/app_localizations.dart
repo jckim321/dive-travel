@@ -2408,7 +2408,7 @@ abstract class AppLocalizations {
   /// No description provided for @bookingSingleRooms.
   ///
   /// In ko, this message translates to:
-  /// **'1인 1실 {count}'**
+  /// **'1인 1실 {count}개'**
   String bookingSingleRooms(int count);
 
   /// No description provided for @bookingPartyDiver.

@@ -147,7 +147,8 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        if (booking.optionLabel.isNotEmpty) ...[
+                        if (booking.partyLines.isEmpty &&
+                            booking.optionLabel.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             booking.optionLabel,
