@@ -10259,6 +10259,30 @@ abstract class AppLocalizations {
   /// **'일요일'**
   String get exploreShopWeekSun;
 
+  /// No description provided for @exploreHqInquiryTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'궁금한 점은 다이브트래블이 도와드려요'**
+  String get exploreHqInquiryTitle;
+
+  /// No description provided for @exploreHqInquiryBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'예약·변경·환불 문의는 본사로 주시면 샵과 확인해 안내해요.'**
+  String get exploreHqInquiryBody;
+
+  /// No description provided for @exploreHqInquiryEmail.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일로 문의'**
+  String get exploreHqInquiryEmail;
+
+  /// No description provided for @exploreHqInquiryKakao.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡으로 문의'**
+  String get exploreHqInquiryKakao;
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

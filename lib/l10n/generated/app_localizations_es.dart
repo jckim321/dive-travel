@@ -5492,6 +5492,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exploreShopWeekSun => '일요일';
 
   @override
+  String get exploreHqInquiryTitle => '¿Dudas? Dive Travel te ayuda';
+
+  @override
+  String get exploreHqInquiryBody =>
+      'Para reservas, cambios o reembolsos, escribe a la sede. Lo consultamos con la tienda y te respondemos.';
+
+  @override
+  String get exploreHqInquiryEmail => 'Contactar por email';
+
+  @override
+  String get exploreHqInquiryKakao => 'Contactar por KakaoTalk';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override

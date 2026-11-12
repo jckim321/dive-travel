@@ -5477,6 +5477,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exploreShopWeekSun => '일요일';
 
   @override
+  String get exploreHqInquiryTitle => 'มีข้อสงสัยไหม ไดฟ์ทราเวลพร้อมช่วย';
+
+  @override
+  String get exploreHqInquiryBody =>
+      'สอบถามเรื่องการจอง การเปลี่ยนแปลง หรือการคืนเงินได้ที่สำนักงานใหญ่ เราจะตรวจสอบกับร้านแล้วแจ้งให้ทราบ';
+
+  @override
+  String get exploreHqInquiryEmail => 'ติดต่อทางอีเมล';
+
+  @override
+  String get exploreHqInquiryKakao => 'ติดต่อทาง KakaoTalk';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override

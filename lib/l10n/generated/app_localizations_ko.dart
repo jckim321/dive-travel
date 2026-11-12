@@ -5472,6 +5472,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exploreShopWeekSun => '일요일';
 
   @override
+  String get exploreHqInquiryTitle => '궁금한 점은 다이브트래블이 도와드려요';
+
+  @override
+  String get exploreHqInquiryBody => '예약·변경·환불 문의는 본사로 주시면 샵과 확인해 안내해요.';
+
+  @override
+  String get exploreHqInquiryEmail => '이메일로 문의';
+
+  @override
+  String get exploreHqInquiryKakao => '카카오톡으로 문의';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override

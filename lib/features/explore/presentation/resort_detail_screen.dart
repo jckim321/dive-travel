@@ -534,6 +534,8 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: 20),
+            _HqInquiryCard(shopName: hull.name),
             if (showOps) ...[
               const SizedBox(height: 20),
               _ResortInfoSection(
@@ -1514,6 +1516,152 @@ class _StarBadge extends StatelessWidget {
       return badge;
     }
     return Opacity(opacity: 0.45, child: badge);
+  }
+}
+
+class _HqInquiryCard extends StatelessWidget {
+  const _HqInquiryCard({required this.shopName});
+
+  final String shopName;
+
+  Uri? get _emailUri {
+    final email = DiveTravelInquiry.email.trim();
+    if (email.isEmpty) {
+      return null;
+    }
+    final subject = '[다이브트래블] ${shopName.trim()} 문의';
+    return Uri.parse('mailto:$email?subject=${Uri.encodeComponent(subject)}');
+  }
+
+  Uri? get _kakaoUri {
+    final raw = DiveTravelInquiry.kakaoChatUrl.trim();
+    if (raw.isEmpty) {
+      return null;
+    }
+    return Uri.tryParse(raw);
+  }
+
+  Future<void> _open(Uri uri) async {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final korean = Localizations.localeOf(context).languageCode == 'ko';
+    final emailUri = _emailUri;
+    final kakaoUri = _kakaoUri;
+    final showKakao = korean && kakaoUri != null;
+    final showEmail = emailUri != null;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4F3F4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.exploreHqInquiryTitle,
+              style: const TextStyle(
+                color: Color(0xFF0C5C66),
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.exploreHqInquiryBody,
+              style: const TextStyle(
+                color: Color(0xFF52606D),
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            if (showKakao || showEmail) ...[
+              const SizedBox(height: 14),
+              if (showKakao && showEmail)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HqInquiryButton(
+                        key: const Key('hq-inquiry-kakao'),
+                        label: l10n.exploreHqInquiryKakao,
+                        background: const Color(0xFFFEE500),
+                        foreground: const Color(0xFF1A1A1A),
+                        onPressed: () => _open(kakaoUri),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _HqInquiryButton(
+                        key: const Key('hq-inquiry-email'),
+                        label: l10n.exploreHqInquiryEmail,
+                        background: const Color(0xFF0E6A72),
+                        foreground: Colors.white,
+                        onPressed: () => _open(emailUri),
+                      ),
+                    ),
+                  ],
+                )
+              else if (showKakao)
+                _HqInquiryButton(
+                  key: const Key('hq-inquiry-kakao'),
+                  label: l10n.exploreHqInquiryKakao,
+                  background: const Color(0xFFFEE500),
+                  foreground: const Color(0xFF1A1A1A),
+                  onPressed: () => _open(kakaoUri),
+                )
+              else
+                _HqInquiryButton(
+                  key: const Key('hq-inquiry-email'),
+                  label: l10n.exploreHqInquiryEmail,
+                  background: const Color(0xFF0E6A72),
+                  foreground: Colors.white,
+                  onPressed: () => _open(emailUri!),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HqInquiryButton extends StatelessWidget {
+  const _HqInquiryButton({
+    super.key,
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onPressed,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: background,
+        foregroundColor: foreground,
+        minimumSize: const Size.fromHeight(48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+      ),
+    );
   }
 }
 

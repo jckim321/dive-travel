@@ -56,3 +56,9 @@ abstract final class AppOwner {
     return '다이버';
   }
 }
+
+/// 본사 문의 주소. 값이 비어 있으면 손님 화면에서 그 버튼을 숨긴다.
+abstract final class DiveTravelInquiry {
+  static const String email = 'jckim321@gmail.com';
+  static const String kakaoChatUrl = 'https://pf.kakao.com/_RxaKNX/chat';
+}

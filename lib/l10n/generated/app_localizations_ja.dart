@@ -5459,6 +5459,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exploreShopWeekSun => '일요일';
 
   @override
+  String get exploreHqInquiryTitle => 'ご不明な点はダイブトラベルがお手伝いします';
+
+  @override
+  String get exploreHqInquiryBody =>
+      '予約・変更・返金のご質問は本社へ。ショップに確認してご案内します。';
+
+  @override
+  String get exploreHqInquiryEmail => 'メールで問い合わせ';
+
+  @override
+  String get exploreHqInquiryKakao => 'カカオトークで問い合わせ';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override

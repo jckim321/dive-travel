@@ -5459,6 +5459,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exploreShopWeekSun => '일요일';
 
   @override
+  String get exploreHqInquiryTitle => '有疑问，潜水旅行来帮您';
+
+  @override
+  String get exploreHqInquiryBody => '预约、变更、退款问题请联系总部，我们会与潜店确认后回复。';
+
+  @override
+  String get exploreHqInquiryEmail => '邮件咨询';
+
+  @override
+  String get exploreHqInquiryKakao => '通过 KakaoTalk 咨询';
+
+  @override
   String get exploreResortAddress => '주소';
 
   @override
