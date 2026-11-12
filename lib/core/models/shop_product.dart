@@ -413,6 +413,7 @@ class CheckoutCharge {
     Set<String> selectedOptionIds = const {},
     int quoteAmount = 0,
     int singleRooms = 0,
+    DateTime? departure,
   }) {
     final lockParty = fromFlag && lockedPartySize > 0;
     final partyDivers = lockParty ? lockedPartySize : divers;
@@ -431,6 +432,7 @@ class CheckoutCharge {
             bookPackage: bookPackage,
             selectedOptionIds: selectedOptionIds,
             singleRooms: lockParty ? 0 : singleRooms,
+            departure: departure,
           ).total;
     return CheckoutCharge(
       partySize: partyDivers + partyNondivers + partyChildren + partyInfants,

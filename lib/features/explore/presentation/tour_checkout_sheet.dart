@@ -147,6 +147,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       bookPackage: _bookPackage,
       selectedOptionIds: _selected,
       singleRooms: _singleRooms,
+      departure: _tourDate,
     );
   }
 
@@ -262,6 +263,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       selectedOptionIds: _selected,
       quoteAmount: widget.quote.amount,
       singleRooms: _singleRooms,
+      departure: _tourDate,
     ).total;
   }
 

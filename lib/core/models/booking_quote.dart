@@ -125,19 +125,63 @@ class BookingQuote {
     required ShopProduct product,
     required GuestRole role,
     required bool professional,
+    DateTime? departure,
   }) {
+    GuestRate? listed;
     for (final rate in product.resolvedGuestRates) {
       if (rate.role == role) {
-        if (!rate.enabled) {
-          return 0;
-        }
-        return professional ? rate.professional : rate.consumer;
+        listed = rate;
+        break;
       }
     }
-    if (role == GuestRole.diver) {
-      return professional ? product.professionalPrice : product.consumerPrice;
+    if (listed == null) {
+      if (role == GuestRole.diver) {
+        return professional ? product.professionalPrice : product.consumerPrice;
+      }
+      return 0;
     }
-    return 0;
+    final peak = _peakRoleRate(product, role, departure);
+    final rate = peak ?? listed;
+    if (!rate.enabled) {
+      return 0;
+    }
+    return professional ? rate.professional : rate.consumer;
+  }
+
+  /// The season rate [ShopProduct.rateForRole] would return, or null when
+  /// the day is outside a single peak window or that window has no [role].
+  static GuestRate? _peakRoleRate(
+    ShopProduct product,
+    GuestRole role,
+    DateTime? departure,
+  ) {
+    if (departure == null) {
+      return null;
+    }
+    final target = DateTime(departure.year, departure.month, departure.day);
+    PeakSeason? only;
+    var matches = 0;
+    for (final season in product.peakSeasons) {
+      final start = PeakSeason.parseDay(season.start);
+      final end = PeakSeason.parseDay(season.end);
+      if (start == null || end == null || end.isBefore(start)) {
+        continue;
+      }
+      if (!target.isBefore(start) && !target.isAfter(end)) {
+        matches += 1;
+        only = season;
+      }
+    }
+    if (matches != 1 || only == null) {
+      return null;
+    }
+    for (final rate in only.rates) {
+      if (rate.role != role) {
+        continue;
+      }
+      return product.rateForRole(departure, role);
+    }
+    return null;
   }
 
   static int optionUnit({
@@ -177,6 +221,7 @@ class BookingQuote {
     required Set<String> selectedOptionIds,
     Map<String, int>? optionQuantities,
     int singleRooms = 0,
+    DateTime? departure,
   }) {
     final lines = <BookingLine>[];
     final partyLines = <BookingPartyLine>[];
@@ -203,6 +248,7 @@ class BookingQuote {
         product: product,
         role: role,
         professional: professional,
+        departure: departure,
       );
     }
 
@@ -267,6 +313,7 @@ class BookingQuote {
           product: product,
           role: role,
           professional: professional,
+          departure: departure,
         );
         final billedCount = heads - free;
         final amount = billed(role, heads);

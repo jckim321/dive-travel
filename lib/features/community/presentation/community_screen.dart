@@ -526,6 +526,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             bookPackage: offer.optionId.isEmpty,
             selectedOptionIds:
                 offer.optionId.isEmpty ? const {} : {offer.optionId},
+            departure: offer.departureStart,
           ).total,
         );
       },
@@ -566,6 +567,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             bookPackage: offer.optionId.isEmpty,
             selectedOptionIds:
                 offer.optionId.isEmpty ? const {} : {offer.optionId},
+            departure: offer.departureStart,
           ).total,
         ),
       ),
@@ -685,6 +687,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       professional: professional,
       bookPackage: offer.optionId.isEmpty,
       selectedOptionIds: offer.optionId.isEmpty ? const {} : {offer.optionId},
+      departure: offer.departureStart,
     ).total;
     final planted = await store.plantSeatFlag(
       shopId: product.shopId,
