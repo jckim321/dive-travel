@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 Future<void> openBookingVoucher(BuildContext context, TourBooking booking) {
@@ -188,7 +189,34 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                           l10n.bookingVoucherPaymentStatus,
                           l10n.bookingPaymentCaptured,
                         ),
-                        if (booking.quoteLines.isNotEmpty) ...[
+                        if (booking.partyLines.isNotEmpty) ...[
+                          const Divider(height: 28),
+                          for (final line in booking.partyLines)
+                            if (bookingPartyLineLabel(l10n, line).isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        bookingPartyLineLabel(l10n, line),
+                                      ),
+                                    ),
+                                    Text(_money.format(line.amount)),
+                                  ],
+                                ),
+                              ),
+                          for (final line in bookingVoucherAddonLines(booking))
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(line.label)),
+                                  Text(_money.format(line.amount)),
+                                ],
+                              ),
+                            ),
+                        ] else if (booking.quoteLines.isNotEmpty) ...[
                           const Divider(height: 28),
                           for (final line in booking.quoteLines)
                             Padding(

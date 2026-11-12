@@ -39,16 +39,76 @@ class BookingLine {
   }
 }
 
+/// Per-role snapshot stored beside [BookingLine]s. Amounts are copies of
+/// [BookingQuote.compute], not a second price.
+class BookingPartyLine {
+  const BookingPartyLine({
+    required this.kind,
+    required this.count,
+    required this.unit,
+    required this.amount,
+  });
+
+  static const kinds = <String>{
+    'diver',
+    'nondiver',
+    'child',
+    'infant',
+    'foc',
+    'single_room',
+  };
+
+  final String kind;
+  final int count;
+  final int unit;
+  final int amount;
+
+  Map<String, dynamic> toMap() => {
+        'kind': kind,
+        'count': count,
+        'unit': unit,
+        'amount': amount,
+      };
+
+  static BookingPartyLine? fromMap(dynamic raw) {
+    if (raw is! Map) {
+      return null;
+    }
+    final data = Map<String, dynamic>.from(raw);
+    final kind = data['kind'] as String? ?? '';
+    if (!kinds.contains(kind)) {
+      return null;
+    }
+    return BookingPartyLine(
+      kind: kind,
+      count: (data['count'] as num?)?.toInt() ?? 0,
+      unit: (data['unit'] as num?)?.toInt() ?? 0,
+      amount: (data['amount'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  static List<BookingPartyLine> listFrom(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    return [
+      for (final item in raw) ?fromMap(item),
+    ];
+  }
+}
+
 class BookingQuote {
   const BookingQuote({
     required this.lines,
     required this.total,
     required this.freeDivers,
+    this.partyLines = const [],
   });
 
   final List<BookingLine> lines;
   final int total;
   final int freeDivers;
+  final List<BookingPartyLine> partyLines;
 
   static int freeCount({
     required int guests,
@@ -119,6 +179,7 @@ class BookingQuote {
     int singleRooms = 0,
   }) {
     final lines = <BookingLine>[];
+    final partyLines = <BookingPartyLine>[];
     var total = 0;
     final freeDivers = product.focAppliesTo == GuestRole.diver
         ? freeCount(
@@ -189,6 +250,68 @@ class BookingQuote {
         lines.add(BookingLine(label: '1인 1실 추가', amount: amount));
         total += amount;
       }
+      final roleLines = <BookingPartyLine>[];
+      var roleSum = 0;
+      void takeRole(GuestRole role, int heads, String kind) {
+        if (heads <= 0) {
+          return;
+        }
+        final free = role == product.focAppliesTo
+            ? freeCount(
+                guests: heads,
+                focPay: product.focPayCount,
+                focFree: product.focFreeCount,
+              )
+            : 0;
+        final unit = rolePrice(
+          product: product,
+          role: role,
+          professional: professional,
+        );
+        final billedCount = heads - free;
+        final amount = billed(role, heads);
+        if (billedCount > 0) {
+          roleLines.add(
+            BookingPartyLine(
+              kind: kind,
+              count: billedCount,
+              unit: unit,
+              amount: amount,
+            ),
+          );
+          roleSum += amount;
+        }
+        if (free >= 1) {
+          roleLines.add(
+            BookingPartyLine(
+              kind: 'foc',
+              count: free,
+              unit: 0,
+              amount: 0,
+            ),
+          );
+        }
+      }
+
+      takeRole(GuestRole.diver, divers, 'diver');
+      takeRole(GuestRole.nondiver, nondivers, 'nondiver');
+      takeRole(GuestRole.child, children, 'child');
+      takeRole(GuestRole.infant, infants, 'infant');
+      if (roleSum == packageAmount) {
+        partyLines.addAll(roleLines);
+        if (singleRooms >= 1 &&
+            product.singleSupplement >= 1 &&
+            product.nights >= 1) {
+          partyLines.add(
+            BookingPartyLine(
+              kind: 'single_room',
+              count: singleRooms,
+              unit: product.singleSupplement * product.nights,
+              amount: singleRooms * product.singleSupplement * product.nights,
+            ),
+          );
+        }
+      }
     } else {
       for (final option in product.options) {
         if (!option.bookable || !selectedOptionIds.contains(option.id)) {
@@ -209,6 +332,11 @@ class BookingQuote {
       }
     }
 
-    return BookingQuote(lines: lines, total: total, freeDivers: freeDivers);
+    return BookingQuote(
+      lines: lines,
+      total: total,
+      freeDivers: freeDivers,
+      partyLines: partyLines,
+    );
   }
 }

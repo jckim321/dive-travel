@@ -1285,6 +1285,36 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String bookingPartyDiver(int count, String unit) {
+    return '다이버 $count × $unit';
+  }
+
+  @override
+  String bookingPartyNondiver(int count, String unit) {
+    return '비다이버 $count × $unit';
+  }
+
+  @override
+  String bookingPartyChild(int count, String unit) {
+    return '소아 $count × $unit';
+  }
+
+  @override
+  String bookingPartyInfant(int count, String unit) {
+    return '유아 $count × $unit';
+  }
+
+  @override
+  String bookingPartyFoc(int count) {
+    return '무료 인원(FOC) $count';
+  }
+
+  @override
+  String bookingPartySingleRoom(int count, String unit) {
+    return '1인 1실 $count × $unit';
+  }
+
+  @override
   String get profileBookingStatus => 'My bookings';
 
   @override

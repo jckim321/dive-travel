@@ -2411,6 +2411,42 @@ abstract class AppLocalizations {
   /// **'1인 1실 {count}'**
   String bookingSingleRooms(int count);
 
+  /// No description provided for @bookingPartyDiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'다이버 {count} × {unit}'**
+  String bookingPartyDiver(int count, String unit);
+
+  /// No description provided for @bookingPartyNondiver.
+  ///
+  /// In ko, this message translates to:
+  /// **'비다이버 {count} × {unit}'**
+  String bookingPartyNondiver(int count, String unit);
+
+  /// No description provided for @bookingPartyChild.
+  ///
+  /// In ko, this message translates to:
+  /// **'소아 {count} × {unit}'**
+  String bookingPartyChild(int count, String unit);
+
+  /// No description provided for @bookingPartyInfant.
+  ///
+  /// In ko, this message translates to:
+  /// **'유아 {count} × {unit}'**
+  String bookingPartyInfant(int count, String unit);
+
+  /// No description provided for @bookingPartyFoc.
+  ///
+  /// In ko, this message translates to:
+  /// **'무료 인원(FOC) {count}'**
+  String bookingPartyFoc(int count);
+
+  /// No description provided for @bookingPartySingleRoom.
+  ///
+  /// In ko, this message translates to:
+  /// **'1인 1실 {count} × {unit}'**
+  String bookingPartySingleRoom(int count, String unit);
+
   /// No description provided for @profileBookingStatus.
   ///
   /// In ko, this message translates to:

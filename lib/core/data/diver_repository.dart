@@ -807,6 +807,7 @@ abstract class DiverRepository {
     int infants = 0,
     int singleRooms = 0,
     List<BookingLine> quoteLines = const [],
+    List<BookingPartyLine> partyLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
     String guestDisplayName = '',

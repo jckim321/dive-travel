@@ -948,6 +948,47 @@
       "count": { "type": "int" }
     }
   },
+  "bookingPartyDiver": "다이버 {count} × {unit}",
+  "@bookingPartyDiver": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyNondiver": "비다이버 {count} × {unit}",
+  "@bookingPartyNondiver": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyChild": "소아 {count} × {unit}",
+  "@bookingPartyChild": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyInfant": "유아 {count} × {unit}",
+  "@bookingPartyInfant": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "bookingPartyFoc": "무료 인원(FOC) {count}",
+  "@bookingPartyFoc": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "bookingPartySingleRoom": "1인 1실 {count} × {unit}",
+  "@bookingPartySingleRoom": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
   "@bookingVoucherPartySummary": {
     "placeholders": {
       "diver": { "type": "int" },

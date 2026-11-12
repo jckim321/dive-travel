@@ -1,3 +1,6 @@
+import 'package:intl/intl.dart';
+
+import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -150,4 +153,36 @@ String partnerVoucherPartyWithSingleRooms(
     return rooms;
   }
   return '$party · $rooms';
+}
+
+final _partyMoney = NumberFormat('#,###', 'en_US');
+
+String bookingPartyAmountText(int amount) => _partyMoney.format(amount);
+
+/// Label for one stored party-price row. Empty when the kind is unknown.
+String bookingPartyLineLabel(AppLocalizations l10n, BookingPartyLine line) {
+  final unit = _partyMoney.format(line.unit);
+  return switch (line.kind) {
+    'diver' => l10n.bookingPartyDiver(line.count, unit),
+    'nondiver' => l10n.bookingPartyNondiver(line.count, unit),
+    'child' => l10n.bookingPartyChild(line.count, unit),
+    'infant' => l10n.bookingPartyInfant(line.count, unit),
+    'foc' => l10n.bookingPartyFoc(line.count),
+    'single_room' => l10n.bookingPartySingleRoom(line.count, unit),
+    _ => '',
+  };
+}
+
+/// Add-on quote rows once the package line and single-room line are shown
+/// from [TourBooking.partyLines]. Empty when there is no stored breakdown.
+List<BookingLine> bookingVoucherAddonLines(TourBooking booking) {
+  if (booking.partyLines.isEmpty || booking.quoteLines.isEmpty) {
+    return const [];
+  }
+  final hideSingle =
+      booking.partyLines.any((line) => line.kind == 'single_room');
+  return [
+    for (final line in booking.quoteLines.skip(1))
+      if (!hideSingle || line.label != '1인 1실 추가') line,
+  ];
 }

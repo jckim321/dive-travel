@@ -64,6 +64,7 @@ class TourBooking {
     this.infants = 0,
     this.singleRooms = 0,
     this.quoteLines = const [],
+    this.partyLines = const [],
     this.seatsHeld = 0,
     this.seatOptionId = '',
     this.guestDisplayName = '',
@@ -104,6 +105,7 @@ class TourBooking {
   /// Single-occupancy rooms chosen at checkout. Missing docs read as 0.
   final int singleRooms;
   final List<BookingLine> quoteLines;
+  final List<BookingPartyLine> partyLines;
   /// Seats charged to `booked_seats` at create time; restore only when > 0.
   final int seatsHeld;
   /// Option used for seat inventory (may differ from display [optionId]).
@@ -242,6 +244,7 @@ class TourBooking {
       infants: infants,
       singleRooms: singleRooms,
       quoteLines: quoteLines,
+      partyLines: partyLines,
       seatsHeld: seatsHeld ?? this.seatsHeld,
       seatOptionId: seatOptionId ?? this.seatOptionId,
       guestDisplayName: guestDisplayName ?? this.guestDisplayName,

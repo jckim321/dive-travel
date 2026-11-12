@@ -548,6 +548,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         infants: _hasProduct ? _qtyInfant : 0,
         singleRooms: _hasProduct ? _singleRooms : 0,
         quoteLines: _hasProduct ? _booking.lines : const [],
+        partyLines: _hasProduct ? _booking.partyLines : const [],
         // Paid SimPay checkout: auto-confirm; defaults stay requested/unpaid elsewhere.
         status: BookingStatus.confirmed,
         paymentStatus: PaymentStatus.captured,

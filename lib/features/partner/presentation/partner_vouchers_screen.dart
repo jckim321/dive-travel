@@ -304,6 +304,16 @@ class PartnerVoucherCard extends StatelessWidget {
               l10n.partnerVoucherRequests,
               l10n.partnerVoucherNone,
             ),
+            if (booking.partyLines.isNotEmpty) ...[
+              for (final line in booking.partyLines)
+                if (bookingPartyLineLabel(l10n, line).isNotEmpty)
+                  _line(
+                    bookingPartyLineLabel(l10n, line),
+                    bookingPartyAmountText(line.amount),
+                  ),
+              for (final line in bookingVoucherAddonLines(booking))
+                _line(line.label, bookingPartyAmountText(line.amount)),
+            ],
             const SizedBox(height: 6),
             Text(
               l10n.partnerVoucherCreatedStamp(
@@ -524,6 +534,13 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
       '${l10n.partnerVoucherFoc}: ${foc ?? l10n.partnerVoucherNone}',
       '${l10n.partnerVoucherGuestName}: ${booking.guestDisplayName.trim().isEmpty ? l10n.partnerVoucherGuestNameMissing : booking.guestDisplayName.trim()}',
       '${l10n.partnerVoucherRequests}: ${l10n.partnerVoucherNone}',
+      if (booking.partyLines.isNotEmpty) ...[
+        for (final line in booking.partyLines)
+          if (bookingPartyLineLabel(l10n, line).isNotEmpty)
+            '${bookingPartyLineLabel(l10n, line)}: ${bookingPartyAmountText(line.amount)}',
+        for (final line in bookingVoucherAddonLines(booking))
+          '${line.label}: ${bookingPartyAmountText(line.amount)}',
+      ],
       l10n.partnerVoucherCreatedStamp(_stamp.format(booking.createdAt)),
     ].join('\n');
   }

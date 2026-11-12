@@ -2010,6 +2010,7 @@ class FirestoreDiverRepository implements DiverRepository {
       infants: (data['infants'] as num?)?.toInt() ?? 0,
       singleRooms: (data['single_rooms'] as num?)?.toInt() ?? 0,
       quoteLines: BookingLine.listFrom(data['quote_lines']),
+      partyLines: BookingPartyLine.listFrom(data['party_lines']),
       seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
       seatOptionId: data['seat_option_id'] as String? ?? '',
       guestDisplayName: data['guest_display_name'] as String? ?? '',
@@ -2065,6 +2066,10 @@ class FirestoreDiverRepository implements DiverRepository {
         'quote_lines': [
           for (final line in booking.quoteLines) line.toMap(),
         ],
+      if (booking.partyLines.isNotEmpty)
+        'party_lines': [
+          for (final line in booking.partyLines) line.toMap(),
+        ],
       if (booking.partnerAckedAt != null)
         'partner_acked_at': Timestamp.fromDate(booking.partnerAckedAt!),
       if (booking.cancelledAt != null)
@@ -2107,6 +2112,7 @@ class FirestoreDiverRepository implements DiverRepository {
     int infants = 0,
     int singleRooms = 0,
     List<BookingLine> quoteLines = const [],
+    List<BookingPartyLine> partyLines = const [],
     BookingStatus status = BookingStatus.requested,
     PaymentStatus paymentStatus = PaymentStatus.unpaid,
     String guestDisplayName = '',
@@ -2221,6 +2227,7 @@ class FirestoreDiverRepository implements DiverRepository {
           infants: infants,
           singleRooms: singleRooms,
           quoteLines: quoteLines,
+          partyLines: partyLines,
           seatsHeld: seatsHeld,
           seatOptionId: seatKey,
           guestDisplayName: guestDisplayName.trim(),
