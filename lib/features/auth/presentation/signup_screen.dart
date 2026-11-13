@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/auth/known_member_store.dart';
 import 'package:dive_travel_app/core/constants/auth_terms_consent.dart';
 import 'package:dive_travel_app/core/constants/nationality.dart';
@@ -8,6 +7,19 @@ import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+bool _signupEnglish(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'en';
+
+/// `@` 와 그 뒤에 점만 있으면 통과. `a@test.test` 같은 시험 주소도 받는다.
+bool _signupEmailOk(String raw) {
+  final value = raw.trim();
+  final at = value.indexOf('@');
+  if (at < 0) {
+    return false;
+  }
+  return value.indexOf('.', at + 1) >= 0;
+}
 
 /// SignupOne form. Full route from the cold-start gate, or embedded in a sheet.
 class SignupScreen extends StatefulWidget {
@@ -28,8 +40,9 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _loginId = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
+  final _displayName = TextEditingController();
   final _legalName = TextEditingController();
   final _birthDate = TextEditingController();
   final _phone = TextEditingController();
@@ -44,8 +57,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
-    _loginId.dispose();
+    _email.dispose();
     _password.dispose();
+    _displayName.dispose();
     _legalName.dispose();
     _birthDate.dispose();
     _phone.dispose();
@@ -113,9 +127,13 @@ class _SignupScreenState extends State<SignupScreen> {
     final session = SessionScope.of(context);
     setState(() => _error = null);
 
-    final issue = AuthIdentity.nameTagIssue(_loginId.text);
-    if (issue != null) {
-      setState(() => _error = _issueMessage(l10n, issue));
+    final email = _email.text.trim();
+    if (!_signupEmailOk(email)) {
+      setState(
+        () => _error = _signupEnglish(context)
+            ? 'Check the email format'
+            : '이메일 형식을 확인해 주세요',
+      );
       return;
     }
     if (_password.text.length < 6) {
@@ -127,15 +145,18 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    final trimmed = _loginId.text.trim();
     final legal = _legalName.text.trim();
+    final nick = _displayName.text.trim();
+    final local = email.split('@').first;
+    final displayName = legal.isNotEmpty
+        ? legal
+        : (nick.isNotEmpty ? nick : local);
     try {
       await applyKeepSignedIn(true);
       await session.signUp(
-        email: AuthIdentity.toAuthEmail(trimmed),
+        email: email,
         password: _password.text,
-        displayName: legal.isNotEmpty ? legal : trimmed,
-        loginId: AuthIdentity.storedLoginId(trimmed),
+        displayName: displayName,
         nationality: _nationality,
         birthDate: _birthDate.text.trim(),
         phone: _phone.text.trim(),
@@ -151,19 +172,6 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(
         () => _error = authFailureMessage(error, l10n, signUp: true),
       );
-    }
-  }
-
-  String _issueMessage(AppLocalizations l10n, NameTagIssue issue) {
-    switch (issue) {
-      case NameTagIssue.empty:
-        return l10n.authErrorNameTagRequired;
-      case NameTagIssue.reserved:
-        return l10n.authErrorLoginIdReserved;
-      case NameTagIssue.format:
-        return l10n.authErrorLoginIdFormat;
-      case NameTagIssue.tooLong:
-        return l10n.authErrorNameTagTooLong;
     }
   }
 
@@ -194,9 +202,10 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   List<Widget> _formFields(AppLocalizations l10n, {required bool busy}) {
+    final english = _signupEnglish(context);
     return [
                 Text(
-                  l10n.authNameTag,
+                  english ? 'Email' : '이메일',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppTheme.navy,
@@ -205,12 +214,15 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 6),
                 TextField(
                   key: const Key('auth-signup-login-id'),
-                  controller: _loginId,
-                  decoration: _box(l10n.authIdExampleHint),
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _box('name@company.com'),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  l10n.authIdRuleHintLong,
+                  english
+                      ? 'Used to sign in and reset your password'
+                      : '로그인과 비밀번호 찾기에 써요',
                   style: const TextStyle(fontSize: 12, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 14),
@@ -240,6 +252,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 4),
                 Text(
                   l10n.authPasswordRuleHint,
+                  style: const TextStyle(fontSize: 12, color: AppTheme.muted),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  english ? 'Display name (optional)' : '표시 이름 (선택)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navy,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _displayName,
+                  maxLength: 20,
+                  decoration: _box(
+                    english ? 'e.g. sea turtle' : '예: 바다거북',
+                  ).copyWith(counterText: ''),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  english ? 'Name shown in the app' : '앱에서 보이는 이름',
                   style: const TextStyle(fontSize: 12, color: AppTheme.muted),
                 ),
                 const SizedBox(height: 14),
