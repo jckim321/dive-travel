@@ -26,7 +26,7 @@ String authFailureMessage(
       case 'invalid-credential':
         return l10n.authErrorInvalidCredential;
       case 'email-already-in-use':
-        if (signUp) return l10n.authErrorLoginIdInUse;
+        if (signUp) return l10n.authErrorEmailInUse;
         return l10n.authErrorEmailInUse;
       case 'weak-password':
         return l10n.authErrorWeakPassword;
