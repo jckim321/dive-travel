@@ -8,6 +8,7 @@ import 'package:dive_travel_app/core/auth/auth_identity.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/language_switch.dart';
+import 'package:dive_travel_app/features/auth/presentation/auth_credentials_form.dart';
 import 'package:dive_travel_app/features/auth/presentation/signup_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -293,8 +294,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             textInputAction: TextInputAction.next,
                             autofillHints: const [AutofillHints.username],
                             decoration: _fieldDecoration(
-                              label: l10n.authNameTag,
-                              hint: l10n.authIdFieldHint,
+                              label: authIdFieldText(context),
+                              hint: authIdFieldText(context),
                               prefix: Icons.person_outline,
                             ),
                           ),
@@ -323,20 +324,53 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          CheckboxListTile(
-                            key: const Key('auth-keep-signed-in'),
-                            contentPadding: EdgeInsets.zero,
-                            value: _keepSignedIn,
-                            onChanged: session.busy
-                                ? null
-                                : (v) => setState(
-                                      () => _keepSignedIn = v ?? true,
-                                    ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            title: Text(
-                              l10n.authKeepSignedInShort,
-                              style: const TextStyle(fontSize: 14),
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CheckboxListTile(
+                                  key: const Key('auth-keep-signed-in'),
+                                  contentPadding: EdgeInsets.zero,
+                                  value: _keepSignedIn,
+                                  onChanged: session.busy
+                                      ? null
+                                      : (v) => setState(
+                                            () => _keepSignedIn = v ?? true,
+                                          ),
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  title: Text(
+                                    l10n.authKeepSignedInShort,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                key: const Key('auth-forgot-password'),
+                                onPressed: session.busy
+                                    ? null
+                                    : () => showForgotPasswordDialog(context),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.ocean,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  Localizations.localeOf(context)
+                                              .languageCode ==
+                                          'en'
+                                      ? 'Forgot password'
+                                      : '비밀번호 찾기',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           if (_error != null) ...[
                             Text(
