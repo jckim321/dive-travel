@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/constants/gallery_limits.dart';
 import 'package:dive_travel_app/core/data/dive_shop_catalog.dart';
 import 'package:dive_travel_app/core/data/dive_star.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
+import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/same_boat_board.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/core/models/story_html.dart';
@@ -19,6 +20,7 @@ import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.d
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
+import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_theme.dart';
 import 'package:dive_travel_app/features/same_boat/presentation/same_boat_seats_screen.dart';
@@ -794,6 +796,27 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                       ),
                     ),
                     const SizedBox(width: 12),
+                    if (open &&
+                        widget.partnerLabels &&
+                        MediaQuery.sizeOf(context).width < 1200)
+                      TextButton(
+                        key: Key('partner-regular-input-preview-${box.id}'),
+                        onPressed: () => _openRegularPreviewSheet(l10n, box),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _FormInk.teal,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          l10n.partnerPreviewButton,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     Text(
                       '옵션 $optionCount',
                       key: Key('partner-regular-option-count-${box.id}'),
@@ -985,12 +1008,181 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
     if (MediaQuery.sizeOf(context).width < 1000) {
       return form;
     }
-    return _PinnedSteps(
+    final steps = _PinnedSteps(
       boxId: box.id,
       labels: _stepLabels,
       statuses: const ['필수', '필수', '필수', '권장', '필수', '필수', '선택', '권장'],
       onTap: (index) => _scrollToSection(anchors[index]),
       child: form,
+    );
+    if (MediaQuery.sizeOf(context).width < 1200) {
+      return steps;
+    }
+    return _StickyPreviewRail(
+      preview: _regularOfferPreview(l10n, box),
+      child: steps,
+    );
+  }
+
+  Listenable _regularPreviewListenable(_RegularProductDraft box) {
+    return Listenable.merge([
+      box.name,
+      box.consumer,
+      box.professional,
+      box.includes,
+      box.excludes,
+      box.nights,
+      box.singleSupplement,
+      for (final addon in box.addons) ...[
+        addon.name,
+        addon.consumer,
+        addon.professional,
+      ],
+      for (final day in box.itinerary) ...[day.day, day.title, day.body],
+    ]);
+  }
+
+  /// Guest card for one open product box. Shop name and place come from the
+  /// same shop lookup the form already uses.
+  Widget _regularOfferPreview(AppLocalizations l10n, _RegularProductDraft box) {
+    return ListenableBuilder(
+      listenable: _regularPreviewListenable(box),
+      builder: (context, _) => _regularOfferPreviewBody(l10n, box),
+    );
+  }
+
+  Widget _regularOfferPreviewBody(
+    AppLocalizations l10n,
+    _RegularProductDraft box,
+  ) {
+    final product = box.toProduct(widget.shopId);
+    final price = parsePositivePrice(box.consumer.text) ?? 0;
+    Uint8List? coverBytes;
+    var coverUrl = '';
+    var hasPhoto = false;
+    if (box.photos.isNotEmpty) {
+      final first = box.photos.first;
+      final data = first.photo?.bytes;
+      if (data != null && data.isNotEmpty) {
+        coverBytes = data;
+        hasPhoto = true;
+      } else {
+        coverUrl = first.url?.trim() ?? '';
+        hasPhoto = coverUrl.isNotEmpty;
+      }
+    }
+    final en = Localizations.localeOf(context).languageCode == 'en';
+    final missing = <String>[
+      if (box.name.text.trim().isEmpty) en ? 'product name' : '상품 이름',
+      if (price <= 0) en ? 'price' : '가격',
+    ];
+    const noteStyle = TextStyle(
+      color: _FormInk.muted,
+      fontSize: 12,
+      height: 1.35,
+    );
+    return Material(
+      color: _FormInk.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: _FormInk.line),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.partnerPreviewTitle,
+              style: const TextStyle(
+                color: _FormInk.ink,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ProductOfferPreview(
+              shop: _previewShop(product, coverUrl),
+              product: product,
+              quote: TourPriceQuote(amount: price, isProfessional: false),
+              coverBytes: coverBytes,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              missing.isEmpty
+                  ? l10n.partnerPreviewReady
+                  : l10n.partnerPreviewMissing(missing.join(', ')),
+              style: noteStyle,
+            ),
+            if (!hasPhoto) ...[
+              const SizedBox(height: 4),
+              Text(l10n.partnerPreviewNoPhoto, style: noteStyle),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  DiveShop _previewShop(ShopProduct product, String coverUrl) {
+    final live = DiverStoreScope.of(context).liveStatsFor(widget.shopId);
+    final catalog = DiveShopCatalog.byId(widget.shopId);
+    final liveName = live?.name?.trim() ?? '';
+    final catalogName = catalog?.name.trim() ?? '';
+    final name = liveName.isNotEmpty
+        ? liveName
+        : (catalogName.isNotEmpty ? catalogName : widget.shopId);
+    final liveLocation = live?.location?.trim() ?? '';
+    final liveCountry = live?.country?.trim() ?? '';
+    final liveContinent = live?.continent?.trim() ?? '';
+    return DiveShop(
+      id: widget.shopId,
+      name: name,
+      location: liveLocation.isNotEmpty
+          ? liveLocation
+          : (catalog?.location ?? ''),
+      country: liveCountry.isNotEmpty ? liveCountry : (catalog?.country ?? ''),
+      continent: liveContinent.isNotEmpty
+          ? liveContinent
+          : (catalog?.continent ?? ''),
+      sites: const [],
+      productName: product.name,
+      stars: live?.diveStar ?? catalog?.stars ?? 0,
+      rating: live?.avgOverall ?? catalog?.rating ?? 0,
+      reviewCount: live?.reviewCount ?? catalog?.reviewCount ?? 0,
+      amenities: const [],
+      consumerPrice: product.consumerPrice,
+      professionalPrice: product.professionalPrice,
+      blurb: product.blurb,
+      durationLabel: product.durationLabel,
+      coverUrl: coverUrl,
+    );
+  }
+
+  Future<void> _openRegularPreviewSheet(
+    AppLocalizations l10n,
+    _RegularProductDraft box,
+  ) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) {
+        final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.85;
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: _regularOfferPreview(l10n, box),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -3106,6 +3298,94 @@ class _PinnedStepsState extends State<_PinnedSteps> {
         ),
         const SizedBox(width: 16),
         Expanded(child: widget.child),
+      ],
+    );
+  }
+}
+
+/// Keeps the guest preview beside the step list while the form scrolls.
+class _StickyPreviewRail extends StatefulWidget {
+  const _StickyPreviewRail({required this.preview, required this.child});
+
+  final Widget preview;
+  final Widget child;
+
+  @override
+  State<_StickyPreviewRail> createState() => _StickyPreviewRailState();
+}
+
+class _StickyPreviewRailState extends State<_StickyPreviewRail> {
+  ScrollPosition? _position;
+  final _previewKey = GlobalKey();
+  var _shift = 0.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = Scrollable.maybeOf(context)?.position;
+    if (identical(_position, next)) {
+      return;
+    }
+    _position?.removeListener(_sync);
+    _position = next;
+    _position?.addListener(_sync);
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_sync);
+    super.dispose();
+  }
+
+  void _sync() {
+    if (!mounted) {
+      return;
+    }
+    final box = context.findRenderObject();
+    final viewport = _position?.context.storageContext.findRenderObject();
+    if (box is! RenderBox ||
+        !box.hasSize ||
+        viewport is! RenderBox ||
+        !viewport.hasSize) {
+      return;
+    }
+    final preview = _previewKey.currentContext?.findRenderObject();
+    final previewHeight =
+        preview is RenderBox && preview.hasSize ? preview.size.height : 0.0;
+    late final double top;
+    try {
+      top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    } catch (_) {
+      return;
+    }
+    final room = box.size.height - previewHeight;
+    final maxShift = room > 0 ? room : 0.0;
+    final shift = top < 0 ? (-top).clamp(0.0, maxShift) : 0.0;
+    if ((shift - _shift).abs() < 0.5) {
+      return;
+    }
+    setState(() => _shift = shift);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final panelHeight = MediaQuery.sizeOf(context).height * 0.85;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: widget.child),
+        const SizedBox(width: 16),
+        SizedBox(
+          width: 360,
+          child: Transform.translate(
+            offset: Offset(0, _shift),
+            child: SizedBox(
+              key: _previewKey,
+              height: panelHeight,
+              child: SingleChildScrollView(child: widget.preview),
+            ),
+          ),
+        ),
       ],
     );
   }
