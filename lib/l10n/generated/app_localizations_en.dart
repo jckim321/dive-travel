@@ -5658,6 +5658,86 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreHqInquiryKakao => 'Contact on KakaoTalk';
 
   @override
+  String exploreHqInquiryEmailCopied(String email) {
+    return 'Email address copied: $email';
+  }
+
+  @override
+  String get exploreAmenityPool => 'Pool';
+
+  @override
+  String get exploreAmenityWifi => 'Wi-Fi';
+
+  @override
+  String get exploreAmenityRestaurant => 'Restaurant';
+
+  @override
+  String get exploreAmenityGearRental => 'Gear rental';
+
+  @override
+  String get exploreAmenityNitrox => 'Nitrox';
+
+  @override
+  String get exploreAmenityShoreDiving => 'Shore diving';
+
+  @override
+  String get exploreAmenitySpeedboat => 'Speedboat';
+
+  @override
+  String get exploreAmenityLaundry => 'Laundry';
+
+  @override
+  String get exploreAmenityParking => 'Parking';
+
+  @override
+  String get exploreAmenityAirConditioning => 'Air conditioning';
+
+  @override
+  String get exploreAmenityAirportPickup => 'Airport pickup';
+
+  @override
+  String get exploreAmenityGearRinse => 'Gear rinse area';
+
+  @override
+  String get exploreAmenityLuggageStorage => 'Luggage storage';
+
+  @override
+  String get exploreShopMonth1 => 'Jan';
+
+  @override
+  String get exploreShopMonth2 => 'Feb';
+
+  @override
+  String get exploreShopMonth3 => 'Mar';
+
+  @override
+  String get exploreShopMonth4 => 'Apr';
+
+  @override
+  String get exploreShopMonth5 => 'May';
+
+  @override
+  String get exploreShopMonth6 => 'Jun';
+
+  @override
+  String get exploreShopMonth7 => 'Jul';
+
+  @override
+  String get exploreShopMonth8 => 'Aug';
+
+  @override
+  String get exploreShopMonth9 => 'Sep';
+
+  @override
+  String get exploreShopMonth10 => 'Oct';
+
+  @override
+  String get exploreShopMonth11 => 'Nov';
+
+  @override
+  String get exploreShopMonth12 => 'Dec';
+
+  @override
   String get exploreResortAddress => 'Address';
 
   @override

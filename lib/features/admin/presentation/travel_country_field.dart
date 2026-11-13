@@ -5,6 +5,20 @@ import 'package:dive_travel_app/features/explore/presentation/continent_atlas_ra
 import 'package:dive_travel_app/features/explore/presentation/explore_place_filters.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
+/// Partner shop info wraps the country field so its box lines up with the
+/// plain region field. The required label stays as the empty-field hint.
+class TravelCountryPlainScope extends InheritedWidget {
+  const TravelCountryPlainScope({super.key, required super.child});
+
+  static bool of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<TravelCountryPlainScope>() !=
+        null;
+  }
+
+  @override
+  bool updateShouldNotify(TravelCountryPlainScope oldWidget) => false;
+}
+
 /// Search-select for a travel country. Typing filters names and aliases.
 /// Choosing a row reports that country. 「기타」 keeps the typed text.
 class TravelCountryField extends StatefulWidget {
@@ -101,6 +115,7 @@ class _TravelCountryFieldState extends State<TravelCountryField> {
         ? null
         : _assignmentLabel(l10n, picked);
 
+    final plain = TravelCountryPlainScope.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -110,7 +125,9 @@ class _TravelCountryFieldState extends State<TravelCountryField> {
           focusNode: _focus,
           style: widget.style,
           cursorColor: widget.cursorColor,
-          decoration: widget.decoration,
+          decoration: plain
+              ? _plainDecoration(widget.decoration)
+              : widget.decoration,
           onTap: () => setState(() => _open = true),
           onChanged: (_) {
             widget.onEdited?.call();
@@ -181,6 +198,28 @@ class _TravelCountryFieldState extends State<TravelCountryField> {
           ),
         ],
       ],
+    );
+  }
+
+  InputDecoration _plainDecoration(InputDecoration source) {
+    const radius = BorderRadius.all(Radius.circular(10));
+    const border = OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: Color(0xFF8A98A8)),
+    );
+    return InputDecoration(
+      hint: source.label,
+      hintText: source.label == null ? source.labelText : null,
+      filled: true,
+      fillColor: Colors.white,
+      constraints: const BoxConstraints(minHeight: 48),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: Color(0xFF0A6B64), width: 1.4),
+      ),
     );
   }
 

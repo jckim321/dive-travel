@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
+import 'package:dive_travel_app/features/admin/presentation/travel_country_field.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 const _kAmenityPresets = <String>[
@@ -588,14 +589,15 @@ class ResortDeskInfoSections extends StatelessWidget {
         BookingFormSection(
           step: '7',
           title: '연락·운영',
-          subtitle: '현지 연락처는 저장만 됩니다. 결제를 마친 손님의 바우처에만 보여요.',
+          subtitle:
+              '결제를 마친 손님의 바우처에만 보여요. 상품 상세에는 나오지 않아요.',
           child: Column(
             children: [
               TextField(
                 controller: draft.localContact,
                 maxLength: kMaxShortLine,
                 decoration: _deskDeco(context, 
-                  label: '현지 연락처 (저장만 · 상세 비공개)',
+                  label: '현지 연락처',
                   hint: '전화·WhatsApp 등',
                 ),
               ),
@@ -1074,7 +1076,12 @@ class PartnerResortInfoForm extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: countryField),
+                  Expanded(
+                    child: _mockLabel(
+                      '국가',
+                      TravelCountryPlainScope(child: countryField),
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _mockLabel(

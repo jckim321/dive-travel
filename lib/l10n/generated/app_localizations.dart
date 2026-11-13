@@ -10314,6 +10314,111 @@ abstract class AppLocalizations {
   /// **'카카오톡으로 문의'**
   String get exploreHqInquiryKakao;
 
+  /// In ko, this message translates to:
+  /// **'이메일 주소를 복사했어요: {email}'**
+  String exploreHqInquiryEmailCopied(String email) =>
+      '이메일 주소를 복사했어요: $email';
+
+  /// In ko, this message translates to:
+  /// **'풀장'**
+  String get exploreAmenityPool => '풀장';
+
+  /// In ko, this message translates to:
+  /// **'와이파이'**
+  String get exploreAmenityWifi => '와이파이';
+
+  /// In ko, this message translates to:
+  /// **'식당'**
+  String get exploreAmenityRestaurant => '식당';
+
+  /// In ko, this message translates to:
+  /// **'장비 렌탈'**
+  String get exploreAmenityGearRental => '장비 렌탈';
+
+  /// In ko, this message translates to:
+  /// **'나이트록스'**
+  String get exploreAmenityNitrox => '나이트록스';
+
+  /// In ko, this message translates to:
+  /// **'쇼어 다이빙'**
+  String get exploreAmenityShoreDiving => '쇼어 다이빙';
+
+  /// In ko, this message translates to:
+  /// **'스피드보트'**
+  String get exploreAmenitySpeedboat => '스피드보트';
+
+  /// In ko, this message translates to:
+  /// **'세탁'**
+  String get exploreAmenityLaundry => '세탁';
+
+  /// In ko, this message translates to:
+  /// **'주차'**
+  String get exploreAmenityParking => '주차';
+
+  /// In ko, this message translates to:
+  /// **'에어컨'**
+  String get exploreAmenityAirConditioning => '에어컨';
+
+  /// In ko, this message translates to:
+  /// **'공항 픽업'**
+  String get exploreAmenityAirportPickup => '공항 픽업';
+
+  /// In ko, this message translates to:
+  /// **'장비 세척장'**
+  String get exploreAmenityGearRinse => '장비 세척장';
+
+  /// In ko, this message translates to:
+  /// **'짐 보관'**
+  String get exploreAmenityLuggageStorage => '짐 보관';
+
+  /// In ko, this message translates to:
+  /// **'1월'**
+  String get exploreShopMonth1 => '1월';
+
+  /// In ko, this message translates to:
+  /// **'2월'**
+  String get exploreShopMonth2 => '2월';
+
+  /// In ko, this message translates to:
+  /// **'3월'**
+  String get exploreShopMonth3 => '3월';
+
+  /// In ko, this message translates to:
+  /// **'4월'**
+  String get exploreShopMonth4 => '4월';
+
+  /// In ko, this message translates to:
+  /// **'5월'**
+  String get exploreShopMonth5 => '5월';
+
+  /// In ko, this message translates to:
+  /// **'6월'**
+  String get exploreShopMonth6 => '6월';
+
+  /// In ko, this message translates to:
+  /// **'7월'**
+  String get exploreShopMonth7 => '7월';
+
+  /// In ko, this message translates to:
+  /// **'8월'**
+  String get exploreShopMonth8 => '8월';
+
+  /// In ko, this message translates to:
+  /// **'9월'**
+  String get exploreShopMonth9 => '9월';
+
+  /// In ko, this message translates to:
+  /// **'10월'**
+  String get exploreShopMonth10 => '10월';
+
+  /// In ko, this message translates to:
+  /// **'11월'**
+  String get exploreShopMonth11 => '11월';
+
+  /// In ko, this message translates to:
+  /// **'12월'**
+  String get exploreShopMonth12 => '12월';
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

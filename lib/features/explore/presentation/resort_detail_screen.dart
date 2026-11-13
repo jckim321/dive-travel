@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:dive_travel_app/core/constants/app_constants.dart';
@@ -238,7 +239,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
     final businessHours = live?.businessHours ?? '';
     final spokenLanguages = live?.spokenLanguages ?? const <String>[];
     final operatingMonths = live?.operatingMonths ?? const <int>[];
-    final seasonLabel = summarizeOperatingMonths(operatingMonths);
+    final seasonLabel = summarizeOperatingMonths(operatingMonths, l10n);
     final closedLabel = shopClosedGuestLine(
       l10n,
       ShopLiveStatsFacts(
@@ -251,7 +252,7 @@ class _ResortDetailScreenState extends State<ResortDetailScreen> {
         seasonLabel.isNotEmpty ||
         closedLabel.isNotEmpty;
     final amenityChips = <String>[
-      ...hull.amenities,
+      for (final item in hull.amenities) localizedAmenityLabel(l10n, item),
       ...hull.sites,
     ];
     final showFeatures =
@@ -1546,6 +1547,33 @@ class _HqInquiryCard extends StatelessWidget {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _openEmail(BuildContext context, Uri uri) async {
+    try {
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened) {
+        return;
+      }
+    } catch (_) {}
+    if (!context.mounted) {
+      return;
+    }
+    final email = DiveTravelInquiry.email;
+    await Clipboard.setData(ClipboardData(text: email));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).exploreHqInquiryEmailCopied(email),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -1603,7 +1631,7 @@ class _HqInquiryCard extends StatelessWidget {
                         label: l10n.exploreHqInquiryEmail,
                         background: const Color(0xFF0E6A72),
                         foreground: Colors.white,
-                        onPressed: () => _open(emailUri),
+                        onPressed: () => _openEmail(context, emailUri),
                       ),
                     ),
                   ],
@@ -1622,7 +1650,7 @@ class _HqInquiryCard extends StatelessWidget {
                   label: l10n.exploreHqInquiryEmail,
                   background: const Color(0xFF0E6A72),
                   foreground: Colors.white,
-                  onPressed: () => _open(emailUri!),
+                  onPressed: () => _openEmail(context, emailUri!),
                 ),
             ],
           ],

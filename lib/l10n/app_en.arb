@@ -2991,5 +2991,36 @@
   "exploreHqInquiryBody": "For booking, change or refund questions, contact us and we'll check with the shop.",
   "exploreHqInquiryEmail": "Contact by email",
   "exploreHqInquiryKakao": "Contact on KakaoTalk",
+  "exploreHqInquiryEmailCopied": "Email address copied: {email}",
+  "@exploreHqInquiryEmailCopied": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "exploreAmenityPool": "Pool",
+  "exploreAmenityWifi": "Wi-Fi",
+  "exploreAmenityRestaurant": "Restaurant",
+  "exploreAmenityGearRental": "Gear rental",
+  "exploreAmenityNitrox": "Nitrox",
+  "exploreAmenityShoreDiving": "Shore diving",
+  "exploreAmenitySpeedboat": "Speedboat",
+  "exploreAmenityLaundry": "Laundry",
+  "exploreAmenityParking": "Parking",
+  "exploreAmenityAirConditioning": "Air conditioning",
+  "exploreAmenityAirportPickup": "Airport pickup",
+  "exploreAmenityGearRinse": "Gear rinse area",
+  "exploreAmenityLuggageStorage": "Luggage storage",
+  "exploreShopMonth1": "Jan",
+  "exploreShopMonth2": "Feb",
+  "exploreShopMonth3": "Mar",
+  "exploreShopMonth4": "Apr",
+  "exploreShopMonth5": "May",
+  "exploreShopMonth6": "Jun",
+  "exploreShopMonth7": "Jul",
+  "exploreShopMonth8": "Aug",
+  "exploreShopMonth9": "Sep",
+  "exploreShopMonth10": "Oct",
+  "exploreShopMonth11": "Nov",
+  "exploreShopMonth12": "Dec",
   "settingsLanguageLabel": "Language"
 }

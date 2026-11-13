@@ -9,6 +9,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/ccard_product_frame.dart';
 import 'package:dive_travel_app/core/widgets/listing_cover.dart';
@@ -55,13 +56,36 @@ class StaffCannotBuyNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        AppLocalizations.of(context).staffCannotBuy,
-        key: const Key('staff-cannot-buy'),
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.muted,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4D6),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline,
+                size: 18,
+                color: Color(0xFF8A5A2B),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).staffCannotBuy,
+                  key: const Key('staff-cannot-buy'),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6B4A1B),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -866,7 +890,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
-                                          amenity,
+                                          localizedAmenityLabel(l10n, amenity),
                                           style: theme.textTheme.bodyLarge,
                                         ),
                                       ),
@@ -957,7 +981,6 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (cannotBuy) const StaffCannotBuyNote(),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -1045,6 +1068,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                     ),
                     const SizedBox(height: 2),
                   ],
+                  if (cannotBuy) const StaffCannotBuyNote(),
                   FilledButton(
                     key: const Key('explore-checkout-pay'),
                     onPressed: cannotBuy ||

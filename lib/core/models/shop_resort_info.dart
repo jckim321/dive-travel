@@ -1,5 +1,7 @@
 // Shop-level resort intro fields (shops/{id} only — never products[]).
 
+import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
 /// Max list sizes written from the resort desk.
 const kMaxAccessRoutes = 5;
 const kMaxNearbySpots = 10;
@@ -288,8 +290,9 @@ List<int> shopClosedDaysFrom(dynamic raw) {
 }
 
 /// One span is `3월 ~ 11월`. A gap is `3~6월, 9~11월`. A lone month is `3월`.
+/// English is `Mar–Nov`, `Mar–Jun, Sep–Nov`, or `Mar`.
 /// December does not join January.
-String summarizeOperatingMonths(List<int> months) {
+String summarizeOperatingMonths(List<int> months, [AppLocalizations? l10n]) {
   final sorted = shopMonthsFrom(months);
   if (sorted.isEmpty) {
     return '';
@@ -307,6 +310,13 @@ String summarizeOperatingMonths(List<int> months) {
     previous = month;
   }
   ranges.add((start, previous));
+  final english = l10n != null && l10n.localeName.startsWith('en');
+  if (english) {
+    return [
+      for (final range in ranges)
+        _englishMonthRange(l10n, range.$1, range.$2),
+    ].join(', ');
+  }
   if (ranges.length == 1) {
     final range = ranges.first;
     if (range.$1 == range.$2) {
@@ -318,4 +328,50 @@ String summarizeOperatingMonths(List<int> months) {
     for (final range in ranges)
       if (range.$1 == range.$2) '${range.$1}월' else '${range.$1}~${range.$2}월',
   ].join(', ');
+}
+
+String _englishMonthRange(AppLocalizations l10n, int start, int end) {
+  final first = _englishMonth(l10n, start);
+  if (start == end) {
+    return first;
+  }
+  return '$first–${_englishMonth(l10n, end)}';
+}
+
+String _englishMonth(AppLocalizations l10n, int month) {
+  return switch (month) {
+    1 => l10n.exploreShopMonth1,
+    2 => l10n.exploreShopMonth2,
+    3 => l10n.exploreShopMonth3,
+    4 => l10n.exploreShopMonth4,
+    5 => l10n.exploreShopMonth5,
+    6 => l10n.exploreShopMonth6,
+    7 => l10n.exploreShopMonth7,
+    8 => l10n.exploreShopMonth8,
+    9 => l10n.exploreShopMonth9,
+    10 => l10n.exploreShopMonth10,
+    11 => l10n.exploreShopMonth11,
+    12 => l10n.exploreShopMonth12,
+    _ => '$month',
+  };
+}
+
+/// Guest label for a stored Korean amenity. Unknown shop text stays as stored.
+String localizedAmenityLabel(AppLocalizations l10n, String stored) {
+  return switch (stored) {
+    '풀장' => l10n.exploreAmenityPool,
+    '와이파이' => l10n.exploreAmenityWifi,
+    '식당' => l10n.exploreAmenityRestaurant,
+    '장비 렌탈' => l10n.exploreAmenityGearRental,
+    '나이트록스' => l10n.exploreAmenityNitrox,
+    '쇼어 다이빙' => l10n.exploreAmenityShoreDiving,
+    '스피드보트' => l10n.exploreAmenitySpeedboat,
+    '세탁' => l10n.exploreAmenityLaundry,
+    '주차' => l10n.exploreAmenityParking,
+    '에어컨' => l10n.exploreAmenityAirConditioning,
+    '공항 픽업' => l10n.exploreAmenityAirportPickup,
+    '장비 세척장' => l10n.exploreAmenityGearRinse,
+    '짐 보관' => l10n.exploreAmenityLuggageStorage,
+    _ => stored,
+  };
 }
