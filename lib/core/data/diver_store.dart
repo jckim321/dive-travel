@@ -3810,6 +3810,7 @@ class DiverStore extends ChangeNotifier {
     required String arrivalFlight,
     DateTime? arrivalAt,
     required String returnFlight,
+    DateTime? returnAt,
   }) {
     final uid = _uid;
     if (uid == null) {
@@ -3821,7 +3822,27 @@ class DiverStore extends ChangeNotifier {
       arrivalFlight: arrivalFlight,
       arrivalAt: arrivalAt,
       returnFlight: returnFlight,
+      returnAt: returnAt,
     );
+  }
+
+  Future<void> recordFlightEvent({
+    required String type,
+    String? platform,
+    String? dest,
+  }) async {
+    final uid = _uid;
+    if (uid == null) {
+      return;
+    }
+    try {
+      await _repository.recordFlightEvent(
+        uid: uid,
+        type: type,
+        platform: platform,
+        dest: dest,
+      );
+    } catch (_) {}
   }
 
   Future<void> addCommunityPost({

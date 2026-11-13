@@ -970,6 +970,14 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                       return;
                                     }
                                     unawaited(
+                                      DiverStoreScope.of(context)
+                                          .recordFlightEvent(
+                                        type: 'link_click',
+                                        platform: 'skyscanner',
+                                        dest: code,
+                                      ),
+                                    );
+                                    unawaited(
                                       openSkyscannerRoute(
                                         from: 'ICN',
                                         to: code,

@@ -10,7 +10,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/booking_public_code.dart';
 import 'package:dive_travel_app/core/models/pro_verification.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -89,7 +91,8 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
         (live == null ||
             live.arrivalFlight != saved.arrivalFlight ||
             live.returnFlight != saved.returnFlight ||
-            live.arrivalAt != saved.arrivalAt)) {
+            live.arrivalAt != saved.arrivalAt ||
+            live.returnAt != saved.returnAt)) {
       return saved;
     }
     return live ?? widget.booking;
@@ -144,17 +147,33 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
     final draft = await showModalBottomSheet<_FlightDraft>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _FlightSheet(booking: booking),
+      builder: (context) => _FlightSheet(
+        booking: booking,
+        returnDay: _returnDay(booking),
+      ),
     );
     if (draft == null || !mounted) {
       return;
     }
     try {
-      await DiverStoreScope.of(context).updateBookingFlight(
+      final store = DiverStoreScope.of(context);
+      await store.updateBookingFlight(
         bookingId: booking.id,
         arrivalFlight: draft.arrivalFlight,
         arrivalAt: draft.arrivalAt,
         returnFlight: draft.returnFlight,
+        returnAt: draft.returnAt,
+      );
+      final live = store.liveStatsFor(booking.shopId);
+      final dest = arrivalAirportCode(
+        nearestAirport: live?.nearestAirport ?? '',
+        nearestHub: live?.nearestHub ?? '',
+      );
+      unawaited(
+        store.recordFlightEvent(
+          type: 'info_saved',
+          dest: dest.isEmpty ? null : dest,
+        ),
       );
       if (!mounted) {
         return;
@@ -165,6 +184,8 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
           arrivalAt: draft.arrivalAt,
           clearArrivalAt: draft.arrivalAt == null,
           returnFlight: draft.returnFlight.trim().toUpperCase(),
+          returnAt: draft.returnAt,
+          clearReturnAt: draft.returnAt == null,
         );
       });
     } catch (e) {
@@ -304,6 +325,19 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                           _arrivalLine(booking),
                         if (booking.returnFlight.trim().isNotEmpty)
                           _row('오는 편', booking.returnFlight.trim()),
+                        if (_returnWithin18Hours(booking))
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              '귀국편이 마지막 다이빙 후 18시간 안일 수 있어요. 일반 권고는 18시간 이상이에요. 리조트 안내를 꼭 확인하세요.',
+                              style: TextStyle(
+                                color: Color(0xFFC45A12),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
                         if (partyLine.isNotEmpty)
                           _row(l10n.checkoutGuests, partyLine),
                         if (booking.guestDisplayName.trim().isNotEmpty)
@@ -411,6 +445,46 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
     );
   }
 
+  DateTime? _returnDay(TourBooking booking) {
+    final live = DiverStoreScope.of(context).liveStatsFor(booking.shopId);
+    if (live == null || booking.productId.isEmpty) {
+      return null;
+    }
+    for (final item in live.readerProducts) {
+      if (item.id != booking.productId) {
+        continue;
+      }
+      final depart = DateTime(
+        booking.scheduledFor.year,
+        booking.scheduledFor.month,
+        booking.scheduledFor.day,
+      );
+      return buyerReturnDay(
+        departure: depart,
+        durationLabel: item.durationLabel,
+      );
+    }
+    return null;
+  }
+
+  bool _returnWithin18Hours(TourBooking booking) {
+    final at = booking.returnAt?.toLocal();
+    final ret = _returnDay(booking);
+    if (at == null || ret == null) {
+      return false;
+    }
+    final dayBefore = DateTime(ret.year, ret.month, ret.day)
+        .subtract(const Duration(days: 1));
+    final lastDive = DateTime(
+      dayBefore.year,
+      dayBefore.month,
+      dayBefore.day,
+      16,
+    );
+    final limit = lastDive.add(const Duration(hours: 18));
+    return !at.isAfter(limit);
+  }
+
   Widget _arrivalLine(TourBooking booking) {
     final value = _arrivalValue(booking);
     final at = booking.arrivalAt?.toLocal();
@@ -456,17 +530,20 @@ class _FlightDraft {
     required this.arrivalFlight,
     required this.arrivalAt,
     required this.returnFlight,
+    required this.returnAt,
   });
 
   final String arrivalFlight;
   final DateTime? arrivalAt;
   final String returnFlight;
+  final DateTime? returnAt;
 }
 
 class _FlightSheet extends StatefulWidget {
-  const _FlightSheet({required this.booking});
+  const _FlightSheet({required this.booking, required this.returnDay});
 
   final TourBooking booking;
+  final DateTime? returnDay;
 
   @override
   State<_FlightSheet> createState() => _FlightSheetState();
@@ -477,6 +554,8 @@ class _FlightSheetState extends State<_FlightSheet> {
   late final TextEditingController _returning;
   TimeOfDay? _time;
   var _dayOffset = 0;
+  TimeOfDay? _returnTime;
+  var _returnOffset = 0;
   static final _day = DateFormat('yyyy.MM.dd');
 
   @override
@@ -490,6 +569,15 @@ class _FlightSheetState extends State<_FlightSheet> {
       _time = TimeOfDay(hour: local.hour, minute: local.minute);
       final saved = DateTime(local.year, local.month, local.day);
       _dayOffset = saved.difference(_departDay()).inDays;
+    }
+    final back = widget.booking.returnAt;
+    final base = widget.returnDay;
+    if (back != null && base != null) {
+      final local = back.toLocal();
+      _returnTime = TimeOfDay(hour: local.hour, minute: local.minute);
+      final saved = DateTime(local.year, local.month, local.day);
+      final day = DateTime(base.year, base.month, base.day);
+      _returnOffset = saved.difference(day).inDays;
     }
   }
 
@@ -514,6 +602,37 @@ class _FlightSheetState extends State<_FlightSheet> {
     }
     final day = _arrivalDay();
     return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+  }
+
+  DateTime? _returnAt() {
+    final base = widget.returnDay;
+    if (base == null) {
+      return widget.booking.returnAt;
+    }
+    final time = _returnTime;
+    if (time == null) {
+      return null;
+    }
+    final day = DateTime(base.year, base.month, base.day)
+        .add(Duration(days: _returnOffset));
+    return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+  }
+
+  DateTime _returnChoiceDay(int offset) {
+    final base = widget.returnDay!;
+    return DateTime(base.year, base.month, base.day)
+        .add(Duration(days: offset));
+  }
+
+  Future<void> _pickReturnTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _returnTime ?? const TimeOfDay(hour: 10, minute: 0),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() => _returnTime = picked);
   }
 
   Future<void> _pickTime() async {
@@ -606,6 +725,44 @@ class _FlightSheetState extends State<_FlightSheet> {
               hintText: 'KE630',
             ),
           ),
+          if (widget.returnDay != null) ...[
+            const SizedBox(height: 12),
+            const Text(
+              '귀국 출발일은 귀국일 전날부터 다음날까지예요.',
+              style: TextStyle(color: AppTheme.muted, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (final offset in const [-1, 0, 1]) ...[
+                  if (offset != -1) const SizedBox(width: 8),
+                  Expanded(child: _returnChoice(offset)),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    key: const Key('booking-return-time'),
+                    onPressed: _pickReturnTime,
+                    child: Text(
+                      '${_day.format(_returnChoiceDay(_returnOffset))} ${_returnTime == null ? '시간 선택' : _returnTime!.format(context)}',
+                    ),
+                  ),
+                ),
+                if (_returnTime != null) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: '시간 지우기',
+                    onPressed: () => setState(() => _returnTime = null),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           FilledButton(
             key: const Key('booking-flight-save'),
@@ -619,6 +776,7 @@ class _FlightSheetState extends State<_FlightSheet> {
                   arrivalFlight: _arrival.text,
                   arrivalAt: _arrivalAt(),
                   returnFlight: _returning.text,
+                  returnAt: _returnAt(),
                 ),
               );
             },
@@ -626,6 +784,35 @@ class _FlightSheetState extends State<_FlightSheet> {
           ),
         ],
         ),
+      ),
+    );
+  }
+
+  Widget _returnChoice(int offset) {
+    final selected = _returnOffset == offset;
+    final day = _returnChoiceDay(offset);
+    final title = offset == 0 ? '귀국일' : (offset < 0 ? '전날' : '+1일');
+    return OutlinedButton(
+      key: Key('booking-return-day-$offset'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: selected ? Colors.white : AppTheme.navy,
+        backgroundColor: selected ? AppTheme.navy : Colors.white,
+        side: const BorderSide(color: AppTheme.navy),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      ),
+      onPressed: () => setState(() => _returnOffset = offset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+          Text(
+            _day.format(day),
+            style: const TextStyle(fontSize: 11),
+          ),
+        ],
       ),
     );
   }

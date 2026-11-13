@@ -866,6 +866,28 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    function flightEventCreateOk() {
+      return request.resource.data.keys().hasOnly([
+          'type', 'platform', 'dest', 'uid', 'at'
+        ])
+        && request.resource.data.type in [
+          'sheet_open', 'link_click', 'info_saved'
+        ]
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time
+        && (
+          request.resource.data.type == 'link_click'
+            ? request.resource.data.platform in [
+              'skyscanner', 'naver', 'google'
+            ]
+            : !request.resource.data.keys().hasAny(['platform'])
+        )
+        && (
+          !request.resource.data.keys().hasAny(['dest'])
+          || request.resource.data.dest.matches('^[A-Z]{3}$')
+        );
+    }
+
     function seatEventCreateOk() {
       return request.resource.data.keys().hasOnly([
           'kind', 'seat_id', 'shop_id', 'product_id', 'option_id',
@@ -1048,6 +1070,12 @@ service cloud.firestore {
     match /seat_events/{eventId} {
       allow read: if isAdmin();
       allow create: if isSignedIn() && seatEventCreateOk();
+      allow update, delete: if false;
+    }
+
+    match /flight_events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && flightEventCreateOk();
       allow update, delete: if false;
     }
 

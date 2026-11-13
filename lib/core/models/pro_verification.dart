@@ -77,6 +77,7 @@ class TourBooking {
     this.arrivalFlight = '',
     this.arrivalAt,
     this.returnFlight = '',
+    this.returnAt,
   });
 
   final String id;
@@ -143,6 +144,9 @@ class TourBooking {
 
   /// Guest-told return flight number. Empty on older bookings.
   final String returnFlight;
+
+  /// Return-flight departure. Null when the guest has not set one.
+  final DateTime? returnAt;
 
   bool get partnerAcked => partnerAckedAt != null;
 
@@ -232,6 +236,8 @@ class TourBooking {
     DateTime? arrivalAt,
     bool clearArrivalAt = false,
     String? returnFlight,
+    DateTime? returnAt,
+    bool clearReturnAt = false,
   }) {
     return TourBooking(
       id: id,
@@ -275,6 +281,7 @@ class TourBooking {
       arrivalFlight: arrivalFlight ?? this.arrivalFlight,
       arrivalAt: clearArrivalAt ? null : (arrivalAt ?? this.arrivalAt),
       returnFlight: returnFlight ?? this.returnFlight,
+      returnAt: clearReturnAt ? null : (returnAt ?? this.returnAt),
     );
   }
 
@@ -327,6 +334,7 @@ class TourBooking {
       arrivalFlight: (data['arrival_flight'] as String? ?? '').trim(),
       arrivalAt: _optionalBookingDate(data['arrival_at']),
       returnFlight: (data['return_flight'] as String? ?? '').trim(),
+      returnAt: _optionalBookingDate(data['return_at']),
     );
   }
 
@@ -362,6 +370,7 @@ class TourBooking {
       'arrival_flight': arrivalFlight,
       'arrival_at': arrivalAt?.toIso8601String() ?? '',
       'return_flight': returnFlight,
+      'return_at': returnAt?.toIso8601String() ?? '',
       'tour_date': scheduledFor.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
     };

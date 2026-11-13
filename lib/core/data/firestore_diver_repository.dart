@@ -2034,6 +2034,8 @@ class FirestoreDiverRepository implements DiverRepository {
       if (booking.arrivalAt != null)
         'arrival_at': Timestamp.fromDate(booking.arrivalAt!),
       if (booking.returnFlight.isNotEmpty) 'return_flight': booking.returnFlight,
+      if (booking.returnAt != null)
+        'return_at': Timestamp.fromDate(booking.returnAt!),
       'tour_date': Timestamp.fromDate(booking.scheduledFor),
       'created_at': Timestamp.fromDate(booking.createdAt),
       'updated_at': FieldValue.serverTimestamp(),
@@ -5703,6 +5705,7 @@ class FirestoreDiverRepository implements DiverRepository {
     required String arrivalFlight,
     DateTime? arrivalAt,
     required String returnFlight,
+    DateTime? returnAt,
   }) async {
     final userRef = _bookings(uid).doc(bookingId);
     final snap = await userRef.get();
@@ -5719,6 +5722,9 @@ class FirestoreDiverRepository implements DiverRepository {
       'arrival_at': arrivalAt == null
           ? FieldValue.delete()
           : Timestamp.fromDate(arrivalAt),
+      'return_at': returnAt == null
+          ? FieldValue.delete()
+          : Timestamp.fromDate(returnAt),
       'updated_at': FieldValue.serverTimestamp(),
     };
     await userRef.set(patch, SetOptions(merge: true));
@@ -5735,6 +5741,30 @@ class FirestoreDiverRepository implements DiverRepository {
       }
       rethrow;
     }
+  }
+
+  @override
+  Future<void> recordFlightEvent({
+    required String uid,
+    required String type,
+    String? platform,
+    String? dest,
+  }) async {
+    try {
+      final data = <String, dynamic>{
+        'type': type,
+        'uid': uid,
+        'at': FieldValue.serverTimestamp(),
+      };
+      if (platform != null && platform.isNotEmpty) {
+        data['platform'] = platform;
+      }
+      final code = normalizeNearestAirport(dest ?? '');
+      if (code.isNotEmpty) {
+        data['dest'] = code;
+      }
+      await _db.collection('flight_events').add(data);
+    } catch (_) {}
   }
 
   @override

@@ -886,6 +886,15 @@ abstract class DiverRepository {
     required String arrivalFlight,
     DateTime? arrivalAt,
     required String returnFlight,
+    DateTime? returnAt,
+  });
+
+  /// Create-only flight usage row. Failures stay inside the implementation.
+  Future<void> recordFlightEvent({
+    required String uid,
+    required String type,
+    String? platform,
+    String? dest,
   });
 
   Future<void> addCommunityPost({

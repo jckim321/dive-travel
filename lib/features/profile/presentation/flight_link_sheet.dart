@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
@@ -18,6 +21,12 @@ Future<void> showFlightLinkSheet(
   DateTime? ret,
 }) {
   final arrival = normalizeNearestAirport(arrivalAirport ?? '');
+  unawaited(
+    DiverStoreScope.of(context).recordFlightEvent(
+      type: 'sheet_open',
+      dest: arrival.isEmpty ? null : arrival,
+    ),
+  );
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -159,21 +168,24 @@ class _FlightLinkSheetState extends State<FlightLinkSheet> {
     final l10n = AppLocalizations.of(context);
     final arrival = widget.arrivalAirport;
     final links = arrival == null
-        ? <({String label, String url, bool featured})>[
+        ? <({String label, String url, bool featured, String platform})>[
             (
               label: l10n.profileFlightSkyscanner,
               url: _homeSkyscanner,
               featured: true,
+              platform: 'skyscanner',
             ),
             (
               label: l10n.profileFlightNaver,
               url: _homeNaver,
               featured: false,
+              platform: 'naver',
             ),
             (
               label: l10n.profileFlightGoogle,
               url: _homeGoogle,
               featured: false,
+              platform: 'google',
             ),
           ]
         : _filledLinks(l10n, arrival);
@@ -224,6 +236,8 @@ class _FlightLinkSheetState extends State<FlightLinkSheet> {
                 label: link.label,
                 url: link.url,
                 featured: link.featured,
+                platform: link.platform,
+                dest: arrival,
               ),
               const SizedBox(height: 8),
             ],
@@ -242,7 +256,8 @@ class _FlightLinkSheetState extends State<FlightLinkSheet> {
     );
   }
 
-  List<({String label, String url, bool featured})> _filledLinks(
+  List<({String label, String url, bool featured, String platform})>
+      _filledLinks(
     AppLocalizations l10n,
     String arrival,
   ) {
@@ -275,9 +290,20 @@ class _FlightLinkSheetState extends State<FlightLinkSheet> {
         label: l10n.profileFlightSkyscanner,
         url: skyscanner,
         featured: true,
+        platform: 'skyscanner',
       ),
-      (label: l10n.profileFlightNaver, url: naver, featured: false),
-      (label: l10n.profileFlightGoogle, url: google, featured: false),
+      (
+        label: l10n.profileFlightNaver,
+        url: naver,
+        featured: false,
+        platform: 'naver',
+      ),
+      (
+        label: l10n.profileFlightGoogle,
+        url: google,
+        featured: false,
+        platform: 'google',
+      ),
     ];
   }
 }
@@ -287,11 +313,15 @@ class _FlightLinkRow extends StatelessWidget {
     required this.label,
     required this.url,
     required this.featured,
+    required this.platform,
+    required this.dest,
   });
 
   final String label;
   final String url;
   final bool featured;
+  final String platform;
+  final String? dest;
 
   @override
   Widget build(BuildContext context) {
@@ -335,6 +365,14 @@ class _FlightLinkRow extends StatelessWidget {
   }
 
   Future<void> _open(BuildContext context) async {
+    final code = normalizeNearestAirport(dest ?? '');
+    unawaited(
+      DiverStoreScope.of(context).recordFlightEvent(
+        type: 'link_click',
+        platform: platform,
+        dest: code.isEmpty ? null : code,
+      ),
+    );
     final uri = Uri.parse(url);
     await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (context.mounted) {

@@ -152,6 +152,7 @@ class MemoryDiverRepository implements DiverRepository {
   final _productChanges = <String, List<ProductChangeRecord>>{};
   final _dailyStats = <String, Map<String, ShopDayStats>>{};
   final _seatEvents = <String, Map<String, Object?>>{};
+  final _flightEvents = <Map<String, Object?>>[];
   final _seatDemands = <String, Map<String, Object>>{};
   final _seatDays = <String, Map<String, int>>{};
   final _seatOutcomes = <String, Map<String, Object?>>{};
@@ -4778,6 +4779,7 @@ class MemoryDiverRepository implements DiverRepository {
     required String arrivalFlight,
     DateTime? arrivalAt,
     required String returnFlight,
+    DateTime? returnAt,
   }) async {
     final index = _bookings.indexWhere(
       (item) => item.id == bookingId && item.uid == uid,
@@ -4794,12 +4796,38 @@ class MemoryDiverRepository implements DiverRepository {
       arrivalAt: arrivalAt,
       clearArrivalAt: arrivalAt == null,
       returnFlight: returnFlight.trim().toUpperCase(),
+      returnAt: returnAt,
+      clearReturnAt: returnAt == null,
     );
     _replaceShopBooking(_bookings[index]);
     _bookingController.add(List<TourBooking>.from(_bookings));
     _shopBookingController.add(
       List<TourBooking>.from(_shopBookings[current.shopId] ?? const []),
     );
+  }
+
+  @override
+  Future<void> recordFlightEvent({
+    required String uid,
+    required String type,
+    String? platform,
+    String? dest,
+  }) async {
+    try {
+      final data = <String, Object?>{
+        'type': type,
+        'uid': uid,
+        'at': DateTime.now().toUtc(),
+      };
+      if (platform != null && platform.isNotEmpty) {
+        data['platform'] = platform;
+      }
+      final code = normalizeNearestAirport(dest ?? '');
+      if (code.isNotEmpty) {
+        data['dest'] = code;
+      }
+      _flightEvents.add(data);
+    } catch (_) {}
   }
 
   void _replaceShopBooking(TourBooking booking) {
