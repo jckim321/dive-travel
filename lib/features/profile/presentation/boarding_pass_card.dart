@@ -333,7 +333,7 @@ class _Ticket extends StatelessWidget {
   Widget build(BuildContext context) {
     final booked = trip;
     final dest = booked?.arrival ?? '???';
-    final destLabel = booked == null
+    final destLabel = booked == null || booked.arrival == null
         ? '다음 바다는 어디예요?'
         : booked.place;
     final when = booked == null ? 'NEXT OCEAN' : _when(booked);

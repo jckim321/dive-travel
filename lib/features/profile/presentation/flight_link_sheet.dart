@@ -144,6 +144,21 @@ const _origins = <_OriginAirport>[
   _OriginAirport('제주', 'CJU'),
 ];
 
+String _flightSheetOrigin = 'ICN';
+
+/// Last origin chip on the flight sheet. Checkout cheap-day search reads this.
+String get flightSheetOriginCode => _flightSheetOrigin;
+
+void selectFlightSheetOrigin(String code) {
+  final normalized = normalizeNearestAirport(code);
+  for (final origin in _origins) {
+    if (origin.code == normalized) {
+      _flightSheetOrigin = normalized;
+      return;
+    }
+  }
+}
+
 class FlightLinkSheet extends StatefulWidget {
   const FlightLinkSheet({
     super.key,
@@ -161,7 +176,7 @@ class FlightLinkSheet extends StatefulWidget {
 }
 
 class _FlightLinkSheetState extends State<FlightLinkSheet> {
-  var _from = 'ICN';
+  var _from = flightSheetOriginCode;
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +240,10 @@ class _FlightLinkSheetState extends State<FlightLinkSheet> {
                       key: Key('flight-origin-${origin.code}'),
                       label: Text('${origin.label} ${origin.code}'),
                       selected: _from == origin.code,
-                      onSelected: (_) => setState(() => _from = origin.code),
+                      onSelected: (_) {
+                        selectFlightSheetOrigin(origin.code);
+                        setState(() => _from = origin.code);
+                      },
                     ),
                 ],
               ),

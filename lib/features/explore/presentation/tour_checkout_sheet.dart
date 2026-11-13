@@ -979,7 +979,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                     );
                                     unawaited(
                                       openSkyscannerRoute(
-                                        from: 'ICN',
+                                        from: flightSheetOriginCode,
                                         to: code,
                                       ),
                                     );
