@@ -761,6 +761,12 @@ DateTime? _isoCalendarDay(String raw) {
   return date;
 }
 
+String _isoCalendarText(DateTime day) {
+  final month = day.month.toString().padLeft(2, '0');
+  final date = day.day.toString().padLeft(2, '0');
+  return '${day.year}-$month-$date';
+}
+
 /// One closed stay range on a partner product (`blocked_dates` item).
 class SaleBlockedRange {
   const SaleBlockedRange({required this.start, required this.end});
@@ -944,6 +950,8 @@ class ShopProduct {
     this.saleWeekdays = const [],
     this.minLeadDays = 0,
     this.blockedDates = const [],
+    this.saleFrom,
+    this.saleTo,
     this.peakSeasons = const [],
     this.diveCount = 0,
     this.freeCancelDays = 0,
@@ -1048,6 +1056,12 @@ class ShopProduct {
       saleWeekdays: _weekdayList(data['sale_weekdays']),
       minLeadDays: (data['min_lead_days'] as num?)?.toInt() ?? 0,
       blockedDates: SaleBlockedRange.listFrom(data['blocked_dates']),
+      saleFrom: data['sale_from'] is String
+          ? _isoCalendarDay(data['sale_from'] as String)
+          : null,
+      saleTo: data['sale_to'] is String
+          ? _isoCalendarDay(data['sale_to'] as String)
+          : null,
       peakSeasons: PeakSeason.listFrom(data['peak_seasons']),
       diveCount: (data['dive_count'] as num?)?.toInt() ?? 0,
       freeCancelDays: (data['free_cancel_days'] as num?)?.toInt() ?? 0,
@@ -1157,6 +1171,12 @@ class ShopProduct {
   /// Date ranges that cannot be booked.
   final List<SaleBlockedRange> blockedDates;
 
+  /// First departure day guests may pick. Null means no start limit.
+  final DateTime? saleFrom;
+
+  /// Last departure day guests may pick. Null means no end limit.
+  final DateTime? saleTo;
+
   /// Inclusive peak windows. Empty means every departure uses base rates.
   final List<PeakSeason> peakSeasons;
 
@@ -1192,6 +1212,27 @@ class ShopProduct {
       final from = start.isAfter(end) ? end : start;
       final to = start.isAfter(end) ? start : end;
       if (!target.isBefore(from) && !target.isAfter(to)) {
+        return false;
+      }
+    }
+    var windowStart = saleFrom;
+    var windowEnd = saleTo;
+    if (windowStart != null &&
+        windowEnd != null &&
+        windowStart.isAfter(windowEnd)) {
+      final swapped = windowStart;
+      windowStart = windowEnd;
+      windowEnd = swapped;
+    }
+    if (windowStart != null) {
+      final from = DateTime(windowStart.year, windowStart.month, windowStart.day);
+      if (target.isBefore(from)) {
+        return false;
+      }
+    }
+    if (windowEnd != null) {
+      final to = DateTime(windowEnd.year, windowEnd.month, windowEnd.day);
+      if (target.isAfter(to)) {
         return false;
       }
     }
@@ -2065,6 +2106,8 @@ class ShopProduct {
     List<int>? saleWeekdays,
     int? minLeadDays,
     List<SaleBlockedRange>? blockedDates,
+    Object? saleFrom = _unset,
+    Object? saleTo = _unset,
     List<PeakSeason>? peakSeasons,
     int? diveCount,
     int? freeCancelDays,
@@ -2142,6 +2185,10 @@ class ShopProduct {
       saleWeekdays: saleWeekdays ?? this.saleWeekdays,
       minLeadDays: minLeadDays ?? this.minLeadDays,
       blockedDates: blockedDates ?? this.blockedDates,
+      saleFrom: identical(saleFrom, _unset)
+          ? this.saleFrom
+          : saleFrom as DateTime?,
+      saleTo: identical(saleTo, _unset) ? this.saleTo : saleTo as DateTime?,
       peakSeasons: peakSeasons ?? this.peakSeasons,
       diveCount: diveCount ?? this.diveCount,
       freeCancelDays: freeCancelDays ?? this.freeCancelDays,
@@ -2306,6 +2353,8 @@ class ShopProduct {
         'sale_weekdays': saleWeekdays,
         'min_lead_days': minLeadDays,
         'blocked_dates': [for (final range in blockedDates) range.toMap()],
+        'sale_from': saleFrom == null ? '' : _isoCalendarText(saleFrom!),
+        'sale_to': saleTo == null ? '' : _isoCalendarText(saleTo!),
         'peak_seasons': [for (final season in peakSeasons) season.toMap()],
         'dive_count': diveCount,
         'free_cancel_days': freeCancelDays,

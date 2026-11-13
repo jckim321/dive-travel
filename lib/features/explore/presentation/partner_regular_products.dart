@@ -295,6 +295,15 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         );
         return;
       }
+      final saleFrom = _peakDay(box.saleFrom);
+      final saleTo = _peakDay(box.saleTo);
+      if (saleFrom != null && saleTo != null && saleFrom.isAfter(saleTo)) {
+        setState(() => _expanded.add(box.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('출발 가능 기간의 시작일이 종료일보다 늦어요')),
+        );
+        return;
+      }
     }
     setState(() => _saving = true);
     final store = DiverStoreScope.of(context);
@@ -2170,6 +2179,29 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         ),
         const SizedBox(height: 10),
         const Text(
+          '출발 가능 기간',
+          style: TextStyle(
+            color: _FormInk.ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '이 기간에 출발하는 날짜만 손님이 고를 수 있어요.',
+          style: TextStyle(color: _FormInk.muted, fontSize: 12, height: 1.35),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _saleBoundField(box, isEnd: false)),
+            const SizedBox(width: 8),
+            Expanded(child: _saleBoundField(box, isEnd: true)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        const Text(
           '예약 막을 날짜',
           style: TextStyle(
             color: _FormInk.ink,
@@ -2196,6 +2228,116 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         ),
       ],
     );
+  }
+
+  Widget _saleBoundField(_RegularProductDraft box, {required bool isEnd}) {
+    final value = isEnd ? box.saleTo : box.saleFrom;
+    final label = isEnd ? '종료일' : '시작일';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _FormInk.ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: _FormInk.fieldFill,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _FormInk.line),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  key: Key(
+                    isEnd
+                        ? 'partner-regular-sale-to-${box.id}'
+                        : 'partner-regular-sale-from-${box.id}',
+                  ),
+                  onTap: () => unawaited(_pickSaleBound(box, isEnd: isEnd)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    child: Text(
+                      value.isEmpty ? '제한 없음' : value,
+                      style: TextStyle(
+                        color: value.isEmpty ? _FormInk.muted : _FormInk.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (value.isNotEmpty)
+                IconButton(
+                  key: Key(
+                    isEnd
+                        ? 'partner-regular-sale-to-clear-${box.id}'
+                        : 'partner-regular-sale-from-clear-${box.id}',
+                  ),
+                  onPressed: () => setState(() {
+                    if (isEnd) {
+                      box.saleTo = '';
+                    } else {
+                      box.saleFrom = '';
+                    }
+                  }),
+                  icon: const Icon(Icons.close, color: _FormInk.muted),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickSaleBound(
+    _RegularProductDraft box, {
+    required bool isEnd,
+  }) async {
+    final controller = widget.storyController;
+    controller?.suspendInput();
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final current = _peakDay(isEnd ? box.saleTo : box.saleFrom);
+      final first = DateTime(2020);
+      final last = DateTime(2100);
+      var initial = current ?? today;
+      if (initial.isBefore(first)) {
+        initial = first;
+      }
+      if (initial.isAfter(last)) {
+        initial = last;
+      }
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: first,
+        lastDate: last,
+      );
+      if (picked == null || !mounted) {
+        return;
+      }
+      final text = DateFormat('yyyy-MM-dd').format(picked);
+      setState(() {
+        if (isEnd) {
+          box.saleTo = text;
+        } else {
+          box.saleFrom = text;
+        }
+      });
+    } finally {
+      controller?.resumeInput();
+    }
   }
 
   Future<void> _addBlockedRange(_RegularProductDraft box) async {
@@ -2615,6 +2757,8 @@ class _RegularProductDraft {
     TextEditingController? nights,
     Set<int>? saleWeekdays,
     this.minLeadDays = 0,
+    this.saleFrom = '',
+    this.saleTo = '',
     List<SaleBlockedRange>? blockedDates,
     List<_PeakSeasonDraft>? peakSeasons,
     ProductCategory? category,
@@ -2690,6 +2834,8 @@ class _RegularProductDraft {
           ? {1, 2, 3, 4, 5, 6, 7}
           : {...product.saleWeekdays},
       minLeadDays: product.minLeadDays,
+      saleFrom: product.saleFrom == null ? '' : _peakIsoText(product.saleFrom!),
+      saleTo: product.saleTo == null ? '' : _peakIsoText(product.saleTo!),
       blockedDates: [...product.blockedDates],
       peakSeasons: [
         for (final season in product.peakSeasons)
@@ -2768,6 +2914,8 @@ class _RegularProductDraft {
   final TextEditingController nights;
   final Set<int> saleWeekdays;
   int minLeadDays;
+  String saleFrom;
+  String saleTo;
   final List<SaleBlockedRange> blockedDates;
   final List<_PeakSeasonDraft> peakSeasons;
   ProductCategory category;
@@ -2873,6 +3021,8 @@ class _RegularProductDraft {
         blockedDates: writeGuestPrices
             ? List<SaleBlockedRange>.of(blockedDates)
             : const [],
+        saleFrom: writeGuestPrices ? _peakDay(saleFrom) : null,
+        saleTo: writeGuestPrices ? _peakDay(saleTo) : null,
         peakSeasons: writeGuestPrices ? _storedPeakSeasons() : const [],
         category: writeGuestPrices ? category : ProductCategory.resortPackage,
         difficulty: writeGuestPrices ? difficulty : '',
@@ -2902,6 +3052,8 @@ class _RegularProductDraft {
       blockedDates: writeGuestPrices
           ? List<SaleBlockedRange>.of(blockedDates)
           : null,
+      saleFrom: writeGuestPrices ? _peakDay(saleFrom) : existing.saleFrom,
+      saleTo: writeGuestPrices ? _peakDay(saleTo) : existing.saleTo,
       peakSeasons: writeGuestPrices ? _storedPeakSeasons() : null,
       category: writeGuestPrices ? category : null,
       difficulty: writeGuestPrices ? difficulty : null,

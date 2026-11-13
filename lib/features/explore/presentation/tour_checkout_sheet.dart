@@ -398,9 +398,13 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     final today = calendarDay(now);
     var initial = calendarDay(_tourDate);
     if (initial.isBefore(today)) initial = today;
-    final last = today.add(const Duration(days: 180));
-    if (initial.isAfter(last)) initial = last;
     final product = widget.product;
+    var last = today.add(const Duration(days: 180));
+    final opened = product == null ? null : _saleSearchStart(product);
+    if (opened != null && opened.isAfter(last)) {
+      last = opened.add(const Duration(days: 180));
+    }
+    if (initial.isAfter(last)) initial = last;
     bool Function(DateTime day)? allowedDay;
     if (_buyerPicksDeparture && product != null && _hasSaleRules(product)) {
       if (!product.allowsDeparture(initial, now)) {
@@ -416,6 +420,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       }
       allowedDay = (day) => product.allowsDeparture(day, now);
     }
+    if (initial.isAfter(last)) last = initial;
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -431,19 +436,41 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   bool _hasSaleRules(ShopProduct product) {
     return product.saleWeekdays.isNotEmpty ||
         product.minLeadDays != 0 ||
-        product.blockedDates.isNotEmpty;
+        product.blockedDates.isNotEmpty ||
+        product.saleFrom != null ||
+        product.saleTo != null;
+  }
+
+  /// Earlier edge of the departure window. Swapped dates follow [allowsDeparture].
+  DateTime? _saleSearchStart(ShopProduct product) {
+    final start = product.saleFrom;
+    if (start == null) return null;
+    final end = product.saleTo;
+    final from = calendarDay(start);
+    if (end != null && calendarDay(end).isBefore(from)) {
+      return calendarDay(end);
+    }
+    return from;
   }
 
   /// First allowed day from [from] through 180 days after today.
+  /// A sale start past that horizon is searched from the start day itself.
   DateTime? _nextAllowedDeparture(
     ShopProduct product,
     DateTime from,
     DateTime now,
   ) {
     final today = calendarDay(now);
-    final last = today.add(const Duration(days: 180));
+    final leadStart = today.add(Duration(days: product.minLeadDays));
+    final opened = _saleSearchStart(product);
     var day = calendarDay(from);
     if (day.isBefore(today)) day = today;
+    if (day.isBefore(leadStart)) day = leadStart;
+    if (opened != null && day.isBefore(opened)) day = opened;
+    var last = today.add(const Duration(days: 180));
+    if (day.isAfter(last)) {
+      last = day.add(const Duration(days: 180));
+    }
     if (day.isAfter(last)) return null;
     final span = last.difference(day).inDays;
     for (var i = 0; i <= span; i++) {
