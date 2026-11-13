@@ -189,19 +189,16 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                           ),
                           Positioned(
                             top: 10,
-                            left: 12,
+                            left: 16,
                             right: 16,
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Spacer(),
-                                Flexible(
-                                  child: _GradeDepthChip(
-                                    signedIn: session.isSignedIn,
-                                    memberGrade: stats.memberGrade,
-                                    isInstructor: stats.isInstructor,
-                                  ),
+                                _GradeDepthChip(
+                                  signedIn: session.isSignedIn,
+                                  memberGrade: stats.memberGrade,
+                                  isInstructor: stats.isInstructor,
                                 ),
-                                const SizedBox(width: 8),
                                 const LanguageSwitch(),
                               ],
                             ),
@@ -459,7 +456,7 @@ class _GradeDepthChip extends StatelessWidget {
           MainShell.goToTab(context, 4);
         },
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 36),
+          constraints: const BoxConstraints(minHeight: 38),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: const Color(0xCC0B1F33),
