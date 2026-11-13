@@ -352,7 +352,7 @@ service cloud.firestore {
         'intro', 'address', 'amenities', 'map_url', 'nearest_hub',
         'access_routes', 'feature_blurb', 'feature_tags', 'nearby_spots',
         'local_contact', 'check_in', 'check_out', 'business_hours',
-        'gallery_urls', 'cover_url'
+        'gallery_urls', 'cover_url', 'nearest_airport', 'spoken_languages', 'operating_months', 'regular_closed_none', 'regular_closed_days', 'regular_closed_note'
       ];
     }
 
