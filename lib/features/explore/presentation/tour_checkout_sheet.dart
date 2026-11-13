@@ -1042,7 +1042,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   Text(
                     [
                       if (duration.trim().isNotEmpty)
-                        _footerDiverLine(l10n, product, duration),
+                        _footerDiverLine(l10n, duration),
                       label,
                     ].join(' · '),
                     maxLines: 1,
@@ -1260,7 +1260,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     addCard(
       Icons.nights_stay_outlined,
       l10n.productOfferNights,
-      product.derivedDurationLabel,
+      localizedDurationLabel(l10n, product.derivedDurationLabel),
     );
     addCard(
       Icons.place_outlined,
@@ -1439,28 +1439,16 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     );
   }
 
-  String _footerDiverLine(
-    AppLocalizations l10n,
-    ShopProduct? product,
-    String duration,
-  ) {
-    final days = product?.itineraryDays.length ?? 0;
-    if (days > 1) {
-      return l10n.checkoutDiverStayLine(1, days - 1, days);
+  String _footerDiverLine(AppLocalizations l10n, String duration) {
+    final shown = localizedDurationLabel(l10n, duration);
+    if (shown.isEmpty) {
+      return '';
     }
-    return l10n.checkoutDiverDurationLine(1, duration.trim());
+    return l10n.checkoutDiverDurationLine(1, shown);
   }
 
-  String _guestStayChip(
-    AppLocalizations l10n,
-    ShopProduct product,
-    String duration,
-  ) {
-    final days = product.itineraryDays.length;
-    if (days > 1) {
-      return l10n.exploreStayNightsDays(days - 1, days);
-    }
-    return duration.trim();
+  String _guestStayChip(AppLocalizations l10n, String duration) {
+    return localizedDurationLabel(l10n, duration);
   }
 
   String _guestConditionLabel(AppLocalizations l10n, String stored) {
@@ -1477,7 +1465,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     ShopProduct product,
     String duration,
   ) {
-    final stay = _guestStayChip(l10n, product, duration);
+    final stay = _guestStayChip(l10n, duration);
     final chips = <String>[
       if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),
       if (stay.isNotEmpty) stay,
@@ -1607,8 +1595,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   Text.rich(
                     TextSpan(
                       children: [
-                        const TextSpan(
-                          text: '1인 1실 사용',
+                        TextSpan(
+                          text: l10n.checkoutSingleRoomUse,
                           style: TextStyle(
                             color: Color(0xFF10242F),
                             fontSize: 14,
@@ -1692,7 +1680,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
             professional: professional,
             departure: _tourDate,
           );
-    final price = unit <= 0 ? '무료' : '₩${_priceFormat.format(unit)}';
+    final price = unit <= 0 ? l10n.checkoutPriceFree : '₩${_priceFormat.format(unit)}';
     var condition = '';
     for (final tier in widget.product?.priceTiers ?? const <ProductPriceTier>[]) {
       if (tier.role == role.firestoreValue && tier.condition.trim().isNotEmpty) {

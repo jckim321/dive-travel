@@ -55,10 +55,10 @@ class ProductOfferBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final lastCall = shop.departure?.lastCall == true;
-    final days = product.itineraryDays.length;
-    final duration = days > 1
-        ? l10n.exploreStayNightsDays(days - 1, days)
-        : product.derivedDurationLabel.trim();
+    final duration = localizedDurationLabel(
+      l10n,
+      product.derivedDurationLabel,
+    );
     final span = <String>[
       if (duration.isNotEmpty) duration,
       if (product.diveCount > 0) l10n.exploreBoatDives(product.diveCount),
@@ -467,7 +467,10 @@ class _OfferFactsState extends State<_OfferFacts> {
           ],
         ),
         if (_open) ...[
-          _fact(l10n.productOfferNights, product.derivedDurationLabel),
+          _fact(
+            l10n.productOfferNights,
+            localizedDurationLabel(l10n, product.derivedDurationLabel),
+          ),
           _fact(l10n.productFormMeetingPoint, product.meetingPoint),
           if (product.storyHtml.trim().isNotEmpty)
             _storyHtml(

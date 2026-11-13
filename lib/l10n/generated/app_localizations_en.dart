@@ -5780,6 +5780,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutPerNight => '/night';
 
   @override
+  String get checkoutSingleRoomUse => 'Single room';
+
+  @override
+  String get checkoutPriceFree => 'Free';
+
+  @override
   String get exploreResortAddress => 'Address';
 
   @override

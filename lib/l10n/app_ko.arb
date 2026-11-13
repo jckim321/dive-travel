@@ -3087,6 +3087,8 @@
   },
   "checkoutSingleRoomAdults": "혼자 방을 쓰는 성인 인원",
   "checkoutPerNight": "/박",
+  "checkoutSingleRoomUse": "1인 1실 사용",
+  "checkoutPriceFree": "무료",
   "exploreResortAddress": "주소",
   "exploreEditResort": "리조트 글 수정",
   "exploreDeskHint": "현지 샵과 관리자가 같은 글을 고칩니다. 저장하면 여행상품 상세에 바로 반영됩니다.",

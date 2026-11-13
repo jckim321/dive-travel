@@ -4,6 +4,7 @@ import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/dive_shop.dart';
 import 'package:dive_travel_app/core/models/price_revision.dart';
 import 'package:dive_travel_app/core/models/story_block.dart';
+import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Explore-only vs home shelf placement for an approved product.
 enum ProductListingKind {
@@ -863,6 +864,23 @@ bool peakSeasonsOverlap(Iterable<PeakSeason> seasons) {
     }
   }
   return false;
+}
+
+/// `N박 M일`, with or without spaces, uses [AppLocalizations.exploreStayNightsDays].
+/// Korean keeps the stored spelling. Anything else is shown as stored.
+String localizedDurationLabel(AppLocalizations l10n, String stored) {
+  final trimmed = stored.trim();
+  final match = RegExp(r'^(\d+)\s*박\s*(\d+)\s*일$').firstMatch(trimmed);
+  if (match == null) {
+    return trimmed;
+  }
+  if (l10n.localeName.startsWith('ko')) {
+    return trimmed;
+  }
+  return l10n.exploreStayNightsDays(
+    int.parse(match.group(1)!),
+    int.parse(match.group(2)!),
+  );
 }
 
 class ShopProduct {

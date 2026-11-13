@@ -10466,6 +10466,14 @@ abstract class AppLocalizations {
   /// **'/박'**
   String get checkoutPerNight => '/박';
 
+  /// In ko, this message translates to:
+  /// **'1인 1실 사용'**
+  String get checkoutSingleRoomUse => '1인 1실 사용';
+
+  /// In ko, this message translates to:
+  /// **'무료'**
+  String get checkoutPriceFree => '무료';
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

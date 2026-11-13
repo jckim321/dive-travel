@@ -3062,5 +3062,7 @@
   },
   "checkoutSingleRoomAdults": "Adults in a room alone",
   "checkoutPerNight": "/night",
+  "checkoutSingleRoomUse": "Single room",
+  "checkoutPriceFree": "Free",
   "settingsLanguageLabel": "Language"
 }
