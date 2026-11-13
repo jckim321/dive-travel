@@ -639,6 +639,10 @@ class _TripCard extends StatelessWidget {
     final date = DateFormat('yyyy.MM.dd').format(booking.scheduledFor);
     final shop = booking.shopName.trim();
     final when = shop.isEmpty ? date : '$date · $shop';
+    final code = booking.publicCode.trim();
+    final bought =
+        DateFormat('MM.dd HH:mm').format(booking.createdAt.toLocal());
+    final purchaseLine = code.isEmpty ? '구매 $bought' : '$code · 구매 $bought';
     final canReview = !upcoming && booking.isActive && !booking.reviewed;
 
     return Material(
@@ -683,6 +687,16 @@ class _TripCard extends StatelessWidget {
                           style: const TextStyle(
                             color: AppTheme.muted,
                             fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          purchaseLine,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.muted,
+                            fontSize: 11,
                           ),
                         ),
                       ],
