@@ -848,7 +848,10 @@ class _TripDetails extends StatelessWidget {
 
   void _openBookingFlights(BuildContext context) {
     final live = DiverStoreScope.of(context).liveStatsFor(booking.shopId);
-    final arrival = normalizeNearestAirport(live?.nearestAirport ?? '');
+    final arrival = arrivalAirportCode(
+      nearestAirport: live?.nearestAirport ?? '',
+      nearestHub: live?.nearestHub ?? '',
+    );
     ShopProduct? product;
     final productId = booking.productId;
     if (live != null && productId.isNotEmpty) {

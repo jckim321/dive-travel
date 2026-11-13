@@ -102,6 +102,19 @@ String normalizeNearestAirport(String raw) {
   return code;
 }
 
+/// Flight-link airport. The stored code wins.
+/// When that is empty, a hub of only three English letters is the code.
+String arrivalAirportCode({
+  String nearestAirport = '',
+  String nearestHub = '',
+}) {
+  final stored = normalizeNearestAirport(nearestAirport);
+  if (stored.isNotEmpty) {
+    return stored;
+  }
+  return normalizeNearestAirport(nearestHub);
+}
+
 String clampShort(String raw, [int max = kMaxShortLine]) {
   final t = raw.trim();
   if (t.length <= max) {

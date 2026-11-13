@@ -80,9 +80,11 @@ TourBooking? _nextTrip(List<TourBooking> bookings, DateTime today) {
 
 _TripFacts _tripFacts(DiverStore store, TourBooking booking) {
   final live = store.liveStatsFor(booking.shopId);
-  final stored = normalizeNearestAirport(live?.nearestAirport ?? '');
   final hub = (live?.nearestHub ?? '').trim();
-  final code = stored.isNotEmpty ? stored : normalizeNearestAirport(hub);
+  final code = arrivalAirportCode(
+    nearestAirport: live?.nearestAirport ?? '',
+    nearestHub: hub,
+  );
   final location = (live?.location ?? '').trim();
   ShopProduct? product;
   if (live != null && booking.productId.isNotEmpty) {

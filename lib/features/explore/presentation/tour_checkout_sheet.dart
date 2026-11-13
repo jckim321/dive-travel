@@ -492,11 +492,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
   }
 
   String? _nearestAirportCode() {
-    final raw = DiverStoreScope.of(context)
-            .liveStatsFor(widget.shop.hullId)
-            ?.nearestAirport ??
-        '';
-    final code = normalizeNearestAirport(raw);
+    final live = DiverStoreScope.of(context).liveStatsFor(widget.shop.hullId);
+    final code = arrivalAirportCode(
+      nearestAirport: live?.nearestAirport ?? '',
+      nearestHub: live?.nearestHub ?? '',
+    );
     return code.isEmpty ? null : code;
   }
 
