@@ -55,10 +55,13 @@ class ProductOfferBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final lastCall = shop.departure?.lastCall == true;
+    final days = product.itineraryDays.length;
+    final duration = days > 1
+        ? l10n.exploreStayNightsDays(days - 1, days)
+        : product.derivedDurationLabel.trim();
     final span = <String>[
-      if (product.derivedDurationLabel.trim().isNotEmpty)
-        product.derivedDurationLabel.trim(),
-      if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+      if (duration.isNotEmpty) duration,
+      if (product.diveCount > 0) l10n.exploreBoatDives(product.diveCount),
     ].join(' · ');
     final status = <String>[
       if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),

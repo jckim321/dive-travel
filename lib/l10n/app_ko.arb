@@ -3047,6 +3047,46 @@
   "exploreShopMonth10": "10월",
   "exploreShopMonth11": "11월",
   "exploreShopMonth12": "12월",
+  "checkoutReturnDate": "돌아오는 날",
+  "checkoutDiverStayLine": "다이버 {count}인 · {nights}박 {days}일",
+  "@checkoutDiverStayLine": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "nights": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
+  "checkoutDiverDurationLine": "다이버 {count}인 · {duration}",
+  "@checkoutDiverDurationLine": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "duration": { "type": "String" }
+    }
+  },
+  "exploreStayNightsDays": "{nights}박 {days}일",
+  "@exploreStayNightsDays": {
+    "placeholders": {
+      "nights": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
+  "exploreBoatDives": "보트 {count}다이브",
+  "@exploreBoatDives": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "checkoutGuestNondiverNote": "다이빙 제외 · 숙박·식사 포함",
+  "checkoutGuestChildNote": "만 2–11세 · 보호자 동반",
+  "checkoutGuestInfantNote": "만 2세 미만 · 침대 미사용",
+  "checkoutSingleRoomBasis": "혼자 방을 쓰는 성인 인원 · {nights}박 기준",
+  "@checkoutSingleRoomBasis": {
+    "placeholders": {
+      "nights": { "type": "int" }
+    }
+  },
+  "checkoutSingleRoomAdults": "혼자 방을 쓰는 성인 인원",
+  "checkoutPerNight": "/박",
   "exploreResortAddress": "주소",
   "exploreEditResort": "리조트 글 수정",
   "exploreDeskHint": "현지 샵과 관리자가 같은 글을 고칩니다. 저장하면 여행상품 상세에 바로 반영됩니다.",

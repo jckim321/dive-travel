@@ -3022,5 +3022,45 @@
   "exploreShopMonth10": "Oct",
   "exploreShopMonth11": "Nov",
   "exploreShopMonth12": "Dec",
+  "checkoutReturnDate": "Return date",
+  "checkoutDiverStayLine": "{count} diver · {nights} nights {days} days",
+  "@checkoutDiverStayLine": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "nights": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
+  "checkoutDiverDurationLine": "{count} diver · {duration}",
+  "@checkoutDiverDurationLine": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "duration": { "type": "String" }
+    }
+  },
+  "exploreStayNightsDays": "{nights} nights {days} days",
+  "@exploreStayNightsDays": {
+    "placeholders": {
+      "nights": { "type": "int" },
+      "days": { "type": "int" }
+    }
+  },
+  "exploreBoatDives": "{count} boat dives",
+  "@exploreBoatDives": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "checkoutGuestNondiverNote": "No diving · stay and meals included",
+  "checkoutGuestChildNote": "Ages 2–11 · with a guardian",
+  "checkoutGuestInfantNote": "Under 2 · no bed",
+  "checkoutSingleRoomBasis": "Adults in a room alone · {nights}-night stay",
+  "@checkoutSingleRoomBasis": {
+    "placeholders": {
+      "nights": { "type": "int" }
+    }
+  },
+  "checkoutSingleRoomAdults": "Adults in a room alone",
+  "checkoutPerNight": "/night",
   "settingsLanguageLabel": "Language"
 }

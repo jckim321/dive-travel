@@ -756,7 +756,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                   ),
                               ],
                             ),
-                            if (product != null) _productChips(product, duration),
+                            if (product != null) _productChips(l10n, product, duration),
                             if (product != null &&
                                 product.blurb.trim().isNotEmpty) ...[
                               const SizedBox(height: 10),
@@ -930,7 +930,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                   Expanded(
                                     child: _DateBox(
                                       key: const Key('checkout-return-date'),
-                                      label: '돌아오는 날',
+                                      label: l10n.checkoutReturnDate,
                                       value: DateFormat(
                                         'yyyy.MM.dd',
                                       ).format(_buyerReturn!),
@@ -1042,7 +1042,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   Text(
                     [
                       if (duration.trim().isNotEmpty)
-                        '다이버 1인 · ${duration.trim()}',
+                        _footerDiverLine(l10n, product, duration),
                       label,
                     ].join(' · '),
                     maxLines: 1,
@@ -1439,11 +1439,49 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     );
   }
 
-  Widget _productChips(ShopProduct product, String duration) {
+  String _footerDiverLine(
+    AppLocalizations l10n,
+    ShopProduct? product,
+    String duration,
+  ) {
+    final days = product?.itineraryDays.length ?? 0;
+    if (days > 1) {
+      return l10n.checkoutDiverStayLine(1, days - 1, days);
+    }
+    return l10n.checkoutDiverDurationLine(1, duration.trim());
+  }
+
+  String _guestStayChip(
+    AppLocalizations l10n,
+    ShopProduct product,
+    String duration,
+  ) {
+    final days = product.itineraryDays.length;
+    if (days > 1) {
+      return l10n.exploreStayNightsDays(days - 1, days);
+    }
+    return duration.trim();
+  }
+
+  String _guestConditionLabel(AppLocalizations l10n, String stored) {
+    return switch (stored) {
+      '다이빙 제외 · 숙박·식사 포함' => l10n.checkoutGuestNondiverNote,
+      '만 2–11세 · 보호자 동반' => l10n.checkoutGuestChildNote,
+      '만 2세 미만 · 침대 미사용' => l10n.checkoutGuestInfantNote,
+      _ => stored,
+    };
+  }
+
+  Widget _productChips(
+    AppLocalizations l10n,
+    ShopProduct product,
+    String duration,
+  ) {
+    final stay = _guestStayChip(l10n, product, duration);
     final chips = <String>[
       if (product.difficulty.trim().isNotEmpty) product.difficulty.trim(),
-      if (duration.trim().isNotEmpty) duration.trim(),
-      if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+      if (stay.isNotEmpty) stay,
+      if (product.diveCount > 0) l10n.exploreBoatDives(product.diveCount),
     ];
     if (chips.isEmpty) {
       return const SizedBox.shrink();
@@ -1524,7 +1562,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
         ),
         if (_showsSingleRoom) ...[
           const SizedBox(height: 10),
-          _singleRoomRow(),
+          _singleRoomRow(l10n),
         ],
         const SizedBox(height: 10),
         _compositionAmounts(),
@@ -1544,13 +1582,13 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
 
   int get _singleRoomMax => _qtyDiver + _qtyNondiver;
 
-  Widget _singleRoomRow() {
+  Widget _singleRoomRow(AppLocalizations l10n) {
     final product = widget.product!;
     final max = _singleRoomMax;
     final nights = product.nights;
     final supplement = product.singleSupplement;
     final price = supplement > 0
-        ? '+₩${_priceFormat.format(supplement)} /박'
+        ? '+₩${_priceFormat.format(supplement)} ${l10n.checkoutPerNight}'
         : '';
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1591,8 +1629,8 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                   ),
                   Text(
                     nights >= 1
-                        ? '혼자 방을 쓰는 성인 인원 · $nights박 기준'
-                        : '혼자 방을 쓰는 성인 인원',
+                        ? l10n.checkoutSingleRoomBasis(nights)
+                        : l10n.checkoutSingleRoomAdults,
                     style: const TextStyle(
                       color: Color(0xFF5B6B75),
                       fontSize: 11,
@@ -1695,7 +1733,7 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                 ),
                 if (condition.isNotEmpty)
                   Text(
-                    condition,
+                    _guestConditionLabel(l10n, condition),
                     style: const TextStyle(
                       color: Color(0xFF5B6B75),
                       fontSize: 11,

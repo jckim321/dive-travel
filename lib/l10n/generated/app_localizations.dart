@@ -10419,6 +10419,53 @@ abstract class AppLocalizations {
   /// **'12월'**
   String get exploreShopMonth12 => '12월';
 
+  /// In ko, this message translates to:
+  /// **'돌아오는 날'**
+  String get checkoutReturnDate => '돌아오는 날';
+
+  /// In ko, this message translates to:
+  /// **'다이버 {count}인 · {nights}박 {days}일'**
+  String checkoutDiverStayLine(int count, int nights, int days) =>
+      '다이버 $count인 · $nights박 $days일';
+
+  /// In ko, this message translates to:
+  /// **'다이버 {count}인 · {duration}'**
+  String checkoutDiverDurationLine(int count, String duration) =>
+      '다이버 $count인 · $duration';
+
+  /// In ko, this message translates to:
+  /// **'{nights}박 {days}일'**
+  String exploreStayNightsDays(int nights, int days) => '$nights박 $days일';
+
+  /// In ko, this message translates to:
+  /// **'보트 {count}다이브'**
+  String exploreBoatDives(int count) => '보트 $count다이브';
+
+  /// In ko, this message translates to:
+  /// **'다이빙 제외 · 숙박·식사 포함'**
+  String get checkoutGuestNondiverNote => '다이빙 제외 · 숙박·식사 포함';
+
+  /// In ko, this message translates to:
+  /// **'만 2–11세 · 보호자 동반'**
+  String get checkoutGuestChildNote => '만 2–11세 · 보호자 동반';
+
+  /// In ko, this message translates to:
+  /// **'만 2세 미만 · 침대 미사용'**
+  String get checkoutGuestInfantNote => '만 2세 미만 · 침대 미사용';
+
+  /// In ko, this message translates to:
+  /// **'혼자 방을 쓰는 성인 인원 · {nights}박 기준'**
+  String checkoutSingleRoomBasis(int nights) =>
+      '혼자 방을 쓰는 성인 인원 · $nights박 기준';
+
+  /// In ko, this message translates to:
+  /// **'혼자 방을 쓰는 성인 인원'**
+  String get checkoutSingleRoomAdults => '혼자 방을 쓰는 성인 인원';
+
+  /// In ko, this message translates to:
+  /// **'/박'**
+  String get checkoutPerNight => '/박';
+
   /// No description provided for @exploreResortAddress.
   ///
   /// In ko, this message translates to:

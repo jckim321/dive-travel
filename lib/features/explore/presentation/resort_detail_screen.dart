@@ -998,10 +998,14 @@ class _RegularProductPicker extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final product = products[index];
+                final days = product.itineraryDays.length;
+                final duration = days > 1
+                    ? l10n.exploreStayNightsDays(days - 1, days)
+                    : product.derivedDurationLabel.trim();
                 final span = [
-                  if (product.derivedDurationLabel.trim().isNotEmpty)
-                    product.derivedDurationLabel.trim(),
-                  if (product.diveCount > 0) '보트 ${product.diveCount}다이브',
+                  if (duration.isNotEmpty) duration,
+                  if (product.diveCount > 0)
+                    l10n.exploreBoatDives(product.diveCount),
                 ].join(' · ');
                 final status = [
                   if (product.difficulty.trim().isNotEmpty)

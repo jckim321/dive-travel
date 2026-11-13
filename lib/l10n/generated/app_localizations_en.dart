@@ -5738,6 +5738,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreShopMonth12 => 'Dec';
 
   @override
+  String get checkoutReturnDate => 'Return date';
+
+  @override
+  String checkoutDiverStayLine(int count, int nights, int days) {
+    return '$count diver · $nights nights $days days';
+  }
+
+  @override
+  String checkoutDiverDurationLine(int count, String duration) {
+    return '$count diver · $duration';
+  }
+
+  @override
+  String exploreStayNightsDays(int nights, int days) {
+    return '$nights nights $days days';
+  }
+
+  @override
+  String exploreBoatDives(int count) => '$count boat dives';
+
+  @override
+  String get checkoutGuestNondiverNote =>
+      'No diving · stay and meals included';
+
+  @override
+  String get checkoutGuestChildNote => 'Ages 2–11 · with a guardian';
+
+  @override
+  String get checkoutGuestInfantNote => 'Under 2 · no bed';
+
+  @override
+  String checkoutSingleRoomBasis(int nights) {
+    return 'Adults in a room alone · $nights-night stay';
+  }
+
+  @override
+  String get checkoutSingleRoomAdults => 'Adults in a room alone';
+
+  @override
+  String get checkoutPerNight => '/night';
+
+  @override
   String get exploreResortAddress => 'Address';
 
   @override
