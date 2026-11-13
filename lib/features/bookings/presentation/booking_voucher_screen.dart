@@ -115,14 +115,29 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
   }
 
   String _arrivalValue(TourBooking booking) {
-    final clock = booking.arrivalAt == null
-        ? ''
-        : _clock.format(booking.arrivalAt!.toLocal());
+    final at = booking.arrivalAt?.toLocal();
+    final clock = at == null ? '' : _clock.format(at);
     final flight = booking.arrivalFlight.trim();
-    if (clock.isNotEmpty && flight.isNotEmpty) {
-      return '$clock · $flight';
+    final body = clock.isNotEmpty && flight.isNotEmpty
+        ? '$clock · $flight'
+        : (clock.isNotEmpty ? clock : flight);
+    if (at == null || _sameCalendarDay(at, booking.scheduledFor)) {
+      return body;
     }
-    return clock.isNotEmpty ? clock : flight;
+    return '${_md(at)} 도착 $body';
+  }
+
+  bool _sameCalendarDay(DateTime arrival, DateTime depart) {
+    final start = depart.toLocal();
+    return arrival.year == start.year &&
+        arrival.month == start.month &&
+        arrival.day == start.day;
+  }
+
+  String _md(DateTime day) {
+    final month = day.month.toString().padLeft(2, '0');
+    final date = day.day.toString().padLeft(2, '0');
+    return '$month.$date';
   }
 
   Future<void> _tellFlight(TourBooking booking) async {
@@ -286,7 +301,7 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
                         ),
                         if (booking.arrivalAt != null ||
                             booking.arrivalFlight.trim().isNotEmpty)
-                          _row('도착', _arrivalValue(booking)),
+                          _arrivalLine(booking),
                         if (booking.returnFlight.trim().isNotEmpty)
                           _row('오는 편', booking.returnFlight.trim()),
                         if (partyLine.isNotEmpty)
@@ -394,6 +409,21 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
         ],
       ),
     );
+  }
+
+  Widget _arrivalLine(TourBooking booking) {
+    final value = _arrivalValue(booking);
+    final at = booking.arrivalAt?.toLocal();
+    if (at != null && !_sameCalendarDay(at, booking.scheduledFor)) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+    return _row('도착', value);
   }
 
   Widget _row(String label, String value) {

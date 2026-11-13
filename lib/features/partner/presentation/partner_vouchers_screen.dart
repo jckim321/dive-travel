@@ -202,20 +202,28 @@ String _partnerVoucherPartyDetail(AppLocalizations l10n, TourBooking booking) {
 }
 
 String? _arrivalNote(TourBooking booking) {
-  final clock = booking.arrivalAt == null
-      ? ''
-      : DateFormat('HH:mm').format(booking.arrivalAt!.toLocal());
+  final at = booking.arrivalAt?.toLocal();
+  final clock = at == null ? '' : DateFormat('HH:mm').format(at);
   final flight = booking.arrivalFlight.trim();
   if (clock.isEmpty && flight.isEmpty) {
     return null;
   }
-  if (clock.isNotEmpty && flight.isNotEmpty) {
-    return '도착 $clock · $flight';
+  final body = clock.isNotEmpty && flight.isNotEmpty
+      ? '도착 $clock · $flight'
+      : (clock.isNotEmpty ? '도착 $clock' : '도착 $flight');
+  if (at == null || _sameCalendarDay(at, booking.scheduledFor)) {
+    return body;
   }
-  if (clock.isNotEmpty) {
-    return '도착 $clock';
-  }
-  return '도착 $flight';
+  final month = at.month.toString().padLeft(2, '0');
+  final date = at.day.toString().padLeft(2, '0');
+  return '$month.$date $body';
+}
+
+bool _sameCalendarDay(DateTime arrival, DateTime depart) {
+  final start = depart.toLocal();
+  return arrival.year == start.year &&
+      arrival.month == start.month &&
+      arrival.day == start.day;
 }
 
 class PartnerVoucherCard extends StatelessWidget {
