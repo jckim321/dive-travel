@@ -19,6 +19,7 @@ import 'package:dive_travel_app/features/admin/presentation/shop_product_box.dar
 import 'package:dive_travel_app/features/admin/presentation/tiptap_story_frame.dart';
 import 'package:dive_travel_app/features/admin/presentation/workbench_price_validation.dart';
 import 'package:dive_travel_app/features/admin/presentation/planner_palette.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_contract_box.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_story_editor.dart';
 import 'package:dive_travel_app/features/explore/presentation/product_offer_box.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_desk_screen.dart';
@@ -486,6 +487,10 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
         const SizedBox(height: 12),
         for (final box in _boxes) ...[
           _productCard(l10n, box),
+          const SizedBox(height: 12),
+        ],
+        if (widget.partnerLabels) ...[
+          PartnerContractBox(shopId: widget.shopId),
           const SizedBox(height: 12),
         ],
         if (!widget.singleNew && widget.onlyProductId == null) ...[
