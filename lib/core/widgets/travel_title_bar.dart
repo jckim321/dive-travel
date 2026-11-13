@@ -453,7 +453,25 @@ class _GradeDepthChip extends StatelessWidget {
             await ensureSignedIn(context);
             return;
           }
-          MainShell.goToTab(context, 4);
+          if (isInstructor) {
+            MainShell.goToTab(context, 4);
+            return;
+          }
+          final host = context;
+          await showModalBottomSheet<void>(
+            context: host,
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+            ),
+            builder: (sheetContext) => _DepthLadderSheet(
+              onViewMembership: () {
+                Navigator.of(sheetContext).pop();
+                MainShell.goToTab(host, 4);
+              },
+            ),
+          );
         },
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 38),
@@ -492,6 +510,222 @@ class _GradeDepthChip extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DepthLadderSheet extends StatelessWidget {
+  const _DepthLadderSheet({required this.onViewMembership});
+
+  final VoidCallback onViewMembership;
+
+  static const _bands =
+      <
+        ({
+          int meters,
+          Color color,
+          String koDepth,
+          String enDepth,
+          String koScene,
+          String enScene,
+        })
+      >[
+        (
+          meters: 0,
+          color: Color(0xFFD9F0FA),
+          koDepth: '수면',
+          enDepth: 'Surface',
+          koScene: '출발 전, 아직 물 위',
+          enScene: 'Before the dive, still on the surface',
+        ),
+        (
+          meters: 10,
+          color: Color(0xFFB7DDF3),
+          koDepth: '10m',
+          enDepth: '10m',
+          koScene: '햇빛이 닿는 산호 정원',
+          enScene: 'A sunlit coral garden',
+        ),
+        (
+          meters: 18,
+          color: Color(0xFF6AA6D4),
+          koDepth: '18m',
+          enDepth: '18m',
+          koScene: '거북이와 만나는 푸른 바다',
+          enScene: 'Blue water and sea turtles',
+        ),
+        (
+          meters: 30,
+          color: Color(0xFF1F5C92),
+          koDepth: '30m',
+          enDepth: '30m',
+          koScene: '난파선과 대형 어류의 세계',
+          enScene: 'Wrecks and big fish',
+        ),
+        (
+          meters: 40,
+          color: Color(0xFF0B2744),
+          koDepth: '40m',
+          enDepth: '40m',
+          koScene: '고요한 심해, 가장 깊은 곳',
+          enScene: 'The quiet deep, the deepest place',
+        ),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    final ko = Localizations.localeOf(context).languageCode == 'ko';
+    final stats = DiverStoreScope.of(context).stats;
+    final grade = stats.memberGrade;
+    final hereMeters = switch (grade) {
+      MemberGrade.silver => 10,
+      MemberGrade.gold => 18,
+      MemberGrade.diamond => 30,
+      MemberGrade.platinum => 40,
+    };
+    final nextMeters = switch (grade) {
+      MemberGrade.silver => 18,
+      MemberGrade.gold => 30,
+      MemberGrade.diamond => 40,
+      MemberGrade.platinum => null,
+    };
+    final remaining = MemberGrade.deficitToNext(
+      current: grade,
+      paidPurchases: stats.paidPurchaseCount,
+      reviews: 0,
+    ).$1;
+    final footer = nextMeters == null
+        ? (ko ? '가장 깊은 바다에 도착했어요' : "You've reached the deepest sea")
+        : (ko
+              ? '다음 수심 ${nextMeters}m까지 예약 $remaining회 남았어요'
+              : '$remaining more ${remaining == 1 ? 'booking' : 'bookings'} to reach ${nextMeters}m');
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.7;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < _bands.length; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                _DepthBand(
+                  band: _bands[i],
+                  ko: ko,
+                  here: _bands[i].meters == hereMeters,
+                ),
+              ],
+              const SizedBox(height: 14),
+              Text(
+                footer,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.navy,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.navy,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: onViewMembership,
+                child: Text(ko ? '내 멤버십 보기' : 'View my membership'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DepthBand extends StatelessWidget {
+  const _DepthBand({required this.band, required this.ko, required this.here});
+
+  final ({
+    int meters,
+    Color color,
+    String koDepth,
+    String enDepth,
+    String koScene,
+    String enScene,
+  })
+  band;
+  final bool ko;
+  final bool here;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = band.color.computeLuminance() > 0.45
+        ? AppTheme.navy
+        : Colors.white;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: band.color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: here ? AppTheme.gold : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            Text(
+              ko ? band.koDepth : band.enDepth,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+                color: ink,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                ko ? band.koScene : band.enScene,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.25,
+                  fontWeight: FontWeight.w600,
+                  color: ink,
+                ),
+              ),
+            ),
+            if (here) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  ko ? '● 지금 여기' : '● You are here',
+                  maxLines: 2,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
+                    color: ink,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
