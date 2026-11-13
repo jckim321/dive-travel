@@ -1092,8 +1092,7 @@ abstract class AppLocalizations {
 
   /// In ko, this message translates to:
   /// **'{fields} 입력하면 결제할 수 있어요'**
-  String checkoutPayEnterToPay(String fields) =>
-      '$fields 입력하면 결제할 수 있어요';
+  String checkoutPayEnterToPay(String fields) => '$fields 입력하면 결제할 수 있어요';
 
   /// No description provided for @simPayTitle.
   ///
@@ -10316,8 +10315,7 @@ abstract class AppLocalizations {
 
   /// In ko, this message translates to:
   /// **'이메일 주소를 복사했어요: {email}'**
-  String exploreHqInquiryEmailCopied(String email) =>
-      '이메일 주소를 복사했어요: $email';
+  String exploreHqInquiryEmailCopied(String email) => '이메일 주소를 복사했어요: $email';
 
   /// In ko, this message translates to:
   /// **'풀장'**
@@ -10455,8 +10453,7 @@ abstract class AppLocalizations {
 
   /// In ko, this message translates to:
   /// **'혼자 방을 쓰는 성인 인원 · {nights}박 기준'**
-  String checkoutSingleRoomBasis(int nights) =>
-      '혼자 방을 쓰는 성인 인원 · $nights박 기준';
+  String checkoutSingleRoomBasis(int nights) => '혼자 방을 쓰는 성인 인원 · $nights박 기준';
 
   /// In ko, this message translates to:
   /// **'혼자 방을 쓰는 성인 인원'**
@@ -13304,6 +13301,21 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'지금 취소 시 환불 {percent}%'**
   String refundPolicyHint(int percent);
+
+  /// **'손님에게 보이는 모습'**
+  String get partnerPreviewTitle => '손님에게 보이는 모습';
+
+  /// **'미리보기'**
+  String get partnerPreviewButton => '미리보기';
+
+  /// **'아직 비어 있는 필수 칸: {fields}'**
+  String partnerPreviewMissing(String fields) => '아직 비어 있는 필수 칸: $fields';
+
+  /// **'필수 칸이 모두 채워졌어요'**
+  String get partnerPreviewReady => '필수 칸이 모두 채워졌어요';
+
+  /// **'사진이 없으면 손님에게 공개되지 않아요'**
+  String get partnerPreviewNoPhoto => '사진이 없으면 손님에게 공개되지 않아요';
 }
 
 class _AppLocalizationsDelegate

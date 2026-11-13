@@ -90,9 +90,8 @@ _OfferDetailParts _splitOfferDetail(String raw) {
       hasMarkers: false,
     );
   }
-  final includeMatch = RegExp(
-    r'포함\s*[:：]?\s*([\s\S]*?)(?=불포함\s*[:：]|$)',
-  ).firstMatch(text);
+  final includeMatch = RegExp(r'포함\s*[:：]?\s*([\s\S]*?)(?=불포함\s*[:：]|$)')
+      .firstMatch(text);
   final excludeMatch = RegExp(r'불포함\s*[:：]?\s*([\s\S]*)$').firstMatch(text);
   return _OfferDetailParts(
     lead: text.substring(0, hit.start).trim(),
@@ -348,6 +347,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   final _photoPicker = const DivePhotoPicker();
   final _gallery = <BookingGalleryItem>[];
   var _galleryTouched = false;
+
   /// User removed every photo on purpose; empty gallery may clear Firestore.
   var _galleryClearedByUser = false;
   final _sectionKeys = List<GlobalKey>.generate(
@@ -367,8 +367,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _countryTouched = false;
   var _placeSeeded = false;
   late ProductCategory _category;
+
   /// Partner chips only; false keeps funDive/course/etc. on save (H1b).
   var _categoryChipTouched = false;
+
   /// Snapshot of durationLabel at load; kept until partner edits 박/일 (H1b).
   var _originalDurationLabel = '';
   var _durationFieldsTouched = false;
@@ -387,10 +389,13 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _hasNondivers = false;
   final _addonQty = <String, int>{};
   var _namedResort = false;
+
   /// Creator shop picker: the single "내가 짜는 여행" choice was selected.
   var _creatorShopPicked = false;
+
   /// Creator resort fields fold only when the user taps 완료.
   var _creatorResortExpanded = true;
+
   /// Creator wizard step. 1 intro, 2 schedule, 3 price, 4–5 empty for now.
   var _creatorStep = 1;
   var _seededCreatorShop = false;
@@ -398,8 +403,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   var _packageNights = 0;
   late bool _editing;
   late final SameBoatSeatOpenController _seats;
+
   /// After first temp-save of a new product, reuse this id on later saves.
   String? _persistedProductId;
+
   /// Form fingerprint after load / successful save (dirty detection).
   String? _baselineSignature;
   static final _priceInputFormatters = <TextInputFormatter>[
@@ -449,8 +456,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     _categoryChipTouched = false;
     _namedResort = _shopId.startsWith('curated-');
     _creatorShopPicked = widget.creatorMode && _namedResort;
-    _persistedProductId =
-        existing?.id.isNotEmpty == true ? existing!.id : null;
+    _persistedProductId = existing?.id.isNotEmpty == true ? existing!.id : null;
     _name = TextEditingController(text: existing?.name ?? '');
     _resortName = TextEditingController();
     _resortCountry = TextEditingController();
@@ -536,8 +542,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         }
       }
     }
-    final existingOptions =
-        existing?.options ?? const <ShopProductOption>[];
+    final existingOptions = existing?.options ?? const <ShopProductOption>[];
     final childAddons = <String, List<ShopProductOption>>{};
     for (final option in existingOptions) {
       if (option.kind == ProductOptionKind.individual) {
@@ -577,7 +582,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _addonQty.putIfAbsent(line.id, () => 0);
     }
     for (final ticket in _individuals) {
-      for (final option in childAddons[ticket.id] ?? const <ShopProductOption>[]) {
+      for (final option
+          in childAddons[ticket.id] ?? const <ShopProductOption>[]) {
         final line = _LineEditors(
           id: option.id,
           name: option.name,
@@ -759,7 +765,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   ShopProductOption? _existingOption(String id) {
-    for (final option in widget.existing?.options ?? const <ShopProductOption>[]) {
+    for (final option
+        in widget.existing?.options ?? const <ShopProductOption>[]) {
       if (option.id == id) {
         return option;
       }
@@ -783,8 +790,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return true;
   }
 
-  bool get _hasPhotosForSave =>
-      _gallery.isNotEmpty || _preserveExistingPhotos;
+  bool get _hasPhotosForSave => _gallery.isNotEmpty || _preserveExistingPhotos;
 
   int get _diverPriceValue =>
       parsePositivePrice(_rateConsumer[GuestRole.diver]?.text ?? '') ?? 0;
@@ -815,9 +821,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     ].join(';');
     final ticketSig = [
       for (final t in _individuals)
-        '${t.name.text}|${t.consumer.text}|${t.professional.text}|${t.lead.text}|${t.includes.text}|${t.excludes.text}|${[
-          for (final a in t.addons) '${a.name.text}|${a.consumer.text}|${a.professional.text}',
-        ].join(',')}',
+        '${t.name.text}|${t.consumer.text}|${t.professional.text}|${t.lead.text}|${t.includes.text}|${t.excludes.text}|${[for (final a in t.addons) '${a.name.text}|${a.consumer.text}|${a.professional.text}'].join(',')}',
     ].join(';');
     return [
       _name.text,
@@ -853,9 +857,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   bool _validatePendingTempSave(AppLocalizations l10n) {
     if (!_hasPhotosForSave) {
       _scrollToPartnerKey(_diverPriceFieldKey);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.briefTempSaveNeedPhoto)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.briefTempSaveNeedPhoto)));
       return false;
     }
     if (_name.text.trim().isEmpty) {
@@ -873,9 +876,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     if (_diverPriceValue <= 0) {
       _scrollToPartnerKey(_diverPriceFieldKey);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.briefTempSaveNeedPrice)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.briefTempSaveNeedPrice)));
       return false;
     }
     return true;
@@ -918,9 +920,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       setState(() {
         _diverPriceError = message;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
       return false;
     }
     return true;
@@ -1214,7 +1215,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     });
   }
 
-
   static String _seedDetailBody(ShopProduct? existing) {
     final schedule = (existing?.schedule ?? '').trim();
     final days = existing?.itineraryDays ?? const <ItineraryDay>[];
@@ -1268,7 +1268,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       flagClosesAt: previous.flagClosesAt,
     );
   }
-
 
   List<ShopGallerySlot> get _gallerySlots => [
     for (final item in _gallery)
@@ -1343,10 +1342,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   bool get _preserveExistingPhotos => shouldPreserveExistingPhotos(
-        galleryEmpty: _gallery.isEmpty,
-        userClearedGallery: _galleryClearedByUser,
-        existingHasPhotos: _existingHasPhotos,
-      );
+    galleryEmpty: _gallery.isEmpty,
+    userClearedGallery: _galleryClearedByUser,
+    existingHasPhotos: _existingHasPhotos,
+  );
 
   void _makeCover(int index) {
     if (index <= 0 || index >= _gallery.length) {
@@ -1374,7 +1373,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     return 'base';
   }
 
-
   static int _parsePackageNights(String? label) {
     final raw = (label ?? '').trim();
     if (raw.isEmpty) {
@@ -1391,7 +1389,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
     return 0;
   }
-
 
   void _reveal(int index) {
     final target = _sectionKeys[index].currentContext;
@@ -1445,7 +1442,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   /// First named option row that fails price parse (addons → individuals → ticket addons).
-  ({FocusNode focus, GlobalKey key, String label, void Function(String?) setError})?
+  ({
+    FocusNode focus,
+    GlobalKey key,
+    String label,
+    void Function(String?) setError,
+  })?
   _findFailedOptionTarget(String optionName) {
     for (final draft in _addons) {
       if (draft.name.text.trim() == optionName &&
@@ -1485,7 +1487,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   String _optionPriceLabel({required bool individual}) {
     final l10n = AppLocalizations.of(context);
-    return individual ? l10n.partnerFormBasePrice : l10n.productFormOptionConsumer;
+    return individual
+        ? l10n.partnerFormBasePrice
+        : l10n.productFormOptionConsumer;
   }
 
   void _focusPriceField(FocusNode focus) {
@@ -1521,30 +1525,31 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final target = check.target!;
     final optionName = check.optionName?.trim() ?? '';
     final overCap = check.failure == WorkbenchPriceParseFailure.overCap;
-    final optionTarget = target == WorkbenchPriceTarget.option &&
-            optionName.isNotEmpty
+    final optionTarget =
+        target == WorkbenchPriceTarget.option && optionName.isNotEmpty
         ? _findFailedOptionTarget(optionName)
         : null;
     final message = overCap
         ? (target == WorkbenchPriceTarget.option && optionName.isNotEmpty
-            ? l10n.workbenchPriceOverCapNamed(optionName)
-            : l10n.workbenchPriceOverCap)
+              ? l10n.workbenchPriceOverCapNamed(optionName)
+              : l10n.workbenchPriceOverCap)
         : switch (target) {
-            WorkbenchPriceTarget.diver =>
-              _pleaseEnter(l10n, l10n.partnerFormBasePrice),
-            WorkbenchPriceTarget.nondiver || WorkbenchPriceTarget.child =>
-              l10n.workbenchNeedGuestPrice,
+            WorkbenchPriceTarget.diver => _pleaseEnter(
+              l10n,
+              l10n.partnerFormBasePrice,
+            ),
+            WorkbenchPriceTarget.nondiver ||
+            WorkbenchPriceTarget.child => l10n.workbenchNeedGuestPrice,
             WorkbenchPriceTarget.option => _pleaseEnter(
-                l10n,
-                optionTarget?.label ?? l10n.productFormOptionConsumer,
-              ),
+              l10n,
+              optionTarget?.label ?? l10n.productFormOptionConsumer,
+            ),
           };
     final focus = switch (target) {
       WorkbenchPriceTarget.diver => _diverPriceFocus,
       WorkbenchPriceTarget.nondiver => _nondiverPriceFocus,
       WorkbenchPriceTarget.child => _childPriceFocus,
-      WorkbenchPriceTarget.option =>
-        optionTarget?.focus ?? _diverPriceFocus,
+      WorkbenchPriceTarget.option => optionTarget?.focus ?? _diverPriceFocus,
     };
     setState(() {
       _clearPriceErrors();
@@ -1567,7 +1572,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       _scrollToPartnerKey(optionTarget.key);
     }
     _focusPriceField(focus);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
     return false;
   }
 
@@ -1664,9 +1670,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         !_namedResort &&
         _shopId.trim().isEmpty) {
       _scrollToPartnerKey(widget.creatorMode ? _nameFieldKey : _adminShopKey);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.productFormPickShop)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.productFormPickShop)));
       return false;
     }
     final isTemp = intent == ProductSaveIntent.keepEditing;
@@ -1680,8 +1685,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         return false;
       }
     } else {
-      final pendingTemp = isTemp &&
-          _editingPublishStatus == ProductPublishStatus.pending;
+      final pendingTemp =
+          isTemp && _editingPublishStatus == ProductPublishStatus.pending;
       if (pendingTemp) {
         if (!_validatePendingTempSave(l10n)) {
           return false;
@@ -1731,7 +1736,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           _scrollToPartnerKey(_resortRegionKey);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_pleaseEnter(l10n, l10n.productFormCuratedLocation)),
+              content: Text(
+                _pleaseEnter(l10n, l10n.productFormCuratedLocation),
+              ),
             ),
           );
           return false;
@@ -1744,7 +1751,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final store = DiverStoreScope.of(context);
     final existing = widget.existing;
     // Creator rejected → resubmit gate only. Partners publish immediately (H1a).
-    final isResubmit = widget.creatorMode &&
+    final isResubmit =
+        widget.creatorMode &&
         existing?.publishStatus == ProductPublishStatus.rejected &&
         intent != ProductSaveIntent.keepEditing;
     setState(() => _savingIntent = intent);
@@ -1815,8 +1823,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           location: kept(live?.location),
           productName: kept(live?.productName),
           consumerPrice: live?.consumerPrice ?? diverRate.consumer,
-          professionalPrice:
-              live?.professionalPrice ?? diverRate.professional,
+          professionalPrice: live?.professionalPrice ?? diverRate.professional,
           country: _resortCountry.text.trim(),
           continent: _continent,
           curated: live?.curated == true,
@@ -1825,7 +1832,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       final productId = existing?.id.isNotEmpty == true
           ? existing!.id
           : (_persistedProductId ??
-              'p-${DateTime.now().millisecondsSinceEpoch}');
+                'p-${DateTime.now().millisecondsSinceEpoch}');
       final drafted = ShopProduct(
         id: productId,
         shopId: shopId,
@@ -1865,8 +1872,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         options: [for (final option in options) _withSeatOption(option)],
         listingKind: _shelfKindForSave(existing),
         featuredAt: _featuredAtForSave(existing),
-        publishStatus:
-            existing?.publishStatus ?? ProductPublishStatus.approved,
+        publishStatus: existing?.publishStatus ?? ProductPublishStatus.approved,
         submittedAt: existing?.submittedAt,
         reviewedAt: existing?.reviewedAt,
         reviewNote: existing?.reviewNote ?? '',
@@ -1918,8 +1924,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       final effectiveIntent =
           widget.creatorMode && intent != ProductSaveIntent.keepEditing
-              ? ProductSaveIntent.submitForReview
-              : intent;
+          ? ProductSaveIntent.submitForReview
+          : intent;
 
       // Partner live save: confirm when any unit price swings ±30%+.
       if (widget.partnerMode &&
@@ -1959,12 +1965,12 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         effectiveIntent,
         partnerLive: widget.partnerMode && !widget.creatorMode,
       );
-      final closeCreator = widget.creatorMode &&
+      final closeCreator =
+          widget.creatorMode &&
           effectiveIntent != ProductSaveIntent.keepEditing;
       if (!quiet && !closeCreator) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(savedText)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(savedText)));
       }
       // Temp save stays on the form. A creator submit closes immediately;
       // Navigator.pop is not blocked by PopScope (that only vetoes system back).
@@ -1986,10 +1992,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         final message = raw.contains('SHOP_STAT_REFRESH_FAILED')
             ? l10n.shopStatRefreshFailed
             : (raw.contains('R2') || raw.contains('업로드')
-                ? l10n.workbenchPhotoUploadFailed
-                : raw
-                    .replaceFirst('Bad state: ', '')
-                    .replaceFirst('StateError: ', ''));
+                  ? l10n.workbenchPhotoUploadFailed
+                  : raw
+                        .replaceFirst('Bad state: ', '')
+                        .replaceFirst('StateError: ', ''));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -2195,16 +2201,23 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final busy = _savingIntent != null;
     final approved =
         widget.existing?.publishStatus == ProductPublishStatus.approved;
-    final primaryLabel = approved ? l10n.briefSave : l10n.partnerProductPublishCta;
+    final primaryLabel = approved
+        ? l10n.briefSave
+        : l10n.partnerProductPublishCta;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final partnerChrome = widget.partnerMode;
     final canPublish =
         store.stats.isAdmin && !widget.partnerMode && !widget.creatorMode;
     final rejectNote = widget.existing?.reviewNote.trim() ?? '';
     final rejectTags = widget.existing?.rejectedReasonTags ?? const <String>[];
-    final showRejectBanner = widget.creatorMode &&
+    final showRejectBanner =
+        widget.creatorMode &&
         widget.existing?.publishStatus == ProductPublishStatus.rejected &&
         (rejectNote.isNotEmpty || rejectTags.isNotEmpty);
+    final showPartnerPreview =
+        widget.partnerMode && !widget.creatorMode && _editing;
+    final widePartnerPreview =
+        showPartnerPreview && MediaQuery.sizeOf(context).width >= 900;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -2245,156 +2258,188 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         body: Column(
           children: [
             Expanded(
-              child: ListView(
-                key: const Key('partner-product-form-scroll'),
-                controller: _partnerScrollController,
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + keyboard),
-                children: [
-                  if (!_editing)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        l10n.briefViewModeHint,
-                        key: const Key('ops-product-view-hint'),
-                        style: const TextStyle(
-                          color: PartnerTheme.textDim,
-                          fontSize: 13,
+              child: _partnerPreviewSlot(
+                wide: widePartnerPreview,
+                l10n: l10n,
+                form: ListView(
+                  key: const Key('partner-product-form-scroll'),
+                  controller: _partnerScrollController,
+                  padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + keyboard),
+                  children: [
+                    if (!_editing)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          l10n.briefViewModeHint,
+                          key: const Key('ops-product-view-hint'),
+                          style: const TextStyle(
+                            color: PartnerTheme.textDim,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
-                    ),
-                  IgnorePointer(
-                    ignoring: !_editing,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (showRejectBanner)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _RejectReasonBanner(
-                              note: rejectNote,
-                              tags: rejectTags,
-                              l10n: l10n,
-                            ),
-                          ),
-                        if (widget.creatorMode) ...[
-                          _creatorProgress(l10n),
-                          _creatorStepBody(l10n, store),
-                        ] else if (widget.partnerMode) ...[
-                          _partnerGuideBanner(l10n),
-                          const SizedBox(height: 16),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-basics'),
-                            title: l10n.partnerFormBoxBasics,
-                            children: [
-                              _shopLine(l10n, store),
-                              const SizedBox(height: 12),
-                              _partnerBasicsSection(l10n),
-                            ],
-                          ),
-                          ShopProductBox(
-                            priceTitle: l10n.partnerFormBoxPricePhoto,
-                            optionsTitle: l10n.partnerFormBoxOptions,
-                            includesTitle: l10n.partnerFormBoxIncludes,
-                            priceAndPhotos: _partnerPricePhotoBlock(l10n),
-                            options: _partnerOptionsBlock(l10n, titled: false),
-                            includes: _partnerIncludesBlock(l10n),
-                            betweenOptionsAndIncludes: _partnerFormBox(
-                              boxKey: const Key(
-                                'partner-form-section-individuals',
+                    IgnorePointer(
+                      ignoring: !_editing,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (showRejectBanner)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _RejectReasonBanner(
+                                note: rejectNote,
+                                tags: rejectTags,
+                                l10n: l10n,
                               ),
-                              title: l10n.partnerFormBoxIndividuals,
+                            ),
+                          if (widget.creatorMode) ...[
+                            _creatorProgress(l10n),
+                            _creatorStepBody(l10n, store),
+                          ] else if (widget.partnerMode) ...[
+                            _partnerGuideBanner(l10n),
+                            const SizedBox(height: 16),
+                            _partnerFormBox(
+                              boxKey: const Key('partner-form-section-basics'),
+                              title: l10n.partnerFormBoxBasics,
                               children: [
-                                _partnerIndividualsBlock(l10n, titled: false),
+                                _shopLine(l10n, store),
+                                const SizedBox(height: 12),
+                                _partnerBasicsSection(l10n),
                               ],
                             ),
-                          ),
-                          _partnerFormBox(
-                            boxKey: const Key('partner-form-section-publish'),
-                            title: l10n.partnerFormBoxPublish,
-                            children: [_partnerPublishSection(l10n)],
-                          ),
-                        ] else ...[
-                          _shopLine(l10n, store),
-                          const SizedBox(height: 16),
-                          _partnerGuideBanner(l10n),
-                          const SizedBox(height: 16),
-                          _partnerSectionHeader(1, l10n.partnerFormSectionBasics),
-                          const SizedBox(height: 10),
-                          _partnerBasicsSection(l10n),
-                          const SizedBox(height: 20),
-                          _partnerSectionHeader(2, l10n.partnerFormSectionPricing),
-                          const SizedBox(height: 10),
-                          _partnerPricingSection(l10n),
-                          const SizedBox(height: 20),
-                          _partnerSectionHeader(3, l10n.partnerFormSectionPublish),
-                          const SizedBox(height: 10),
-                          _partnerPublishSection(l10n),
+                            ShopProductBox(
+                              priceTitle: l10n.partnerFormBoxPricePhoto,
+                              optionsTitle: l10n.partnerFormBoxOptions,
+                              includesTitle: l10n.partnerFormBoxIncludes,
+                              priceAndPhotos: _partnerPricePhotoBlock(l10n),
+                              options: _partnerOptionsBlock(
+                                l10n,
+                                titled: false,
+                              ),
+                              includes: _partnerIncludesBlock(l10n),
+                              betweenOptionsAndIncludes: _partnerFormBox(
+                                boxKey: const Key(
+                                  'partner-form-section-individuals',
+                                ),
+                                title: l10n.partnerFormBoxIndividuals,
+                                children: [
+                                  _partnerIndividualsBlock(l10n, titled: false),
+                                ],
+                              ),
+                            ),
+                            _partnerFormBox(
+                              boxKey: const Key('partner-form-section-publish'),
+                              title: l10n.partnerFormBoxPublish,
+                              children: [_partnerPublishSection(l10n)],
+                            ),
+                          ] else ...[
+                            _shopLine(l10n, store),
+                            const SizedBox(height: 16),
+                            _partnerGuideBanner(l10n),
+                            const SizedBox(height: 16),
+                            _partnerSectionHeader(
+                              1,
+                              l10n.partnerFormSectionBasics,
+                            ),
+                            const SizedBox(height: 10),
+                            _partnerBasicsSection(l10n),
+                            const SizedBox(height: 20),
+                            _partnerSectionHeader(
+                              2,
+                              l10n.partnerFormSectionPricing,
+                            ),
+                            const SizedBox(height: 10),
+                            _partnerPricingSection(l10n),
+                            const SizedBox(height: 20),
+                            _partnerSectionHeader(
+                              3,
+                              l10n.partnerFormSectionPublish,
+                            ),
+                            const SizedBox(height: 10),
+                            _partnerPublishSection(l10n),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  ..._openSeatsTail(l10n),
-                ],
+                    ..._openSeatsTail(l10n),
+                  ],
+                ),
               ),
             ),
+            if (showPartnerPreview && !widePartnerPreview)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: OutlinedButton(
+                  key: const Key('partner-product-preview'),
+                  onPressed: () => unawaited(_openPartnerPreviewSheet()),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                    foregroundColor: PartnerTheme.text,
+                    side: const BorderSide(color: PartnerTheme.borderStrong),
+                  ),
+                  child: Text(l10n.partnerPreviewButton),
+                ),
+              ),
             SafeArea(
               top: false,
               child: partnerChrome
                   ? Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  children: [
-                    if (_canTempSave) ...[
-                      Expanded(
-                        child: OutlinedButton(
-                          key: const Key('partner-form-temp-save'),
-                          onPressed: busy
-                              ? null
-                              : () => unawaited(
-                                    _save(ProductSaveIntent.keepEditing),
-                                  ),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                          ),
-                          child: Text(
-                            busy &&
-                                    _savingIntent ==
-                                        ProductSaveIntent.keepEditing
-                                ? l10n.exploreSaving
-                                : l10n.briefTempSave,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    Expanded(
-                      flex: _canTempSave ? 2 : 1,
-                      child: FilledButton(
-                        key: const Key('partner-product-save'),
-                        onPressed: !_editing || busy
-                            ? (_editing
-                                ? null
-                                : () => setState(() => _editing = true))
-                            : () => unawaited(
-                                  _save(ProductSaveIntent.submitForReview),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: Row(
+                        children: [
+                          if (_canTempSave) ...[
+                            Expanded(
+                              child: OutlinedButton(
+                                key: const Key('partner-form-temp-save'),
+                                onPressed: busy
+                                    ? null
+                                    : () => unawaited(
+                                        _save(ProductSaveIntent.keepEditing),
+                                      ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(48),
                                 ),
-                        style: _readableFilledStyle(),
-                        child: Text(
-                          !_editing
-                              ? l10n.briefEdit
-                              : (busy &&
-                                      _savingIntent != null &&
-                                      _savingIntent !=
-                                          ProductSaveIntent.keepEditing
-                                  ? l10n.exploreSaving
-                                  : primaryLabel),
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
+                                child: Text(
+                                  busy &&
+                                          _savingIntent ==
+                                              ProductSaveIntent.keepEditing
+                                      ? l10n.exploreSaving
+                                      : l10n.briefTempSave,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                          Expanded(
+                            flex: _canTempSave ? 2 : 1,
+                            child: FilledButton(
+                              key: const Key('partner-product-save'),
+                              onPressed: !_editing || busy
+                                  ? (_editing
+                                        ? null
+                                        : () => setState(() => _editing = true))
+                                  : () => unawaited(
+                                      _save(ProductSaveIntent.submitForReview),
+                                    ),
+                              style: _readableFilledStyle(),
+                              child: Text(
+                                !_editing
+                                    ? l10n.briefEdit
+                                    : (busy &&
+                                              _savingIntent != null &&
+                                              _savingIntent !=
+                                                  ProductSaveIntent.keepEditing
+                                          ? l10n.exploreSaving
+                                          : primaryLabel),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              )
+                    )
                   : _saveBar(l10n, canPublish: canPublish),
             ),
           ],
@@ -2405,143 +2450,157 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
 
   Widget _shopLine(AppLocalizations l10n, DiverStore store) {
     if (widget.creatorMode) {
-      return KeyedSubtree(
-        key: _nameFieldKey,
-        child: _creatorShopLine(l10n),
-      );
+      return KeyedSubtree(key: _nameFieldKey, child: _creatorShopLine(l10n));
     }
     return ListenableBuilder(
       listenable: store,
       builder: (context, _) {
-    final locked = widget.partnerMode || widget.lockedShopId != null;
-    final liveShop = store.liveStatsFor(_shopId);
-    final liveName = liveShop?.name?.trim() ?? '';
-    if (locked) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            liveName.isEmpty ? _shopId : liveName,
-            key: const Key('partner-product-shop'),
-            style: const TextStyle(
-              color: PartnerTheme.text,
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
-          if (widget.partnerMode) ...[
-            const SizedBox(height: 12),
-            KeyedSubtree(
-              key: _resortCountryKey,
-              child: _travelCountryField(l10n, partnerStyle: true),
-            ),
-          ],
-        ],
-      );
-    }
-    final shops = store.shopStats;
-    final known = shops.any((item) => item.shopId == _shopId);
-    final String? shopValue = _namedResort
-        ? _kDirectShop
-        : (known
-              ? _shopId
-              : (widget.existing == null || _shopId.isEmpty
-                    ? null
-                    : _shopId));
-    return KeyedSubtree(
-      key: _adminShopKey,
-      child: KeyedSubtree(
-      key: const Key('admin-product-shop'),
-      child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        DropdownButtonFormField<String>(
-          key: ValueKey('admin-product-shop-$_namedResort-$shopValue'),
-          initialValue: shopValue,
-          isExpanded: true,
-          hint: Text(
-            l10n.productFormPickShop,
-            style: const TextStyle(color: PartnerTheme.textDim, fontSize: 16),
-          ),
-          style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
-          dropdownColor: PartnerTheme.card,
-          iconEnabledColor: PartnerTheme.text,
-          decoration: _partnerField(l10n.productFormShopHint),
-          items: [
-            DropdownMenuItem(
-              value: _kDirectShop,
-              child: Text(l10n.productFormDirectSelect),
-            ),
-            for (final item in shops)
-              DropdownMenuItem(
-                value: item.shopId,
-                child: Text(_dbShopLabel(item)),
+        final locked = widget.partnerMode || widget.lockedShopId != null;
+        final liveShop = store.liveStatsFor(_shopId);
+        final liveName = liveShop?.name?.trim() ?? '';
+        if (locked) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                liveName.isEmpty ? _shopId : liveName,
+                key: const Key('partner-product-shop'),
+                style: const TextStyle(
+                  color: PartnerTheme.text,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
-            if (!known && shopValue != null && shopValue != _kDirectShop)
-              DropdownMenuItem(value: shopValue, child: Text(shopValue)),
-          ],
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() {
-              if (value == _kDirectShop) {
-                final current = store.liveStatsFor(_shopId);
-                _namedResort = true;
-                if (_resortName.text.trim().isEmpty) {
-                  _resortName.text = current?.name?.trim() ?? '';
-                }
-                if (_resortCountry.text.trim().isEmpty) {
-                  _resortCountry.text = current?.country?.trim() ?? '';
-                }
-                if (_resortRegion.text.trim().isEmpty) {
-                  _resortRegion.text = current?.location?.trim() ?? '';
-                }
-                return;
-              }
-              _applyCatalogShop(value, store: store);
-            });
-          },
-        ),
-        if (_namedResort) ...[
-          const SizedBox(height: 12),
-          KeyedSubtree(
-            key: _resortNameKey,
-            child: TextField(
-              key: const Key('product-curated-resort'),
-              controller: _resortName,
-              style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
-              cursorColor: PartnerTheme.accent,
-              decoration: _partnerField(
-                l10n.productFormCuratedResort,
-                hint: l10n.productFormCuratedResortHint,
-              ),
+              if (widget.partnerMode) ...[
+                const SizedBox(height: 12),
+                KeyedSubtree(
+                  key: _resortCountryKey,
+                  child: _travelCountryField(l10n, partnerStyle: true),
+                ),
+              ],
+            ],
+          );
+        }
+        final shops = store.shopStats;
+        final known = shops.any((item) => item.shopId == _shopId);
+        final String? shopValue = _namedResort
+            ? _kDirectShop
+            : (known
+                  ? _shopId
+                  : (widget.existing == null || _shopId.isEmpty
+                        ? null
+                        : _shopId));
+        return KeyedSubtree(
+          key: _adminShopKey,
+          child: KeyedSubtree(
+            key: const Key('admin-product-shop'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  key: ValueKey('admin-product-shop-$_namedResort-$shopValue'),
+                  initialValue: shopValue,
+                  isExpanded: true,
+                  hint: Text(
+                    l10n.productFormPickShop,
+                    style: const TextStyle(
+                      color: PartnerTheme.textDim,
+                      fontSize: 16,
+                    ),
+                  ),
+                  style: const TextStyle(
+                    color: PartnerTheme.text,
+                    fontSize: 16,
+                  ),
+                  dropdownColor: PartnerTheme.card,
+                  iconEnabledColor: PartnerTheme.text,
+                  decoration: _partnerField(l10n.productFormShopHint),
+                  items: [
+                    DropdownMenuItem(
+                      value: _kDirectShop,
+                      child: Text(l10n.productFormDirectSelect),
+                    ),
+                    for (final item in shops)
+                      DropdownMenuItem(
+                        value: item.shopId,
+                        child: Text(_dbShopLabel(item)),
+                      ),
+                    if (!known &&
+                        shopValue != null &&
+                        shopValue != _kDirectShop)
+                      DropdownMenuItem(
+                        value: shopValue,
+                        child: Text(shopValue),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) {
+                      return;
+                    }
+                    setState(() {
+                      if (value == _kDirectShop) {
+                        final current = store.liveStatsFor(_shopId);
+                        _namedResort = true;
+                        if (_resortName.text.trim().isEmpty) {
+                          _resortName.text = current?.name?.trim() ?? '';
+                        }
+                        if (_resortCountry.text.trim().isEmpty) {
+                          _resortCountry.text = current?.country?.trim() ?? '';
+                        }
+                        if (_resortRegion.text.trim().isEmpty) {
+                          _resortRegion.text = current?.location?.trim() ?? '';
+                        }
+                        return;
+                      }
+                      _applyCatalogShop(value, store: store);
+                    });
+                  },
+                ),
+                if (_namedResort) ...[
+                  const SizedBox(height: 12),
+                  KeyedSubtree(
+                    key: _resortNameKey,
+                    child: TextField(
+                      key: const Key('product-curated-resort'),
+                      controller: _resortName,
+                      style: const TextStyle(
+                        color: PartnerTheme.text,
+                        fontSize: 16,
+                      ),
+                      cursorColor: PartnerTheme.accent,
+                      decoration: _partnerField(
+                        l10n.productFormCuratedResort,
+                        hint: l10n.productFormCuratedResortHint,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  KeyedSubtree(
+                    key: _resortCountryKey,
+                    child: _travelCountryField(l10n, partnerStyle: true),
+                  ),
+                  const SizedBox(height: 12),
+                  KeyedSubtree(
+                    key: _resortRegionKey,
+                    child: TextField(
+                      key: const Key('product-curated-region'),
+                      controller: _resortRegion,
+                      style: const TextStyle(
+                        color: PartnerTheme.text,
+                        fontSize: 16,
+                      ),
+                      cursorColor: PartnerTheme.accent,
+                      decoration: _partnerField(
+                        l10n.productFormCuratedLocation,
+                        hint: l10n.productFormCuratedLocationHint,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          KeyedSubtree(
-            key: _resortCountryKey,
-            child: _travelCountryField(l10n, partnerStyle: true),
-          ),
-          const SizedBox(height: 12),
-          KeyedSubtree(
-            key: _resortRegionKey,
-            child: TextField(
-              key: const Key('product-curated-region'),
-              controller: _resortRegion,
-              style: const TextStyle(color: PartnerTheme.text, fontSize: 16),
-              cursorColor: PartnerTheme.accent,
-              decoration: _partnerField(
-                l10n.productFormCuratedLocation,
-                hint: l10n.productFormCuratedLocationHint,
-              ),
-            ),
-          ),
-        ],
-      ],
-      ),
-      ),
-    );
+        );
       },
     );
   }
@@ -2644,9 +2703,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       fieldKey: const Key('product-curated-country'),
       decoration: decoration,
       picked: _pickedCountry,
-      style: partnerStyle
-          ? const TextStyle(color: PartnerTheme.text)
-          : null,
+      style: partnerStyle ? const TextStyle(color: PartnerTheme.text) : null,
       cursorColor: partnerStyle ? PartnerTheme.accent : null,
       onEdited: () => _countryTouched = true,
       onPicked: (country) {
@@ -2788,10 +2845,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   }
 
   /// 옵션 카드와 개별상품 카드가 같이 쓰는 틀.
-  Widget _partnerEntryCard({
-    required Key key,
-    required List<Widget> children,
-  }) {
+  Widget _partnerEntryCard({required Key key, required List<Widget> children}) {
     return Material(
       key: key,
       color: PartnerTheme.bg,
@@ -2983,10 +3037,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       3 => _creatorStepPrice(l10n),
       4 => _creatorStepExtras(l10n),
       5 => _creatorStepReview(l10n),
-      _ => SizedBox(
-          key: Key('creator-wizard-step-$_creatorStep'),
-          height: 8,
-        ),
+      _ => SizedBox(key: Key('creator-wizard-step-$_creatorStep'), height: 8),
     };
   }
 
@@ -3047,7 +3098,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               key: 'partner-cat-resort',
               label: l10n.workbenchCatResort,
               selected: chip == ProductCategory.resortPackage,
-              onTap: () => _onPartnerCategoryChip(ProductCategory.resortPackage),
+              onTap: () =>
+                  _onPartnerCategoryChip(ProductCategory.resortPackage),
             ),
             _partnerTypeChip(
               key: 'partner-cat-day',
@@ -3167,9 +3219,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       inputFormatters: _wonPriceInputFormatters,
       style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
       cursorColor: PartnerTheme.accent,
-      decoration: _partnerField(label, errorText: errorText).copyWith(
-        counterText: '',
-      ),
+      decoration: _partnerField(
+        label,
+        errorText: errorText,
+      ).copyWith(counterText: ''),
       onChanged: (_) => onChanged(),
     );
   }
@@ -3673,37 +3726,20 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   ) {
     final gaps = <({String id, String label, int step})>[];
     if (_resortName.text.trim().isEmpty) {
-      gaps.add((
-        id: 'resort',
-        label: l10n.productFormCuratedResort,
-        step: 1,
-      ));
+      gaps.add((id: 'resort', label: l10n.productFormCuratedResort, step: 1));
     }
     if (_resortCountry.text.trim().isEmpty) {
-      gaps.add((
-        id: 'country',
-        label: l10n.productFormCuratedCountry,
-        step: 1,
-      ));
+      gaps.add((id: 'country', label: l10n.productFormCuratedCountry, step: 1));
     }
     if (_resortRegion.text.trim().isEmpty) {
-      gaps.add((
-        id: 'region',
-        label: l10n.productFormCuratedLocation,
-        step: 1,
-      ));
+      gaps.add((id: 'region', label: l10n.productFormCuratedLocation, step: 1));
     }
     if (_diverPriceValue <= 0) {
       gaps.add((id: 'diver', label: l10n.partnerFormBasePrice, step: 3));
     }
     if (_hasNondivers) {
-      if (parsePositivePrice(_rateConsumer[GuestRole.nondiver]!.text) ==
-          null) {
-        gaps.add((
-          id: 'nondiver',
-          label: l10n.workbenchGuestNondiver,
-          step: 3,
-        ));
+      if (parsePositivePrice(_rateConsumer[GuestRole.nondiver]!.text) == null) {
+        gaps.add((id: 'nondiver', label: l10n.workbenchGuestNondiver, step: 3));
       }
       if (parsePositivePrice(_rateConsumer[GuestRole.child]!.text) == null) {
         gaps.add((id: 'child', label: l10n.workbenchGuestChild, step: 3));
@@ -3714,11 +3750,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (addon != null) {
         if (addon.name.text.trim().isNotEmpty &&
             parsePositivePrice(addon.consumer.text) == null) {
-          gaps.add((
-            id: 'offer-$id',
-            label: addon.name.text.trim(),
-            step: 4,
-          ));
+          gaps.add((id: 'offer-$id', label: addon.name.text.trim(), step: 4));
         }
         continue;
       }
@@ -3728,11 +3760,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       }
       if (ticket.name.text.trim().isNotEmpty &&
           parsePositivePrice(ticket.consumer.text) == null) {
-        gaps.add((
-          id: 'offer-$id',
-          label: ticket.name.text.trim(),
-          step: 4,
-        ));
+        gaps.add((id: 'offer-$id', label: ticket.name.text.trim(), step: 4));
       }
       for (final nested in ticket.addons) {
         if (nested.name.text.trim().isNotEmpty &&
@@ -3834,6 +3862,227 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     );
   }
 
+  Widget _partnerPreviewSlot({
+    required bool wide,
+    required AppLocalizations l10n,
+    required Widget form,
+  }) {
+    if (!wide) {
+      return form;
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: form),
+        SizedBox(
+          width: 360,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 12, 16, 12),
+            child: SingleChildScrollView(child: _partnerPreviewLive(l10n)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _partnerPreviewLive(AppLocalizations l10n) {
+    return ListenableBuilder(
+      listenable: _partnerPreviewListenable(),
+      builder: (context, _) => _partnerPreviewColumn(l10n),
+    );
+  }
+
+  Listenable _partnerPreviewListenable() {
+    return Listenable.merge([
+      _name,
+      _blurb,
+      _nightsField,
+      _daysField,
+      _includes,
+      _excludes,
+      _cancel,
+      _meeting,
+      _resortCountry,
+      _resortRegion,
+      if (_rateConsumer[GuestRole.diver] != null)
+        _rateConsumer[GuestRole.diver]!,
+      for (final line in _addons) ...[
+        line.name,
+        line.consumer,
+        line.description,
+        line.includes,
+        line.excludes,
+      ],
+      for (final ticket in _individuals) ...[
+        ticket.name,
+        ticket.lead,
+        ticket.consumer,
+        ticket.includes,
+        ticket.excludes,
+        for (final nested in ticket.addons) ...[
+          nested.name,
+          nested.consumer,
+          nested.description,
+          nested.includes,
+          nested.excludes,
+        ],
+      ],
+    ]);
+  }
+
+  Widget _partnerPreviewColumn(AppLocalizations l10n) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F4EE),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE3DED3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.partnerPreviewTitle,
+              style: const TextStyle(
+                color: Color(0xFF10242F),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _partnerOfferPreview(),
+            const SizedBox(height: 8),
+            _partnerPreviewStatus(l10n),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Guest card from the partner form, built the same way as the creator review.
+  Widget _partnerOfferPreview() {
+    final l10n = AppLocalizations.of(context);
+    final name = _name.text.trim();
+    final price = _diverPriceValue;
+    final shopId = _shopId.trim().isEmpty ? 'partner-preview' : _shopId.trim();
+    final product = ShopProduct(
+      id: widget.existing?.id ?? 'partner-preview-product',
+      shopId: shopId,
+      name: name,
+      consumerPrice: price,
+      professionalPrice: price,
+      blurb: _blurb.text.trim(),
+      durationLabel: _durationLabelForSave,
+      coverUrl: _galleryCoverUrl,
+      continent: _continent,
+      meetingPoint: _meeting.text.trim(),
+      includes: _includes.text.trim(),
+      excludes: _excludes.text.trim(),
+      cancellationNote: _cancel.text.trim(),
+      options: _assembledOptions(name: name, diverPrice: price),
+      category: _categoryForSave,
+    );
+    final shop = DiveShop(
+      id: shopId,
+      name: name.isEmpty ? l10n.partnerPreviewTitle : name,
+      location: _resortRegion.text.trim(),
+      country: _resortCountry.text.trim(),
+      continent: _continent,
+      sites: const [],
+      productName: name,
+      stars: 0,
+      rating: 0,
+      reviewCount: 0,
+      amenities: const [],
+      consumerPrice: price,
+      professionalPrice: price,
+      blurb: _blurb.text.trim(),
+      durationLabel: _durationLabelForSave,
+      coverUrl: _galleryCoverUrl,
+    );
+    Uint8List? coverBytes;
+    for (final item in _gallery) {
+      final data = item.photo?.bytes;
+      if (data != null && data.isNotEmpty) {
+        coverBytes = data;
+        break;
+      }
+    }
+    return ProductOfferPreview(
+      shop: shop,
+      product: product,
+      quote: TourPriceQuote(amount: price, isProfessional: false),
+      coverBytes: coverBytes,
+    );
+  }
+
+  bool get _partnerPreviewHasPhoto {
+    for (final item in _gallery) {
+      final bytes = item.photo?.bytes;
+      if (bytes != null && bytes.isNotEmpty) {
+        return true;
+      }
+      if ((item.url?.trim() ?? '').isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Widget _partnerPreviewStatus(AppLocalizations l10n) {
+    final en = Localizations.localeOf(context).languageCode == 'en';
+    final missing = <String>[
+      if (_name.text.trim().isEmpty) en ? 'product name' : '상품 이름',
+      if (_diverPriceValue <= 0) en ? 'price' : '가격',
+    ];
+    const noteStyle = TextStyle(
+      color: Color(0xFF5C6B76),
+      fontSize: 12,
+      height: 1.35,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          missing.isEmpty
+              ? l10n.partnerPreviewReady
+              : l10n.partnerPreviewMissing(missing.join(', ')),
+          style: noteStyle,
+        ),
+        if (!_partnerPreviewHasPhoto) ...[
+          const SizedBox(height: 4),
+          Text(l10n.partnerPreviewNoPhoto, style: noteStyle),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _openPartnerPreviewSheet() {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (sheetContext) {
+        final maxHeight = MediaQuery.sizeOf(sheetContext).height * 0.85;
+        final l10n = AppLocalizations.of(sheetContext);
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: _partnerPreviewLive(l10n),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _partnerBasicsSection(AppLocalizations l10n) {
     final chip = selectedPartnerCategoryChip(_category);
     return Column(
@@ -3900,7 +4149,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
               key: 'partner-cat-resort',
               label: l10n.workbenchCatResort,
               selected: chip == ProductCategory.resortPackage,
-              onTap: () => _onPartnerCategoryChip(ProductCategory.resortPackage),
+              onTap: () =>
+                  _onPartnerCategoryChip(ProductCategory.resortPackage),
             ),
             _partnerTypeChip(
               key: 'partner-cat-day',
@@ -3967,40 +4217,40 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
         if (widget.partnerMode) ...[
           const SizedBox(height: 12),
           Material(
-          color: PartnerTheme.card,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.partnerFormShopInfoRow,
-                    style: const TextStyle(
-                      color: PartnerTheme.textDim,
-                      fontSize: 12,
-                      height: 1.35,
+            color: PartnerTheme.card,
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.partnerFormShopInfoRow,
+                      style: const TextStyle(
+                        color: PartnerTheme.textDim,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
                     ),
                   ),
-                ),
-                TextButton(
-                  key: const Key('partner-form-shop-info'),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ResortDeskScreen(
-                          shopId: _shopId,
-                          partnerMode: true,
+                  TextButton(
+                    key: const Key('partner-form-shop-info'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ResortDeskScreen(
+                            shopId: _shopId,
+                            partnerMode: true,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  child: Text(l10n.partnerFormShopInfoCta),
-                ),
-              ],
+                      );
+                    },
+                    child: Text(l10n.partnerFormShopInfoCta),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         ],
       ],
     );
@@ -4100,7 +4350,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                   keyboardType: TextInputType.number,
                   maxLength: kWorkbenchPriceInputMaxLength,
                   inputFormatters: _priceInputFormatters,
-                  style: const TextStyle(color: PartnerTheme.text, fontSize: 15),
+                  style: const TextStyle(
+                    color: PartnerTheme.text,
+                    fontSize: 15,
+                  ),
                   cursorColor: PartnerTheme.accent,
                   decoration: _partnerField(
                     l10n.partnerFormBasePrice,
@@ -4302,15 +4555,9 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           ? _partnerField(l10n.productFormOptionGroup)
           : _bookingDense(l10n.productFormOptionGroup),
       items: [
-        const DropdownMenuItem(
-          value: '',
-          child: Text(optionGroupUnsetLabel),
-        ),
+        const DropdownMenuItem(value: '', child: Text(optionGroupUnsetLabel)),
         for (final group in optionGroups)
-          DropdownMenuItem(
-            value: group.id,
-            child: Text(group.nameKo),
-          ),
+          DropdownMenuItem(value: group.id, child: Text(group.nameKo)),
       ],
       onChanged: (next) => onChanged(normalizeOptionGroup(next)),
     );
@@ -4371,10 +4618,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           _addons.removeAt(index);
         });
       },
-      icon: const Icon(
-        Icons.delete_outline,
-        color: PartnerTheme.textDim,
-      ),
+      icon: const Icon(Icons.delete_outline, color: PartnerTheme.textDim),
     );
     final group = _optionGroupMenu(
       id: draft.id,
@@ -4438,131 +4682,122 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
   Widget _partnerIndividualCard(AppLocalizations l10n, int index) {
     final ticket = _individuals[index];
     final fields = <Widget>[
-            Row(
-              children: [
-                Expanded(
-                  child: _StableField(
-                    key: ValueKey('individual-name-slot-${ticket.id}'),
-                    stamp: 0,
-                    buildField: () => TextField(
-                      key: ValueKey('individual-name-${ticket.id}'),
-                      controller: ticket.name,
-                      cursorColor: PartnerTheme.accent,
-                      style: const TextStyle(color: PartnerTheme.text),
-                      decoration: _partnerField(l10n.bookingEntryIndividualName),
-                    ),
+      Row(
+        children: [
+          Expanded(
+            child: _StableField(
+              key: ValueKey('individual-name-slot-${ticket.id}'),
+              stamp: 0,
+              buildField: () => TextField(
+                key: ValueKey('individual-name-${ticket.id}'),
+                controller: ticket.name,
+                cursorColor: PartnerTheme.accent,
+                style: const TextStyle(color: PartnerTheme.text),
+                decoration: _partnerField(l10n.bookingEntryIndividualName),
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _dropIndividual(ticket);
+                _individuals.removeAt(index);
+                _syncSeatSlots();
+              });
+            },
+            icon: const Icon(Icons.delete_outline, color: PartnerTheme.textDim),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      _optionGroupMenu(
+        id: ticket.id,
+        value: ticket.group,
+        partner: true,
+        onChanged: (next) => setState(() => ticket.group = next),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: KeyedSubtree(
+              key: ticket.priceKey,
+              child: _StableField(
+                key: ValueKey('individual-price-slot-${ticket.id}'),
+                stamp: ticket.priceError,
+                buildField: () => TextField(
+                  key: ValueKey('partner-form-individual-price-${ticket.id}'),
+                  focusNode: ticket.consumerFocus,
+                  controller: ticket.consumer,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: _priceInputFormatters,
+                  cursorColor: PartnerTheme.accent,
+                  style: const TextStyle(color: PartnerTheme.text),
+                  decoration: _partnerField(
+                    l10n.partnerFormBasePrice,
+                    errorText: ticket.priceError,
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _dropIndividual(ticket);
-                      _individuals.removeAt(index);
-                      _syncSeatSlots();
-                    });
+                  onChanged: (_) {
+                    if (ticket.priceError != null) {
+                      setState(() => ticket.priceError = null);
+                    }
                   },
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: PartnerTheme.textDim,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _optionGroupMenu(
-              id: ticket.id,
-              value: ticket.group,
-              partner: true,
-              onChanged: (next) => setState(() => ticket.group = next),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: KeyedSubtree(
-                    key: ticket.priceKey,
-                    child: _StableField(
-                      key: ValueKey('individual-price-slot-${ticket.id}'),
-                      stamp: ticket.priceError,
-                      buildField: () => TextField(
-                        key: ValueKey('partner-form-individual-price-${ticket.id}'),
-                        focusNode: ticket.consumerFocus,
-                        controller: ticket.consumer,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: _priceInputFormatters,
-                        cursorColor: PartnerTheme.accent,
-                        style: const TextStyle(color: PartnerTheme.text),
-                        decoration: _partnerField(
-                          l10n.partnerFormBasePrice,
-                          errorText: ticket.priceError,
-                        ),
-                        onChanged: (_) {
-                          if (ticket.priceError != null) {
-                            setState(() => ticket.priceError = null);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _instructorPriceField(
-                    key: ValueKey('individual-pro-${ticket.id}'),
-                    controller: ticket.professional,
-                    label: l10n.exploreProPrice,
-                    hint: l10n.productFormProPriceHint,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _StableField(
-              key: ValueKey('individual-includes-slot-${ticket.id}'),
-              stamp: 0,
-              buildField: () => TextField(
-                key: ValueKey('partner-form-individual-includes-${ticket.id}'),
-                controller: ticket.includes,
-                minLines: 2,
-                maxLines: 3,
-                cursorColor: PartnerTheme.accent,
-                style: const TextStyle(color: PartnerTheme.text),
-                decoration: _partnerField(
-                  l10n.productFormIncludes,
-                  lines: 2,
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            _StableField(
-              key: ValueKey('individual-excludes-slot-${ticket.id}'),
-              stamp: 0,
-              buildField: () => TextField(
-                key: ValueKey('partner-form-individual-excludes-${ticket.id}'),
-                controller: ticket.excludes,
-                minLines: 2,
-                maxLines: 3,
-                cursorColor: PartnerTheme.accent,
-                style: const TextStyle(color: PartnerTheme.text),
-                decoration: _partnerField(
-                  l10n.productFormExcludes,
-                  lines: 2,
-                ),
-              ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _instructorPriceField(
+              key: ValueKey('individual-pro-${ticket.id}'),
+              controller: ticket.professional,
+              label: l10n.exploreProPrice,
+              hint: l10n.productFormProPriceHint,
             ),
-            const SizedBox(height: 8),
-            for (var j = 0; j < ticket.addons.length; j++) ...[
-              _nestedAddonRow(l10n, ticket, j),
-              const SizedBox(height: 6),
-            ],
-            TextButton(
-              onPressed: () {
-                final line = _LineEditors(kind: ProductOptionKind.addon);
-                setState(() => ticket.addons.add(line));
-              },
-              child: Text(l10n.partnerFormIndividualOptions),
-            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      _StableField(
+        key: ValueKey('individual-includes-slot-${ticket.id}'),
+        stamp: 0,
+        buildField: () => TextField(
+          key: ValueKey('partner-form-individual-includes-${ticket.id}'),
+          controller: ticket.includes,
+          minLines: 2,
+          maxLines: 3,
+          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(l10n.productFormIncludes, lines: 2),
+        ),
+      ),
+      const SizedBox(height: 8),
+      _StableField(
+        key: ValueKey('individual-excludes-slot-${ticket.id}'),
+        stamp: 0,
+        buildField: () => TextField(
+          key: ValueKey('partner-form-individual-excludes-${ticket.id}'),
+          controller: ticket.excludes,
+          minLines: 2,
+          maxLines: 3,
+          cursorColor: PartnerTheme.accent,
+          style: const TextStyle(color: PartnerTheme.text),
+          decoration: _partnerField(l10n.productFormExcludes, lines: 2),
+        ),
+      ),
+      const SizedBox(height: 8),
+      for (var j = 0; j < ticket.addons.length; j++) ...[
+        _nestedAddonRow(l10n, ticket, j),
+        const SizedBox(height: 6),
+      ],
+      TextButton(
+        onPressed: () {
+          final line = _LineEditors(kind: ProductOptionKind.addon);
+          setState(() => ticket.addons.add(line));
+        },
+        child: Text(l10n.partnerFormIndividualOptions),
+      ),
     ];
     if (widget.partnerMode) {
       return _partnerEntryCard(
@@ -4680,10 +4915,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (entry == null) {
       return const [];
     }
-    return [
-      const SizedBox(height: 16),
-      entry,
-    ];
+    return [const SizedBox(height: 16), entry];
   }
 
   /// Creator wizard keeps [craftedTripCanOpenSeats]. The one-screen form
@@ -4707,7 +4939,8 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     if (existing != null && existing.submittedByUid != uid) {
       return null;
     }
-    final gate = existing ??
+    final gate =
+        existing ??
         ShopProduct(
           id: 'new',
           shopId: 'new',
@@ -4717,11 +4950,7 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
           submittedByUid: uid,
           publishStatus: ProductPublishStatus.pending,
         );
-    if (craftedTripCanOpenSeats(
-      grade: grade,
-      viewerUid: uid,
-      product: gate,
-    )) {
+    if (craftedTripCanOpenSeats(grade: grade, viewerUid: uid, product: gate)) {
       return _openSeatsButton(l10n, existing!);
     }
     return _openSeatsHint(l10n);
@@ -4927,13 +5156,14 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     final submitIntent = widget.creatorMode
         ? ProductSaveIntent.submitForReview
         : (canPublish
-            ? ProductSaveIntent.publish
-            : ProductSaveIntent.submitForReview);
+              ? ProductSaveIntent.publish
+              : ProductSaveIntent.submitForReview);
     final busy = _savingIntent != null;
-    final pending = canPublish &&
+    final pending =
+        canPublish &&
         (widget.existing?.publishStatus == ProductPublishStatus.pending);
-    final partnerSaveLabel = widget.existing?.publishStatus ==
-            ProductPublishStatus.approved
+    final partnerSaveLabel =
+        widget.existing?.publishStatus == ProductPublishStatus.approved
         ? l10n.briefSave
         : l10n.partnerProductPublish;
     return SafeArea(
@@ -4995,10 +5225,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
                           _savingIntent != ProductSaveIntent.keepEditing
                       ? l10n.exploreSaving
                       : (canPublish
-                          ? l10n.briefSave
-                          : (widget.partnerMode
-                              ? partnerSaveLabel
-                              : l10n.briefSubmit)),
+                            ? l10n.briefSave
+                            : (widget.partnerMode
+                                  ? partnerSaveLabel
+                                  : l10n.briefSubmit)),
                 ),
               ),
           ],
@@ -5019,32 +5249,28 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       return;
     }
     if (!ProductPublishGuard.hasValidPricesForApprove(existing)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.adminProductApproveOverCap)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.adminProductApproveOverCap)));
       return;
     }
     setState(() => _savingIntent = ProductSaveIntent.publish);
     try {
-      final probe = await DiverStoreScope.of(context).approveShopProduct(
-        shopId: existing.shopId,
-        productId: existing.id,
-      );
+      final probe = await DiverStoreScope.of(context)
+          .approveShopProduct(shopId: existing.shopId, productId: existing.id);
       unawaited(probe.readFuture);
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.adminProductApproved)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.adminProductApproved)));
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
     } finally {
       if (mounted) {
         setState(() => _savingIntent = null);
@@ -5073,24 +5299,21 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.adminProductRejected)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.adminProductRejected)));
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
     } finally {
       if (mounted) {
         setState(() => _savingIntent = null);
       }
     }
   }
-
 
   InputDecoration _field(String label, {String? hint, int? lines}) {
     final border = OutlineInputBorder(
@@ -5112,7 +5335,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       ),
     );
   }
-
 
   void _applyCatalogShop(String shopId, {required DiverStore store}) {
     final live = store.liveStatsFor(shopId);
@@ -5139,8 +5361,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
     }
   }
 
-
-
   InputDecoration _bookingDense(
     String label, {
     String? hint,
@@ -5166,7 +5386,10 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       filled: true,
       fillColor: Colors.white,
       labelStyle: const TextStyle(color: AppTheme.muted, fontSize: 12),
-      hintStyle: const TextStyle(color: AppTheme.muted, fontWeight: FontWeight.w400),
+      hintStyle: const TextStyle(
+        color: AppTheme.muted,
+        fontWeight: FontWeight.w400,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       border: border,
       enabledBorder: border,
@@ -5178,7 +5401,6 @@ class _OpsProductWorkbenchState extends State<OpsProductWorkbench> {
       focusedErrorBorder: errorBorder,
     );
   }
-
 }
 
 /// Darker than [PartnerTheme.accent] so the same teal reads on the white bar.
@@ -5565,10 +5787,7 @@ class _RejectReasonBannerState extends State<_RejectReasonBanner> {
                 overflow: (!_expanded && long)
                     ? TextOverflow.ellipsis
                     : TextOverflow.visible,
-                style: const TextStyle(
-                  color: Color(0xFF5C1A1A),
-                  height: 1.4,
-                ),
+                style: const TextStyle(color: Color(0xFF5C1A1A), height: 1.4),
               ),
               if (long)
                 Align(

@@ -3731,5 +3731,15 @@
     "placeholders": {
       "percent": { "type": "int" }
     }
-  }
+  },
+  "partnerPreviewTitle": "손님에게 보이는 모습",
+  "partnerPreviewButton": "미리보기",
+  "partnerPreviewMissing": "아직 비어 있는 필수 칸: {fields}",
+  "@partnerPreviewMissing": {
+    "placeholders": {
+      "fields": { "type": "String" }
+    }
+  },
+  "partnerPreviewReady": "필수 칸이 모두 채워졌어요",
+  "partnerPreviewNoPhoto": "사진이 없으면 손님에게 공개되지 않아요"
 }

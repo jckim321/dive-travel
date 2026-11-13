@@ -4650,10 +4650,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get partnerPeakSeasonOverlap => 'Overlapping dates cannot be saved';
 
   @override
-  String get partnerPeakSeasonBadRange => 'The end date cannot be before the start date';
+  String get partnerPeakSeasonBadRange =>
+      'The end date cannot be before the start date';
 
   @override
-  String get partnerPeakSeasonNeedDates => 'Choose a start date and an end date';
+  String get partnerPeakSeasonNeedDates =>
+      'Choose a start date and an end date';
 
   @override
   String get partnerFormAddOption => '+ Add option';
@@ -5565,7 +5567,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreShopSeason => 'Open season';
 
   @override
-  String get exploreShopSeasonHint => 'Tap the months and a range fills in, like Mar–Nov.';
+  String get exploreShopSeasonHint =>
+      'Tap the months and a range fills in, like Mar–Nov.';
 
   @override
   String get exploreShopClosed => 'Regular days off';
@@ -5574,7 +5577,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exploreShopClosedNone => 'None';
 
   @override
-  String get exploreShopClosedNote => 'Other note (for example, Wednesdays may also be closed in the rainy season)';
+  String get exploreShopClosedNote =>
+      'Other note (for example, Wednesdays may also be closed in the rainy season)';
 
   @override
   String exploreShopClosedWeekly(String days) {
@@ -5759,8 +5763,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String exploreBoatDives(int count) => '$count boat dives';
 
   @override
-  String get checkoutGuestNondiverNote =>
-      'No diving · stay and meals included';
+  String get checkoutGuestNondiverNote => 'No diving · stay and meals included';
 
   @override
   String get checkoutGuestChildNote => 'Ages 2–11 · with a guardian';
@@ -7322,4 +7325,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String refundPolicyHint(int percent) {
     return 'Cancel now for a $percent% refund';
   }
+
+  @override
+  String get partnerPreviewTitle => 'What guests see';
+
+  @override
+  String get partnerPreviewButton => 'Preview';
+
+  @override
+  String partnerPreviewMissing(String fields) =>
+      'Required fields still empty: $fields';
+
+  @override
+  String get partnerPreviewReady => 'All required fields are filled';
+
+  @override
+  String get partnerPreviewNoPhoto => "Without a photo, guests won't see this";
 }

@@ -3064,5 +3064,15 @@
   "checkoutPerNight": "/night",
   "checkoutSingleRoomUse": "Single room",
   "checkoutPriceFree": "Free",
-  "settingsLanguageLabel": "Language"
+  "settingsLanguageLabel": "Language",
+  "partnerPreviewTitle": "What guests see",
+  "partnerPreviewButton": "Preview",
+  "partnerPreviewMissing": "Required fields still empty: {fields}",
+  "@partnerPreviewMissing": {
+    "placeholders": {
+      "fields": { "type": "String" }
+    }
+  },
+  "partnerPreviewReady": "All required fields are filled",
+  "partnerPreviewNoPhoto": "Without a photo, guests won't see this"
 }
