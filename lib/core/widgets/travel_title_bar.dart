@@ -5,6 +5,7 @@ import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/bilingual_rotator.dart';
+import 'package:dive_travel_app/core/widgets/language_switch.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
@@ -98,83 +99,104 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                     child: SizedBox(
                       key: const Key('home-hero-card'),
                       height: cardHeight,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: AppTheme.cardShadow,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              const ColoredBox(color: AppTheme.oceanDeep),
-                              ColorFiltered(
-                                colorFilter: ColorFilter.mode(
-                                  Colors.black.withValues(alpha: 0.28),
-                                  BlendMode.darken,
-                                ),
-                                child: Image.asset(
-                                  _heroAsset,
-                                  fit: BoxFit.cover,
-                                  alignment: const Alignment(0, -0.15),
-                                  errorBuilder: (_, _, _) => const ColoredBox(
-                                    color: AppTheme.oceanDeep,
-                                  ),
-                                ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: AppTheme.cardShadow,
                               ),
-                              const DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Color(0x99052A4A),
-                                      Color(0x55052A4A),
-                                      Color(0xCC0B1F33),
-                                    ],
-                                    stops: [0.0, 0.42, 1.0],
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: Stack(
+                                  fit: StackFit.expand,
                                   children: [
-                                    const Align(
-                                      alignment: Alignment.topRight,
-                                      child: _LuggageChip(),
-                                    ),
-                                    const Spacer(),
-                                    BilingualRotator(
-                                      alignment: Alignment.centerLeft,
-                                      english: _SloganBlock(
-                                        title: english.homeWelcome,
-                                        subtitle: english.homeSubtitle,
+                                    const ColoredBox(color: AppTheme.oceanDeep),
+                                    ColorFiltered(
+                                      colorFilter: ColorFilter.mode(
+                                        Colors.black.withValues(alpha: 0.28),
+                                        BlendMode.darken,
                                       ),
-                                      localized: _SloganBlock(
-                                        title: l10n.homeWelcome,
-                                        subtitle: l10n.homeSubtitle,
+                                      child: Image.asset(
+                                        _heroAsset,
+                                        fit: BoxFit.cover,
+                                        alignment: const Alignment(0, -0.15),
+                                        errorBuilder: (_, _, _) =>
+                                            const ColoredBox(
+                                          color: AppTheme.oceanDeep,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(height: 10),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: FractionallySizedBox(
-                                        widthFactor:
-                                            0.35 + (0.55 * _stubWidth.value),
-                                        alignment: Alignment.centerLeft,
-                                        child: const _BoardingStubStrip(),
+                                    const DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color(0x99052A4A),
+                                            Color(0x55052A4A),
+                                            Color(0xCC0B1F33),
+                                          ],
+                                          stops: [0.0, 0.42, 1.0],
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        10,
+                                        16,
+                                        10,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Spacer(),
+                                          BilingualRotator(
+                                            alignment: Alignment.centerLeft,
+                                            english: _SloganBlock(
+                                              title: english.homeWelcome,
+                                              subtitle: english.homeSubtitle,
+                                            ),
+                                            localized: _SloganBlock(
+                                              title: l10n.homeWelcome,
+                                              subtitle: l10n.homeSubtitle,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: FractionallySizedBox(
+                                              widthFactor: 0.35 +
+                                                  (0.55 * _stubWidth.value),
+                                              alignment: Alignment.centerLeft,
+                                              child: const _BoardingStubStrip(),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const Positioned(
+                            top: 10,
+                            right: 16,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _LuggageChip(),
+                                SizedBox(width: 8),
+                                LanguageSwitch(),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
