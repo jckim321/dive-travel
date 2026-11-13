@@ -800,7 +800,9 @@ class PartnerResortInfoForm extends StatelessWidget {
                 cursorColor: PlannerPalette.accent,
                 maxLength: kMaxShortLine,
                 maxLines: 2,
-                decoration: _field('가장 가까운 도시·공항'),
+                decoration: _field('가장 가까운 도시·공항').copyWith(
+                  helperText: '손님에게 보이는 설명 문구',
+                ),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -813,7 +815,10 @@ class PartnerResortInfoForm extends StatelessWidget {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
                 ],
-                decoration: _field('가까운 공항(3글자 코드)'),
+                decoration: _field('가까운 공항(3글자 코드)').copyWith(
+                  helperText: '현지 공항 3글자 코드 (예: 발리 DPS) — 항공권 링크에 쓰여요',
+                  helperMaxLines: 2,
+                ),
               ),
               const SizedBox(height: 8),
               for (var i = 0; i < info.accessRoutes.length; i++)
@@ -1311,7 +1316,9 @@ class PartnerResortInfoForm extends StatelessWidget {
                   cursorColor: const Color(0xFF0A6B64),
                   maxLength: kMaxShortLine,
                   maxLines: 2,
-                  decoration: _field('가장 가까운 도시·공항', mockup: true),
+                  decoration: _field('가장 가까운 도시·공항', mockup: true).copyWith(
+                    helperText: '손님에게 보이는 설명 문구',
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -1327,7 +1334,14 @@ class PartnerResortInfoForm extends StatelessWidget {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
                   ],
-                  decoration: _field('가까운 공항(3글자 코드)', mockup: true),
+                  decoration: _field(
+                    '가까운 공항(3글자 코드)',
+                    mockup: true,
+                  ).copyWith(
+                    helperText:
+                        '현지 공항 3글자 코드 (예: 발리 DPS) — 항공권 링크에 쓰여요',
+                    helperMaxLines: 2,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
