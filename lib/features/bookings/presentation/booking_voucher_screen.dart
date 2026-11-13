@@ -14,21 +14,53 @@ import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_voucher_logic.dart';
+import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
-Future<void> openBookingVoucher(BuildContext context, TourBooking booking) {
+BuildContext? _contextUnderMainShell(BuildContext root) {
+  BuildContext? found;
+  void visit(Element element) {
+    if (found != null) {
+      return;
+    }
+    if (element.widget is MainShell) {
+      element.visitChildElements((child) {
+        found ??= child;
+      });
+      return;
+    }
+    element.visitChildElements(visit);
+  }
+
+  root.visitChildElements(visit);
+  return found;
+}
+
+Future<void> openBookingVoucher(
+  BuildContext context,
+  TourBooking booking, {
+  bool afterPayment = false,
+}) {
   return Navigator.of(context).push<void>(
     MaterialPageRoute<void>(
-      builder: (_) => BookingVoucherScreen(booking: booking),
+      builder: (_) => BookingVoucherScreen(
+        booking: booking,
+        afterPayment: afterPayment,
+      ),
     ),
   );
 }
 
 /// Full-screen travel voucher — open anytime and save to the phone for field use.
 class BookingVoucherScreen extends StatefulWidget {
-  const BookingVoucherScreen({super.key, required this.booking});
+  const BookingVoucherScreen({
+    super.key,
+    required this.booking,
+    this.afterPayment = false,
+  });
 
   final TourBooking booking;
+  final bool afterPayment;
 
   @override
   State<BookingVoucherScreen> createState() => _BookingVoucherScreenState();
@@ -72,6 +104,21 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
   void dispose() {
     _store?.removeListener(_onStore);
     super.dispose();
+  }
+
+  void _closeToTab(int index) {
+    final navigator = Navigator.of(context);
+    navigator.popUntil((route) => route.isFirst);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!navigator.mounted) {
+        return;
+      }
+      final host = _contextUnderMainShell(navigator.context);
+      if (host == null || !host.mounted) {
+        return;
+      }
+      MainShell.goToTab(host, index);
+    });
   }
 
   static final _money = NumberFormat('#,###', 'en_US');
@@ -413,6 +460,28 @@ class _BookingVoucherScreenState extends State<BookingVoucherScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (widget.afterPayment) ...[
+                    OutlinedButton(
+                      key: const Key('booking-voucher-my-trips'),
+                      onPressed: () => _closeToTab(4),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: AppTheme.navy,
+                      ),
+                      child: const Text('내 예약 보기'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      key: const Key('booking-voucher-home'),
+                      onPressed: () => _closeToTab(0),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: AppTheme.navy,
+                      ),
+                      child: const Text('홈으로'),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   if (booking.isActive) ...[
                     OutlinedButton.icon(
                       key: const Key('booking-voucher-flight'),

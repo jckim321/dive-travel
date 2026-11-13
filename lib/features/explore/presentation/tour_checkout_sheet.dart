@@ -663,7 +663,11 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
       final overlayContext = navigator.overlay?.context;
       navigator.pop();
       if (overlayContext != null && overlayContext.mounted) {
-        await openBookingVoucher(overlayContext, saved);
+        await openBookingVoucher(
+          overlayContext,
+          saved,
+          afterPayment: true,
+        );
       }
     } finally {
       _paying = false;
