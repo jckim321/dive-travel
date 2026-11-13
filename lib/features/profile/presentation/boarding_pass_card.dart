@@ -208,6 +208,113 @@ class _SoonGlowState extends State<_SoonGlow>
   }
 }
 
+class _PulseTick {
+  const _PulseTick({
+    required this.lit,
+    required this.warm,
+    required this.today,
+    required this.wave,
+  });
+
+  final bool lit;
+  final bool warm;
+  final bool today;
+  final double wave;
+}
+
+class _PulseHost extends StatefulWidget {
+  const _PulseHost({required this.daysUntil, required this.builder});
+
+  final int? daysUntil;
+  final Widget Function(BuildContext context, _PulseTick tick) builder;
+
+  @override
+  State<_PulseHost> createState() => _PulseHostState();
+}
+
+class _PulseHostState extends State<_PulseHost>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _breath;
+
+  @override
+  void initState() {
+    super.initState();
+    _breath = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_PulseHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  bool get _lit {
+    final days = widget.daysUntil;
+    return days != null && days <= 7;
+  }
+
+  bool get _warm {
+    final days = widget.daysUntil;
+    return days != null && days <= 3;
+  }
+
+  void _sync() {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    if (!_lit || reduce) {
+      if (_breath.isAnimating) {
+        _breath.stop();
+      }
+      return;
+    }
+    final next = _warm
+        ? const Duration(milliseconds: 1500)
+        : const Duration(seconds: 3);
+    final restart = _breath.duration != next || !_breath.isAnimating;
+    _breath.duration = next;
+    if (restart) {
+      _breath.repeat();
+    }
+  }
+
+  _PulseTick _tick(bool reduce) {
+    final days = widget.daysUntil;
+    final lit = days != null && days <= 7;
+    final warm = days != null && days <= 3;
+    final today = days != null && days <= 0;
+    final wave = !lit || reduce
+        ? 1.0
+        : 0.4 + 0.6 * math.sin(_breath.value * math.pi);
+    return _PulseTick(lit: lit, warm: warm, today: today, wave: wave);
+  }
+
+  @override
+  void dispose() {
+    _breath.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    if (!_lit || reduce) {
+      return widget.builder(context, _tick(reduce));
+    }
+    return AnimatedBuilder(
+      animation: _breath,
+      builder: (context, _) => widget.builder(context, _tick(false)),
+    );
+  }
+}
+
 class _Ticket extends StatelessWidget {
   const _Ticket({
     required this.l10n,
@@ -227,7 +334,10 @@ class _Ticket extends StatelessWidget {
         ? '다음 바다는 어디예요?'
         : booked.place;
     final when = booked == null ? 'NEXT OCEAN' : _when(booked);
-    return GestureDetector(
+    return _PulseHost(
+      daysUntil: booked?.daysUntil,
+      builder: (context, tick) {
+        return GestureDetector(
       key: const Key('profile-boarding-pass'),
       onTap: onOpen,
       child: Stack(
@@ -276,24 +386,8 @@ class _Ticket extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 4),
                           child: Column(
                             children: [
-                              Text(
-                                booked.daysUntil <= 0
-                                    ? l10n.profileTripDdayToday
-                                    : l10n.profileTripDday(booked.daysUntil),
-                                key: const Key('profile-boarding-dday'),
-                                style: const TextStyle(
-                                  color: AppTheme.gold,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              Text(
-                                '출발까지',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.72),
-                                  fontSize: 11,
-                                ),
-                              ),
+                              _ddayMark(l10n, booked, tick),
+                              _untilLabel(booked, tick),
                             ],
                           ),
                         ),
@@ -353,14 +447,122 @@ class _Ticket extends StatelessWidget {
           ],
         ),
           ),
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: _stubHeight - 9,
             height: 18,
-            child: IgnorePointer(
-              child: Icon(Icons.flight, size: 16, color: AppTheme.goldSoft),
+            child: _plane(tick),
+          ),
+        ],
+      ),
+    );
+      },
+    );
+  }
+
+  Widget _ddayMark(AppLocalizations l10n, _TripFacts booked, _PulseTick tick) {
+    final label = booked.daysUntil <= 0
+        ? l10n.profileTripDdayToday
+        : l10n.profileTripDday(booked.daysUntil);
+    if (!tick.lit) {
+      return Text(
+        label,
+        key: const Key('profile-boarding-dday'),
+        style: const TextStyle(
+          color: AppTheme.gold,
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+    final color = tick.warm ? const Color(0xFFFF9A4A) : AppTheme.gold;
+    final wave = tick.wave;
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          width: 64,
+          height: 64,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.10 + 0.20 * wave),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.22 + 0.48 * wave),
+                    blurRadius: 18,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
             ),
+          ),
+        ),
+        Text(
+          label,
+          key: const Key('profile-boarding-dday'),
+          style: TextStyle(
+            color: color,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            shadows: [
+              Shadow(
+                color: color.withValues(alpha: 0.40 + 0.55 * wave),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _untilLabel(_TripFacts booked, _PulseTick tick) {
+    if (booked.daysUntil > 0) {
+      return Text(
+        '출발까지',
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.72),
+          fontSize: 11,
+        ),
+      );
+    }
+    const color = Color(0xFFFF9A4A);
+    return Text(
+      '오늘 떠나요',
+      style: TextStyle(
+        color: color,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        shadows: [
+          Shadow(
+            color: color.withValues(alpha: 0.40 + 0.55 * tick.wave),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _plane(_PulseTick tick) {
+    if (!tick.today) {
+      return const IgnorePointer(
+        child: Icon(Icons.flight, size: 16, color: AppTheme.goldSoft),
+      );
+    }
+    const color = Color(0xFFFF9A4A);
+    return IgnorePointer(
+      child: Icon(
+        Icons.flight,
+        size: 16,
+        color: color,
+        shadows: [
+          Shadow(
+            color: color.withValues(alpha: 0.45 + 0.50 * tick.wave),
+            blurRadius: 10,
           ),
         ],
       ),

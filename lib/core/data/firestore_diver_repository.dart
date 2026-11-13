@@ -1978,52 +1978,7 @@ class FirestoreDiverRepository implements DiverRepository {
       _shops.doc(shopId).collection('bookings');
 
   TourBooking _toBooking(String id, Map<String, dynamic> data) {
-    return TourBooking(
-      id: id,
-      uid: data['uid'] as String? ?? '',
-      shopId: data['shop_id'] as String? ?? '',
-      shopName: data['shop_name'] as String? ?? '',
-      productName: data['product_name'] as String? ?? '',
-      price: (data['price'] as num?)?.toInt() ?? 0,
-      createdAt: _readDate(data['created_at']),
-      tourDate: data['tour_date'] == null ? null : _readDate(data['tour_date']),
-      reviewed: data['reviewed'] == true,
-      status: BookingStatus.parse(data['status']),
-      refundPercent: (data['refund_percent'] as num?)?.toInt() ?? 0,
-      refundAmount: (data['refund_amount'] as num?)?.toInt() ?? 0,
-      refundNoticeSeen: data['refund_notice_seen'] == true,
-      commissionRate:
-          (data['commission_rate'] as num?)?.toDouble() ??
-          RefundPolicy.defaultCommissionRate,
-      paymentStatus: PaymentStatus.parse(data['payment_status']),
-      productId: data['product_id'] as String? ?? '',
-      optionId: data['option_id'] as String? ?? '',
-      optionName: data['option_name'] as String? ?? '',
-      listingKind: data.containsKey('listing_kind')
-          ? ProductListingKind.parse(data['listing_kind'])
-          : ProductListingKind.exploreOnly,
-      fromFlag: data['from_flag'] == true,
-      partySize: (data['party_size'] as num?)?.toInt() ?? 0,
-      divers: (data['divers'] as num?)?.toInt() ?? 0,
-      nondivers: (data['nondivers'] as num?)?.toInt() ?? 0,
-      children: (data['children'] as num?)?.toInt() ?? 0,
-      infants: (data['infants'] as num?)?.toInt() ?? 0,
-      singleRooms: (data['single_rooms'] as num?)?.toInt() ?? 0,
-      quoteLines: BookingLine.listFrom(data['quote_lines']),
-      partyLines: BookingPartyLine.listFrom(data['party_lines']),
-      seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
-      seatOptionId: data['seat_option_id'] as String? ?? '',
-      guestDisplayName: data['guest_display_name'] as String? ?? '',
-      guestBirthDate: data['guest_birth_date'] as String? ?? '',
-      guestContact: data['guest_contact'] as String? ?? '',
-      publicCode: data['public_code'] as String? ?? '',
-      partnerAckedAt: data['partner_acked_at'] == null
-          ? null
-          : _readDate(data['partner_acked_at']),
-      cancelledAt: data['cancelled_at'] == null
-          ? null
-          : _readDate(data['cancelled_at']),
-    );
+    return TourBooking.fromMap(id, data);
   }
 
   Map<String, dynamic> _bookingPayload(
@@ -2074,6 +2029,11 @@ class FirestoreDiverRepository implements DiverRepository {
         'partner_acked_at': Timestamp.fromDate(booking.partnerAckedAt!),
       if (booking.cancelledAt != null)
         'cancelled_at': Timestamp.fromDate(booking.cancelledAt!),
+      if (booking.arrivalFlight.isNotEmpty)
+        'arrival_flight': booking.arrivalFlight,
+      if (booking.arrivalAt != null)
+        'arrival_at': Timestamp.fromDate(booking.arrivalAt!),
+      if (booking.returnFlight.isNotEmpty) 'return_flight': booking.returnFlight,
       'tour_date': Timestamp.fromDate(booking.scheduledFor),
       'created_at': Timestamp.fromDate(booking.createdAt),
       'updated_at': FieldValue.serverTimestamp(),
@@ -5733,6 +5693,47 @@ class FirestoreDiverRepository implements DiverRepository {
       await _shopBookings(shopId)
           .doc(bookingId)
           .set(patch, SetOptions(merge: true));
+    }
+  }
+
+  @override
+  Future<void> updateBookingFlight({
+    required String uid,
+    required String bookingId,
+    required String arrivalFlight,
+    DateTime? arrivalAt,
+    required String returnFlight,
+  }) async {
+    final userRef = _bookings(uid).doc(bookingId);
+    final snap = await userRef.get();
+    if (!snap.exists) {
+      return;
+    }
+    final booking = _toBooking(snap.id, snap.data() ?? {});
+    if (!booking.isActive) {
+      return;
+    }
+    final patch = <String, dynamic>{
+      'arrival_flight': arrivalFlight.trim().toUpperCase(),
+      'return_flight': returnFlight.trim().toUpperCase(),
+      'arrival_at': arrivalAt == null
+          ? FieldValue.delete()
+          : Timestamp.fromDate(arrivalAt),
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    await userRef.set(patch, SetOptions(merge: true));
+    final shopId = booking.shopId.split('--').first;
+    if (shopId.isEmpty) {
+      return;
+    }
+    final shopRef = _shopBookings(shopId).doc(bookingId);
+    try {
+      await shopRef.update(patch);
+    } on FirebaseException catch (error) {
+      if (error.code == 'not-found') {
+        return;
+      }
+      rethrow;
     }
   }
 

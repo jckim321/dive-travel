@@ -4771,6 +4771,37 @@ class MemoryDiverRepository implements DiverRepository {
     _bookingController.add(List<TourBooking>.from(_bookings));
   }
 
+  @override
+  Future<void> updateBookingFlight({
+    required String uid,
+    required String bookingId,
+    required String arrivalFlight,
+    DateTime? arrivalAt,
+    required String returnFlight,
+  }) async {
+    final index = _bookings.indexWhere(
+      (item) => item.id == bookingId && item.uid == uid,
+    );
+    if (index < 0) {
+      return;
+    }
+    final current = _bookings[index];
+    if (!current.isActive) {
+      return;
+    }
+    _bookings[index] = current.copyWith(
+      arrivalFlight: arrivalFlight.trim().toUpperCase(),
+      arrivalAt: arrivalAt,
+      clearArrivalAt: arrivalAt == null,
+      returnFlight: returnFlight.trim().toUpperCase(),
+    );
+    _replaceShopBooking(_bookings[index]);
+    _bookingController.add(List<TourBooking>.from(_bookings));
+    _shopBookingController.add(
+      List<TourBooking>.from(_shopBookings[current.shopId] ?? const []),
+    );
+  }
+
   void _replaceShopBooking(TourBooking booking) {
     final visible = booking.copyWith(guestBirthDate: '', guestContact: '');
     final list = _shopBookings.putIfAbsent(booking.shopId, () => []);

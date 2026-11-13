@@ -1,3 +1,4 @@
+import 'package:dive_travel_app/core/data/refund_policy.dart';
 import 'package:dive_travel_app/core/models/booking_quote.dart';
 import 'package:dive_travel_app/core/models/shop_product.dart';
 
@@ -73,6 +74,9 @@ class TourBooking {
     this.publicCode = '',
     this.partnerAckedAt,
     this.cancelledAt,
+    this.arrivalFlight = '',
+    this.arrivalAt,
+    this.returnFlight = '',
   });
 
   final String id;
@@ -130,6 +134,15 @@ class TourBooking {
   /// When the shop copy was cancelled or weather-cancelled.
   /// Read from the existing `cancelled_at` field. Overview uses this only.
   final DateTime? cancelledAt;
+
+  /// Guest-told inbound flight number. Empty on older bookings.
+  final String arrivalFlight;
+
+  /// Arrival clock on the departure day. Null when the guest has not set one.
+  final DateTime? arrivalAt;
+
+  /// Guest-told return flight number. Empty on older bookings.
+  final String returnFlight;
 
   bool get partnerAcked => partnerAckedAt != null;
 
@@ -215,6 +228,10 @@ class TourBooking {
     bool clearPartnerAckedAt = false,
     DateTime? cancelledAt,
     bool clearCancelledAt = false,
+    String? arrivalFlight,
+    DateTime? arrivalAt,
+    bool clearArrivalAt = false,
+    String? returnFlight,
   }) {
     return TourBooking(
       id: id,
@@ -255,12 +272,130 @@ class TourBooking {
           ? null
           : (partnerAckedAt ?? this.partnerAckedAt),
       cancelledAt: clearCancelledAt ? null : (cancelledAt ?? this.cancelledAt),
+      arrivalFlight: arrivalFlight ?? this.arrivalFlight,
+      arrivalAt: clearArrivalAt ? null : (arrivalAt ?? this.arrivalAt),
+      returnFlight: returnFlight ?? this.returnFlight,
     );
+  }
+
+  factory TourBooking.fromMap(String id, Map<String, dynamic> data) {
+    return TourBooking(
+      id: id,
+      uid: data['uid'] as String? ?? '',
+      shopId: data['shop_id'] as String? ?? '',
+      shopName: data['shop_name'] as String? ?? '',
+      productName: data['product_name'] as String? ?? '',
+      price: (data['price'] as num?)?.toInt() ?? 0,
+      createdAt: _bookingDate(data['created_at']),
+      tourDate: data['tour_date'] == null ? null : _bookingDate(data['tour_date']),
+      reviewed: data['reviewed'] == true,
+      status: BookingStatus.parse(data['status']),
+      refundPercent: (data['refund_percent'] as num?)?.toInt() ?? 0,
+      refundAmount: (data['refund_amount'] as num?)?.toInt() ?? 0,
+      refundNoticeSeen: data['refund_notice_seen'] == true,
+      commissionRate:
+          (data['commission_rate'] as num?)?.toDouble() ??
+          RefundPolicy.defaultCommissionRate,
+      paymentStatus: PaymentStatus.parse(data['payment_status']),
+      productId: data['product_id'] as String? ?? '',
+      optionId: data['option_id'] as String? ?? '',
+      optionName: data['option_name'] as String? ?? '',
+      listingKind: data.containsKey('listing_kind')
+          ? ProductListingKind.parse(data['listing_kind'])
+          : ProductListingKind.exploreOnly,
+      fromFlag: data['from_flag'] == true,
+      partySize: (data['party_size'] as num?)?.toInt() ?? 0,
+      divers: (data['divers'] as num?)?.toInt() ?? 0,
+      nondivers: (data['nondivers'] as num?)?.toInt() ?? 0,
+      children: (data['children'] as num?)?.toInt() ?? 0,
+      infants: (data['infants'] as num?)?.toInt() ?? 0,
+      singleRooms: (data['single_rooms'] as num?)?.toInt() ?? 0,
+      quoteLines: BookingLine.listFrom(data['quote_lines']),
+      partyLines: BookingPartyLine.listFrom(data['party_lines']),
+      seatsHeld: (data['seats_held'] as num?)?.toInt() ?? 0,
+      seatOptionId: data['seat_option_id'] as String? ?? '',
+      guestDisplayName: data['guest_display_name'] as String? ?? '',
+      guestBirthDate: data['guest_birth_date'] as String? ?? '',
+      guestContact: data['guest_contact'] as String? ?? '',
+      publicCode: data['public_code'] as String? ?? '',
+      partnerAckedAt: data['partner_acked_at'] == null
+          ? null
+          : _bookingDate(data['partner_acked_at']),
+      cancelledAt: data['cancelled_at'] == null
+          ? null
+          : _bookingDate(data['cancelled_at']),
+      arrivalFlight: (data['arrival_flight'] as String? ?? '').trim(),
+      arrivalAt: _optionalBookingDate(data['arrival_at']),
+      returnFlight: (data['return_flight'] as String? ?? '').trim(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'shop_id': shopId,
+      'shop_name': shopName,
+      'product_name': productName,
+      'price': price,
+      'reviewed': reviewed,
+      'status': status.firestoreValue,
+      'refund_percent': refundPercent,
+      'refund_amount': refundAmount,
+      'refund_notice_seen': refundNoticeSeen,
+      'commission_rate': commissionRate,
+      'payment_status': paymentStatus.firestoreValue,
+      'product_id': productId,
+      'option_id': optionId,
+      'option_name': optionName,
+      'listing_kind': listingKind.firestoreValue,
+      'from_flag': fromFlag,
+      'party_size': partySize,
+      'divers': divers,
+      'nondivers': nondivers,
+      'children': children,
+      'infants': infants,
+      'single_rooms': singleRooms,
+      'seats_held': seatsHeld,
+      'seat_option_id': seatOptionId,
+      'guest_display_name': guestDisplayName,
+      'public_code': publicCode,
+      'arrival_flight': arrivalFlight,
+      'arrival_at': arrivalAt?.toIso8601String() ?? '',
+      'return_flight': returnFlight,
+      'tour_date': scheduledFor.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+    };
   }
 
   /// Inventory option id used when restoring seats.
   String get seatsOptionKey =>
       seatOptionId.isNotEmpty ? seatOptionId : optionId;
+}
+
+DateTime? _optionalBookingDate(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is String && value.trim().isEmpty) {
+    return null;
+  }
+  return _bookingDate(value);
+}
+
+DateTime _bookingDate(dynamic value) {
+  if (value is DateTime) {
+    return value;
+  }
+  if (value is String) {
+    return DateTime.tryParse(value) ?? DateTime.now();
+  }
+  try {
+    final date = (value as dynamic).toDate();
+    if (date is DateTime) {
+      return date;
+    }
+  } catch (_) {}
+  return DateTime.now();
 }
 
 /// Real profile/login display name for partner vouchers.

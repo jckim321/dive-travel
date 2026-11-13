@@ -878,6 +878,16 @@ abstract class DiverRepository {
     required String bookingId,
   });
 
+  /// Guest flight note on the user booking and the shop copy.
+  /// Empty strings clear the flight numbers. Null [arrivalAt] clears the time.
+  Future<void> updateBookingFlight({
+    required String uid,
+    required String bookingId,
+    required String arrivalFlight,
+    DateTime? arrivalAt,
+    required String returnFlight,
+  });
+
   Future<void> addCommunityPost({
     required String uid,
     required String authorName,

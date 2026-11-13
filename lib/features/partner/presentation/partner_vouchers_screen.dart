@@ -201,6 +201,23 @@ String _partnerVoucherPartyDetail(AppLocalizations l10n, TourBooking booking) {
   return parts.join(' · ');
 }
 
+String? _arrivalNote(TourBooking booking) {
+  final clock = booking.arrivalAt == null
+      ? ''
+      : DateFormat('HH:mm').format(booking.arrivalAt!.toLocal());
+  final flight = booking.arrivalFlight.trim();
+  if (clock.isEmpty && flight.isEmpty) {
+    return null;
+  }
+  if (clock.isNotEmpty && flight.isNotEmpty) {
+    return '도착 $clock · $flight';
+  }
+  if (clock.isNotEmpty) {
+    return '도착 $clock';
+  }
+  return '도착 $flight';
+}
+
 class PartnerVoucherCard extends StatelessWidget {
   const PartnerVoucherCard({
     super.key,
@@ -274,6 +291,17 @@ class PartnerVoucherCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _line(l10n.partnerVoucherTourDate, _day.format(booking.scheduledFor)),
+            if (_arrivalNote(booking) case final note?)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  note,
+                  style: const TextStyle(
+                    color: PartnerTheme.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             _line(
               l10n.partnerVoucherParty,
               partnerVoucherPartyWithSingleRooms(
@@ -520,6 +548,7 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
   String _plainText(AppLocalizations l10n) {
     final foc = partnerVoucherFocLabel(booking);
     final option = booking.optionLabel;
+    final arrival = _arrivalNote(booking);
     return [
       l10n.partnerVoucherTitleLine(
         bookingPublicLabel(
@@ -529,6 +558,7 @@ class PartnerVoucherDetailScreen extends StatelessWidget {
         booking.productLabel,
       ),
       '${l10n.partnerVoucherTourDate}: ${_day.format(booking.scheduledFor)}',
+      ?arrival,
       '${l10n.partnerVoucherParty}: ${partnerVoucherPartyWithSingleRooms(l10n, booking, booking.hasPartyDetail ? _partnerVoucherPartyDetail(l10n, booking) : '${booking.partySize}')}',
       '${l10n.partnerVoucherOptions}: ${option.isEmpty ? l10n.partnerVoucherNone : option}',
       '${l10n.partnerVoucherFoc}: ${foc ?? l10n.partnerVoucherNone}',

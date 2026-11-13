@@ -3805,6 +3805,25 @@ class DiverStore extends ChangeNotifier {
     return _repository.acknowledgeRefundNotice(uid: uid, bookingId: bookingId);
   }
 
+  Future<void> updateBookingFlight({
+    required String bookingId,
+    required String arrivalFlight,
+    DateTime? arrivalAt,
+    required String returnFlight,
+  }) {
+    final uid = _uid;
+    if (uid == null) {
+      return Future.value();
+    }
+    return _repository.updateBookingFlight(
+      uid: uid,
+      bookingId: bookingId,
+      arrivalFlight: arrivalFlight,
+      arrivalAt: arrivalAt,
+      returnFlight: returnFlight,
+    );
+  }
+
   Future<void> addCommunityPost({
     required String title,
     required String subtitle,
