@@ -4799,6 +4799,7 @@ class FirestoreDiverRepository implements DiverRepository {
     List<String>? amenities,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,
@@ -4891,6 +4892,8 @@ class FirestoreDiverRepository implements DiverRepository {
       if (amenities != null) 'amenities': amenities,
       if (mapUrl != null) 'map_url': mapUrl.trim(),
       if (nearestHub != null) 'nearest_hub': nearestHub.trim(),
+      if (nearestAirport != null)
+        'nearest_airport': normalizeNearestAirport(nearestAirport),
       if (accessRoutes != null)
         'access_routes': [
           for (final route in accessRoutes.take(kMaxAccessRoutes))

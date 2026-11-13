@@ -2500,6 +2500,7 @@ class DiverStore extends ChangeNotifier {
     List<String>? amenities,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,
@@ -2566,6 +2567,7 @@ class DiverStore extends ChangeNotifier {
       amenities: amenities,
       mapUrl: mapUrl,
       nearestHub: nearestHub,
+      nearestAirport: nearestAirport,
       accessRoutes: accessRoutes,
       featureBlurb: featureBlurb,
       featureTags: featureTags,
@@ -2603,6 +2605,7 @@ class DiverStore extends ChangeNotifier {
       amenities: amenities,
       mapUrl: mapUrl,
       nearestHub: nearestHub,
+      nearestAirport: nearestAirport,
       accessRoutes: accessRoutes,
       featureBlurb: featureBlurb,
       featureTags: featureTags,
@@ -2653,6 +2656,7 @@ class DiverStore extends ChangeNotifier {
     List<String>? amenities,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,
@@ -2730,6 +2734,9 @@ class DiverStore extends ChangeNotifier {
           amenities: amenities,
           mapUrl: mapUrl?.trim(),
           nearestHub: nearestHub?.trim(),
+          nearestAirport: nearestAirport == null
+              ? null
+              : normalizeNearestAirport(nearestAirport),
           accessRoutes: accessRoutes,
           featureBlurb: featureBlurb?.trim(),
           featureTags: featureTags,
@@ -3935,6 +3942,7 @@ class DiverStore extends ChangeNotifier {
           curated: profile.curated,
           mapUrl: profile.mapUrl,
           nearestHub: profile.nearestHub,
+          nearestAirport: profile.nearestAirport,
           accessRoutes: profile.accessRoutes,
           featureBlurb: profile.featureBlurb,
           featureTags: profile.featureTags,
@@ -4035,6 +4043,7 @@ class DiverStore extends ChangeNotifier {
         fetched.continent == saved.continent &&
         fetched.mapUrl == saved.mapUrl &&
         fetched.nearestHub == saved.nearestHub &&
+        fetched.nearestAirport == saved.nearestAirport &&
         fetched.featureBlurb == saved.featureBlurb &&
         fetched.localContact == saved.localContact &&
         fetched.checkIn == saved.checkIn &&

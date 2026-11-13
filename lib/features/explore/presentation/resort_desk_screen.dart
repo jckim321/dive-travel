@@ -229,6 +229,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
     _info.seed(
       mapUrl: live?.mapUrl ?? '',
       nearestHub: live?.nearestHub ?? '',
+      nearestAirport: live?.nearestAirport ?? '',
       featureBlurb: live?.featureBlurb ?? '',
       localContact: live?.localContact ?? '',
       checkIn: live?.checkIn ?? '',
@@ -427,6 +428,7 @@ class _ResortDeskScreenState extends State<ResortDeskScreen> {
         ],
         mapUrl: null,
         nearestHub: clampShort(_info.nearestHub.text),
+        nearestAirport: normalizeNearestAirport(_info.nearestAirport.text),
         accessRoutes: _info.builtRoutes(),
         featureBlurb: clampShort(_info.featureBlurb.text, kMaxShortLine * 2),
         featureTags: [

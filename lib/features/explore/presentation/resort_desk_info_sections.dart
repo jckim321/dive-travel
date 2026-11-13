@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/models/shop_resort_info.dart';
 import 'package:dive_travel_app/core/widgets/booking_gallery_editor.dart';
@@ -56,6 +57,7 @@ class ResortDeskInfoDraft {
 
   final mapUrl = TextEditingController();
   final nearestHub = TextEditingController();
+  final nearestAirport = TextEditingController();
   final featureBlurb = TextEditingController();
   final localContact = TextEditingController();
   final checkIn = TextEditingController();
@@ -77,6 +79,7 @@ class ResortDeskInfoDraft {
   void seed({
     required String mapUrl,
     required String nearestHub,
+    required String nearestAirport,
     required String featureBlurb,
     required String localContact,
     required String checkIn,
@@ -94,6 +97,7 @@ class ResortDeskInfoDraft {
   }) {
     this.mapUrl.text = mapUrl;
     this.nearestHub.text = nearestHub;
+    this.nearestAirport.text = nearestAirport;
     this.featureBlurb.text = featureBlurb;
     this.localContact.text = localContact;
     this.checkIn.text = checkIn;
@@ -176,6 +180,7 @@ class ResortDeskInfoDraft {
   void dispose() {
     mapUrl.dispose();
     nearestHub.dispose();
+    nearestAirport.dispose();
     featureBlurb.dispose();
     localContact.dispose();
     checkIn.dispose();
@@ -798,6 +803,19 @@ class PartnerResortInfoForm extends StatelessWidget {
                 decoration: _field('가장 가까운 도시·공항'),
               ),
               const SizedBox(height: 8),
+              TextField(
+                key: const Key('resort-nearest-airport'),
+                controller: info.nearestAirport,
+                style: fieldStyle,
+                cursorColor: PlannerPalette.accent,
+                maxLength: 3,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
+                ],
+                decoration: _field('가까운 공항(3글자 코드)'),
+              ),
+              const SizedBox(height: 8),
               for (var i = 0; i < info.accessRoutes.length; i++)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -1294,6 +1312,22 @@ class PartnerResortInfoForm extends StatelessWidget {
                   maxLength: kMaxShortLine,
                   maxLines: 2,
                   decoration: _field('가장 가까운 도시·공항', mockup: true),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _mockLabel(
+                '가까운 공항(3글자 코드)',
+                TextField(
+                  key: const Key('partner-resort-nearest-airport'),
+                  controller: info.nearestAirport,
+                  style: fieldStyle,
+                  cursorColor: const Color(0xFF0A6B64),
+                  maxLength: 3,
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[A-Za-z]')),
+                  ],
+                  decoration: _field('가까운 공항(3글자 코드)', mockup: true),
                 ),
               ),
               const SizedBox(height: 8),

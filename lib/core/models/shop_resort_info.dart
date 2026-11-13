@@ -88,6 +88,20 @@ Uri googleMapsSearchUri(String query) {
   });
 }
 
+/// Three-letter airport code. Anything else, including blank, is empty.
+String normalizeNearestAirport(String raw) {
+  final code = raw.trim().toUpperCase();
+  if (code.length != 3) {
+    return '';
+  }
+  for (final unit in code.codeUnits) {
+    if (unit < 65 || unit > 90) {
+      return '';
+    }
+  }
+  return code;
+}
+
 String clampShort(String raw, [int max = kMaxShortLine]) {
   final t = raw.trim();
   if (t.length <= max) {

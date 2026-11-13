@@ -632,6 +632,7 @@ abstract class DiverRepository {
     List<String>? amenities,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,

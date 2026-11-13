@@ -21,13 +21,15 @@ import 'package:dive_travel_app/core/models/shop_product.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/features/bookings/presentation/my_bookings_section.dart';
+import 'package:dive_travel_app/core/models/shop_resort_info.dart';
+import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/tour_checkout_sheet.dart';
 import 'package:dive_travel_app/features/reviews/presentation/my_reviews_screen.dart';
 import 'package:dive_travel_app/features/reviews/presentation/operation_review_screen.dart';
 import 'package:dive_travel_app/features/profile/presentation/departure_desk_header.dart';
 import 'package:dive_travel_app/features/profile/presentation/flight_link_sheet.dart';
-import 'package:dive_travel_app/features/profile/presentation/diving_passport_card.dart';
+import 'package:dive_travel_app/features/profile/presentation/boarding_pass_card.dart';
 import 'package:dive_travel_app/features/profile/presentation/my_crafted_trips_section.dart';
 import 'package:dive_travel_app/features/community/presentation/community_screen.dart';
 import 'package:dive_travel_app/features/community/presentation/same_boat_search_bar.dart';
@@ -166,6 +168,7 @@ class ProfileScreen extends StatelessWidget {
                     memberGrade: stats.memberGrade,
                     isInstructor: stats.isInstructor,
                     onSettings: () => _openSettings(context),
+                    showFlightSearch: false,
                   ),
                 ),
                 if (stats.gradeCelebrationPending &&
@@ -181,7 +184,7 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      DivingPassportCard(regions: store.regions),
+                      const BoardingPassCard(),
                       const SizedBox(height: 28),
                       _OceanSectionTitle(title: l10n.profileMyTripsTitle),
                       const SizedBox(height: 12),
@@ -843,6 +846,34 @@ class _TripDetails extends StatelessWidget {
   final VoidCallback onOpenVoucher;
   final VoidCallback onWriteReview;
 
+  void _openBookingFlights(BuildContext context) {
+    final live = DiverStoreScope.of(context).liveStatsFor(booking.shopId);
+    final arrival = normalizeNearestAirport(live?.nearestAirport ?? '');
+    ShopProduct? product;
+    final productId = booking.productId;
+    if (live != null && productId.isNotEmpty) {
+      for (final item in live.readerProducts) {
+        if (item.id == productId) {
+          product = item;
+          break;
+        }
+      }
+    }
+    final depart = booking.tourDate;
+    final ret = depart == null || product == null
+        ? null
+        : buyerReturnDay(
+            departure: depart,
+            durationLabel: product.durationLabel,
+          );
+    showFlightLinkSheet(
+      context,
+      arrivalAirport: arrival.isEmpty ? null : arrival,
+      depart: depart,
+      ret: ret,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -893,7 +924,7 @@ class _TripDetails extends StatelessWidget {
             if (showFlight)
               FilledButton(
                 key: Key('profile-flight-${booking.id}'),
-                onPressed: () => showFlightLinkSheet(context),
+                onPressed: () => _openBookingFlights(context),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTheme.gold,
                   foregroundColor: AppTheme.navy,

@@ -3889,6 +3889,7 @@ class MemoryDiverRepository implements DiverRepository {
     List<String>? amenities,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,
@@ -4009,6 +4010,9 @@ class MemoryDiverRepository implements DiverRepository {
               amenities: amenities ?? current?.amenities,
               mapUrl: mapUrl ?? current?.mapUrl,
               nearestHub: nearestHub ?? current?.nearestHub,
+              nearestAirport: nearestAirport == null
+                  ? current?.nearestAirport
+                  : normalizeNearestAirport(nearestAirport),
               accessRoutes: accessRoutes ?? current?.accessRoutes,
               featureBlurb: featureBlurb ?? current?.featureBlurb,
               featureTags: featureTags ?? current?.featureTags,

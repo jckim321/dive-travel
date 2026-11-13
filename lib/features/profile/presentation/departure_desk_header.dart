@@ -15,6 +15,7 @@ class DepartureDeskHeader extends StatelessWidget {
     required this.memberGrade,
     required this.isInstructor,
     required this.onSettings,
+    this.showFlightSearch = true,
   });
 
   final String displayName;
@@ -23,6 +24,9 @@ class DepartureDeskHeader extends StatelessWidget {
   final MemberGrade memberGrade;
   final bool isInstructor;
   final VoidCallback onSettings;
+
+  /// My hides this row. The boarding pass opens the same sheet.
+  final bool showFlightSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -132,46 +136,48 @@ class DepartureDeskHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Material(
-            color: Colors.white.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(999),
-            child: InkWell(
-              key: const Key('profile-flight-search'),
+          if (showFlightSearch) ...[
+            const SizedBox(height: 8),
+            Material(
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(999),
-              onTap: () => showFlightLinkSheet(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.flight, color: Colors.white, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      l10n.profileFlightSearch,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
+              child: InkWell(
+                key: const Key('profile-flight-search'),
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => showFlightLinkSheet(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.flight, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.profileFlightSearch,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      l10n.profileFlightPayHint,
-                      softWrap: false,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.86),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                      const Spacer(),
+                      Text(
+                        l10n.profileFlightPayHint,
+                        softWrap: false,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.86),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

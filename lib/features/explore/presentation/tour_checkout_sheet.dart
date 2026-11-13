@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:intl/intl.dart';
 
@@ -16,6 +18,7 @@ import 'package:dive_travel_app/core/widgets/listing_cover.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/bookings/presentation/booking_voucher_screen.dart';
 import 'package:dive_travel_app/features/explore/presentation/partner_empty_seat_products.dart';
+import 'package:dive_travel_app/features/profile/presentation/flight_link_sheet.dart';
 import 'package:dive_travel_app/features/explore/presentation/resort_detail_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
@@ -488,6 +491,36 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
     return !product.openEmptySeats;
   }
 
+  String? _nearestAirportCode() {
+    final raw = DiverStoreScope.of(context)
+            .liveStatsFor(widget.shop.hullId)
+            ?.nearestAirport ??
+        '';
+    final code = normalizeNearestAirport(raw);
+    return code.isEmpty ? null : code;
+  }
+
+  String? _saleWindowLabel() {
+    final product = widget.product;
+    if (product == null) {
+      return null;
+    }
+    var start = product.saleFrom;
+    var end = product.saleTo;
+    if (start == null && end == null) {
+      return null;
+    }
+    if (start != null && end != null && start.isAfter(end)) {
+      final swapped = start;
+      start = end;
+      end = swapped;
+    }
+    String text(DateTime day) => DateFormat('yyyy-MM-dd').format(day);
+    final from = start == null ? '' : text(start);
+    final to = end == null ? '' : text(end);
+    return '출발 가능 기간 $from ~ $to';
+  }
+
   DateTime? get _buyerReturn {
     if (!_buyerPicksDeparture) return null;
     return buyerReturnDay(
@@ -926,6 +959,39 @@ class _TourCheckoutSheetState extends State<TourCheckoutSheet> {
                                 ),
                             ],
                             const SizedBox(height: 18),
+                            if (_nearestAirportCode() != null) ...[
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  key: const Key('checkout-cheap-days'),
+                                  onPressed: () {
+                                    final code = _nearestAirportCode();
+                                    if (code == null) {
+                                      return;
+                                    }
+                                    unawaited(
+                                      openSkyscannerRoute(
+                                        from: 'ICN',
+                                        to: code,
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.flight, size: 18),
+                                  label: const Text('싼 날 찾아보기'),
+                                ),
+                              ),
+                              if (_saleWindowLabel() != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text(
+                                    _saleWindowLabel()!,
+                                    key: const Key('checkout-sale-window'),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.muted,
+                                    ),
+                                  ),
+                                ),
+                            ],
                             Row(
                               children: [
                                 Expanded(

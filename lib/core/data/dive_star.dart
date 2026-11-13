@@ -99,6 +99,7 @@ class ShopLiveStats {
     this.address,
     this.mapUrl = '',
     this.nearestHub = '',
+    this.nearestAirport = '',
     this.accessRoutes = const [],
     this.featureBlurb = '',
     this.featureTags = const [],
@@ -159,6 +160,9 @@ class ShopLiveStats {
       address: data['address'] as String?,
       mapUrl: (data['map_url'] as String? ?? '').trim(),
       nearestHub: (data['nearest_hub'] as String? ?? '').trim(),
+      nearestAirport: normalizeNearestAirport(
+        data['nearest_airport'] as String? ?? '',
+      ),
       accessRoutes: AccessRoute.listFrom(data['access_routes']),
       featureBlurb: (data['feature_blurb'] as String? ?? '').trim(),
       featureTags: stringListFrom(
@@ -230,6 +234,9 @@ class ShopLiveStats {
   final String? address;
   final String mapUrl;
   final String nearestHub;
+
+  /// Optional IATA code (`nearest_airport`). Empty means no airport link.
+  final String nearestAirport;
   final List<AccessRoute> accessRoutes;
   final String featureBlurb;
   final List<String> featureTags;
@@ -310,6 +317,7 @@ class ShopLiveStats {
     String? address,
     String? mapUrl,
     String? nearestHub,
+    String? nearestAirport,
     List<AccessRoute>? accessRoutes,
     String? featureBlurb,
     List<String>? featureTags,
@@ -363,6 +371,7 @@ class ShopLiveStats {
       address: address ?? this.address,
       mapUrl: mapUrl ?? this.mapUrl,
       nearestHub: nearestHub ?? this.nearestHub,
+      nearestAirport: nearestAirport ?? this.nearestAirport,
       accessRoutes: accessRoutes ?? this.accessRoutes,
       featureBlurb: featureBlurb ?? this.featureBlurb,
       featureTags: featureTags ?? this.featureTags,
