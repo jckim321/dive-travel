@@ -292,7 +292,7 @@ class _PulseHostState extends State<_PulseHost>
     final today = days != null && days <= 0;
     final wave = !lit || reduce
         ? 1.0
-        : 0.4 + 0.6 * math.sin(_breath.value * math.pi);
+        : math.sin(_breath.value * math.pi);
     return _PulseTick(lit: lit, warm: warm, today: today, wave: wave);
   }
 
@@ -476,48 +476,41 @@ class _Ticket extends StatelessWidget {
         ),
       );
     }
-    final color = tick.warm ? const Color(0xFFFF9A4A) : AppTheme.gold;
-    final wave = tick.wave;
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        Positioned(
-          width: 64,
-          height: 64,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.10 + 0.20 * wave),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.22 + 0.48 * wave),
-                    blurRadius: 18,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Text(
-          label,
-          key: const Key('profile-boarding-dday'),
-          style: TextStyle(
-            color: color,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            shadows: [
-              Shadow(
-                color: color.withValues(alpha: 0.40 + 0.55 * wave),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-        ),
-      ],
+    final color = _pulseColor(tick);
+    return Text(
+      label,
+      key: const Key('profile-boarding-dday'),
+      style: TextStyle(
+        color: color,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        shadows: _pulseShadow(color),
+      ),
     );
+  }
+
+  Color _pulseColor(_PulseTick tick) {
+    if (tick.warm) {
+      return Color.lerp(
+        const Color(0xFF9A3E12),
+        const Color(0xFFFFC48A),
+        tick.wave,
+      )!;
+    }
+    return Color.lerp(
+      const Color(0xFF8A6428),
+      const Color(0xFFFFF1C4),
+      tick.wave,
+    )!;
+  }
+
+  List<Shadow> _pulseShadow(Color color) {
+    return [
+      Shadow(
+        color: color.withValues(alpha: 0.85),
+        blurRadius: 7,
+      ),
+    ];
   }
 
   Widget _untilLabel(_TripFacts booked, _PulseTick tick) {
@@ -530,19 +523,14 @@ class _Ticket extends StatelessWidget {
         ),
       );
     }
-    const color = Color(0xFFFF9A4A);
+    final color = _pulseColor(tick);
     return Text(
       '오늘 떠나요',
       style: TextStyle(
         color: color,
         fontSize: 11,
         fontWeight: FontWeight.w800,
-        shadows: [
-          Shadow(
-            color: color.withValues(alpha: 0.40 + 0.55 * tick.wave),
-            blurRadius: 10,
-          ),
-        ],
+        shadows: _pulseShadow(color),
       ),
     );
   }
@@ -553,18 +541,13 @@ class _Ticket extends StatelessWidget {
         child: Icon(Icons.flight, size: 16, color: AppTheme.goldSoft),
       );
     }
-    const color = Color(0xFFFF9A4A);
+    final color = _pulseColor(tick);
     return IgnorePointer(
       child: Icon(
         Icons.flight,
         size: 16,
         color: color,
-        shadows: [
-          Shadow(
-            color: color.withValues(alpha: 0.45 + 0.50 * tick.wave),
-            blurRadius: 10,
-          ),
-        ],
+        shadows: _pulseShadow(color),
       ),
     );
   }
