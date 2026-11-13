@@ -3,12 +3,14 @@ import 'package:flutter/services.dart';
 
 import 'package:dive_travel_app/core/data/diver_store.dart';
 import 'package:dive_travel_app/core/data/session_controller.dart';
+import 'package:dive_travel_app/core/models/member_grade.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/core/widgets/bilingual_rotator.dart';
 import 'package:dive_travel_app/core/widgets/language_switch.dart';
 import 'package:dive_travel_app/features/admin/presentation/admin_gate.dart';
 import 'package:dive_travel_app/features/auth/presentation/auth_sign_in_sheet.dart';
 import 'package:dive_travel_app/features/partner/presentation/partner_gate.dart';
+import 'package:dive_travel_app/features/shell/presentation/main_shell.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
 
 /// Compact APDI-style hero card: photo background, darkened for type.
@@ -125,8 +127,8 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                                         alignment: const Alignment(0, -0.15),
                                         errorBuilder: (_, _, _) =>
                                             const ColoredBox(
-                                          color: AppTheme.oceanDeep,
-                                        ),
+                                              color: AppTheme.oceanDeep,
+                                            ),
                                       ),
                                     ),
                                     const DecoratedBox(
@@ -170,7 +172,8 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                                           Align(
                                             alignment: Alignment.centerLeft,
                                             child: FractionallySizedBox(
-                                              widthFactor: 0.35 +
+                                              widthFactor:
+                                                  0.35 +
                                                   (0.55 * _stubWidth.value),
                                               alignment: Alignment.centerLeft,
                                               child: const _BoardingStubStrip(),
@@ -184,15 +187,22 @@ class _TravelPosterHeaderState extends State<TravelPosterHeader>
                               ),
                             ),
                           ),
-                          const Positioned(
+                          Positioned(
                             top: 10,
+                            left: 12,
                             right: 16,
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _LuggageChip(),
-                                SizedBox(width: 8),
-                                LanguageSwitch(),
+                                const Spacer(),
+                                Flexible(
+                                  child: _GradeDepthChip(
+                                    signedIn: session.isSignedIn,
+                                    memberGrade: stats.memberGrade,
+                                    isInstructor: stats.isInstructor,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const LanguageSwitch(),
                               ],
                             ),
                           ),
@@ -345,10 +355,7 @@ class _OrangeTopBar extends StatelessWidget {
 }
 
 class _SloganBlock extends StatelessWidget {
-  const _SloganBlock({
-    required this.title,
-    required this.subtitle,
-  });
+  const _SloganBlock({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -402,41 +409,92 @@ class _SloganBlock extends StatelessWidget {
   }
 }
 
-class _LuggageChip extends StatelessWidget {
-  const _LuggageChip();
+class _GradeDepthChip extends StatelessWidget {
+  const _GradeDepthChip({
+    required this.signedIn,
+    required this.memberGrade,
+    required this.isInstructor,
+  });
+
+  final bool signedIn;
+  final MemberGrade memberGrade;
+  final bool isInstructor;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xCC0B1F33),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.gold.withValues(alpha: 0.85)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.gold, width: 1.3),
+    final l10n = AppLocalizations.of(context);
+    final grade = signedIn
+        ? ProfileDisplayGrade.fromMember(
+            grade: memberGrade,
+            isInstructor: isInstructor,
+          )
+        : null;
+    final (emoji, label) = switch (grade) {
+      null => ('🌊', 'SURFACE · 0m'),
+      ProfileDisplayGrade.silver => ('🥈', 'SILVER · 10m'),
+      ProfileDisplayGrade.gold => ('🥇', 'GOLD · 18m'),
+      ProfileDisplayGrade.diamond => ('💎', 'DIAMOND · 30m'),
+      ProfileDisplayGrade.platinum => ('💠', 'PLATINUM · 40m'),
+      ProfileDisplayGrade.instructor => ('🎓', 'INSTRUCTOR'),
+    };
+    final semanticsLabel = switch (grade) {
+      null => l10n.authLogin,
+      ProfileDisplayGrade.silver => l10n.profileGradeSilver,
+      ProfileDisplayGrade.gold => l10n.profileGradeGold,
+      ProfileDisplayGrade.diamond => l10n.profileGradeDiamond,
+      ProfileDisplayGrade.platinum => l10n.profileGradePlatinum,
+      ProfileDisplayGrade.instructor => l10n.profileGradeInstructor,
+    };
+    return Semantics(
+      key: const Key('home-grade-chip'),
+      button: true,
+      label: semanticsLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () async {
+          if (!signedIn) {
+            await ensureSignedIn(context);
+            return;
+          }
+          MainShell.goToTab(context, 4);
+        },
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 36),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xCC0B1F33),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppTheme.gold.withValues(alpha: 0.85)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 13, height: 1),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        height: 1,
+                        color: AppTheme.goldSoft.withValues(alpha: 0.95),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 6),
-            Text(
-              'SS-07',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: AppTheme.goldSoft.withValues(alpha: 0.95),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
