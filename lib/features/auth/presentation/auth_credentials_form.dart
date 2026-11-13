@@ -1,9 +1,92 @@
 import 'package:flutter/material.dart';
 
 import 'package:dive_travel_app/core/auth/auth_identity.dart';
+import 'package:dive_travel_app/core/data/session_controller.dart';
 import 'package:dive_travel_app/core/theme/app_theme.dart';
 import 'package:dive_travel_app/features/auth/presentation/signup_screen.dart';
 import 'package:dive_travel_app/l10n/generated/app_localizations.dart';
+
+bool _authEnglish(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'en';
+
+/// Visible label and hint for the login id field.
+String authIdFieldText(BuildContext context) =>
+    _authEnglish(context) ? 'Email or ID' : '이메일 또는 아이디';
+
+Future<void> showForgotPasswordDialog(BuildContext context) async {
+  final email = TextEditingController();
+  final english = _authEnglish(context);
+  final typed = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(english ? 'Forgot password' : '비밀번호 찾기'),
+        content: TextField(
+          key: const Key('auth-reset-email'),
+          controller: email,
+          keyboardType: TextInputType.emailAddress,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: english ? 'Email' : '이메일',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(english ? 'Cancel' : '취소'),
+          ),
+          TextButton(
+            key: const Key('auth-reset-send'),
+            onPressed: () => Navigator.of(dialogContext).pop(email.text.trim()),
+            child: Text(english ? 'Send' : '보내기'),
+          ),
+        ],
+      );
+    },
+  );
+  email.dispose();
+  if (typed == null || !context.mounted) {
+    return;
+  }
+  if (!typed.contains('@')) {
+    await _showForgotNotice(
+      context,
+      english
+          ? 'Accounts signed up with an ID should contact help@divetravel.com.'
+          : '아이디로 가입하신 계정은 help@divetravel.com으로 문의해 주세요.',
+    );
+    return;
+  }
+  try {
+    await SessionScope.of(context).sendPasswordReset(typed);
+  } catch (_) {}
+  if (!context.mounted) {
+    return;
+  }
+  await _showForgotNotice(
+    context,
+    english
+        ? 'If this email is registered, we sent a reset mail. Check spam too.'
+        : '가입한 이메일이라면 안내 메일을 보냈어요. 스팸함도 확인해 보세요.',
+  );
+}
+
+Future<void> _showForgotNotice(BuildContext context, String message) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(_authEnglish(context) ? 'OK' : '확인'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
 /// Id + password submitted from [AuthCredentialsForm].
 class AuthCredentials {
@@ -193,8 +276,8 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
           textInputAction: TextInputAction.next,
           autofillHints: const [AutofillHints.username],
           decoration: _fieldDecoration(
-            label: l10n.authNameTag,
-            hint: l10n.authIdFieldHint,
+            label: authIdFieldText(context),
+            hint: authIdFieldText(context),
             prefix: Icons.person_outline,
           ),
         ),
@@ -220,18 +303,43 @@ class _AuthCredentialsFormState extends State<AuthCredentialsForm> {
             ),
           ),
         ),
-        CheckboxListTile(
-          key: const Key('auth-keep-signed-in'),
-          contentPadding: EdgeInsets.zero,
-          value: _keepSignedIn,
-          onChanged: widget.busy
-              ? null
-              : (value) => setState(() => _keepSignedIn = value ?? true),
-          controlAffinity: ListTileControlAffinity.leading,
-          title: Text(
-            l10n.authKeepSignedInShort,
-            style: const TextStyle(fontSize: 14),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: CheckboxListTile(
+                key: const Key('auth-keep-signed-in'),
+                contentPadding: EdgeInsets.zero,
+                value: _keepSignedIn,
+                onChanged: widget.busy
+                    ? null
+                    : (value) => setState(() => _keepSignedIn = value ?? true),
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  l10n.authKeepSignedInShort,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+            TextButton(
+              key: const Key('auth-forgot-password'),
+              onPressed: widget.busy
+                  ? null
+                  : () => showForgotPasswordDialog(context),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.ocean,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                _authEnglish(context) ? 'Forgot password' : '비밀번호 찾기',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
         if (error != null) ...[
           Text(
