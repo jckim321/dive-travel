@@ -66,7 +66,7 @@ Uri naverFlightUri({
   });
 }
 
-/// Google Flights natural-language search. Not the undocumented `tfs` blob.
+/// Google Flights search. `q` is percent-encoded, so spaces stay `%20`.
 Uri googleFlightUri({
   required String from,
   required String to,
@@ -76,10 +76,13 @@ Uri googleFlightUri({
   final origin = normalizeNearestAirport(from);
   final dest = normalizeNearestAirport(to);
   final start = _isoDay(depart);
-  final query = ret == null
-      ? 'Flights from $origin to $dest on $start one way'
-      : 'Flights from $origin to $dest on $start returning ${_isoDay(ret)}';
-  return Uri.https('www.google.com', '/travel/flights', {'q': query});
+  final sentence = ret == null
+      ? 'Flights to $dest from $origin on $start'
+      : 'Flights to $dest from $origin on $start through ${_isoDay(ret)}';
+  final q = Uri.encodeComponent(sentence);
+  return Uri.parse(
+    'https://www.google.com/travel/flights?hl=ko&curr=KRW&q=$q',
+  );
 }
 
 Future<void> openSkyscannerRoute({
