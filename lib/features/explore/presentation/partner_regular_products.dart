@@ -361,6 +361,7 @@ class _PartnerRegularProductsState extends State<PartnerRegularProducts> {
                 margin: EdgeInsets.only(bottom: 88),
               ),
             );
+            await Navigator.of(context).maybePop();
           } else {
             final hidden = _boxes.any(
               (box) => !box.isUntouchedNew && !box.showOnBooking,
